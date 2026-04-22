@@ -30,6 +30,8 @@ int main() {
     {
         std::ofstream output(path);
         output << "package demo.cli\n";
+        output << "record User\n";
+        output << "    name: Text\n";
         output << "function main() -> Int32\n";
         output << "    0\n";
     }
@@ -40,7 +42,10 @@ int main() {
 
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
-    assert(output.find("top-level declarations: 1") != std::string::npos);
+    assert(output.find("top-level declarations: 2") != std::string::npos);
+    assert(output.find("records: 1") != std::string::npos);
     assert(output.find("functions: 1") != std::string::npos);
+    assert(output.find("record fields: 1") != std::string::npos);
+    assert(output.find("function body statements: 1") != std::string::npos);
     return 0;
 }

@@ -29,9 +29,12 @@ void test_parse_success() {
     assert(result.module.top_level_declaration_count == 2);
     assert(result.module.records.size() == 1);
     assert(result.module.records.front().name == "User");
+    assert(result.module.records.front().field_names.size() == 1);
+    assert(result.module.records.front().field_names.front() == "name");
     assert(result.module.functions.size() == 1);
     assert(result.module.functions.front().name == "main");
     assert(result.module.functions.front().return_type == "Int32");
+    assert(result.module.functions.front().body_statement_count == 1);
 }
 
 void test_parse_failure() {
@@ -72,11 +75,32 @@ void test_function_header_failure() {
     assert(result.diagnostics.entries().front().message == "expected '->' after function parameter list");
 }
 
+void test_missing_record_block_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_record_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "record User\n";
+        output << "function main() -> Int32\n";
+        output << "    0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "record declaration requires an indented field block");
+}
+
 }  // namespace
 
 int main() {
     test_parse_success();
     test_parse_failure();
     test_function_header_failure();
+    test_missing_record_block_failure();
     return 0;
 }

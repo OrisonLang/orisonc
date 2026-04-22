@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <string_view>
+#include <vector>
 
 namespace orison::syntax {
 namespace {
@@ -29,27 +30,97 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
     std::size_t line = 1;
     std::size_t column = 1;
     bool at_line_start = true;
-    std::size_t current_indent = 0;
+    bool first_token_on_line = false;
+    std::vector<std::size_t> indent_stack {0};
+
+    auto push_simple_token = [&](TokenKind kind, std::string lexeme, std::size_t token_line, std::size_t token_column) {
+        result.tokens.push_back(Token {
+            .kind = kind,
+            .lexeme = std::move(lexeme),
+            .line = token_line,
+            .column = token_column,
+            .indent = 0,
+            .line_start = first_token_on_line,
+        });
+        first_token_on_line = false;
+    };
 
     while (index < input.size()) {
         char ch = input[index];
 
         if (at_line_start) {
-            current_indent = 0;
+            std::size_t indent = 0;
             while (index < input.size() && input[index] == ' ') {
-                ++current_indent;
+                ++indent;
                 ++index;
                 ++column;
             }
 
             if (index < input.size() && input[index] == '\t') {
                 result.diagnostics.error(line, "tabs are not permitted in indentation");
+                while (index < input.size() && input[index] == '\t') {
+                    ++index;
+                    ++column;
+                }
             }
 
             if (index >= input.size()) {
                 break;
             }
 
+            ch = input[index];
+
+            if (ch == '\r') {
+                ++index;
+                continue;
+            }
+
+            if (ch == '\n') {
+                push_simple_token(TokenKind::newline, "\n", line, column);
+                ++index;
+                ++line;
+                column = 1;
+                continue;
+            }
+
+            if (ch == '#') {
+                while (index < input.size() && input[index] != '\n') {
+                    ++index;
+                    ++column;
+                }
+                continue;
+            }
+
+            if (indent > indent_stack.back()) {
+                indent_stack.push_back(indent);
+                result.tokens.push_back(Token {
+                    .kind = TokenKind::indent,
+                    .lexeme = "",
+                    .line = line,
+                    .column = 1,
+                    .indent = indent,
+                    .line_start = false,
+                });
+            } else {
+                while (indent < indent_stack.back()) {
+                    indent_stack.pop_back();
+                    result.tokens.push_back(Token {
+                        .kind = TokenKind::dedent,
+                        .lexeme = "",
+                        .line = line,
+                        .column = 1,
+                        .indent = indent,
+                        .line_start = false,
+                    });
+                }
+
+                if (indent != indent_stack.back()) {
+                    result.diagnostics.error(line, "inconsistent indentation level");
+                }
+            }
+
+            at_line_start = false;
+            first_token_on_line = true;
             ch = input[index];
         }
 
@@ -59,20 +130,12 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
         }
 
         if (ch == '\n') {
-            result.tokens.push_back(Token {
-                .kind = TokenKind::newline,
-                .lexeme = "\n",
-                .line = line,
-                .column = column,
-                .indent = 0,
-                .line_start = false,
-            });
-
+            push_simple_token(TokenKind::newline, "\n", line, column);
             ++index;
             ++line;
             column = 1;
             at_line_start = true;
-            current_indent = 0;
+            first_token_on_line = false;
             continue;
         }
 
@@ -95,10 +158,10 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
             .lexeme = "",
             .line = line,
             .column = column,
-            .indent = at_line_start ? current_indent : 0,
-            .line_start = at_line_start,
+            .indent = 0,
+            .line_start = first_token_on_line,
         };
-        at_line_start = false;
+        first_token_on_line = false;
 
         if (std::isalpha(static_cast<unsigned char>(ch)) != 0 || ch == '_') {
             auto start = index;
@@ -177,13 +240,25 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
         ++column;
     }
 
+    while (indent_stack.size() > 1) {
+        indent_stack.pop_back();
+        result.tokens.push_back(Token {
+            .kind = TokenKind::dedent,
+            .lexeme = "",
+            .line = line,
+            .column = 1,
+            .indent = 0,
+            .line_start = false,
+        });
+    }
+
     result.tokens.push_back(Token {
         .kind = TokenKind::eof,
         .lexeme = "",
         .line = line,
         .column = column,
         .indent = 0,
-        .line_start = at_line_start,
+        .line_start = false,
     });
     return result;
 }

@@ -17,7 +17,7 @@ public:
         ParseResult result;
 
         while (!is(TokenKind::eof)) {
-            skip_newlines();
+            skip_layout_between_declarations();
             if (is(TokenKind::eof)) {
                 break;
             }
@@ -76,6 +76,12 @@ private:
         }
     }
 
+    void skip_layout_between_declarations() {
+        while (is(TokenKind::newline) || is(TokenKind::dedent)) {
+            advance();
+        }
+    }
+
     void skip_to_next_line() {
         while (!is(TokenKind::newline) && !is(TokenKind::eof)) {
             advance();
@@ -85,9 +91,9 @@ private:
 
     void skip_to_next_top_level() {
         while (!is(TokenKind::eof)) {
-            if (is(TokenKind::newline)) {
+            if (is(TokenKind::newline) || is(TokenKind::dedent)) {
                 advance();
-                if (current().line_start && current().indent == 0) {
+                if (current().line_start) {
                     break;
                 }
                 continue;
@@ -159,6 +165,29 @@ private:
         return name;
     }
 
+    auto consume_block_start(ParseResult& result, std::string const& message) -> bool {
+        if (!is(TokenKind::newline)) {
+            result.diagnostics.error(current().line, message);
+            return false;
+        }
+
+        advance();
+        if (!is(TokenKind::indent)) {
+            result.diagnostics.error(current().line, message);
+            return false;
+        }
+
+        advance();
+        skip_newlines();
+        return true;
+    }
+
+    void consume_block_end() {
+        if (is(TokenKind::dedent)) {
+            advance();
+        }
+    }
+
     void parse_package(ParseResult& result) {
         auto line = current().line;
         advance();
@@ -180,11 +209,50 @@ private:
     void parse_record(ParseResult& result) {
         advance();
         auto name = expect_identifier(result, "record declaration requires a type name");
-        if (!name.empty()) {
-            result.module.records.push_back(RecordSyntax {.name = name});
-            ++result.module.top_level_declaration_count;
+        if (name.empty()) {
+            skip_to_next_line();
+            return;
         }
-        skip_to_next_line();
+
+        RecordSyntax record {.name = name};
+
+        if (!consume_block_start(result, "record declaration requires an indented field block")) {
+            skip_to_next_top_level();
+            return;
+        }
+
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            auto field_name = expect_identifier(result, "record field requires a name");
+            if (field_name.empty()) {
+                skip_to_next_line();
+                continue;
+            }
+
+            if (!is(TokenKind::colon)) {
+                result.diagnostics.error(current().line, "record field requires ':' after the field name");
+                skip_to_next_line();
+                continue;
+            }
+
+            advance();
+            auto field_type = parse_type_name(result);
+            if (field_type.empty()) {
+                skip_to_next_line();
+                continue;
+            }
+
+            record.field_names.push_back(field_name);
+            skip_to_next_line();
+        }
+
+        consume_block_end();
+        result.module.records.push_back(std::move(record));
+        ++result.module.top_level_declaration_count;
     }
 
     void parse_function(ParseResult& result) {
@@ -227,14 +295,35 @@ private:
 
         advance();
         auto return_type = parse_type_name(result);
-        if (!return_type.empty()) {
-            result.module.functions.push_back(FunctionSyntax {
-                .name = name,
-                .return_type = return_type,
-            });
-            ++result.module.top_level_declaration_count;
+        if (return_type.empty()) {
+            skip_to_next_top_level();
+            return;
         }
-        skip_to_next_line();
+
+        FunctionSyntax function {
+            .name = name,
+            .return_type = return_type,
+            .body_statement_count = 0,
+        };
+
+        if (!consume_block_start(result, "function declaration requires an indented body block")) {
+            skip_to_next_top_level();
+            return;
+        }
+
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            ++function.body_statement_count;
+            skip_to_next_line();
+        }
+
+        consume_block_end();
+        result.module.functions.push_back(std::move(function));
+        ++result.module.top_level_declaration_count;
     }
 
     std::vector<Token> tokens_;

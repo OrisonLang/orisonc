@@ -10,11 +10,13 @@ namespace orison::syntax {
 
 struct RecordSyntax {
     std::string name;
+    std::vector<std::string> field_names;
 };
 
 struct FunctionSyntax {
     std::string name;
     std::string return_type;
+    std::size_t body_statement_count = 0;
 };
 
 struct ModuleSyntax {

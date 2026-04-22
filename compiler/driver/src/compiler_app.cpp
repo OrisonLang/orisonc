@@ -45,6 +45,12 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "top-level declarations: " << parse_result.module.top_level_declaration_count << '\n';
         output << "records: " << parse_result.module.records.size() << '\n';
         output << "functions: " << parse_result.module.functions.size() << '\n';
+        if (!parse_result.module.records.empty()) {
+            output << "record fields: " << parse_result.module.records.front().field_names.size() << '\n';
+        }
+        if (!parse_result.module.functions.empty()) {
+            output << "function body statements: " << parse_result.module.functions.front().body_statement_count << '\n';
+        }
         return CompileResult {.exit_code = 0, .stdout_text = output.str()};
     }
 

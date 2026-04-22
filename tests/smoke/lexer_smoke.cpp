@@ -22,12 +22,23 @@ int main() {
     auto result = lexer.lex(*source_file);
 
     assert(!result.diagnostics.has_errors());
-    assert(result.tokens.size() >= 8);
+    assert(result.tokens.size() >= 10);
     assert(result.tokens[0].kind == orison::syntax::TokenKind::keyword_package);
     assert(result.tokens[0].line_start);
-    assert(result.tokens[0].indent == 0);
     assert(result.tokens[1].kind == orison::syntax::TokenKind::identifier);
     assert(result.tokens[2].kind == orison::syntax::TokenKind::dot);
     assert(result.tokens[3].kind == orison::syntax::TokenKind::identifier);
+    bool saw_indent = false;
+    bool saw_dedent = false;
+    for (auto const& token : result.tokens) {
+        if (token.kind == orison::syntax::TokenKind::indent) {
+            saw_indent = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::dedent) {
+            saw_dedent = true;
+        }
+    }
+    assert(saw_indent);
+    assert(saw_dedent);
     return 0;
 }

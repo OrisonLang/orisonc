@@ -11,6 +11,8 @@ enum class TokenKind {
     keyword_package,
     keyword_record,
     keyword_function,
+    indent,
+    dedent,
     left_paren,
     right_paren,
     comma,
