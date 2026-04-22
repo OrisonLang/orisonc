@@ -41,5 +41,6 @@ int main() {
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
     assert(output.find("top-level declarations: 1") != std::string::npos);
+    assert(output.find("functions: 1") != std::string::npos);
     return 0;
 }

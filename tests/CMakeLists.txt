@@ -30,6 +30,22 @@ add_test(
     COMMAND orison_module_parser_smoke
 )
 
+add_executable(orison_lexer_smoke
+    smoke/lexer_smoke.cpp
+)
+
+target_link_libraries(orison_lexer_smoke
+    PRIVATE
+        orison_syntax
+)
+
+target_compile_features(orison_lexer_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_lexer_smoke
+    COMMAND orison_lexer_smoke
+)
+
 add_executable(orisonc_cli_smoke
     smoke/orisonc_cli_smoke.cpp
 )

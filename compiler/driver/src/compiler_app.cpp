@@ -42,7 +42,9 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         std::ostringstream output;
         output << "parsed " << maybe_source->path().string() << '\n';
         output << "package " << parse_result.module.package_name << '\n';
-        output << "top-level declarations: " << parse_result.module.top_level_declarations.size() << '\n';
+        output << "top-level declarations: " << parse_result.module.top_level_declaration_count << '\n';
+        output << "records: " << parse_result.module.records.size() << '\n';
+        output << "functions: " << parse_result.module.functions.size() << '\n';
         return CompileResult {.exit_code = 0, .stdout_text = output.str()};
     }
 

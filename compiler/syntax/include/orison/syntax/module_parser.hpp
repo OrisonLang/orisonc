@@ -8,9 +8,20 @@
 
 namespace orison::syntax {
 
+struct RecordSyntax {
+    std::string name;
+};
+
+struct FunctionSyntax {
+    std::string name;
+    std::string return_type;
+};
+
 struct ModuleSyntax {
     std::string package_name;
-    std::vector<std::string> top_level_declarations;
+    std::vector<RecordSyntax> records;
+    std::vector<FunctionSyntax> functions;
+    std::size_t top_level_declaration_count = 0;
 };
 
 struct ParseResult {

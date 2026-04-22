@@ -1,4 +1,5 @@
 add_library(orison_syntax STATIC
+    src/lexer.cpp
     src/module_parser.cpp
 )
 
