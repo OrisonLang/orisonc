@@ -7,4 +7,11 @@ target_include_directories(orison_driver
         include
 )
 
+target_link_libraries(orison_driver
+    PUBLIC
+        orison_diagnostics
+        orison_source
+        orison_syntax
+)
+
 target_compile_features(orison_driver PUBLIC cxx_std_23)

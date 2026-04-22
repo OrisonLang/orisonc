@@ -1,13 +1,14 @@
 #pragma once
 
+#include "orison/driver/compile_result.hpp"
+
 #include <span>
-#include <string>
 
 namespace orison::driver {
 
 class CompilerApp {
 public:
-    std::string run(std::span<char const* const> args) const;
+    auto run(std::span<char const* const> args) const -> CompileResult;
 };
 
 }  // namespace orison::driver

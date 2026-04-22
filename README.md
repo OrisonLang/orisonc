@@ -64,6 +64,9 @@ The repository is being scaffolded toward a layout similar to:
 Current bootstrap layout:
 
 - `compiler/driver/` — shared compiler-driver library code
+- `compiler/source/` — source file loading and path-aware source objects
+- `compiler/diagnostics/` — explicit diagnostic collection and rendering
+- `compiler/syntax/` — early module parser infrastructure
 - `tools/orisonc/` — initial compiler executable entry point
 - `runtime/` — reserved for runtime support
 - `tests/` — native smoke and regression tests
@@ -80,4 +83,4 @@ The exact layout may change during early implementation.
 
 ## Status
 
-This repository currently contains the initial language design documents plus the first native `C++23` project scaffold for the Orison toolchain.
+This repository currently contains the initial language design documents plus an early native `C++23` frontend scaffold that can read a source file, parse a minimal top-level module shape, and report explicit diagnostics.

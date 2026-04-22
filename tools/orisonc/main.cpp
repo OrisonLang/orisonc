@@ -2,9 +2,8 @@
 
 #include <array>
 #include <cstdlib>
-#include <iostream>
+#include <cstdio>
 #include <span>
-#include <string>
 
 int main(int argc, char** argv) {
     std::array<char const*, 64> storage {};
@@ -14,7 +13,12 @@ int main(int argc, char** argv) {
     }
 
     orison::driver::CompilerApp app;
-    std::string output = app.run(std::span<char const* const>(storage.data(), count));
-    std::cout << output << '\n';
-    return EXIT_SUCCESS;
+    auto result = app.run(std::span<char const* const>(storage.data(), count));
+    if (!result.stdout_text.empty()) {
+        std::fputs(result.stdout_text.c_str(), stdout);
+    }
+    if (!result.stderr_text.empty()) {
+        std::fputs(result.stderr_text.c_str(), stderr);
+    }
+    return result.exit_code;
 }
