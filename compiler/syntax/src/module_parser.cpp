@@ -432,6 +432,53 @@ private:
         return statement;
     }
 
+    auto parse_statement_block(ParseResult& result, std::string const& message) -> std::vector<StatementSyntax> {
+        std::vector<StatementSyntax> statements;
+        if (!consume_block_start(result, message)) {
+            return statements;
+        }
+
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            auto statement = parse_statement(result);
+            if (statement.valid) {
+                statements.push_back(std::move(statement));
+            }
+            if (is(TokenKind::newline)) {
+                skip_to_next_line();
+            } else if (!is(TokenKind::dedent) && !is(TokenKind::eof) && !current().line_start) {
+                skip_to_next_line();
+            }
+        }
+
+        consume_block_end();
+        return statements;
+    }
+
+    auto parse_if_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::if_statement, .valid = true};
+        advance();
+
+        statement.expression = parse_expression(result);
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            statement.expression.arguments.empty()) {
+            result.diagnostics.error(current().line, "if statement requires a condition expression");
+            statement.valid = false;
+            return statement;
+        }
+
+        statement.nested_statements =
+            parse_statement_block(result, "if statement requires an indented consequence block");
+        if (statement.nested_statements.empty() && result.diagnostics.has_errors()) {
+            statement.valid = false;
+        }
+        return statement;
+    }
+
     auto parse_expression_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = true};
         statement.expression = parse_expression(result);
@@ -450,6 +497,8 @@ private:
             return parse_binding_statement(result, StatementKind::var_binding);
         case TokenKind::keyword_return:
             return parse_return_statement(result);
+        case TokenKind::keyword_if:
+            return parse_if_statement(result);
         default:
             return parse_expression_statement(result);
         }
@@ -556,25 +605,13 @@ private:
             .body_statements = {},
         };
 
-        if (!consume_block_start(result, "function declaration requires an indented body block")) {
+        auto body = parse_statement_block(result, "function declaration requires an indented body block");
+        if (body.empty() && result.diagnostics.has_errors()) {
             skip_to_next_top_level();
             return;
         }
 
-        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
-            if (is(TokenKind::newline)) {
-                advance();
-                continue;
-            }
-
-            auto statement = parse_statement(result);
-            if (statement.valid) {
-                function.body_statements.push_back(std::move(statement));
-            }
-            skip_to_next_line();
-        }
-
-        consume_block_end();
+        function.body_statements = std::move(body);
         result.module.functions.push_back(std::move(function));
         ++result.module.top_level_declaration_count;
     }

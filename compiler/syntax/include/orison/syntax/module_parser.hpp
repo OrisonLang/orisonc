@@ -44,6 +44,7 @@ enum class StatementKind {
     let_binding,
     var_binding,
     return_statement,
+    if_statement,
     expression_statement,
 };
 
@@ -53,6 +54,7 @@ struct StatementSyntax {
     std::string name;
     TypeSyntax annotated_type;
     ExpressionSyntax expression;
+    std::vector<StatementSyntax> nested_statements;
 };
 
 struct RecordSyntax {

@@ -40,6 +40,8 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
         return "var";
     case StatementKind::return_statement:
         return "return";
+    case StatementKind::if_statement:
+        return "if";
     case StatementKind::expression_statement:
         return "expression";
     }
@@ -118,12 +120,11 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             output << "function body statements: " << parse_result.module.functions.front().body_statements.size()
                    << '\n';
             if (!parse_result.module.functions.front().body_statements.empty()) {
-                output << "first statement kind: "
-                       << render_statement_kind(parse_result.module.functions.front().body_statements.front().kind)
+                auto const& first_statement = parse_result.module.functions.front().body_statements.front();
+                output << "first statement kind: " << render_statement_kind(first_statement.kind) << '\n';
+                output << "first statement expression: " << render_expression(first_statement.expression)
                        << '\n';
-                output << "first statement expression: "
-                       << render_expression(parse_result.module.functions.front().body_statements.front().expression)
-                       << '\n';
+                output << "first statement nested count: " << first_statement.nested_statements.size() << '\n';
             }
         }
         return CompileResult {.exit_code = 0, .stdout_text = output.str()};

@@ -26,6 +26,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "return") {
         return TokenKind::keyword_return;
     }
+    if (text == "if") {
+        return TokenKind::keyword_if;
+    }
     return TokenKind::identifier;
 }
 
