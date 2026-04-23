@@ -66,7 +66,7 @@ Current bootstrap layout:
 - `compiler/driver/` — shared compiler-driver library code
 - `compiler/source/` — source file loading and path-aware source objects
 - `compiler/diagnostics/` — explicit diagnostic collection and rendering
-- `compiler/syntax/` — lexer and early parser infrastructure for module headers
+- `compiler/syntax/` — lexer and early parser infrastructure for module headers, block structure, and signature syntax
 - `tools/orisonc/` — initial compiler executable entry point
 - `runtime/` — reserved for runtime support
 - `tests/` — native smoke and regression tests
@@ -83,4 +83,4 @@ The exact layout may change during early implementation.
 
 ## Status
 
-This repository currently contains the initial language design documents plus an early native `C++23` frontend scaffold that can read a source file, lex a token stream, parse minimal module headers, and report explicit diagnostics.
+This repository currently contains the initial language design documents plus an early native `C++23` frontend scaffold that can read a source file, lex a token stream, parse indentation-based blocks, build minimal signature/type syntax, and report explicit diagnostics.

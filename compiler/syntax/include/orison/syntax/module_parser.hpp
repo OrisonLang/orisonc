@@ -8,14 +8,30 @@
 
 namespace orison::syntax {
 
+struct TypeSyntax {
+    std::string name;
+    std::vector<TypeSyntax> generic_arguments;
+};
+
+struct FieldSyntax {
+    std::string name;
+    TypeSyntax type;
+};
+
+struct ParameterSyntax {
+    std::string name;
+    TypeSyntax type;
+};
+
 struct RecordSyntax {
     std::string name;
-    std::vector<std::string> field_names;
+    std::vector<FieldSyntax> fields;
 };
 
 struct FunctionSyntax {
     std::string name;
-    std::string return_type;
+    std::vector<ParameterSyntax> parameters;
+    TypeSyntax return_type;
     std::size_t body_statement_count = 0;
 };
 

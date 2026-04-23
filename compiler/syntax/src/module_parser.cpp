@@ -127,42 +127,41 @@ private:
         return name;
     }
 
-    auto parse_type_name(ParseResult& result) -> std::string {
-        auto name = expect_identifier(result, "expected return type after '->'");
-        if (name.empty()) {
-            return name;
+    auto parse_type(ParseResult& result, std::string const& message) -> TypeSyntax {
+        TypeSyntax type {.name = parse_qualified_name(result, message)};
+        if (type.name.empty()) {
+            return type;
         }
 
-        if (is(TokenKind::less)) {
-            name += "<";
-            advance();
+        if (!is(TokenKind::less)) {
+            return type;
+        }
 
-            bool first = true;
-            while (!is(TokenKind::greater) && !is(TokenKind::eof) && !is(TokenKind::newline)) {
-                if (!first) {
-                    if (is(TokenKind::comma)) {
-                        name += ", ";
-                        advance();
-                    } else {
-                        result.diagnostics.error(current().line, "expected ',' or '>' in generic type");
-                        break;
-                    }
-                }
-
-                auto part = parse_qualified_name(result, "expected generic type argument");
-                name += part;
-                first = false;
+        advance();
+        while (!is(TokenKind::greater) && !is(TokenKind::eof) && !is(TokenKind::newline)) {
+            type.generic_arguments.push_back(parse_type(result, "expected generic type argument"));
+            if (type.generic_arguments.back().name.empty()) {
+                break;
             }
 
-            if (is(TokenKind::greater)) {
-                name += ">";
+            if (is(TokenKind::comma)) {
                 advance();
-            } else {
-                result.diagnostics.error(current().line, "expected '>' to close generic type");
+                continue;
+            }
+
+            if (!is(TokenKind::greater)) {
+                result.diagnostics.error(current().line, "expected ',' or '>' in generic type");
+                break;
             }
         }
 
-        return name;
+        if (is(TokenKind::greater)) {
+            advance();
+        } else {
+            result.diagnostics.error(current().line, "expected '>' to close generic type");
+        }
+
+        return type;
     }
 
     auto consume_block_start(ParseResult& result, std::string const& message) -> bool {
@@ -186,6 +185,70 @@ private:
         if (is(TokenKind::dedent)) {
             advance();
         }
+    }
+
+    auto parse_parameter(ParseResult& result) -> ParameterSyntax {
+        ParameterSyntax parameter;
+        parameter.name = expect_identifier(result, "function parameter requires a name");
+        if (parameter.name.empty()) {
+            return parameter;
+        }
+
+        if (!is(TokenKind::colon)) {
+            result.diagnostics.error(current().line, "function parameter requires ':' after the parameter name");
+            parameter.name.clear();
+            return parameter;
+        }
+
+        advance();
+        parameter.type = parse_type(result, "function parameter requires a type");
+        if (parameter.type.name.empty()) {
+            parameter.name.clear();
+        }
+        return parameter;
+    }
+
+    auto parse_parameter_list(ParseResult& result) -> std::vector<ParameterSyntax> {
+        std::vector<ParameterSyntax> parameters;
+        if (!is(TokenKind::left_paren)) {
+            result.diagnostics.error(current().line, "expected '(' after function name");
+            return parameters;
+        }
+
+        advance();
+        if (is(TokenKind::right_paren)) {
+            advance();
+            return parameters;
+        }
+
+        while (!is(TokenKind::eof)) {
+            auto parameter = parse_parameter(result);
+            if (!parameter.name.empty()) {
+                parameters.push_back(std::move(parameter));
+            } else {
+                break;
+            }
+
+            if (is(TokenKind::comma)) {
+                advance();
+                continue;
+            }
+
+            if (is(TokenKind::right_paren)) {
+                advance();
+                return parameters;
+            }
+
+            result.diagnostics.error(current().line, "expected ',' or ')' in function parameter list");
+            break;
+        }
+
+        if (!is(TokenKind::right_paren)) {
+            result.diagnostics.error(current().line, "function header cannot end before ')'");
+        } else {
+            advance();
+        }
+        return parameters;
     }
 
     void parse_package(ParseResult& result) {
@@ -227,8 +290,9 @@ private:
                 continue;
             }
 
-            auto field_name = expect_identifier(result, "record field requires a name");
-            if (field_name.empty()) {
+            FieldSyntax field;
+            field.name = expect_identifier(result, "record field requires a name");
+            if (field.name.empty()) {
                 skip_to_next_line();
                 continue;
             }
@@ -240,13 +304,13 @@ private:
             }
 
             advance();
-            auto field_type = parse_type_name(result);
-            if (field_type.empty()) {
+            field.type = parse_type(result, "record field requires a type");
+            if (field.type.name.empty()) {
                 skip_to_next_line();
                 continue;
             }
 
-            record.field_names.push_back(field_name);
+            record.fields.push_back(std::move(field));
             skip_to_next_line();
         }
 
@@ -263,28 +327,9 @@ private:
             return;
         }
 
-        if (!is(TokenKind::left_paren)) {
-            result.diagnostics.error(current().line, "expected '(' after function name");
+        auto parameters = parse_parameter_list(result);
+        if (result.diagnostics.has_errors() && !is(TokenKind::arrow) && !is(TokenKind::newline)) {
             skip_to_next_line();
-            return;
-        }
-
-        int depth = 0;
-        while (!is(TokenKind::eof)) {
-            if (is(TokenKind::left_paren)) {
-                ++depth;
-            } else if (is(TokenKind::right_paren)) {
-                --depth;
-                if (depth == 0) {
-                    advance();
-                    break;
-                }
-            } else if (is(TokenKind::newline)) {
-                result.diagnostics.error(current().line, "function header cannot end before ')'");
-                skip_to_next_line();
-                return;
-            }
-            advance();
         }
 
         if (!is(TokenKind::arrow)) {
@@ -294,15 +339,16 @@ private:
         }
 
         advance();
-        auto return_type = parse_type_name(result);
-        if (return_type.empty()) {
+        auto return_type = parse_type(result, "expected return type after '->'");
+        if (return_type.name.empty()) {
             skip_to_next_top_level();
             return;
         }
 
         FunctionSyntax function {
             .name = name,
-            .return_type = return_type,
+            .parameters = std::move(parameters),
+            .return_type = std::move(return_type),
             .body_statement_count = 0,
         };
 

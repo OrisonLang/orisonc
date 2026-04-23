@@ -31,8 +31,8 @@ int main() {
         std::ofstream output(path);
         output << "package demo.cli\n";
         output << "record User\n";
-        output << "    name: Text\n";
-        output << "function main() -> Int32\n";
+        output << "    values: DynamicArray<Maybe<Int32>>\n";
+        output << "function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "    0\n";
     }
 
@@ -46,6 +46,9 @@ int main() {
     assert(output.find("records: 1") != std::string::npos);
     assert(output.find("functions: 1") != std::string::npos);
     assert(output.find("record fields: 1") != std::string::npos);
+    assert(output.find("first field type: DynamicArray<Maybe<Int32>>") != std::string::npos);
+    assert(output.find("function parameters: 1") != std::string::npos);
+    assert(output.find("function return type: Outcome<Int32, ParseError>") != std::string::npos);
     assert(output.find("function body statements: 1") != std::string::npos);
     return 0;
 }

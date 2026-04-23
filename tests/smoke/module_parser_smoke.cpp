@@ -13,8 +13,9 @@ void test_parse_success() {
         std::ofstream output(path);
         output << "package demo.app\n\n";
         output << "record User\n";
-        output << "    name: Text\n\n";
-        output << "function main() -> Int32\n";
+        output << "    name: Text\n";
+        output << "    values: DynamicArray<Maybe<Int32>>\n\n";
+        output << "function main(input: shared.View<Byte>, count: Int32) -> Outcome<Int32, ParseError>\n";
         output << "    0\n";
     }
 
@@ -29,11 +30,28 @@ void test_parse_success() {
     assert(result.module.top_level_declaration_count == 2);
     assert(result.module.records.size() == 1);
     assert(result.module.records.front().name == "User");
-    assert(result.module.records.front().field_names.size() == 1);
-    assert(result.module.records.front().field_names.front() == "name");
+    assert(result.module.records.front().fields.size() == 2);
+    assert(result.module.records.front().fields.front().name == "name");
+    assert(result.module.records.front().fields.front().type.name == "Text");
+    assert(result.module.records.front().fields[1].name == "values");
+    assert(result.module.records.front().fields[1].type.name == "DynamicArray");
+    assert(result.module.records.front().fields[1].type.generic_arguments.size() == 1);
+    assert(result.module.records.front().fields[1].type.generic_arguments.front().name == "Maybe");
+    assert(result.module.records.front().fields[1].type.generic_arguments.front().generic_arguments.size() == 1);
+    assert(result.module.records.front().fields[1].type.generic_arguments.front().generic_arguments.front().name == "Int32");
     assert(result.module.functions.size() == 1);
     assert(result.module.functions.front().name == "main");
-    assert(result.module.functions.front().return_type == "Int32");
+    assert(result.module.functions.front().parameters.size() == 2);
+    assert(result.module.functions.front().parameters.front().name == "input");
+    assert(result.module.functions.front().parameters.front().type.name == "shared.View");
+    assert(result.module.functions.front().parameters.front().type.generic_arguments.size() == 1);
+    assert(result.module.functions.front().parameters.front().type.generic_arguments.front().name == "Byte");
+    assert(result.module.functions.front().parameters[1].name == "count");
+    assert(result.module.functions.front().parameters[1].type.name == "Int32");
+    assert(result.module.functions.front().return_type.name == "Outcome");
+    assert(result.module.functions.front().return_type.generic_arguments.size() == 2);
+    assert(result.module.functions.front().return_type.generic_arguments.front().name == "Int32");
+    assert(result.module.functions.front().return_type.generic_arguments[1].name == "ParseError");
     assert(result.module.functions.front().body_statement_count == 1);
 }
 
