@@ -475,6 +475,16 @@ private:
             parse_statement_block(result, "if statement requires an indented consequence block");
         if (statement.nested_statements.empty() && result.diagnostics.has_errors()) {
             statement.valid = false;
+            return statement;
+        }
+
+        if (is(TokenKind::keyword_else)) {
+            advance();
+            statement.alternate_statements =
+                parse_statement_block(result, "else clause requires an indented consequence block");
+            if (statement.alternate_statements.empty() && result.diagnostics.has_errors()) {
+                statement.valid = false;
+            }
         }
         return statement;
     }
@@ -499,6 +509,12 @@ private:
             return parse_return_statement(result);
         case TokenKind::keyword_if:
             return parse_if_statement(result);
+        case TokenKind::keyword_else: {
+            StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = false};
+            result.diagnostics.error(current().line, "else must follow an if consequence block");
+            advance();
+            return statement;
+        }
         default:
             return parse_expression_statement(result);
         }

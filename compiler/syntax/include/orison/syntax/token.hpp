@@ -15,6 +15,7 @@ enum class TokenKind {
     keyword_var,
     keyword_return,
     keyword_if,
+    keyword_else,
     indent,
     dedent,
     left_paren,

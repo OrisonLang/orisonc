@@ -29,6 +29,7 @@ Orison currently aims for:
 
 - `ORISON_SPEC.md` — language feature and keyword reference
 - `ORISON_TOUR.md` — end-to-end syntax tour
+- `docs/frontend-parity-audit.md` — current frontend implementation/parity tracker
 - `AGENTS.md` — repository rules for AI-augmented development
 - `MEMORY.md` — persistent project context and design learnings
 - `docs/adr/` — architecture decision records
@@ -66,7 +67,7 @@ Current bootstrap layout:
 - `compiler/driver/` — shared compiler-driver library code
 - `compiler/source/` — source file loading and path-aware source objects
 - `compiler/diagnostics/` — explicit diagnostic collection and rendering
-- `compiler/syntax/` — lexer and early parser infrastructure for module headers, block structure, signature syntax, basic statements, minimal expression trees, and nested `if` blocks
+- `compiler/syntax/` — lexer and early parser infrastructure for module headers, block structure, signature syntax, basic statements, minimal expression trees, and nested `if`/`else` blocks
 - `tools/orisonc/` — initial compiler executable entry point
 - `runtime/` — reserved for runtime support
 - `tests/` — native smoke and regression tests
@@ -83,4 +84,4 @@ The exact layout may change during early implementation.
 
 ## Status
 
-This repository currently contains the initial language design documents plus an early native `C++23` frontend scaffold that can read a source file, lex a token stream, parse indentation-based blocks, build minimal signature/type/statement/expression/control-flow syntax, and report explicit diagnostics.
+This repository currently contains the initial language design documents plus an early native `C++23` frontend scaffold that can read a source file, lex a token stream, parse indentation-based blocks, build minimal signature/type/statement/expression/control-flow syntax including nested `if`/`else` blocks, and report explicit diagnostics.

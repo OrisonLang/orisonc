@@ -125,6 +125,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
                 output << "first statement expression: " << render_expression(first_statement.expression)
                        << '\n';
                 output << "first statement nested count: " << first_statement.nested_statements.size() << '\n';
+                output << "first statement alternate count: " << first_statement.alternate_statements.size() << '\n';
             }
         }
         return CompileResult {.exit_code = 0, .stdout_text = output.str()};

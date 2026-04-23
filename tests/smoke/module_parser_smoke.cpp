@@ -19,6 +19,8 @@ void test_parse_success() {
         output << "    if count + 1\n";
         output << "        let label: Text = input.read(count)\n";
         output << "        sink(label.value)\n";
+        output << "    else\n";
+        output << "        return input.read(0)\n";
         output << "    var total = count + 1 * 2\n";
         output << "    return total\n";
     }
@@ -61,6 +63,7 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[0].expression.kind == orison::syntax::ExpressionKind::binary);
     assert(result.module.functions.front().body_statements[0].expression.text == "+");
     assert(result.module.functions.front().body_statements[0].nested_statements.size() == 2);
+    assert(result.module.functions.front().body_statements[0].alternate_statements.size() == 1);
     assert(result.module.functions.front().body_statements[0].nested_statements[0].kind == orison::syntax::StatementKind::let_binding);
     assert(result.module.functions.front().body_statements[0].nested_statements[0].name == "label");
     assert(result.module.functions.front().body_statements[0].nested_statements[0].annotated_type.name == "Text");
@@ -72,6 +75,8 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[0].nested_statements[0].expression.arguments.front().text == "count");
     assert(result.module.functions.front().body_statements[0].nested_statements[1].kind == orison::syntax::StatementKind::expression_statement);
     assert(result.module.functions.front().body_statements[0].nested_statements[1].expression.kind == orison::syntax::ExpressionKind::call);
+    assert(result.module.functions.front().body_statements[0].alternate_statements[0].kind == orison::syntax::StatementKind::return_statement);
+    assert(result.module.functions.front().body_statements[0].alternate_statements[0].expression.kind == orison::syntax::ExpressionKind::call);
     assert(result.module.functions.front().body_statements[1].kind == orison::syntax::StatementKind::var_binding);
     assert(result.module.functions.front().body_statements[1].name == "total");
     assert(result.module.functions.front().body_statements[1].expression.kind == orison::syntax::ExpressionKind::binary);
@@ -182,6 +187,26 @@ void test_if_statement_failure() {
     assert(result.diagnostics.entries().front().message == "if statement requires an indented consequence block");
 }
 
+void test_else_statement_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_else_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "function main() -> Int32\n";
+        output << "    else\n";
+        output << "        return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "else must follow an if consequence block");
+}
+
 }  // namespace
 
 int main() {
@@ -191,5 +216,6 @@ int main() {
     test_missing_record_block_failure();
     test_binding_statement_failure();
     test_if_statement_failure();
+    test_else_statement_failure();
     return 0;
 }

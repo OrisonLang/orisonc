@@ -198,8 +198,8 @@ function parse_port(text: shared Text) -> Outcome<Port, ParseError>
 function clamp_to_zero(x: Int64) -> Int64
     if x < 0
         return 0
-
-    x
+    else
+        return x
 
 # switch over values
 function sign(x: Int64) -> Int64

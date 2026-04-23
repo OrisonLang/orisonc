@@ -441,11 +441,20 @@ function parse_port(text: shared Text) -> Outcome<UInt16, ParseError>
 
 ### `else`
 
-Introduces the failure branch of a `guard`.
+Introduces the alternate branch of a control-flow form.
 
 ```text
 guard file.exists() else
     return Error(IOError.Closed)
+```
+
+It is also used with `if`.
+
+```text
+if x < 0
+    return 0
+else
+    return x
 ```
 
 ### `if`
@@ -456,8 +465,8 @@ Small boolean branch form.
 function clamp_to_zero(x: Int64) -> Int64
     if x < 0
         return 0
-
-    x
+    else
+        return x
 ```
 
 ### `while`

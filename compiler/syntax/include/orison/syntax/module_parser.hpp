@@ -55,6 +55,7 @@ struct StatementSyntax {
     TypeSyntax annotated_type;
     ExpressionSyntax expression;
     std::vector<StatementSyntax> nested_statements;
+    std::vector<StatementSyntax> alternate_statements;
 };
 
 struct RecordSyntax {

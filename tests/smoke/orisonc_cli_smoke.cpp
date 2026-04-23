@@ -35,6 +35,8 @@ int main() {
         output << "function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "    if 1 + 2\n";
         output << "        let label: Text = input.read(1 + 2)\n";
+        output << "    else\n";
+        output << "        return input.read(0)\n";
         output << "    return label\n";
     }
 
@@ -55,5 +57,6 @@ int main() {
     assert(output.find("first statement kind: if") != std::string::npos);
     assert(output.find("first statement expression: (1 + 2)") != std::string::npos);
     assert(output.find("first statement nested count: 1") != std::string::npos);
+    assert(output.find("first statement alternate count: 1") != std::string::npos);
     return 0;
 }
