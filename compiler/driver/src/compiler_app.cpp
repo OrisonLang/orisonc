@@ -40,6 +40,8 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
         return "var";
     case StatementKind::return_statement:
         return "return";
+    case StatementKind::guard_statement:
+        return "guard";
     case StatementKind::if_statement:
         return "if";
     case StatementKind::expression_statement:

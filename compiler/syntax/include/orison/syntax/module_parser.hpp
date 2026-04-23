@@ -44,6 +44,7 @@ enum class StatementKind {
     let_binding,
     var_binding,
     return_statement,
+    guard_statement,
     if_statement,
     expression_statement,
 };

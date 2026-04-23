@@ -254,6 +254,9 @@ private:
 
     auto precedence(TokenKind kind) const -> int {
         switch (kind) {
+        case TokenKind::less:
+        case TokenKind::greater:
+            return 5;
         case TokenKind::star:
         case TokenKind::slash:
             return 20;
@@ -489,6 +492,32 @@ private:
         return statement;
     }
 
+    auto parse_guard_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::guard_statement, .valid = true};
+        advance();
+
+        statement.expression = parse_expression(result);
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            statement.expression.arguments.empty()) {
+            result.diagnostics.error(current().line, "guard statement requires a condition expression");
+            statement.valid = false;
+            return statement;
+        }
+
+        if (!is(TokenKind::keyword_else)) {
+            result.diagnostics.error(current().line, "guard statement requires 'else' before the failure block");
+            statement.valid = false;
+            return statement;
+        }
+
+        advance();
+        statement.nested_statements = parse_statement_block(result, "guard else clause requires an indented failure block");
+        if (statement.nested_statements.empty() && result.diagnostics.has_errors()) {
+            statement.valid = false;
+        }
+        return statement;
+    }
+
     auto parse_expression_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = true};
         statement.expression = parse_expression(result);
@@ -507,6 +536,8 @@ private:
             return parse_binding_statement(result, StatementKind::var_binding);
         case TokenKind::keyword_return:
             return parse_return_statement(result);
+        case TokenKind::keyword_guard:
+            return parse_guard_statement(result);
         case TokenKind::keyword_if:
             return parse_if_statement(result);
         case TokenKind::keyword_else: {
