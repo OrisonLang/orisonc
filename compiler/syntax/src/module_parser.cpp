@@ -2,6 +2,7 @@
 
 #include "orison/syntax/lexer.hpp"
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -251,13 +252,143 @@ private:
         return parameters;
     }
 
-    auto collect_expression_until_line_end() -> ExpressionSyntax {
-        ExpressionSyntax expression;
-        while (!is(TokenKind::newline) && !is(TokenKind::dedent) && !is(TokenKind::eof)) {
-            expression.tokens.push_back(current().lexeme);
-            advance();
+    auto precedence(TokenKind kind) const -> int {
+        switch (kind) {
+        case TokenKind::star:
+        case TokenKind::slash:
+            return 20;
+        case TokenKind::plus:
+        case TokenKind::minus:
+            return 10;
+        default:
+            return -1;
         }
-        return expression;
+    }
+
+    auto make_name_expression(std::string text) -> ExpressionSyntax {
+        return ExpressionSyntax {.kind = ExpressionKind::name, .text = std::move(text)};
+    }
+
+    auto make_integer_expression(std::string text) -> ExpressionSyntax {
+        return ExpressionSyntax {.kind = ExpressionKind::integer_literal, .text = std::move(text)};
+    }
+
+    auto parse_argument_list(ParseResult& result) -> std::vector<ExpressionSyntax> {
+        std::vector<ExpressionSyntax> arguments;
+        if (is(TokenKind::right_paren)) {
+            advance();
+            return arguments;
+        }
+
+        while (!is(TokenKind::eof)) {
+            auto argument = parse_expression(result);
+            if (argument.text.empty() && argument.kind == ExpressionKind::name && !argument.left && !argument.right &&
+                argument.arguments.empty()) {
+                break;
+            }
+            arguments.push_back(std::move(argument));
+
+            if (is(TokenKind::comma)) {
+                advance();
+                continue;
+            }
+
+            if (is(TokenKind::right_paren)) {
+                advance();
+                return arguments;
+            }
+
+            result.diagnostics.error(current().line, "expected ',' or ')' in call argument list");
+            break;
+        }
+
+        if (is(TokenKind::right_paren)) {
+            advance();
+        } else {
+            result.diagnostics.error(current().line, "call expression cannot end before ')'");
+        }
+        return arguments;
+    }
+
+    auto parse_primary_expression(ParseResult& result) -> ExpressionSyntax {
+        if (is(TokenKind::identifier)) {
+            auto expression = make_name_expression(current().lexeme);
+            advance();
+
+            while (true) {
+                if (is(TokenKind::left_paren)) {
+                    advance();
+                    ExpressionSyntax call_expression {
+                        .kind = ExpressionKind::call,
+                        .text = "",
+                        .arguments = parse_argument_list(result),
+                        .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                        .right = nullptr,
+                    };
+                    expression = std::move(call_expression);
+                    continue;
+                }
+
+                if (is(TokenKind::dot)) {
+                    advance();
+                    auto member_name = expect_identifier(result, "expected member name after '.'");
+                    ExpressionSyntax member_expression {
+                        .kind = ExpressionKind::member_access,
+                        .text = std::move(member_name),
+                        .arguments = {},
+                        .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                        .right = nullptr,
+                    };
+                    expression = std::move(member_expression);
+                    continue;
+                }
+
+                break;
+            }
+
+            return expression;
+        }
+
+        if (is(TokenKind::integer_literal)) {
+            auto expression = make_integer_expression(current().lexeme);
+            advance();
+            return expression;
+        }
+
+        result.diagnostics.error(current().line, "expected expression");
+        return {};
+    }
+
+    auto parse_expression(ParseResult& result, int minimum_precedence = 0) -> ExpressionSyntax {
+        auto left = parse_primary_expression(result);
+        if (left.text.empty() && !left.left && !left.right && left.arguments.empty()) {
+            return left;
+        }
+
+        while (true) {
+            auto current_precedence = precedence(current().kind);
+            if (current_precedence < minimum_precedence) {
+                break;
+            }
+
+            auto operator_text = current().lexeme;
+            advance();
+            auto right = parse_expression(result, current_precedence + 1);
+            if (right.text.empty() && !right.left && !right.right && right.arguments.empty()) {
+                break;
+            }
+
+            ExpressionSyntax binary_expression {
+                .kind = ExpressionKind::binary,
+                .text = std::move(operator_text),
+                .arguments = {},
+                .left = std::make_unique<ExpressionSyntax>(std::move(left)),
+                .right = std::make_unique<ExpressionSyntax>(std::move(right)),
+            };
+            left = std::move(binary_expression);
+        }
+
+        return left;
     }
 
     auto parse_binding_statement(ParseResult& result, StatementKind kind) -> StatementSyntax {
@@ -282,25 +413,30 @@ private:
         }
 
         advance();
-        statement.expression = collect_expression_until_line_end();
-        if (statement.expression.tokens.empty()) {
+        statement.expression = parse_expression(result);
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            statement.expression.arguments.empty()) {
             result.diagnostics.error(current().line, "binding statement requires an initializer expression");
             statement.valid = false;
         }
         return statement;
     }
 
-    auto parse_return_statement() -> StatementSyntax {
+    auto parse_return_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::return_statement, .valid = true};
         advance();
-        statement.expression = collect_expression_until_line_end();
+        if (is(TokenKind::newline) || is(TokenKind::dedent) || is(TokenKind::eof)) {
+            return statement;
+        }
+        statement.expression = parse_expression(result);
         return statement;
     }
 
-    auto parse_expression_statement() -> StatementSyntax {
+    auto parse_expression_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = true};
-        statement.expression = collect_expression_until_line_end();
-        if (statement.expression.tokens.empty()) {
+        statement.expression = parse_expression(result);
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            statement.expression.arguments.empty()) {
             statement.valid = false;
         }
         return statement;
@@ -313,9 +449,9 @@ private:
         case TokenKind::keyword_var:
             return parse_binding_statement(result, StatementKind::var_binding);
         case TokenKind::keyword_return:
-            return parse_return_statement();
+            return parse_return_statement(result);
         default:
-            return parse_expression_statement();
+            return parse_expression_statement(result);
         }
     }
 

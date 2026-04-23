@@ -236,6 +236,18 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
         case '=':
             token.kind = TokenKind::equal;
             break;
+        case '+':
+            token.kind = TokenKind::plus;
+            break;
+        case '-':
+            token.kind = TokenKind::minus;
+            break;
+        case '*':
+            token.kind = TokenKind::star;
+            break;
+        case '/':
+            token.kind = TokenKind::slash;
+            break;
         default:
             token.kind = TokenKind::unknown;
             token.lexeme = std::string(1, ch);

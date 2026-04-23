@@ -16,10 +16,10 @@ void test_parse_success() {
         output << "    name: Text\n";
         output << "    values: DynamicArray<Maybe<Int32>>\n\n";
         output << "function main(input: shared.View<Byte>, count: Int32) -> Outcome<Int32, ParseError>\n";
-        output << "    let label: Text = count\n";
-        output << "    var total = 0\n";
+        output << "    let label: Text = input.read(count)\n";
+        output << "    var total = count + 1 * 2\n";
         output << "    return total\n";
-        output << "    finalize\n";
+        output << "    sink(label.value)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -59,15 +59,29 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[0].kind == orison::syntax::StatementKind::let_binding);
     assert(result.module.functions.front().body_statements[0].name == "label");
     assert(result.module.functions.front().body_statements[0].annotated_type.name == "Text");
-    assert(result.module.functions.front().body_statements[0].expression.tokens.size() == 1);
-    assert(result.module.functions.front().body_statements[0].expression.tokens.front() == "count");
+    assert(result.module.functions.front().body_statements[0].expression.kind == orison::syntax::ExpressionKind::call);
+    assert(result.module.functions.front().body_statements[0].expression.left->kind == orison::syntax::ExpressionKind::member_access);
+    assert(result.module.functions.front().body_statements[0].expression.left->text == "read");
+    assert(result.module.functions.front().body_statements[0].expression.left->left->text == "input");
+    assert(result.module.functions.front().body_statements[0].expression.arguments.size() == 1);
+    assert(result.module.functions.front().body_statements[0].expression.arguments.front().text == "count");
     assert(result.module.functions.front().body_statements[1].kind == orison::syntax::StatementKind::var_binding);
     assert(result.module.functions.front().body_statements[1].name == "total");
-    assert(result.module.functions.front().body_statements[1].expression.tokens.front() == "0");
+    assert(result.module.functions.front().body_statements[1].expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(result.module.functions.front().body_statements[1].expression.text == "+");
+    assert(result.module.functions.front().body_statements[1].expression.left->text == "count");
+    assert(result.module.functions.front().body_statements[1].expression.right->kind == orison::syntax::ExpressionKind::binary);
+    assert(result.module.functions.front().body_statements[1].expression.right->text == "*");
+    assert(result.module.functions.front().body_statements[1].expression.right->left->text == "1");
+    assert(result.module.functions.front().body_statements[1].expression.right->right->text == "2");
     assert(result.module.functions.front().body_statements[2].kind == orison::syntax::StatementKind::return_statement);
-    assert(result.module.functions.front().body_statements[2].expression.tokens.front() == "total");
+    assert(result.module.functions.front().body_statements[2].expression.text == "total");
     assert(result.module.functions.front().body_statements[3].kind == orison::syntax::StatementKind::expression_statement);
-    assert(result.module.functions.front().body_statements[3].expression.tokens.front() == "finalize");
+    assert(result.module.functions.front().body_statements[3].expression.kind == orison::syntax::ExpressionKind::call);
+    assert(result.module.functions.front().body_statements[3].expression.left->text == "sink");
+    assert(result.module.functions.front().body_statements[3].expression.arguments.size() == 1);
+    assert(result.module.functions.front().body_statements[3].expression.arguments.front().kind == orison::syntax::ExpressionKind::member_access);
+    assert(result.module.functions.front().body_statements[3].expression.arguments.front().text == "value");
 }
 
 void test_parse_failure() {

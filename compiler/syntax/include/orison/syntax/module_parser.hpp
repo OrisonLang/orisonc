@@ -3,6 +3,7 @@
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/source/source_file.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -23,8 +24,20 @@ struct ParameterSyntax {
     TypeSyntax type;
 };
 
+enum class ExpressionKind {
+    name,
+    integer_literal,
+    call,
+    member_access,
+    binary,
+};
+
 struct ExpressionSyntax {
-    std::vector<std::string> tokens;
+    ExpressionKind kind = ExpressionKind::name;
+    std::string text;
+    std::vector<ExpressionSyntax> arguments;
+    std::unique_ptr<ExpressionSyntax> left;
+    std::unique_ptr<ExpressionSyntax> right;
 };
 
 enum class StatementKind {

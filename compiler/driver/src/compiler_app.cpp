@@ -46,6 +46,33 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
     return "unknown";
 }
 
+auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> std::string {
+    using orison::syntax::ExpressionKind;
+    switch (expression.kind) {
+    case ExpressionKind::name:
+    case ExpressionKind::integer_literal:
+        return expression.text;
+    case ExpressionKind::call: {
+        std::string rendered = render_expression(*expression.left);
+        rendered += "(";
+        for (std::size_t i = 0; i < expression.arguments.size(); ++i) {
+            if (i > 0) {
+                rendered += ", ";
+            }
+            rendered += render_expression(expression.arguments[i]);
+        }
+        rendered += ")";
+        return rendered;
+    }
+    case ExpressionKind::member_access:
+        return render_expression(*expression.left) + "." + expression.text;
+    case ExpressionKind::binary:
+        return "(" + render_expression(*expression.left) + " " + expression.text + " " +
+               render_expression(*expression.right) + ")";
+    }
+    return "";
+}
+
 }  // namespace
 
 auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
@@ -93,6 +120,9 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             if (!parse_result.module.functions.front().body_statements.empty()) {
                 output << "first statement kind: "
                        << render_statement_kind(parse_result.module.functions.front().body_statements.front().kind)
+                       << '\n';
+                output << "first statement expression: "
+                       << render_expression(parse_result.module.functions.front().body_statements.front().expression)
                        << '\n';
             }
         }

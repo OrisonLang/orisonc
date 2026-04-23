@@ -33,7 +33,7 @@ int main() {
         output << "record User\n";
         output << "    values: DynamicArray<Maybe<Int32>>\n";
         output << "function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
-        output << "    let label: Text = input\n";
+        output << "    let label: Text = input.read(1 + 2)\n";
         output << "    return label\n";
     }
 
@@ -52,5 +52,6 @@ int main() {
     assert(output.find("function return type: Outcome<Int32, ParseError>") != std::string::npos);
     assert(output.find("function body statements: 2") != std::string::npos);
     assert(output.find("first statement kind: let") != std::string::npos);
+    assert(output.find("first statement expression: input.read((1 + 2))") != std::string::npos);
     return 0;
 }
