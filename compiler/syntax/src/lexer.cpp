@@ -17,6 +17,15 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "function") {
         return TokenKind::keyword_function;
     }
+    if (text == "let") {
+        return TokenKind::keyword_let;
+    }
+    if (text == "var") {
+        return TokenKind::keyword_var;
+    }
+    if (text == "return") {
+        return TokenKind::keyword_return;
+    }
     return TokenKind::identifier;
 }
 
@@ -223,6 +232,9 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
             break;
         case '>':
             token.kind = TokenKind::greater;
+            break;
+        case '=':
+            token.kind = TokenKind::equal;
             break;
         default:
             token.kind = TokenKind::unknown;

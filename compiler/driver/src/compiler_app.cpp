@@ -31,6 +31,21 @@ auto render_type(orison::syntax::TypeSyntax const& type) -> std::string {
     return rendered;
 }
 
+auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_view {
+    using orison::syntax::StatementKind;
+    switch (kind) {
+    case StatementKind::let_binding:
+        return "let";
+    case StatementKind::var_binding:
+        return "var";
+    case StatementKind::return_statement:
+        return "return";
+    case StatementKind::expression_statement:
+        return "expression";
+    }
+    return "unknown";
+}
+
 }  // namespace
 
 auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
@@ -73,7 +88,13 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             output << "function parameters: " << parse_result.module.functions.front().parameters.size() << '\n';
             output << "function return type: " << render_type(parse_result.module.functions.front().return_type)
                    << '\n';
-            output << "function body statements: " << parse_result.module.functions.front().body_statement_count << '\n';
+            output << "function body statements: " << parse_result.module.functions.front().body_statements.size()
+                   << '\n';
+            if (!parse_result.module.functions.front().body_statements.empty()) {
+                output << "first statement kind: "
+                       << render_statement_kind(parse_result.module.functions.front().body_statements.front().kind)
+                       << '\n';
+            }
         }
         return CompileResult {.exit_code = 0, .stdout_text = output.str()};
     }

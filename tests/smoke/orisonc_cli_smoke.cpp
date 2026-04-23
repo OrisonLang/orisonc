@@ -33,7 +33,8 @@ int main() {
         output << "record User\n";
         output << "    values: DynamicArray<Maybe<Int32>>\n";
         output << "function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
-        output << "    0\n";
+        output << "    let label: Text = input\n";
+        output << "    return label\n";
     }
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
@@ -49,6 +50,7 @@ int main() {
     assert(output.find("first field type: DynamicArray<Maybe<Int32>>") != std::string::npos);
     assert(output.find("function parameters: 1") != std::string::npos);
     assert(output.find("function return type: Outcome<Int32, ParseError>") != std::string::npos);
-    assert(output.find("function body statements: 1") != std::string::npos);
+    assert(output.find("function body statements: 2") != std::string::npos);
+    assert(output.find("first statement kind: let") != std::string::npos);
     return 0;
 }

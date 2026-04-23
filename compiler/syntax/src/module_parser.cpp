@@ -251,6 +251,74 @@ private:
         return parameters;
     }
 
+    auto collect_expression_until_line_end() -> ExpressionSyntax {
+        ExpressionSyntax expression;
+        while (!is(TokenKind::newline) && !is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            expression.tokens.push_back(current().lexeme);
+            advance();
+        }
+        return expression;
+    }
+
+    auto parse_binding_statement(ParseResult& result, StatementKind kind) -> StatementSyntax {
+        StatementSyntax statement {.kind = kind, .valid = true};
+        advance();
+
+        statement.name = expect_identifier(result, "binding statement requires a name");
+        if (statement.name.empty()) {
+            statement.valid = false;
+            return statement;
+        }
+
+        if (is(TokenKind::colon)) {
+            advance();
+            statement.annotated_type = parse_type(result, "binding type annotation requires a type");
+        }
+
+        if (!is(TokenKind::equal)) {
+            result.diagnostics.error(current().line, "binding statement requires '=' before the initializer");
+            statement.valid = false;
+            return statement;
+        }
+
+        advance();
+        statement.expression = collect_expression_until_line_end();
+        if (statement.expression.tokens.empty()) {
+            result.diagnostics.error(current().line, "binding statement requires an initializer expression");
+            statement.valid = false;
+        }
+        return statement;
+    }
+
+    auto parse_return_statement() -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::return_statement, .valid = true};
+        advance();
+        statement.expression = collect_expression_until_line_end();
+        return statement;
+    }
+
+    auto parse_expression_statement() -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = true};
+        statement.expression = collect_expression_until_line_end();
+        if (statement.expression.tokens.empty()) {
+            statement.valid = false;
+        }
+        return statement;
+    }
+
+    auto parse_statement(ParseResult& result) -> StatementSyntax {
+        switch (current().kind) {
+        case TokenKind::keyword_let:
+            return parse_binding_statement(result, StatementKind::let_binding);
+        case TokenKind::keyword_var:
+            return parse_binding_statement(result, StatementKind::var_binding);
+        case TokenKind::keyword_return:
+            return parse_return_statement();
+        default:
+            return parse_expression_statement();
+        }
+    }
+
     void parse_package(ParseResult& result) {
         auto line = current().line;
         advance();
@@ -349,7 +417,7 @@ private:
             .name = name,
             .parameters = std::move(parameters),
             .return_type = std::move(return_type),
-            .body_statement_count = 0,
+            .body_statements = {},
         };
 
         if (!consume_block_start(result, "function declaration requires an indented body block")) {
@@ -363,7 +431,10 @@ private:
                 continue;
             }
 
-            ++function.body_statement_count;
+            auto statement = parse_statement(result);
+            if (statement.valid) {
+                function.body_statements.push_back(std::move(statement));
+            }
             skip_to_next_line();
         }
 

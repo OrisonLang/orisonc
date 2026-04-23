@@ -23,6 +23,25 @@ struct ParameterSyntax {
     TypeSyntax type;
 };
 
+struct ExpressionSyntax {
+    std::vector<std::string> tokens;
+};
+
+enum class StatementKind {
+    let_binding,
+    var_binding,
+    return_statement,
+    expression_statement,
+};
+
+struct StatementSyntax {
+    StatementKind kind = StatementKind::expression_statement;
+    bool valid = true;
+    std::string name;
+    TypeSyntax annotated_type;
+    ExpressionSyntax expression;
+};
+
 struct RecordSyntax {
     std::string name;
     std::vector<FieldSyntax> fields;
@@ -32,7 +51,7 @@ struct FunctionSyntax {
     std::string name;
     std::vector<ParameterSyntax> parameters;
     TypeSyntax return_type;
-    std::size_t body_statement_count = 0;
+    std::vector<StatementSyntax> body_statements;
 };
 
 struct ModuleSyntax {
