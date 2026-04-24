@@ -55,6 +55,7 @@ enum class StatementKind {
     switch_statement,
     guard_statement,
     if_statement,
+    while_statement,
     expression_statement,
 };
 

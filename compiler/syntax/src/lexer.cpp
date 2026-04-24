@@ -41,6 +41,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "else") {
         return TokenKind::keyword_else;
     }
+    if (text == "while") {
+        return TokenKind::keyword_while;
+    }
     return TokenKind::identifier;
 }
 

@@ -606,6 +606,26 @@ private:
         return statement;
     }
 
+    auto parse_while_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::while_statement, .valid = true};
+        advance();
+
+        statement.expression = parse_expression(result);
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            statement.expression.arguments.empty()) {
+            result.diagnostics.error(current().line, "while statement requires a condition expression");
+            statement.valid = false;
+            return statement;
+        }
+
+        statement.nested_statements =
+            parse_statement_block(result, "while statement requires an indented body block");
+        if (statement.nested_statements.empty() && result.diagnostics.has_errors()) {
+            statement.valid = false;
+        }
+        return statement;
+    }
+
     auto parse_expression_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = true};
         statement.expression = parse_expression(result);
@@ -630,6 +650,8 @@ private:
             return parse_guard_statement(result);
         case TokenKind::keyword_if:
             return parse_if_statement(result);
+        case TokenKind::keyword_while:
+            return parse_while_statement(result);
         case TokenKind::keyword_else: {
             StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = false};
             result.diagnostics.error(current().line, "else must follow an if consequence block");

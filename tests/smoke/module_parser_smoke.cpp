@@ -145,6 +145,40 @@ void test_switch_statement_success() {
     assert(switch_statement.switch_cases[2].statement->expression.text == "+");
 }
 
+void test_while_statement_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_while_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.loops\n";
+        output << "function count_down(current: Int32) -> Int32\n";
+        output << "    while current >= 0\n";
+        output << "        sink(current)\n";
+        output << "        var next = current - 1\n";
+        output << "    return current\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& while_statement = result.module.functions.front().body_statements[0];
+    assert(while_statement.kind == orison::syntax::StatementKind::while_statement);
+    assert(while_statement.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(while_statement.expression.text == ">=");
+    assert(while_statement.nested_statements.size() == 2);
+    assert(while_statement.nested_statements[0].kind == orison::syntax::StatementKind::expression_statement);
+    assert(while_statement.nested_statements[0].expression.kind == orison::syntax::ExpressionKind::call);
+    assert(while_statement.nested_statements[1].kind == orison::syntax::StatementKind::var_binding);
+    assert(while_statement.nested_statements[1].name == "next");
+    assert(while_statement.nested_statements[1].expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(while_statement.nested_statements[1].expression.text == "-");
+}
+
 void test_parse_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_failure.or";
     {
@@ -302,11 +336,32 @@ void test_switch_statement_failure() {
     assert(result.diagnostics.entries().front().message == "switch case requires '=>'");
 }
 
+void test_while_statement_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_while_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "function main() -> Int32\n";
+        output << "    while 1\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "while statement requires an indented body block");
+}
+
 }  // namespace
 
 int main() {
     test_parse_success();
     test_switch_statement_success();
+    test_while_statement_success();
     test_parse_failure();
     test_function_header_failure();
     test_missing_record_block_failure();
@@ -315,5 +370,6 @@ int main() {
     test_else_statement_failure();
     test_guard_statement_failure();
     test_switch_statement_failure();
+    test_while_statement_failure();
     return 0;
 }
