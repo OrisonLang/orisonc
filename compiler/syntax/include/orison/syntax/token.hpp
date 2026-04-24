@@ -40,6 +40,7 @@ enum class TokenKind {
     plus,
     minus,
     star,
+    percent,
     slash,
     arrow,
     fat_arrow,

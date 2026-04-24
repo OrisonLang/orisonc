@@ -263,6 +263,7 @@ private:
         case TokenKind::greater:
             return 5;
         case TokenKind::star:
+        case TokenKind::percent:
         case TokenKind::slash:
             return 20;
         case TokenKind::plus:

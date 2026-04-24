@@ -286,6 +286,37 @@ void test_equality_expression_success() {
     assert(while_statement.expression.right->text == "false");
 }
 
+void test_modulo_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_modulo_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.conditions\n";
+        output << "function first_even(item: Int32) -> Int32\n";
+        output << "    if item % 2 != 0\n";
+        output << "        return 1\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& if_statement = result.module.functions.front().body_statements[0];
+    assert(if_statement.kind == orison::syntax::StatementKind::if_statement);
+    assert(if_statement.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(if_statement.expression.text == "!=");
+    assert(if_statement.expression.left->kind == orison::syntax::ExpressionKind::binary);
+    assert(if_statement.expression.left->text == "%");
+    assert(if_statement.expression.left->left->text == "item");
+    assert(if_statement.expression.left->right->text == "2");
+    assert(if_statement.expression.right->text == "0");
+}
+
 void test_parse_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_failure.or";
     {
@@ -533,6 +564,7 @@ int main() {
     test_for_statement_success();
     test_defer_statement_success();
     test_equality_expression_success();
+    test_modulo_expression_success();
     test_parse_failure();
     test_function_header_failure();
     test_missing_record_block_failure();

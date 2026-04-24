@@ -317,6 +317,9 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
         case '*':
             token.kind = TokenKind::star;
             break;
+        case '%':
+            token.kind = TokenKind::percent;
+            break;
         case '/':
             token.kind = TokenKind::slash;
             break;
