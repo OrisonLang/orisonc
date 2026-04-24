@@ -317,6 +317,32 @@ void test_modulo_expression_success() {
     assert(if_statement.expression.right->text == "0");
 }
 
+void test_unary_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_unary_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.conditions\n";
+        output << "function evaluate(inner: Int32) -> Int32\n";
+        output << "    return -inner\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 1);
+    auto const& return_statement = result.module.functions.front().body_statements[0];
+    assert(return_statement.kind == orison::syntax::StatementKind::return_statement);
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::unary);
+    assert(return_statement.expression.text == "-");
+    assert(return_statement.expression.left->kind == orison::syntax::ExpressionKind::name);
+    assert(return_statement.expression.left->text == "inner");
+}
+
 void test_parse_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_failure.or";
     {
@@ -565,6 +591,7 @@ int main() {
     test_defer_statement_success();
     test_equality_expression_success();
     test_modulo_expression_success();
+    test_unary_expression_success();
     test_parse_failure();
     test_function_header_failure();
     test_missing_record_block_failure();

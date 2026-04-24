@@ -282,6 +282,28 @@ private:
         return ExpressionSyntax {.kind = ExpressionKind::integer_literal, .text = std::move(text)};
     }
 
+    auto parse_prefix_expression(ParseResult& result) -> ExpressionSyntax {
+        if (is(TokenKind::minus)) {
+            auto operator_text = current().lexeme;
+            advance();
+            auto operand = parse_prefix_expression(result);
+            if (operand.text.empty() && !operand.left && !operand.right && operand.arguments.empty()) {
+                result.diagnostics.error(current().line, "unary operator requires an operand expression");
+                return {};
+            }
+
+            return ExpressionSyntax {
+                .kind = ExpressionKind::unary,
+                .text = std::move(operator_text),
+                .arguments = {},
+                .left = std::make_unique<ExpressionSyntax>(std::move(operand)),
+                .right = nullptr,
+            };
+        }
+
+        return parse_primary_expression(result);
+    }
+
     auto parse_argument_list(ParseResult& result) -> std::vector<ExpressionSyntax> {
         std::vector<ExpressionSyntax> arguments;
         if (is(TokenKind::right_paren)) {
@@ -369,7 +391,7 @@ private:
     }
 
     auto parse_expression(ParseResult& result, int minimum_precedence = 0) -> ExpressionSyntax {
-        auto left = parse_primary_expression(result);
+        auto left = parse_prefix_expression(result);
         if (left.text.empty() && !left.left && !left.right && left.arguments.empty()) {
             return left;
         }

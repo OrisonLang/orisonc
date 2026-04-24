@@ -13,7 +13,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - package declarations, record declarations, and function headers
 - parsed record fields, typed parameters, return types, and nested generic type syntax
 - statement parsing for `let`, `var`, `return`, expression statements, inline and block-arm `switch`, `guard ... else`, `if` with an optional `else` block, `while`, `for ... in`, and block `defer`
-- expression parsing for names, integer literals, calls, member access, and binary `+`, `-`, `*`, `%`, `/`, `==`, `!=`, `<`, `<=`, `>`, `>=`
+- expression parsing for names, integer literals, unary `-`, calls, member access, and binary `+`, `-`, `*`, `%`, `/`, `==`, `!=`, `<`, `<=`, `>`, `>=`
 - CLI parse output for first-statement nested, alternate, and switch-arm counts
 
 ### Pending
@@ -23,4 +23,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
-- 2026-04-24: completed parser support for `%`, extended smoke coverage, and synchronized the parity records.
+- 2026-04-24: completed parser support for unary `-`, extended smoke coverage, and synchronized the parity records.

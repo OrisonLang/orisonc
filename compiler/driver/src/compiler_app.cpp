@@ -64,6 +64,8 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
     case ExpressionKind::name:
     case ExpressionKind::integer_literal:
         return expression.text;
+    case ExpressionKind::unary:
+        return expression.text + render_expression(*expression.left);
     case ExpressionKind::call: {
         std::string rendered = render_expression(*expression.left);
         rendered += "(";

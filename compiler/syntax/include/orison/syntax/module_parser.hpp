@@ -27,6 +27,7 @@ struct ParameterSyntax {
 enum class ExpressionKind {
     name,
     integer_literal,
+    unary,
     call,
     member_access,
     binary,
