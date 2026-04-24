@@ -26,6 +26,12 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "return") {
         return TokenKind::keyword_return;
     }
+    if (text == "switch") {
+        return TokenKind::keyword_switch;
+    }
+    if (text == "default") {
+        return TokenKind::keyword_default;
+    }
     if (text == "guard") {
         return TokenKind::keyword_guard;
     }
@@ -214,6 +220,33 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
         if (ch == '-' && index + 1 < input.size() && input[index + 1] == '>') {
             token.kind = TokenKind::arrow;
             token.lexeme = "->";
+            index += 2;
+            column += 2;
+            result.tokens.push_back(token);
+            continue;
+        }
+
+        if (ch == '=' && index + 1 < input.size() && input[index + 1] == '>') {
+            token.kind = TokenKind::fat_arrow;
+            token.lexeme = "=>";
+            index += 2;
+            column += 2;
+            result.tokens.push_back(token);
+            continue;
+        }
+
+        if (ch == '<' && index + 1 < input.size() && input[index + 1] == '=') {
+            token.kind = TokenKind::less_equal;
+            token.lexeme = "<=";
+            index += 2;
+            column += 2;
+            result.tokens.push_back(token);
+            continue;
+        }
+
+        if (ch == '>' && index + 1 < input.size() && input[index + 1] == '=') {
+            token.kind = TokenKind::greater_equal;
+            token.lexeme = ">=";
             index += 2;
             column += 2;
             result.tokens.push_back(token);

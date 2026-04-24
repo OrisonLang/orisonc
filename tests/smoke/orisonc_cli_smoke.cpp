@@ -33,13 +33,10 @@ int main() {
         output << "record User\n";
         output << "    values: DynamicArray<Maybe<Int32>>\n";
         output << "function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
-        output << "    guard input.length() > 0 else\n";
-        output << "        return input.read(0)\n";
-        output << "    if 1 < 2\n";
-        output << "        let label: Text = input.read(1 + 2)\n";
-        output << "    else\n";
-        output << "        return input.read(1)\n";
-        output << "    return label\n";
+        output << "    switch input.length() >= 1\n";
+        output << "        input.length() => return input.read(0)\n";
+        output << "        default => return input.read(1)\n";
+        output << "    return input.read(2)\n";
     }
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
@@ -55,10 +52,11 @@ int main() {
     assert(output.find("first field type: DynamicArray<Maybe<Int32>>") != std::string::npos);
     assert(output.find("function parameters: 1") != std::string::npos);
     assert(output.find("function return type: Outcome<Int32, ParseError>") != std::string::npos);
-    assert(output.find("function body statements: 3") != std::string::npos);
-    assert(output.find("first statement kind: guard") != std::string::npos);
-    assert(output.find("first statement expression: (input.length() > 0)") != std::string::npos);
-    assert(output.find("first statement nested count: 1") != std::string::npos);
+    assert(output.find("function body statements: 2") != std::string::npos);
+    assert(output.find("first statement kind: switch") != std::string::npos);
+    assert(output.find("first statement expression: (input.length() >= 1)") != std::string::npos);
+    assert(output.find("first statement nested count: 0") != std::string::npos);
     assert(output.find("first statement alternate count: 0") != std::string::npos);
+    assert(output.find("first statement switch cases: 2") != std::string::npos);
     return 0;
 }

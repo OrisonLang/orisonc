@@ -40,10 +40,19 @@ struct ExpressionSyntax {
     std::unique_ptr<ExpressionSyntax> right;
 };
 
+struct StatementSyntax;
+
+struct SwitchCaseSyntax {
+    bool is_default = false;
+    ExpressionSyntax pattern;
+    std::unique_ptr<StatementSyntax> statement;
+};
+
 enum class StatementKind {
     let_binding,
     var_binding,
     return_statement,
+    switch_statement,
     guard_statement,
     if_statement,
     expression_statement,
@@ -57,6 +66,7 @@ struct StatementSyntax {
     ExpressionSyntax expression;
     std::vector<StatementSyntax> nested_statements;
     std::vector<StatementSyntax> alternate_statements;
+    std::vector<SwitchCaseSyntax> switch_cases;
 };
 
 struct RecordSyntax {

@@ -254,6 +254,8 @@ private:
 
     auto precedence(TokenKind kind) const -> int {
         switch (kind) {
+        case TokenKind::less_equal:
+        case TokenKind::greater_equal:
         case TokenKind::less:
         case TokenKind::greater:
             return 5;
@@ -492,6 +494,92 @@ private:
         return statement;
     }
 
+    auto parse_switch_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::switch_statement, .valid = true};
+        advance();
+
+        statement.expression = parse_expression(result);
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            statement.expression.arguments.empty()) {
+            result.diagnostics.error(current().line, "switch statement requires a subject expression");
+            statement.valid = false;
+            return statement;
+        }
+
+        if (!consume_block_start(result, "switch statement requires an indented case block")) {
+            statement.valid = false;
+            return statement;
+        }
+
+        bool saw_default = false;
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            SwitchCaseSyntax switch_case;
+            if (is(TokenKind::keyword_default)) {
+                if (saw_default) {
+                    result.diagnostics.error(current().line, "switch statement may only contain one default case");
+                    switch_case.is_default = true;
+                } else {
+                    switch_case.is_default = true;
+                    saw_default = true;
+                }
+                advance();
+            } else {
+                switch_case.pattern = parse_expression(result);
+                if (switch_case.pattern.text.empty() && !switch_case.pattern.left && !switch_case.pattern.right &&
+                    switch_case.pattern.arguments.empty()) {
+                    result.diagnostics.error(current().line, "switch case requires a pattern expression or default");
+                    statement.valid = false;
+                    skip_to_next_line();
+                    continue;
+                }
+            }
+
+            if (!is(TokenKind::fat_arrow)) {
+                result.diagnostics.error(current().line, "switch case requires '=>'");
+                statement.valid = false;
+                skip_to_next_line();
+                continue;
+            }
+
+            advance();
+            if (is(TokenKind::newline) || is(TokenKind::dedent) || is(TokenKind::eof)) {
+                result.diagnostics.error(current().line, "switch case requires an inline consequence statement");
+                statement.valid = false;
+                skip_to_next_line();
+                continue;
+            }
+
+            auto consequence = parse_statement(result);
+            if (!consequence.valid) {
+                result.diagnostics.error(current().line, "switch case requires a valid consequence statement");
+                statement.valid = false;
+                skip_to_next_line();
+                continue;
+            }
+
+            switch_case.statement = std::make_unique<StatementSyntax>(std::move(consequence));
+            statement.switch_cases.push_back(std::move(switch_case));
+
+            if (is(TokenKind::newline)) {
+                skip_to_next_line();
+            } else if (!is(TokenKind::dedent) && !is(TokenKind::eof) && !current().line_start) {
+                skip_to_next_line();
+            }
+        }
+
+        consume_block_end();
+        if (statement.switch_cases.empty()) {
+            result.diagnostics.error(current().line, "switch statement requires at least one case");
+            statement.valid = false;
+        }
+        return statement;
+    }
+
     auto parse_guard_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::guard_statement, .valid = true};
         advance();
@@ -536,6 +624,8 @@ private:
             return parse_binding_statement(result, StatementKind::var_binding);
         case TokenKind::keyword_return:
             return parse_return_statement(result);
+        case TokenKind::keyword_switch:
+            return parse_switch_statement(result);
         case TokenKind::keyword_guard:
             return parse_guard_statement(result);
         case TokenKind::keyword_if:
@@ -543,6 +633,12 @@ private:
         case TokenKind::keyword_else: {
             StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = false};
             result.diagnostics.error(current().line, "else must follow an if consequence block");
+            advance();
+            return statement;
+        }
+        case TokenKind::keyword_default: {
+            StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = false};
+            result.diagnostics.error(current().line, "default must appear inside a switch case");
             advance();
             return statement;
         }

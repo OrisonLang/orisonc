@@ -101,6 +101,50 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[3].expression.text == "total");
 }
 
+void test_switch_statement_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(value: Int32) -> Int32\n";
+        output << "    switch value >= 0\n";
+        output << "        0 => 0\n";
+        output << "        classify(value) => return value\n";
+        output << "        default => value + 1\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 1);
+    auto const& switch_statement = result.module.functions.front().body_statements[0];
+    assert(switch_statement.kind == orison::syntax::StatementKind::switch_statement);
+    assert(switch_statement.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(switch_statement.expression.text == ">=");
+    assert(switch_statement.switch_cases.size() == 3);
+    assert(!switch_statement.switch_cases[0].is_default);
+    assert(switch_statement.switch_cases[0].pattern.kind == orison::syntax::ExpressionKind::integer_literal);
+    assert(switch_statement.switch_cases[0].pattern.text == "0");
+    assert(switch_statement.switch_cases[0].statement != nullptr);
+    assert(switch_statement.switch_cases[0].statement->kind == orison::syntax::StatementKind::expression_statement);
+    assert(switch_statement.switch_cases[0].statement->expression.text == "0");
+    assert(!switch_statement.switch_cases[1].is_default);
+    assert(switch_statement.switch_cases[1].pattern.kind == orison::syntax::ExpressionKind::call);
+    assert(switch_statement.switch_cases[1].statement != nullptr);
+    assert(switch_statement.switch_cases[1].statement->kind == orison::syntax::StatementKind::return_statement);
+    assert(switch_statement.switch_cases[1].statement->expression.text == "value");
+    assert(switch_statement.switch_cases[2].is_default);
+    assert(switch_statement.switch_cases[2].statement != nullptr);
+    assert(switch_statement.switch_cases[2].statement->kind == orison::syntax::StatementKind::expression_statement);
+    assert(switch_statement.switch_cases[2].statement->expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(switch_statement.switch_cases[2].statement->expression.text == "+");
+}
+
 void test_parse_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_failure.or";
     {
@@ -238,10 +282,31 @@ void test_guard_statement_failure() {
     assert(result.diagnostics.entries().front().message == "guard statement requires 'else' before the failure block");
 }
 
+void test_switch_statement_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "function main() -> Int32\n";
+        output << "    switch 1\n";
+        output << "        0 return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "switch case requires '=>'");
+}
+
 }  // namespace
 
 int main() {
     test_parse_success();
+    test_switch_statement_success();
     test_parse_failure();
     test_function_header_failure();
     test_missing_record_block_failure();
@@ -249,5 +314,6 @@ int main() {
     test_if_statement_failure();
     test_else_statement_failure();
     test_guard_statement_failure();
+    test_switch_statement_failure();
     return 0;
 }

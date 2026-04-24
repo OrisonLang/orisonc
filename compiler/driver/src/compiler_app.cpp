@@ -40,6 +40,8 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
         return "var";
     case StatementKind::return_statement:
         return "return";
+    case StatementKind::switch_statement:
+        return "switch";
     case StatementKind::guard_statement:
         return "guard";
     case StatementKind::if_statement:
@@ -128,6 +130,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
                        << '\n';
                 output << "first statement nested count: " << first_statement.nested_statements.size() << '\n';
                 output << "first statement alternate count: " << first_statement.alternate_statements.size() << '\n';
+                output << "first statement switch cases: " << first_statement.switch_cases.size() << '\n';
             }
         }
         return CompileResult {.exit_code = 0, .stdout_text = output.str()};
