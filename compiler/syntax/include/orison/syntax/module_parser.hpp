@@ -45,7 +45,7 @@ struct StatementSyntax;
 struct SwitchCaseSyntax {
     bool is_default = false;
     ExpressionSyntax pattern;
-    std::unique_ptr<StatementSyntax> statement;
+    std::vector<std::unique_ptr<StatementSyntax>> statements;
 };
 
 enum class StatementKind {

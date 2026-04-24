@@ -108,7 +108,9 @@ void test_switch_statement_success() {
         output << "package demo.switches\n";
         output << "function classify(value: Int32) -> Int32\n";
         output << "    switch value >= 0\n";
-        output << "        0 => 0\n";
+        output << "        0 =>\n";
+        output << "            let zero = value\n";
+        output << "            return zero\n";
         output << "        classify(value) => return value\n";
         output << "        default => value + 1\n";
     }
@@ -130,19 +132,25 @@ void test_switch_statement_success() {
     assert(!switch_statement.switch_cases[0].is_default);
     assert(switch_statement.switch_cases[0].pattern.kind == orison::syntax::ExpressionKind::integer_literal);
     assert(switch_statement.switch_cases[0].pattern.text == "0");
-    assert(switch_statement.switch_cases[0].statement != nullptr);
-    assert(switch_statement.switch_cases[0].statement->kind == orison::syntax::StatementKind::expression_statement);
-    assert(switch_statement.switch_cases[0].statement->expression.text == "0");
+    assert(switch_statement.switch_cases[0].statements.size() == 2);
+    assert(switch_statement.switch_cases[0].statements[0] != nullptr);
+    assert(switch_statement.switch_cases[0].statements[0]->kind == orison::syntax::StatementKind::let_binding);
+    assert(switch_statement.switch_cases[0].statements[0]->name == "zero");
+    assert(switch_statement.switch_cases[0].statements[1] != nullptr);
+    assert(switch_statement.switch_cases[0].statements[1]->kind == orison::syntax::StatementKind::return_statement);
+    assert(switch_statement.switch_cases[0].statements[1]->expression.text == "zero");
     assert(!switch_statement.switch_cases[1].is_default);
     assert(switch_statement.switch_cases[1].pattern.kind == orison::syntax::ExpressionKind::call);
-    assert(switch_statement.switch_cases[1].statement != nullptr);
-    assert(switch_statement.switch_cases[1].statement->kind == orison::syntax::StatementKind::return_statement);
-    assert(switch_statement.switch_cases[1].statement->expression.text == "value");
+    assert(switch_statement.switch_cases[1].statements.size() == 1);
+    assert(switch_statement.switch_cases[1].statements[0] != nullptr);
+    assert(switch_statement.switch_cases[1].statements[0]->kind == orison::syntax::StatementKind::return_statement);
+    assert(switch_statement.switch_cases[1].statements[0]->expression.text == "value");
     assert(switch_statement.switch_cases[2].is_default);
-    assert(switch_statement.switch_cases[2].statement != nullptr);
-    assert(switch_statement.switch_cases[2].statement->kind == orison::syntax::StatementKind::expression_statement);
-    assert(switch_statement.switch_cases[2].statement->expression.kind == orison::syntax::ExpressionKind::binary);
-    assert(switch_statement.switch_cases[2].statement->expression.text == "+");
+    assert(switch_statement.switch_cases[2].statements.size() == 1);
+    assert(switch_statement.switch_cases[2].statements[0] != nullptr);
+    assert(switch_statement.switch_cases[2].statements[0]->kind == orison::syntax::StatementKind::expression_statement);
+    assert(switch_statement.switch_cases[2].statements[0]->expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(switch_statement.switch_cases[2].statements[0]->expression.text == "+");
 }
 
 void test_while_statement_success() {
@@ -399,6 +407,27 @@ void test_switch_statement_failure() {
     assert(result.diagnostics.entries().front().message == "switch case requires '=>'");
 }
 
+void test_switch_block_case_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_block_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "function main() -> Int32\n";
+        output << "    switch 1\n";
+        output << "        0 =>\n";
+        output << "        return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "switch case requires an indented consequence block");
+}
+
 void test_while_statement_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_while_failure.or";
     {
@@ -475,6 +504,7 @@ int main() {
     test_else_statement_failure();
     test_guard_statement_failure();
     test_switch_statement_failure();
+    test_switch_block_case_failure();
     test_while_statement_failure();
     test_for_statement_failure();
     test_defer_statement_failure();

@@ -547,8 +547,27 @@ private:
             }
 
             advance();
-            if (is(TokenKind::newline) || is(TokenKind::dedent) || is(TokenKind::eof)) {
-                result.diagnostics.error(current().line, "switch case requires an inline consequence statement");
+            if (is(TokenKind::newline)) {
+                auto had_errors_before_block = result.diagnostics.has_errors();
+                auto consequences =
+                    parse_statement_block(result, "switch case requires an indented consequence block");
+                if (consequences.empty()) {
+                    statement.valid = false;
+                    if (!had_errors_before_block && !result.diagnostics.has_errors()) {
+                        result.diagnostics.error(current().line, "switch case requires at least one consequence statement");
+                    }
+                    continue;
+                }
+
+                for (auto& consequence : consequences) {
+                    switch_case.statements.push_back(std::make_unique<StatementSyntax>(std::move(consequence)));
+                }
+                statement.switch_cases.push_back(std::move(switch_case));
+                continue;
+            }
+
+            if (is(TokenKind::dedent) || is(TokenKind::eof)) {
+                result.diagnostics.error(current().line, "switch case requires a consequence statement or indented consequence block");
                 statement.valid = false;
                 skip_to_next_line();
                 continue;
@@ -562,7 +581,7 @@ private:
                 continue;
             }
 
-            switch_case.statement = std::make_unique<StatementSyntax>(std::move(consequence));
+            switch_case.statements.push_back(std::make_unique<StatementSyntax>(std::move(consequence)));
             statement.switch_cases.push_back(std::move(switch_case));
 
             if (is(TokenKind::newline)) {
