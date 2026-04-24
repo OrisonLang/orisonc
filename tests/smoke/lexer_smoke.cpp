@@ -11,9 +11,9 @@ int main() {
         std::ofstream output(path);
         output << "package demo.cli\n";
         output << "\n";
-        output << "function main(path: Text) -> Int32\n";
-        output << "    defer\n";
-        output << "        close(path)\n";
+        output << "function main(enabled: Bool) -> Int32\n";
+        output << "    if enabled == false\n";
+        output << "        return 0\n";
         output << "    return 0\n";
     }
 
@@ -24,18 +24,18 @@ int main() {
     auto result = lexer.lex(*source_file);
 
     assert(!result.diagnostics.has_errors());
-    assert(result.tokens.size() >= 14);
+    assert(result.tokens.size() >= 16);
     assert(result.tokens[0].kind == orison::syntax::TokenKind::keyword_package);
     assert(result.tokens[0].line_start);
     assert(result.tokens[1].kind == orison::syntax::TokenKind::identifier);
     assert(result.tokens[2].kind == orison::syntax::TokenKind::dot);
     assert(result.tokens[3].kind == orison::syntax::TokenKind::identifier);
-    bool saw_defer = false;
+    bool saw_equal_equal = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
-        if (token.kind == orison::syntax::TokenKind::keyword_defer) {
-            saw_defer = true;
+        if (token.kind == orison::syntax::TokenKind::equal_equal) {
+            saw_equal_equal = true;
         }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
@@ -44,7 +44,7 @@ int main() {
             saw_dedent = true;
         }
     }
-    assert(saw_defer);
+    assert(saw_equal_equal);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

@@ -247,6 +247,24 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
             continue;
         }
 
+        if (ch == '=' && index + 1 < input.size() && input[index + 1] == '=') {
+            token.kind = TokenKind::equal_equal;
+            token.lexeme = "==";
+            index += 2;
+            column += 2;
+            result.tokens.push_back(token);
+            continue;
+        }
+
+        if (ch == '!' && index + 1 < input.size() && input[index + 1] == '=') {
+            token.kind = TokenKind::bang_equal;
+            token.lexeme = "!=";
+            index += 2;
+            column += 2;
+            result.tokens.push_back(token);
+            continue;
+        }
+
         if (ch == '<' && index + 1 < input.size() && input[index + 1] == '=') {
             token.kind = TokenKind::less_equal;
             token.lexeme = "<=";

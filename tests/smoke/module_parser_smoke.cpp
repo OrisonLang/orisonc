@@ -250,6 +250,42 @@ void test_defer_statement_success() {
     assert(defer_statement.nested_statements[1].expression.kind == orison::syntax::ExpressionKind::call);
 }
 
+void test_equality_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_equality_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.conditions\n";
+        output << "function classify(enabled: Bool, ready: Bool) -> Int32\n";
+        output << "    if enabled == false\n";
+        output << "        return 0\n";
+        output << "    while ready != false\n";
+        output << "        return 1\n";
+        output << "    return 2\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 3);
+    auto const& if_statement = result.module.functions.front().body_statements[0];
+    assert(if_statement.kind == orison::syntax::StatementKind::if_statement);
+    assert(if_statement.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(if_statement.expression.text == "==");
+    assert(if_statement.expression.left->text == "enabled");
+    assert(if_statement.expression.right->text == "false");
+    auto const& while_statement = result.module.functions.front().body_statements[1];
+    assert(while_statement.kind == orison::syntax::StatementKind::while_statement);
+    assert(while_statement.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(while_statement.expression.text == "!=");
+    assert(while_statement.expression.left->text == "ready");
+    assert(while_statement.expression.right->text == "false");
+}
+
 void test_parse_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_failure.or";
     {
@@ -496,6 +532,7 @@ int main() {
     test_while_statement_success();
     test_for_statement_success();
     test_defer_statement_success();
+    test_equality_expression_success();
     test_parse_failure();
     test_function_header_failure();
     test_missing_record_block_failure();

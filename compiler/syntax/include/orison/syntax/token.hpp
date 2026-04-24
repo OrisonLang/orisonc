@@ -35,6 +35,8 @@ enum class TokenKind {
     greater,
     greater_equal,
     equal,
+    equal_equal,
+    bang_equal,
     plus,
     minus,
     star,

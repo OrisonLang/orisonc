@@ -254,6 +254,9 @@ private:
 
     auto precedence(TokenKind kind) const -> int {
         switch (kind) {
+        case TokenKind::equal_equal:
+        case TokenKind::bang_equal:
+            return 3;
         case TokenKind::less_equal:
         case TokenKind::greater_equal:
         case TokenKind::less:
