@@ -212,6 +212,36 @@ void test_for_statement_success() {
     assert(for_statement.nested_statements[1].expression.text == "item");
 }
 
+void test_defer_statement_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_defer_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.cleanup\n";
+        output << "function use_file(path: Text) -> Int32\n";
+        output << "    defer\n";
+        output << "        close(path)\n";
+        output << "        flush(path)\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& defer_statement = result.module.functions.front().body_statements[0];
+    assert(defer_statement.kind == orison::syntax::StatementKind::defer_statement);
+    assert(defer_statement.nested_statements.size() == 2);
+    assert(defer_statement.nested_statements[0].kind == orison::syntax::StatementKind::expression_statement);
+    assert(defer_statement.nested_statements[0].expression.kind == orison::syntax::ExpressionKind::call);
+    assert(defer_statement.nested_statements[1].kind == orison::syntax::StatementKind::expression_statement);
+    assert(defer_statement.nested_statements[1].expression.kind == orison::syntax::ExpressionKind::call);
+}
+
 void test_parse_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_failure.or";
     {
@@ -409,6 +439,26 @@ void test_for_statement_failure() {
     assert(result.diagnostics.entries().front().message == "for statement requires 'in' before the iterable expression");
 }
 
+void test_defer_statement_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_defer_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "function main() -> Int32\n";
+        output << "    defer\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "defer statement requires an indented cleanup block");
+}
+
 }  // namespace
 
 int main() {
@@ -416,6 +466,7 @@ int main() {
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();
+    test_defer_statement_success();
     test_parse_failure();
     test_function_header_failure();
     test_missing_record_block_failure();
@@ -426,5 +477,6 @@ int main() {
     test_switch_statement_failure();
     test_while_statement_failure();
     test_for_statement_failure();
+    test_defer_statement_failure();
     return 0;
 }

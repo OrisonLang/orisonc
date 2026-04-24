@@ -57,6 +57,7 @@ enum class StatementKind {
     if_statement,
     while_statement,
     for_statement,
+    defer_statement,
     expression_statement,
 };
 

@@ -50,6 +50,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "in") {
         return TokenKind::keyword_in;
     }
+    if (text == "defer") {
+        return TokenKind::keyword_defer;
+    }
     return TokenKind::identifier;
 }
 

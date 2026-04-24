@@ -22,6 +22,7 @@ enum class TokenKind {
     keyword_while,
     keyword_for,
     keyword_in,
+    keyword_defer,
     indent,
     dedent,
     left_paren,

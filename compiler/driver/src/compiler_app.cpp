@@ -50,6 +50,8 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
         return "while";
     case StatementKind::for_statement:
         return "for";
+    case StatementKind::defer_statement:
+        return "defer";
     case StatementKind::expression_statement:
         return "expression";
     }

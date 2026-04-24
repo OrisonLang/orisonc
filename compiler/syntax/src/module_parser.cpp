@@ -659,6 +659,24 @@ private:
         return statement;
     }
 
+    auto parse_defer_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::defer_statement, .valid = true};
+        advance();
+
+        statement.nested_statements =
+            parse_statement_block(result, "defer statement requires an indented cleanup block");
+        if (statement.nested_statements.empty() && result.diagnostics.has_errors()) {
+            statement.valid = false;
+            return statement;
+        }
+
+        if (statement.nested_statements.empty()) {
+            result.diagnostics.error(current().line, "defer statement requires at least one cleanup statement");
+            statement.valid = false;
+        }
+        return statement;
+    }
+
     auto parse_expression_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = true};
         statement.expression = parse_expression(result);
@@ -687,6 +705,8 @@ private:
             return parse_while_statement(result);
         case TokenKind::keyword_for:
             return parse_for_statement(result);
+        case TokenKind::keyword_defer:
+            return parse_defer_statement(result);
         case TokenKind::keyword_else: {
             StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = false};
             result.diagnostics.error(current().line, "else must follow an if consequence block");
