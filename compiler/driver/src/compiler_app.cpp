@@ -48,6 +48,8 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
         return "if";
     case StatementKind::while_statement:
         return "while";
+    case StatementKind::for_statement:
+        return "for";
     case StatementKind::expression_statement:
         return "expression";
     }

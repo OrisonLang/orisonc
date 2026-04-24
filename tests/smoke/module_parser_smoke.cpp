@@ -179,6 +179,39 @@ void test_while_statement_success() {
     assert(while_statement.nested_statements[1].expression.text == "-");
 }
 
+void test_for_statement_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_for_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.loops\n";
+        output << "function find_first(items: shared.View<Int32>) -> Int32\n";
+        output << "    for item in items\n";
+        output << "        sink(item)\n";
+        output << "        return item\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& for_statement = result.module.functions.front().body_statements[0];
+    assert(for_statement.kind == orison::syntax::StatementKind::for_statement);
+    assert(for_statement.name == "item");
+    assert(for_statement.expression.kind == orison::syntax::ExpressionKind::name);
+    assert(for_statement.expression.text == "items");
+    assert(for_statement.nested_statements.size() == 2);
+    assert(for_statement.nested_statements[0].kind == orison::syntax::StatementKind::expression_statement);
+    assert(for_statement.nested_statements[0].expression.kind == orison::syntax::ExpressionKind::call);
+    assert(for_statement.nested_statements[1].kind == orison::syntax::StatementKind::return_statement);
+    assert(for_statement.nested_statements[1].expression.text == "item");
+}
+
 void test_parse_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_failure.or";
     {
@@ -356,12 +389,33 @@ void test_while_statement_failure() {
     assert(result.diagnostics.entries().front().message == "while statement requires an indented body block");
 }
 
+void test_for_statement_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_for_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "function main(items: shared.View<Int32>) -> Int32\n";
+        output << "    for item items\n";
+        output << "        return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "for statement requires 'in' before the iterable expression");
+}
+
 }  // namespace
 
 int main() {
     test_parse_success();
     test_switch_statement_success();
     test_while_statement_success();
+    test_for_statement_success();
     test_parse_failure();
     test_function_header_failure();
     test_missing_record_block_failure();
@@ -371,5 +425,6 @@ int main() {
     test_guard_statement_failure();
     test_switch_statement_failure();
     test_while_statement_failure();
+    test_for_statement_failure();
     return 0;
 }

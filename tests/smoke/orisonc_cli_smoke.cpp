@@ -33,7 +33,7 @@ int main() {
         output << "record User\n";
         output << "    values: DynamicArray<Maybe<Int32>>\n";
         output << "function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
-        output << "    while input.length() >= 1\n";
+        output << "    for item in input\n";
         output << "        return input.read(0)\n";
         output << "    return input.read(2)\n";
     }
@@ -52,8 +52,8 @@ int main() {
     assert(output.find("function parameters: 1") != std::string::npos);
     assert(output.find("function return type: Outcome<Int32, ParseError>") != std::string::npos);
     assert(output.find("function body statements: 2") != std::string::npos);
-    assert(output.find("first statement kind: while") != std::string::npos);
-    assert(output.find("first statement expression: (input.length() >= 1)") != std::string::npos);
+    assert(output.find("first statement kind: for") != std::string::npos);
+    assert(output.find("first statement expression: input") != std::string::npos);
     assert(output.find("first statement nested count: 1") != std::string::npos);
     assert(output.find("first statement alternate count: 0") != std::string::npos);
     assert(output.find("first statement switch cases: 0") != std::string::npos);
