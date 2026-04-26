@@ -258,6 +258,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
                 output << "first statement alternate count: " << first_statement.alternate_statements.size() << '\n';
                 output << "first statement switch cases: " << first_statement.switch_cases.size() << '\n';
                 if (!first_statement.switch_cases.empty()) {
+                    output << "first switch case pattern: "
+                           << render_expression(first_statement.switch_cases.front().pattern) << '\n';
                     output << "first switch case statements: " << first_statement.switch_cases.front().statements.size()
                            << '\n';
                 }

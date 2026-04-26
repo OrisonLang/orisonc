@@ -1096,6 +1096,53 @@ void test_null_safe_member_access_failure() {
     assert(diagnostics.front().message == "expected member name after '?.'");
 }
 
+void test_constructor_pattern_switch_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_constructor_pattern_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "function sum_list(xs: shared List<Int64>, acc: Int64) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Empty => acc\n";
+        output << "        Node(head, tail) => recur(tail.value, acc + head)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 1);
+    auto const& switch_statement = result.module.functions.front().body_statements[0];
+    assert(switch_statement.kind == orison::syntax::StatementKind::switch_statement);
+    assert(switch_statement.expression.kind == orison::syntax::ExpressionKind::name);
+    assert(switch_statement.expression.text == "xs");
+    assert(switch_statement.switch_cases.size() == 2);
+    assert(!switch_statement.switch_cases[0].is_default);
+    assert(switch_statement.switch_cases[0].pattern.kind == orison::syntax::ExpressionKind::name);
+    assert(switch_statement.switch_cases[0].pattern.text == "Empty");
+    assert(switch_statement.switch_cases[0].statements.size() == 1);
+    assert(switch_statement.switch_cases[0].statements[0] != nullptr);
+    assert(switch_statement.switch_cases[0].statements[0]->kind == orison::syntax::StatementKind::expression_statement);
+    assert(switch_statement.switch_cases[0].statements[0]->expression.text == "acc");
+    assert(!switch_statement.switch_cases[1].is_default);
+    assert(switch_statement.switch_cases[1].pattern.kind == orison::syntax::ExpressionKind::call);
+    assert(switch_statement.switch_cases[1].pattern.left->kind == orison::syntax::ExpressionKind::name);
+    assert(switch_statement.switch_cases[1].pattern.left->text == "Node");
+    assert(switch_statement.switch_cases[1].pattern.arguments.size() == 2);
+    assert(switch_statement.switch_cases[1].pattern.arguments[0].kind == orison::syntax::ExpressionKind::name);
+    assert(switch_statement.switch_cases[1].pattern.arguments[0].text == "head");
+    assert(switch_statement.switch_cases[1].pattern.arguments[1].kind == orison::syntax::ExpressionKind::name);
+    assert(switch_statement.switch_cases[1].pattern.arguments[1].text == "tail");
+    assert(switch_statement.switch_cases[1].statements.size() == 1);
+    assert(switch_statement.switch_cases[1].statements[0] != nullptr);
+    assert(switch_statement.switch_cases[1].statements[0]->kind == orison::syntax::StatementKind::expression_statement);
+    assert(switch_statement.switch_cases[1].statements[0]->expression.kind == orison::syntax::ExpressionKind::call);
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1650,6 +1697,7 @@ int main() {
     test_ternary_expression_failure();
     test_null_safe_member_access_success();
     test_null_safe_member_access_failure();
+    test_constructor_pattern_switch_success();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();
