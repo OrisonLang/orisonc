@@ -25,51 +25,58 @@ type Port = UInt16
 # records
 # ------------------------------------------------------------
 
-record User
-    id: UserId
-    name: Text
-    age: UInt8
+public record User
+    public id: UserId
+    public name: Text
+    public profile: Maybe<Profile>
+    private age: UInt8
+
+public record Profile
+    public address: Maybe<AddressInfo>
+
+public record AddressInfo
+    public city: Text
 
 record Box<T>
-    value: T
+    public value: T
 
 record Pair<A, B>
-    first: A
-    second: B
+    public first: A
+    public second: B
 
 # growable owned contiguous storage
-record Buffer
-    data: DynamicArray<Byte>
+public record Buffer
+    private data: DynamicArray<Byte>
 
 record BufferReader
-    data: DynamicArray<Byte>
-    cursor: IntSize
+    package data: DynamicArray<Byte>
+    private cursor: IntSize
 
 # fixed-size contiguous inline storage
-record Header
-    magic: Array<Byte, 4>
-    version: UInt16
+public record Header
+    public magic: Array<Byte, 4>
+    public version: UInt16
 
 # typed MMIO register block
-record UartRegisters
-    data: UInt32
-    status: UInt32
-    control: UInt32
+public record UartRegisters
+    public data: UInt32
+    public status: UInt32
+    public control: UInt32
 
 # ------------------------------------------------------------
 # sum types / tagged unions
 # ------------------------------------------------------------
 
-choice IOError
+public choice IOError
     Closed
     EndOfInput
     PermissionDenied
 
-choice ParseError
+public choice ParseError
     EmptyInput
     InvalidDigit
 
-choice Expression
+public choice Expression
     Int(value: Int64)
     Add(left: Box<Expression>, right: Box<Expression>)
     Neg(inner: Box<Expression>)
@@ -87,10 +94,10 @@ choice Task
 # interfaces
 # ------------------------------------------------------------
 
-interface Reader
+public interface Reader
     function read(this: exclusive This, into: exclusive View<Byte>) -> Outcome<IntSize, IOError>
 
-interface Display
+public interface Display
     function display(this: shared This) -> Text
 
 interface Iterator<T>
@@ -119,35 +126,38 @@ implements Display for User
 # ------------------------------------------------------------
 
 extend Buffer
-    function append(this: exclusive This, b: Byte) -> Unit
+    public function append(this: exclusive This, b: Byte) -> Unit
         this.data.push(b)
 
-    function length(this: shared This) -> IntSize
+    public function length(this: shared This) -> IntSize
         this.data.length()
 
-    function first(this: shared This) -> Maybe<Byte>
+    public function first(this: shared This) -> Maybe<Byte>
         switch this.data.length()
             0 => Empty
             default => Some(this.data[0])
 
 extend BufferReader
-    function reset(this: exclusive This) -> Unit
+    public function reset(this: exclusive This) -> Unit
         this.cursor = 0
 
-    function remaining(this: shared This) -> IntSize
+    public function remaining(this: shared This) -> IntSize
         this.data.length() - this.cursor
+
+    private function check_bounds(this: shared This) -> Bool
+        this.cursor < this.data.length()
 
 # ------------------------------------------------------------
 # plain functions
 # ------------------------------------------------------------
 
-function add(a: Int64, b: Int64) -> Int64
+public function add(a: Int64, b: Int64) -> Int64
     a + b
 
-function consume(buf: Buffer) -> Unit
+package function consume(buf: Buffer) -> Unit
     sink(buf)
 
-function first<T>(items: shared View<T>) -> Maybe<shared T>
+public function first<T>(items: shared View<T>) -> Maybe<shared T>
     switch items.length()
         0 => Empty
         default => Some(items[0])
@@ -156,17 +166,17 @@ function first<T>(items: shared View<T>) -> Maybe<shared T>
 # generic functions with constraints
 # ------------------------------------------------------------
 
-function max<T>(left: T, right: T) -> T
+public function max<T>(left: T, right: T) -> T
 where T: Ordered
     switch left >= right
         true => left
         false => right
 
-function sort_copy<T>(items: shared View<T>) -> DynamicArray<T>
+public function sort_copy<T>(items: shared View<T>) -> DynamicArray<T>
 where T: Ordered + Cloneable
     clone_and_sort(items)
 
-function fill<R>(source: exclusive R, into: exclusive View<Byte>) -> Outcome<IntSize, IOError>
+package function fill<R>(source: exclusive R, into: exclusive View<Byte>) -> Outcome<IntSize, IOError>
 where R: Reader
     source.read(into)
 
@@ -174,7 +184,7 @@ where R: Reader
 # local bindings
 # ------------------------------------------------------------
 
-function sum(items: shared View<Int64>) -> Int64
+public function sum(items: shared View<Int64>) -> Int64
     let label: Text = "sum"
     var total = 0
 
@@ -184,38 +194,75 @@ function sum(items: shared View<Int64>) -> Int64
     total
 
 # ------------------------------------------------------------
+# boolean operators, ternary, null-safe access, and bitwise ops
+# ------------------------------------------------------------
+
+public function in_range(x: Int64) -> Bool
+    x >= 0 and x <= 100
+
+public function allowed(a: Bool, b: Bool) -> Bool
+    a or b
+
+public function invert(flag: Bool) -> Bool
+    not flag
+
+public function absolute(x: Int64) -> Int64
+    x < 0 ? -x : x
+
+public function city_name(user: Maybe<User>) -> Maybe<Text>
+    user?.profile?.address?.city
+
+public function mask_low_byte(x: UInt32) -> UInt32
+    x bit_and 0xFF
+
+public function combine_flags(a: UInt32, b: UInt32) -> UInt32
+    a bit_or b
+
+public function toggle_bits(a: UInt32, b: UInt32) -> UInt32
+    a bit_xor b
+
+public function invert_bits(x: UInt32) -> UInt32
+    bit_not x
+
+public function move_left(x: UInt32, amount: UInt32) -> UInt32
+    x shift_left amount
+
+public function move_right(x: UInt32, amount: UInt32) -> UInt32
+    x shift_right amount
+
+# ------------------------------------------------------------
 # control flow
 # ------------------------------------------------------------
 
 # guard with early return
-function parse_port(text: shared Text) -> Outcome<Port, ParseError>
+public function parse_port(text: shared Text) -> Outcome<Port, ParseError>
     guard text.length() > 0 else
         return Error(ParseError.EmptyInput)
 
     Ok(parse_digits(text))
 
 # small boolean branch
-function clamp_to_zero(x: Int64) -> Int64
+public function clamp_to_zero(x: Int64) -> Int64
     if x < 0
         return 0
-    else
-        return x
+
+    x
 
 # switch over values
-function sign(x: Int64) -> Int64
+public function sign(x: Int64) -> Int64
     switch x
         0 => 0
         default => 1
 
 # switch over patterns
-function evaluate(expr: shared Expression) -> Int64
+public function evaluate(expr: shared Expression) -> Int64
     switch expr
         Int(value) => value
         Add(left, right) => evaluate(left.value) + evaluate(right.value)
         Neg(inner) => -evaluate(inner.value)
 
 # while loop
-function count_down(n: Int64) -> Unit
+public function count_down(n: Int64) -> Unit
     var current = n
 
     while current > 0
@@ -223,7 +270,7 @@ function count_down(n: Int64) -> Unit
         current = current - 1
 
 # for loop, continue, early return
-function first_even(items: shared View<Int64>) -> Maybe<Int64>
+public function first_even(items: shared View<Int64>) -> Maybe<Int64>
     for item in items
         if item % 2 != 0
             continue
@@ -233,13 +280,13 @@ function first_even(items: shared View<Int64>) -> Maybe<Int64>
     Empty
 
 # repeat loop
-function poll() -> Unit
+public function poll() -> Unit
     repeat
         step()
-    while ready() == false
+    while not ready()
 
 # defer
-function use_file(path: Text) -> Outcome<Unit, IOError>
+public function use_file(path: Text) -> Outcome<Unit, IOError>
     let file = open(path)
     defer
         file.close()
@@ -251,18 +298,18 @@ function use_file(path: Text) -> Outcome<Unit, IOError>
 # ------------------------------------------------------------
 
 # implicit Unit at end of block
-function log_message(text: Text) -> Unit
+public function log_message(text: Text) -> Unit
     console.print(text)
 
 # naked return is allowed in Unit functions
-function maybe_log(text: Text, enabled: Bool) -> Unit
-    if enabled == false
+public function maybe_log(text: Text, enabled: Bool) -> Unit
+    if not enabled
         return
 
     console.print(text)
 
 # explicit unit is still legal, though usually unnecessary
-function explicit_unit_demo() -> Unit
+public function explicit_unit_demo() -> Unit
     side_effect()
     unit
 
@@ -271,19 +318,19 @@ function explicit_unit_demo() -> Unit
 # ------------------------------------------------------------
 
 # ordinary recursion
-function factorial(n: Int64) -> Int64
+public function factorial(n: Int64) -> Int64
     switch n
         0 => 1
         default => n * factorial(n - 1)
 
 # self tail recursion
-function sum_list(xs: shared List<Int64>, acc: Int64) -> Int64
+public function sum_list(xs: shared List<Int64>, acc: Int64) -> Int64
     switch xs
         Empty => acc
         Node(head, tail) => recur(tail.value, acc + head)
 
 # general tail call
-function dispatch(task: Task) -> Outcome<Int64, IOError>
+public function dispatch(task: Task) -> Outcome<Int64, IOError>
     switch task
         Local(next) => return tail run(next)
         Remote(done) => done
@@ -292,7 +339,7 @@ function dispatch(task: Task) -> Outcome<Int64, IOError>
 # built-in Maybe and Outcome constructors
 # ------------------------------------------------------------
 
-function demo_constructors() -> Outcome<Maybe<Int64>, IOError>
+public function demo_constructors() -> Outcome<Maybe<Int64>, IOError>
     Ok(Some(42))
 
 # ------------------------------------------------------------
@@ -300,11 +347,11 @@ function demo_constructors() -> Outcome<Maybe<Int64>, IOError>
 # ------------------------------------------------------------
 
 # fixed-size inline array
-function make_magic() -> Array<Byte, 4>
+public function make_magic() -> Array<Byte, 4>
     [0x7F, 0x45, 0x4C, 0x46]
 
 # borrowed view over contiguous data
-function checksum(data: shared View<Byte>) -> UInt32
+public function checksum(data: shared View<Byte>) -> UInt32
     var total: UInt32 = 0
 
     for b in data
@@ -313,7 +360,7 @@ function checksum(data: shared View<Byte>) -> UInt32
     total
 
 # growable owned contiguous storage
-function collect_bytes() -> DynamicArray<Byte>
+public function collect_bytes() -> DynamicArray<Byte>
     let bytes = DynamicArray<Byte>()
     bytes.push(0x41)
     bytes.push(0x42)
@@ -325,26 +372,26 @@ function collect_bytes() -> DynamicArray<Byte>
 # ------------------------------------------------------------
 
 # import foreign symbols with an explicit ABI
-foreign "c"
+package foreign "c"
     function puts(text: Pointer<Byte>) -> Int32
     function strlen(text: Pointer<Byte>) -> UIntSize
 
 # import foreign symbols from a specific library
-foreign "c" library "m"
+package foreign "c" library "m"
     function sin(x: Float64) -> Float64
     function cos(x: Float64) -> Float64
 
 # rename a foreign symbol locally
-foreign "c"
+package foreign "c"
     function print_line(text: Pointer<Byte>) -> Int32 as "puts"
 
 # export a language function to foreign callers
-export foreign "c"
+public foreign "c"
 function ffi_add(a: Int32, b: Int32) -> Int32
     a + b
 
 # export with an explicit external symbol name
-export foreign "c" as "device_init"
+public foreign "c" as "device_init"
 function initialize_device() -> Int32
     0
 
@@ -384,7 +431,7 @@ unsafe function zero_bytes(start: Address, count: UInt64) -> Unit
         i = i + 1
 
 # explicit unsafe block
-function scribble(addr: Address) -> Unit
+public function scribble(addr: Address) -> Unit
     unsafe
         let p = Pointer<Byte>(addr)
         raw_write(p, 0xFF)
@@ -413,10 +460,10 @@ unsafe function uart_enable() -> Unit
     volatile_write<UInt32>(UART0_CONTROL, 0x01)
 
 unsafe function uart_ready() -> Bool
-    (volatile_read<UInt32>(UART0_STATUS) & 0x01) != 0
+    (volatile_read<UInt32>(UART0_STATUS) bit_and 0x01) != 0
 
 unsafe function uart_send(byte: Byte) -> Unit
-    while uart_ready() == false
+    while not uart_ready()
         ()
 
     volatile_write<UInt32>(UART0_DATA, byte as UInt32)
@@ -441,7 +488,7 @@ unsafe function uart_enable_via_block() -> Unit
 # ------------------------------------------------------------
 
 # spawn an OS thread and join it later
-function parallel_sum(data: shared View<Int64>) -> Int64
+public function parallel_sum(data: shared View<Int64>) -> Int64
     let left = thread
         sum(data)
 
@@ -451,7 +498,7 @@ function parallel_sum(data: shared View<Int64>) -> Int64
     left_result + right
 
 # moving owned data into a thread requires concurrency-safe transfer
-function launch_processing(buffer: Buffer) -> Unit
+public function launch_processing(buffer: Buffer) -> Unit
     let worker = thread
         process(buffer)
 
@@ -481,7 +528,7 @@ async function fetch_pair() -> Outcome<Pair<Text, Text>, IOError>
 
 # async code with an early return
 async function maybe_fetch(url: Text, enabled: Bool) -> Outcome<Text, IOError>
-    if enabled == false
+    if not enabled
         return Error(IOError.Closed)
 
     await fetch(url)

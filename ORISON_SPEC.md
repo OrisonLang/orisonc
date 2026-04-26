@@ -2,7 +2,7 @@
 
 ## Overview
 
-Orison is a statically typed systems programming language designed for readability, explicit ownership, and practical low-level control. The surface syntax aims to reduce unnecessary notation while preserving strong semantics around memory, safety, concurrency, and foreign interaction.
+Orison is a statically typed systems programming language designed for readability, explicit ownership, practical low-level control, and modern tooling. The surface syntax aims to reduce unnecessary notation while preserving strong semantics around memory, safety, concurrency, foreign interaction, and access control.
 
 ## Type system summary
 
@@ -21,9 +21,58 @@ Orison uses a **static, explicit, mostly nominal, ownership-aware systems type s
 
 ### One-paragraph description
 
-Orison provides a static, mostly nominal type system for systems programming with explicit ownership and borrowing, generic abstraction, algebraic data types, and interface-based polymorphism. Ordinary values, shared views, exclusive mutable views, and raw pointers are represented distinctly. Safe typed code and unsafe raw-memory code are intentionally separated, while fixed-width numeric types, addresses, arrays, dynamic arrays, views, and memory-mapped I/O remain first-class concerns.
+Orison provides a static, mostly nominal type system for systems programming with explicit ownership and borrowing, generic abstraction, algebraic data types, and interface-based polymorphism. Ordinary values, shared views, exclusive mutable views, and raw pointers are represented distinctly. Safe typed code and unsafe raw-memory code are intentionally separated, while fixed-width numeric types, addresses, arrays, dynamic arrays, views, memory-mapped I/O, FFI, and concurrency remain first-class concerns.
 
-## Surface features and keywords
+---
+
+## Access control model
+
+Orison uses a small three-level visibility model:
+
+- `public`
+- `package`
+- `private`
+
+### Defaults
+
+- Top-level declarations default to `package`.
+- Type members default to `private`.
+- Interface members are implicitly `public`.
+
+### `public`
+
+Makes a declaration visible outside the current package.
+
+```text
+public function parse_port(text: shared Text) -> Outcome<UInt16, ParseError>
+    guard text.length() > 0 else
+        return Error(ParseError.EmptyInput)
+
+    Ok(parse_digits(text))
+```
+
+### `package`
+
+Makes a declaration visible only inside the current package.
+
+```text
+package function parse_digits(text: shared Text) -> UInt16
+    ...
+```
+
+### `private`
+
+Restricts a type member or method to the declaring type context.
+
+```text
+extend BufferReader
+    private function check_bounds(this: shared This) -> Bool
+        this.cursor < this.data.length()
+```
+
+---
+
+## Package and import syntax
 
 ### `package`
 
@@ -44,25 +93,11 @@ import
     random_int from math.random
 ```
 
-### `export`
+Wildcard imports are intentionally not part of the initial design.
 
-Marks a declaration as visible outside the current package.
+---
 
-```text
-export function parse_port(text: shared Text) -> Outcome<UInt16, ParseError>
-    guard text.length() > 0 else
-        return Error(ParseError.EmptyInput)
-
-    Ok(parse_digits(text))
-```
-
-Also valid with foreign exports.
-
-```text
-export foreign "c"
-function ffi_add(a: Int32, b: Int32) -> Int32
-    a + b
-```
+## Declarations
 
 ### `type`
 
@@ -78,18 +113,18 @@ type Port = UInt16
 Defines a product type with named fields.
 
 ```text
-record User
-    id: UserId
-    name: Text
-    age: UInt8
+public record User
+    public id: UserId
+    public name: Text
+    private age: UInt8
 ```
 
 Generic records are supported.
 
 ```text
 record Pair<A, B>
-    first: A
-    second: B
+    public first: A
+    public second: B
 ```
 
 ### `choice`
@@ -97,7 +132,7 @@ record Pair<A, B>
 Defines a tagged sum type.
 
 ```text
-choice IOError
+public choice IOError
     Closed
     EndOfInput
     PermissionDenied
@@ -106,7 +141,7 @@ choice IOError
 Variants may carry payloads.
 
 ```text
-choice Expression
+public choice Expression
     Int(value: Int64)
     Add(left: Box<Expression>, right: Box<Expression>)
     Neg(inner: Box<Expression>)
@@ -117,11 +152,11 @@ choice Expression
 Defines a behavioral abstraction.
 
 ```text
-interface Display
+public interface Display
     function display(this: shared This) -> Text
 ```
 
-Generic interfaces are also supported.
+Generic interfaces are supported.
 
 ```text
 interface Iterator<T>
@@ -144,10 +179,10 @@ Adds inherent methods directly to a type.
 
 ```text
 extend Buffer
-    function length(this: shared This) -> IntSize
+    public function length(this: shared This) -> IntSize
         this.data.length()
 
-    function append(this: exclusive This, b: Byte) -> Unit
+    public function append(this: exclusive This, b: Byte) -> Unit
         this.data.push(b)
 ```
 
@@ -156,7 +191,7 @@ extend Buffer
 Defines a function or method.
 
 ```text
-function add(a: Int64, b: Int64) -> Int64
+public function add(a: Int64, b: Int64) -> Int64
     a + b
 ```
 
@@ -165,7 +200,7 @@ function add(a: Int64, b: Int64) -> Int64
 Adds generic constraints.
 
 ```text
-function max<T>(left: T, right: T) -> T
+public function max<T>(left: T, right: T) -> T
 where T: Ordered
     switch left >= right
         true => left
@@ -178,7 +213,7 @@ Refers to the current receiver value.
 
 ```text
 extend User
-    function display_name(this: shared This) -> Text
+    public function display_name(this: shared This) -> Text
         this.name
 ```
 
@@ -191,6 +226,8 @@ interface Reader
     function read(this: exclusive This, into: exclusive View<Byte>) -> Outcome<IntSize, IOError>
 ```
 
+---
+
 ## Ownership and access
 
 ### Owned values
@@ -198,7 +235,7 @@ interface Reader
 A bare type usually means owned value semantics.
 
 ```text
-function consume(buf: Buffer) -> Unit
+package function consume(buf: Buffer) -> Unit
     sink(buf)
 ```
 
@@ -207,7 +244,7 @@ function consume(buf: Buffer) -> Unit
 Marks a read-only non-owning access view.
 
 ```text
-function first<T>(items: shared View<T>) -> Maybe<shared T>
+public function first<T>(items: shared View<T>) -> Maybe<shared T>
     switch items.length()
         0 => Empty
         default => Some(items[0])
@@ -218,7 +255,7 @@ function first<T>(items: shared View<T>) -> Maybe<shared T>
 Marks a unique mutable non-owning access view.
 
 ```text
-function fill<R>(source: exclusive R, into: exclusive View<Byte>) -> Outcome<IntSize, IOError>
+package function fill<R>(source: exclusive R, into: exclusive View<Byte>) -> Outcome<IntSize, IOError>
 where R: Reader
     source.read(into)
 ```
@@ -240,6 +277,8 @@ Represents a raw machine address.
 ```text
 const UART0_BASE: Address = 0x4000_1000
 ```
+
+---
 
 ## Built-in type families
 
@@ -276,6 +315,8 @@ const UART0_BASE: Address = 0x4000_1000
 - `Address`
 - `Pointer<T>`
 
+---
+
 ## Algebraic helpers
 
 ### `Maybe<T>`
@@ -283,7 +324,7 @@ const UART0_BASE: Address = 0x4000_1000
 Represents an optional value.
 
 ```text
-function first<T>(items: shared View<T>) -> Maybe<shared T>
+public function first<T>(items: shared View<T>) -> Maybe<shared T>
     switch items.length()
         0 => Empty
         default => Some(items[0])
@@ -299,7 +340,7 @@ Constructors:
 Represents success or failure.
 
 ```text
-function parse_port(text: shared Text) -> Outcome<UInt16, ParseError>
+public function parse_port(text: shared Text) -> Outcome<UInt16, ParseError>
     guard text.length() > 0 else
         return Error(ParseError.EmptyInput)
 
@@ -317,7 +358,7 @@ Represents explicit owning heap indirection.
 
 ```text
 record Box<T>
-    value: T
+    public value: T
 ```
 
 Useful for recursive data.
@@ -328,6 +369,8 @@ choice List<T>
     Node(head: T, tail: Box<List<T>>)
 ```
 
+---
+
 ## Collections and views
 
 ### `Array<T, N>`
@@ -335,9 +378,9 @@ choice List<T>
 Represents fixed-size contiguous inline storage.
 
 ```text
-record Header
-    magic: Array<Byte, 4>
-    version: UInt16
+public record Header
+    public magic: Array<Byte, 4>
+    public version: UInt16
 ```
 
 ### `View<T>`
@@ -345,7 +388,7 @@ record Header
 Represents a non-owning contiguous view over data.
 
 ```text
-function checksum(data: shared View<Byte>) -> UInt32
+public function checksum(data: shared View<Byte>) -> UInt32
     var total: UInt32 = 0
 
     for b in data
@@ -359,8 +402,8 @@ function checksum(data: shared View<Byte>) -> UInt32
 Represents growable owned contiguous storage.
 
 ```text
-record Buffer
-    data: DynamicArray<Byte>
+public record Buffer
+    private data: DynamicArray<Byte>
 ```
 
 ### `List<T>`
@@ -372,6 +415,8 @@ choice List<T>
     Empty
     Node(head: T, tail: Box<List<T>>)
 ```
+
+---
 
 ## Local bindings
 
@@ -392,25 +437,95 @@ var total = 0
 total = total + 1
 ```
 
+---
+
+## Operators
+
+### Boolean operators
+
+Orison uses word-based boolean operators.
+
+- `and`
+- `or`
+- `not`
+
+```text
+public function in_range(x: Int64) -> Bool
+    x >= 0 and x <= 100
+
+public function allowed(a: Bool, b: Bool) -> Bool
+    a or b
+
+public function invert(flag: Bool) -> Bool
+    not flag
+```
+
+### Ternary operator
+
+Orison supports `?:` for compact conditional expressions.
+
+```text
+public function absolute(x: Int64) -> Int64
+    x < 0 ? -x : x
+```
+
+### Null-safe member access
+
+Orison supports null-safe chained access with `?.` for optional navigation.
+
+```text
+public function city_name(user: Maybe<User>) -> Maybe<Text>
+    user?.profile?.address?.city
+```
+
+### Bitwise operators
+
+Orison uses named bitwise operators rather than symbolic sigils.
+
+- `bit_and`
+- `bit_or`
+- `bit_xor`
+- `bit_not`
+- `shift_left`
+- `shift_right`
+
+```text
+public function mask_low_byte(x: UInt32) -> UInt32
+    x bit_and 0xFF
+
+public function combine_flags(a: UInt32, b: UInt32) -> UInt32
+    a bit_or b
+
+public function toggle_bits(a: UInt32, b: UInt32) -> UInt32
+    a bit_xor b
+
+public function invert_bits(x: UInt32) -> UInt32
+    bit_not x
+
+public function move_left(x: UInt32, amount: UInt32) -> UInt32
+    x shift_left amount
+
+public function move_right(x: UInt32, amount: UInt32) -> UInt32
+    x shift_right amount
+```
+
+---
+
 ## Control flow
 
 ### `switch`
 
 Primary branching construct for values and patterns.
 
-Value-based example:
-
 ```text
-function sign(x: Int64) -> Int64
+public function sign(x: Int64) -> Int64
     switch x
         0 => 0
         default => 1
 ```
 
-Pattern-based example:
-
 ```text
-function evaluate(expr: shared Expression) -> Int64
+public function evaluate(expr: shared Expression) -> Int64
     switch expr
         Int(value) => value
         Add(left, right) => evaluate(left.value) + evaluate(right.value)
@@ -432,7 +547,7 @@ switch code
 Checks a precondition and exits early if it fails.
 
 ```text
-function parse_port(text: shared Text) -> Outcome<UInt16, ParseError>
+public function parse_port(text: shared Text) -> Outcome<UInt16, ParseError>
     guard text.length() > 0 else
         return Error(ParseError.EmptyInput)
 
@@ -441,20 +556,11 @@ function parse_port(text: shared Text) -> Outcome<UInt16, ParseError>
 
 ### `else`
 
-Introduces the alternate branch of a control-flow form.
+Introduces the failure branch of a `guard`.
 
 ```text
 guard file.exists() else
     return Error(IOError.Closed)
-```
-
-It is also used with `if`.
-
-```text
-if x < 0
-    return 0
-else
-    return x
 ```
 
 ### `if`
@@ -462,11 +568,11 @@ else
 Small boolean branch form.
 
 ```text
-function clamp_to_zero(x: Int64) -> Int64
+public function clamp_to_zero(x: Int64) -> Int64
     if x < 0
         return 0
-    else
-        return x
+
+    x
 ```
 
 ### `while`
@@ -474,7 +580,7 @@ function clamp_to_zero(x: Int64) -> Int64
 Condition-driven loop.
 
 ```text
-function count_down(n: Int64) -> Unit
+public function count_down(n: Int64) -> Unit
     var current = n
 
     while current > 0
@@ -487,7 +593,7 @@ function count_down(n: Int64) -> Unit
 Iterates over a sequence or view.
 
 ```text
-function sum(items: shared View<Int64>) -> Int64
+public function sum(items: shared View<Int64>) -> Int64
     var total = 0
 
     for item in items
@@ -501,10 +607,10 @@ function sum(items: shared View<Int64>) -> Int64
 Runs a post-test loop.
 
 ```text
-function poll() -> Unit
+public function poll() -> Unit
     repeat
         step()
-    while ready() == false
+    while not ready()
 ```
 
 ### `break`
@@ -512,7 +618,7 @@ function poll() -> Unit
 Exits the nearest loop.
 
 ```text
-function find_stop(items: shared View<Int64>) -> Unit
+public function find_stop(items: shared View<Int64>) -> Unit
     for item in items
         if item == 0
             break
@@ -525,7 +631,7 @@ function find_stop(items: shared View<Int64>) -> Unit
 Skips to the next loop iteration.
 
 ```text
-function first_even(items: shared View<Int64>) -> Maybe<Int64>
+public function first_even(items: shared View<Int64>) -> Maybe<Int64>
     for item in items
         if item % 2 != 0
             continue
@@ -540,7 +646,7 @@ function first_even(items: shared View<Int64>) -> Maybe<Int64>
 Schedules cleanup when the current scope exits.
 
 ```text
-function use_file(path: Text) -> Outcome<Unit, IOError>
+public function use_file(path: Text) -> Outcome<Unit, IOError>
     let file = open(path)
     defer
         file.close()
@@ -553,7 +659,7 @@ function use_file(path: Text) -> Outcome<Unit, IOError>
 Performs an early return.
 
 ```text
-function clamp_to_zero(x: Int64) -> Int64
+public function clamp_to_zero(x: Int64) -> Int64
     if x < 0
         return 0
 
@@ -563,8 +669,8 @@ function clamp_to_zero(x: Int64) -> Int64
 A `Unit` function may use a bare `return`.
 
 ```text
-function maybe_log(text: Text, enabled: Bool) -> Unit
-    if enabled == false
+public function maybe_log(text: Text, enabled: Bool) -> Unit
+    if not enabled
         return
 
     print(text)
@@ -575,7 +681,7 @@ function maybe_log(text: Text, enabled: Bool) -> Unit
 A non-`Unit` function returns its final expression.
 
 ```text
-function add(a: Int64, b: Int64) -> Int64
+public function add(a: Int64, b: Int64) -> Int64
     a + b
 ```
 
@@ -584,24 +690,26 @@ function add(a: Int64, b: Int64) -> Int64
 A `Unit` function may reach the end of its block without spelling `unit`.
 
 ```text
-function log_message(text: Text) -> Unit
+public function log_message(text: Text) -> Unit
     print(text)
 ```
 
 Explicit `unit` remains legal.
 
 ```text
-function explicit_unit_demo() -> Unit
+public function explicit_unit_demo() -> Unit
     side_effect()
     unit
 ```
+
+---
 
 ## Recursion and tail forms
 
 ### Ordinary recursion
 
 ```text
-function factorial(n: Int64) -> Int64
+public function factorial(n: Int64) -> Int64
     switch n
         0 => 1
         default => n * factorial(n - 1)
@@ -612,7 +720,7 @@ function factorial(n: Int64) -> Int64
 Represents self-tail-recursive re-entry.
 
 ```text
-function sum_list(xs: shared List<Int64>, acc: Int64) -> Int64
+public function sum_list(xs: shared List<Int64>, acc: Int64) -> Int64
     switch xs
         Empty => acc
         Node(head, tail) => recur(tail.value, acc + head)
@@ -623,11 +731,13 @@ function sum_list(xs: shared List<Int64>, acc: Int64) -> Int64
 Marks a guaranteed general tail call when used in `return tail ...`.
 
 ```text
-function dispatch(task: Task) -> Outcome<Int64, IOError>
+public function dispatch(task: Task) -> Outcome<Int64, IOError>
     switch task
         Local(next) => return tail run(next)
         Remote(done) => done
 ```
+
+---
 
 ## Foreign Function Interface
 
@@ -636,7 +746,7 @@ function dispatch(task: Task) -> Outcome<Int64, IOError>
 Declares foreign imports for a specific ABI.
 
 ```text
-foreign "c"
+package foreign "c"
     function puts(text: Pointer<Byte>) -> Int32
     function strlen(text: Pointer<Byte>) -> UIntSize
 ```
@@ -646,7 +756,7 @@ foreign "c"
 Narrows foreign imports to a specific linked library.
 
 ```text
-foreign "c" library "m"
+package foreign "c" library "m"
     function sin(x: Float64) -> Float64
     function cos(x: Float64) -> Float64
 ```
@@ -656,16 +766,16 @@ foreign "c" library "m"
 Renames an imported foreign symbol locally.
 
 ```text
-foreign "c"
+package foreign "c"
     function print_line(text: Pointer<Byte>) -> Int32 as "puts"
 ```
 
-### `export foreign`
+### `public foreign`
 
 Exports a language-defined function to foreign callers.
 
 ```text
-export foreign "c"
+public foreign "c"
 function ffi_add(a: Int32, b: Int32) -> Int32
     a + b
 ```
@@ -673,10 +783,12 @@ function ffi_add(a: Int32, b: Int32) -> Int32
 You may also export under a specific external symbol name.
 
 ```text
-export foreign "c" as "device_init"
+public foreign "c" as "device_init"
 function initialize_device() -> Int32
     0
 ```
+
+---
 
 ## Unsafe, raw memory, and MMIO
 
@@ -684,15 +796,11 @@ function initialize_device() -> Int32
 
 Enters the unsafe subset of the language.
 
-Unsafe function:
-
 ```text
 unsafe function read_byte(addr: Address) -> Byte
     let p: Pointer<Byte> = Pointer<Byte>(addr)
     raw_read(p)
 ```
-
-Unsafe block:
 
 ```text
 function scribble(addr: Address) -> Unit
@@ -753,14 +861,16 @@ unsafe function uart_enable() -> Unit
     volatile_write<UInt32>(UART0_CONTROL, 0x01)
 
 unsafe function uart_ready() -> Bool
-    (volatile_read<UInt32>(UART0_STATUS) & 0x01) != 0
+    (volatile_read<UInt32>(UART0_STATUS) bit_and 0x01) != 0
 
 unsafe function uart_send(byte: Byte) -> Unit
-    while uart_ready() == false
+    while not uart_ready()
         ()
 
     volatile_write<UInt32>(UART0_DATA, byte as UInt32)
 ```
+
+---
 
 ## Concurrency and tasks
 
@@ -769,7 +879,7 @@ unsafe function uart_send(byte: Byte) -> Unit
 Spawns an OS thread.
 
 ```text
-function parallel_sum(data: shared View<Int64>) -> Int64
+public function parallel_sum(data: shared View<Int64>) -> Int64
     let left = thread
         sum(data)
 
@@ -812,7 +922,7 @@ Suspends until an async result is ready.
 
 ```text
 async function maybe_fetch(url: Text, enabled: Bool) -> Outcome<Text, IOError>
-    if enabled == false
+    if not enabled
         return Error(IOError.Closed)
 
     await fetch(url)
@@ -833,21 +943,3 @@ Marks values safe to share across thread or task boundaries.
 ```text
 interface Shareable
 ```
-
-## Summary
-
-Orison currently has a:
-
-- static type system
-- mostly nominal type identity model
-- ownership-aware access discipline
-- generic abstraction model
-- algebraic data-modeling core
-- interface-based behavioral abstraction model
-- explicit package/import and FFI surface
-- explicit unsafe boundary for raw memory, pointers, and MMIO
-- readable concurrency model spanning threads, tasks, and async functions
-
-In one sentence:
-
-> Orison is a static, mostly nominal, ownership-aware systems language with records, choices, generics, interfaces, explicit views and pointers, clear package and FFI boundaries, and a readable concurrency model.

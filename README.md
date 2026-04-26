@@ -5,7 +5,7 @@ Orison is a readable systems programming language with explicit ownership, expli
 ## Project goals
 
 - Make systems programming more approachable without hiding core machine concepts.
-- Keep memory, ownership, allocation, concurrency, and unsafe operations explicit.
+- Keep memory, ownership, allocation, access control, concurrency, and unsafe operations explicit.
 - Provide a strong statically typed language with practical low-level control.
 - Ship a serious toolchain with compiler, formatter, and language server support.
 - Preserve a path toward zero-cost abstractions through representation and compiler design, not surface complexity.
@@ -19,7 +19,12 @@ Orison currently aims for:
 - algebraic data types via `record` and `choice`
 - generics and constrained polymorphism
 - interface-based abstraction via `interface` and `implements`
+- three-level access control: `public`, `package`, `private`
 - indentation-based primary syntax
+- word-based boolean operators: `and`, `or`, `not`
+- named bitwise operators: `bit_and`, `bit_or`, `bit_xor`, `bit_not`, `shift_left`, `shift_right`
+- ternary conditional expressions with `?:`
+- null-safe member access with `?.`
 - explicit `unsafe` boundaries
 - first-class raw addresses and MMIO support
 - package imports and explicit FFI declarations
@@ -27,51 +32,31 @@ Orison currently aims for:
 
 ## Core documents
 
-- `ORISON_SPEC.md` — language feature and keyword reference
-- `ORISON_TOUR.md` — end-to-end syntax tour
-- `docs/frontend-parity-audit.md` — current frontend implementation/parity tracker
-- `AGENTS.md` — repository rules for AI-augmented development
-- `MEMORY.md` — persistent project context and design learnings
-- `docs/adr/` — architecture decision records
+- `ORISON_SPEC.md` - language feature and keyword reference
+- `ORISON_TOUR.md` - end-to-end syntax tour
+- `AGENTS.md` - repository rules for AI-augmented development
+- `MEMORY.md` - persistent project context and design learnings
+- `docs/adr/` - architecture decision records
 
 ## Tooling plan
 
 The intended tool suite is:
 
-- `orisonc` — compiler driver
-- `orisonls` — language server
-- `orisonfmt` — formatter
+- `orisonc` - compiler driver
+- `orisonls` - language server
+- `orisonfmt` - formatter
 
 Each tool should be distributed as a monolithic statically linked executable. Internally, the implementation should remain modular and library-oriented.
 
-## Implementation stack
-
-The initial implementation targets:
-
-- `C++23` for the compiler and supporting tools
-- `LLVM` for lowering, optimization, and machine code generation
-- `CMake` for the native build workflow
-
 ## Repository expectations
 
-The repository is being scaffolded toward a layout similar to:
+The repository should evolve toward a layout similar to:
 
-- `docs/adr/`
 - `compiler/`
 - `runtime/`
 - `tools/`
 - `tests/`
-
-Current bootstrap layout:
-
-- `compiler/driver/` — shared compiler-driver library code
-- `compiler/source/` — source file loading and path-aware source objects
-- `compiler/diagnostics/` — explicit diagnostic collection and rendering
-- `compiler/syntax/` — lexer and early parser infrastructure for module headers, block structure, signature syntax, basic statements, minimal expression trees, and nested `if`/`else` blocks
-- `tools/orisonc/` — initial compiler executable entry point
-- `runtime/` — reserved for runtime support
-- `tests/` — native smoke and regression tests
-- `docs/adr/` — architecture decision records
+- `docs/adr/`
 
 The exact layout may change during early implementation.
 
@@ -80,8 +65,7 @@ The exact layout may change during early implementation.
 - Update the spec and syntax tour when language surface syntax changes.
 - Add or update tests for every meaningful change.
 - Record material design decisions in ADRs.
-- Record ongoing project learnings in `MEMORY.md`.
 
 ## Status
 
-This repository currently contains the initial language design documents plus an early native `C++23` frontend scaffold that can read a source file, lex a token stream, parse indentation-based blocks, build minimal signature/type/statement/expression/control-flow syntax including nested `if`/`else` blocks, and report explicit diagnostics.
+This repository currently captures the initial language design and development conventions needed to begin implementation.
