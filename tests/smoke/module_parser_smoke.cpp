@@ -320,6 +320,57 @@ void test_extend_failure() {
     assert(diagnostics.front().message == "extend members must be function declarations");
 }
 
+void test_where_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_where_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.constraints\n";
+        output << "public function sort_copy<T>(items: shared View<T>) -> DynamicArray<T>\n";
+        output << "where T: Ordered + Cloneable\n";
+        output << "    return clone(items)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().name == "sort_copy");
+    assert(result.module.functions.front().generic_parameters.size() == 1);
+    assert(result.module.functions.front().generic_parameters.front() == "T");
+    assert(result.module.functions.front().where_constraints.size() == 1);
+    assert(result.module.functions.front().where_constraints.front().parameter_name == "T");
+    assert(result.module.functions.front().where_constraints.front().requirements.size() == 2);
+    assert(result.module.functions.front().where_constraints.front().requirements[0].name == "Ordered");
+    assert(result.module.functions.front().where_constraints.front().requirements[1].name == "Cloneable");
+    assert(result.module.functions.front().body_statements.size() == 1);
+}
+
+void test_where_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_where_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.constraints\n";
+        output << "public function max<T>(left: T, right: T) -> T\n";
+        output << "where T Ordered\n";
+        output << "    return left\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "where clause requires ':' after the constrained parameter");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -848,6 +899,8 @@ int main() {
     test_implements_failure();
     test_extend_success();
     test_extend_failure();
+    test_where_success();
+    test_where_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

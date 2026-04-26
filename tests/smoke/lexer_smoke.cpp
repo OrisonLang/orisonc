@@ -21,6 +21,9 @@ int main() {
         output << "extend Screen\n";
         output << "    public function clear(this: exclusive This) -> Unit\n";
         output << "        return this.width\n";
+        output << "package function fill<R>(source: exclusive R) -> Unit\n";
+        output << "where R: Reader + Display\n";
+        output << "    return\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -44,6 +47,7 @@ int main() {
     bool saw_interface = false;
     bool saw_implements = false;
     bool saw_extend = false;
+    bool saw_where = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
@@ -71,6 +75,9 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::keyword_extend) {
             saw_extend = true;
         }
+        if (token.kind == orison::syntax::TokenKind::keyword_where) {
+            saw_where = true;
+        }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
         }
@@ -86,6 +93,7 @@ int main() {
     assert(saw_interface);
     assert(saw_implements);
     assert(saw_extend);
+    assert(saw_where);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

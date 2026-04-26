@@ -41,7 +41,8 @@ int main() {
         output << "extend FileReader\n";
         output << "    public function reset(this: exclusive This) -> Unit\n";
         output << "        return input.length()\n";
-        output << "package function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
+        output << "package function main<R>(input: shared.View<Byte>, reader: exclusive R) -> Outcome<Int32, ParseError>\n";
+        output << "where R: Reader\n";
         output << "    return -input.length()\n";
         output << "    return input.read(2)\n";
     }
@@ -73,8 +74,10 @@ int main() {
     assert(output.find("first extension method visibility: public") != std::string::npos);
     assert(output.find("functions: 1") != std::string::npos);
     assert(output.find("first function visibility: package") != std::string::npos);
-    assert(output.find("function parameters: 1") != std::string::npos);
+    assert(output.find("function parameters: 2") != std::string::npos);
     assert(output.find("function return type: Outcome<Int32, ParseError>") != std::string::npos);
+    assert(output.find("function where constraints: 1") != std::string::npos);
+    assert(output.find("first function where constraint: R: Reader") != std::string::npos);
     assert(output.find("function body statements: 2") != std::string::npos);
     assert(output.find("first statement kind: return") != std::string::npos);
     assert(output.find("first statement expression: -input.length()") != std::string::npos);

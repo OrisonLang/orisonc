@@ -48,6 +48,11 @@ struct ParameterSyntax {
     TypeSyntax type;
 };
 
+struct WhereConstraintSyntax {
+    std::string parameter_name;
+    std::vector<TypeSyntax> requirements;
+};
+
 enum class ExpressionKind {
     name,
     integer_literal,
@@ -118,8 +123,10 @@ struct ChoiceSyntax {
 
 struct InterfaceMethodSyntax {
     std::string name;
+    std::vector<std::string> generic_parameters;
     std::vector<ParameterSyntax> parameters;
     TypeSyntax return_type;
+    std::vector<WhereConstraintSyntax> where_constraints;
 };
 
 struct InterfaceSyntax {
@@ -132,8 +139,10 @@ struct InterfaceSyntax {
 struct FunctionSyntax {
     Visibility visibility = Visibility::package_visibility;
     std::string name;
+    std::vector<std::string> generic_parameters;
     std::vector<ParameterSyntax> parameters;
     TypeSyntax return_type;
+    std::vector<WhereConstraintSyntax> where_constraints;
     std::vector<StatementSyntax> body_statements;
 };
 

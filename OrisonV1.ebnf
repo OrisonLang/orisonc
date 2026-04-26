@@ -1,0 +1,894 @@
+# ORISON_GRAMMAR.ebnf
+#
+# Draft formal grammar for Orison.
+#
+# Notes:
+# - This is an initial grammar suitable for review, parser design, and test planning.
+# - It is intentionally conservative.
+# - Indentation tokens are modeled explicitly as INDENT / DEDENT / NEWLINE.
+# - A real lexer would emit INDENT / DEDENT similarly to Python.
+# - Operator precedence is expressed through layered expression rules.
+# - Layout-sensitive parsing details may be refined later.
+
+# =============================================================================
+# LEXICAL GRAMMAR
+# =============================================================================
+
+source_character
+    ::= any Unicode scalar value
+
+newline
+    ::= "\n"
+     |  "\r\n"
+
+whitespace
+    ::= " "
+     |  "\t"
+
+comment
+    ::= "#" { not_newline } newline
+
+not_newline
+    ::= any source_character except "\n" and "\r"
+
+identifier
+    ::= identifier_start { identifier_continue }
+
+identifier_start
+    ::= "A".."Z"
+     |  "a".."z"
+     |  "_"
+
+identifier_continue
+    ::= identifier_start
+     |  "0".."9"
+
+upper_identifier
+    ::= "A".."Z" { identifier_continue }
+
+lower_identifier
+    ::= "a".."z" { identifier_continue }
+     |  "_" { identifier_continue }
+
+integer_literal
+    ::= decimal_integer
+     |  hexadecimal_integer
+     |  binary_integer
+
+decimal_integer
+    ::= decimal_digit { decimal_digit_or_separator }
+
+decimal_digit_or_separator
+    ::= decimal_digit
+     |  "_"
+
+decimal_digit
+    ::= "0".."9"
+
+hexadecimal_integer
+    ::= "0x" hexadecimal_digit { hexadecimal_digit_or_separator }
+     |  "0X" hexadecimal_digit { hexadecimal_digit_or_separator }
+
+hexadecimal_digit_or_separator
+    ::= hexadecimal_digit
+     |  "_"
+
+hexadecimal_digit
+    ::= "0".."9"
+     |  "a".."f"
+     |  "A".."F"
+
+binary_integer
+    ::= "0b" binary_digit { binary_digit_or_separator }
+     |  "0B" binary_digit { binary_digit_or_separator }
+
+binary_digit_or_separator
+    ::= binary_digit
+     |  "_"
+
+binary_digit
+    ::= "0"
+     |  "1"
+
+float_literal
+    ::= decimal_integer "." decimal_integer [ exponent_part ]
+     |  decimal_integer exponent_part
+
+exponent_part
+    ::= ( "e" | "E" ) [ "+" | "-" ] decimal_integer
+
+string_literal
+    ::= "\"" { string_character | escape_sequence } "\""
+
+string_character
+    ::= any source_character except "\"" and "\\" and newline
+
+character_literal
+    ::= "'" ( character_body | escape_sequence ) "'"
+
+character_body
+    ::= any source_character except "'" and "\\" and newline
+
+escape_sequence
+    ::= "\\" escape_character
+     |  "\\u{" hexadecimal_digit { hexadecimal_digit } "}"
+
+escape_character
+    ::= "\""
+     |  "'"
+     |  "\\"
+     |  "n"
+     |  "r"
+     |  "t"
+     |  "0"
+
+bool_literal
+    ::= "true"
+     |  "false"
+
+unit_literal
+    ::= "unit"
+
+literal
+    ::= integer_literal
+     |  float_literal
+     |  string_literal
+     |  character_literal
+     |  bool_literal
+     |  unit_literal
+
+# Keywords are reserved and cannot be used as ordinary identifiers.
+
+keyword
+    ::= "package"
+     |  "import"
+     |  "from"
+     |  "as"
+     |  "public"
+     |  "private"
+     |  "type"
+     |  "record"
+     |  "choice"
+     |  "interface"
+     |  "implements"
+     |  "for"
+     |  "extend"
+     |  "function"
+     |  "async"
+     |  "where"
+     |  "shared"
+     |  "exclusive"
+     |  "let"
+     |  "var"
+     |  "const"
+     |  "switch"
+     |  "default"
+     |  "guard"
+     |  "else"
+     |  "if"
+     |  "while"
+     |  "repeat"
+     |  "break"
+     |  "continue"
+     |  "defer"
+     |  "return"
+     |  "recur"
+     |  "tail"
+     |  "foreign"
+     |  "library"
+     |  "unsafe"
+     |  "thread"
+     |  "task"
+     |  "await"
+     |  "and"
+     |  "or"
+     |  "not"
+     |  "bit_and"
+     |  "bit_or"
+     |  "bit_xor"
+     |  "bit_not"
+     |  "shift_left"
+     |  "shift_right"
+
+symbol
+    ::= "("
+     |  ")"
+     |  "["
+     |  "]"
+     |  "{"
+     |  "}"
+     |  "<"
+     |  ">"
+     |  ","
+     |  "."
+     |  "?."
+     |  ":"
+     |  "::"
+     |  "="
+     |  "=>"
+     |  "->"
+     |  "?"
+     |  "+"
+     |  "-"
+     |  "*"
+     |  "/"
+     |  "%"
+     |  "=="
+     |  "!="
+     |  "<="
+     |  ">="
+     |  "!"
+     |  "+="
+     |  "-="
+     |  "*="
+     |  "/="
+     |  "%="
+
+layout_token
+    ::= NEWLINE
+     |  INDENT
+     |  DEDENT
+
+# =============================================================================
+# SYNTACTIC GRAMMAR
+# =============================================================================
+
+compilation_unit
+    ::= package_declaration NEWLINE
+        import_section_opt
+        top_level_declaration_list_opt
+        EOF
+
+package_declaration
+    ::= "package" package_path
+
+package_path
+    ::= identifier { "." identifier }
+
+import_section_opt
+    ::= import_block
+     |  empty
+
+import_block
+    ::= "import" NEWLINE INDENT import_item_list DEDENT
+
+import_item_list
+    ::= import_item { NEWLINE import_item } [ NEWLINE ]
+
+import_item
+    ::= identifier import_alias_opt "from" package_path
+
+import_alias_opt
+    ::= "as" identifier
+     |  empty
+
+top_level_declaration_list_opt
+    ::= top_level_declaration_list
+     |  empty
+
+top_level_declaration_list
+    ::= { top_level_declaration NEWLINE* }
+
+top_level_declaration
+    ::= visibility_modifier_opt type_alias_declaration
+     |  visibility_modifier_opt record_declaration
+     |  visibility_modifier_opt choice_declaration
+     |  visibility_modifier_opt interface_declaration
+     |  implements_declaration
+     |  extend_declaration
+     |  visibility_modifier_opt function_declaration
+     |  visibility_modifier_opt const_declaration
+     |  visibility_modifier_opt foreign_block
+     |  visibility_modifier_opt foreign_export_declaration
+
+visibility_modifier_opt
+    ::= visibility_modifier
+     |  empty
+
+visibility_modifier
+    ::= "public"
+     |  "package"
+     |  "private"
+
+# =============================================================================
+# TYPE DECLARATIONS
+# =============================================================================
+
+type_alias_declaration
+    ::= "type" type_name "=" type_expression
+
+record_declaration
+    ::= "record" type_name generic_parameter_list_opt NEWLINE INDENT record_member_list DEDENT
+
+record_member_list
+    ::= record_member { NEWLINE record_member } [ NEWLINE ]
+
+record_member
+    ::= visibility_modifier_opt field_declaration
+
+field_declaration
+    ::= identifier ":" type_expression
+
+choice_declaration
+    ::= "choice" type_name generic_parameter_list_opt NEWLINE INDENT choice_variant_list DEDENT
+
+choice_variant_list
+    ::= choice_variant { NEWLINE choice_variant } [ NEWLINE ]
+
+choice_variant
+    ::= constructor_name
+     |  constructor_name "(" field_parameter_list_opt ")"
+
+constructor_name
+    ::= upper_identifier
+
+interface_declaration
+    ::= "interface" type_name generic_parameter_list_opt interface_body_opt
+
+interface_body_opt
+    ::= NEWLINE INDENT interface_member_list DEDENT
+     |  empty
+
+interface_member_list
+    ::= interface_member { NEWLINE interface_member } [ NEWLINE ]
+
+interface_member
+    ::= function_signature
+
+implements_declaration
+    ::= "implements" type_name generic_argument_list_opt "for" type_expression NEWLINE INDENT function_declaration_list DEDENT
+
+extend_declaration
+    ::= "extend" type_expression NEWLINE INDENT extend_member_list DEDENT
+
+extend_member_list
+    ::= extend_member { NEWLINE extend_member } [ NEWLINE ]
+
+extend_member
+    ::= visibility_modifier_opt function_declaration
+
+function_declaration_list
+    ::= function_declaration { NEWLINE function_declaration } [ NEWLINE ]
+
+# =============================================================================
+# FUNCTIONS
+# =============================================================================
+
+function_declaration
+    ::= async_modifier_opt unsafe_modifier_opt "function" function_name generic_parameter_list_opt
+        "(" parameter_list_opt ")"
+        return_type_annotation
+        where_clause_opt
+        function_body
+
+function_signature
+    ::= async_modifier_opt unsafe_modifier_opt "function" function_name generic_parameter_list_opt
+        "(" parameter_list_opt ")"
+        return_type_annotation
+        where_clause_opt
+
+async_modifier_opt
+    ::= "async"
+     |  empty
+
+unsafe_modifier_opt
+    ::= "unsafe"
+     |  empty
+
+function_name
+    ::= identifier
+
+return_type_annotation
+    ::= "->" type_expression
+
+function_body
+    ::= NEWLINE INDENT statement_list_opt DEDENT
+
+parameter_list_opt
+    ::= parameter_list
+     |  empty
+
+parameter_list
+    ::= parameter { "," parameter }
+
+parameter
+    ::= identifier ":" type_expression
+
+field_parameter_list_opt
+    ::= field_parameter_list
+     |  empty
+
+field_parameter_list
+    ::= field_parameter { "," field_parameter }
+
+field_parameter
+    ::= identifier ":" type_expression
+
+where_clause_opt
+    ::= where_clause
+     |  empty
+
+where_clause
+    ::= NEWLINE "where" where_constraint_list
+
+where_constraint_list
+    ::= where_constraint { "," where_constraint }
+
+where_constraint
+    ::= type_name ":" type_expression { "+" type_expression }
+
+# =============================================================================
+# FOREIGN FUNCTION INTERFACE
+# =============================================================================
+
+foreign_block
+    ::= "foreign" string_literal foreign_library_opt NEWLINE INDENT foreign_declaration_list DEDENT
+
+foreign_library_opt
+    ::= "library" string_literal
+     |  empty
+
+foreign_declaration_list
+    ::= foreign_declaration { NEWLINE foreign_declaration } [ NEWLINE ]
+
+foreign_declaration
+    ::= "function" function_name "(" parameter_list_opt ")" return_type_annotation foreign_symbol_alias_opt
+
+foreign_symbol_alias_opt
+    ::= "as" string_literal
+     |  empty
+
+foreign_export_declaration
+    ::= "foreign" string_literal foreign_symbol_alias_opt NEWLINE function_declaration
+     |  "foreign" string_literal foreign_symbol_alias_opt function_declaration
+
+# Example accepted by this rule:
+# public foreign "c"
+# function ffi_add(a: Int32, b: Int32) -> Int32
+#     a + b
+#
+# Example accepted by this rule:
+# public foreign "c" as "device_init"
+# function initialize_device() -> Int32
+#     0
+
+# =============================================================================
+# CONSTANTS
+# =============================================================================
+
+const_declaration
+    ::= "const" identifier ":" type_expression "=" expression
+
+# =============================================================================
+# TYPES
+# =============================================================================
+
+type_expression
+    ::= access_type
+     |  generic_type
+     |  array_type
+     |  simple_type
+
+access_type
+    ::= "shared" type_expression
+     |  "exclusive" type_expression
+
+generic_type
+    ::= type_name generic_argument_list
+
+array_type
+    ::= "Array" "<" type_expression "," expression ">"
+
+simple_type
+    ::= type_name
+
+type_name
+    ::= upper_identifier
+     |  builtin_type_name
+
+builtin_type_name
+    ::= "Int8"
+     |  "Int16"
+     |  "Int32"
+     |  "Int64"
+     |  "Int128"
+     |  "IntSize"
+     |  "UInt8"
+     |  "UInt16"
+     |  "UInt32"
+     |  "UInt64"
+     |  "UInt128"
+     |  "UIntSize"
+     |  "Float32"
+     |  "Float64"
+     |  "Bool"
+     |  "Byte"
+     |  "Char"
+     |  "Text"
+     |  "Unit"
+     |  "Address"
+     |  "This"
+
+generic_parameter_list_opt
+    ::= generic_parameter_list
+     |  empty
+
+generic_parameter_list
+    ::= "<" generic_parameter { "," generic_parameter } ">"
+
+generic_parameter
+    ::= type_name
+
+generic_argument_list_opt
+    ::= generic_argument_list
+     |  empty
+
+generic_argument_list
+    ::= "<" type_expression { "," type_expression } ">"
+
+# =============================================================================
+# STATEMENTS AND BLOCKS
+# =============================================================================
+
+statement_list_opt
+    ::= statement_list
+     |  empty
+
+statement_list
+    ::= statement { NEWLINE statement } [ NEWLINE ]
+
+statement
+    ::= declaration_statement
+     |  assignment_statement
+     |  control_statement
+     |  unsafe_block
+     |  defer_statement
+     |  expression_statement
+
+declaration_statement
+    ::= let_statement
+     |  var_statement
+     |  const_declaration
+
+let_statement
+    ::= "let" identifier type_annotation_opt "=" expression
+
+var_statement
+    ::= "var" identifier type_annotation_opt "=" expression
+
+type_annotation_opt
+    ::= ":" type_expression
+     |  empty
+
+assignment_statement
+    ::= assignment_target assignment_operator expression
+
+assignment_target
+    ::= postfix_expression
+
+assignment_operator
+    ::= "="
+     |  "+="
+     |  "-="
+     |  "*="
+     |  "/="
+     |  "%="
+
+control_statement
+    ::= if_statement
+     |  guard_statement
+     |  switch_statement
+     |  while_statement
+     |  for_statement
+     |  repeat_statement
+     |  break_statement
+     |  continue_statement
+     |  return_statement
+     |  recur_statement
+
+if_statement
+    ::= "if" expression NEWLINE INDENT statement_list_opt DEDENT else_clause_opt
+
+else_clause_opt
+    ::= NEWLINE "else" NEWLINE INDENT statement_list_opt DEDENT
+     |  empty
+
+guard_statement
+    ::= "guard" expression "else" NEWLINE INDENT statement_list_opt DEDENT
+
+switch_statement
+    ::= "switch" expression NEWLINE INDENT switch_arm_list DEDENT
+
+switch_arm_list
+    ::= switch_arm { NEWLINE switch_arm } [ NEWLINE ]
+
+switch_arm
+    ::= pattern "=>" expression
+     |  pattern "=>" NEWLINE INDENT statement_list_opt DEDENT
+     |  "default" "=>" expression
+     |  "default" "=>" NEWLINE INDENT statement_list_opt DEDENT
+
+while_statement
+    ::= "while" expression NEWLINE INDENT statement_list_opt DEDENT
+
+for_statement
+    ::= "for" identifier "in" expression NEWLINE INDENT statement_list_opt DEDENT
+
+repeat_statement
+    ::= "repeat" NEWLINE INDENT statement_list_opt DEDENT NEWLINE "while" expression
+
+break_statement
+    ::= "break"
+
+continue_statement
+    ::= "continue"
+
+return_statement
+    ::= "return"
+     |  "return" expression
+     |  "return" "tail" call_expression
+
+recur_statement
+    ::= "recur" "(" argument_list_opt ")"
+
+unsafe_block
+    ::= "unsafe" NEWLINE INDENT statement_list_opt DEDENT
+
+defer_statement
+    ::= "defer" NEWLINE INDENT statement_list_opt DEDENT
+
+expression_statement
+    ::= expression
+
+# =============================================================================
+# PATTERNS
+# =============================================================================
+
+pattern
+    ::= literal_pattern
+     |  constructor_pattern
+     |  identifier_pattern
+     |  wildcard_pattern
+
+literal_pattern
+    ::= literal
+
+constructor_pattern
+    ::= constructor_name
+     |  constructor_name "(" pattern_list_opt ")"
+
+pattern_list_opt
+    ::= pattern_list
+     |  empty
+
+pattern_list
+    ::= pattern { "," pattern }
+
+identifier_pattern
+    ::= identifier
+
+wildcard_pattern
+    ::= "_"
+
+# =============================================================================
+# EXPRESSIONS
+# =============================================================================
+
+expression
+    ::= ternary_expression
+
+ternary_expression
+    ::= logical_or_expression
+     |  logical_or_expression "?" expression ":" expression
+
+logical_or_expression
+    ::= logical_and_expression { "or" logical_and_expression }
+
+logical_and_expression
+    ::= equality_expression { "and" equality_expression }
+
+equality_expression
+    ::= relational_expression { equality_operator relational_expression }
+
+equality_operator
+    ::= "=="
+     |  "!="
+
+relational_expression
+    ::= bitwise_expression { relational_operator bitwise_expression }
+
+relational_operator
+    ::= "<"
+     |  "<="
+     |  ">"
+     |  ">="
+
+bitwise_expression
+    ::= shift_expression { bitwise_operator shift_expression }
+
+bitwise_operator
+    ::= "bit_and"
+     |  "bit_or"
+     |  "bit_xor"
+
+shift_expression
+    ::= additive_expression { shift_operator additive_expression }
+
+shift_operator
+    ::= "shift_left"
+     |  "shift_right"
+
+additive_expression
+    ::= multiplicative_expression { additive_operator multiplicative_expression }
+
+additive_operator
+    ::= "+"
+     |  "-"
+
+multiplicative_expression
+    ::= cast_expression { multiplicative_operator cast_expression }
+
+multiplicative_operator
+    ::= "*"
+     |  "/"
+     |  "%"
+
+cast_expression
+    ::= unary_expression { "as" type_expression }
+
+unary_expression
+    ::= unary_operator unary_expression
+     |  await_expression
+     |  thread_expression
+     |  task_expression
+     |  postfix_expression
+
+unary_operator
+    ::= "not"
+     |  "bit_not"
+     |  "-"
+     |  "+"
+
+await_expression
+    ::= "await" unary_expression
+
+thread_expression
+    ::= "thread" NEWLINE INDENT statement_list_opt DEDENT
+
+task_expression
+    ::= "task" NEWLINE INDENT statement_list_opt DEDENT
+
+postfix_expression
+    ::= primary_expression { postfix_operator }
+
+postfix_operator
+    ::= member_access
+     |  null_safe_member_access
+     |  call_suffix
+     |  index_suffix
+
+member_access
+    ::= "." identifier
+
+null_safe_member_access
+    ::= "?." identifier
+
+call_suffix
+    ::= "(" argument_list_opt ")"
+
+index_suffix
+    ::= "[" expression "]"
+
+call_expression
+    ::= postfix_expression
+    # Semantic restriction:
+    # - A call expression used after `return tail` must denote a direct tail-call target.
+
+primary_expression
+    ::= literal
+     |  unit_group
+     |  identifier
+     |  qualified_name
+     |  constructor_expression
+     |  array_literal
+     |  parenthesized_expression
+
+unit_group
+    ::= "(" ")"
+
+qualified_name
+    ::= identifier { "." identifier }
+
+constructor_expression
+    ::= type_name generic_argument_list_opt "(" argument_list_opt ")"
+     |  constructor_name "(" argument_list_opt ")"
+
+array_literal
+    ::= "[" argument_list_opt "]"
+
+parenthesized_expression
+    ::= "(" expression ")"
+
+argument_list_opt
+    ::= argument_list
+     |  empty
+
+argument_list
+    ::= expression { "," expression }
+
+# =============================================================================
+# PRECEDENCE SUMMARY
+# =============================================================================
+#
+# Highest to lowest:
+#
+# 1. primary expressions
+# 2. postfix: call, index, member, null-safe member
+# 3. unary: not, bit_not, unary +, unary -, await
+# 4. multiplicative: *, /, %
+# 5. additive: +, -
+# 6. shifts: shift_left, shift_right
+# 7. bitwise: bit_and, bit_or, bit_xor
+# 8. relational: <, <=, >, >=
+# 9. equality: ==, !=
+# 10. logical and: and
+# 11. logical or: or
+# 12. ternary: ?:
+#
+# =============================================================================
+# SEMANTIC NOTES OUTSIDE THIS GRAMMAR
+# =============================================================================
+#
+# 1. Indentation:
+#    The lexer emits INDENT and DEDENT tokens after NEWLINE based on leading
+#    whitespace. Mixed tabs/spaces policy is implementation-defined until a
+#    formatter policy is finalized.
+#
+# 2. Visibility:
+#    Top-level declarations default to package visibility.
+#    Type members default to private visibility.
+#    Interface members are implicitly public.
+#
+# 3. `private`:
+#    Private top-level declarations are not recommended for v1 unless file-level
+#    privacy is later specified.
+#
+# 4. `public foreign`:
+#    Foreign exports use public visibility. The older `export foreign` spelling
+#    is intentionally not part of this grammar.
+#
+# 5. `?.`:
+#    Null-safe access is defined over Maybe-like optional values. The exact
+#    desugaring is semantic, not syntactic:
+#
+#        user?.profile?.address?.city
+#
+#    conceptually yields Maybe<...> and short-circuits to Empty when any segment
+#    is Empty.
+#
+# 6. Boolean operators:
+#    Orison uses word operators `and`, `or`, and `not`, not symbolic forms.
+#
+# 7. Bitwise operators:
+#    Orison uses named operators: bit_and, bit_or, bit_xor, bit_not,
+#    shift_left, and shift_right.
+#
+# 8. Unit:
+#    Unit functions may fall off the end with implicit unit.
+#    Unit functions may use a bare `return`.
+#
+# 9. Tail calls:
+#    `recur(...)` is limited to self-tail-recursive re-entry.
+#    `return tail f(...)` is limited to verified tail-call position.
+#
+# 10. Unsafe:
+#    Raw pointer construction, raw memory access, pointer arithmetic, volatile
+#    MMIO access, and foreign calls may require unsafe contexts by semantic rule.
+#
+# 11. Dynamic dispatch:
+#    This grammar does not yet define explicit dynamic interface objects.
+#
+# 12. Layout:
+#    This grammar does not yet define representation/layout attributes such as
+#    C-compatible records, packed records, alignment, or calling-convention
+#    attributes beyond the `foreign "abi"` block notation.

@@ -235,6 +235,7 @@ private:
         case TokenKind::keyword_for:
         case TokenKind::keyword_in:
         case TokenKind::keyword_defer:
+        case TokenKind::keyword_where:
             return true;
         default:
             return false;
@@ -475,6 +476,7 @@ private:
             return std::nullopt;
         }
 
+        auto generic_parameters = parse_generic_parameter_names(result);
         auto parameters = parse_parameter_list(result);
         if (result.diagnostics.has_errors() && !is(TokenKind::arrow) && !is(TokenKind::newline)) {
             skip_to_next_line();
@@ -491,10 +493,62 @@ private:
             return std::nullopt;
         }
 
+        std::vector<WhereConstraintSyntax> where_constraints;
+        if (is(TokenKind::newline) && peek().kind == TokenKind::keyword_where && peek().line_start) {
+            advance();
+            advance();
+
+            while (!is(TokenKind::newline) && !is(TokenKind::eof)) {
+                WhereConstraintSyntax constraint;
+                constraint.parameter_name =
+                    expect_identifier(result, "where clause requires a constrained generic parameter name");
+                if (constraint.parameter_name.empty()) {
+                    break;
+                }
+
+                if (!is(TokenKind::colon)) {
+                    result.diagnostics.error(current().line, "where clause requires ':' after the constrained parameter");
+                    break;
+                }
+
+                advance();
+                while (true) {
+                    auto requirement = parse_type(result, "where clause requires an interface or constraint type");
+                    if (requirement.name.empty()) {
+                        break;
+                    }
+                    constraint.requirements.push_back(std::move(requirement));
+
+                    if (is(TokenKind::plus)) {
+                        advance();
+                        continue;
+                    }
+                    break;
+                }
+
+                if (constraint.requirements.empty()) {
+                    break;
+                }
+
+                where_constraints.push_back(std::move(constraint));
+                if (is(TokenKind::comma)) {
+                    advance();
+                    continue;
+                }
+
+                if (!is(TokenKind::newline) && !is(TokenKind::eof)) {
+                    result.diagnostics.error(current().line, "expected ',' or end of where clause");
+                }
+                break;
+            }
+        }
+
         return InterfaceMethodSyntax {
             .name = std::move(name),
+            .generic_parameters = std::move(generic_parameters),
             .parameters = std::move(parameters),
             .return_type = std::move(return_type),
+            .where_constraints = std::move(where_constraints),
         };
     }
 
@@ -503,8 +557,10 @@ private:
         FunctionSyntax function {
             .visibility = visibility,
             .name = std::move(signature.name),
+            .generic_parameters = std::move(signature.generic_parameters),
             .parameters = std::move(signature.parameters),
             .return_type = std::move(signature.return_type),
+            .where_constraints = std::move(signature.where_constraints),
             .body_statements = {},
         };
 

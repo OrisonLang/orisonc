@@ -44,6 +44,17 @@ auto render_visibility(orison::syntax::Visibility visibility) -> std::string_vie
     return "unknown";
 }
 
+auto render_where_constraint(orison::syntax::WhereConstraintSyntax const& constraint) -> std::string {
+    std::string rendered = constraint.parameter_name + ": ";
+    for (std::size_t i = 0; i < constraint.requirements.size(); ++i) {
+        if (i > 0) {
+            rendered += " + ";
+        }
+        rendered += render_type(constraint.requirements[i]);
+    }
+    return rendered;
+}
+
 auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_view {
     using orison::syntax::StatementKind;
     switch (kind) {
@@ -194,6 +205,13 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             output << "function parameters: " << parse_result.module.functions.front().parameters.size() << '\n';
             output << "function return type: " << render_type(parse_result.module.functions.front().return_type)
                    << '\n';
+            output << "function where constraints: "
+                   << parse_result.module.functions.front().where_constraints.size() << '\n';
+            if (!parse_result.module.functions.front().where_constraints.empty()) {
+                output << "first function where constraint: "
+                       << render_where_constraint(parse_result.module.functions.front().where_constraints.front())
+                       << '\n';
+            }
             output << "function body statements: " << parse_result.module.functions.front().body_statements.size()
                    << '\n';
             if (!parse_result.module.functions.front().body_statements.empty()) {
