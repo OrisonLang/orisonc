@@ -735,6 +735,59 @@ void test_hex_binary_integer_success() {
     assert(result.module.functions.front().body_statements[2].expression.text == "0x2000_0000");
 }
 
+void test_cast_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_cast_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.casts\n";
+        output << "function checksum(b: Byte, total: UInt32) -> UInt32\n";
+        output << "    let converted = b as UInt32\n";
+        output << "    return total + b as UInt32\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& let_statement = result.module.functions.front().body_statements[0];
+    assert(let_statement.expression.kind == orison::syntax::ExpressionKind::cast);
+    assert(let_statement.expression.text == "UInt32");
+    assert(let_statement.expression.left->kind == orison::syntax::ExpressionKind::name);
+    assert(let_statement.expression.left->text == "b");
+    auto const& return_statement = result.module.functions.front().body_statements[1];
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(return_statement.expression.text == "+");
+    assert(return_statement.expression.right->kind == orison::syntax::ExpressionKind::cast);
+    assert(return_statement.expression.right->text == "UInt32");
+    assert(return_statement.expression.right->left->text == "b");
+}
+
+void test_cast_expression_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_cast_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.casts\n";
+        output << "function checksum(b: Byte) -> UInt32\n";
+        output << "    return b as\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "cast expression requires a target type after 'as'");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1277,6 +1330,8 @@ int main() {
     test_string_literal_success();
     test_string_literal_failure();
     test_hex_binary_integer_success();
+    test_cast_expression_success();
+    test_cast_expression_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

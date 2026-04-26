@@ -649,6 +649,31 @@ private:
         return parse_primary_expression(result);
     }
 
+    auto parse_cast_expression(ParseResult& result) -> ExpressionSyntax {
+        auto expression = parse_prefix_expression(result);
+        if (expression.text.empty() && !expression.left && !expression.right && expression.arguments.empty()) {
+            return expression;
+        }
+
+        while (is(TokenKind::keyword_as)) {
+            advance();
+            auto cast_type = parse_type(result, "cast expression requires a target type after 'as'");
+            if (cast_type.name.empty()) {
+                return {};
+            }
+
+            expression = ExpressionSyntax {
+                .kind = ExpressionKind::cast,
+                .text = cast_type.name,
+                .arguments = {},
+                .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                .right = nullptr,
+            };
+        }
+
+        return expression;
+    }
+
     auto parse_argument_list(ParseResult& result) -> std::vector<ExpressionSyntax> {
         std::vector<ExpressionSyntax> arguments;
         if (is(TokenKind::right_paren)) {
@@ -748,7 +773,7 @@ private:
     }
 
     auto parse_expression(ParseResult& result, int minimum_precedence = 0) -> ExpressionSyntax {
-        auto left = parse_prefix_expression(result);
+        auto left = parse_cast_expression(result);
         if (left.text.empty() && !left.left && !left.right && left.arguments.empty()) {
             return left;
         }

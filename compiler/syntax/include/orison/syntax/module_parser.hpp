@@ -59,6 +59,7 @@ enum class ExpressionKind {
     string_literal,
     boolean_literal,
     unary,
+    cast,
     call,
     member_access,
     binary,
