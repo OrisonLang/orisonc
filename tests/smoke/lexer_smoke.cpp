@@ -15,6 +15,9 @@ int main() {
         output << "public type Port = UInt16\n";
         output << "public interface Display\n";
         output << "    function display(this: shared This) -> Text\n";
+        output << "implements Display for Screen\n";
+        output << "    function display(this: shared This) -> Text\n";
+        output << "        return this.name\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -36,6 +39,7 @@ int main() {
     bool saw_public = false;
     bool saw_type = false;
     bool saw_interface = false;
+    bool saw_implements = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
@@ -57,6 +61,9 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::keyword_interface) {
             saw_interface = true;
         }
+        if (token.kind == orison::syntax::TokenKind::keyword_implements) {
+            saw_implements = true;
+        }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
         }
@@ -70,6 +77,7 @@ int main() {
     assert(saw_public);
     assert(saw_type);
     assert(saw_interface);
+    assert(saw_implements);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

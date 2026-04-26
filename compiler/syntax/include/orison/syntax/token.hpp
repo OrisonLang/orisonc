@@ -14,6 +14,7 @@ enum class TokenKind {
     keyword_record,
     keyword_choice,
     keyword_interface,
+    keyword_implements,
     keyword_function,
     keyword_public,
     keyword_private,

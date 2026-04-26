@@ -137,6 +137,12 @@ struct FunctionSyntax {
     std::vector<StatementSyntax> body_statements;
 };
 
+struct ImplementationSyntax {
+    TypeSyntax interface_type;
+    TypeSyntax receiver_type;
+    std::vector<FunctionSyntax> methods;
+};
+
 struct ModuleSyntax {
     std::string package_name;
     std::vector<ImportSyntax> imports;
@@ -144,6 +150,7 @@ struct ModuleSyntax {
     std::vector<RecordSyntax> records;
     std::vector<ChoiceSyntax> choices;
     std::vector<InterfaceSyntax> interfaces;
+    std::vector<ImplementationSyntax> implementations;
     std::vector<FunctionSyntax> functions;
     std::size_t top_level_declaration_count = 0;
 };

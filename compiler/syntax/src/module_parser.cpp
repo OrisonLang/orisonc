@@ -68,13 +68,16 @@ private:
         case TokenKind::keyword_interface:
             parse_interface(result, Visibility::package_visibility);
             break;
+        case TokenKind::keyword_implements:
+            parse_implementation(result);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, Visibility::package_visibility);
             break;
         default:
             result.diagnostics.error(
                 current().line,
-                "expected a top-level declaration such as package, import, type, record, choice, interface, or function"
+                "expected a top-level declaration such as package, import, type, record, choice, interface, implements, or function"
             );
             skip_to_next_line();
             break;
@@ -211,6 +214,7 @@ private:
         case TokenKind::keyword_function:
         case TokenKind::keyword_public:
         case TokenKind::keyword_private:
+        case TokenKind::keyword_implements:
         case TokenKind::keyword_from:
         case TokenKind::keyword_as:
         case TokenKind::keyword_shared:
@@ -488,6 +492,25 @@ private:
             .parameters = std::move(parameters),
             .return_type = std::move(return_type),
         };
+    }
+
+    auto parse_function_body(ParseResult& result, InterfaceMethodSyntax signature, Visibility visibility)
+        -> std::optional<FunctionSyntax> {
+        FunctionSyntax function {
+            .visibility = visibility,
+            .name = std::move(signature.name),
+            .parameters = std::move(signature.parameters),
+            .return_type = std::move(signature.return_type),
+            .body_statements = {},
+        };
+
+        auto body = parse_statement_block(result, "function declaration requires an indented body block");
+        if (body.empty() && result.diagnostics.has_errors()) {
+            return std::nullopt;
+        }
+
+        function.body_statements = std::move(body);
+        return function;
     }
 
     auto precedence(TokenKind kind) const -> int {
@@ -1279,6 +1302,64 @@ private:
         ++result.module.top_level_declaration_count;
     }
 
+    void parse_implementation(ParseResult& result) {
+        advance();
+        auto interface_type = parse_type(result, "implements declaration requires an interface type");
+        if (interface_type.name.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        if (!is(TokenKind::keyword_for)) {
+            result.diagnostics.error(current().line, "implements declaration requires 'for' before the receiver type");
+            skip_to_next_line();
+            return;
+        }
+
+        advance();
+        auto receiver_type = parse_type(result, "implements declaration requires a receiver type");
+        if (receiver_type.name.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        ImplementationSyntax implementation {
+            .interface_type = std::move(interface_type),
+            .receiver_type = std::move(receiver_type),
+            .methods = {},
+        };
+
+        if (!consume_block_start(result, "implements declaration requires an indented method block")) {
+            skip_to_next_top_level();
+            return;
+        }
+
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            auto maybe_signature = parse_function_signature(result, "implements members must be function declarations");
+            if (!maybe_signature.has_value()) {
+                skip_to_next_line();
+                continue;
+            }
+
+            auto maybe_method = parse_function_body(result, std::move(*maybe_signature), Visibility::package_visibility);
+            if (!maybe_method.has_value()) {
+                skip_to_next_top_level();
+                return;
+            }
+
+            implementation.methods.push_back(std::move(*maybe_method));
+        }
+
+        consume_block_end();
+        result.module.implementations.push_back(std::move(implementation));
+        ++result.module.top_level_declaration_count;
+    }
+
     void parse_function(ParseResult& result, Visibility visibility) {
         auto maybe_signature = parse_function_signature(result, "function declaration requires 'function'");
         if (!maybe_signature.has_value()) {
@@ -1286,22 +1367,13 @@ private:
             return;
         }
 
-        FunctionSyntax function {
-            .visibility = visibility,
-            .name = std::move(maybe_signature->name),
-            .parameters = std::move(maybe_signature->parameters),
-            .return_type = std::move(maybe_signature->return_type),
-            .body_statements = {},
-        };
-
-        auto body = parse_statement_block(result, "function declaration requires an indented body block");
-        if (body.empty() && result.diagnostics.has_errors()) {
+        auto maybe_function = parse_function_body(result, std::move(*maybe_signature), visibility);
+        if (!maybe_function.has_value()) {
             skip_to_next_top_level();
             return;
         }
 
-        function.body_statements = std::move(body);
-        result.module.functions.push_back(std::move(function));
+        result.module.functions.push_back(std::move(*maybe_function));
         ++result.module.top_level_declaration_count;
     }
 

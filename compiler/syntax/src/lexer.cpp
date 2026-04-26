@@ -26,6 +26,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "interface") {
         return TokenKind::keyword_interface;
     }
+    if (text == "implements") {
+        return TokenKind::keyword_implements;
+    }
     if (text == "function") {
         return TokenKind::keyword_function;
     }
