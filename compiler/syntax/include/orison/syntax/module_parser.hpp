@@ -53,6 +53,19 @@ struct WhereConstraintSyntax {
     std::vector<TypeSyntax> requirements;
 };
 
+struct ForeignImportFunctionSyntax {
+    std::string name;
+    std::vector<ParameterSyntax> parameters;
+    TypeSyntax return_type;
+    std::string external_name;
+};
+
+struct ForeignImportBlockSyntax {
+    std::string abi;
+    std::string library_name;
+    std::vector<ForeignImportFunctionSyntax> functions;
+};
+
 enum class ExpressionKind {
     name,
     integer_literal,
@@ -166,6 +179,12 @@ struct FunctionSyntax {
     std::vector<StatementSyntax> body_statements;
 };
 
+struct ForeignExportSyntax {
+    std::string abi;
+    std::string external_name;
+    FunctionSyntax function;
+};
+
 struct ImplementationSyntax {
     TypeSyntax interface_type;
     TypeSyntax receiver_type;
@@ -180,6 +199,8 @@ struct ExtensionSyntax {
 struct ModuleSyntax {
     std::string package_name;
     std::vector<ImportSyntax> imports;
+    std::vector<ForeignImportBlockSyntax> foreign_imports;
+    std::vector<ForeignExportSyntax> foreign_exports;
     std::vector<ConstantSyntax> constants;
     std::vector<TypeAliasSyntax> type_aliases;
     std::vector<RecordSyntax> records;

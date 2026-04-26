@@ -13,6 +13,12 @@ int main() {
         output << "const UART0_BASE: Address = 0x4000_1000\n";
         output << "import\n";
         output << "    Logger as Log from diagnostics.logger\n";
+        output << "package foreign \"c\" library \"m\"\n";
+        output << "    function sin(x: Float64) -> Float64\n";
+        output << "    function print_line(text: Pointer<Byte>) -> Int32 as \"puts\"\n";
+        output << "public foreign \"c\" as \"device_init\"\n";
+        output << "function initialize_device() -> Int32\n";
+        output << "    return 0\n";
         output << "public type Port = UInt16\n";
         output << "public interface Display\n";
         output << "    function display(this: shared This) -> Text\n";
@@ -66,6 +72,8 @@ int main() {
     assert(result.tokens[3].kind == orison::syntax::TokenKind::identifier);
     bool saw_import = false;
     bool saw_const = false;
+    bool saw_foreign = false;
+    bool saw_library = false;
     bool saw_as = false;
     bool saw_from = false;
     bool saw_public = false;
@@ -104,6 +112,12 @@ int main() {
         }
         if (token.kind == orison::syntax::TokenKind::keyword_const) {
             saw_const = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_foreign) {
+            saw_foreign = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_library) {
+            saw_library = true;
         }
         if (token.kind == orison::syntax::TokenKind::keyword_as) {
             saw_as = true;
@@ -204,6 +218,8 @@ int main() {
     }
     assert(saw_import);
     assert(saw_const);
+    assert(saw_foreign);
+    assert(saw_library);
     assert(saw_as);
     assert(saw_from);
     assert(saw_public);

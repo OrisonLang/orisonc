@@ -16,6 +16,9 @@ void test_parse_success() {
         output << "import\n";
         output << "    Logger as Log from diagnostics.logger\n";
         output << "    console from io\n\n";
+        output << "package foreign \"c\"\n";
+        output << "    function puts(text: Pointer<Byte>) -> Int32\n";
+        output << "    function print_line(text: Pointer<Byte>) -> Int32 as \"puts\"\n\n";
         output << "public type UserId = UInt64\n\n";
         output << "public record User\n";
         output << "    public name: Text\n";
@@ -33,6 +36,9 @@ void test_parse_success() {
         output << "        return count\n";
         output << "    private function ready(this: shared This) -> Bool\n";
         output << "        return count > 0\n\n";
+        output << "public foreign \"c\" as \"device_init\"\n";
+        output << "function initialize_device() -> Int32\n";
+        output << "    return 0\n\n";
         output << "package function main(input: shared.View<Byte>, count: Int32) -> Outcome<Int32, ParseError>\n";
         output << "    guard count > 0 else\n";
         output << "        return input.read(0)\n";
@@ -56,6 +62,19 @@ void test_parse_success() {
     assert(!result.diagnostics.has_errors());
     assert(result.module.package_name == "demo.app");
     assert(result.module.imports.size() == 2);
+    assert(result.module.foreign_imports.size() == 1);
+    assert(result.module.foreign_imports.front().abi == "\"c\"");
+    assert(result.module.foreign_imports.front().library_name.empty());
+    assert(result.module.foreign_imports.front().functions.size() == 2);
+    assert(result.module.foreign_imports.front().functions[0].name == "puts");
+    assert(result.module.foreign_imports.front().functions[0].return_type.name == "Int32");
+    assert(result.module.foreign_imports.front().functions[1].name == "print_line");
+    assert(result.module.foreign_imports.front().functions[1].external_name == "\"puts\"");
+    assert(result.module.foreign_exports.size() == 1);
+    assert(result.module.foreign_exports.front().abi == "\"c\"");
+    assert(result.module.foreign_exports.front().external_name == "\"device_init\"");
+    assert(result.module.foreign_exports.front().function.name == "initialize_device");
+    assert(result.module.foreign_exports.front().function.body_statements.size() == 1);
     assert(result.module.constants.size() == 1);
     assert(result.module.constants.front().name == "UART0_BASE");
     assert(result.module.constants.front().type.name == "Address");
@@ -68,7 +87,7 @@ void test_parse_success() {
     assert(result.module.type_aliases.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.type_aliases.front().name == "UserId");
     assert(result.module.type_aliases.front().aliased_type.name == "UInt64");
-    assert(result.module.top_level_declaration_count == 8);
+    assert(result.module.top_level_declaration_count == 10);
     assert(result.module.records.size() == 1);
     assert(result.module.records.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.records.front().name == "User");
@@ -192,6 +211,77 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[3].expression.text == "+");
     assert(result.module.functions.front().body_statements[4].kind == orison::syntax::StatementKind::return_statement);
     assert(result.module.functions.front().body_statements[4].expression.text == "total");
+}
+
+void test_foreign_import_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_foreign_import_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.foreign\n";
+        output << "package foreign \"c\" library \"m\"\n";
+        output << "    function sin(x: Float64) -> Float64\n";
+        output << "    function cos(x: Float64) -> Float64\n";
+        output << "    function print_line(text: Pointer<Byte>) -> Int32 as \"puts\"\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.foreign_imports.size() == 1);
+    assert(result.module.foreign_imports.front().abi == "\"c\"");
+    assert(result.module.foreign_imports.front().library_name == "\"m\"");
+    assert(result.module.foreign_imports.front().functions.size() == 3);
+    assert(result.module.foreign_imports.front().functions[2].name == "print_line");
+    assert(result.module.foreign_imports.front().functions[2].external_name == "\"puts\"");
+}
+
+void test_foreign_export_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_foreign_export_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.foreign\n";
+        output << "public foreign \"c\" as \"device_init\"\n";
+        output << "function initialize_device() -> Int32\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.foreign_exports.size() == 1);
+    assert(result.module.foreign_exports.front().abi == "\"c\"");
+    assert(result.module.foreign_exports.front().external_name == "\"device_init\"");
+    assert(result.module.foreign_exports.front().function.name == "initialize_device");
+    assert(result.module.foreign_exports.front().function.body_statements.size() == 1);
+}
+
+void test_foreign_import_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_foreign_import_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.foreign\n";
+        output << "package foreign \"c\"\n";
+        output << "    let broken = 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "foreign import members must be function declarations");
 }
 
 void test_constant_success() {
@@ -1720,6 +1810,9 @@ int main() {
     test_parse_success();
     test_constant_success();
     test_constant_failure();
+    test_foreign_import_success();
+    test_foreign_export_success();
+    test_foreign_import_failure();
     test_choice_generic_success();
     test_interface_generic_success();
     test_implements_success();

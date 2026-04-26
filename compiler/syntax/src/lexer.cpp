@@ -107,6 +107,12 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "const") {
         return TokenKind::keyword_const;
     }
+    if (text == "foreign") {
+        return TokenKind::keyword_foreign;
+    }
+    if (text == "library") {
+        return TokenKind::keyword_library;
+    }
     if (text == "and") {
         return TokenKind::keyword_and;
     }

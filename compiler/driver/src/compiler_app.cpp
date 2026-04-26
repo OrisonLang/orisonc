@@ -176,6 +176,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "package " << parse_result.module.package_name << '\n';
         output << "top-level declarations: " << parse_result.module.top_level_declaration_count << '\n';
         output << "imports: " << parse_result.module.imports.size() << '\n';
+        output << "foreign imports: " << parse_result.module.foreign_imports.size() << '\n';
+        output << "foreign exports: " << parse_result.module.foreign_exports.size() << '\n';
         output << "constants: " << parse_result.module.constants.size() << '\n';
         output << "type aliases: " << parse_result.module.type_aliases.size() << '\n';
         output << "records: " << parse_result.module.records.size() << '\n';
@@ -186,6 +188,26 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "functions: " << parse_result.module.functions.size() << '\n';
         if (!parse_result.module.imports.empty()) {
             output << "first import from: " << parse_result.module.imports.front().from_package << '\n';
+        }
+        if (!parse_result.module.foreign_imports.empty()) {
+            output << "first foreign import abi: " << parse_result.module.foreign_imports.front().abi << '\n';
+            output << "first foreign import library: "
+                   << (parse_result.module.foreign_imports.front().library_name.empty()
+                           ? "<none>"
+                           : parse_result.module.foreign_imports.front().library_name)
+                   << '\n';
+            output << "first foreign import functions: " << parse_result.module.foreign_imports.front().functions.size()
+                   << '\n';
+        }
+        if (!parse_result.module.foreign_exports.empty()) {
+            output << "first foreign export abi: " << parse_result.module.foreign_exports.front().abi << '\n';
+            output << "first foreign export symbol: "
+                   << (parse_result.module.foreign_exports.front().external_name.empty()
+                           ? "<none>"
+                           : parse_result.module.foreign_exports.front().external_name)
+                   << '\n';
+            output << "first foreign export function: "
+                   << parse_result.module.foreign_exports.front().function.name << '\n';
         }
         if (!parse_result.module.constants.empty()) {
             output << "first constant type: " << render_type(parse_result.module.constants.front().type) << '\n';

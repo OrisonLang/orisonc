@@ -83,7 +83,7 @@ private:
         default:
             result.diagnostics.error(
                 current().line,
-                "expected a top-level declaration such as package, import, type, record, choice, interface, implements, extend, or function"
+                "expected a top-level declaration such as package, import, const, type, record, choice, interface, implements, extend, or function"
             );
             skip_to_next_line();
             break;
@@ -104,11 +104,14 @@ private:
         case TokenKind::keyword_interface:
             parse_interface(result, visibility);
             break;
+        case TokenKind::keyword_foreign:
+            parse_foreign(result, visibility);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, visibility);
             break;
         default:
-            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, interface, or function");
+            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, interface, foreign, or function");
             skip_to_next_line();
             break;
         }
@@ -156,7 +159,7 @@ private:
         auto const& next = peek();
         return next.kind == TokenKind::keyword_record || next.kind == TokenKind::keyword_choice ||
                next.kind == TokenKind::keyword_interface || next.kind == TokenKind::keyword_function ||
-               next.kind == TokenKind::keyword_type;
+               next.kind == TokenKind::keyword_type || next.kind == TokenKind::keyword_foreign;
     }
 
     void advance() {
@@ -208,12 +211,25 @@ private:
         return value;
     }
 
+    auto expect_string_literal(ParseResult& result, std::string const& message) -> std::string {
+        if (!is(TokenKind::string_literal)) {
+            result.diagnostics.error(current().line, message);
+            return {};
+        }
+
+        auto value = current().lexeme;
+        advance();
+        return value;
+    }
+
     auto is_name_component_token(TokenKind kind) const -> bool {
         switch (kind) {
         case TokenKind::identifier:
         case TokenKind::keyword_package:
         case TokenKind::keyword_import:
         case TokenKind::keyword_const:
+        case TokenKind::keyword_foreign:
+        case TokenKind::keyword_library:
         case TokenKind::keyword_type:
         case TokenKind::keyword_record:
         case TokenKind::keyword_choice:
@@ -1488,6 +1504,140 @@ private:
         }
 
         consume_block_end();
+    }
+
+    auto parse_foreign_import_function(ParseResult& result) -> std::optional<ForeignImportFunctionSyntax> {
+        if (!is(TokenKind::keyword_function)) {
+            result.diagnostics.error(current().line, "foreign import members must be function declarations");
+            return std::nullopt;
+        }
+
+        advance();
+        auto name = expect_identifier(result, "foreign import declaration requires a function name");
+        if (name.empty()) {
+            return std::nullopt;
+        }
+
+        auto parameters = parse_parameter_list(result);
+        if (!is(TokenKind::arrow)) {
+            result.diagnostics.error(current().line, "expected '->' after foreign import parameter list");
+            return std::nullopt;
+        }
+
+        advance();
+        auto return_type = parse_type(result, "foreign import declaration requires a return type");
+        if (return_type.name.empty()) {
+            return std::nullopt;
+        }
+
+        std::string external_name;
+        if (is(TokenKind::keyword_as)) {
+            advance();
+            external_name = expect_string_literal(result, "foreign import alias requires a string literal");
+            if (external_name.empty()) {
+                return std::nullopt;
+            }
+        }
+
+        return ForeignImportFunctionSyntax {
+            .name = std::move(name),
+            .parameters = std::move(parameters),
+            .return_type = std::move(return_type),
+            .external_name = std::move(external_name),
+        };
+    }
+
+    void parse_foreign(ParseResult& result, Visibility visibility) {
+        advance();
+        auto abi = expect_string_literal(result, "foreign declaration requires an ABI string literal");
+        if (abi.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        if (visibility == Visibility::package_visibility) {
+            std::string library_name;
+            if (is(TokenKind::keyword_library)) {
+                advance();
+                library_name = expect_string_literal(result, "foreign library clause requires a string literal");
+                if (library_name.empty()) {
+                    skip_to_next_line();
+                    return;
+                }
+            }
+
+            ForeignImportBlockSyntax foreign_import {
+                .abi = std::move(abi),
+                .library_name = std::move(library_name),
+                .functions = {},
+            };
+
+            if (!consume_block_start(result, "foreign import declaration requires an indented member block")) {
+                skip_to_next_top_level();
+                return;
+            }
+
+            while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+                if (is(TokenKind::newline)) {
+                    advance();
+                    continue;
+                }
+
+                auto maybe_function = parse_foreign_import_function(result);
+                if (!maybe_function.has_value()) {
+                    skip_to_next_line();
+                    continue;
+                }
+
+                foreign_import.functions.push_back(std::move(*maybe_function));
+                skip_to_next_line();
+            }
+
+            consume_block_end();
+            result.module.foreign_imports.push_back(std::move(foreign_import));
+            ++result.module.top_level_declaration_count;
+            return;
+        }
+
+        if (visibility != Visibility::public_visibility) {
+            result.diagnostics.error(current().line, "foreign exports must use public visibility");
+            skip_to_next_top_level();
+            return;
+        }
+
+        std::string external_name;
+        if (is(TokenKind::keyword_as)) {
+            advance();
+            external_name = expect_string_literal(result, "foreign export alias requires a string literal");
+            if (external_name.empty()) {
+                skip_to_next_top_level();
+                return;
+            }
+        }
+
+        if (is(TokenKind::newline)) {
+            advance();
+            skip_newlines();
+        }
+
+        auto maybe_signature = parse_function_signature(result, "foreign export requires a function declaration");
+        if (!maybe_signature.has_value()) {
+            skip_to_next_top_level();
+            return;
+        }
+
+        auto maybe_function = parse_function_body(result, std::move(*maybe_signature), Visibility::public_visibility);
+        if (!maybe_function.has_value()) {
+            skip_to_next_top_level();
+            return;
+        }
+
+        result.module.foreign_exports.push_back(ForeignExportSyntax {
+            .abi = std::move(abi),
+            .external_name = std::move(external_name),
+            .function = std::move(*maybe_function),
+        });
+        ++result.module.top_level_declaration_count;
     }
 
     void parse_type_alias(ParseResult& result, Visibility visibility) {
