@@ -554,6 +554,56 @@ void test_repeat_statement_failure() {
     assert(diagnostics.front().message == "repeat statement requires a trailing while condition");
 }
 
+void test_unsafe_statement_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_unsafe_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "function scribble(addr: Address) -> Unit\n";
+        output << "    unsafe\n";
+        output << "        let p = Pointer(addr)\n";
+        output << "        raw_write(p)\n";
+        output << "    return\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& unsafe_statement = result.module.functions.front().body_statements[0];
+    assert(unsafe_statement.kind == orison::syntax::StatementKind::unsafe_statement);
+    assert(unsafe_statement.nested_statements.size() == 2);
+    assert(unsafe_statement.nested_statements[0].kind == orison::syntax::StatementKind::let_binding);
+    assert(unsafe_statement.nested_statements[1].kind == orison::syntax::StatementKind::expression_statement);
+}
+
+void test_unsafe_statement_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_unsafe_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "function scribble() -> Unit\n";
+        output << "    unsafe\n";
+        output << "    return\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "unsafe statement requires an indented block");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1090,6 +1140,8 @@ int main() {
     test_break_continue_standalone_success();
     test_repeat_statement_success();
     test_repeat_statement_failure();
+    test_unsafe_statement_success();
+    test_unsafe_statement_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

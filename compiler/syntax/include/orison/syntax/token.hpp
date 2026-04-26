@@ -38,6 +38,7 @@ enum class TokenKind {
     keyword_break,
     keyword_continue,
     keyword_repeat,
+    keyword_unsafe,
     keyword_where,
     indent,
     dedent,

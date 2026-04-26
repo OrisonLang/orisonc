@@ -98,6 +98,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "repeat") {
         return TokenKind::keyword_repeat;
     }
+    if (text == "unsafe") {
+        return TokenKind::keyword_unsafe;
+    }
     if (text == "where") {
         return TokenKind::keyword_where;
     }

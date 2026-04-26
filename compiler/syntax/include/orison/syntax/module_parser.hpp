@@ -91,6 +91,7 @@ enum class StatementKind {
     while_statement,
     repeat_statement,
     for_statement,
+    unsafe_statement,
     defer_statement,
     expression_statement,
 };

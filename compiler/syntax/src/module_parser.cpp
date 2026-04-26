@@ -238,6 +238,7 @@ private:
         case TokenKind::keyword_break:
         case TokenKind::keyword_continue:
         case TokenKind::keyword_repeat:
+        case TokenKind::keyword_unsafe:
         case TokenKind::keyword_where:
             return true;
         default:
@@ -1136,6 +1137,24 @@ private:
         return statement;
     }
 
+    auto parse_unsafe_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::unsafe_statement, .valid = true};
+        advance();
+
+        statement.nested_statements =
+            parse_statement_block(result, "unsafe statement requires an indented block");
+        if (statement.nested_statements.empty() && result.diagnostics.has_errors()) {
+            statement.valid = false;
+            return statement;
+        }
+
+        if (statement.nested_statements.empty()) {
+            result.diagnostics.error(current().line, "unsafe statement requires at least one nested statement");
+            statement.valid = false;
+        }
+        return statement;
+    }
+
     auto parse_defer_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::defer_statement, .valid = true};
         advance();
@@ -1188,6 +1207,8 @@ private:
             return parse_repeat_statement(result);
         case TokenKind::keyword_for:
             return parse_for_statement(result);
+        case TokenKind::keyword_unsafe:
+            return parse_unsafe_statement(result);
         case TokenKind::keyword_defer:
             return parse_defer_statement(result);
         case TokenKind::keyword_else: {
