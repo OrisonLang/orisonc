@@ -23,6 +23,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "choice") {
         return TokenKind::keyword_choice;
     }
+    if (text == "interface") {
+        return TokenKind::keyword_interface;
+    }
     if (text == "function") {
         return TokenKind::keyword_function;
     }
@@ -37,6 +40,12 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     }
     if (text == "as") {
         return TokenKind::keyword_as;
+    }
+    if (text == "shared") {
+        return TokenKind::keyword_shared;
+    }
+    if (text == "exclusive") {
+        return TokenKind::keyword_exclusive;
     }
     if (text == "let") {
         return TokenKind::keyword_let;

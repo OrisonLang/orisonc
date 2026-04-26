@@ -133,6 +133,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "type aliases: " << parse_result.module.type_aliases.size() << '\n';
         output << "records: " << parse_result.module.records.size() << '\n';
         output << "choices: " << parse_result.module.choices.size() << '\n';
+        output << "interfaces: " << parse_result.module.interfaces.size() << '\n';
         output << "functions: " << parse_result.module.functions.size() << '\n';
         if (!parse_result.module.imports.empty()) {
             output << "first import from: " << parse_result.module.imports.front().from_package << '\n';
@@ -162,6 +163,11 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
                 output << "first choice payloads: "
                        << parse_result.module.choices.front().variants.front().payloads.size() << '\n';
             }
+        }
+        if (!parse_result.module.interfaces.empty()) {
+            output << "first interface visibility: "
+                   << render_visibility(parse_result.module.interfaces.front().visibility) << '\n';
+            output << "first interface methods: " << parse_result.module.interfaces.front().methods.size() << '\n';
         }
         if (!parse_result.module.functions.empty()) {
             output << "first function visibility: "

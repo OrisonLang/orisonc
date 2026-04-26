@@ -3,6 +3,7 @@
 #include "orison/syntax/lexer.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -64,13 +65,16 @@ private:
         case TokenKind::keyword_choice:
             parse_choice(result, Visibility::package_visibility);
             break;
+        case TokenKind::keyword_interface:
+            parse_interface(result, Visibility::package_visibility);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, Visibility::package_visibility);
             break;
         default:
             result.diagnostics.error(
                 current().line,
-                "expected a top-level declaration such as package, import, type, record, choice, or function"
+                "expected a top-level declaration such as package, import, type, record, choice, interface, or function"
             );
             skip_to_next_line();
             break;
@@ -88,11 +92,14 @@ private:
         case TokenKind::keyword_choice:
             parse_choice(result, visibility);
             break;
+        case TokenKind::keyword_interface:
+            parse_interface(result, visibility);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, visibility);
             break;
         default:
-            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, or function");
+            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, interface, or function");
             skip_to_next_line();
             break;
         }
@@ -138,7 +145,8 @@ private:
         }
 
         auto const& next = peek();
-        return next.kind == TokenKind::keyword_record || next.kind == TokenKind::keyword_function ||
+        return next.kind == TokenKind::keyword_record || next.kind == TokenKind::keyword_choice ||
+               next.kind == TokenKind::keyword_interface || next.kind == TokenKind::keyword_function ||
                next.kind == TokenKind::keyword_type;
     }
 
@@ -191,11 +199,56 @@ private:
         return value;
     }
 
+    auto is_name_component_token(TokenKind kind) const -> bool {
+        switch (kind) {
+        case TokenKind::identifier:
+        case TokenKind::keyword_package:
+        case TokenKind::keyword_import:
+        case TokenKind::keyword_type:
+        case TokenKind::keyword_record:
+        case TokenKind::keyword_choice:
+        case TokenKind::keyword_interface:
+        case TokenKind::keyword_function:
+        case TokenKind::keyword_public:
+        case TokenKind::keyword_private:
+        case TokenKind::keyword_from:
+        case TokenKind::keyword_as:
+        case TokenKind::keyword_shared:
+        case TokenKind::keyword_exclusive:
+        case TokenKind::keyword_let:
+        case TokenKind::keyword_var:
+        case TokenKind::keyword_return:
+        case TokenKind::keyword_switch:
+        case TokenKind::keyword_default:
+        case TokenKind::keyword_guard:
+        case TokenKind::keyword_if:
+        case TokenKind::keyword_else:
+        case TokenKind::keyword_while:
+        case TokenKind::keyword_for:
+        case TokenKind::keyword_in:
+        case TokenKind::keyword_defer:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    auto expect_name_component(ParseResult& result, std::string const& message) -> std::string {
+        if (!is_name_component_token(current().kind)) {
+            result.diagnostics.error(current().line, message);
+            return {};
+        }
+
+        auto value = current().lexeme;
+        advance();
+        return value;
+    }
+
     auto parse_qualified_name(ParseResult& result, std::string const& message) -> std::string {
-        auto name = expect_identifier(result, message);
+        auto name = expect_name_component(result, message);
         while (is(TokenKind::dot)) {
             advance();
-            auto part = expect_identifier(result, "expected identifier after '.' in qualified name");
+            auto part = expect_name_component(result, "expected identifier after '.' in qualified name");
             if (part.empty()) {
                 break;
             }
@@ -206,9 +259,22 @@ private:
     }
 
     auto parse_type(ParseResult& result, std::string const& message) -> TypeSyntax {
+        std::string qualifier;
+        if (is(TokenKind::keyword_shared) || is(TokenKind::keyword_exclusive)) {
+            qualifier = current().lexeme;
+            advance();
+            if (is(TokenKind::dot)) {
+                advance();
+            }
+        }
+
         TypeSyntax type {.name = parse_qualified_name(result, message)};
         if (type.name.empty()) {
             return type;
+        }
+
+        if (!qualifier.empty()) {
+            type.name = qualifier + "." + type.name;
         }
 
         if (!is(TokenKind::less)) {
@@ -386,6 +452,42 @@ private:
             advance();
         }
         return parameters;
+    }
+
+    auto parse_function_signature(ParseResult& result, std::string const& declaration_message)
+        -> std::optional<InterfaceMethodSyntax> {
+        if (!is(TokenKind::keyword_function)) {
+            result.diagnostics.error(current().line, declaration_message);
+            return std::nullopt;
+        }
+
+        advance();
+        auto name = expect_identifier(result, "function declaration requires a name");
+        if (name.empty()) {
+            return std::nullopt;
+        }
+
+        auto parameters = parse_parameter_list(result);
+        if (result.diagnostics.has_errors() && !is(TokenKind::arrow) && !is(TokenKind::newline)) {
+            skip_to_next_line();
+        }
+
+        if (!is(TokenKind::arrow)) {
+            result.diagnostics.error(current().line, "expected '->' after function parameter list");
+            return std::nullopt;
+        }
+
+        advance();
+        auto return_type = parse_type(result, "expected return type after '->'");
+        if (return_type.name.empty()) {
+            return std::nullopt;
+        }
+
+        return InterfaceMethodSyntax {
+            .name = std::move(name),
+            .parameters = std::move(parameters),
+            .return_type = std::move(return_type),
+        };
     }
 
     auto precedence(TokenKind kind) const -> int {
@@ -1136,37 +1238,59 @@ private:
         ++result.module.top_level_declaration_count;
     }
 
-    void parse_function(ParseResult& result, Visibility visibility) {
+    void parse_interface(ParseResult& result, Visibility visibility) {
         advance();
-        auto name = expect_identifier(result, "function declaration requires a name");
+        auto name = expect_identifier(result, "interface declaration requires a name");
         if (name.empty()) {
             skip_to_next_line();
             return;
         }
 
-        auto parameters = parse_parameter_list(result);
-        if (result.diagnostics.has_errors() && !is(TokenKind::arrow) && !is(TokenKind::newline)) {
-            skip_to_next_line();
-        }
+        InterfaceSyntax interface_syntax {
+            .visibility = visibility,
+            .name = name,
+            .generic_parameters = parse_generic_parameter_names(result),
+            .methods = {},
+        };
 
-        if (!is(TokenKind::arrow)) {
-            result.diagnostics.error(current().line, "expected '->' after function parameter list");
-            skip_to_next_line();
+        if (!consume_block_start(result, "interface declaration requires an indented member block")) {
+            skip_to_next_top_level();
             return;
         }
 
-        advance();
-        auto return_type = parse_type(result, "expected return type after '->'");
-        if (return_type.name.empty()) {
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            auto maybe_method = parse_function_signature(result, "interface members must be function declarations");
+            if (!maybe_method.has_value()) {
+                skip_to_next_line();
+                continue;
+            }
+
+            interface_syntax.methods.push_back(std::move(*maybe_method));
+            skip_to_next_line();
+        }
+
+        consume_block_end();
+        result.module.interfaces.push_back(std::move(interface_syntax));
+        ++result.module.top_level_declaration_count;
+    }
+
+    void parse_function(ParseResult& result, Visibility visibility) {
+        auto maybe_signature = parse_function_signature(result, "function declaration requires 'function'");
+        if (!maybe_signature.has_value()) {
             skip_to_next_top_level();
             return;
         }
 
         FunctionSyntax function {
             .visibility = visibility,
-            .name = name,
-            .parameters = std::move(parameters),
-            .return_type = std::move(return_type),
+            .name = std::move(maybe_signature->name),
+            .parameters = std::move(maybe_signature->parameters),
+            .return_type = std::move(maybe_signature->return_type),
             .body_statements = {},
         };
 

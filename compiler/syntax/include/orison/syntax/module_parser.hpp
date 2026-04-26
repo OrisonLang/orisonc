@@ -116,6 +116,19 @@ struct ChoiceSyntax {
     std::vector<ChoiceVariantSyntax> variants;
 };
 
+struct InterfaceMethodSyntax {
+    std::string name;
+    std::vector<ParameterSyntax> parameters;
+    TypeSyntax return_type;
+};
+
+struct InterfaceSyntax {
+    Visibility visibility = Visibility::package_visibility;
+    std::string name;
+    std::vector<std::string> generic_parameters;
+    std::vector<InterfaceMethodSyntax> methods;
+};
+
 struct FunctionSyntax {
     Visibility visibility = Visibility::package_visibility;
     std::string name;
@@ -130,6 +143,7 @@ struct ModuleSyntax {
     std::vector<TypeAliasSyntax> type_aliases;
     std::vector<RecordSyntax> records;
     std::vector<ChoiceSyntax> choices;
+    std::vector<InterfaceSyntax> interfaces;
     std::vector<FunctionSyntax> functions;
     std::size_t top_level_declaration_count = 0;
 };

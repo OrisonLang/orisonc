@@ -33,9 +33,8 @@ int main() {
         output << "import\n";
         output << "    Logger as Log from diagnostics.logger\n";
         output << "public type Port = UInt16\n";
-        output << "public choice ParseError\n";
-        output << "    EmptyInput\n";
-        output << "    InvalidDigit(value: UInt16)\n";
+        output << "public interface Reader\n";
+        output << "    function read(this: exclusive This, into: exclusive View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "package function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "    return -input.length()\n";
         output << "    return input.read(2)\n";
@@ -54,10 +53,10 @@ int main() {
     assert(output.find("first type alias visibility: public") != std::string::npos);
     assert(output.find("first type alias target: UInt16") != std::string::npos);
     assert(output.find("records: 0") != std::string::npos);
-    assert(output.find("choices: 1") != std::string::npos);
-    assert(output.find("first choice visibility: public") != std::string::npos);
-    assert(output.find("first choice variants: 2") != std::string::npos);
-    assert(output.find("first choice payloads: 0") != std::string::npos);
+    assert(output.find("choices: 0") != std::string::npos);
+    assert(output.find("interfaces: 1") != std::string::npos);
+    assert(output.find("first interface visibility: public") != std::string::npos);
+    assert(output.find("first interface methods: 1") != std::string::npos);
     assert(output.find("functions: 1") != std::string::npos);
     assert(output.find("first function visibility: package") != std::string::npos);
     assert(output.find("function parameters: 1") != std::string::npos);

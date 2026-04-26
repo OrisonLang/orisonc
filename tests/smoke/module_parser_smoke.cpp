@@ -22,6 +22,8 @@ void test_parse_success() {
         output << "public choice ParseError\n";
         output << "    EmptyInput\n";
         output << "    InvalidDigit(value: UInt16)\n\n";
+        output << "public interface Reader\n";
+        output << "    function read(this: exclusive This, into: exclusive View<Byte>) -> Outcome<Int32, ParseError>\n\n";
         output << "package function main(input: shared.View<Byte>, count: Int32) -> Outcome<Int32, ParseError>\n";
         output << "    guard count > 0 else\n";
         output << "        return input.read(0)\n";
@@ -50,7 +52,7 @@ void test_parse_success() {
     assert(result.module.type_aliases.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.type_aliases.front().name == "UserId");
     assert(result.module.type_aliases.front().aliased_type.name == "UInt64");
-    assert(result.module.top_level_declaration_count == 4);
+    assert(result.module.top_level_declaration_count == 5);
     assert(result.module.records.size() == 1);
     assert(result.module.records.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.records.front().name == "User");
@@ -75,6 +77,13 @@ void test_parse_success() {
     assert(result.module.choices.front().variants[1].payloads.size() == 1);
     assert(result.module.choices.front().variants[1].payloads[0].name == "value");
     assert(result.module.choices.front().variants[1].payloads[0].type.name == "UInt16");
+    assert(result.module.interfaces.size() == 1);
+    assert(result.module.interfaces.front().visibility == orison::syntax::Visibility::public_visibility);
+    assert(result.module.interfaces.front().name == "Reader");
+    assert(result.module.interfaces.front().methods.size() == 1);
+    assert(result.module.interfaces.front().methods[0].name == "read");
+    assert(result.module.interfaces.front().methods[0].parameters.size() == 2);
+    assert(result.module.interfaces.front().methods[0].return_type.name == "Outcome");
     assert(result.module.functions.size() == 1);
     assert(result.module.functions.front().visibility == orison::syntax::Visibility::package_visibility);
     assert(result.module.functions.front().name == "main");
@@ -154,6 +163,33 @@ void test_choice_generic_success() {
     assert(result.module.choices.front().variants.size() == 2);
     assert(result.module.choices.front().variants[1].payloads.size() == 2);
     assert(result.module.choices.front().variants[1].payloads[1].type.name == "Box");
+}
+
+void test_interface_generic_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_interface_generic_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.interfaces\n";
+        output << "interface Iterator<T>\n";
+        output << "    function next(this: exclusive This) -> Maybe<T>\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.interfaces.size() == 1);
+    assert(result.module.interfaces.front().name == "Iterator");
+    assert(result.module.interfaces.front().generic_parameters.size() == 1);
+    assert(result.module.interfaces.front().generic_parameters[0] == "T");
+    assert(result.module.interfaces.front().methods.size() == 1);
+    assert(result.module.interfaces.front().methods[0].name == "next");
+    assert(result.module.interfaces.front().methods[0].return_type.name == "Maybe");
+    assert(result.module.interfaces.front().methods[0].return_type.generic_arguments.size() == 1);
+    assert(result.module.interfaces.front().methods[0].return_type.generic_arguments[0].name == "T");
 }
 
 void test_switch_statement_success() {
@@ -574,6 +610,25 @@ void test_choice_failure() {
     assert(result.diagnostics.entries().front().message == "named type entry requires ':' after the name");
 }
 
+void test_interface_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_interface_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "interface Reader\n";
+        output << "    read(this: exclusive This) -> Int32\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "interface members must be function declarations");
+}
+
 void test_switch_block_case_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_block_failure.or";
     {
@@ -660,6 +715,7 @@ void test_defer_statement_failure() {
 int main() {
     test_parse_success();
     test_choice_generic_success();
+    test_interface_generic_success();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();
@@ -675,6 +731,7 @@ int main() {
     test_else_statement_failure();
     test_guard_statement_failure();
     test_choice_failure();
+    test_interface_failure();
     test_switch_statement_failure();
     test_switch_block_case_failure();
     test_while_statement_failure();
