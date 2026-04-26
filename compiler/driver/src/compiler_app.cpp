@@ -112,6 +112,9 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
         return rendered;
     }
     case ExpressionKind::unary:
+        if (expression.text == "not") {
+            return expression.text + " " + render_expression(*expression.left);
+        }
         return expression.text + render_expression(*expression.left);
     case ExpressionKind::cast:
         return render_expression(*expression.left) + " as " + expression.text;

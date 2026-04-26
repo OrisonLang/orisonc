@@ -899,6 +899,44 @@ void test_array_literal_failure() {
     assert(diagnostics.front().message == "expected ',' or ']' in array literal");
 }
 
+void test_word_boolean_operator_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_word_boolean_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.booleans\n";
+        output << "function allowed(x: Int32, a: Bool, b: Bool, flag: Bool) -> Bool\n";
+        output << "    let in_range = x >= 0 and x <= 100\n";
+        output << "    let merged = a or b\n";
+        output << "    if not flag\n";
+        output << "        return false\n";
+        output << "    return in_range\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 4);
+    auto const& in_range = result.module.functions.front().body_statements[0];
+    assert(in_range.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(in_range.expression.text == "and");
+    assert(in_range.expression.left->kind == orison::syntax::ExpressionKind::binary);
+    assert(in_range.expression.left->text == ">=");
+    assert(in_range.expression.right->kind == orison::syntax::ExpressionKind::binary);
+    assert(in_range.expression.right->text == "<=");
+    auto const& merged = result.module.functions.front().body_statements[1];
+    assert(merged.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(merged.expression.text == "or");
+    auto const& if_statement = result.module.functions.front().body_statements[2];
+    assert(if_statement.expression.kind == orison::syntax::ExpressionKind::unary);
+    assert(if_statement.expression.text == "not");
+    assert(if_statement.expression.left->text == "flag");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1447,6 +1485,7 @@ int main() {
     test_index_expression_failure();
     test_array_literal_success();
     test_array_literal_failure();
+    test_word_boolean_operator_success();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

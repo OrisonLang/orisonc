@@ -104,6 +104,15 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "where") {
         return TokenKind::keyword_where;
     }
+    if (text == "and") {
+        return TokenKind::keyword_and;
+    }
+    if (text == "or") {
+        return TokenKind::keyword_or;
+    }
+    if (text == "not") {
+        return TokenKind::keyword_not;
+    }
     if (text == "true") {
         return TokenKind::keyword_true;
     }

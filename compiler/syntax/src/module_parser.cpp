@@ -240,6 +240,9 @@ private:
         case TokenKind::keyword_repeat:
         case TokenKind::keyword_unsafe:
         case TokenKind::keyword_where:
+        case TokenKind::keyword_and:
+        case TokenKind::keyword_or:
+        case TokenKind::keyword_not:
         case TokenKind::keyword_true:
         case TokenKind::keyword_false:
             return true;
@@ -591,6 +594,10 @@ private:
 
     auto precedence(TokenKind kind) const -> int {
         switch (kind) {
+        case TokenKind::keyword_or:
+            return 1;
+        case TokenKind::keyword_and:
+            return 2;
         case TokenKind::equal_equal:
         case TokenKind::bang_equal:
             return 3;
@@ -628,7 +635,7 @@ private:
     }
 
     auto parse_prefix_expression(ParseResult& result) -> ExpressionSyntax {
-        if (is(TokenKind::minus)) {
+        if (is(TokenKind::minus) || is(TokenKind::keyword_not)) {
             auto operator_text = current().lexeme;
             advance();
             auto operand = parse_prefix_expression(result);
