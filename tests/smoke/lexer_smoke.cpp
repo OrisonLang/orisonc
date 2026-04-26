@@ -39,6 +39,12 @@ int main() {
         output << "    let first = source.items[0]\n";
         output << "    let allowed = true and not false\n";
         output << "    let either = source.ready() or true\n";
+        output << "    let masked = source.bits bit_and 0xFF\n";
+        output << "    let combined = source.bits bit_or 0b1010\n";
+        output << "    let toggled = source.bits bit_xor 0x0F\n";
+        output << "    let inverted = bit_not source.bits\n";
+        output << "    let left = source.bits shift_left 2\n";
+        output << "    let right = source.bits shift_right 1\n";
         output << "    return\n";
     }
 
@@ -78,6 +84,12 @@ int main() {
     bool saw_and = false;
     bool saw_or = false;
     bool saw_not = false;
+    bool saw_bit_and = false;
+    bool saw_bit_or = false;
+    bool saw_bit_xor = false;
+    bool saw_bit_not = false;
+    bool saw_shift_left = false;
+    bool saw_shift_right = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
@@ -150,6 +162,24 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::keyword_not) {
             saw_not = true;
         }
+        if (token.kind == orison::syntax::TokenKind::keyword_bit_and) {
+            saw_bit_and = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_bit_or) {
+            saw_bit_or = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_bit_xor) {
+            saw_bit_xor = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_bit_not) {
+            saw_bit_not = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_shift_left) {
+            saw_shift_left = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_shift_right) {
+            saw_shift_right = true;
+        }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
         }
@@ -180,6 +210,12 @@ int main() {
     assert(saw_and);
     assert(saw_or);
     assert(saw_not);
+    assert(saw_bit_and);
+    assert(saw_bit_or);
+    assert(saw_bit_xor);
+    assert(saw_bit_not);
+    assert(saw_shift_left);
+    assert(saw_shift_right);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

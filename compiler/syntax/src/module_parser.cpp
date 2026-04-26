@@ -243,6 +243,12 @@ private:
         case TokenKind::keyword_and:
         case TokenKind::keyword_or:
         case TokenKind::keyword_not:
+        case TokenKind::keyword_bit_and:
+        case TokenKind::keyword_bit_or:
+        case TokenKind::keyword_bit_xor:
+        case TokenKind::keyword_bit_not:
+        case TokenKind::keyword_shift_left:
+        case TokenKind::keyword_shift_right:
         case TokenKind::keyword_true:
         case TokenKind::keyword_false:
             return true;
@@ -598,21 +604,30 @@ private:
             return 1;
         case TokenKind::keyword_and:
             return 2;
+        case TokenKind::keyword_bit_or:
+            return 3;
+        case TokenKind::keyword_bit_xor:
+            return 4;
+        case TokenKind::keyword_bit_and:
+            return 5;
         case TokenKind::equal_equal:
         case TokenKind::bang_equal:
-            return 3;
+            return 6;
         case TokenKind::less_equal:
         case TokenKind::greater_equal:
         case TokenKind::less:
         case TokenKind::greater:
-            return 5;
+            return 7;
+        case TokenKind::keyword_shift_left:
+        case TokenKind::keyword_shift_right:
+            return 8;
+        case TokenKind::plus:
+        case TokenKind::minus:
+            return 10;
         case TokenKind::star:
         case TokenKind::percent:
         case TokenKind::slash:
             return 20;
-        case TokenKind::plus:
-        case TokenKind::minus:
-            return 10;
         default:
             return -1;
         }
@@ -635,7 +650,7 @@ private:
     }
 
     auto parse_prefix_expression(ParseResult& result) -> ExpressionSyntax {
-        if (is(TokenKind::minus) || is(TokenKind::keyword_not)) {
+        if (is(TokenKind::minus) || is(TokenKind::keyword_not) || is(TokenKind::keyword_bit_not)) {
             auto operator_text = current().lexeme;
             advance();
             auto operand = parse_prefix_expression(result);

@@ -113,6 +113,24 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "not") {
         return TokenKind::keyword_not;
     }
+    if (text == "bit_and") {
+        return TokenKind::keyword_bit_and;
+    }
+    if (text == "bit_or") {
+        return TokenKind::keyword_bit_or;
+    }
+    if (text == "bit_xor") {
+        return TokenKind::keyword_bit_xor;
+    }
+    if (text == "bit_not") {
+        return TokenKind::keyword_bit_not;
+    }
+    if (text == "shift_left") {
+        return TokenKind::keyword_shift_left;
+    }
+    if (text == "shift_right") {
+        return TokenKind::keyword_shift_right;
+    }
     if (text == "true") {
         return TokenKind::keyword_true;
     }

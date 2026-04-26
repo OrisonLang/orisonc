@@ -937,6 +937,53 @@ void test_word_boolean_operator_success() {
     assert(if_statement.expression.left->text == "flag");
 }
 
+void test_named_bitwise_operator_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_named_bitwise_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bits\n";
+        output << "function mix(flags: UInt32, mask: UInt32, amount: UInt32) -> UInt32\n";
+        output << "    let low = flags bit_and 0xFF\n";
+        output << "    let combined = flags bit_or mask\n";
+        output << "    let toggled = flags bit_xor mask\n";
+        output << "    let moved = flags shift_left amount + 1\n";
+        output << "    return bit_not flags\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 5);
+    auto const& low = result.module.functions.front().body_statements[0];
+    assert(low.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(low.expression.text == "bit_and");
+    assert(low.expression.left->text == "flags");
+    assert(low.expression.right->text == "0xFF");
+    auto const& combined = result.module.functions.front().body_statements[1];
+    assert(combined.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(combined.expression.text == "bit_or");
+    auto const& toggled = result.module.functions.front().body_statements[2];
+    assert(toggled.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(toggled.expression.text == "bit_xor");
+    auto const& moved = result.module.functions.front().body_statements[3];
+    assert(moved.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(moved.expression.text == "shift_left");
+    assert(moved.expression.left->text == "flags");
+    assert(moved.expression.right->kind == orison::syntax::ExpressionKind::binary);
+    assert(moved.expression.right->text == "+");
+    assert(moved.expression.right->left->text == "amount");
+    assert(moved.expression.right->right->text == "1");
+    auto const& return_statement = result.module.functions.front().body_statements[4];
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::unary);
+    assert(return_statement.expression.text == "bit_not");
+    assert(return_statement.expression.left->text == "flags");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1486,6 +1533,7 @@ int main() {
     test_array_literal_success();
     test_array_literal_failure();
     test_word_boolean_operator_success();
+    test_named_bitwise_operator_success();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();
