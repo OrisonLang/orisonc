@@ -13,8 +13,9 @@ int main() {
         output << "import\n";
         output << "    Logger as Log from diagnostics.logger\n";
         output << "public type Port = UInt16\n";
-        output << "public record User\n";
-        output << "    private age: UInt8\n";
+        output << "public choice ParseError\n";
+        output << "    EmptyInput\n";
+        output << "    InvalidDigit(value: UInt16)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -24,7 +25,7 @@ int main() {
     auto result = lexer.lex(*source_file);
 
     assert(!result.diagnostics.has_errors());
-    assert(result.tokens.size() >= 22);
+    assert(result.tokens.size() >= 24);
     assert(result.tokens[0].kind == orison::syntax::TokenKind::keyword_package);
     assert(result.tokens[0].line_start);
     assert(result.tokens[1].kind == orison::syntax::TokenKind::identifier);
@@ -36,6 +37,7 @@ int main() {
     bool saw_public = false;
     bool saw_private = false;
     bool saw_type = false;
+    bool saw_choice = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
@@ -57,6 +59,9 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::keyword_type) {
             saw_type = true;
         }
+        if (token.kind == orison::syntax::TokenKind::keyword_choice) {
+            saw_choice = true;
+        }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
         }
@@ -70,6 +75,7 @@ int main() {
     assert(saw_public);
     assert(saw_private);
     assert(saw_type);
+    assert(saw_choice);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

@@ -19,6 +19,9 @@ void test_parse_success() {
         output << "public record User\n";
         output << "    public name: Text\n";
         output << "    private values: DynamicArray<Maybe<Int32>>\n\n";
+        output << "public choice ParseError\n";
+        output << "    EmptyInput\n";
+        output << "    InvalidDigit(value: UInt16)\n\n";
         output << "package function main(input: shared.View<Byte>, count: Int32) -> Outcome<Int32, ParseError>\n";
         output << "    guard count > 0 else\n";
         output << "        return input.read(0)\n";
@@ -47,7 +50,7 @@ void test_parse_success() {
     assert(result.module.type_aliases.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.type_aliases.front().name == "UserId");
     assert(result.module.type_aliases.front().aliased_type.name == "UInt64");
-    assert(result.module.top_level_declaration_count == 3);
+    assert(result.module.top_level_declaration_count == 4);
     assert(result.module.records.size() == 1);
     assert(result.module.records.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.records.front().name == "User");
@@ -62,6 +65,16 @@ void test_parse_success() {
     assert(result.module.records.front().fields[1].type.generic_arguments.front().name == "Maybe");
     assert(result.module.records.front().fields[1].type.generic_arguments.front().generic_arguments.size() == 1);
     assert(result.module.records.front().fields[1].type.generic_arguments.front().generic_arguments.front().name == "Int32");
+    assert(result.module.choices.size() == 1);
+    assert(result.module.choices.front().visibility == orison::syntax::Visibility::public_visibility);
+    assert(result.module.choices.front().name == "ParseError");
+    assert(result.module.choices.front().variants.size() == 2);
+    assert(result.module.choices.front().variants[0].name == "EmptyInput");
+    assert(result.module.choices.front().variants[0].payloads.empty());
+    assert(result.module.choices.front().variants[1].name == "InvalidDigit");
+    assert(result.module.choices.front().variants[1].payloads.size() == 1);
+    assert(result.module.choices.front().variants[1].payloads[0].name == "value");
+    assert(result.module.choices.front().variants[1].payloads[0].type.name == "UInt16");
     assert(result.module.functions.size() == 1);
     assert(result.module.functions.front().visibility == orison::syntax::Visibility::package_visibility);
     assert(result.module.functions.front().name == "main");
@@ -115,6 +128,32 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[2].expression.right->right->text == "2");
     assert(result.module.functions.front().body_statements[3].kind == orison::syntax::StatementKind::return_statement);
     assert(result.module.functions.front().body_statements[3].expression.text == "total");
+}
+
+void test_choice_generic_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_choice_generic_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.choice\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.choices.size() == 1);
+    assert(result.module.choices.front().name == "List");
+    assert(result.module.choices.front().generic_parameters.size() == 1);
+    assert(result.module.choices.front().generic_parameters[0] == "T");
+    assert(result.module.choices.front().variants.size() == 2);
+    assert(result.module.choices.front().variants[1].payloads.size() == 2);
+    assert(result.module.choices.front().variants[1].payloads[1].type.name == "Box");
 }
 
 void test_switch_statement_success() {
@@ -516,6 +555,25 @@ void test_switch_statement_failure() {
     assert(result.diagnostics.entries().front().message == "switch case requires '=>'");
 }
 
+void test_choice_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_choice_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bad\n";
+        output << "choice ParseError\n";
+        output << "    InvalidDigit(value UInt16)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    assert(result.diagnostics.entries().front().message == "named type entry requires ':' after the name");
+}
+
 void test_switch_block_case_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_block_failure.or";
     {
@@ -601,6 +659,7 @@ void test_defer_statement_failure() {
 
 int main() {
     test_parse_success();
+    test_choice_generic_success();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();
@@ -615,6 +674,7 @@ int main() {
     test_if_statement_failure();
     test_else_statement_failure();
     test_guard_statement_failure();
+    test_choice_failure();
     test_switch_statement_failure();
     test_switch_block_case_failure();
     test_while_statement_failure();

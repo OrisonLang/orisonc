@@ -61,13 +61,16 @@ private:
         case TokenKind::keyword_record:
             parse_record(result, Visibility::package_visibility);
             break;
+        case TokenKind::keyword_choice:
+            parse_choice(result, Visibility::package_visibility);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, Visibility::package_visibility);
             break;
         default:
             result.diagnostics.error(
                 current().line,
-                "expected a top-level declaration such as package, import, type, record, or function"
+                "expected a top-level declaration such as package, import, type, record, choice, or function"
             );
             skip_to_next_line();
             break;
@@ -82,11 +85,14 @@ private:
         case TokenKind::keyword_record:
             parse_record(result, visibility);
             break;
+        case TokenKind::keyword_choice:
+            parse_choice(result, visibility);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, visibility);
             break;
         default:
-            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, or function");
+            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, or function");
             skip_to_next_line();
             break;
         }
@@ -278,6 +284,65 @@ private:
             parameter.name.clear();
         }
         return parameter;
+    }
+
+    auto parse_named_type(ParseResult& result, std::string const& name_message, std::string const& type_message)
+        -> NamedTypeSyntax {
+        NamedTypeSyntax named_type;
+        named_type.name = expect_identifier(result, name_message);
+        if (named_type.name.empty()) {
+            return named_type;
+        }
+
+        if (!is(TokenKind::colon)) {
+            result.diagnostics.error(current().line, "named type entry requires ':' after the name");
+            named_type.name.clear();
+            return named_type;
+        }
+
+        advance();
+        named_type.type = parse_type(result, type_message);
+        if (named_type.type.name.empty()) {
+            named_type.name.clear();
+        }
+        return named_type;
+    }
+
+    auto parse_generic_parameter_names(ParseResult& result) -> std::vector<std::string> {
+        std::vector<std::string> parameters;
+        if (!is(TokenKind::less)) {
+            return parameters;
+        }
+
+        advance();
+        while (!is(TokenKind::eof)) {
+            auto parameter = expect_identifier(result, "generic parameter list requires a parameter name");
+            if (parameter.empty()) {
+                break;
+            }
+            parameters.push_back(std::move(parameter));
+
+            if (is(TokenKind::comma)) {
+                advance();
+                continue;
+            }
+
+            if (is(TokenKind::greater)) {
+                advance();
+                return parameters;
+            }
+
+            result.diagnostics.error(current().line, "expected ',' or '>' in generic parameter list");
+            break;
+        }
+
+        if (is(TokenKind::greater)) {
+            advance();
+        } else {
+            result.diagnostics.error(current().line, "generic parameter list cannot end before '>'");
+        }
+
+        return parameters;
     }
 
     auto parse_parameter_list(ParseResult& result) -> std::vector<ParameterSyntax> {
@@ -955,7 +1020,7 @@ private:
             return;
         }
 
-        RecordSyntax record {.visibility = visibility, .name = name};
+        RecordSyntax record {.visibility = visibility, .name = name, .generic_parameters = parse_generic_parameter_names(result)};
 
         if (!consume_block_start(result, "record declaration requires an indented field block")) {
             skip_to_next_top_level();
@@ -995,6 +1060,79 @@ private:
 
         consume_block_end();
         result.module.records.push_back(std::move(record));
+        ++result.module.top_level_declaration_count;
+    }
+
+    void parse_choice(ParseResult& result, Visibility visibility) {
+        advance();
+        auto name = expect_identifier(result, "choice declaration requires a type name");
+        if (name.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        ChoiceSyntax choice {.visibility = visibility, .name = name, .generic_parameters = parse_generic_parameter_names(result)};
+        if (!consume_block_start(result, "choice declaration requires an indented variant block")) {
+            skip_to_next_top_level();
+            return;
+        }
+
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            ChoiceVariantSyntax variant;
+            variant.name = expect_identifier(result, "choice variant requires a name");
+            if (variant.name.empty()) {
+                skip_to_next_line();
+                continue;
+            }
+
+            if (is(TokenKind::left_paren)) {
+                advance();
+                if (!is(TokenKind::right_paren)) {
+                    while (!is(TokenKind::eof)) {
+                        auto payload = parse_named_type(
+                            result,
+                            "choice payload requires a field name",
+                            "choice payload requires a field type"
+                        );
+                        if (payload.name.empty()) {
+                            break;
+                        }
+                        variant.payloads.push_back(std::move(payload));
+
+                        if (is(TokenKind::comma)) {
+                            advance();
+                            continue;
+                        }
+
+                        if (is(TokenKind::right_paren)) {
+                            break;
+                        }
+
+                        result.diagnostics.error(current().line, "expected ',' or ')' in choice payload list");
+                        break;
+                    }
+                }
+
+                if (is(TokenKind::right_paren)) {
+                    advance();
+                } else {
+                    result.diagnostics.error(current().line, "choice payload list cannot end before ')'");
+                    skip_to_next_line();
+                    continue;
+                }
+            }
+
+            choice.variants.push_back(std::move(variant));
+            skip_to_next_line();
+        }
+
+        consume_block_end();
+        result.module.choices.push_back(std::move(choice));
         ++result.module.top_level_declaration_count;
     }
 

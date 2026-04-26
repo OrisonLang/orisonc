@@ -32,6 +32,11 @@ struct TypeAliasSyntax {
     TypeSyntax aliased_type;
 };
 
+struct NamedTypeSyntax {
+    std::string name;
+    TypeSyntax type;
+};
+
 struct FieldSyntax {
     Visibility visibility = Visibility::private_visibility;
     std::string name;
@@ -95,7 +100,20 @@ struct StatementSyntax {
 struct RecordSyntax {
     Visibility visibility = Visibility::package_visibility;
     std::string name;
+    std::vector<std::string> generic_parameters;
     std::vector<FieldSyntax> fields;
+};
+
+struct ChoiceVariantSyntax {
+    std::string name;
+    std::vector<NamedTypeSyntax> payloads;
+};
+
+struct ChoiceSyntax {
+    Visibility visibility = Visibility::package_visibility;
+    std::string name;
+    std::vector<std::string> generic_parameters;
+    std::vector<ChoiceVariantSyntax> variants;
 };
 
 struct FunctionSyntax {
@@ -111,6 +129,7 @@ struct ModuleSyntax {
     std::vector<ImportSyntax> imports;
     std::vector<TypeAliasSyntax> type_aliases;
     std::vector<RecordSyntax> records;
+    std::vector<ChoiceSyntax> choices;
     std::vector<FunctionSyntax> functions;
     std::size_t top_level_declaration_count = 0;
 };

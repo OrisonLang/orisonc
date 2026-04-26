@@ -20,6 +20,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "record") {
         return TokenKind::keyword_record;
     }
+    if (text == "choice") {
+        return TokenKind::keyword_choice;
+    }
     if (text == "function") {
         return TokenKind::keyword_function;
     }

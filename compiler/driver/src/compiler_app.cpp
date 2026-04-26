@@ -132,6 +132,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "imports: " << parse_result.module.imports.size() << '\n';
         output << "type aliases: " << parse_result.module.type_aliases.size() << '\n';
         output << "records: " << parse_result.module.records.size() << '\n';
+        output << "choices: " << parse_result.module.choices.size() << '\n';
         output << "functions: " << parse_result.module.functions.size() << '\n';
         if (!parse_result.module.imports.empty()) {
             output << "first import from: " << parse_result.module.imports.front().from_package << '\n';
@@ -151,6 +152,15 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
                        << render_visibility(parse_result.module.records.front().fields.front().visibility) << '\n';
                 output << "first field type: "
                        << render_type(parse_result.module.records.front().fields.front().type) << '\n';
+            }
+        }
+        if (!parse_result.module.choices.empty()) {
+            output << "first choice visibility: " << render_visibility(parse_result.module.choices.front().visibility)
+                   << '\n';
+            output << "first choice variants: " << parse_result.module.choices.front().variants.size() << '\n';
+            if (!parse_result.module.choices.front().variants.empty()) {
+                output << "first choice payloads: "
+                       << parse_result.module.choices.front().variants.front().payloads.size() << '\n';
             }
         }
         if (!parse_result.module.functions.empty()) {
