@@ -1045,6 +1045,57 @@ void test_ternary_expression_failure() {
     assert(diagnostics.front().message == "expected ':' after ternary true branch");
 }
 
+void test_null_safe_member_access_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_null_safe_member_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.nullsafe\n";
+        output << "function city_name(user: Maybe<User>) -> Maybe<Text>\n";
+        output << "    let city = user?.profile?.address?.city\n";
+        output << "    return city\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& let_statement = result.module.functions.front().body_statements[0];
+    assert(let_statement.expression.kind == orison::syntax::ExpressionKind::null_safe_member_access);
+    assert(let_statement.expression.text == "city");
+    assert(let_statement.expression.left->kind == orison::syntax::ExpressionKind::null_safe_member_access);
+    assert(let_statement.expression.left->text == "address");
+    assert(let_statement.expression.left->left->kind == orison::syntax::ExpressionKind::null_safe_member_access);
+    assert(let_statement.expression.left->left->text == "profile");
+    assert(let_statement.expression.left->left->left->kind == orison::syntax::ExpressionKind::name);
+    assert(let_statement.expression.left->left->left->text == "user");
+}
+
+void test_null_safe_member_access_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_null_safe_member_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.nullsafe\n";
+        output << "function city_name(user: Maybe<User>) -> Maybe<Text>\n";
+        output << "    return user?.\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "expected member name after '?.'");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1597,6 +1648,8 @@ int main() {
     test_named_bitwise_operator_success();
     test_ternary_expression_success();
     test_ternary_expression_failure();
+    test_null_safe_member_access_success();
+    test_null_safe_member_access_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

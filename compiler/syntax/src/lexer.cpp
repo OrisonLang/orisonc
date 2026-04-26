@@ -445,6 +445,15 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
             continue;
         }
 
+        if (ch == '?' && index + 1 < input.size() && input[index + 1] == '.') {
+            token.kind = TokenKind::question_dot;
+            token.lexeme = "?.";
+            index += 2;
+            column += 2;
+            result.tokens.push_back(token);
+            continue;
+        }
+
         switch (ch) {
         case '[':
             token.kind = TokenKind::left_bracket;

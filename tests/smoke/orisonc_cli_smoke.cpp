@@ -43,7 +43,7 @@ int main() {
         output << "        return input.length()\n";
         output << "package function main<R>(input: shared.View<Byte>, reader: exclusive R) -> Outcome<Int32, ParseError>\n";
         output << "where R: Reader\n";
-        output << "    return input.length() < 4 ? 0 : 1\n";
+        output << "    return reader?.source?.buffer\n";
         output << "    return input.read(2)\n";
     }
 
@@ -80,7 +80,7 @@ int main() {
     assert(output.find("first function where constraint: R: Reader") != std::string::npos);
     assert(output.find("function body statements: 2") != std::string::npos);
     assert(output.find("first statement kind: return") != std::string::npos);
-    assert(output.find("first statement expression: ((input.length() < 4) ? 0 : 1)") != std::string::npos);
+    assert(output.find("first statement expression: reader?.source?.buffer") != std::string::npos);
     assert(output.find("first statement nested count: 0") != std::string::npos);
     assert(output.find("first statement alternate count: 0") != std::string::npos);
     assert(output.find("first statement switch cases: 0") != std::string::npos);

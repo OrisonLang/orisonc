@@ -809,6 +809,21 @@ private:
                     continue;
                 }
 
+                if (is(TokenKind::question_dot)) {
+                    advance();
+                    auto member_name = expect_identifier(result, "expected member name after '?.'");
+                    ExpressionSyntax member_expression {
+                        .kind = ExpressionKind::null_safe_member_access,
+                        .text = std::move(member_name),
+                        .arguments = {},
+                        .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                        .right = nullptr,
+                        .alternate = nullptr,
+                    };
+                    expression = std::move(member_expression);
+                    continue;
+                }
+
                 if (is(TokenKind::left_bracket)) {
                     advance();
                     auto index_expression = parse_expression(result);

@@ -59,6 +59,7 @@ enum class TokenKind {
     left_paren,
     right_paren,
     comma,
+    question_dot,
     question,
     colon,
     dot,
