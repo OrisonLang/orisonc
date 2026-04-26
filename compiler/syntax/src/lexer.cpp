@@ -95,6 +95,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "continue") {
         return TokenKind::keyword_continue;
     }
+    if (text == "repeat") {
+        return TokenKind::keyword_repeat;
+    }
     if (text == "where") {
         return TokenKind::keyword_where;
     }

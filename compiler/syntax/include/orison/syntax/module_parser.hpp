@@ -89,6 +89,7 @@ enum class StatementKind {
     guard_statement,
     if_statement,
     while_statement,
+    repeat_statement,
     for_statement,
     defer_statement,
     expression_statement,

@@ -498,6 +498,62 @@ void test_break_continue_standalone_success() {
            orison::syntax::StatementKind::continue_statement);
 }
 
+void test_repeat_statement_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_repeat_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.repeat\n";
+        output << "function poll() -> Unit\n";
+        output << "    repeat\n";
+        output << "        step()\n";
+        output << "        continue\n";
+        output << "    while ready != false\n";
+        output << "    return\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& repeat_statement = result.module.functions.front().body_statements[0];
+    assert(repeat_statement.kind == orison::syntax::StatementKind::repeat_statement);
+    assert(repeat_statement.nested_statements.size() == 2);
+    assert(repeat_statement.nested_statements[0].kind == orison::syntax::StatementKind::expression_statement);
+    assert(repeat_statement.nested_statements[1].kind == orison::syntax::StatementKind::continue_statement);
+    assert(repeat_statement.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(repeat_statement.expression.text == "!=");
+    assert(repeat_statement.expression.left->text == "ready");
+    assert(repeat_statement.expression.right->text == "false");
+}
+
+void test_repeat_statement_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_repeat_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.repeat\n";
+        output << "function poll() -> Unit\n";
+        output << "    repeat\n";
+        output << "        step()\n";
+        output << "    return\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "repeat statement requires a trailing while condition");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1032,6 +1088,8 @@ int main() {
     test_assignment_failure();
     test_break_continue_success();
     test_break_continue_standalone_success();
+    test_repeat_statement_success();
+    test_repeat_statement_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

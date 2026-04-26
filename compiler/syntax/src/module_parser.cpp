@@ -237,6 +237,7 @@ private:
         case TokenKind::keyword_defer:
         case TokenKind::keyword_break:
         case TokenKind::keyword_continue:
+        case TokenKind::keyword_repeat:
         case TokenKind::keyword_where:
             return true;
         default:
@@ -1075,6 +1076,33 @@ private:
         return statement;
     }
 
+    auto parse_repeat_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::repeat_statement, .valid = true};
+        advance();
+
+        statement.nested_statements =
+            parse_statement_block(result, "repeat statement requires an indented body block");
+        if (statement.nested_statements.empty() && result.diagnostics.has_errors()) {
+            statement.valid = false;
+            return statement;
+        }
+
+        if (!is(TokenKind::keyword_while)) {
+            result.diagnostics.error(current().line, "repeat statement requires a trailing while condition");
+            statement.valid = false;
+            return statement;
+        }
+
+        advance();
+        statement.expression = parse_expression(result);
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            statement.expression.arguments.empty()) {
+            result.diagnostics.error(current().line, "repeat statement requires a trailing while condition expression");
+            statement.valid = false;
+        }
+        return statement;
+    }
+
     auto parse_for_statement(ParseResult& result) -> StatementSyntax {
         StatementSyntax statement {.kind = StatementKind::for_statement, .valid = true};
         advance();
@@ -1156,6 +1184,8 @@ private:
             return parse_if_statement(result);
         case TokenKind::keyword_while:
             return parse_while_statement(result);
+        case TokenKind::keyword_repeat:
+            return parse_repeat_statement(result);
         case TokenKind::keyword_for:
             return parse_for_statement(result);
         case TokenKind::keyword_defer:
