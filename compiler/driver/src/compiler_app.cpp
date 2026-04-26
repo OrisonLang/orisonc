@@ -135,6 +135,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "choices: " << parse_result.module.choices.size() << '\n';
         output << "interfaces: " << parse_result.module.interfaces.size() << '\n';
         output << "implementations: " << parse_result.module.implementations.size() << '\n';
+        output << "extensions: " << parse_result.module.extensions.size() << '\n';
         output << "functions: " << parse_result.module.functions.size() << '\n';
         if (!parse_result.module.imports.empty()) {
             output << "first import from: " << parse_result.module.imports.front().from_package << '\n';
@@ -177,6 +178,15 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
                    << render_type(parse_result.module.implementations.front().receiver_type) << '\n';
             output << "first implementation methods: " << parse_result.module.implementations.front().methods.size()
                    << '\n';
+        }
+        if (!parse_result.module.extensions.empty()) {
+            output << "first extension receiver: " << render_type(parse_result.module.extensions.front().receiver_type)
+                   << '\n';
+            output << "first extension methods: " << parse_result.module.extensions.front().methods.size() << '\n';
+            if (!parse_result.module.extensions.front().methods.empty()) {
+                output << "first extension method visibility: "
+                       << render_visibility(parse_result.module.extensions.front().methods.front().visibility) << '\n';
+            }
         }
         if (!parse_result.module.functions.empty()) {
             output << "first function visibility: "

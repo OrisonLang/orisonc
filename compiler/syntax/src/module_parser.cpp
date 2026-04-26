@@ -71,13 +71,16 @@ private:
         case TokenKind::keyword_implements:
             parse_implementation(result);
             break;
+        case TokenKind::keyword_extend:
+            parse_extension(result);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, Visibility::package_visibility);
             break;
         default:
             result.diagnostics.error(
                 current().line,
-                "expected a top-level declaration such as package, import, type, record, choice, interface, implements, or function"
+                "expected a top-level declaration such as package, import, type, record, choice, interface, implements, extend, or function"
             );
             skip_to_next_line();
             break;
@@ -215,6 +218,7 @@ private:
         case TokenKind::keyword_public:
         case TokenKind::keyword_private:
         case TokenKind::keyword_implements:
+        case TokenKind::keyword_extend:
         case TokenKind::keyword_from:
         case TokenKind::keyword_as:
         case TokenKind::keyword_shared:
@@ -511,6 +515,16 @@ private:
 
         function.body_statements = std::move(body);
         return function;
+    }
+
+    auto parse_method_visibility() -> Visibility {
+        if (!is_visibility_modifier(current().kind)) {
+            return Visibility::package_visibility;
+        }
+
+        auto visibility = visibility_from_token(current().kind);
+        advance();
+        return visibility;
     }
 
     auto precedence(TokenKind kind) const -> int {
@@ -1357,6 +1371,51 @@ private:
 
         consume_block_end();
         result.module.implementations.push_back(std::move(implementation));
+        ++result.module.top_level_declaration_count;
+    }
+
+    void parse_extension(ParseResult& result) {
+        advance();
+        auto receiver_type = parse_type(result, "extend declaration requires a receiver type");
+        if (receiver_type.name.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        ExtensionSyntax extension {
+            .receiver_type = std::move(receiver_type),
+            .methods = {},
+        };
+
+        if (!consume_block_start(result, "extend declaration requires an indented method block")) {
+            skip_to_next_top_level();
+            return;
+        }
+
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            auto visibility = parse_method_visibility();
+            auto maybe_signature = parse_function_signature(result, "extend members must be function declarations");
+            if (!maybe_signature.has_value()) {
+                skip_to_next_line();
+                continue;
+            }
+
+            auto maybe_method = parse_function_body(result, std::move(*maybe_signature), visibility);
+            if (!maybe_method.has_value()) {
+                skip_to_next_top_level();
+                return;
+            }
+
+            extension.methods.push_back(std::move(*maybe_method));
+        }
+
+        consume_block_end();
+        result.module.extensions.push_back(std::move(extension));
         ++result.module.top_level_declaration_count;
     }
 

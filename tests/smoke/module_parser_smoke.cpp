@@ -27,6 +27,11 @@ void test_parse_success() {
         output << "implements Reader for FileReader\n";
         output << "    function read(this: exclusive This, into: exclusive View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "        return into.length()\n\n";
+        output << "extend FileReader\n";
+        output << "    public function reset(this: exclusive This) -> Unit\n";
+        output << "        return count\n";
+        output << "    private function ready(this: shared This) -> Bool\n";
+        output << "        return count > 0\n\n";
         output << "package function main(input: shared.View<Byte>, count: Int32) -> Outcome<Int32, ParseError>\n";
         output << "    guard count > 0 else\n";
         output << "        return input.read(0)\n";
@@ -55,7 +60,7 @@ void test_parse_success() {
     assert(result.module.type_aliases.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.type_aliases.front().name == "UserId");
     assert(result.module.type_aliases.front().aliased_type.name == "UInt64");
-    assert(result.module.top_level_declaration_count == 6);
+    assert(result.module.top_level_declaration_count == 7);
     assert(result.module.records.size() == 1);
     assert(result.module.records.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.records.front().name == "User");
@@ -98,6 +103,18 @@ void test_parse_success() {
            orison::syntax::StatementKind::return_statement);
     assert(result.module.implementations.front().methods[0].body_statements[0].expression.kind ==
            orison::syntax::ExpressionKind::call);
+    assert(result.module.extensions.size() == 1);
+    assert(result.module.extensions.front().receiver_type.name == "FileReader");
+    assert(result.module.extensions.front().methods.size() == 2);
+    assert(result.module.extensions.front().methods[0].visibility == orison::syntax::Visibility::public_visibility);
+    assert(result.module.extensions.front().methods[0].name == "reset");
+    assert(result.module.extensions.front().methods[0].body_statements.size() == 1);
+    assert(result.module.extensions.front().methods[1].visibility == orison::syntax::Visibility::private_visibility);
+    assert(result.module.extensions.front().methods[1].name == "ready");
+    assert(result.module.extensions.front().methods[1].body_statements.size() == 1);
+    assert(result.module.extensions.front().methods[1].body_statements[0].expression.kind ==
+           orison::syntax::ExpressionKind::binary);
+    assert(result.module.extensions.front().methods[1].body_statements[0].expression.text == ">");
     assert(result.module.functions.size() == 1);
     assert(result.module.functions.front().visibility == orison::syntax::Visibility::package_visibility);
     assert(result.module.functions.front().name == "main");
@@ -252,6 +269,55 @@ void test_implements_failure() {
     auto diagnostics = result.diagnostics.entries();
     assert(!diagnostics.empty());
     assert(diagnostics.front().message == "implements members must be function declarations");
+}
+
+void test_extend_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_extend_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.extensions\n";
+        output << "extend BufferReader\n";
+        output << "    public function reset(this: exclusive This) -> Unit\n";
+        output << "        return this.cursor\n";
+        output << "    private function remaining(this: shared This) -> Int32\n";
+        output << "        return this.length()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.extensions.size() == 1);
+    assert(result.module.extensions.front().receiver_type.name == "BufferReader");
+    assert(result.module.extensions.front().methods.size() == 2);
+    assert(result.module.extensions.front().methods[0].visibility == orison::syntax::Visibility::public_visibility);
+    assert(result.module.extensions.front().methods[0].name == "reset");
+    assert(result.module.extensions.front().methods[1].visibility == orison::syntax::Visibility::private_visibility);
+    assert(result.module.extensions.front().methods[1].name == "remaining");
+}
+
+void test_extend_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_extend_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.extensions\n";
+        output << "extend BufferReader\n";
+        output << "    let broken = 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "extend members must be function declarations");
 }
 
 void test_switch_statement_success() {
@@ -780,6 +846,8 @@ int main() {
     test_interface_generic_success();
     test_implements_success();
     test_implements_failure();
+    test_extend_success();
+    test_extend_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

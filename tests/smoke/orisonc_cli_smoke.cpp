@@ -38,6 +38,9 @@ int main() {
         output << "implements Reader for FileReader\n";
         output << "    function read(this: exclusive This, into: exclusive View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "        return into.length()\n";
+        output << "extend FileReader\n";
+        output << "    public function reset(this: exclusive This) -> Unit\n";
+        output << "        return input.length()\n";
         output << "package function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "    return -input.length()\n";
         output << "    return input.read(2)\n";
@@ -49,7 +52,7 @@ int main() {
 
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
-    assert(output.find("top-level declarations: 4") != std::string::npos);
+    assert(output.find("top-level declarations: 5") != std::string::npos);
     assert(output.find("imports: 1") != std::string::npos);
     assert(output.find("type aliases: 1") != std::string::npos);
     assert(output.find("first import from: diagnostics.logger") != std::string::npos);
@@ -59,11 +62,15 @@ int main() {
     assert(output.find("choices: 0") != std::string::npos);
     assert(output.find("interfaces: 1") != std::string::npos);
     assert(output.find("implementations: 1") != std::string::npos);
+    assert(output.find("extensions: 1") != std::string::npos);
     assert(output.find("first interface visibility: public") != std::string::npos);
     assert(output.find("first interface methods: 1") != std::string::npos);
     assert(output.find("first implementation interface: Reader") != std::string::npos);
     assert(output.find("first implementation receiver: FileReader") != std::string::npos);
     assert(output.find("first implementation methods: 1") != std::string::npos);
+    assert(output.find("first extension receiver: FileReader") != std::string::npos);
+    assert(output.find("first extension methods: 1") != std::string::npos);
+    assert(output.find("first extension method visibility: public") != std::string::npos);
     assert(output.find("functions: 1") != std::string::npos);
     assert(output.find("first function visibility: package") != std::string::npos);
     assert(output.find("function parameters: 1") != std::string::npos);
