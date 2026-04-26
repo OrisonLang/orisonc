@@ -34,6 +34,8 @@ int main() {
         output << "    if true\n";
         output << "        return\n";
         output << "    let label: Text = \"ready\"\n";
+        output << "    let mask = 0xFF\n";
+        output << "    let bits = 0b1010_0001\n";
         output << "    return\n";
     }
 
@@ -66,6 +68,8 @@ int main() {
     bool saw_true = false;
     bool saw_false = false;
     bool saw_string = false;
+    bool saw_hex = false;
+    bool saw_binary = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
@@ -117,6 +121,12 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::string_literal) {
             saw_string = true;
         }
+        if (token.kind == orison::syntax::TokenKind::integer_literal && token.lexeme == "0xFF") {
+            saw_hex = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::integer_literal && token.lexeme == "0b1010_0001") {
+            saw_binary = true;
+        }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
         }
@@ -140,6 +150,8 @@ int main() {
     assert(saw_true);
     assert(!saw_false);
     assert(saw_string);
+    assert(saw_hex);
+    assert(saw_binary);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

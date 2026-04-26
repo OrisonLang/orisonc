@@ -700,6 +700,41 @@ void test_string_literal_failure() {
     assert(diagnostics.front().message == "unterminated string literal");
 }
 
+void test_hex_binary_integer_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_hex_binary_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.numbers\n";
+        output << "function mask_values() -> UInt32\n";
+        output << "    let mask = 0xFF\n";
+        output << "    let bits = 0b1010_0001\n";
+        output << "    return 0x2000_0000\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 3);
+    assert(result.module.functions.front().body_statements[0].kind == orison::syntax::StatementKind::let_binding);
+    assert(result.module.functions.front().body_statements[0].expression.kind ==
+           orison::syntax::ExpressionKind::integer_literal);
+    assert(result.module.functions.front().body_statements[0].expression.text == "0xFF");
+    assert(result.module.functions.front().body_statements[1].kind == orison::syntax::StatementKind::let_binding);
+    assert(result.module.functions.front().body_statements[1].expression.kind ==
+           orison::syntax::ExpressionKind::integer_literal);
+    assert(result.module.functions.front().body_statements[1].expression.text == "0b1010_0001");
+    assert(result.module.functions.front().body_statements[2].kind ==
+           orison::syntax::StatementKind::return_statement);
+    assert(result.module.functions.front().body_statements[2].expression.kind ==
+           orison::syntax::ExpressionKind::integer_literal);
+    assert(result.module.functions.front().body_statements[2].expression.text == "0x2000_0000");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1241,6 +1276,7 @@ int main() {
     test_boolean_literal_success();
     test_string_literal_success();
     test_string_literal_failure();
+    test_hex_binary_integer_success();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

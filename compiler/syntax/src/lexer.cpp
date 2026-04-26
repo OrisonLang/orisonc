@@ -275,9 +275,39 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
 
         if (std::isdigit(static_cast<unsigned char>(ch)) != 0) {
             auto start = index;
-            while (index < input.size() && std::isdigit(static_cast<unsigned char>(input[index])) != 0) {
-                ++index;
-                ++column;
+            if (ch == '0' && index + 2 < input.size() && (input[index + 1] == 'x' || input[index + 1] == 'X') &&
+                std::isxdigit(static_cast<unsigned char>(input[index + 2])) != 0) {
+                index += 2;
+                column += 2;
+                while (index < input.size()) {
+                    char part = input[index];
+                    if (std::isxdigit(static_cast<unsigned char>(part)) != 0 || part == '_') {
+                        ++index;
+                        ++column;
+                        continue;
+                    }
+                    break;
+                }
+            } else if (
+                ch == '0' && index + 2 < input.size() && (input[index + 1] == 'b' || input[index + 1] == 'B') &&
+                (input[index + 2] == '0' || input[index + 2] == '1')
+            ) {
+                index += 2;
+                column += 2;
+                while (index < input.size()) {
+                    char part = input[index];
+                    if (part == '0' || part == '1' || part == '_') {
+                        ++index;
+                        ++column;
+                        continue;
+                    }
+                    break;
+                }
+            } else {
+                while (index < input.size() && std::isdigit(static_cast<unsigned char>(input[index])) != 0) {
+                    ++index;
+                    ++column;
+                }
             }
 
             token.lexeme = input.substr(start, index - start);
