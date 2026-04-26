@@ -286,6 +286,54 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
             continue;
         }
 
+        if (ch == '"') {
+            auto token_column = column;
+            std::string literal;
+            literal += ch;
+            ++index;
+            ++column;
+
+            bool terminated = false;
+            while (index < input.size()) {
+                char part = input[index];
+                if (part == '\r' || part == '\n') {
+                    break;
+                }
+
+                literal += part;
+                ++index;
+                ++column;
+
+                if (part == '\\') {
+                    if (index >= input.size()) {
+                        break;
+                    }
+                    char escaped = input[index];
+                    if (escaped == '\r' || escaped == '\n') {
+                        break;
+                    }
+                    literal += escaped;
+                    ++index;
+                    ++column;
+                    continue;
+                }
+
+                if (part == '"') {
+                    terminated = true;
+                    break;
+                }
+            }
+
+            token.kind = TokenKind::string_literal;
+            token.lexeme = std::move(literal);
+            token.column = token_column;
+            result.tokens.push_back(token);
+            if (!terminated) {
+                result.diagnostics.error(line, "unterminated string literal");
+            }
+            continue;
+        }
+
         if (ch == '-' && index + 1 < input.size() && input[index + 1] == '>') {
             token.kind = TokenKind::arrow;
             token.lexeme = "->";

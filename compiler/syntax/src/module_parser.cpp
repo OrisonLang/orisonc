@@ -619,6 +619,10 @@ private:
         return ExpressionSyntax {.kind = ExpressionKind::integer_literal, .text = std::move(text)};
     }
 
+    auto make_string_expression(std::string text) -> ExpressionSyntax {
+        return ExpressionSyntax {.kind = ExpressionKind::string_literal, .text = std::move(text)};
+    }
+
     auto make_boolean_expression(std::string text) -> ExpressionSyntax {
         return ExpressionSyntax {.kind = ExpressionKind::boolean_literal, .text = std::move(text)};
     }
@@ -723,6 +727,12 @@ private:
 
         if (is(TokenKind::integer_literal)) {
             auto expression = make_integer_expression(current().lexeme);
+            advance();
+            return expression;
+        }
+
+        if (is(TokenKind::string_literal)) {
+            auto expression = make_string_expression(current().lexeme);
             advance();
             return expression;
         }

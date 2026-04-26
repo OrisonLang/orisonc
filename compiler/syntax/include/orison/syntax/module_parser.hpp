@@ -56,6 +56,7 @@ struct WhereConstraintSyntax {
 enum class ExpressionKind {
     name,
     integer_literal,
+    string_literal,
     boolean_literal,
     unary,
     call,

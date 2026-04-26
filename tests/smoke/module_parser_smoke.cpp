@@ -643,6 +643,63 @@ void test_boolean_literal_success() {
     assert(switch_statement.switch_cases[0].statements[0]->expression.text == "false");
 }
 
+void test_string_literal_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_string_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.strings\n";
+        output << "function log_message() -> Text\n";
+        output << "    let label: Text = \"sum\"\n";
+        output << "    sink(\"hello\")\n";
+        output << "    return \"done\"\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 3);
+    auto const& let_statement = result.module.functions.front().body_statements[0];
+    assert(let_statement.kind == orison::syntax::StatementKind::let_binding);
+    assert(let_statement.expression.kind == orison::syntax::ExpressionKind::string_literal);
+    assert(let_statement.expression.text == "\"sum\"");
+    auto const& call_statement = result.module.functions.front().body_statements[1];
+    assert(call_statement.kind == orison::syntax::StatementKind::expression_statement);
+    assert(call_statement.expression.kind == orison::syntax::ExpressionKind::call);
+    assert(call_statement.expression.arguments.size() == 1);
+    assert(call_statement.expression.arguments[0].kind == orison::syntax::ExpressionKind::string_literal);
+    assert(call_statement.expression.arguments[0].text == "\"hello\"");
+    auto const& return_statement = result.module.functions.front().body_statements[2];
+    assert(return_statement.kind == orison::syntax::StatementKind::return_statement);
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::string_literal);
+    assert(return_statement.expression.text == "\"done\"");
+}
+
+void test_string_literal_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_string_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.strings\n";
+        output << "function log_message() -> Text\n";
+        output << "    return \"unterminated\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "unterminated string literal");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1182,6 +1239,8 @@ int main() {
     test_unsafe_statement_success();
     test_unsafe_statement_failure();
     test_boolean_literal_success();
+    test_string_literal_success();
+    test_string_literal_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

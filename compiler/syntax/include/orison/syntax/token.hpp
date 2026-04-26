@@ -8,6 +8,7 @@ namespace orison::syntax {
 enum class TokenKind {
     identifier,
     integer_literal,
+    string_literal,
     keyword_package,
     keyword_import,
     keyword_type,
