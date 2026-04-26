@@ -65,6 +65,7 @@ enum class ExpressionKind {
     member_access,
     index_access,
     binary,
+    ternary,
 };
 
 struct ExpressionSyntax {
@@ -73,6 +74,7 @@ struct ExpressionSyntax {
     std::vector<ExpressionSyntax> arguments;
     std::unique_ptr<ExpressionSyntax> left;
     std::unique_ptr<ExpressionSyntax> right;
+    std::unique_ptr<ExpressionSyntax> alternate;
 };
 
 struct StatementSyntax;

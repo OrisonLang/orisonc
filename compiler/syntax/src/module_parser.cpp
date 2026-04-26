@@ -665,6 +665,7 @@ private:
                 .arguments = {},
                 .left = std::make_unique<ExpressionSyntax>(std::move(operand)),
                 .right = nullptr,
+                .alternate = nullptr,
             };
         }
 
@@ -690,6 +691,7 @@ private:
                 .arguments = {},
                 .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
                 .right = nullptr,
+                .alternate = nullptr,
             };
         }
 
@@ -786,6 +788,7 @@ private:
                         .arguments = parse_argument_list(result),
                         .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
                         .right = nullptr,
+                        .alternate = nullptr,
                     };
                     expression = std::move(call_expression);
                     continue;
@@ -800,6 +803,7 @@ private:
                         .arguments = {},
                         .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
                         .right = nullptr,
+                        .alternate = nullptr,
                     };
                     expression = std::move(member_expression);
                     continue;
@@ -827,6 +831,7 @@ private:
                         .arguments = std::move(index_arguments),
                         .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
                         .right = nullptr,
+                        .alternate = nullptr,
                     };
                     expression = std::move(index_access_expression);
                     continue;
@@ -885,8 +890,41 @@ private:
                 .arguments = {},
                 .left = std::make_unique<ExpressionSyntax>(std::move(left)),
                 .right = std::make_unique<ExpressionSyntax>(std::move(right)),
+                .alternate = nullptr,
             };
             left = std::move(binary_expression);
+        }
+
+        if (minimum_precedence <= 0 && is(TokenKind::question)) {
+            advance();
+            auto true_expression = parse_expression(result);
+            if (true_expression.text.empty() && !true_expression.left && !true_expression.right &&
+                !true_expression.alternate && true_expression.arguments.empty()) {
+                result.diagnostics.error(current().line, "ternary expression requires a true branch after '?'");
+                return {};
+            }
+
+            if (!is(TokenKind::colon)) {
+                result.diagnostics.error(current().line, "expected ':' after ternary true branch");
+                return {};
+            }
+
+            advance();
+            auto false_expression = parse_expression(result);
+            if (false_expression.text.empty() && !false_expression.left && !false_expression.right &&
+                !false_expression.alternate && false_expression.arguments.empty()) {
+                result.diagnostics.error(current().line, "ternary expression requires a false branch after ':'");
+                return {};
+            }
+
+            left = ExpressionSyntax {
+                .kind = ExpressionKind::ternary,
+                .text = "",
+                .arguments = {},
+                .left = std::make_unique<ExpressionSyntax>(std::move(left)),
+                .right = std::make_unique<ExpressionSyntax>(std::move(true_expression)),
+                .alternate = std::make_unique<ExpressionSyntax>(std::move(false_expression)),
+            };
         }
 
         return left;

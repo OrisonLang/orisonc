@@ -984,6 +984,67 @@ void test_named_bitwise_operator_success() {
     assert(return_statement.expression.left->text == "flags");
 }
 
+void test_ternary_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_ternary_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.ternary\n";
+        output << "function absolute(x: Int64, enabled: Bool) -> Int64\n";
+        output << "    let clamped = enabled or x < 0 ? -x : x\n";
+        output << "    return x < 0 ? -x : x\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& let_statement = result.module.functions.front().body_statements[0];
+    assert(let_statement.expression.kind == orison::syntax::ExpressionKind::ternary);
+    assert(let_statement.expression.left->kind == orison::syntax::ExpressionKind::binary);
+    assert(let_statement.expression.left->text == "or");
+    assert(let_statement.expression.right->kind == orison::syntax::ExpressionKind::unary);
+    assert(let_statement.expression.right->text == "-");
+    assert(let_statement.expression.right->left->text == "x");
+    assert(let_statement.expression.alternate->kind == orison::syntax::ExpressionKind::name);
+    assert(let_statement.expression.alternate->text == "x");
+    auto const& return_statement = result.module.functions.front().body_statements[1];
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::ternary);
+    assert(return_statement.expression.left->kind == orison::syntax::ExpressionKind::binary);
+    assert(return_statement.expression.left->text == "<");
+    assert(return_statement.expression.left->left->text == "x");
+    assert(return_statement.expression.left->right->text == "0");
+    assert(return_statement.expression.right->kind == orison::syntax::ExpressionKind::unary);
+    assert(return_statement.expression.right->text == "-");
+    assert(return_statement.expression.alternate->kind == orison::syntax::ExpressionKind::name);
+    assert(return_statement.expression.alternate->text == "x");
+}
+
+void test_ternary_expression_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_ternary_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.ternary\n";
+        output << "function absolute(x: Int64) -> Int64\n";
+        output << "    return x < 0 ? -x\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "expected ':' after ternary true branch");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1534,6 +1595,8 @@ int main() {
     test_array_literal_failure();
     test_word_boolean_operator_success();
     test_named_bitwise_operator_success();
+    test_ternary_expression_success();
+    test_ternary_expression_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

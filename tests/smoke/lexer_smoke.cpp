@@ -37,6 +37,7 @@ int main() {
         output << "    let mask = 0xFF\n";
         output << "    let bits = 0b1010_0001\n";
         output << "    let first = source.items[0]\n";
+        output << "    let absolute = source.value < 0 ? -source.value : source.value\n";
         output << "    let allowed = true and not false\n";
         output << "    let either = source.ready() or true\n";
         output << "    let masked = source.bits bit_and 0xFF\n";
@@ -81,6 +82,7 @@ int main() {
     bool saw_binary = false;
     bool saw_left_bracket = false;
     bool saw_right_bracket = false;
+    bool saw_question = false;
     bool saw_and = false;
     bool saw_or = false;
     bool saw_not = false;
@@ -153,6 +155,9 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::right_bracket) {
             saw_right_bracket = true;
         }
+        if (token.kind == orison::syntax::TokenKind::question) {
+            saw_question = true;
+        }
         if (token.kind == orison::syntax::TokenKind::keyword_and) {
             saw_and = true;
         }
@@ -207,6 +212,7 @@ int main() {
     assert(saw_binary);
     assert(saw_left_bracket);
     assert(saw_right_bracket);
+    assert(saw_question);
     assert(saw_and);
     assert(saw_or);
     assert(saw_not);

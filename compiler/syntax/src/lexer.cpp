@@ -461,6 +461,9 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
         case ',':
             token.kind = TokenKind::comma;
             break;
+        case '?':
+            token.kind = TokenKind::question;
+            break;
         case ':':
             token.kind = TokenKind::colon;
             break;

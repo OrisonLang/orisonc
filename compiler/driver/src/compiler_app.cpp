@@ -137,6 +137,9 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
     case ExpressionKind::binary:
         return "(" + render_expression(*expression.left) + " " + expression.text + " " +
                render_expression(*expression.right) + ")";
+    case ExpressionKind::ternary:
+        return "(" + render_expression(*expression.left) + " ? " + render_expression(*expression.right) + " : " +
+               render_expression(*expression.alternate) + ")";
     }
     return "";
 }
