@@ -83,6 +83,8 @@ enum class StatementKind {
     var_binding,
     assignment_statement,
     return_statement,
+    break_statement,
+    continue_statement,
     switch_statement,
     guard_statement,
     if_statement,

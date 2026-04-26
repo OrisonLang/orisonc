@@ -235,6 +235,8 @@ private:
         case TokenKind::keyword_for:
         case TokenKind::keyword_in:
         case TokenKind::keyword_defer:
+        case TokenKind::keyword_break:
+        case TokenKind::keyword_continue:
         case TokenKind::keyword_where:
             return true;
         default:
@@ -853,6 +855,18 @@ private:
         return statement;
     }
 
+    auto parse_break_statement() -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::break_statement, .valid = true};
+        advance();
+        return statement;
+    }
+
+    auto parse_continue_statement() -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::continue_statement, .valid = true};
+        advance();
+        return statement;
+    }
+
     auto parse_statement_block(ParseResult& result, std::string const& message) -> std::vector<StatementSyntax> {
         std::vector<StatementSyntax> statements;
         if (!consume_block_start(result, message)) {
@@ -1130,6 +1144,10 @@ private:
             return parse_binding_statement(result, StatementKind::var_binding);
         case TokenKind::keyword_return:
             return parse_return_statement(result);
+        case TokenKind::keyword_break:
+            return parse_break_statement();
+        case TokenKind::keyword_continue:
+            return parse_continue_statement();
         case TokenKind::keyword_switch:
             return parse_switch_statement(result);
         case TokenKind::keyword_guard:

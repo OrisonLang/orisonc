@@ -441,6 +441,63 @@ void test_assignment_failure() {
     assert(diagnostics.front().message == "expected expression");
 }
 
+void test_break_continue_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_break_continue_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.loops\n";
+        output << "function first_even(items: shared View<Int32>) -> Maybe<Int32>\n";
+        output << "    for item in items\n";
+        output << "        if item % 2 != 0\n";
+        output << "            continue\n";
+        output << "        break\n";
+        output << "    return items.length()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& for_statement = result.module.functions.front().body_statements[0];
+    assert(for_statement.kind == orison::syntax::StatementKind::for_statement);
+    assert(for_statement.nested_statements.size() == 2);
+    assert(for_statement.nested_statements[0].kind == orison::syntax::StatementKind::if_statement);
+    assert(for_statement.nested_statements[0].nested_statements.size() == 1);
+    assert(for_statement.nested_statements[0].nested_statements[0].kind ==
+           orison::syntax::StatementKind::continue_statement);
+    assert(for_statement.nested_statements[1].kind == orison::syntax::StatementKind::break_statement);
+}
+
+void test_break_continue_standalone_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_break_continue_standalone_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.flow\n";
+        output << "function stop() -> Int32\n";
+        output << "    break\n";
+        output << "    continue\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 3);
+    assert(result.module.functions.front().body_statements[0].kind == orison::syntax::StatementKind::break_statement);
+    assert(result.module.functions.front().body_statements[1].kind ==
+           orison::syntax::StatementKind::continue_statement);
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -973,6 +1030,8 @@ int main() {
     test_where_failure();
     test_assignment_success();
     test_assignment_failure();
+    test_break_continue_success();
+    test_break_continue_standalone_success();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

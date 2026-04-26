@@ -89,6 +89,12 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "defer") {
         return TokenKind::keyword_defer;
     }
+    if (text == "break") {
+        return TokenKind::keyword_break;
+    }
+    if (text == "continue") {
+        return TokenKind::keyword_continue;
+    }
     if (text == "where") {
         return TokenKind::keyword_where;
     }

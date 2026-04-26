@@ -23,6 +23,9 @@ int main() {
         output << "        return this.width\n";
         output << "package function fill<R>(source: exclusive R) -> Unit\n";
         output << "where R: Reader + Display\n";
+        output << "    while source.ready()\n";
+        output << "        continue\n";
+        output << "    break\n";
         output << "    return\n";
     }
 
@@ -48,6 +51,8 @@ int main() {
     bool saw_implements = false;
     bool saw_extend = false;
     bool saw_where = false;
+    bool saw_break = false;
+    bool saw_continue = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
@@ -78,6 +83,12 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::keyword_where) {
             saw_where = true;
         }
+        if (token.kind == orison::syntax::TokenKind::keyword_break) {
+            saw_break = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_continue) {
+            saw_continue = true;
+        }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
         }
@@ -94,6 +105,8 @@ int main() {
     assert(saw_implements);
     assert(saw_extend);
     assert(saw_where);
+    assert(saw_break);
+    assert(saw_continue);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

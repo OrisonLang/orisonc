@@ -66,6 +66,10 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
         return "assignment";
     case StatementKind::return_statement:
         return "return";
+    case StatementKind::break_statement:
+        return "break";
+    case StatementKind::continue_statement:
+        return "continue";
     case StatementKind::switch_statement:
         return "switch";
     case StatementKind::guard_statement:
