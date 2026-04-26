@@ -41,6 +41,7 @@ enum class TokenKind {
     keyword_repeat,
     keyword_unsafe,
     keyword_where,
+    keyword_const,
     keyword_and,
     keyword_or,
     keyword_not,

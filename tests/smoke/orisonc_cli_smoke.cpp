@@ -30,6 +30,7 @@ int main() {
     {
         std::ofstream output(path);
         output << "package demo.cli\n";
+        output << "const UART0_BASE: Address = 0x4000_1000\n";
         output << "import\n";
         output << "    Logger as Log from diagnostics.logger\n";
         output << "public type Port = UInt16\n";
@@ -56,10 +57,13 @@ int main() {
 
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
-    assert(output.find("top-level declarations: 5") != std::string::npos);
+    assert(output.find("top-level declarations: 6") != std::string::npos);
     assert(output.find("imports: 1") != std::string::npos);
+    assert(output.find("constants: 1") != std::string::npos);
     assert(output.find("type aliases: 1") != std::string::npos);
     assert(output.find("first import from: diagnostics.logger") != std::string::npos);
+    assert(output.find("first constant type: Address") != std::string::npos);
+    assert(output.find("first constant initializer: 0x4000_1000") != std::string::npos);
     assert(output.find("first type alias visibility: public") != std::string::npos);
     assert(output.find("first type alias target: UInt16") != std::string::npos);
     assert(output.find("records: 0") != std::string::npos);

@@ -78,6 +78,12 @@ struct ExpressionSyntax {
     std::unique_ptr<ExpressionSyntax> alternate;
 };
 
+struct ConstantSyntax {
+    std::string name;
+    TypeSyntax type;
+    ExpressionSyntax initializer;
+};
+
 struct StatementSyntax;
 
 struct SwitchCaseSyntax {
@@ -174,6 +180,7 @@ struct ExtensionSyntax {
 struct ModuleSyntax {
     std::string package_name;
     std::vector<ImportSyntax> imports;
+    std::vector<ConstantSyntax> constants;
     std::vector<TypeAliasSyntax> type_aliases;
     std::vector<RecordSyntax> records;
     std::vector<ChoiceSyntax> choices;

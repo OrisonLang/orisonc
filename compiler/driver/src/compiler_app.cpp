@@ -176,6 +176,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "package " << parse_result.module.package_name << '\n';
         output << "top-level declarations: " << parse_result.module.top_level_declaration_count << '\n';
         output << "imports: " << parse_result.module.imports.size() << '\n';
+        output << "constants: " << parse_result.module.constants.size() << '\n';
         output << "type aliases: " << parse_result.module.type_aliases.size() << '\n';
         output << "records: " << parse_result.module.records.size() << '\n';
         output << "choices: " << parse_result.module.choices.size() << '\n';
@@ -185,6 +186,11 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "functions: " << parse_result.module.functions.size() << '\n';
         if (!parse_result.module.imports.empty()) {
             output << "first import from: " << parse_result.module.imports.front().from_package << '\n';
+        }
+        if (!parse_result.module.constants.empty()) {
+            output << "first constant type: " << render_type(parse_result.module.constants.front().type) << '\n';
+            output << "first constant initializer: "
+                   << render_expression(parse_result.module.constants.front().initializer) << '\n';
         }
         if (!parse_result.module.type_aliases.empty()) {
             output << "first type alias visibility: "

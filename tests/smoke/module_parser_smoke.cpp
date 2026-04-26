@@ -12,6 +12,7 @@ void test_parse_success() {
     {
         std::ofstream output(path);
         output << "package demo.app\n\n";
+        output << "const UART0_BASE: Address = 0x4000_1000\n\n";
         output << "import\n";
         output << "    Logger as Log from diagnostics.logger\n";
         output << "    console from io\n\n";
@@ -55,6 +56,11 @@ void test_parse_success() {
     assert(!result.diagnostics.has_errors());
     assert(result.module.package_name == "demo.app");
     assert(result.module.imports.size() == 2);
+    assert(result.module.constants.size() == 1);
+    assert(result.module.constants.front().name == "UART0_BASE");
+    assert(result.module.constants.front().type.name == "Address");
+    assert(result.module.constants.front().initializer.kind == orison::syntax::ExpressionKind::integer_literal);
+    assert(result.module.constants.front().initializer.text == "0x4000_1000");
     assert(result.module.imports.front().name == "Logger");
     assert(result.module.imports.front().alias == "Log");
     assert(result.module.imports.front().from_package == "diagnostics.logger");
@@ -62,7 +68,7 @@ void test_parse_success() {
     assert(result.module.type_aliases.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.type_aliases.front().name == "UserId");
     assert(result.module.type_aliases.front().aliased_type.name == "UInt64");
-    assert(result.module.top_level_declaration_count == 7);
+    assert(result.module.top_level_declaration_count == 8);
     assert(result.module.records.size() == 1);
     assert(result.module.records.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.records.front().name == "User");
@@ -186,6 +192,53 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[3].expression.text == "+");
     assert(result.module.functions.front().body_statements[4].kind == orison::syntax::StatementKind::return_statement);
     assert(result.module.functions.front().body_statements[4].expression.text == "total");
+}
+
+void test_constant_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_constant_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.consts\n";
+        output << "const UART0_BASE: Address = 0x4000_1000\n";
+        output << "const UART0_DATA: Address = UART0_BASE + 0x00\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.constants.size() == 2);
+    assert(result.module.constants[0].name == "UART0_BASE");
+    assert(result.module.constants[0].type.name == "Address");
+    assert(result.module.constants[0].initializer.text == "0x4000_1000");
+    assert(result.module.constants[1].name == "UART0_DATA");
+    assert(result.module.constants[1].initializer.kind == orison::syntax::ExpressionKind::binary);
+    assert(result.module.constants[1].initializer.text == "+");
+    assert(result.module.constants[1].initializer.left->text == "UART0_BASE");
+    assert(result.module.constants[1].initializer.right->text == "0x00");
+}
+
+void test_constant_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_constant_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.consts\n";
+        output << "const UART0_BASE Address = 0x4000_1000\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "constant declaration requires ':' after the name");
 }
 
 void test_choice_generic_success() {
@@ -1665,6 +1718,8 @@ void test_defer_statement_failure() {
 
 int main() {
     test_parse_success();
+    test_constant_success();
+    test_constant_failure();
     test_choice_generic_success();
     test_interface_generic_success();
     test_implements_success();

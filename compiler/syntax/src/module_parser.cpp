@@ -56,6 +56,9 @@ private:
         case TokenKind::keyword_import:
             parse_import(result);
             break;
+        case TokenKind::keyword_const:
+            parse_constant(result);
+            break;
         case TokenKind::keyword_type:
             parse_type_alias(result, Visibility::package_visibility);
             break;
@@ -210,6 +213,7 @@ private:
         case TokenKind::identifier:
         case TokenKind::keyword_package:
         case TokenKind::keyword_import:
+        case TokenKind::keyword_const:
         case TokenKind::keyword_type:
         case TokenKind::keyword_record:
         case TokenKind::keyword_choice:
@@ -1511,6 +1515,50 @@ private:
             .visibility = visibility,
             .name = std::move(name),
             .aliased_type = std::move(aliased_type),
+        });
+        ++result.module.top_level_declaration_count;
+        skip_to_next_line();
+    }
+
+    void parse_constant(ParseResult& result) {
+        advance();
+        auto name = expect_identifier(result, "constant declaration requires a name");
+        if (name.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        if (!is(TokenKind::colon)) {
+            result.diagnostics.error(current().line, "constant declaration requires ':' after the name");
+            skip_to_next_line();
+            return;
+        }
+
+        advance();
+        auto type = parse_type(result, "constant declaration requires a type");
+        if (type.name.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        if (!is(TokenKind::equal)) {
+            result.diagnostics.error(current().line, "constant declaration requires '=' before the initializer");
+            skip_to_next_line();
+            return;
+        }
+
+        advance();
+        auto initializer = parse_expression(result);
+        if (initializer.text.empty() && !initializer.left && !initializer.right && !initializer.alternate &&
+            initializer.arguments.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        result.module.constants.push_back(ConstantSyntax {
+            .name = std::move(name),
+            .type = std::move(type),
+            .initializer = std::move(initializer),
         });
         ++result.module.top_level_declaration_count;
         skip_to_next_line();

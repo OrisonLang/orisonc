@@ -10,6 +10,7 @@ int main() {
     {
         std::ofstream output(path);
         output << "package demo.cli\n";
+        output << "const UART0_BASE: Address = 0x4000_1000\n";
         output << "import\n";
         output << "    Logger as Log from diagnostics.logger\n";
         output << "public type Port = UInt16\n";
@@ -64,6 +65,7 @@ int main() {
     assert(result.tokens[2].kind == orison::syntax::TokenKind::dot);
     assert(result.tokens[3].kind == orison::syntax::TokenKind::identifier);
     bool saw_import = false;
+    bool saw_const = false;
     bool saw_as = false;
     bool saw_from = false;
     bool saw_public = false;
@@ -99,6 +101,9 @@ int main() {
     for (auto const& token : result.tokens) {
         if (token.kind == orison::syntax::TokenKind::keyword_import) {
             saw_import = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_const) {
+            saw_const = true;
         }
         if (token.kind == orison::syntax::TokenKind::keyword_as) {
             saw_as = true;
@@ -198,6 +203,7 @@ int main() {
         }
     }
     assert(saw_import);
+    assert(saw_const);
     assert(saw_as);
     assert(saw_from);
     assert(saw_public);
