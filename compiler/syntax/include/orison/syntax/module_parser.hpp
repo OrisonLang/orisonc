@@ -9,12 +9,31 @@
 
 namespace orison::syntax {
 
+enum class Visibility {
+    public_visibility,
+    package_visibility,
+    private_visibility,
+};
+
 struct TypeSyntax {
     std::string name;
     std::vector<TypeSyntax> generic_arguments;
 };
 
+struct ImportSyntax {
+    std::string name;
+    std::string alias;
+    std::string from_package;
+};
+
+struct TypeAliasSyntax {
+    Visibility visibility = Visibility::package_visibility;
+    std::string name;
+    TypeSyntax aliased_type;
+};
+
 struct FieldSyntax {
+    Visibility visibility = Visibility::private_visibility;
     std::string name;
     TypeSyntax type;
 };
@@ -74,11 +93,13 @@ struct StatementSyntax {
 };
 
 struct RecordSyntax {
+    Visibility visibility = Visibility::package_visibility;
     std::string name;
     std::vector<FieldSyntax> fields;
 };
 
 struct FunctionSyntax {
+    Visibility visibility = Visibility::package_visibility;
     std::string name;
     std::vector<ParameterSyntax> parameters;
     TypeSyntax return_type;
@@ -87,6 +108,8 @@ struct FunctionSyntax {
 
 struct ModuleSyntax {
     std::string package_name;
+    std::vector<ImportSyntax> imports;
+    std::vector<TypeAliasSyntax> type_aliases;
     std::vector<RecordSyntax> records;
     std::vector<FunctionSyntax> functions;
     std::size_t top_level_declaration_count = 0;

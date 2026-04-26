@@ -30,9 +30,12 @@ int main() {
     {
         std::ofstream output(path);
         output << "package demo.cli\n";
-        output << "record User\n";
-        output << "    values: DynamicArray<Maybe<Int32>>\n";
-        output << "function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
+        output << "import\n";
+        output << "    Logger as Log from diagnostics.logger\n";
+        output << "public type Port = UInt16\n";
+        output << "public record User\n";
+        output << "    private values: DynamicArray<Maybe<Int32>>\n";
+        output << "package function main(input: shared.View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "    return -input.length()\n";
         output << "    return input.read(2)\n";
     }
@@ -43,11 +46,19 @@ int main() {
 
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
-    assert(output.find("top-level declarations: 2") != std::string::npos);
+    assert(output.find("top-level declarations: 3") != std::string::npos);
+    assert(output.find("imports: 1") != std::string::npos);
+    assert(output.find("type aliases: 1") != std::string::npos);
+    assert(output.find("first import from: diagnostics.logger") != std::string::npos);
+    assert(output.find("first type alias visibility: public") != std::string::npos);
+    assert(output.find("first type alias target: UInt16") != std::string::npos);
     assert(output.find("records: 1") != std::string::npos);
     assert(output.find("functions: 1") != std::string::npos);
+    assert(output.find("first record visibility: public") != std::string::npos);
     assert(output.find("record fields: 1") != std::string::npos);
+    assert(output.find("first field visibility: private") != std::string::npos);
     assert(output.find("first field type: DynamicArray<Maybe<Int32>>") != std::string::npos);
+    assert(output.find("first function visibility: package") != std::string::npos);
     assert(output.find("function parameters: 1") != std::string::npos);
     assert(output.find("function return type: Outcome<Int32, ParseError>") != std::string::npos);
     assert(output.find("function body statements: 2") != std::string::npos);

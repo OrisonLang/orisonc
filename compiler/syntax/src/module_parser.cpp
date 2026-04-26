@@ -29,24 +29,7 @@ public:
                 continue;
             }
 
-            switch (token.kind) {
-            case TokenKind::keyword_package:
-                parse_package(result);
-                break;
-            case TokenKind::keyword_record:
-                parse_record(result);
-                break;
-            case TokenKind::keyword_function:
-                parse_function(result);
-                break;
-            default:
-                result.diagnostics.error(
-                    token.line,
-                    "expected a top-level declaration such as package, record, or function"
-                );
-                skip_to_next_line();
-                break;
-            }
+            parse_top_level_declaration(result);
         }
 
         if (result.module.package_name.empty()) {
@@ -57,12 +40,100 @@ public:
     }
 
 private:
+    void parse_top_level_declaration(ParseResult& result) {
+        if (current_starts_visibility_qualified_declaration()) {
+            auto visibility = visibility_from_token(current().kind);
+            advance();
+            parse_visibility_qualified_top_level_declaration(result, visibility);
+            return;
+        }
+
+        switch (current().kind) {
+        case TokenKind::keyword_package:
+            parse_package(result);
+            break;
+        case TokenKind::keyword_import:
+            parse_import(result);
+            break;
+        case TokenKind::keyword_type:
+            parse_type_alias(result, Visibility::package_visibility);
+            break;
+        case TokenKind::keyword_record:
+            parse_record(result, Visibility::package_visibility);
+            break;
+        case TokenKind::keyword_function:
+            parse_function(result, Visibility::package_visibility);
+            break;
+        default:
+            result.diagnostics.error(
+                current().line,
+                "expected a top-level declaration such as package, import, type, record, or function"
+            );
+            skip_to_next_line();
+            break;
+        }
+    }
+
+    void parse_visibility_qualified_top_level_declaration(ParseResult& result, Visibility visibility) {
+        switch (current().kind) {
+        case TokenKind::keyword_type:
+            parse_type_alias(result, visibility);
+            break;
+        case TokenKind::keyword_record:
+            parse_record(result, visibility);
+            break;
+        case TokenKind::keyword_function:
+            parse_function(result, visibility);
+            break;
+        default:
+            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, or function");
+            skip_to_next_line();
+            break;
+        }
+    }
+
     auto current() const -> Token const& {
         return tokens_[index_];
     }
 
+    auto peek(std::size_t offset = 1) const -> Token const& {
+        auto target = index_ + offset;
+        if (target >= tokens_.size()) {
+            return tokens_.back();
+        }
+        return tokens_[target];
+    }
+
     auto is(TokenKind kind) const -> bool {
         return current().kind == kind;
+    }
+
+    auto is_visibility_modifier(TokenKind kind) const -> bool {
+        return kind == TokenKind::keyword_public || kind == TokenKind::keyword_package ||
+               kind == TokenKind::keyword_private;
+    }
+
+    auto visibility_from_token(TokenKind kind) const -> Visibility {
+        switch (kind) {
+        case TokenKind::keyword_public:
+            return Visibility::public_visibility;
+        case TokenKind::keyword_private:
+            return Visibility::private_visibility;
+        case TokenKind::keyword_package:
+            return Visibility::package_visibility;
+        default:
+            return Visibility::package_visibility;
+        }
+    }
+
+    auto current_starts_visibility_qualified_declaration() const -> bool {
+        if (!is_visibility_modifier(current().kind)) {
+            return false;
+        }
+
+        auto const& next = peek();
+        return next.kind == TokenKind::keyword_record || next.kind == TokenKind::keyword_function ||
+               next.kind == TokenKind::keyword_type;
     }
 
     void advance() {
@@ -787,7 +858,96 @@ private:
         skip_to_next_line();
     }
 
-    void parse_record(ParseResult& result) {
+    void parse_import(ParseResult& result) {
+        advance();
+        if (!consume_block_start(result, "import declaration requires an indented import block")) {
+            skip_to_next_top_level();
+            return;
+        }
+
+        while (!is(TokenKind::dedent) && !is(TokenKind::eof)) {
+            if (is(TokenKind::newline)) {
+                advance();
+                continue;
+            }
+
+            ImportSyntax import;
+            import.name = expect_identifier(result, "import entry requires a name");
+            if (import.name.empty()) {
+                skip_to_next_line();
+                continue;
+            }
+
+            if (is(TokenKind::keyword_as)) {
+                advance();
+                import.alias = expect_identifier(result, "import alias requires a name");
+                if (import.alias.empty()) {
+                    skip_to_next_line();
+                    continue;
+                }
+            }
+
+            if (!is(TokenKind::keyword_from)) {
+                result.diagnostics.error(current().line, "import entry requires 'from' before the package name");
+                skip_to_next_line();
+                continue;
+            }
+
+            advance();
+            import.from_package = parse_qualified_name(result, "import entry requires a package name after 'from'");
+            if (import.from_package.empty()) {
+                skip_to_next_line();
+                continue;
+            }
+
+            result.module.imports.push_back(std::move(import));
+            skip_to_next_line();
+        }
+
+        consume_block_end();
+    }
+
+    void parse_type_alias(ParseResult& result, Visibility visibility) {
+        advance();
+        auto name = expect_identifier(result, "type alias declaration requires a name");
+        if (name.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        if (!is(TokenKind::equal)) {
+            result.diagnostics.error(current().line, "type alias declaration requires '=' before the aliased type");
+            skip_to_next_line();
+            return;
+        }
+
+        advance();
+        auto aliased_type = parse_type(result, "type alias declaration requires a target type");
+        if (aliased_type.name.empty()) {
+            skip_to_next_line();
+            return;
+        }
+
+        result.module.type_aliases.push_back(TypeAliasSyntax {
+            .visibility = visibility,
+            .name = std::move(name),
+            .aliased_type = std::move(aliased_type),
+        });
+        ++result.module.top_level_declaration_count;
+        skip_to_next_line();
+    }
+
+    auto parse_field_visibility() -> Visibility {
+        if (!is_visibility_modifier(current().kind)) {
+            return Visibility::private_visibility;
+        }
+
+        auto visibility = visibility_from_token(current().kind);
+        advance();
+        return visibility;
+    }
+
+    void parse_record(ParseResult& result, Visibility visibility) {
         advance();
         auto name = expect_identifier(result, "record declaration requires a type name");
         if (name.empty()) {
@@ -795,7 +955,7 @@ private:
             return;
         }
 
-        RecordSyntax record {.name = name};
+        RecordSyntax record {.visibility = visibility, .name = name};
 
         if (!consume_block_start(result, "record declaration requires an indented field block")) {
             skip_to_next_top_level();
@@ -809,6 +969,7 @@ private:
             }
 
             FieldSyntax field;
+            field.visibility = parse_field_visibility();
             field.name = expect_identifier(result, "record field requires a name");
             if (field.name.empty()) {
                 skip_to_next_line();
@@ -837,7 +998,7 @@ private:
         ++result.module.top_level_declaration_count;
     }
 
-    void parse_function(ParseResult& result) {
+    void parse_function(ParseResult& result, Visibility visibility) {
         advance();
         auto name = expect_identifier(result, "function declaration requires a name");
         if (name.empty()) {
@@ -864,6 +1025,7 @@ private:
         }
 
         FunctionSyntax function {
+            .visibility = visibility,
             .name = name,
             .parameters = std::move(parameters),
             .return_type = std::move(return_type),

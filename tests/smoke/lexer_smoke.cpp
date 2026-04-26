@@ -10,12 +10,11 @@ int main() {
     {
         std::ofstream output(path);
         output << "package demo.cli\n";
-        output << "\n";
-        output << "function main(value: Int32) -> Int32\n";
-        output << "    return -value\n";
-        output << "    if value % 2 != 0\n";
-        output << "        return 0\n";
-        output << "    return 0\n";
+        output << "import\n";
+        output << "    Logger as Log from diagnostics.logger\n";
+        output << "public type Port = UInt16\n";
+        output << "public record User\n";
+        output << "    private age: UInt8\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -25,26 +24,38 @@ int main() {
     auto result = lexer.lex(*source_file);
 
     assert(!result.diagnostics.has_errors());
-    assert(result.tokens.size() >= 20);
+    assert(result.tokens.size() >= 22);
     assert(result.tokens[0].kind == orison::syntax::TokenKind::keyword_package);
     assert(result.tokens[0].line_start);
     assert(result.tokens[1].kind == orison::syntax::TokenKind::identifier);
     assert(result.tokens[2].kind == orison::syntax::TokenKind::dot);
     assert(result.tokens[3].kind == orison::syntax::TokenKind::identifier);
-    bool saw_minus = false;
-    bool saw_percent = false;
-    bool saw_bang_equal = false;
+    bool saw_import = false;
+    bool saw_as = false;
+    bool saw_from = false;
+    bool saw_public = false;
+    bool saw_private = false;
+    bool saw_type = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
-        if (token.kind == orison::syntax::TokenKind::minus) {
-            saw_minus = true;
+        if (token.kind == orison::syntax::TokenKind::keyword_import) {
+            saw_import = true;
         }
-        if (token.kind == orison::syntax::TokenKind::percent) {
-            saw_percent = true;
+        if (token.kind == orison::syntax::TokenKind::keyword_as) {
+            saw_as = true;
         }
-        if (token.kind == orison::syntax::TokenKind::bang_equal) {
-            saw_bang_equal = true;
+        if (token.kind == orison::syntax::TokenKind::keyword_from) {
+            saw_from = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_public) {
+            saw_public = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_private) {
+            saw_private = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_type) {
+            saw_type = true;
         }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
@@ -53,9 +64,12 @@ int main() {
             saw_dedent = true;
         }
     }
-    assert(saw_minus);
-    assert(saw_percent);
-    assert(saw_bang_equal);
+    assert(saw_import);
+    assert(saw_as);
+    assert(saw_from);
+    assert(saw_public);
+    assert(saw_private);
+    assert(saw_type);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

@@ -11,11 +11,29 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "package") {
         return TokenKind::keyword_package;
     }
+    if (text == "import") {
+        return TokenKind::keyword_import;
+    }
+    if (text == "type") {
+        return TokenKind::keyword_type;
+    }
     if (text == "record") {
         return TokenKind::keyword_record;
     }
     if (text == "function") {
         return TokenKind::keyword_function;
+    }
+    if (text == "public") {
+        return TokenKind::keyword_public;
+    }
+    if (text == "private") {
+        return TokenKind::keyword_private;
+    }
+    if (text == "from") {
+        return TokenKind::keyword_from;
+    }
+    if (text == "as") {
+        return TokenKind::keyword_as;
     }
     if (text == "let") {
         return TokenKind::keyword_let;

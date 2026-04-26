@@ -8,19 +8,21 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ### Implemented
 
-- lexing for package, record, function, let, var, return, switch, default, guard, if, else, while, for, in, and defer keywords
+- lexing for package, import, type, record, function, public, private, from, as, let, var, return, switch, default, guard, if, else, while, for, in, and defer keywords
 - indentation-sensitive block structure with explicit `indent` and `dedent` tokens
-- package declarations, record declarations, and function headers
+- package declarations, import blocks, type aliases, record declarations, and function headers
+- parsed top-level visibility modifiers for supported declarations plus field visibility modifiers in records
 - parsed record fields, typed parameters, return types, and nested generic type syntax
 - statement parsing for `let`, `var`, `return`, expression statements, inline and block-arm `switch`, `guard ... else`, `if` with an optional `else` block, `while`, `for ... in`, and block `defer`
 - expression parsing for names, integer literals, unary `-`, calls, member access, and binary `+`, `-`, `*`, `%`, `/`, `==`, `!=`, `<`, `<=`, `>`, `>=`
-- CLI parse output for first-statement nested, alternate, and switch-arm counts
+- CLI parse output for import/type counts, declaration visibility, and first-statement nested/alternate/switch-arm counts
 
 ### Pending
 
-- richer expression grammar beyond the current narrow precedence table
+- additional top-level declarations and blocks from the updated docs, including `choice`, `interface`, `implements`, `extend`, and `where`
+- richer expression grammar beyond the current narrow precedence table, including `and`, `or`, `not`, `?:`, `?.`, and named bitwise operators
 - semantic analysis, type checking, ownership checking, lowering, and backend code generation
 
 ## Latest update
 
-- 2026-04-24: completed parser support for unary `-`, extended smoke coverage, and synchronized the parity records.
+- 2026-04-25: completed parser support for import blocks, type aliases, and visibility modifiers on supported declarations/record fields, extended smoke coverage, and synchronized the parity records.

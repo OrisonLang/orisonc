@@ -31,6 +31,19 @@ auto render_type(orison::syntax::TypeSyntax const& type) -> std::string {
     return rendered;
 }
 
+auto render_visibility(orison::syntax::Visibility visibility) -> std::string_view {
+    using orison::syntax::Visibility;
+    switch (visibility) {
+    case Visibility::public_visibility:
+        return "public";
+    case Visibility::package_visibility:
+        return "package";
+    case Visibility::private_visibility:
+        return "private";
+    }
+    return "unknown";
+}
+
 auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_view {
     using orison::syntax::StatementKind;
     switch (kind) {
@@ -116,16 +129,33 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         output << "parsed " << maybe_source->path().string() << '\n';
         output << "package " << parse_result.module.package_name << '\n';
         output << "top-level declarations: " << parse_result.module.top_level_declaration_count << '\n';
+        output << "imports: " << parse_result.module.imports.size() << '\n';
+        output << "type aliases: " << parse_result.module.type_aliases.size() << '\n';
         output << "records: " << parse_result.module.records.size() << '\n';
         output << "functions: " << parse_result.module.functions.size() << '\n';
+        if (!parse_result.module.imports.empty()) {
+            output << "first import from: " << parse_result.module.imports.front().from_package << '\n';
+        }
+        if (!parse_result.module.type_aliases.empty()) {
+            output << "first type alias visibility: "
+                   << render_visibility(parse_result.module.type_aliases.front().visibility) << '\n';
+            output << "first type alias target: "
+                   << render_type(parse_result.module.type_aliases.front().aliased_type) << '\n';
+        }
         if (!parse_result.module.records.empty()) {
+            output << "first record visibility: " << render_visibility(parse_result.module.records.front().visibility)
+                   << '\n';
             output << "record fields: " << parse_result.module.records.front().fields.size() << '\n';
             if (!parse_result.module.records.front().fields.empty()) {
+                output << "first field visibility: "
+                       << render_visibility(parse_result.module.records.front().fields.front().visibility) << '\n';
                 output << "first field type: "
                        << render_type(parse_result.module.records.front().fields.front().type) << '\n';
             }
         }
         if (!parse_result.module.functions.empty()) {
+            output << "first function visibility: "
+                   << render_visibility(parse_result.module.functions.front().visibility) << '\n';
             output << "function parameters: " << parse_result.module.functions.front().parameters.size() << '\n';
             output << "function return type: " << render_type(parse_result.module.functions.front().return_type)
                    << '\n';
