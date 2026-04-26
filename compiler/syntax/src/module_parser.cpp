@@ -753,6 +753,33 @@ private:
         return left;
     }
 
+    auto is_assignable_expression(ExpressionSyntax const& expression) const -> bool {
+        return expression.kind == ExpressionKind::name || expression.kind == ExpressionKind::member_access;
+    }
+
+    auto current_starts_assignment_statement() const -> bool {
+        if (!is(TokenKind::identifier)) {
+            return false;
+        }
+
+        auto lookahead = index_ + 1;
+        while (lookahead < tokens_.size()) {
+            auto kind = tokens_[lookahead].kind;
+            if (kind == TokenKind::dot) {
+                ++lookahead;
+                if (lookahead >= tokens_.size() || tokens_[lookahead].kind != TokenKind::identifier) {
+                    return false;
+                }
+                ++lookahead;
+                continue;
+            }
+
+            return kind == TokenKind::equal;
+        }
+
+        return false;
+    }
+
     auto parse_binding_statement(ParseResult& result, StatementKind kind) -> StatementSyntax {
         StatementSyntax statement {.kind = kind, .valid = true};
         advance();
@@ -779,6 +806,38 @@ private:
         if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
             statement.expression.arguments.empty()) {
             result.diagnostics.error(current().line, "binding statement requires an initializer expression");
+            statement.valid = false;
+        }
+        return statement;
+    }
+
+    auto parse_assignment_statement(ParseResult& result) -> StatementSyntax {
+        StatementSyntax statement {.kind = StatementKind::assignment_statement, .valid = true};
+        statement.assignment_target = parse_expression(result);
+        if (statement.assignment_target.text.empty() && !statement.assignment_target.left &&
+            !statement.assignment_target.right && statement.assignment_target.arguments.empty()) {
+            result.diagnostics.error(current().line, "assignment statement requires a target expression");
+            statement.valid = false;
+            return statement;
+        }
+
+        if (!is_assignable_expression(statement.assignment_target)) {
+            result.diagnostics.error(current().line, "assignment target must be a name or member access");
+            statement.valid = false;
+            return statement;
+        }
+
+        if (!is(TokenKind::equal)) {
+            result.diagnostics.error(current().line, "assignment statement requires '=' before the assigned expression");
+            statement.valid = false;
+            return statement;
+        }
+
+        advance();
+        statement.expression = parse_expression(result);
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            statement.expression.arguments.empty()) {
+            result.diagnostics.error(current().line, "assignment statement requires an assigned expression");
             statement.valid = false;
         }
         return statement;
@@ -1096,6 +1155,9 @@ private:
             return statement;
         }
         default:
+            if (current_starts_assignment_statement()) {
+                return parse_assignment_statement(result);
+            }
             return parse_expression_statement(result);
         }
     }

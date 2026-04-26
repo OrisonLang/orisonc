@@ -81,6 +81,7 @@ struct SwitchCaseSyntax {
 enum class StatementKind {
     let_binding,
     var_binding,
+    assignment_statement,
     return_statement,
     switch_statement,
     guard_statement,
@@ -96,6 +97,7 @@ struct StatementSyntax {
     bool valid = true;
     std::string name;
     TypeSyntax annotated_type;
+    ExpressionSyntax assignment_target;
     ExpressionSyntax expression;
     std::vector<StatementSyntax> nested_statements;
     std::vector<StatementSyntax> alternate_statements;

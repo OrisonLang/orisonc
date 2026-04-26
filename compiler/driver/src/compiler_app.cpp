@@ -62,6 +62,8 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
         return "let";
     case StatementKind::var_binding:
         return "var";
+    case StatementKind::assignment_statement:
+        return "assignment";
     case StatementKind::return_statement:
         return "return";
     case StatementKind::switch_statement:

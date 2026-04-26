@@ -37,10 +37,12 @@ void test_parse_success() {
         output << "        return input.read(0)\n";
         output << "    if count < 10\n";
         output << "        let label: Text = input.read(count)\n";
+        output << "        label = input.read(0)\n";
         output << "        sink(label.value)\n";
         output << "    else\n";
         output << "        return input.read(count)\n";
         output << "    var total = count + 1 * 2\n";
+        output << "    total = total + 1\n";
         output << "    return total\n";
     }
 
@@ -129,7 +131,7 @@ void test_parse_success() {
     assert(result.module.functions.front().return_type.generic_arguments.size() == 2);
     assert(result.module.functions.front().return_type.generic_arguments.front().name == "Int32");
     assert(result.module.functions.front().return_type.generic_arguments[1].name == "ParseError");
-    assert(result.module.functions.front().body_statements.size() == 4);
+    assert(result.module.functions.front().body_statements.size() == 5);
     assert(result.module.functions.front().body_statements[0].kind == orison::syntax::StatementKind::guard_statement);
     assert(result.module.functions.front().body_statements[0].expression.kind == orison::syntax::ExpressionKind::binary);
     assert(result.module.functions.front().body_statements[0].expression.text == ">");
@@ -142,7 +144,7 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[1].kind == orison::syntax::StatementKind::if_statement);
     assert(result.module.functions.front().body_statements[1].expression.kind == orison::syntax::ExpressionKind::binary);
     assert(result.module.functions.front().body_statements[1].expression.text == "<");
-    assert(result.module.functions.front().body_statements[1].nested_statements.size() == 2);
+    assert(result.module.functions.front().body_statements[1].nested_statements.size() == 3);
     assert(result.module.functions.front().body_statements[1].alternate_statements.size() == 1);
     assert(result.module.functions.front().body_statements[1].nested_statements[0].kind == orison::syntax::StatementKind::let_binding);
     assert(result.module.functions.front().body_statements[1].nested_statements[0].name == "label");
@@ -153,8 +155,17 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[1].nested_statements[0].expression.left->left->text == "input");
     assert(result.module.functions.front().body_statements[1].nested_statements[0].expression.arguments.size() == 1);
     assert(result.module.functions.front().body_statements[1].nested_statements[0].expression.arguments.front().text == "count");
-    assert(result.module.functions.front().body_statements[1].nested_statements[1].kind == orison::syntax::StatementKind::expression_statement);
-    assert(result.module.functions.front().body_statements[1].nested_statements[1].expression.kind == orison::syntax::ExpressionKind::call);
+    assert(result.module.functions.front().body_statements[1].nested_statements[1].kind ==
+           orison::syntax::StatementKind::assignment_statement);
+    assert(result.module.functions.front().body_statements[1].nested_statements[1].assignment_target.kind ==
+           orison::syntax::ExpressionKind::name);
+    assert(result.module.functions.front().body_statements[1].nested_statements[1].assignment_target.text == "label");
+    assert(result.module.functions.front().body_statements[1].nested_statements[1].expression.kind ==
+           orison::syntax::ExpressionKind::call);
+    assert(result.module.functions.front().body_statements[1].nested_statements[2].kind ==
+           orison::syntax::StatementKind::expression_statement);
+    assert(result.module.functions.front().body_statements[1].nested_statements[2].expression.kind ==
+           orison::syntax::ExpressionKind::call);
     assert(result.module.functions.front().body_statements[1].alternate_statements[0].kind == orison::syntax::StatementKind::return_statement);
     assert(result.module.functions.front().body_statements[1].alternate_statements[0].expression.kind == orison::syntax::ExpressionKind::call);
     assert(result.module.functions.front().body_statements[2].kind == orison::syntax::StatementKind::var_binding);
@@ -166,8 +177,15 @@ void test_parse_success() {
     assert(result.module.functions.front().body_statements[2].expression.right->text == "*");
     assert(result.module.functions.front().body_statements[2].expression.right->left->text == "1");
     assert(result.module.functions.front().body_statements[2].expression.right->right->text == "2");
-    assert(result.module.functions.front().body_statements[3].kind == orison::syntax::StatementKind::return_statement);
-    assert(result.module.functions.front().body_statements[3].expression.text == "total");
+    assert(result.module.functions.front().body_statements[3].kind == orison::syntax::StatementKind::assignment_statement);
+    assert(result.module.functions.front().body_statements[3].assignment_target.kind ==
+           orison::syntax::ExpressionKind::name);
+    assert(result.module.functions.front().body_statements[3].assignment_target.text == "total");
+    assert(result.module.functions.front().body_statements[3].expression.kind ==
+           orison::syntax::ExpressionKind::binary);
+    assert(result.module.functions.front().body_statements[3].expression.text == "+");
+    assert(result.module.functions.front().body_statements[4].kind == orison::syntax::StatementKind::return_statement);
+    assert(result.module.functions.front().body_statements[4].expression.text == "total");
 }
 
 void test_choice_generic_success() {
@@ -369,6 +387,58 @@ void test_where_failure() {
     auto diagnostics = result.diagnostics.entries();
     assert(!diagnostics.empty());
     assert(diagnostics.front().message == "where clause requires ':' after the constrained parameter");
+}
+
+void test_assignment_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_assignment_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.assign\n";
+        output << "function update(current: Int32) -> Int32\n";
+        output << "    current = current + 1\n";
+        output << "    this.value = current\n";
+        output << "    return current\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 3);
+    assert(result.module.functions.front().body_statements[0].kind == orison::syntax::StatementKind::assignment_statement);
+    assert(result.module.functions.front().body_statements[0].assignment_target.kind ==
+           orison::syntax::ExpressionKind::name);
+    assert(result.module.functions.front().body_statements[0].assignment_target.text == "current");
+    assert(result.module.functions.front().body_statements[1].kind == orison::syntax::StatementKind::assignment_statement);
+    assert(result.module.functions.front().body_statements[1].assignment_target.kind ==
+           orison::syntax::ExpressionKind::member_access);
+    assert(result.module.functions.front().body_statements[1].assignment_target.text == "value");
+    assert(result.module.functions.front().body_statements[1].assignment_target.left->text == "this");
+}
+
+void test_assignment_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_assignment_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.assign\n";
+        output << "function update() -> Int32\n";
+        output << "    current =\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "expected expression");
 }
 
 void test_switch_statement_success() {
@@ -901,6 +971,8 @@ int main() {
     test_extend_failure();
     test_where_success();
     test_where_failure();
+    test_assignment_success();
+    test_assignment_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();
