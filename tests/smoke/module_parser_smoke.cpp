@@ -39,6 +39,8 @@ void test_parse_success() {
         output << "public foreign \"c\" as \"device_init\"\n";
         output << "function initialize_device() -> Int32\n";
         output << "    return 0\n\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, ParseError>\n";
+        output << "    return url\n\n";
         output << "unsafe function read_byte(addr: Address) -> Byte\n";
         output << "    return raw_read(addr)\n\n";
         output << "package function main(input: shared.View<Byte>, count: Int32) -> Outcome<Int32, ParseError>\n";
@@ -144,19 +146,33 @@ void test_parse_success() {
     assert(result.module.extensions.front().methods[1].body_statements[0].expression.kind ==
            orison::syntax::ExpressionKind::binary);
     assert(result.module.extensions.front().methods[1].body_statements[0].expression.text == ">");
-    assert(result.module.functions.size() == 2);
+    assert(result.module.functions.size() == 3);
     assert(result.module.functions.front().visibility == orison::syntax::Visibility::package_visibility);
-    assert(result.module.functions.front().is_unsafe);
-    assert(result.module.functions.front().name == "read_byte");
+    assert(result.module.functions.front().is_async);
+    assert(!result.module.functions.front().is_unsafe);
+    assert(result.module.functions.front().name == "fetch");
     assert(result.module.functions.front().parameters.size() == 1);
-    assert(result.module.functions.front().parameters.front().name == "addr");
-    assert(result.module.functions.front().parameters.front().type.name == "Address");
-    assert(result.module.functions.front().return_type.name == "Byte");
+    assert(result.module.functions.front().parameters.front().name == "url");
+    assert(result.module.functions.front().parameters.front().type.name == "Text");
+    assert(result.module.functions.front().return_type.name == "Outcome");
     assert(result.module.functions.front().body_statements.size() == 1);
     assert(result.module.functions.front().body_statements[0].kind == orison::syntax::StatementKind::return_statement);
-    assert(result.module.functions.front().body_statements[0].expression.kind == orison::syntax::ExpressionKind::call);
-    auto const& main_function = result.module.functions[1];
+    assert(result.module.functions.front().body_statements[0].expression.kind == orison::syntax::ExpressionKind::name);
+    auto const& unsafe_function = result.module.functions[1];
+    assert(unsafe_function.visibility == orison::syntax::Visibility::package_visibility);
+    assert(!unsafe_function.is_async);
+    assert(unsafe_function.is_unsafe);
+    assert(unsafe_function.name == "read_byte");
+    assert(unsafe_function.parameters.size() == 1);
+    assert(unsafe_function.parameters.front().name == "addr");
+    assert(unsafe_function.parameters.front().type.name == "Address");
+    assert(unsafe_function.return_type.name == "Byte");
+    assert(unsafe_function.body_statements.size() == 1);
+    assert(unsafe_function.body_statements[0].kind == orison::syntax::StatementKind::return_statement);
+    assert(unsafe_function.body_statements[0].expression.kind == orison::syntax::ExpressionKind::call);
+    auto const& main_function = result.module.functions[2];
     assert(main_function.visibility == orison::syntax::Visibility::package_visibility);
+    assert(!main_function.is_async);
     assert(!main_function.is_unsafe);
     assert(main_function.name == "main");
     assert(main_function.parameters.size() == 2);
@@ -323,6 +339,55 @@ void test_unsafe_function_success() {
     assert(result.module.functions[1].is_unsafe);
     assert(result.module.functions[1].visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.functions[1].name == "poke");
+}
+
+void test_async_function_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_async_function_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.async\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return url\n";
+        output << "public async unsafe function fetch_byte(addr: Address) -> Byte\n";
+        output << "    return raw_read(addr)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 2);
+    assert(result.module.functions[0].is_async);
+    assert(!result.module.functions[0].is_unsafe);
+    assert(result.module.functions[0].name == "fetch");
+    assert(result.module.functions[1].is_async);
+    assert(result.module.functions[1].is_unsafe);
+    assert(result.module.functions[1].visibility == orison::syntax::Visibility::public_visibility);
+    assert(result.module.functions[1].name == "fetch_byte");
+}
+
+void test_async_function_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_async_function_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.async\n";
+        output << "async record Broken\n";
+        output << "    value: Int32\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "async modifier must be followed by function");
 }
 
 void test_unsafe_function_failure() {
@@ -1875,6 +1940,8 @@ int main() {
     test_foreign_import_success();
     test_foreign_export_success();
     test_foreign_import_failure();
+    test_async_function_success();
+    test_async_function_failure();
     test_unsafe_function_success();
     test_unsafe_function_failure();
     test_choice_generic_success();

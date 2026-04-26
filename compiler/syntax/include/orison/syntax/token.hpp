@@ -44,6 +44,7 @@ enum class TokenKind {
     keyword_const,
     keyword_foreign,
     keyword_library,
+    keyword_async,
     keyword_and,
     keyword_or,
     keyword_not,

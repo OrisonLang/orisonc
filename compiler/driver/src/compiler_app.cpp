@@ -265,6 +265,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         if (!parse_result.module.functions.empty()) {
             output << "first function visibility: "
                    << render_visibility(parse_result.module.functions.front().visibility) << '\n';
+            output << "first function async: "
+                   << (parse_result.module.functions.front().is_async ? "true" : "false") << '\n';
             output << "first function unsafe: "
                    << (parse_result.module.functions.front().is_unsafe ? "true" : "false") << '\n';
             output << "function parameters: " << parse_result.module.functions.front().parameters.size() << '\n';

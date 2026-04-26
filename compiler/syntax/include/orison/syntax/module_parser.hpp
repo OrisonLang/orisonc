@@ -171,6 +171,7 @@ struct InterfaceSyntax {
 
 struct FunctionSyntax {
     Visibility visibility = Visibility::package_visibility;
+    bool is_async = false;
     bool is_unsafe = false;
     std::string name;
     std::vector<std::string> generic_parameters;

@@ -21,11 +21,11 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ### Pending
 
-- additional top-level forms and modifiers from the updated docs, including `async` function modifiers
+- additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - concurrency expression forms from the updated docs, including `thread`, `task`, and `await`
 - semantic analysis, type checking, ownership checking, lowering, and backend code generation
 
 ## Latest update
 
-- 2026-04-26: completed parser support for unsafe function modifiers, extended smoke coverage, and synchronized the parity records.
+- 2026-04-26: completed parser support for async function modifiers, extended smoke coverage, and synchronized the parity records.

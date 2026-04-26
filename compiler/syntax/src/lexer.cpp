@@ -113,6 +113,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "library") {
         return TokenKind::keyword_library;
     }
+    if (text == "async") {
+        return TokenKind::keyword_async;
+    }
     if (text == "and") {
         return TokenKind::keyword_and;
     }

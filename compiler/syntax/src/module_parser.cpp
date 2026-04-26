@@ -77,6 +77,9 @@ private:
         case TokenKind::keyword_extend:
             parse_extension(result);
             break;
+        case TokenKind::keyword_async:
+            parse_function(result, Visibility::package_visibility, false, true);
+            break;
         case TokenKind::keyword_unsafe:
             parse_function(result, Visibility::package_visibility, true);
             break;
@@ -110,6 +113,9 @@ private:
         case TokenKind::keyword_foreign:
             parse_foreign(result, visibility);
             break;
+        case TokenKind::keyword_async:
+            parse_function(result, visibility, false, true);
+            break;
         case TokenKind::keyword_unsafe:
             parse_function(result, visibility, true);
             break;
@@ -117,7 +123,7 @@ private:
             parse_function(result, visibility);
             break;
         default:
-            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, interface, foreign, unsafe, or function");
+            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, interface, foreign, async, unsafe, or function");
             skip_to_next_line();
             break;
         }
@@ -166,7 +172,7 @@ private:
         return next.kind == TokenKind::keyword_record || next.kind == TokenKind::keyword_choice ||
                next.kind == TokenKind::keyword_interface || next.kind == TokenKind::keyword_function ||
                next.kind == TokenKind::keyword_type || next.kind == TokenKind::keyword_foreign ||
-               next.kind == TokenKind::keyword_unsafe;
+               next.kind == TokenKind::keyword_unsafe || next.kind == TokenKind::keyword_async;
     }
 
     void advance() {
@@ -237,6 +243,7 @@ private:
         case TokenKind::keyword_const:
         case TokenKind::keyword_foreign:
         case TokenKind::keyword_library:
+        case TokenKind::keyword_async:
         case TokenKind::keyword_type:
         case TokenKind::keyword_record:
         case TokenKind::keyword_choice:
@@ -598,11 +605,13 @@ private:
         ParseResult& result,
         InterfaceMethodSyntax signature,
         Visibility visibility,
-        bool is_unsafe = false
+        bool is_unsafe = false,
+        bool is_async = false
     )
         -> std::optional<FunctionSyntax> {
         FunctionSyntax function {
             .visibility = visibility,
+            .is_async = is_async,
             .is_unsafe = is_unsafe,
             .name = std::move(signature.name),
             .generic_parameters = std::move(signature.generic_parameters),
@@ -2005,9 +2014,24 @@ private:
         ++result.module.top_level_declaration_count;
     }
 
-    void parse_function(ParseResult& result, Visibility visibility, bool is_unsafe = false) {
-        if (is_unsafe) {
+    void parse_function(ParseResult& result, Visibility visibility, bool is_unsafe = false, bool is_async = false) {
+        if (is_async) {
             advance();
+            if (is(TokenKind::keyword_unsafe)) {
+                is_unsafe = true;
+                advance();
+            }
+            if (!is(TokenKind::keyword_function)) {
+                result.diagnostics.error(current().line, "async modifier must be followed by function");
+                skip_to_next_top_level();
+                return;
+            }
+        }
+
+        if (is_unsafe) {
+            if (!is_async) {
+                advance();
+            }
             if (!is(TokenKind::keyword_function)) {
                 result.diagnostics.error(current().line, "unsafe modifier must be followed by function");
                 skip_to_next_top_level();
@@ -2021,7 +2045,8 @@ private:
             return;
         }
 
-        auto maybe_function = parse_function_body(result, std::move(*maybe_signature), visibility, is_unsafe);
+        auto maybe_function =
+            parse_function_body(result, std::move(*maybe_signature), visibility, is_unsafe, is_async);
         if (!maybe_function.has_value()) {
             skip_to_next_top_level();
             return;

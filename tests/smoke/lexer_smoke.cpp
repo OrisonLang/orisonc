@@ -19,6 +19,8 @@ int main() {
         output << "public foreign \"c\" as \"device_init\"\n";
         output << "function initialize_device() -> Int32\n";
         output << "    return 0\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return url\n";
         output << "unsafe function read_byte(addr: Address) -> Byte\n";
         output << "    return raw_read(addr)\n";
         output << "public type Port = UInt16\n";
@@ -76,6 +78,7 @@ int main() {
     bool saw_const = false;
     bool saw_foreign = false;
     bool saw_library = false;
+    bool saw_async = false;
     bool saw_as = false;
     bool saw_from = false;
     bool saw_public = false;
@@ -120,6 +123,9 @@ int main() {
         }
         if (token.kind == orison::syntax::TokenKind::keyword_library) {
             saw_library = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_async) {
+            saw_async = true;
         }
         if (token.kind == orison::syntax::TokenKind::keyword_as) {
             saw_as = true;
@@ -222,6 +228,7 @@ int main() {
     assert(saw_const);
     assert(saw_foreign);
     assert(saw_library);
+    assert(saw_async);
     assert(saw_as);
     assert(saw_from);
     assert(saw_public);
