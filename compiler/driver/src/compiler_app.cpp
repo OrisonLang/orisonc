@@ -118,6 +118,8 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
     }
     case ExpressionKind::member_access:
         return render_expression(*expression.left) + "." + expression.text;
+    case ExpressionKind::index_access:
+        return render_expression(*expression.left) + "[" + render_expression(expression.arguments.front()) + "]";
     case ExpressionKind::binary:
         return "(" + render_expression(*expression.left) + " " + expression.text + " " +
                render_expression(*expression.right) + ")";

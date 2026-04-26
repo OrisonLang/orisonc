@@ -419,6 +419,12 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
         }
 
         switch (ch) {
+        case '[':
+            token.kind = TokenKind::left_bracket;
+            break;
+        case ']':
+            token.kind = TokenKind::right_bracket;
+            break;
         case '(':
             token.kind = TokenKind::left_paren;
             break;

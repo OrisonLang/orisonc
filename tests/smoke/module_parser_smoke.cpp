@@ -788,6 +788,65 @@ void test_cast_expression_failure() {
     assert(diagnostics.front().message == "cast expression requires a target type after 'as'");
 }
 
+void test_index_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_index_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.index\n";
+        output << "function first(items: shared View<Byte>) -> Byte\n";
+        output << "    let first_item = items[0]\n";
+        output << "    sink(this.data[0])\n";
+        output << "    return items[0]\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 3);
+    auto const& let_statement = result.module.functions.front().body_statements[0];
+    assert(let_statement.expression.kind == orison::syntax::ExpressionKind::index_access);
+    assert(let_statement.expression.left->text == "items");
+    assert(let_statement.expression.arguments.size() == 1);
+    assert(let_statement.expression.arguments[0].kind == orison::syntax::ExpressionKind::integer_literal);
+    assert(let_statement.expression.arguments[0].text == "0");
+    auto const& call_statement = result.module.functions.front().body_statements[1];
+    assert(call_statement.expression.kind == orison::syntax::ExpressionKind::call);
+    assert(call_statement.expression.arguments.size() == 1);
+    assert(call_statement.expression.arguments[0].kind == orison::syntax::ExpressionKind::index_access);
+    assert(call_statement.expression.arguments[0].left->kind == orison::syntax::ExpressionKind::member_access);
+    assert(call_statement.expression.arguments[0].left->text == "data");
+    assert(call_statement.expression.arguments[0].left->left->text == "this");
+    auto const& return_statement = result.module.functions.front().body_statements[2];
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::index_access);
+    assert(return_statement.expression.left->text == "items");
+}
+
+void test_index_expression_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_index_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.index\n";
+        output << "function first(items: shared View<Byte>) -> Byte\n";
+        output << "    return items[0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "expected ']' after index expression");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1332,6 +1391,8 @@ int main() {
     test_hex_binary_integer_success();
     test_cast_expression_success();
     test_cast_expression_failure();
+    test_index_expression_success();
+    test_index_expression_failure();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

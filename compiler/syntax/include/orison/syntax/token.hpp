@@ -45,6 +45,8 @@ enum class TokenKind {
     keyword_false,
     indent,
     dedent,
+    left_bracket,
+    right_bracket,
     left_paren,
     right_paren,
     comma,

@@ -62,6 +62,7 @@ enum class ExpressionKind {
     cast,
     call,
     member_access,
+    index_access,
     binary,
 };
 

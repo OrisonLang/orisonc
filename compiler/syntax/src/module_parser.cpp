@@ -744,6 +744,33 @@ private:
                     continue;
                 }
 
+                if (is(TokenKind::left_bracket)) {
+                    advance();
+                    auto index_expression = parse_expression(result);
+                    if (index_expression.text.empty() && !index_expression.left && !index_expression.right &&
+                        index_expression.arguments.empty()) {
+                        return {};
+                    }
+
+                    if (!is(TokenKind::right_bracket)) {
+                        result.diagnostics.error(current().line, "expected ']' after index expression");
+                        return {};
+                    }
+
+                    advance();
+                    std::vector<ExpressionSyntax> index_arguments;
+                    index_arguments.push_back(std::move(index_expression));
+                    ExpressionSyntax index_access_expression {
+                        .kind = ExpressionKind::index_access,
+                        .text = "",
+                        .arguments = std::move(index_arguments),
+                        .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
+                        .right = nullptr,
+                    };
+                    expression = std::move(index_access_expression);
+                    continue;
+                }
+
                 break;
             }
 
