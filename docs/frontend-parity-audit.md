@@ -16,16 +16,16 @@ This file tracks which source-language frontend slices are reflected in the curr
 - parsed interface method signatures including generic interface parameter lists, `implements Interface for Type` method blocks, and `extend Type` method blocks with method visibility
 - parsed record fields, typed parameters, return types, generic `where` constraints, nested generic type syntax, and `shared`/`exclusive`-qualified type names
 - statement parsing for `let`, `var`, plain `=` assignment, `return`, `break`, `continue`, expression statements, inline and block-arm `switch`, `guard ... else`, `if` with an optional `else` block, `while`, `repeat ... while`, `for ... in`, block `unsafe`, and block `defer`
-- expression parsing for names, decimal/hex/binary integer literals, string literals, boolean literals, unary `-`, calls, member access, index access, and binary `+`, `-`, `*`, `%`, `/`, `==`, `!=`, `<`, `<=`, `>`, `>=`
+- expression parsing for names, decimal/hex/binary integer literals, string literals, boolean literals, array literals, unary `-`, calls, member access, index access, and binary `+`, `-`, `*`, `%`, `/`, `==`, `!=`, `<`, `<=`, `>`, `>=`
 - CLI parse output for import/type/choice/interface/implementation/extension counts, declaration visibility, implementation/extension targets, function `where` constraints, and first-statement nested/alternate/switch-arm counts
 
 ### Pending
 
 - additional top-level forms and modifiers from the updated docs, including `const`, `foreign` blocks/exports, and `unsafe`/`async` function modifiers
-- richer expression, literal, and pattern grammar beyond the current narrow subset, including array literals, constructor patterns, `and`, `or`, `not`, `?:`, `?.`, and named bitwise operators
+- richer expression, literal, and pattern grammar beyond the current narrow subset, including constructor patterns, `and`, `or`, `not`, `?:`, `?.`, and named bitwise operators
 - concurrency expression forms from the updated docs, including `thread`, `task`, and `await`
 - semantic analysis, type checking, ownership checking, lowering, and backend code generation
 
 ## Latest update
 
-- 2026-04-26: completed parser support for index expressions, extended smoke coverage, and synchronized the parity records.
+- 2026-04-26: completed parser support for array literals, extended smoke coverage, and synchronized the parity records.

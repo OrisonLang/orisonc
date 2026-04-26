@@ -711,7 +711,46 @@ private:
         return arguments;
     }
 
+    auto parse_array_literal(ParseResult& result) -> ExpressionSyntax {
+        ExpressionSyntax expression {.kind = ExpressionKind::array_literal, .text = ""};
+        advance();
+
+        if (is(TokenKind::right_bracket)) {
+            advance();
+            return expression;
+        }
+
+        while (!is(TokenKind::eof)) {
+            auto element = parse_expression(result);
+            if (element.text.empty() && element.kind == ExpressionKind::name && !element.left && !element.right &&
+                element.arguments.empty()) {
+                return {};
+            }
+            expression.arguments.push_back(std::move(element));
+
+            if (is(TokenKind::comma)) {
+                advance();
+                continue;
+            }
+
+            if (is(TokenKind::right_bracket)) {
+                advance();
+                return expression;
+            }
+
+            result.diagnostics.error(current().line, "expected ',' or ']' in array literal");
+            return {};
+        }
+
+        result.diagnostics.error(current().line, "array literal cannot end before ']'");
+        return {};
+    }
+
     auto parse_primary_expression(ParseResult& result) -> ExpressionSyntax {
+        if (is(TokenKind::left_bracket)) {
+            return parse_array_literal(result);
+        }
+
         if (is(TokenKind::identifier)) {
             auto expression = make_name_expression(current().lexeme);
             advance();

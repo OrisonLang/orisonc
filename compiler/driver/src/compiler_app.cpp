@@ -100,6 +100,17 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
     case ExpressionKind::string_literal:
     case ExpressionKind::boolean_literal:
         return expression.text;
+    case ExpressionKind::array_literal: {
+        std::string rendered = "[";
+        for (std::size_t i = 0; i < expression.arguments.size(); ++i) {
+            if (i > 0) {
+                rendered += ", ";
+            }
+            rendered += render_expression(expression.arguments[i]);
+        }
+        rendered += "]";
+        return rendered;
+    }
     case ExpressionKind::unary:
         return expression.text + render_expression(*expression.left);
     case ExpressionKind::cast:
