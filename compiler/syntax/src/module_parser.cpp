@@ -240,6 +240,8 @@ private:
         case TokenKind::keyword_repeat:
         case TokenKind::keyword_unsafe:
         case TokenKind::keyword_where:
+        case TokenKind::keyword_true:
+        case TokenKind::keyword_false:
             return true;
         default:
             return false;
@@ -617,6 +619,10 @@ private:
         return ExpressionSyntax {.kind = ExpressionKind::integer_literal, .text = std::move(text)};
     }
 
+    auto make_boolean_expression(std::string text) -> ExpressionSyntax {
+        return ExpressionSyntax {.kind = ExpressionKind::boolean_literal, .text = std::move(text)};
+    }
+
     auto parse_prefix_expression(ParseResult& result) -> ExpressionSyntax {
         if (is(TokenKind::minus)) {
             auto operator_text = current().lexeme;
@@ -717,6 +723,12 @@ private:
 
         if (is(TokenKind::integer_literal)) {
             auto expression = make_integer_expression(current().lexeme);
+            advance();
+            return expression;
+        }
+
+        if (is(TokenKind::keyword_true) || is(TokenKind::keyword_false)) {
+            auto expression = make_boolean_expression(current().lexeme);
             advance();
             return expression;
         }

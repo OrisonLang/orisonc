@@ -31,6 +31,8 @@ int main() {
         output << "    while source.ready()\n";
         output << "    unsafe\n";
         output << "        source.write()\n";
+        output << "    if true\n";
+        output << "        return\n";
         output << "    return\n";
     }
 
@@ -60,6 +62,8 @@ int main() {
     bool saw_continue = false;
     bool saw_repeat = false;
     bool saw_unsafe = false;
+    bool saw_true = false;
+    bool saw_false = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
@@ -102,6 +106,12 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::keyword_unsafe) {
             saw_unsafe = true;
         }
+        if (token.kind == orison::syntax::TokenKind::keyword_true) {
+            saw_true = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_false) {
+            saw_false = true;
+        }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
         }
@@ -122,6 +132,8 @@ int main() {
     assert(saw_continue);
     assert(saw_repeat);
     assert(saw_unsafe);
+    assert(saw_true);
+    assert(!saw_false);
     assert(saw_indent);
     assert(saw_dedent);
     return 0;

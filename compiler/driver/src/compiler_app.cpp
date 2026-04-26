@@ -97,6 +97,7 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
     switch (expression.kind) {
     case ExpressionKind::name:
     case ExpressionKind::integer_literal:
+    case ExpressionKind::boolean_literal:
         return expression.text;
     case ExpressionKind::unary:
         return expression.text + render_expression(*expression.left);

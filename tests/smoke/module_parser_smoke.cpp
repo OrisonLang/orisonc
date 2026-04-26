@@ -604,6 +604,45 @@ void test_unsafe_statement_failure() {
     assert(diagnostics.front().message == "unsafe statement requires an indented block");
 }
 
+void test_boolean_literal_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_boolean_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.bools\n";
+        output << "function classify(flag: Bool) -> Bool\n";
+        output << "    if flag == false\n";
+        output << "        return true\n";
+        output << "    switch flag\n";
+        output << "        true => false\n";
+        output << "        default => true\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    auto const& if_statement = result.module.functions.front().body_statements[0];
+    assert(if_statement.expression.kind == orison::syntax::ExpressionKind::binary);
+    assert(if_statement.expression.right->kind == orison::syntax::ExpressionKind::boolean_literal);
+    assert(if_statement.expression.right->text == "false");
+    assert(if_statement.nested_statements[0].kind == orison::syntax::StatementKind::return_statement);
+    assert(if_statement.nested_statements[0].expression.kind == orison::syntax::ExpressionKind::boolean_literal);
+    assert(if_statement.nested_statements[0].expression.text == "true");
+    auto const& switch_statement = result.module.functions.front().body_statements[1];
+    assert(switch_statement.kind == orison::syntax::StatementKind::switch_statement);
+    assert(switch_statement.switch_cases.size() == 2);
+    assert(switch_statement.switch_cases[0].pattern.kind == orison::syntax::ExpressionKind::boolean_literal);
+    assert(switch_statement.switch_cases[0].pattern.text == "true");
+    assert(switch_statement.switch_cases[0].statements[0]->expression.kind ==
+           orison::syntax::ExpressionKind::boolean_literal);
+    assert(switch_statement.switch_cases[0].statements[0]->expression.text == "false");
+}
+
 void test_switch_statement_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_switch_success.or";
     {
@@ -1142,6 +1181,7 @@ int main() {
     test_repeat_statement_failure();
     test_unsafe_statement_success();
     test_unsafe_statement_failure();
+    test_boolean_literal_success();
     test_switch_statement_success();
     test_while_statement_success();
     test_for_statement_success();

@@ -40,6 +40,8 @@ enum class TokenKind {
     keyword_repeat,
     keyword_unsafe,
     keyword_where,
+    keyword_true,
+    keyword_false,
     indent,
     dedent,
     left_paren,
