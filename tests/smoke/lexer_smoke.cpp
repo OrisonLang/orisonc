@@ -19,6 +19,8 @@ int main() {
         output << "public foreign \"c\" as \"device_init\"\n";
         output << "function initialize_device() -> Int32\n";
         output << "    return 0\n";
+        output << "unsafe function read_byte(addr: Address) -> Byte\n";
+        output << "    return raw_read(addr)\n";
         output << "public type Port = UInt16\n";
         output << "public interface Display\n";
         output << "    function display(this: shared This) -> Text\n";

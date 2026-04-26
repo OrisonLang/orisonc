@@ -77,6 +77,9 @@ private:
         case TokenKind::keyword_extend:
             parse_extension(result);
             break;
+        case TokenKind::keyword_unsafe:
+            parse_function(result, Visibility::package_visibility, true);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, Visibility::package_visibility);
             break;
@@ -107,11 +110,14 @@ private:
         case TokenKind::keyword_foreign:
             parse_foreign(result, visibility);
             break;
+        case TokenKind::keyword_unsafe:
+            parse_function(result, visibility, true);
+            break;
         case TokenKind::keyword_function:
             parse_function(result, visibility);
             break;
         default:
-            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, interface, foreign, or function");
+            result.diagnostics.error(current().line, "visibility modifier must be followed by type, record, choice, interface, foreign, unsafe, or function");
             skip_to_next_line();
             break;
         }
@@ -159,7 +165,8 @@ private:
         auto const& next = peek();
         return next.kind == TokenKind::keyword_record || next.kind == TokenKind::keyword_choice ||
                next.kind == TokenKind::keyword_interface || next.kind == TokenKind::keyword_function ||
-               next.kind == TokenKind::keyword_type || next.kind == TokenKind::keyword_foreign;
+               next.kind == TokenKind::keyword_type || next.kind == TokenKind::keyword_foreign ||
+               next.kind == TokenKind::keyword_unsafe;
     }
 
     void advance() {
@@ -587,10 +594,16 @@ private:
         };
     }
 
-    auto parse_function_body(ParseResult& result, InterfaceMethodSyntax signature, Visibility visibility)
+    auto parse_function_body(
+        ParseResult& result,
+        InterfaceMethodSyntax signature,
+        Visibility visibility,
+        bool is_unsafe = false
+    )
         -> std::optional<FunctionSyntax> {
         FunctionSyntax function {
             .visibility = visibility,
+            .is_unsafe = is_unsafe,
             .name = std::move(signature.name),
             .generic_parameters = std::move(signature.generic_parameters),
             .parameters = std::move(signature.parameters),
@@ -1992,14 +2005,23 @@ private:
         ++result.module.top_level_declaration_count;
     }
 
-    void parse_function(ParseResult& result, Visibility visibility) {
+    void parse_function(ParseResult& result, Visibility visibility, bool is_unsafe = false) {
+        if (is_unsafe) {
+            advance();
+            if (!is(TokenKind::keyword_function)) {
+                result.diagnostics.error(current().line, "unsafe modifier must be followed by function");
+                skip_to_next_top_level();
+                return;
+            }
+        }
+
         auto maybe_signature = parse_function_signature(result, "function declaration requires 'function'");
         if (!maybe_signature.has_value()) {
             skip_to_next_top_level();
             return;
         }
 
-        auto maybe_function = parse_function_body(result, std::move(*maybe_signature), visibility);
+        auto maybe_function = parse_function_body(result, std::move(*maybe_signature), visibility, is_unsafe);
         if (!maybe_function.has_value()) {
             skip_to_next_top_level();
             return;

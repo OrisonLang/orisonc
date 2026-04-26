@@ -39,6 +39,8 @@ int main() {
         output << "function initialize_device() -> Int32\n";
         output << "    return 0\n";
         output << "public type Port = UInt16\n";
+        output << "unsafe function read_word(addr: Address) -> UInt32\n";
+        output << "    return raw_read(addr)\n";
         output << "public interface Reader\n";
         output << "    function read(this: exclusive This, into: exclusive View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "implements Reader for FileReader\n";
@@ -62,7 +64,7 @@ int main() {
 
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
-    assert(output.find("top-level declarations: 8") != std::string::npos);
+    assert(output.find("top-level declarations: 9") != std::string::npos);
     assert(output.find("imports: 1") != std::string::npos);
     assert(output.find("foreign imports: 1") != std::string::npos);
     assert(output.find("foreign exports: 1") != std::string::npos);
@@ -92,19 +94,17 @@ int main() {
     assert(output.find("first extension receiver: FileReader") != std::string::npos);
     assert(output.find("first extension methods: 1") != std::string::npos);
     assert(output.find("first extension method visibility: public") != std::string::npos);
-    assert(output.find("functions: 1") != std::string::npos);
+    assert(output.find("functions: 2") != std::string::npos);
     assert(output.find("first function visibility: package") != std::string::npos);
-    assert(output.find("function parameters: 2") != std::string::npos);
-    assert(output.find("function return type: Outcome<Int32, ParseError>") != std::string::npos);
-    assert(output.find("function where constraints: 1") != std::string::npos);
-    assert(output.find("first function where constraint: R: Reader") != std::string::npos);
-    assert(output.find("function body statements: 2") != std::string::npos);
-    assert(output.find("first statement kind: switch") != std::string::npos);
-    assert(output.find("first statement expression: reader") != std::string::npos);
+    assert(output.find("first function unsafe: true") != std::string::npos);
+    assert(output.find("function parameters: 1") != std::string::npos);
+    assert(output.find("function return type: UInt32") != std::string::npos);
+    assert(output.find("function where constraints: 0") != std::string::npos);
+    assert(output.find("function body statements: 1") != std::string::npos);
+    assert(output.find("first statement kind: return") != std::string::npos);
+    assert(output.find("first statement expression: raw_read(addr)") != std::string::npos);
     assert(output.find("first statement nested count: 0") != std::string::npos);
     assert(output.find("first statement alternate count: 0") != std::string::npos);
-    assert(output.find("first statement switch cases: 3") != std::string::npos);
-    assert(output.find("first switch case pattern: Some(value)") != std::string::npos);
-    assert(output.find("first switch case statements: 1") != std::string::npos);
+    assert(output.find("first statement switch cases: 0") != std::string::npos);
     return 0;
 }
