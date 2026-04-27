@@ -40,11 +40,70 @@ public:
 private:
     struct Binding {
         std::string name;
+        std::string type_name;
         bool mutable_binding = false;
         bool receiver_binding = false;
         bool parameter_binding = false;
         std::size_t scope_depth = 0;
     };
+
+    auto render_type_name(syntax::TypeSyntax const& type) const -> std::string {
+        std::string rendered = type.name;
+        if (type.generic_arguments.empty()) {
+            return rendered;
+        }
+
+        rendered += "<";
+        for (std::size_t index = 0; index < type.generic_arguments.size(); ++index) {
+            if (index > 0) {
+                rendered += ", ";
+            }
+            rendered += render_type_name(type.generic_arguments[index]);
+        }
+        rendered += ">";
+        return rendered;
+    }
+
+    auto is_obviously_safe_capture_type(std::string const& type_name) const -> bool {
+        if (type_name.empty()) {
+            return false;
+        }
+
+        if (type_name.rfind("shared.", 0) == 0) {
+            return true;
+        }
+
+        static constexpr char const* safe_types[] = {
+            "Int8",   "Int16",  "Int32",   "Int64",   "Int128", "IntSize", "UInt8",  "UInt16",
+            "UInt32", "UInt64", "UInt128", "UIntSize", "Float32", "Float64", "Bool",   "Byte",
+            "Char",   "Text",   "Address",
+        };
+
+        for (auto const* safe_type : safe_types) {
+            if (type_name == safe_type) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    auto infer_expression_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+        switch (expression.kind) {
+        case syntax::ExpressionKind::name: {
+            auto const* binding = find_binding(expression.text);
+            return binding == nullptr ? std::string {} : binding->type_name;
+        }
+        case syntax::ExpressionKind::string_literal:
+            return "Text";
+        case syntax::ExpressionKind::boolean_literal:
+            return "Bool";
+        case syntax::ExpressionKind::integer_literal:
+            return "Int64";
+        default:
+            return {};
+        }
+    }
 
     auto is_value_return_statement(syntax::StatementSyntax const& statement) const -> bool {
         return statement.kind == syntax::StatementKind::return_statement &&
@@ -68,6 +127,7 @@ private:
         for (auto const& parameter : function.parameters) {
             declare_binding(
                 parameter.name,
+                render_type_name(parameter.type),
                 false,
                 parameter.name == "this",
                 true
@@ -84,14 +144,17 @@ private:
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
         if (statement.kind == syntax::StatementKind::let_binding || statement.kind == syntax::StatementKind::var_binding) {
             analyze_expression(statement.expression, in_async_function);
-            declare_binding(statement.name, statement.kind == syntax::StatementKind::var_binding);
+            auto type_name = !statement.annotated_type.name.empty()
+                                 ? render_type_name(statement.annotated_type)
+                                 : infer_expression_type_name(statement.expression);
+            declare_binding(statement.name, type_name, statement.kind == syntax::StatementKind::var_binding);
             return;
         }
 
         if (statement.kind == syntax::StatementKind::for_statement) {
             analyze_expression(statement.expression, in_async_function);
             push_scope();
-            declare_binding(statement.name, true);
+            declare_binding(statement.name, {}, true);
             for (auto const& nested_statement : statement.nested_statements) {
                 analyze_statement(nested_statement, in_async_function);
             }
@@ -194,6 +257,7 @@ private:
 
     void declare_binding(
         std::string const& name,
+        std::string type_name,
         bool mutable_binding,
         bool receiver_binding = false,
         bool parameter_binding = false
@@ -204,6 +268,7 @@ private:
 
         scope_stack_.back().push_back(Binding {
             .name = name,
+            .type_name = std::move(type_name),
             .mutable_binding = mutable_binding,
             .receiver_binding = receiver_binding,
             .parameter_binding = parameter_binding,
@@ -244,6 +309,7 @@ private:
         concurrency_captures.push_back(ConcurrencyCapture {
             .line = expression.line,
             .name = expression.text,
+            .type_name = binding->type_name,
             .expression_kind = current_capture_expression_kind_,
             .capture_kind = capture_kind,
         });
@@ -257,6 +323,17 @@ private:
             diagnostics_.error(
                 expression.line,
                 "concurrency expression cannot capture mutable outer local '" + expression.text + "'"
+            );
+            return;
+        }
+
+        if ((capture_kind == ConcurrencyCaptureKind::parameter ||
+             capture_kind == ConcurrencyCaptureKind::immutable_outer_local) &&
+            !binding->type_name.empty() && !is_obviously_safe_capture_type(binding->type_name)) {
+            diagnostics_.error(
+                expression.line,
+                "concurrency capture '" + expression.text + "' of type '" + binding->type_name +
+                    "' requires future Transferable/Shareable analysis"
             );
         }
     }

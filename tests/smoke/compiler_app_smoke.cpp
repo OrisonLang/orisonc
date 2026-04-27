@@ -111,5 +111,26 @@ int main() {
     assert(receiver_result.stderr_text.find(
                "concurrency expression cannot capture receiver 'this'"
            ) != std::string::npos);
+
+    auto typed_capture_path = std::filesystem::temp_directory_path() / "orison_compiler_app_typed_capture_failure.or";
+    {
+        std::ofstream output(typed_capture_path);
+        output << "package demo.thread\n";
+        output << "function launch_processing(buffer: Buffer) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        process(buffer)\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto typed_capture_path_text = typed_capture_path.string();
+    std::array<char const*, 3> typed_capture_argv {"orisonc", "--parse", typed_capture_path_text.c_str()};
+    auto typed_capture_result =
+        app.run(std::span<char const* const>(typed_capture_argv.data(), typed_capture_argv.size()));
+
+    assert(typed_capture_result.exit_code == 1);
+    assert(typed_capture_result.stdout_text.empty());
+    assert(typed_capture_result.stderr_text.find(
+               "concurrency capture 'buffer' of type 'Buffer' requires future Transferable/Shareable analysis"
+           ) != std::string::npos);
     return 0;
 }

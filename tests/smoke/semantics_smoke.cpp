@@ -181,15 +181,49 @@ void test_concurrency_capture_classification_success() {
     assert(analysis.concurrency_captures.size() == 2);
     assert(analysis.concurrency_captures[0].line == 5);
     assert(analysis.concurrency_captures[0].name == "cached");
+    assert(analysis.concurrency_captures[0].type_name == "Text");
     assert(analysis.concurrency_captures[0].expression_kind ==
            orison::semantics::ConcurrencyExpressionKind::task);
     assert(analysis.concurrency_captures[0].capture_kind ==
            orison::semantics::ConcurrencyCaptureKind::immutable_outer_local);
     assert(analysis.concurrency_captures[1].line == 9);
     assert(analysis.concurrency_captures[1].name == "data");
+    assert(analysis.concurrency_captures[1].type_name == "shared.View<Int64>");
     assert(analysis.concurrency_captures[1].expression_kind ==
            orison::semantics::ConcurrencyExpressionKind::thread);
     assert(analysis.concurrency_captures[1].capture_kind ==
+           orison::semantics::ConcurrencyCaptureKind::parameter);
+}
+
+void test_thread_capture_owned_parameter_type_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_owned_parameter_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "function launch_processing(buffer: Buffer) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        process(buffer)\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto analysis = analyzer.analyze(parse_result.module);
+    assert(analysis.has_errors());
+    assert(analysis.entries().size() == 1);
+    assert(analysis.entries().front().line == 4);
+    assert(analysis.entries().front().message ==
+           "concurrency capture 'buffer' of type 'Buffer' requires future Transferable/Shareable analysis");
+    assert(analysis.concurrency_captures.size() == 1);
+    assert(analysis.concurrency_captures[0].name == "buffer");
+    assert(analysis.concurrency_captures[0].type_name == "Buffer");
+    assert(analysis.concurrency_captures[0].capture_kind ==
            orison::semantics::ConcurrencyCaptureKind::parameter);
 }
 
@@ -387,6 +421,7 @@ int main() {
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_concurrency_capture_classification_success();
+    test_thread_capture_owned_parameter_type_failure();
     test_task_expression_value_boundary_failure();
     test_task_expression_value_return_success();
     test_thread_expression_value_boundary_failure();
