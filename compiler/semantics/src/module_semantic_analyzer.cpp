@@ -32,6 +32,17 @@ public:
     }
 
 private:
+    auto is_value_return_statement(syntax::StatementSyntax const& statement) const -> bool {
+        return statement.kind == syntax::StatementKind::return_statement &&
+               (!statement.expression.text.empty() || statement.expression.left || statement.expression.right ||
+                statement.expression.alternate || !statement.expression.arguments.empty() ||
+                !statement.expression.nested_statements.empty());
+    }
+
+    auto expression_requires_value_boundary(syntax::ExpressionSyntax const& expression) const -> bool {
+        return expression.kind == syntax::ExpressionKind::task || expression.kind == syntax::ExpressionKind::thread;
+    }
+
     void analyze_function(syntax::FunctionSyntax const& function) {
         for (auto const& statement : function.body_statements) {
             analyze_statement(statement, function.is_async);
@@ -65,6 +76,19 @@ private:
 
         if (expression.kind == syntax::ExpressionKind::task && !in_async_function) {
             diagnostics_.error(expression.line, "task expression is only valid inside async functions");
+        }
+
+        if (expression_requires_value_boundary(expression)) {
+            auto const* final_statement =
+                expression.nested_statements.empty() ? nullptr : expression.nested_statements.back().get();
+            if (final_statement == nullptr ||
+                (final_statement->kind != syntax::StatementKind::expression_statement &&
+                 !is_value_return_statement(*final_statement))) {
+                diagnostics_.error(
+                    final_statement != nullptr ? final_statement->line : expression.line,
+                    expression.text + " expression body must end with an expression statement or value return"
+                );
+            }
         }
 
         for (auto const& argument : expression.arguments) {

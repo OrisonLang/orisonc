@@ -49,5 +49,25 @@ int main() {
     assert(task_result.exit_code == 1);
     assert(task_result.stdout_text.empty());
     assert(task_result.stderr_text.find("task expression is only valid inside async functions") != std::string::npos);
+
+    auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
+    {
+        std::ofstream output(thread_path);
+        output << "package demo.thread\n";
+        output << "function parallel_sum(data: shared View<Int64>) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        let total = sum(data)\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto thread_path_text = thread_path.string();
+    std::array<char const*, 3> thread_argv {"orisonc", "--parse", thread_path_text.c_str()};
+    auto thread_result = app.run(std::span<char const* const>(thread_argv.data(), thread_argv.size()));
+
+    assert(thread_result.exit_code == 1);
+    assert(thread_result.stdout_text.empty());
+    assert(thread_result.stderr_text.find(
+               "thread expression body must end with an expression statement or value return"
+           ) != std::string::npos);
     return 0;
 }
