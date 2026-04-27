@@ -252,6 +252,62 @@ void test_thread_expression_value_return_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_task_capture_mutable_outer_local_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_capture_mutable_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.task\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var attempts = 0\n";
+        output << "    let request_task = task\n";
+        output << "        attempts\n";
+        output << "    return await request_task\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "concurrency expression cannot capture mutable outer local 'attempts'");
+}
+
+void test_thread_capture_mutable_outer_local_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_capture_mutable_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "function parallel_sum(data: shared View<Int64>) -> Int64\n";
+        output << "    var total = 0\n";
+        output << "    let worker = thread\n";
+        output << "        total\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "concurrency expression cannot capture mutable outer local 'total'");
+}
+
 }  // namespace
 
 int main() {
@@ -265,5 +321,7 @@ int main() {
     test_task_expression_value_return_success();
     test_thread_expression_value_boundary_failure();
     test_thread_expression_value_return_success();
+    test_task_capture_mutable_outer_local_failure();
+    test_thread_capture_mutable_outer_local_failure();
     return 0;
 }

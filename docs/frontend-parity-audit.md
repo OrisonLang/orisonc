@@ -17,7 +17,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - parsed record fields, typed parameters, return types, generic `where` constraints, nested generic type syntax, and `shared`/`exclusive`-qualified type names
 - statement parsing for `let`, `var`, plain `=` assignment, `return`, `break`, `continue`, expression statements, inline and block-arm `switch`, `guard ... else`, `if` with an optional `else` block, `while`, `repeat ... while`, `for ... in`, block `unsafe`, and block `defer`
 - expression parsing for names, decimal/hex/binary integer literals, string literals, boolean literals, array literals, `task` and `thread` block expressions, unary `-`, `not`, `bit_not`, and `await`, calls, member access, null-safe member access, index access, ternary `?:`, and binary `+`, `-`, `*`, `%`, `/`, `==`, `!=`, `<`, `<=`, `>`, `>=`, `and`, `or`, `bit_and`, `bit_or`, `bit_xor`, `shift_left`, and `shift_right`
-- first semantic validation for concurrency surface rules: `await` and `task` now produce frontend diagnostics when used outside `async` functions or methods, and `task`/`thread` bodies must end in a value-producing statement shape
+- first semantic validation for concurrency surface rules: `await` and `task` now produce frontend diagnostics when used outside `async` functions or methods, `task`/`thread` bodies must end in a value-producing statement shape, and concurrency bodies now reject captures of mutable outer locals
 - CLI parse output for import/type/choice/interface/implementation/extension counts, declaration visibility, implementation/extension targets, function `where` constraints, and first-statement nested/alternate/switch-arm counts
 
 ### Pending
@@ -28,4 +28,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
-- 2026-04-26: extended the first semantic concurrency pass so `task` and `thread` bodies now require a value-producing tail statement, extended smoke coverage, and synchronized the parity records.
+- 2026-04-26: extended the first semantic concurrency pass so concurrency bodies now reject captures of mutable outer locals, extended smoke coverage, and synchronized the parity records.

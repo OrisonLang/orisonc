@@ -69,5 +69,26 @@ int main() {
     assert(thread_result.stderr_text.find(
                "thread expression body must end with an expression statement or value return"
            ) != std::string::npos);
+
+    auto capture_path = std::filesystem::temp_directory_path() / "orison_compiler_app_capture_failure.or";
+    {
+        std::ofstream output(capture_path);
+        output << "package demo.task\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var attempts = 0\n";
+        output << "    let request_task = task\n";
+        output << "        attempts\n";
+        output << "    return await request_task\n";
+    }
+
+    auto capture_path_text = capture_path.string();
+    std::array<char const*, 3> capture_argv {"orisonc", "--parse", capture_path_text.c_str()};
+    auto capture_result = app.run(std::span<char const* const>(capture_argv.data(), capture_argv.size()));
+
+    assert(capture_result.exit_code == 1);
+    assert(capture_result.stdout_text.empty());
+    assert(capture_result.stderr_text.find(
+               "concurrency expression cannot capture mutable outer local 'attempts'"
+           ) != std::string::npos);
     return 0;
 }
