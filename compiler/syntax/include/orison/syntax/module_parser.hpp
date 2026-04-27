@@ -66,12 +66,15 @@ struct ForeignImportBlockSyntax {
     std::vector<ForeignImportFunctionSyntax> functions;
 };
 
+struct StatementSyntax;
+
 enum class ExpressionKind {
     name,
     integer_literal,
     string_literal,
     boolean_literal,
     array_literal,
+    task,
     unary,
     cast,
     call,
@@ -86,6 +89,7 @@ struct ExpressionSyntax {
     ExpressionKind kind = ExpressionKind::name;
     std::string text;
     std::vector<ExpressionSyntax> arguments;
+    std::vector<std::unique_ptr<StatementSyntax>> nested_statements;
     std::unique_ptr<ExpressionSyntax> left;
     std::unique_ptr<ExpressionSyntax> right;
     std::unique_ptr<ExpressionSyntax> alternate;
@@ -96,8 +100,6 @@ struct ConstantSyntax {
     TypeSyntax type;
     ExpressionSyntax initializer;
 };
-
-struct StatementSyntax;
 
 struct SwitchCaseSyntax {
     bool is_default = false;

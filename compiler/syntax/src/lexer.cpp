@@ -119,6 +119,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "await") {
         return TokenKind::keyword_await;
     }
+    if (text == "task") {
+        return TokenKind::keyword_task;
+    }
     if (text == "and") {
         return TokenKind::keyword_and;
     }

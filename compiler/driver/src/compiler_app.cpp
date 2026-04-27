@@ -10,6 +10,8 @@
 namespace orison::driver {
 namespace {
 
+auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> std::string;
+
 auto usage_text() -> std::string {
     return "usage: orisonc --version | --parse <file>";
 }
@@ -92,6 +94,28 @@ auto render_statement_kind(orison::syntax::StatementKind kind) -> std::string_vi
     return "unknown";
 }
 
+auto render_inline_statement(orison::syntax::StatementSyntax const& statement) -> std::string {
+    switch (statement.kind) {
+    case orison::syntax::StatementKind::let_binding:
+        return "let " + statement.name + " = " + render_expression(statement.expression);
+    case orison::syntax::StatementKind::var_binding:
+        return "var " + statement.name + " = " + render_expression(statement.expression);
+    case orison::syntax::StatementKind::assignment_statement:
+        return render_expression(statement.assignment_target) + " = " + render_expression(statement.expression);
+    case orison::syntax::StatementKind::return_statement:
+        if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
+            !statement.expression.alternate && statement.expression.arguments.empty() &&
+            statement.expression.nested_statements.empty()) {
+            return "return";
+        }
+        return "return " + render_expression(statement.expression);
+    case orison::syntax::StatementKind::expression_statement:
+        return render_expression(statement.expression);
+    default:
+        return std::string(render_statement_kind(statement.kind));
+    }
+}
+
 auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> std::string {
     using orison::syntax::ExpressionKind;
     switch (expression.kind) {
@@ -109,6 +133,17 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
             rendered += render_expression(expression.arguments[i]);
         }
         rendered += "]";
+        return rendered;
+    }
+    case ExpressionKind::task: {
+        std::string rendered = "task { ";
+        for (std::size_t i = 0; i < expression.nested_statements.size(); ++i) {
+            if (i > 0) {
+                rendered += "; ";
+            }
+            rendered += render_inline_statement(*expression.nested_statements[i]);
+        }
+        rendered += " }";
         return rendered;
     }
     case ExpressionKind::unary:

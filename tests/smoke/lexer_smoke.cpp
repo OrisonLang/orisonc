@@ -20,7 +20,9 @@ int main() {
         output << "function initialize_device() -> Int32\n";
         output << "    return 0\n";
         output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return await request(url)\n";
+        output << "    let request_task = task\n";
+        output << "        request(url)\n";
+        output << "    return await request_task\n";
         output << "unsafe function read_byte(addr: Address) -> Byte\n";
         output << "    return raw_read(addr)\n";
         output << "public type Port = UInt16\n";
@@ -80,6 +82,7 @@ int main() {
     bool saw_library = false;
     bool saw_async = false;
     bool saw_await = false;
+    bool saw_task = false;
     bool saw_as = false;
     bool saw_from = false;
     bool saw_public = false;
@@ -130,6 +133,9 @@ int main() {
         }
         if (token.kind == orison::syntax::TokenKind::keyword_await) {
             saw_await = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_task) {
+            saw_task = true;
         }
         if (token.kind == orison::syntax::TokenKind::keyword_as) {
             saw_as = true;
@@ -234,6 +240,7 @@ int main() {
     assert(saw_library);
     assert(saw_async);
     assert(saw_await);
+    assert(saw_task);
     assert(saw_as);
     assert(saw_from);
     assert(saw_public);
