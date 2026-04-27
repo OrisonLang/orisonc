@@ -209,11 +209,11 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         }
 
         semantics::ModuleSemanticAnalyzer semantic_analyzer;
-        auto semantic_diagnostics = semantic_analyzer.analyze(parse_result.module);
-        if (semantic_diagnostics.has_errors()) {
+        auto semantic_analysis = semantic_analyzer.analyze(parse_result.module);
+        if (semantic_analysis.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
-                .stderr_text = semantic_diagnostics.render(maybe_source->path().string()),
+                .stderr_text = semantic_analysis.render(maybe_source->path().string()),
             };
         }
 
