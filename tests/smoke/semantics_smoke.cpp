@@ -308,6 +308,34 @@ void test_thread_capture_mutable_outer_local_failure() {
            "concurrency expression cannot capture mutable outer local 'total'");
 }
 
+void test_thread_capture_receiver_this_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_capture_this_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "extend Worker\n";
+        output << "    function spawn(this: shared This) -> Int64\n";
+        output << "        let worker = thread\n";
+        output << "            this.id\n";
+        output << "        return worker.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "concurrency expression cannot capture receiver 'this'");
+}
+
 }  // namespace
 
 int main() {
@@ -323,5 +351,6 @@ int main() {
     test_thread_expression_value_return_success();
     test_task_capture_mutable_outer_local_failure();
     test_thread_capture_mutable_outer_local_failure();
+    test_thread_capture_receiver_this_failure();
     return 0;
 }

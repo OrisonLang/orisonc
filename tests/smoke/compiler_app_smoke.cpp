@@ -90,5 +90,26 @@ int main() {
     assert(capture_result.stderr_text.find(
                "concurrency expression cannot capture mutable outer local 'attempts'"
            ) != std::string::npos);
+
+    auto receiver_path = std::filesystem::temp_directory_path() / "orison_compiler_app_capture_this_failure.or";
+    {
+        std::ofstream output(receiver_path);
+        output << "package demo.thread\n";
+        output << "extend Worker\n";
+        output << "    function spawn(this: shared This) -> Int64\n";
+        output << "        let worker = thread\n";
+        output << "            this.id\n";
+        output << "        return worker.join()\n";
+    }
+
+    auto receiver_path_text = receiver_path.string();
+    std::array<char const*, 3> receiver_argv {"orisonc", "--parse", receiver_path_text.c_str()};
+    auto receiver_result = app.run(std::span<char const* const>(receiver_argv.data(), receiver_argv.size()));
+
+    assert(receiver_result.exit_code == 1);
+    assert(receiver_result.stdout_text.empty());
+    assert(receiver_result.stderr_text.find(
+               "concurrency expression cannot capture receiver 'this'"
+           ) != std::string::npos);
     return 0;
 }

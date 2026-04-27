@@ -202,6 +202,14 @@ private:
             return;
         }
 
+        if (binding->scope_depth < capture_scope_depth_ && expression.text == "this") {
+            diagnostics_.error(
+                expression.line,
+                "concurrency expression cannot capture receiver 'this'"
+            );
+            return;
+        }
+
         if (binding->scope_depth < capture_scope_depth_ && binding->mutable_binding) {
             diagnostics_.error(
                 expression.line,
