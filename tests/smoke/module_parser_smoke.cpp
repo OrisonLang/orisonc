@@ -483,6 +483,67 @@ void test_task_expression_failure() {
     assert(diagnostics.front().message == "task expression requires an indented body block");
 }
 
+void test_thread_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_thread_expression_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "public function parallel_sum(data: shared View<Int64>) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        sum(data)\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions[0].body_statements.size() == 2);
+    auto const& let_statement = result.module.functions[0].body_statements[0];
+    assert(let_statement.kind == orison::syntax::StatementKind::let_binding);
+    assert(let_statement.expression.kind == orison::syntax::ExpressionKind::thread);
+    assert(let_statement.expression.text == "thread");
+    assert(let_statement.expression.nested_statements.size() == 1);
+    assert(let_statement.expression.nested_statements[0]->kind == orison::syntax::StatementKind::expression_statement);
+    assert(let_statement.expression.nested_statements[0]->expression.kind == orison::syntax::ExpressionKind::call);
+    assert(let_statement.expression.nested_statements[0]->expression.left != nullptr);
+    assert(let_statement.expression.nested_statements[0]->expression.left->text == "sum");
+    auto const& return_statement = result.module.functions[0].body_statements[1];
+    assert(return_statement.kind == orison::syntax::StatementKind::return_statement);
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::call);
+    assert(return_statement.expression.left != nullptr);
+    assert(return_statement.expression.left->kind == orison::syntax::ExpressionKind::member_access);
+    assert(return_statement.expression.left->text == "join");
+    assert(return_statement.expression.left->left != nullptr);
+    assert(return_statement.expression.left->left->text == "worker");
+}
+
+void test_thread_expression_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_thread_expression_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "public function parallel_sum(data: shared View<Int64>) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(result.diagnostics.has_errors());
+    auto diagnostics = result.diagnostics.entries();
+    assert(!diagnostics.empty());
+    assert(diagnostics.front().message == "thread expression requires an indented body block");
+}
+
 void test_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_async_function_failure.or";
     {
@@ -2059,6 +2120,8 @@ int main() {
     test_await_expression_success();
     test_task_expression_success();
     test_task_expression_failure();
+    test_thread_expression_success();
+    test_thread_expression_failure();
     test_unsafe_function_success();
     test_unsafe_function_failure();
     test_choice_generic_success();

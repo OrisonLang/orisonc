@@ -246,6 +246,7 @@ private:
         case TokenKind::keyword_async:
         case TokenKind::keyword_await:
         case TokenKind::keyword_task:
+        case TokenKind::keyword_thread:
         case TokenKind::keyword_type:
         case TokenKind::keyword_record:
         case TokenKind::keyword_choice:
@@ -815,17 +816,17 @@ private:
         return {};
     }
 
-    auto parse_task_expression(ParseResult& result) -> ExpressionSyntax {
-        ExpressionSyntax expression {.kind = ExpressionKind::task, .text = "task"};
+    auto parse_block_expression(ParseResult& result, ExpressionKind kind, std::string keyword) -> ExpressionSyntax {
+        ExpressionSyntax expression {.kind = kind, .text = std::move(keyword)};
         advance();
 
-        auto body = parse_statement_block(result, "task expression requires an indented body block");
+        auto body = parse_statement_block(result, expression.text + " expression requires an indented body block");
         if (body.empty() && result.diagnostics.has_errors()) {
             return {};
         }
 
         if (body.empty()) {
-            result.diagnostics.error(current().line, "task expression requires at least one nested statement");
+            result.diagnostics.error(current().line, expression.text + " expression requires at least one nested statement");
             return {};
         }
 
@@ -842,7 +843,11 @@ private:
         }
 
         if (is(TokenKind::keyword_task)) {
-            return parse_task_expression(result);
+            return parse_block_expression(result, ExpressionKind::task, "task");
+        }
+
+        if (is(TokenKind::keyword_thread)) {
+            return parse_block_expression(result, ExpressionKind::thread, "thread");
         }
 
         if (is(TokenKind::identifier)) {

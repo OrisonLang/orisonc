@@ -23,6 +23,10 @@ int main() {
         output << "    let request_task = task\n";
         output << "        request(url)\n";
         output << "    return await request_task\n";
+        output << "public function parallel_sum(data: shared View<Int64>) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        sum(data)\n";
+        output << "    return worker.join()\n";
         output << "unsafe function read_byte(addr: Address) -> Byte\n";
         output << "    return raw_read(addr)\n";
         output << "public type Port = UInt16\n";
@@ -83,6 +87,7 @@ int main() {
     bool saw_async = false;
     bool saw_await = false;
     bool saw_task = false;
+    bool saw_thread = false;
     bool saw_as = false;
     bool saw_from = false;
     bool saw_public = false;
@@ -136,6 +141,9 @@ int main() {
         }
         if (token.kind == orison::syntax::TokenKind::keyword_task) {
             saw_task = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::keyword_thread) {
+            saw_thread = true;
         }
         if (token.kind == orison::syntax::TokenKind::keyword_as) {
             saw_as = true;
@@ -241,6 +249,7 @@ int main() {
     assert(saw_async);
     assert(saw_await);
     assert(saw_task);
+    assert(saw_thread);
     assert(saw_as);
     assert(saw_from);
     assert(saw_public);

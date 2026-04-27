@@ -47,6 +47,7 @@ enum class TokenKind {
     keyword_async,
     keyword_await,
     keyword_task,
+    keyword_thread,
     keyword_and,
     keyword_or,
     keyword_not,

@@ -75,6 +75,7 @@ enum class ExpressionKind {
     boolean_literal,
     array_literal,
     task,
+    thread,
     unary,
     cast,
     call,

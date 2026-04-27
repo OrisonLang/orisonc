@@ -122,6 +122,9 @@ auto keyword_kind(std::string_view text) -> TokenKind {
     if (text == "task") {
         return TokenKind::keyword_task;
     }
+    if (text == "thread") {
+        return TokenKind::keyword_thread;
+    }
     if (text == "and") {
         return TokenKind::keyword_and;
     }

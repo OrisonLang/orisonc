@@ -135,8 +135,9 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
         rendered += "]";
         return rendered;
     }
-    case ExpressionKind::task: {
-        std::string rendered = "task { ";
+    case ExpressionKind::task:
+    case ExpressionKind::thread: {
+        std::string rendered = expression.text + " { ";
         for (std::size_t i = 0; i < expression.nested_statements.size(); ++i) {
             if (i > 0) {
                 rendered += "; ";

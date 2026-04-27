@@ -43,6 +43,10 @@ int main() {
         output << "    let request_task = task\n";
         output << "        request(url)\n";
         output << "    return await request_task\n";
+        output << "public function parallel_sum(data: shared View<Int64>) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        sum(data)\n";
+        output << "    return worker.join()\n";
         output << "unsafe function read_word(addr: Address) -> UInt32\n";
         output << "    return raw_read(addr)\n";
         output << "public interface Reader\n";
@@ -68,7 +72,7 @@ int main() {
 
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
-    assert(output.find("top-level declarations: 10") != std::string::npos);
+    assert(output.find("top-level declarations: 11") != std::string::npos);
     assert(output.find("imports: 1") != std::string::npos);
     assert(output.find("foreign imports: 1") != std::string::npos);
     assert(output.find("foreign exports: 1") != std::string::npos);
@@ -98,7 +102,7 @@ int main() {
     assert(output.find("first extension receiver: FileReader") != std::string::npos);
     assert(output.find("first extension methods: 1") != std::string::npos);
     assert(output.find("first extension method visibility: public") != std::string::npos);
-    assert(output.find("functions: 3") != std::string::npos);
+    assert(output.find("functions: 4") != std::string::npos);
     assert(output.find("first function visibility: package") != std::string::npos);
     assert(output.find("first function async: true") != std::string::npos);
     assert(output.find("first function unsafe: false") != std::string::npos);
