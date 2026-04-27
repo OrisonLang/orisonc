@@ -1,5 +1,6 @@
 #include "orison/driver/compiler_app.hpp"
 
+#include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
 
@@ -204,6 +205,15 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             return CompileResult {
                 .exit_code = 1,
                 .stderr_text = parse_result.diagnostics.render(maybe_source->path().string()),
+            };
+        }
+
+        semantics::ModuleSemanticAnalyzer semantic_analyzer;
+        auto semantic_diagnostics = semantic_analyzer.analyze(parse_result.module);
+        if (semantic_diagnostics.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = semantic_diagnostics.render(maybe_source->path().string()),
             };
         }
 

@@ -3,6 +3,7 @@
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/source/source_file.hpp"
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
@@ -88,6 +89,7 @@ enum class ExpressionKind {
 
 struct ExpressionSyntax {
     ExpressionKind kind = ExpressionKind::name;
+    std::size_t line = 0;
     std::string text;
     std::vector<ExpressionSyntax> arguments;
     std::vector<std::unique_ptr<StatementSyntax>> nested_statements;
@@ -128,6 +130,7 @@ enum class StatementKind {
 
 struct StatementSyntax {
     StatementKind kind = StatementKind::expression_statement;
+    std::size_t line = 0;
     bool valid = true;
     std::string name;
     TypeSyntax annotated_type;
@@ -174,6 +177,7 @@ struct InterfaceSyntax {
 
 struct FunctionSyntax {
     Visibility visibility = Visibility::package_visibility;
+    std::size_t line = 0;
     bool is_async = false;
     bool is_unsafe = false;
     std::string name;

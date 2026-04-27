@@ -614,6 +614,7 @@ private:
         -> std::optional<FunctionSyntax> {
         FunctionSyntax function {
             .visibility = visibility,
+            .line = current().line,
             .is_async = is_async,
             .is_unsafe = is_unsafe,
             .name = std::move(signature.name),
@@ -679,19 +680,19 @@ private:
     }
 
     auto make_name_expression(std::string text) -> ExpressionSyntax {
-        return ExpressionSyntax {.kind = ExpressionKind::name, .text = std::move(text)};
+        return ExpressionSyntax {.kind = ExpressionKind::name, .line = current().line, .text = std::move(text)};
     }
 
     auto make_integer_expression(std::string text) -> ExpressionSyntax {
-        return ExpressionSyntax {.kind = ExpressionKind::integer_literal, .text = std::move(text)};
+        return ExpressionSyntax {.kind = ExpressionKind::integer_literal, .line = current().line, .text = std::move(text)};
     }
 
     auto make_string_expression(std::string text) -> ExpressionSyntax {
-        return ExpressionSyntax {.kind = ExpressionKind::string_literal, .text = std::move(text)};
+        return ExpressionSyntax {.kind = ExpressionKind::string_literal, .line = current().line, .text = std::move(text)};
     }
 
     auto make_boolean_expression(std::string text) -> ExpressionSyntax {
-        return ExpressionSyntax {.kind = ExpressionKind::boolean_literal, .text = std::move(text)};
+        return ExpressionSyntax {.kind = ExpressionKind::boolean_literal, .line = current().line, .text = std::move(text)};
     }
 
     auto parse_prefix_expression(ParseResult& result) -> ExpressionSyntax {
@@ -707,6 +708,7 @@ private:
 
             return ExpressionSyntax {
                 .kind = ExpressionKind::unary,
+                .line = operand.line,
                 .text = std::move(operator_text),
                 .arguments = {},
                 .left = std::make_unique<ExpressionSyntax>(std::move(operand)),
@@ -733,6 +735,7 @@ private:
 
             expression = ExpressionSyntax {
                 .kind = ExpressionKind::cast,
+                .line = expression.line,
                 .text = cast_type.name,
                 .arguments = {},
                 .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
@@ -782,7 +785,7 @@ private:
     }
 
     auto parse_array_literal(ParseResult& result) -> ExpressionSyntax {
-        ExpressionSyntax expression {.kind = ExpressionKind::array_literal, .text = ""};
+        ExpressionSyntax expression {.kind = ExpressionKind::array_literal, .line = current().line, .text = ""};
         advance();
 
         if (is(TokenKind::right_bracket)) {
@@ -817,7 +820,7 @@ private:
     }
 
     auto parse_block_expression(ParseResult& result, ExpressionKind kind, std::string keyword) -> ExpressionSyntax {
-        ExpressionSyntax expression {.kind = kind, .text = std::move(keyword)};
+        ExpressionSyntax expression {.kind = kind, .line = current().line, .text = std::move(keyword)};
         advance();
 
         auto body = parse_statement_block(result, expression.text + " expression requires an indented body block");
@@ -859,6 +862,7 @@ private:
                     advance();
                     ExpressionSyntax call_expression {
                         .kind = ExpressionKind::call,
+                        .line = expression.line,
                         .text = "",
                         .arguments = parse_argument_list(result),
                         .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
@@ -874,6 +878,7 @@ private:
                     auto member_name = expect_identifier(result, "expected member name after '.'");
                     ExpressionSyntax member_expression {
                         .kind = ExpressionKind::member_access,
+                        .line = current().line,
                         .text = std::move(member_name),
                         .arguments = {},
                         .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
@@ -889,6 +894,7 @@ private:
                     auto member_name = expect_identifier(result, "expected member name after '?.'");
                     ExpressionSyntax member_expression {
                         .kind = ExpressionKind::null_safe_member_access,
+                        .line = current().line,
                         .text = std::move(member_name),
                         .arguments = {},
                         .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
@@ -917,6 +923,7 @@ private:
                     index_arguments.push_back(std::move(index_expression));
                     ExpressionSyntax index_access_expression {
                         .kind = ExpressionKind::index_access,
+                        .line = expression.line,
                         .text = "",
                         .arguments = std::move(index_arguments),
                         .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
@@ -976,6 +983,7 @@ private:
 
             ExpressionSyntax binary_expression {
                 .kind = ExpressionKind::binary,
+                .line = left.line,
                 .text = std::move(operator_text),
                 .arguments = {},
                 .left = std::make_unique<ExpressionSyntax>(std::move(left)),
@@ -1009,6 +1017,7 @@ private:
 
             left = ExpressionSyntax {
                 .kind = ExpressionKind::ternary,
+                .line = left.line,
                 .text = "",
                 .arguments = {},
                 .left = std::make_unique<ExpressionSyntax>(std::move(left)),
@@ -1048,7 +1057,7 @@ private:
     }
 
     auto parse_binding_statement(ParseResult& result, StatementKind kind) -> StatementSyntax {
-        StatementSyntax statement {.kind = kind, .valid = true};
+        StatementSyntax statement {.kind = kind, .line = current().line, .valid = true};
         advance();
 
         statement.name = expect_identifier(result, "binding statement requires a name");
@@ -1079,7 +1088,7 @@ private:
     }
 
     auto parse_assignment_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::assignment_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::assignment_statement, .line = current().line, .valid = true};
         statement.assignment_target = parse_expression(result);
         if (statement.assignment_target.text.empty() && !statement.assignment_target.left &&
             !statement.assignment_target.right && statement.assignment_target.arguments.empty()) {
@@ -1111,7 +1120,7 @@ private:
     }
 
     auto parse_return_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::return_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::return_statement, .line = current().line, .valid = true};
         advance();
         if (is(TokenKind::newline) || is(TokenKind::dedent) || is(TokenKind::eof)) {
             return statement;
@@ -1121,13 +1130,13 @@ private:
     }
 
     auto parse_break_statement() -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::break_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::break_statement, .line = current().line, .valid = true};
         advance();
         return statement;
     }
 
     auto parse_continue_statement() -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::continue_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::continue_statement, .line = current().line, .valid = true};
         advance();
         return statement;
     }
@@ -1160,7 +1169,7 @@ private:
     }
 
     auto parse_if_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::if_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::if_statement, .line = current().line, .valid = true};
         advance();
 
         statement.expression = parse_expression(result);
@@ -1190,7 +1199,7 @@ private:
     }
 
     auto parse_switch_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::switch_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::switch_statement, .line = current().line, .valid = true};
         advance();
 
         statement.expression = parse_expression(result);
@@ -1295,7 +1304,7 @@ private:
     }
 
     auto parse_guard_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::guard_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::guard_statement, .line = current().line, .valid = true};
         advance();
 
         statement.expression = parse_expression(result);
@@ -1321,7 +1330,7 @@ private:
     }
 
     auto parse_while_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::while_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::while_statement, .line = current().line, .valid = true};
         advance();
 
         statement.expression = parse_expression(result);
@@ -1341,7 +1350,7 @@ private:
     }
 
     auto parse_repeat_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::repeat_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::repeat_statement, .line = current().line, .valid = true};
         advance();
 
         statement.nested_statements =
@@ -1368,7 +1377,7 @@ private:
     }
 
     auto parse_for_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::for_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::for_statement, .line = current().line, .valid = true};
         advance();
 
         statement.name = expect_identifier(result, "for statement requires a loop binding name");
@@ -1401,7 +1410,7 @@ private:
     }
 
     auto parse_unsafe_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::unsafe_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::unsafe_statement, .line = current().line, .valid = true};
         advance();
 
         statement.nested_statements =
@@ -1419,7 +1428,7 @@ private:
     }
 
     auto parse_defer_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::defer_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::defer_statement, .line = current().line, .valid = true};
         advance();
 
         statement.nested_statements =
@@ -1437,7 +1446,7 @@ private:
     }
 
     auto parse_expression_statement(ParseResult& result) -> StatementSyntax {
-        StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = true};
+        StatementSyntax statement {.kind = StatementKind::expression_statement, .line = current().line, .valid = true};
         statement.expression = parse_expression(result);
         if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&
             statement.expression.arguments.empty()) {
@@ -1475,13 +1484,13 @@ private:
         case TokenKind::keyword_defer:
             return parse_defer_statement(result);
         case TokenKind::keyword_else: {
-            StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = false};
+            StatementSyntax statement {.kind = StatementKind::expression_statement, .line = current().line, .valid = false};
             result.diagnostics.error(current().line, "else must follow an if consequence block");
             advance();
             return statement;
         }
         case TokenKind::keyword_default: {
-            StatementSyntax statement {.kind = StatementKind::expression_statement, .valid = false};
+            StatementSyntax statement {.kind = StatementKind::expression_statement, .line = current().line, .valid = false};
             result.diagnostics.error(current().line, "default must appear inside a switch case");
             advance();
             return statement;

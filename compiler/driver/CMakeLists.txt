@@ -10,6 +10,7 @@ target_include_directories(orison_driver
 target_link_libraries(orison_driver
     PUBLIC
         orison_diagnostics
+        orison_semantics
         orison_source
         orison_syntax
 )
