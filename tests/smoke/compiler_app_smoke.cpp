@@ -31,5 +31,23 @@ int main() {
     assert(parse_result.exit_code == 1);
     assert(parse_result.stdout_text.empty());
     assert(parse_result.stderr_text.find("await expression is only valid inside async functions") != std::string::npos);
+
+    auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
+    {
+        std::ofstream output(task_path);
+        output << "package demo.task\n";
+        output << "function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let request_task = task\n";
+        output << "        request(url)\n";
+        output << "    return request(url)\n";
+    }
+
+    auto task_path_text = task_path.string();
+    std::array<char const*, 3> task_argv {"orisonc", "--parse", task_path_text.c_str()};
+    auto task_result = app.run(std::span<char const* const>(task_argv.data(), task_argv.size()));
+
+    assert(task_result.exit_code == 1);
+    assert(task_result.stdout_text.empty());
+    assert(task_result.stderr_text.find("task expression is only valid inside async functions") != std::string::npos);
     return 0;
 }

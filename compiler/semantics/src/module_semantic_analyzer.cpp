@@ -63,6 +63,10 @@ private:
             diagnostics_.error(expression.line, "await expression is only valid inside async functions");
         }
 
+        if (expression.kind == syntax::ExpressionKind::task && !in_async_function) {
+            diagnostics_.error(expression.line, "task expression is only valid inside async functions");
+        }
+
         for (auto const& argument : expression.arguments) {
             analyze_expression(argument, in_async_function);
         }
