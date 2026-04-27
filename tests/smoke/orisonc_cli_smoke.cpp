@@ -40,7 +40,7 @@ int main() {
         output << "    return 0\n";
         output << "public type Port = UInt16\n";
         output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return url\n";
+        output << "    return await request(url)\n";
         output << "unsafe function read_word(addr: Address) -> UInt32\n";
         output << "    return raw_read(addr)\n";
         output << "public interface Reader\n";
@@ -105,7 +105,7 @@ int main() {
     assert(output.find("function where constraints: 0") != std::string::npos);
     assert(output.find("function body statements: 1") != std::string::npos);
     assert(output.find("first statement kind: return") != std::string::npos);
-    assert(output.find("first statement expression: url") != std::string::npos);
+    assert(output.find("first statement expression: await request(url)") != std::string::npos);
     assert(output.find("first statement nested count: 0") != std::string::npos);
     assert(output.find("first statement alternate count: 0") != std::string::npos);
     assert(output.find("first statement switch cases: 0") != std::string::npos);

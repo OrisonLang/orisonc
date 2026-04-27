@@ -112,7 +112,7 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
         return rendered;
     }
     case ExpressionKind::unary:
-        if (expression.text == "not" || expression.text == "bit_not") {
+        if (expression.text == "not" || expression.text == "bit_not" || expression.text == "await") {
             return expression.text + " " + render_expression(*expression.left);
         }
         return expression.text + render_expression(*expression.left);

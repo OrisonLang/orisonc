@@ -40,7 +40,7 @@ void test_parse_success() {
         output << "function initialize_device() -> Int32\n";
         output << "    return 0\n\n";
         output << "async function fetch(url: Text) -> Outcome<Text, ParseError>\n";
-        output << "    return url\n\n";
+        output << "    return await request(url)\n\n";
         output << "unsafe function read_byte(addr: Address) -> Byte\n";
         output << "    return raw_read(addr)\n\n";
         output << "package function main(input: shared.View<Byte>, count: Int32) -> Outcome<Int32, ParseError>\n";
@@ -91,7 +91,7 @@ void test_parse_success() {
     assert(result.module.type_aliases.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.type_aliases.front().name == "UserId");
     assert(result.module.type_aliases.front().aliased_type.name == "UInt64");
-    assert(result.module.top_level_declaration_count == 11);
+    assert(result.module.top_level_declaration_count == 12);
     assert(result.module.records.size() == 1);
     assert(result.module.records.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.records.front().name == "User");
@@ -157,7 +157,14 @@ void test_parse_success() {
     assert(result.module.functions.front().return_type.name == "Outcome");
     assert(result.module.functions.front().body_statements.size() == 1);
     assert(result.module.functions.front().body_statements[0].kind == orison::syntax::StatementKind::return_statement);
-    assert(result.module.functions.front().body_statements[0].expression.kind == orison::syntax::ExpressionKind::name);
+    assert(result.module.functions.front().body_statements[0].expression.kind == orison::syntax::ExpressionKind::unary);
+    assert(result.module.functions.front().body_statements[0].expression.text == "await");
+    assert(result.module.functions.front().body_statements[0].expression.left != nullptr);
+    assert(result.module.functions.front().body_statements[0].expression.left->kind == orison::syntax::ExpressionKind::call);
+    assert(result.module.functions.front().body_statements[0].expression.left->left != nullptr);
+    assert(result.module.functions.front().body_statements[0].expression.left->left->text == "request");
+    assert(result.module.functions.front().body_statements[0].expression.left->arguments.size() == 1);
+    assert(result.module.functions.front().body_statements[0].expression.left->arguments.front().text == "url");
     auto const& unsafe_function = result.module.functions[1];
     assert(unsafe_function.visibility == orison::syntax::Visibility::package_visibility);
     assert(!unsafe_function.is_async);
@@ -347,7 +354,8 @@ void test_async_function_success() {
         std::ofstream output(path);
         output << "package demo.async\n";
         output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return url\n";
+        output << "    let value = await fetch_inner(url)\n";
+        output << "    return value\n";
         output << "public async unsafe function fetch_byte(addr: Address) -> Byte\n";
         output << "    return raw_read(addr)\n";
     }
@@ -363,10 +371,52 @@ void test_async_function_success() {
     assert(result.module.functions[0].is_async);
     assert(!result.module.functions[0].is_unsafe);
     assert(result.module.functions[0].name == "fetch");
+    assert(result.module.functions[0].body_statements.size() == 2);
+    assert(result.module.functions[0].body_statements[0].kind == orison::syntax::StatementKind::let_binding);
+    assert(result.module.functions[0].body_statements[0].expression.kind == orison::syntax::ExpressionKind::unary);
+    assert(result.module.functions[0].body_statements[0].expression.text == "await");
+    assert(result.module.functions[0].body_statements[0].expression.left != nullptr);
+    assert(result.module.functions[0].body_statements[0].expression.left->kind == orison::syntax::ExpressionKind::call);
+    assert(result.module.functions[0].body_statements[1].kind == orison::syntax::StatementKind::return_statement);
+    assert(result.module.functions[0].body_statements[1].expression.text == "value");
     assert(result.module.functions[1].is_async);
     assert(result.module.functions[1].is_unsafe);
     assert(result.module.functions[1].visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.functions[1].name == "fetch_byte");
+}
+
+void test_await_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_await_expression_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function fetch_pair(a: Task<Text>, b: Task<Text>) -> Outcome<Pair<Text, Text>, IOError>\n";
+        output << "    let left = await a\n";
+        output << "    let right = await b\n";
+        output << "    return Pair(left, right)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions[0].is_async);
+    assert(result.module.functions[0].body_statements.size() == 3);
+    assert(result.module.functions[0].body_statements[0].kind == orison::syntax::StatementKind::let_binding);
+    assert(result.module.functions[0].body_statements[0].expression.kind == orison::syntax::ExpressionKind::unary);
+    assert(result.module.functions[0].body_statements[0].expression.text == "await");
+    assert(result.module.functions[0].body_statements[0].expression.left != nullptr);
+    assert(result.module.functions[0].body_statements[0].expression.left->kind == orison::syntax::ExpressionKind::name);
+    assert(result.module.functions[0].body_statements[0].expression.left->text == "a");
+    assert(result.module.functions[0].body_statements[1].kind == orison::syntax::StatementKind::let_binding);
+    assert(result.module.functions[0].body_statements[1].expression.kind == orison::syntax::ExpressionKind::unary);
+    assert(result.module.functions[0].body_statements[1].expression.text == "await");
+    assert(result.module.functions[0].body_statements[1].expression.left != nullptr);
+    assert(result.module.functions[0].body_statements[1].expression.left->text == "b");
 }
 
 void test_async_function_failure() {
@@ -1942,6 +1992,7 @@ int main() {
     test_foreign_import_failure();
     test_async_function_success();
     test_async_function_failure();
+    test_await_expression_success();
     test_unsafe_function_success();
     test_unsafe_function_failure();
     test_choice_generic_success();

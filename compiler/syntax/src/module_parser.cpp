@@ -244,6 +244,7 @@ private:
         case TokenKind::keyword_foreign:
         case TokenKind::keyword_library:
         case TokenKind::keyword_async:
+        case TokenKind::keyword_await:
         case TokenKind::keyword_type:
         case TokenKind::keyword_record:
         case TokenKind::keyword_choice:
@@ -692,7 +693,8 @@ private:
     }
 
     auto parse_prefix_expression(ParseResult& result) -> ExpressionSyntax {
-        if (is(TokenKind::minus) || is(TokenKind::keyword_not) || is(TokenKind::keyword_bit_not)) {
+        if (is(TokenKind::minus) || is(TokenKind::keyword_not) || is(TokenKind::keyword_bit_not) ||
+            is(TokenKind::keyword_await)) {
             auto operator_text = current().lexeme;
             advance();
             auto operand = parse_prefix_expression(result);
