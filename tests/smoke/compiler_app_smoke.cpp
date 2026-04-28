@@ -132,5 +132,26 @@ int main() {
     assert(typed_capture_result.stderr_text.find(
                "concurrency capture 'buffer' of type 'Buffer' requires future Transferable/Shareable analysis"
            ) != std::string::npos);
+
+    auto generic_capture_path = std::filesystem::temp_directory_path() / "orison_compiler_app_generic_capture_failure.or";
+    {
+        std::ofstream output(generic_capture_path);
+        output << "package demo.thread\n";
+        output << "function launch<T>(item: T) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        process(item)\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto generic_capture_path_text = generic_capture_path.string();
+    std::array<char const*, 3> generic_capture_argv {"orisonc", "--parse", generic_capture_path_text.c_str()};
+    auto generic_capture_result =
+        app.run(std::span<char const* const>(generic_capture_argv.data(), generic_capture_argv.size()));
+
+    assert(generic_capture_result.exit_code == 1);
+    assert(generic_capture_result.stdout_text.empty());
+    assert(generic_capture_result.stderr_text.find(
+               "concurrency capture 'item' of type 'T' requires future Transferable/Shareable analysis"
+           ) != std::string::npos);
     return 0;
 }

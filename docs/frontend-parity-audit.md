@@ -17,7 +17,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - parsed record fields, typed parameters, return types, generic `where` constraints, nested generic type syntax, and `shared`/`exclusive`-qualified type names
 - statement parsing for `let`, `var`, plain `=` assignment, `return`, `break`, `continue`, expression statements, inline and block-arm `switch`, `guard ... else`, `if` with an optional `else` block, `while`, `repeat ... while`, `for ... in`, block `unsafe`, and block `defer`
 - expression parsing for names, decimal/hex/binary integer literals, string literals, boolean literals, array literals, `task` and `thread` block expressions, unary `-`, `not`, `bit_not`, and `await`, calls, member access, null-safe member access, index access, ternary `?:`, and binary `+`, `-`, `*`, `%`, `/`, `==`, `!=`, `<`, `<=`, `>`, `>=`, `and`, `or`, `bit_and`, `bit_or`, `bit_xor`, `shift_left`, and `shift_right`
-- first semantic validation for concurrency surface rules: `await` and `task` now produce frontend diagnostics when used outside `async` functions or methods, `task`/`thread` bodies must end in a value-producing statement shape, concurrency bodies now reject captures of mutable outer locals and receiver `this`, and the semantics pass now classifies captured outer values with provisional type names for later typed checks
+- first semantic validation for concurrency surface rules: `await` and `task` now produce frontend diagnostics when used outside `async` functions or methods, `task`/`thread` bodies must end in a value-producing statement shape, concurrency bodies now reject captures of mutable outer locals and receiver `this`, and the semantics pass now classifies captured outer values with provisional type names plus placeholder `Transferable`/`Shareable` marker recognition
 - CLI parse output for import/type/choice/interface/implementation/extension counts, declaration visibility, implementation/extension targets, function `where` constraints, and first-statement nested/alternate/switch-arm counts
 
 ### Pending
@@ -28,4 +28,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
-- 2026-04-27: extended concurrency-capture classification with provisional type names and used that data for the first whitelist-based typed concurrency diagnostic, extended smoke coverage, and synchronized the parity records.
+- 2026-04-27: extended provisional typed concurrency checks so generic captures constrained by `Transferable` or `Shareable` are recognized by the semantic layer, extended smoke coverage, and synchronized the parity records.

@@ -88,6 +88,15 @@ private:
         return false;
     }
 
+    auto has_concurrency_marker_constraint(std::string const& type_name) const -> bool {
+        for (auto const& constrained_type : concurrency_marker_types_) {
+            if (constrained_type == type_name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     auto infer_expression_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
         switch (expression.kind) {
         case syntax::ExpressionKind::name: {
@@ -123,6 +132,15 @@ private:
 
     void analyze_function(syntax::FunctionSyntax const& function) {
         scope_stack_.clear();
+        concurrency_marker_types_.clear();
+        for (auto const& constraint : function.where_constraints) {
+            for (auto const& requirement : constraint.requirements) {
+                if (requirement.name == "Transferable" || requirement.name == "Shareable") {
+                    concurrency_marker_types_.push_back(constraint.parameter_name);
+                    break;
+                }
+            }
+        }
         push_scope();
         for (auto const& parameter : function.parameters) {
             declare_binding(
@@ -329,7 +347,8 @@ private:
 
         if ((capture_kind == ConcurrencyCaptureKind::parameter ||
              capture_kind == ConcurrencyCaptureKind::immutable_outer_local) &&
-            !binding->type_name.empty() && !is_obviously_safe_capture_type(binding->type_name)) {
+            !binding->type_name.empty() && !is_obviously_safe_capture_type(binding->type_name) &&
+            !has_concurrency_marker_constraint(binding->type_name)) {
             diagnostics_.error(
                 expression.line,
                 "concurrency capture '" + expression.text + "' of type '" + binding->type_name +
@@ -341,6 +360,7 @@ private:
     syntax::ModuleSyntax const& module_;
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
+    std::vector<std::string> concurrency_marker_types_;
     std::vector<std::vector<Binding>> scope_stack_;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
