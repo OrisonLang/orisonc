@@ -20,6 +20,8 @@ int main() {
     {
         std::ofstream output(path);
         output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
         output << "function fetch(url: Text) -> Outcome<Text, IOError>\n";
         output << "    return await request(url)\n";
     }
@@ -48,7 +50,34 @@ int main() {
     assert(await_value_result.exit_code == 1);
     assert(await_value_result.stdout_text.empty());
     assert(await_value_result.stderr_text.find(
-               "await expression currently requires a task value or async-produced call result"
+               "await expression currently requires a task value or declared async call result"
+           ) != std::string::npos);
+
+    auto await_non_async_call_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_await_non_async_call_failure.or";
+    {
+        std::ofstream output(await_non_async_call_path);
+        output << "package demo.await\n";
+        output << "function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let pending = request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto await_non_async_call_path_text = await_non_async_call_path.string();
+    std::array<char const*, 3> await_non_async_call_argv {
+        "orisonc",
+        "--parse",
+        await_non_async_call_path_text.c_str()
+    };
+    auto await_non_async_call_result =
+        app.run(std::span<char const* const>(await_non_async_call_argv.data(), await_non_async_call_argv.size()));
+
+    assert(await_non_async_call_result.exit_code == 1);
+    assert(await_non_async_call_result.stdout_text.empty());
+    assert(await_non_async_call_result.stderr_text.find(
+               "await expression currently requires a task value or declared async call result"
            ) != std::string::npos);
 
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";

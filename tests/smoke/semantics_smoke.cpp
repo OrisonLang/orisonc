@@ -36,6 +36,8 @@ void test_await_async_call_value_success() {
     {
         std::ofstream output(path);
         output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
         output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
         output << "    let pending = request(url)\n";
         output << "    return await pending\n";
@@ -58,6 +60,8 @@ void test_await_outside_async_function_failure() {
     {
         std::ofstream output(path);
         output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
         output << "function fetch(url: Text) -> Outcome<Text, IOError>\n";
         output << "    return await request(url)\n";
     }
@@ -73,7 +77,7 @@ void test_await_outside_async_function_failure() {
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().line == 5);
     assert(diagnostics.entries().front().message == "await expression is only valid inside async functions");
 }
 
@@ -82,6 +86,8 @@ void test_await_outside_async_method_failure() {
     {
         std::ofstream output(path);
         output << "package demo.await\n";
+        output << "async function request(id: Int64) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(id)\n";
         output << "extend Worker\n";
         output << "    function poll(this: shared This) -> Outcome<Text, IOError>\n";
         output << "        return await request(this.id)\n";
@@ -98,7 +104,7 @@ void test_await_outside_async_method_failure() {
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
+    assert(diagnostics.entries().front().line == 6);
     assert(diagnostics.entries().front().message == "await expression is only valid inside async functions");
 }
 
@@ -125,7 +131,7 @@ void test_await_plain_value_failure() {
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 4);
     assert(diagnostics.entries().front().message ==
-           "await expression currently requires a task value or async-produced call result");
+           "await expression currently requires a task value or declared async call result");
 }
 
 void test_await_thread_value_failure() {
@@ -152,9 +158,37 @@ void test_await_thread_value_failure() {
     assert(diagnostics.entries().size() == 2);
     assert(diagnostics.entries()[0].line == 5);
     assert(diagnostics.entries()[0].message ==
-           "await expression currently requires a task value or async-produced call result");
+           "await expression currently requires a task value or declared async call result");
     assert(diagnostics.entries()[1].line == 5);
     assert(diagnostics.entries()[1].message == "thread value 'worker' must be consumed with .join()");
+}
+
+void test_await_non_async_call_value_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_non_async_call_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let pending = request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 6);
+    assert(diagnostics.entries().front().message ==
+           "await expression currently requires a task value or declared async call result");
 }
 
 void test_task_inside_async_function_success() {
@@ -942,6 +976,7 @@ int main() {
     test_await_outside_async_method_failure();
     test_await_plain_value_failure();
     test_await_thread_value_failure();
+    test_await_non_async_call_value_failure();
     test_task_inside_async_function_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();

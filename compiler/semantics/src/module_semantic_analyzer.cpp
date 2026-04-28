@@ -24,6 +24,7 @@ public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
 
     auto analyze() -> SemanticAnalysisResult {
+        collect_async_callable_names();
         collect_concurrency_marker_implementations();
 
         for (auto const& function : module_.functions) {
@@ -110,6 +111,15 @@ private:
     ) const -> bool {
         for (auto const& constrained_type : marker_types) {
             if (constrained_type == type_name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    auto has_async_callable_name(std::string const& name) const -> bool {
+        for (auto const& async_callable_name : async_callable_names_) {
+            if (async_callable_name == name) {
                 return true;
             }
         }
@@ -207,7 +217,7 @@ private:
         case syntax::ExpressionKind::thread:
             return ValueOriginKind::thread;
         case syntax::ExpressionKind::call:
-            return ValueOriginKind::async_call;
+            return is_declared_async_call(expression) ? ValueOriginKind::async_call : ValueOriginKind::none;
         case syntax::ExpressionKind::name: {
             auto const* binding = find_binding(expression.text);
             return binding == nullptr ? ValueOriginKind::none : binding->value_origin;
@@ -241,6 +251,23 @@ private:
         return origin == ValueOriginKind::task || origin == ValueOriginKind::async_call;
     }
 
+    auto is_declared_async_call(syntax::ExpressionSyntax const& expression) const -> bool {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left) {
+            return false;
+        }
+
+        if (expression.left->kind == syntax::ExpressionKind::name) {
+            return has_async_callable_name(expression.left->text);
+        }
+
+        if (expression.left->kind == syntax::ExpressionKind::member_access ||
+            expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+            return has_async_callable_name(expression.left->text);
+        }
+
+        return false;
+    }
+
     auto is_structurally_thread_expression(syntax::ExpressionSyntax const& expression) const -> bool {
         return infer_expression_value_origin(expression) == ValueOriginKind::thread;
     }
@@ -264,6 +291,38 @@ private:
             }
             if (implementation.interface_type.name == "Shareable") {
                 shareable_impl_types_.push_back(rendered_type);
+            }
+        }
+    }
+
+    void collect_async_callable_names() {
+        async_callable_names_.clear();
+
+        for (auto const& function : module_.functions) {
+            if (function.is_async) {
+                async_callable_names_.push_back(function.name);
+            }
+        }
+
+        for (auto const& implementation : module_.implementations) {
+            for (auto const& method : implementation.methods) {
+                if (method.is_async) {
+                    async_callable_names_.push_back(method.name);
+                }
+            }
+        }
+
+        for (auto const& extension : module_.extensions) {
+            for (auto const& method : extension.methods) {
+                if (method.is_async) {
+                    async_callable_names_.push_back(method.name);
+                }
+            }
+        }
+
+        for (auto const& foreign_export : module_.foreign_exports) {
+            if (foreign_export.function.is_async) {
+                async_callable_names_.push_back(foreign_export.function.name);
             }
         }
     }
@@ -374,7 +433,7 @@ private:
             !is_structurally_awaitable_expression(*expression.left)) {
             diagnostics_.error(
                 expression.line,
-                "await expression currently requires a task value or async-produced call result"
+                "await expression currently requires a task value or declared async call result"
             );
         }
 
@@ -567,6 +626,7 @@ private:
     syntax::ModuleSyntax const& module_;
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
+    std::vector<std::string> async_callable_names_;
     std::vector<std::string> transferable_constraint_types_;
     std::vector<std::string> shareable_constraint_types_;
     std::vector<std::string> transferable_impl_types_;
