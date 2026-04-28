@@ -31,6 +31,28 @@ void test_await_inside_async_function_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_await_async_call_value_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_call_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let pending = request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_await_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_sync_failure.or";
     {
@@ -78,6 +100,61 @@ void test_await_outside_async_method_failure() {
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 4);
     assert(diagnostics.entries().front().message == "await expression is only valid inside async functions");
+}
+
+void test_await_plain_value_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_plain_value_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function fetch() -> Int64\n";
+        output << "    let count = 1\n";
+        output << "    return await count\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 4);
+    assert(diagnostics.entries().front().message ==
+           "await expression currently requires a task value or async-produced call result");
+}
+
+void test_await_thread_value_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_thread_value_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function fetch() -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        1\n";
+        output << "    return await worker\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 2);
+    assert(diagnostics.entries()[0].line == 5);
+    assert(diagnostics.entries()[0].message ==
+           "await expression currently requires a task value or async-produced call result");
+    assert(diagnostics.entries()[1].line == 5);
+    assert(diagnostics.entries()[1].message == "thread value 'worker' must be consumed with .join()");
 }
 
 void test_task_inside_async_function_success() {
@@ -150,6 +227,81 @@ void test_thread_outside_async_function_success() {
     orison::semantics::ModuleSemanticAnalyzer analyzer;
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(!diagnostics.has_errors());
+}
+
+void test_thread_join_receiver_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_join_receiver_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "function parallel_sum() -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        1\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_join_non_thread_receiver_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_join_non_thread_receiver_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "async function fetch() -> Int64\n";
+        output << "    let request_task = task\n";
+        output << "        1\n";
+        output << "    return request_task.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message == "join() currently requires a thread value receiver");
+}
+
+void test_thread_value_without_join_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_value_without_join_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "function parallel_sum() -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        1\n";
+        output << "    return worker\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message == "thread value 'worker' must be consumed with .join()");
 }
 
 void test_concurrency_capture_classification_success() {
@@ -785,11 +937,17 @@ void test_thread_capture_receiver_this_failure() {
 
 int main() {
     test_await_inside_async_function_success();
+    test_await_async_call_value_success();
     test_await_outside_async_function_failure();
     test_await_outside_async_method_failure();
+    test_await_plain_value_failure();
+    test_await_thread_value_failure();
     test_task_inside_async_function_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
+    test_thread_join_receiver_success();
+    test_join_non_thread_receiver_failure();
+    test_thread_value_without_join_failure();
     test_concurrency_capture_classification_success();
     test_thread_capture_owned_parameter_type_failure();
     test_thread_capture_transferable_generic_success();

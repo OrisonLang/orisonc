@@ -12,6 +12,13 @@ enum class ConcurrencyMarkerKind {
     shareable,
 };
 
+enum class ValueOriginKind {
+    none,
+    task,
+    thread,
+    async_call,
+};
+
 class Analyzer {
 public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
@@ -49,6 +56,7 @@ private:
     struct Binding {
         std::string name;
         std::string type_name;
+        ValueOriginKind value_origin = ValueOriginKind::none;
         bool mutable_binding = false;
         bool receiver_binding = false;
         bool parameter_binding = false;
@@ -192,6 +200,26 @@ private:
         }
     }
 
+    auto infer_expression_value_origin(syntax::ExpressionSyntax const& expression) const -> ValueOriginKind {
+        switch (expression.kind) {
+        case syntax::ExpressionKind::task:
+            return ValueOriginKind::task;
+        case syntax::ExpressionKind::thread:
+            return ValueOriginKind::thread;
+        case syntax::ExpressionKind::call:
+            return ValueOriginKind::async_call;
+        case syntax::ExpressionKind::name: {
+            auto const* binding = find_binding(expression.text);
+            return binding == nullptr ? ValueOriginKind::none : binding->value_origin;
+        }
+        case syntax::ExpressionKind::cast:
+        case syntax::ExpressionKind::unary:
+            return expression.left ? infer_expression_value_origin(*expression.left) : ValueOriginKind::none;
+        default:
+            return ValueOriginKind::none;
+        }
+    }
+
     auto is_value_return_statement(syntax::StatementSyntax const& statement) const -> bool {
         return statement.kind == syntax::StatementKind::return_statement &&
                (!statement.expression.text.empty() || statement.expression.left || statement.expression.right ||
@@ -206,6 +234,15 @@ private:
     auto classify_concurrency_expression(syntax::ExpressionSyntax const& expression) const -> ConcurrencyExpressionKind {
         return expression.kind == syntax::ExpressionKind::thread ? ConcurrencyExpressionKind::thread
                                                                  : ConcurrencyExpressionKind::task;
+    }
+
+    auto is_structurally_awaitable_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+        auto origin = infer_expression_value_origin(expression);
+        return origin == ValueOriginKind::task || origin == ValueOriginKind::async_call;
+    }
+
+    auto is_structurally_thread_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+        return infer_expression_value_origin(expression) == ValueOriginKind::thread;
     }
 
     auto infer_statement_value_type_name(syntax::StatementSyntax const& statement) const -> std::string {
@@ -269,7 +306,14 @@ private:
             auto type_name = !statement.annotated_type.name.empty()
                                  ? render_type_name(statement.annotated_type)
                                  : infer_expression_type_name(statement.expression);
-            declare_binding(statement.name, type_name, statement.kind == syntax::StatementKind::var_binding);
+            declare_binding(
+                statement.name,
+                type_name,
+                statement.kind == syntax::StatementKind::var_binding,
+                false,
+                false,
+                infer_expression_value_origin(statement.expression)
+            );
             return;
         }
 
@@ -309,8 +353,16 @@ private:
         }
     }
 
-    void analyze_expression(syntax::ExpressionSyntax const& expression, bool in_async_function) {
+    void analyze_expression(
+        syntax::ExpressionSyntax const& expression,
+        bool in_async_function,
+        bool allow_thread_value_name = false
+    ) {
         if (expression.kind == syntax::ExpressionKind::name) {
+            auto const* binding = find_binding(expression.text);
+            if (!allow_thread_value_name && binding != nullptr && binding->value_origin == ValueOriginKind::thread) {
+                diagnostics_.error(expression.line, "thread value '" + expression.text + "' must be consumed with .join()");
+            }
             record_concurrency_capture(expression);
         }
 
@@ -318,8 +370,30 @@ private:
             diagnostics_.error(expression.line, "await expression is only valid inside async functions");
         }
 
+        if (expression.kind == syntax::ExpressionKind::unary && expression.text == "await" && expression.left &&
+            !is_structurally_awaitable_expression(*expression.left)) {
+            diagnostics_.error(
+                expression.line,
+                "await expression currently requires a task value or async-produced call result"
+            );
+        }
+
         if (expression.kind == syntax::ExpressionKind::task && !in_async_function) {
             diagnostics_.error(expression.line, "task expression is only valid inside async functions");
+        }
+
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::member_access && expression.left->text == "join" &&
+            expression.left->left) {
+            if (!is_structurally_thread_expression(*expression.left->left)) {
+                diagnostics_.error(expression.line, "join() currently requires a thread value receiver");
+            }
+
+            analyze_expression(*expression.left->left, in_async_function, true);
+            for (auto const& argument : expression.arguments) {
+                analyze_expression(argument, in_async_function);
+            }
+            return;
         }
 
         if (expression_requires_value_boundary(expression)) {
@@ -367,7 +441,7 @@ private:
         }
 
         if (expression.left) {
-            analyze_expression(*expression.left, in_async_function);
+            analyze_expression(*expression.left, in_async_function, allow_thread_value_name);
         }
 
         if (expression.right) {
@@ -394,7 +468,8 @@ private:
         std::string type_name,
         bool mutable_binding,
         bool receiver_binding = false,
-        bool parameter_binding = false
+        bool parameter_binding = false,
+        ValueOriginKind value_origin = ValueOriginKind::none
     ) {
         if (scope_stack_.empty()) {
             push_scope();
@@ -403,6 +478,7 @@ private:
         scope_stack_.back().push_back(Binding {
             .name = name,
             .type_name = std::move(type_name),
+            .value_origin = value_origin,
             .mutable_binding = mutable_binding,
             .receiver_binding = receiver_binding,
             .parameter_binding = parameter_binding,

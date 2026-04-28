@@ -32,6 +32,25 @@ int main() {
     assert(parse_result.stdout_text.empty());
     assert(parse_result.stderr_text.find("await expression is only valid inside async functions") != std::string::npos);
 
+    auto await_value_path = std::filesystem::temp_directory_path() / "orison_compiler_app_await_value_failure.or";
+    {
+        std::ofstream output(await_value_path);
+        output << "package demo.await\n";
+        output << "async function fetch() -> Int64\n";
+        output << "    let count = 1\n";
+        output << "    return await count\n";
+    }
+
+    auto await_value_path_text = await_value_path.string();
+    std::array<char const*, 3> await_value_argv {"orisonc", "--parse", await_value_path_text.c_str()};
+    auto await_value_result = app.run(std::span<char const* const>(await_value_argv.data(), await_value_argv.size()));
+
+    assert(await_value_result.exit_code == 1);
+    assert(await_value_result.stdout_text.empty());
+    assert(await_value_result.stderr_text.find(
+               "await expression currently requires a task value or async-produced call result"
+           ) != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);
@@ -176,6 +195,48 @@ int main() {
     assert(shareable_thread_result.stdout_text.empty());
     assert(shareable_thread_result.stderr_text.find(
                "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis"
+           ) != std::string::npos);
+
+    auto join_receiver_path = std::filesystem::temp_directory_path() / "orison_compiler_app_join_receiver_failure.or";
+    {
+        std::ofstream output(join_receiver_path);
+        output << "package demo.thread\n";
+        output << "async function fetch() -> Int64\n";
+        output << "    let request_task = task\n";
+        output << "        1\n";
+        output << "    return request_task.join()\n";
+    }
+
+    auto join_receiver_path_text = join_receiver_path.string();
+    std::array<char const*, 3> join_receiver_argv {"orisonc", "--parse", join_receiver_path_text.c_str()};
+    auto join_receiver_result =
+        app.run(std::span<char const* const>(join_receiver_argv.data(), join_receiver_argv.size()));
+
+    assert(join_receiver_result.exit_code == 1);
+    assert(join_receiver_result.stdout_text.empty());
+    assert(join_receiver_result.stderr_text.find(
+               "join() currently requires a thread value receiver"
+           ) != std::string::npos);
+
+    auto thread_value_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
+    {
+        std::ofstream output(thread_value_path);
+        output << "package demo.thread\n";
+        output << "function parallel_sum() -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        1\n";
+        output << "    return worker\n";
+    }
+
+    auto thread_value_path_text = thread_value_path.string();
+    std::array<char const*, 3> thread_value_argv {"orisonc", "--parse", thread_value_path_text.c_str()};
+    auto thread_value_result =
+        app.run(std::span<char const* const>(thread_value_argv.data(), thread_value_argv.size()));
+
+    assert(thread_value_result.exit_code == 1);
+    assert(thread_value_result.stdout_text.empty());
+    assert(thread_value_result.stderr_text.find(
+               "thread value 'worker' must be consumed with .join()"
            ) != std::string::npos);
 
     auto concrete_marker_path = std::filesystem::temp_directory_path() / "orison_compiler_app_concrete_marker_success.or";
