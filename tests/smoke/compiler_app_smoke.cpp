@@ -153,5 +153,27 @@ int main() {
     assert(generic_capture_result.stderr_text.find(
                "concurrency capture 'item' of type 'T' requires future Transferable/Shareable analysis"
            ) != std::string::npos);
+
+    auto concrete_marker_path = std::filesystem::temp_directory_path() / "orison_compiler_app_concrete_marker_success.or";
+    {
+        std::ofstream output(concrete_marker_path);
+        output << "package demo.thread\n";
+        output << "implements Transferable for Buffer\n";
+        output << "    function placeholder(this: shared This) -> Unit\n";
+        output << "        return\n";
+        output << "function launch_processing(buffer: Buffer) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        process(buffer)\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto concrete_marker_path_text = concrete_marker_path.string();
+    std::array<char const*, 3> concrete_marker_argv {"orisonc", "--parse", concrete_marker_path_text.c_str()};
+    auto concrete_marker_result =
+        app.run(std::span<char const* const>(concrete_marker_argv.data(), concrete_marker_argv.size()));
+
+    assert(concrete_marker_result.exit_code == 0);
+    assert(concrete_marker_result.stderr_text.empty());
+    assert(concrete_marker_result.stdout_text.find("parsed ") != std::string::npos);
     return 0;
 }

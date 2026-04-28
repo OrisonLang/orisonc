@@ -11,6 +11,8 @@ public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
 
     auto analyze() -> SemanticAnalysisResult {
+        collect_concurrency_marker_implementations();
+
         for (auto const& function : module_.functions) {
             analyze_function(function);
         }
@@ -97,6 +99,15 @@ private:
         return false;
     }
 
+    auto has_concrete_concurrency_marker(std::string const& type_name) const -> bool {
+        for (auto const& marked_type : concurrency_marker_impl_types_) {
+            if (marked_type == type_name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     auto infer_expression_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
         switch (expression.kind) {
         case syntax::ExpressionKind::name: {
@@ -128,6 +139,16 @@ private:
     auto classify_concurrency_expression(syntax::ExpressionSyntax const& expression) const -> ConcurrencyExpressionKind {
         return expression.kind == syntax::ExpressionKind::thread ? ConcurrencyExpressionKind::thread
                                                                  : ConcurrencyExpressionKind::task;
+    }
+
+    void collect_concurrency_marker_implementations() {
+        concurrency_marker_impl_types_.clear();
+        for (auto const& implementation : module_.implementations) {
+            if (implementation.interface_type.name == "Transferable" ||
+                implementation.interface_type.name == "Shareable") {
+                concurrency_marker_impl_types_.push_back(render_type_name(implementation.receiver_type));
+            }
+        }
     }
 
     void analyze_function(syntax::FunctionSyntax const& function) {
@@ -348,7 +369,8 @@ private:
         if ((capture_kind == ConcurrencyCaptureKind::parameter ||
              capture_kind == ConcurrencyCaptureKind::immutable_outer_local) &&
             !binding->type_name.empty() && !is_obviously_safe_capture_type(binding->type_name) &&
-            !has_concurrency_marker_constraint(binding->type_name)) {
+            !has_concurrency_marker_constraint(binding->type_name) &&
+            !has_concrete_concurrency_marker(binding->type_name)) {
             diagnostics_.error(
                 expression.line,
                 "concurrency capture '" + expression.text + "' of type '" + binding->type_name +
@@ -361,6 +383,7 @@ private:
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<std::string> concurrency_marker_types_;
+    std::vector<std::string> concurrency_marker_impl_types_;
     std::vector<std::vector<Binding>> scope_stack_;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;

@@ -283,6 +283,35 @@ void test_thread_capture_unconstrained_generic_failure() {
            "concurrency capture 'item' of type 'T' requires future Transferable/Shareable analysis");
 }
 
+void test_thread_capture_transferable_concrete_type_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_transferable_concrete_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.thread\n";
+        output << "implements Transferable for Buffer\n";
+        output << "    function placeholder(this: shared This) -> Unit\n";
+        output << "        return\n";
+        output << "function launch_processing(buffer: Buffer) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        process(buffer)\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto analysis = analyzer.analyze(parse_result.module);
+    assert(!analysis.has_errors());
+    assert(analysis.concurrency_captures.size() == 1);
+    assert(analysis.concurrency_captures[0].name == "buffer");
+    assert(analysis.concurrency_captures[0].type_name == "Buffer");
+}
+
 void test_task_expression_value_boundary_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_value_boundary_failure.or";
     {
@@ -480,6 +509,7 @@ int main() {
     test_thread_capture_owned_parameter_type_failure();
     test_thread_capture_transferable_generic_success();
     test_thread_capture_unconstrained_generic_failure();
+    test_thread_capture_transferable_concrete_type_success();
     test_task_expression_value_boundary_failure();
     test_task_expression_value_return_success();
     test_thread_expression_value_boundary_failure();
