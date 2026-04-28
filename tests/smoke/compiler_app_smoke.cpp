@@ -130,7 +130,7 @@ int main() {
     assert(typed_capture_result.exit_code == 1);
     assert(typed_capture_result.stdout_text.empty());
     assert(typed_capture_result.stderr_text.find(
-               "concurrency capture 'buffer' of type 'Buffer' requires future Transferable/Shareable analysis"
+               "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis"
            ) != std::string::npos);
 
     auto generic_capture_path = std::filesystem::temp_directory_path() / "orison_compiler_app_generic_capture_failure.or";
@@ -151,7 +151,31 @@ int main() {
     assert(generic_capture_result.exit_code == 1);
     assert(generic_capture_result.stdout_text.empty());
     assert(generic_capture_result.stderr_text.find(
-               "concurrency capture 'item' of type 'T' requires future Transferable/Shareable analysis"
+               "thread capture 'item' of type 'T' requires future Transferable analysis"
+           ) != std::string::npos);
+
+    auto shareable_thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_shareable_thread_failure.or";
+    {
+        std::ofstream output(shareable_thread_path);
+        output << "package demo.thread\n";
+        output << "implements Shareable for Buffer\n";
+        output << "    function placeholder(this: shared This) -> Unit\n";
+        output << "        return\n";
+        output << "function launch_processing(buffer: Buffer) -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        process(buffer)\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto shareable_thread_path_text = shareable_thread_path.string();
+    std::array<char const*, 3> shareable_thread_argv {"orisonc", "--parse", shareable_thread_path_text.c_str()};
+    auto shareable_thread_result =
+        app.run(std::span<char const* const>(shareable_thread_argv.data(), shareable_thread_argv.size()));
+
+    assert(shareable_thread_result.exit_code == 1);
+    assert(shareable_thread_result.stdout_text.empty());
+    assert(shareable_thread_result.stderr_text.find(
+               "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis"
            ) != std::string::npos);
 
     auto concrete_marker_path = std::filesystem::temp_directory_path() / "orison_compiler_app_concrete_marker_success.or";
@@ -175,5 +199,27 @@ int main() {
     assert(concrete_marker_result.exit_code == 0);
     assert(concrete_marker_result.stderr_text.empty());
     assert(concrete_marker_result.stdout_text.find("parsed ") != std::string::npos);
+
+    auto shareable_task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_shareable_task_success.or";
+    {
+        std::ofstream output(shareable_task_path);
+        output << "package demo.task\n";
+        output << "implements Shareable for Buffer\n";
+        output << "    function placeholder(this: shared This) -> Unit\n";
+        output << "        return\n";
+        output << "async function launch_processing(buffer: Buffer) -> Buffer\n";
+        output << "    let worker = task\n";
+        output << "        buffer\n";
+        output << "    return await worker\n";
+    }
+
+    auto shareable_task_path_text = shareable_task_path.string();
+    std::array<char const*, 3> shareable_task_argv {"orisonc", "--parse", shareable_task_path_text.c_str()};
+    auto shareable_task_result =
+        app.run(std::span<char const* const>(shareable_task_argv.data(), shareable_task_argv.size()));
+
+    assert(shareable_task_result.exit_code == 0);
+    assert(shareable_task_result.stderr_text.empty());
+    assert(shareable_task_result.stdout_text.find("parsed ") != std::string::npos);
     return 0;
 }

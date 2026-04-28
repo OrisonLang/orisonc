@@ -6,6 +6,11 @@
 namespace orison::semantics {
 namespace {
 
+enum class ConcurrencyMarkerKind {
+    transferable,
+    shareable,
+};
+
 class Analyzer {
 public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
@@ -90,8 +95,11 @@ private:
         return false;
     }
 
-    auto has_concurrency_marker_constraint(std::string const& type_name) const -> bool {
-        for (auto const& constrained_type : concurrency_marker_types_) {
+    auto has_marker_type(
+        std::vector<std::string> const& marker_types,
+        std::string const& type_name
+    ) const -> bool {
+        for (auto const& constrained_type : marker_types) {
             if (constrained_type == type_name) {
                 return true;
             }
@@ -99,12 +107,43 @@ private:
         return false;
     }
 
-    auto has_concrete_concurrency_marker(std::string const& type_name) const -> bool {
-        for (auto const& marked_type : concurrency_marker_impl_types_) {
-            if (marked_type == type_name) {
-                return true;
-            }
+    auto has_concurrency_marker_constraint(
+        std::string const& type_name,
+        ConcurrencyMarkerKind marker_kind
+    ) const -> bool {
+        if (marker_kind == ConcurrencyMarkerKind::transferable) {
+            return has_marker_type(transferable_constraint_types_, type_name);
         }
+
+        return has_marker_type(shareable_constraint_types_, type_name);
+    }
+
+    auto has_concrete_concurrency_marker(
+        std::string const& type_name,
+        ConcurrencyMarkerKind marker_kind
+    ) const -> bool {
+        if (marker_kind == ConcurrencyMarkerKind::transferable) {
+            return has_marker_type(transferable_impl_types_, type_name);
+        }
+
+        return has_marker_type(shareable_impl_types_, type_name);
+    }
+
+    auto has_allowed_concurrency_marker(
+        std::string const& type_name,
+        ConcurrencyExpressionKind expression_kind
+    ) const -> bool {
+        if (has_concurrency_marker_constraint(type_name, ConcurrencyMarkerKind::transferable) ||
+            has_concrete_concurrency_marker(type_name, ConcurrencyMarkerKind::transferable)) {
+            return true;
+        }
+
+        if (expression_kind == ConcurrencyExpressionKind::task &&
+            (has_concurrency_marker_constraint(type_name, ConcurrencyMarkerKind::shareable) ||
+             has_concrete_concurrency_marker(type_name, ConcurrencyMarkerKind::shareable))) {
+            return true;
+        }
+
         return false;
     }
 
@@ -142,23 +181,30 @@ private:
     }
 
     void collect_concurrency_marker_implementations() {
-        concurrency_marker_impl_types_.clear();
+        transferable_impl_types_.clear();
+        shareable_impl_types_.clear();
         for (auto const& implementation : module_.implementations) {
-            if (implementation.interface_type.name == "Transferable" ||
-                implementation.interface_type.name == "Shareable") {
-                concurrency_marker_impl_types_.push_back(render_type_name(implementation.receiver_type));
+            auto rendered_type = render_type_name(implementation.receiver_type);
+            if (implementation.interface_type.name == "Transferable") {
+                transferable_impl_types_.push_back(rendered_type);
+            }
+            if (implementation.interface_type.name == "Shareable") {
+                shareable_impl_types_.push_back(rendered_type);
             }
         }
     }
 
     void analyze_function(syntax::FunctionSyntax const& function) {
         scope_stack_.clear();
-        concurrency_marker_types_.clear();
+        transferable_constraint_types_.clear();
+        shareable_constraint_types_.clear();
         for (auto const& constraint : function.where_constraints) {
             for (auto const& requirement : constraint.requirements) {
-                if (requirement.name == "Transferable" || requirement.name == "Shareable") {
-                    concurrency_marker_types_.push_back(constraint.parameter_name);
-                    break;
+                if (requirement.name == "Transferable") {
+                    transferable_constraint_types_.push_back(constraint.parameter_name);
+                }
+                if (requirement.name == "Shareable") {
+                    shareable_constraint_types_.push_back(constraint.parameter_name);
                 }
             }
         }
@@ -369,21 +415,30 @@ private:
         if ((capture_kind == ConcurrencyCaptureKind::parameter ||
              capture_kind == ConcurrencyCaptureKind::immutable_outer_local) &&
             !binding->type_name.empty() && !is_obviously_safe_capture_type(binding->type_name) &&
-            !has_concurrency_marker_constraint(binding->type_name) &&
-            !has_concrete_concurrency_marker(binding->type_name)) {
-            diagnostics_.error(
-                expression.line,
-                "concurrency capture '" + expression.text + "' of type '" + binding->type_name +
-                    "' requires future Transferable/Shareable analysis"
-            );
+            !has_allowed_concurrency_marker(binding->type_name, current_capture_expression_kind_)) {
+            if (current_capture_expression_kind_ == ConcurrencyExpressionKind::thread) {
+                diagnostics_.error(
+                    expression.line,
+                    "thread capture '" + expression.text + "' of type '" + binding->type_name +
+                        "' requires future Transferable analysis"
+                );
+            } else {
+                diagnostics_.error(
+                    expression.line,
+                    "task capture '" + expression.text + "' of type '" + binding->type_name +
+                        "' requires future Transferable/Shareable analysis"
+                );
+            }
         }
     }
 
     syntax::ModuleSyntax const& module_;
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
-    std::vector<std::string> concurrency_marker_types_;
-    std::vector<std::string> concurrency_marker_impl_types_;
+    std::vector<std::string> transferable_constraint_types_;
+    std::vector<std::string> shareable_constraint_types_;
+    std::vector<std::string> transferable_impl_types_;
+    std::vector<std::string> shareable_impl_types_;
     std::vector<std::vector<Binding>> scope_stack_;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
