@@ -80,6 +80,37 @@ int main() {
                "await expression currently requires a task value or declared async call result"
            ) != std::string::npos);
 
+    auto await_member_name_collision_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_await_member_name_collision_failure.or";
+    {
+        std::ofstream output(await_member_name_collision_path);
+        output << "package demo.await\n";
+        output << "async function run(text: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(text)\n";
+        output << "extend Printer\n";
+        output << "    function run(this: shared This) -> Outcome<Text, IOError>\n";
+        output << "        return render(this)\n";
+        output << "async function fetch(printer: Printer) -> Outcome<Text, IOError>\n";
+        output << "    let pending = printer.run()\n";
+        output << "    return await pending\n";
+    }
+
+    auto await_member_name_collision_path_text = await_member_name_collision_path.string();
+    std::array<char const*, 3> await_member_name_collision_argv {
+        "orisonc",
+        "--parse",
+        await_member_name_collision_path_text.c_str()
+    };
+    auto await_member_name_collision_result = app.run(
+        std::span<char const* const>(await_member_name_collision_argv.data(), await_member_name_collision_argv.size())
+    );
+
+    assert(await_member_name_collision_result.exit_code == 1);
+    assert(await_member_name_collision_result.stdout_text.empty());
+    assert(await_member_name_collision_result.stderr_text.find(
+               "await expression currently requires a task value or declared async call result"
+           ) != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);

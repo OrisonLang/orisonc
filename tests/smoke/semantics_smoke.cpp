@@ -191,6 +191,38 @@ void test_await_non_async_call_value_failure() {
            "await expression currently requires a task value or declared async call result");
 }
 
+void test_await_member_call_not_marked_async_from_top_level_name_collision_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_await_member_name_collision_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function run(text: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(text)\n";
+        output << "extend Printer\n";
+        output << "    function run(this: shared This) -> Outcome<Text, IOError>\n";
+        output << "        return render(this)\n";
+        output << "async function fetch(printer: Printer) -> Outcome<Text, IOError>\n";
+        output << "    let pending = printer.run()\n";
+        output << "    return await pending\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 9);
+    assert(diagnostics.entries().front().message ==
+           "await expression currently requires a task value or declared async call result");
+}
+
 void test_task_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_async_success.or";
     {
@@ -977,6 +1009,7 @@ int main() {
     test_await_plain_value_failure();
     test_await_thread_value_failure();
     test_await_non_async_call_value_failure();
+    test_await_member_call_not_marked_async_from_top_level_name_collision_failure();
     test_task_inside_async_function_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();

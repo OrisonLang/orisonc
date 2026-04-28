@@ -19,6 +19,11 @@ enum class ValueOriginKind {
     async_call,
 };
 
+struct AsyncMethodSignature {
+    std::string receiver_type;
+    std::string method_name;
+};
+
 class Analyzer {
 public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
@@ -32,14 +37,16 @@ public:
         }
 
         for (auto const& implementation : module_.implementations) {
+            auto receiver_type_name = render_type_name(implementation.receiver_type);
             for (auto const& method : implementation.methods) {
-                analyze_function(method);
+                analyze_function(method, receiver_type_name);
             }
         }
 
         for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
             for (auto const& method : extension.methods) {
-                analyze_function(method);
+                analyze_function(method, receiver_type_name);
             }
         }
 
@@ -120,6 +127,18 @@ private:
     auto has_async_callable_name(std::string const& name) const -> bool {
         for (auto const& async_callable_name : async_callable_names_) {
             if (async_callable_name == name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    auto has_async_method_signature(
+        std::string const& receiver_type,
+        std::string const& method_name
+    ) const -> bool {
+        for (auto const& signature : async_method_signatures_) {
+            if (signature.receiver_type == receiver_type && signature.method_name == method_name) {
                 return true;
             }
         }
@@ -210,6 +229,17 @@ private:
         }
     }
 
+    auto infer_receiver_type_name_for_member_call(syntax::ExpressionSyntax const& callee_expression) const
+        -> std::string {
+        if ((callee_expression.kind != syntax::ExpressionKind::member_access &&
+             callee_expression.kind != syntax::ExpressionKind::null_safe_member_access) ||
+            !callee_expression.left) {
+            return {};
+        }
+
+        return infer_expression_type_name(*callee_expression.left);
+    }
+
     auto infer_expression_value_origin(syntax::ExpressionSyntax const& expression) const -> ValueOriginKind {
         switch (expression.kind) {
         case syntax::ExpressionKind::task:
@@ -262,7 +292,12 @@ private:
 
         if (expression.left->kind == syntax::ExpressionKind::member_access ||
             expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
-            return has_async_callable_name(expression.left->text);
+            auto receiver_type = infer_receiver_type_name_for_member_call(*expression.left);
+            if (receiver_type.empty()) {
+                return false;
+            }
+
+            return has_async_method_signature(receiver_type, expression.left->text);
         }
 
         return false;
@@ -297,6 +332,7 @@ private:
 
     void collect_async_callable_names() {
         async_callable_names_.clear();
+        async_method_signatures_.clear();
 
         for (auto const& function : module_.functions) {
             if (function.is_async) {
@@ -305,17 +341,25 @@ private:
         }
 
         for (auto const& implementation : module_.implementations) {
+            auto receiver_type_name = render_type_name(implementation.receiver_type);
             for (auto const& method : implementation.methods) {
                 if (method.is_async) {
-                    async_callable_names_.push_back(method.name);
+                    async_method_signatures_.push_back(AsyncMethodSignature {
+                        .receiver_type = receiver_type_name,
+                        .method_name = method.name,
+                    });
                 }
             }
         }
 
         for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
             for (auto const& method : extension.methods) {
                 if (method.is_async) {
-                    async_callable_names_.push_back(method.name);
+                    async_method_signatures_.push_back(AsyncMethodSignature {
+                        .receiver_type = receiver_type_name,
+                        .method_name = method.name,
+                    });
                 }
             }
         }
@@ -327,7 +371,10 @@ private:
         }
     }
 
-    void analyze_function(syntax::FunctionSyntax const& function) {
+    void analyze_function(
+        syntax::FunctionSyntax const& function,
+        std::string receiver_type_name = {}
+    ) {
         scope_stack_.clear();
         transferable_constraint_types_.clear();
         shareable_constraint_types_.clear();
@@ -345,7 +392,8 @@ private:
         for (auto const& parameter : function.parameters) {
             declare_binding(
                 parameter.name,
-                render_type_name(parameter.type),
+                parameter.name == "this" && !receiver_type_name.empty() ? receiver_type_name
+                                                                        : render_type_name(parameter.type),
                 false,
                 parameter.name == "this",
                 true
@@ -627,6 +675,7 @@ private:
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<std::string> async_callable_names_;
+    std::vector<AsyncMethodSignature> async_method_signatures_;
     std::vector<std::string> transferable_constraint_types_;
     std::vector<std::string> shareable_constraint_types_;
     std::vector<std::string> transferable_impl_types_;
