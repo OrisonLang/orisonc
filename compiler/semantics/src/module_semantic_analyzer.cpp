@@ -1,6 +1,7 @@
 #include "orison/semantics/module_semantic_analyzer.hpp"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace orison::semantics {
@@ -147,6 +148,33 @@ private:
         return false;
     }
 
+    auto validate_concurrency_value_type(
+        std::size_t line,
+        std::string const& type_name,
+        ConcurrencyExpressionKind expression_kind,
+        std::string_view value_role
+    ) -> void {
+        if (type_name.empty() || is_obviously_safe_capture_type(type_name) ||
+            has_allowed_concurrency_marker(type_name, expression_kind)) {
+            return;
+        }
+
+        if (expression_kind == ConcurrencyExpressionKind::thread) {
+            diagnostics_.error(
+                line,
+                "thread " + std::string(value_role) + " type '" + type_name +
+                    "' requires future Transferable analysis"
+            );
+            return;
+        }
+
+        diagnostics_.error(
+            line,
+            "task " + std::string(value_role) + " type '" + type_name +
+                "' requires future Transferable/Shareable analysis"
+        );
+    }
+
     auto infer_expression_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
         switch (expression.kind) {
         case syntax::ExpressionKind::name: {
@@ -178,6 +206,15 @@ private:
     auto classify_concurrency_expression(syntax::ExpressionSyntax const& expression) const -> ConcurrencyExpressionKind {
         return expression.kind == syntax::ExpressionKind::thread ? ConcurrencyExpressionKind::thread
                                                                  : ConcurrencyExpressionKind::task;
+    }
+
+    auto infer_statement_value_type_name(syntax::StatementSyntax const& statement) const -> std::string {
+        if (statement.kind != syntax::StatementKind::expression_statement &&
+            statement.kind != syntax::StatementKind::return_statement) {
+            return {};
+        }
+
+        return infer_expression_type_name(statement.expression);
     }
 
     void collect_concurrency_marker_implementations() {
@@ -288,6 +325,7 @@ private:
         if (expression_requires_value_boundary(expression)) {
             auto const* final_statement =
                 expression.nested_statements.empty() ? nullptr : expression.nested_statements.back().get();
+            auto expression_kind = classify_concurrency_expression(expression);
             if (final_statement == nullptr ||
                 (final_statement->kind != syntax::StatementKind::expression_statement &&
                  !is_value_return_statement(*final_statement))) {
@@ -300,11 +338,22 @@ private:
             auto saved_capture_depth = capture_scope_depth_;
             auto saved_capture_expression_kind = current_capture_expression_kind_;
             capture_scope_depth_ = scope_stack_.size();
-            current_capture_expression_kind_ = classify_concurrency_expression(expression);
+            current_capture_expression_kind_ = expression_kind;
 
             push_scope();
             for (auto const& nested_statement : expression.nested_statements) {
                 analyze_statement(*nested_statement, in_async_function);
+            }
+
+            if (final_statement != nullptr &&
+                (final_statement->kind == syntax::StatementKind::expression_statement ||
+                 is_value_return_statement(*final_statement))) {
+                validate_concurrency_value_type(
+                    final_statement->line,
+                    infer_statement_value_type_name(*final_statement),
+                    expression_kind,
+                    "result"
+                );
             }
             pop_scope();
 
@@ -414,20 +463,27 @@ private:
 
         if ((capture_kind == ConcurrencyCaptureKind::parameter ||
              capture_kind == ConcurrencyCaptureKind::immutable_outer_local) &&
-            !binding->type_name.empty() && !is_obviously_safe_capture_type(binding->type_name) &&
-            !has_allowed_concurrency_marker(binding->type_name, current_capture_expression_kind_)) {
-            if (current_capture_expression_kind_ == ConcurrencyExpressionKind::thread) {
+            !binding->type_name.empty()) {
+            if (current_capture_expression_kind_ == ConcurrencyExpressionKind::thread &&
+                !is_obviously_safe_capture_type(binding->type_name) &&
+                !has_allowed_concurrency_marker(binding->type_name, current_capture_expression_kind_)) {
                 diagnostics_.error(
                     expression.line,
                     "thread capture '" + expression.text + "' of type '" + binding->type_name +
                         "' requires future Transferable analysis"
                 );
-            } else {
+                return;
+            }
+
+            if (current_capture_expression_kind_ == ConcurrencyExpressionKind::task &&
+                !is_obviously_safe_capture_type(binding->type_name) &&
+                !has_allowed_concurrency_marker(binding->type_name, current_capture_expression_kind_)) {
                 diagnostics_.error(
                     expression.line,
                     "task capture '" + expression.text + "' of type '" + binding->type_name +
                         "' requires future Transferable/Shareable analysis"
                 );
+                return;
             }
         }
     }

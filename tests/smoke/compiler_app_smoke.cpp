@@ -221,5 +221,60 @@ int main() {
     assert(shareable_task_result.exit_code == 0);
     assert(shareable_task_result.stderr_text.empty());
     assert(shareable_task_result.stdout_text.find("parsed ") != std::string::npos);
+
+    auto thread_result_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_thread_result_failure.or";
+    {
+        std::ofstream output(thread_result_failure_path);
+        output << "package demo.thread\n";
+        output << "function launch_processing() -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        let produced: Buffer = make_buffer()\n";
+        output << "        produced\n";
+        output << "    return worker.join()\n";
+    }
+
+    auto thread_result_failure_path_text = thread_result_failure_path.string();
+    std::array<char const*, 3> thread_result_failure_argv {
+        "orisonc",
+        "--parse",
+        thread_result_failure_path_text.c_str()
+    };
+    auto thread_result_failure_result =
+        app.run(std::span<char const* const>(thread_result_failure_argv.data(), thread_result_failure_argv.size()));
+
+    assert(thread_result_failure_result.exit_code == 1);
+    assert(thread_result_failure_result.stdout_text.empty());
+    assert(thread_result_failure_result.stderr_text.find(
+               "thread result type 'Buffer' requires future Transferable analysis"
+           ) != std::string::npos);
+
+    auto task_result_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_task_result_shareable_success.or";
+    {
+        std::ofstream output(task_result_success_path);
+        output << "package demo.task\n";
+        output << "implements Shareable for Buffer\n";
+        output << "    function placeholder(this: shared This) -> Unit\n";
+        output << "        return\n";
+        output << "async function launch_processing() -> Buffer\n";
+        output << "    let worker = task\n";
+        output << "        let produced: Buffer = make_buffer()\n";
+        output << "        produced\n";
+        output << "    return await worker\n";
+    }
+
+    auto task_result_success_path_text = task_result_success_path.string();
+    std::array<char const*, 3> task_result_success_argv {
+        "orisonc",
+        "--parse",
+        task_result_success_path_text.c_str()
+    };
+    auto task_result_success_result =
+        app.run(std::span<char const* const>(task_result_success_argv.data(), task_result_success_argv.size()));
+
+    assert(task_result_success_result.exit_code == 0);
+    assert(task_result_success_result.stderr_text.empty());
+    assert(task_result_success_result.stdout_text.find("parsed ") != std::string::npos);
     return 0;
 }
