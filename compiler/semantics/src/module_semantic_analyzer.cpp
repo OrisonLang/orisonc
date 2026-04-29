@@ -99,8 +99,12 @@ private:
         return rendered;
     }
 
+    auto is_receiver_self_type_name(std::string const& type_name) const -> bool {
+        return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
+    }
+
     void validate_receiver_type_usage(syntax::TypeSyntax const& type, std::size_t line) {
-        if (type.name == "This" && !receiver_context_active_) {
+        if (is_receiver_self_type_name(type.name) && !receiver_context_active_) {
             diagnostics_.error(line, "This type is only valid inside interface, implements, or extend methods");
         }
 
@@ -723,8 +727,15 @@ private:
         for (auto const& parameter : function.parameters) {
             if (parameter.name == "this" && receiver_type_name.empty()) {
                 diagnostics_.error(function.line, "receiver parameter 'this' is only valid in implements or extend methods");
+            } else if (parameter.name == "this" && !is_receiver_self_type_name(parameter.type.name)) {
+                diagnostics_.error(
+                    function.line,
+                    "receiver parameter 'this' must use This, shared This, or exclusive This"
+                );
             }
-            validate_receiver_type_usage(parameter.type, function.line);
+            if (!(parameter.name == "this" && receiver_type_name.empty())) {
+                validate_receiver_type_usage(parameter.type, function.line);
+            }
             declare_binding(
                 parameter.name,
                 parameter.name == "this" && !receiver_type_name.empty() ? receiver_type_name

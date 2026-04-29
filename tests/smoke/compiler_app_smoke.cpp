@@ -994,7 +994,7 @@ int main() {
     {
         std::ofstream output(this_type_signature_failure_path);
         output << "package demo.receiver\n";
-        output << "function project(value: This) -> This\n";
+        output << "function project(value: shared This) -> shared This\n";
         output << "    return value\n";
     }
 
@@ -1015,6 +1015,36 @@ int main() {
     assert(this_type_signature_failure_result.stdout_text.empty());
     assert(this_type_signature_failure_result.stderr_text.find(
                "This type is only valid inside interface, implements, or extend methods"
+           ) != std::string::npos);
+
+    auto receiver_parameter_nonself_type_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_receiver_parameter_nonself_type_failure.or";
+    {
+        std::ofstream output(receiver_parameter_nonself_type_failure_path);
+        output << "package demo.receiver\n";
+        output << "extend Buffer\n";
+        output << "    function reset(this: Int64) -> Unit\n";
+        output << "        return\n";
+    }
+
+    auto receiver_parameter_nonself_type_failure_path_text =
+        receiver_parameter_nonself_type_failure_path.string();
+    std::array<char const*, 3> receiver_parameter_nonself_type_failure_argv {
+        "orisonc",
+        "--parse",
+        receiver_parameter_nonself_type_failure_path_text.c_str()
+    };
+    auto receiver_parameter_nonself_type_failure_result = app.run(
+        std::span<char const* const>(
+            receiver_parameter_nonself_type_failure_argv.data(),
+            receiver_parameter_nonself_type_failure_argv.size()
+        )
+    );
+
+    assert(receiver_parameter_nonself_type_failure_result.exit_code == 1);
+    assert(receiver_parameter_nonself_type_failure_result.stdout_text.empty());
+    assert(receiver_parameter_nonself_type_failure_result.stderr_text.find(
+               "receiver parameter 'this' must use This, shared This, or exclusive This"
            ) != std::string::npos);
 
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
