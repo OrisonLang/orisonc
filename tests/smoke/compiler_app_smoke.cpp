@@ -137,6 +137,58 @@ int main() {
                "await cannot be used with thread values; use .join() instead"
            ) != std::string::npos);
 
+    auto return_task_value_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_return_task_value_failure.or";
+    {
+        std::ofstream output(return_task_value_path);
+        output << "package demo.task\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let request_task = task\n";
+        output << "        request(url)\n";
+        output << "    return request_task\n";
+    }
+
+    auto return_task_value_path_text = return_task_value_path.string();
+    std::array<char const*, 3> return_task_value_argv {
+        "orisonc",
+        "--parse",
+        return_task_value_path_text.c_str()
+    };
+    auto return_task_value_result =
+        app.run(std::span<char const* const>(return_task_value_argv.data(), return_task_value_argv.size()));
+
+    assert(return_task_value_result.exit_code == 1);
+    assert(return_task_value_result.stdout_text.empty());
+    assert(return_task_value_result.stderr_text.find(
+               "return cannot forward task or async-call values; use await instead"
+           ) != std::string::npos);
+
+    auto return_thread_value_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_return_thread_value_failure.or";
+    {
+        std::ofstream output(return_thread_value_path);
+        output << "package demo.thread\n";
+        output << "function parallel_sum() -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        1\n";
+        output << "    return worker\n";
+    }
+
+    auto return_thread_value_path_text = return_thread_value_path.string();
+    std::array<char const*, 3> return_thread_value_argv {
+        "orisonc",
+        "--parse",
+        return_thread_value_path_text.c_str()
+    };
+    auto return_thread_value_result =
+        app.run(std::span<char const* const>(return_thread_value_argv.data(), return_thread_value_argv.size()));
+
+    assert(return_thread_value_result.exit_code == 1);
+    assert(return_thread_value_result.stdout_text.empty());
+    assert(return_thread_value_result.stderr_text.find(
+               "return cannot forward thread values; use .join() instead"
+           ) != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);
@@ -154,6 +206,33 @@ int main() {
     assert(task_result.exit_code == 1);
     assert(task_result.stdout_text.empty());
     assert(task_result.stderr_text.find("task expression is only valid inside async functions") != std::string::npos);
+
+    auto assignment_async_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_assignment_async_origin_success.or";
+    {
+        std::ofstream output(assignment_async_origin_path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = request(url)\n";
+        output << "    pending = request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto assignment_async_origin_path_text = assignment_async_origin_path.string();
+    std::array<char const*, 3> assignment_async_origin_argv {
+        "orisonc",
+        "--parse",
+        assignment_async_origin_path_text.c_str()
+    };
+    auto assignment_async_origin_result = app.run(
+        std::span<char const* const>(assignment_async_origin_argv.data(), assignment_async_origin_argv.size())
+    );
+
+    assert(assignment_async_origin_result.exit_code == 0);
+    assert(assignment_async_origin_result.stderr_text.empty());
+    assert(assignment_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
 
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
     {
@@ -349,7 +428,7 @@ int main() {
     assert(thread_value_result.exit_code == 1);
     assert(thread_value_result.stdout_text.empty());
     assert(thread_value_result.stderr_text.find(
-               "thread value 'worker' must be consumed with .join()"
+               "return cannot forward thread values; use .join() instead"
            ) != std::string::npos);
 
     auto concrete_marker_path = std::filesystem::temp_directory_path() / "orison_compiler_app_concrete_marker_success.or";

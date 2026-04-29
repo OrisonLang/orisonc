@@ -246,14 +246,22 @@ private:
             return ValueOriginKind::task;
         case syntax::ExpressionKind::thread:
             return ValueOriginKind::thread;
+        case syntax::ExpressionKind::unary:
+            if (expression.text == "await") {
+                return ValueOriginKind::none;
+            }
+            return expression.left ? infer_expression_value_origin(*expression.left) : ValueOriginKind::none;
         case syntax::ExpressionKind::call:
+            if (expression.left && expression.left->kind == syntax::ExpressionKind::member_access &&
+                expression.left->text == "join") {
+                return ValueOriginKind::none;
+            }
             return is_declared_async_call(expression) ? ValueOriginKind::async_call : ValueOriginKind::none;
         case syntax::ExpressionKind::name: {
             auto const* binding = find_binding(expression.text);
             return binding == nullptr ? ValueOriginKind::none : binding->value_origin;
         }
         case syntax::ExpressionKind::cast:
-        case syntax::ExpressionKind::unary:
             return expression.left ? infer_expression_value_origin(*expression.left) : ValueOriginKind::none;
         default:
             return ValueOriginKind::none;
@@ -338,6 +346,20 @@ private:
         }
 
         diagnostics_.error(line, "join() currently requires a thread value receiver");
+    }
+
+    auto validate_return_expression(syntax::ExpressionSyntax const& expression, std::size_t line) -> void {
+        auto origin = infer_expression_value_origin(expression);
+        if (origin == ValueOriginKind::none) {
+            return;
+        }
+
+        if (origin == ValueOriginKind::thread) {
+            diagnostics_.error(line, "return cannot forward thread values; use .join() instead");
+            return;
+        }
+
+        diagnostics_.error(line, "return cannot forward task or async-call values; use await instead");
     }
 
     auto infer_statement_value_type_name(syntax::StatementSyntax const& statement) const -> std::string {
@@ -457,6 +479,24 @@ private:
             return;
         }
 
+        if (statement.kind == syntax::StatementKind::assignment_statement) {
+            analyze_expression(statement.assignment_target, in_async_function, true);
+            analyze_expression(statement.expression, in_async_function);
+
+            if (statement.assignment_target.kind == syntax::ExpressionKind::name) {
+                update_binding(
+                    statement.assignment_target.text,
+                    infer_expression_type_name(statement.expression),
+                    infer_expression_value_origin(statement.expression)
+                );
+            }
+        }
+
+        if (statement.kind == syntax::StatementKind::return_statement) {
+            analyze_expression(statement.expression, in_async_function, true);
+            validate_return_expression(statement.expression, statement.line);
+        }
+
         if (statement.kind == syntax::StatementKind::for_statement) {
             analyze_expression(statement.expression, in_async_function);
             push_scope();
@@ -467,9 +507,11 @@ private:
             pop_scope();
             return;
         }
-
-        analyze_expression(statement.assignment_target, in_async_function);
-        analyze_expression(statement.expression, in_async_function);
+        if (statement.kind != syntax::StatementKind::assignment_statement &&
+            statement.kind != syntax::StatementKind::return_statement) {
+            analyze_expression(statement.assignment_target, in_async_function);
+            analyze_expression(statement.expression, in_async_function);
+        }
 
         push_scope();
         for (auto const& nested_statement : statement.nested_statements) {
@@ -630,6 +672,24 @@ private:
             }
         }
         return nullptr;
+    }
+
+    void update_binding(
+        std::string const& name,
+        std::string type_name,
+        ValueOriginKind value_origin
+    ) {
+        for (auto scope_index = scope_stack_.rbegin(); scope_index != scope_stack_.rend(); ++scope_index) {
+            for (auto binding = scope_index->rbegin(); binding != scope_index->rend(); ++binding) {
+                if (binding->name == name) {
+                    if (!type_name.empty()) {
+                        binding->type_name = std::move(type_name);
+                    }
+                    binding->value_origin = value_origin;
+                    return;
+                }
+            }
+        }
     }
 
     void record_concurrency_capture(syntax::ExpressionSyntax const& expression) {
