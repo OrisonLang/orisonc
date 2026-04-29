@@ -1254,9 +1254,14 @@ int main() {
         output << "record Device\n";
         output << "    bases: Pointer<Address>\n";
         output << "extend Device\n";
-        output << "    unsafe function base_at(this: shared This, index: Int64) -> Address\n";
+        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
         output << "        let base = this.bases[index]\n";
         output << "        return base\n";
+        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            return Pointer(this.base_at(index))\n";
+        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
+        output << "    raw_write(device.byte_ptr(index), value)\n";
     }
 
     auto return_rebound_indexed_member_field_address_success_path_text =
@@ -1275,6 +1280,73 @@ int main() {
 
     assert(return_rebound_indexed_member_field_address_success_result.exit_code == 0);
     assert(return_rebound_indexed_member_field_address_success_result.stderr_text.empty());
+
+    auto return_rebound_indexed_pointer_used_by_helper_success_path = std::filesystem::temp_directory_path() /
+                                                                      "orison_compiler_app_return_rebound_indexed_pointer_used_by_helper_success.or";
+    {
+        std::ofstream output(return_rebound_indexed_pointer_used_by_helper_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function byte_ptr(device: Device, index: Int64) -> Pointer<Byte>\n";
+        output << "    let p = device.ptrs[index]\n";
+        output << "    return p\n";
+        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
+        output << "    raw_write(byte_ptr(device, index), value)\n";
+    }
+
+    auto return_rebound_indexed_pointer_used_by_helper_success_path_text =
+        return_rebound_indexed_pointer_used_by_helper_success_path.string();
+    std::array<char const*, 3> return_rebound_indexed_pointer_used_by_helper_success_argv {
+        "orisonc",
+        "--parse",
+        return_rebound_indexed_pointer_used_by_helper_success_path_text.c_str()
+    };
+    auto return_rebound_indexed_pointer_used_by_helper_success_result = app.run(
+        std::span<char const* const>(
+            return_rebound_indexed_pointer_used_by_helper_success_argv.data(),
+            return_rebound_indexed_pointer_used_by_helper_success_argv.size()
+        )
+    );
+
+    assert(return_rebound_indexed_pointer_used_by_helper_success_result.exit_code == 0);
+    assert(return_rebound_indexed_pointer_used_by_helper_success_result.stderr_text.empty());
+
+    auto return_rebound_indexed_address_pointer_constructor_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_return_rebound_indexed_address_pointer_constructor_success.or";
+    {
+        std::ofstream output(return_rebound_indexed_address_pointer_constructor_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "extend Device\n";
+        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
+        output << "        let base = this.bases[index]\n";
+        output << "        return base\n";
+        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            return Pointer(this.base_at(index))\n";
+        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
+        output << "    raw_write(device.byte_ptr(index), value)\n";
+    }
+
+    auto return_rebound_indexed_address_pointer_constructor_success_path_text =
+        return_rebound_indexed_address_pointer_constructor_success_path.string();
+    std::array<char const*, 3> return_rebound_indexed_address_pointer_constructor_success_argv {
+        "orisonc",
+        "--parse",
+        return_rebound_indexed_address_pointer_constructor_success_path_text.c_str()
+    };
+    auto return_rebound_indexed_address_pointer_constructor_success_result = app.run(
+        std::span<char const* const>(
+            return_rebound_indexed_address_pointer_constructor_success_argv.data(),
+            return_rebound_indexed_address_pointer_constructor_success_argv.size()
+        )
+    );
+
+    assert(return_rebound_indexed_address_pointer_constructor_success_result.exit_code == 0);
+    assert(return_rebound_indexed_address_pointer_constructor_success_result.stderr_text.empty());
 
     auto volatile_read_return_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_return_type_failure.or";

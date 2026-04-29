@@ -2493,9 +2493,72 @@ void test_return_rebound_indexed_member_field_address_success() {
         output << "record Device\n";
         output << "    bases: Pointer<Address>\n";
         output << "extend Device\n";
-        output << "    unsafe function base_at(this: shared This, index: Int64) -> Address\n";
+        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
         output << "        let base = this.bases[index]\n";
         output << "        return base\n";
+        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            return Pointer(this.base_at(index))\n";
+        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
+        output << "    raw_write(device.byte_ptr(index), value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_return_rebound_indexed_pointer_used_by_helper_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_return_rebound_indexed_pointer_used_by_helper_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function byte_ptr(device: Device, index: Int64) -> Pointer<Byte>\n";
+        output << "    let p = device.ptrs[index]\n";
+        output << "    return p\n";
+        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
+        output << "    raw_write(byte_ptr(device, index), value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_return_rebound_indexed_address_used_by_pointer_constructor_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_return_rebound_indexed_address_pointer_constructor_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "extend Device\n";
+        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
+        output << "        let base = this.bases[index]\n";
+        output << "        return base\n";
+        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            return Pointer(this.base_at(index))\n";
+        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
+        output << "    raw_write(device.byte_ptr(index), value)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -3723,6 +3786,8 @@ int main() {
     test_rebound_indexed_member_field_address_inference_enables_pointer_constructor_success();
     test_return_rebound_indexed_record_pointer_field_success();
     test_return_rebound_indexed_member_field_address_success();
+    test_return_rebound_indexed_pointer_used_by_helper_success();
+    test_return_rebound_indexed_address_used_by_pointer_constructor_success();
     test_volatile_read_return_type_mismatch_failure();
     test_volatile_read_return_type_match_success();
     test_volatile_write_value_type_mismatch_failure();
