@@ -28,4 +28,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
-- 2026-04-29: preserved explicit pointee types for `Pointer(...)` in annotated binding and pointer-return contexts, and carried those declared return types through both top-level helper calls and receiver-aware method calls so later `raw_write` and `volatile_write` checks can still distinguish `Pointer<Byte>` from `Pointer<UInt32>`.
+- 2026-04-29: preserved explicit pointee types for `Pointer(...)` in annotated binding and pointer-return contexts, and carried those declared return types plus `raw_offset(...)`-preserved pointer types through both top-level helper calls and receiver-aware method calls so later `raw_write` and `volatile_write` checks can still distinguish `Pointer<Byte>` from `Pointer<UInt32>`.
