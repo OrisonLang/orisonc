@@ -1151,6 +1151,72 @@ int main() {
     assert(indexed_member_field_address_pointer_constructor_success_result.exit_code == 0);
     assert(indexed_member_field_address_pointer_constructor_success_result.stderr_text.empty());
 
+    auto rebound_indexed_record_pointer_field_type_failure_path = std::filesystem::temp_directory_path() /
+                                                                  "orison_compiler_app_rebound_indexed_record_pointer_field_type_failure.or";
+    {
+        std::ofstream output(rebound_indexed_record_pointer_field_type_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function write_word(device: Device, index: Int64, value: UInt32) -> Unit\n";
+        output << "    let p = device.ptrs[index]\n";
+        output << "    raw_write(p, value)\n";
+    }
+
+    auto rebound_indexed_record_pointer_field_type_failure_path_text =
+        rebound_indexed_record_pointer_field_type_failure_path.string();
+    std::array<char const*, 3> rebound_indexed_record_pointer_field_type_failure_argv {
+        "orisonc",
+        "--parse",
+        rebound_indexed_record_pointer_field_type_failure_path_text.c_str()
+    };
+    auto rebound_indexed_record_pointer_field_type_failure_result = app.run(
+        std::span<char const* const>(
+            rebound_indexed_record_pointer_field_type_failure_argv.data(),
+            rebound_indexed_record_pointer_field_type_failure_argv.size()
+        )
+    );
+
+    assert(rebound_indexed_record_pointer_field_type_failure_result.exit_code == 1);
+    assert(rebound_indexed_record_pointer_field_type_failure_result.stdout_text.empty());
+    assert(rebound_indexed_record_pointer_field_type_failure_result.stderr_text.find(
+               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+           ) != std::string::npos);
+
+    auto rebound_indexed_member_field_address_pointer_constructor_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_rebound_indexed_member_field_address_pointer_constructor_success.or";
+    {
+        std::ofstream output(rebound_indexed_member_field_address_pointer_constructor_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "extend Device\n";
+        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            let base = this.bases[index]\n";
+        output << "            return Pointer(base)\n";
+        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
+        output << "    raw_write(device.byte_ptr(index), value)\n";
+    }
+
+    auto rebound_indexed_member_field_address_pointer_constructor_success_path_text =
+        rebound_indexed_member_field_address_pointer_constructor_success_path.string();
+    std::array<char const*, 3> rebound_indexed_member_field_address_pointer_constructor_success_argv {
+        "orisonc",
+        "--parse",
+        rebound_indexed_member_field_address_pointer_constructor_success_path_text.c_str()
+    };
+    auto rebound_indexed_member_field_address_pointer_constructor_success_result = app.run(
+        std::span<char const* const>(
+            rebound_indexed_member_field_address_pointer_constructor_success_argv.data(),
+            rebound_indexed_member_field_address_pointer_constructor_success_argv.size()
+        )
+    );
+
+    assert(rebound_indexed_member_field_address_pointer_constructor_success_result.exit_code == 0);
+    assert(rebound_indexed_member_field_address_pointer_constructor_success_result.stderr_text.empty());
+
     auto volatile_read_return_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_return_type_failure.or";
     {
