@@ -532,6 +532,43 @@ private:
                expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Pointer";
     }
 
+    auto read_intrinsic_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
+            expression.left->kind != syntax::ExpressionKind::name) {
+            return {};
+        }
+
+        if (expression.left->text == "raw_read" || expression.left->text == "volatile_read") {
+            return expression.left->text;
+        }
+
+        return {};
+    }
+
+    auto validate_read_result_type(
+        syntax::ExpressionSyntax const& expression,
+        std::string const& expected_type_name,
+        std::size_t line,
+        std::string_view context_description
+    ) -> bool {
+        auto intrinsic_name = read_intrinsic_name(expression);
+        if (intrinsic_name.empty() || expected_type_name.empty()) {
+            return false;
+        }
+
+        auto inferred_type_name = infer_expression_type_name(expression);
+        if (!inferred_type_name.empty() && inferred_type_name != expected_type_name) {
+            diagnostics_.error(
+                line,
+                intrinsic_name + " result type '" + inferred_type_name + "' does not match " +
+                    std::string(context_description) + " type '" + expected_type_name + "'"
+            );
+            return true;
+        }
+
+        return false;
+    }
+
     void validate_pointer_constructor_operands(syntax::ExpressionSyntax const& expression) {
         if (!is_pointer_constructor_call(expression)) {
             return;
@@ -565,11 +602,11 @@ private:
     }
 
     void validate_index_access_operands(syntax::ExpressionSyntax const& expression) {
-        if (expression.kind != syntax::ExpressionKind::index_access || !expression.right) {
+        if (expression.kind != syntax::ExpressionKind::index_access || expression.arguments.empty()) {
             return;
         }
 
-        auto index_type_name = infer_expression_type_name(*expression.right);
+        auto index_type_name = infer_expression_type_name(expression.arguments.front());
         if (!index_type_name.empty() && !is_integer_type_name(index_type_name)) {
             diagnostics_.error(
                 expression.line,
@@ -1276,14 +1313,20 @@ private:
                                  : infer_expression_type_name(statement.expression);
             if (!statement.annotated_type.name.empty()) {
                 validate_receiver_type_usage(statement.annotated_type, statement.line);
-                if (is_pointer_type(statement.annotated_type)) {
+                auto read_result_type_mismatch = validate_read_result_type(
+                    statement.expression,
+                    render_type_name(statement.annotated_type),
+                    statement.line,
+                    "binding"
+                );
+                if (is_pointer_type(statement.annotated_type) && !read_result_type_mismatch) {
                     validate_pointer_typed_expression(
                         statement.expression,
                         statement.line,
                         "pointer-typed binding initializer"
                     );
                 }
-                if (is_address_type(statement.annotated_type)) {
+                if (is_address_type(statement.annotated_type) && !read_result_type_mismatch) {
                     validate_address_typed_expression(
                         statement.expression,
                         statement.line,
@@ -1323,14 +1366,20 @@ private:
             }
             analyze_expression(statement.expression, in_async_function, true);
             validate_return_expression(statement.expression, statement.line);
-            if (current_function_returns_pointer_) {
+            auto read_result_type_mismatch = validate_read_result_type(
+                statement.expression,
+                current_function_return_type_name_,
+                statement.line,
+                "function return"
+            );
+            if (current_function_returns_pointer_ && !read_result_type_mismatch) {
                 validate_pointer_typed_expression(
                     statement.expression,
                     statement.line,
                     "pointer-returning function"
                 );
             }
-            if (current_function_returns_address_) {
+            if (current_function_returns_address_ && !read_result_type_mismatch) {
                 validate_address_typed_expression(
                     statement.expression,
                     statement.line,

@@ -926,6 +926,61 @@ int main() {
     assert(address_typed_binding_success_result.stderr_text.empty());
     assert(address_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto raw_read_typed_binding_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_typed_binding_failure.or";
+    {
+        std::ofstream output(raw_read_typed_binding_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Byte>) -> UInt32\n";
+        output << "    let value: UInt32 = raw_read(p)\n";
+        output << "    return value\n";
+    }
+
+    auto raw_read_typed_binding_failure_path_text = raw_read_typed_binding_failure_path.string();
+    std::array<char const*, 3> raw_read_typed_binding_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_read_typed_binding_failure_path_text.c_str()
+    };
+    auto raw_read_typed_binding_failure_result = app.run(
+        std::span<char const* const>(
+            raw_read_typed_binding_failure_argv.data(),
+            raw_read_typed_binding_failure_argv.size()
+        )
+    );
+
+    assert(raw_read_typed_binding_failure_result.exit_code == 1);
+    assert(raw_read_typed_binding_failure_result.stdout_text.empty());
+    assert(raw_read_typed_binding_failure_result.stderr_text.find(
+               "raw_read result type 'Byte' does not match binding type 'UInt32'"
+           ) != std::string::npos);
+
+    auto raw_read_typed_binding_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_typed_binding_success.or";
+    {
+        std::ofstream output(raw_read_typed_binding_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte(p: Pointer<Byte>) -> Byte\n";
+        output << "    let value: Byte = raw_read(p)\n";
+        output << "    return value\n";
+    }
+
+    auto raw_read_typed_binding_success_path_text = raw_read_typed_binding_success_path.string();
+    std::array<char const*, 3> raw_read_typed_binding_success_argv {
+        "orisonc",
+        "--parse",
+        raw_read_typed_binding_success_path_text.c_str()
+    };
+    auto raw_read_typed_binding_success_result = app.run(
+        std::span<char const* const>(
+            raw_read_typed_binding_success_argv.data(),
+            raw_read_typed_binding_success_argv.size()
+        )
+    );
+
+    assert(raw_read_typed_binding_success_result.exit_code == 0);
+    assert(raw_read_typed_binding_success_result.stderr_text.empty());
+
     auto raw_read_return_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_return_type_failure.or";
     {
@@ -951,7 +1006,7 @@ int main() {
     assert(raw_read_return_type_failure_result.exit_code == 1);
     assert(raw_read_return_type_failure_result.stdout_text.empty());
     assert(raw_read_return_type_failure_result.stderr_text.find(
-               "pointer-returning function currently requires a structurally pointer-like expression"
+               "raw_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
            ) != std::string::npos);
 
     auto raw_write_value_type_failure_path =
@@ -1459,8 +1514,63 @@ int main() {
     assert(volatile_read_return_type_failure_result.exit_code == 1);
     assert(volatile_read_return_type_failure_result.stdout_text.empty());
     assert(volatile_read_return_type_failure_result.stderr_text.find(
-               "pointer-returning function currently requires a structurally pointer-like expression"
+               "volatile_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
            ) != std::string::npos);
+
+    auto volatile_read_typed_binding_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_typed_binding_failure.or";
+    {
+        std::ofstream output(volatile_read_typed_binding_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Byte>) -> UInt32\n";
+        output << "    let value: UInt32 = volatile_read(p)\n";
+        output << "    return value\n";
+    }
+
+    auto volatile_read_typed_binding_failure_path_text = volatile_read_typed_binding_failure_path.string();
+    std::array<char const*, 3> volatile_read_typed_binding_failure_argv {
+        "orisonc",
+        "--parse",
+        volatile_read_typed_binding_failure_path_text.c_str()
+    };
+    auto volatile_read_typed_binding_failure_result = app.run(
+        std::span<char const* const>(
+            volatile_read_typed_binding_failure_argv.data(),
+            volatile_read_typed_binding_failure_argv.size()
+        )
+    );
+
+    assert(volatile_read_typed_binding_failure_result.exit_code == 1);
+    assert(volatile_read_typed_binding_failure_result.stdout_text.empty());
+    assert(volatile_read_typed_binding_failure_result.stderr_text.find(
+               "volatile_read result type 'Byte' does not match binding type 'UInt32'"
+           ) != std::string::npos);
+
+    auto volatile_read_typed_binding_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_typed_binding_success.or";
+    {
+        std::ofstream output(volatile_read_typed_binding_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte(p: Pointer<Byte>) -> Byte\n";
+        output << "    let value: Byte = volatile_read(p)\n";
+        output << "    return value\n";
+    }
+
+    auto volatile_read_typed_binding_success_path_text = volatile_read_typed_binding_success_path.string();
+    std::array<char const*, 3> volatile_read_typed_binding_success_argv {
+        "orisonc",
+        "--parse",
+        volatile_read_typed_binding_success_path_text.c_str()
+    };
+    auto volatile_read_typed_binding_success_result = app.run(
+        std::span<char const* const>(
+            volatile_read_typed_binding_success_argv.data(),
+            volatile_read_typed_binding_success_argv.size()
+        )
+    );
+
+    assert(volatile_read_typed_binding_success_result.exit_code == 0);
+    assert(volatile_read_typed_binding_success_result.stderr_text.empty());
 
     auto volatile_write_value_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_write_value_type_failure.or";
