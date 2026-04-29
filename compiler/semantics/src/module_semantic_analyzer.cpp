@@ -135,6 +135,22 @@ private:
         return type_name == "Address";
     }
 
+    auto is_integer_type_name(std::string const& type_name) const -> bool {
+        static constexpr char const* integer_types[] = {
+            "Int8",    "Int16",   "Int32",   "Int64",   "Int128",  "IntSize",
+            "UInt8",   "UInt16",  "UInt32",  "UInt64",  "UInt128", "UIntSize",
+            "Byte",    "Char",
+        };
+
+        for (auto const* integer_type : integer_types) {
+            if (type_name == integer_type) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     auto pointer_pointee_type_name(std::string const& type_name) const -> std::string {
         if (!is_pointer_type_name(type_name)) {
             return {};
@@ -548,6 +564,20 @@ private:
         }
     }
 
+    void validate_index_access_operands(syntax::ExpressionSyntax const& expression) {
+        if (expression.kind != syntax::ExpressionKind::index_access || !expression.right) {
+            return;
+        }
+
+        auto index_type_name = infer_expression_type_name(*expression.right);
+        if (!index_type_name.empty() && !is_integer_type_name(index_type_name)) {
+            diagnostics_.error(
+                expression.line,
+                "index access currently requires an integer index expression"
+            );
+        }
+    }
+
     auto is_declared_unsafe_call(syntax::ExpressionSyntax const& expression) const -> bool {
         if (expression.kind != syntax::ExpressionKind::call || !expression.left) {
             return false;
@@ -715,6 +745,16 @@ private:
                     expression.line,
                     intrinsic_name + " value type '" + value_type_name +
                         "' does not match pointer element type '" + pointee_type_name + "'"
+                );
+            }
+        }
+
+        if (intrinsic_name == "raw_offset" && expression.arguments.size() >= 2) {
+            auto offset_type_name = infer_expression_type_name(expression.arguments[1]);
+            if (!offset_type_name.empty() && !is_integer_type_name(offset_type_name)) {
+                diagnostics_.error(
+                    expression.line,
+                    "raw_offset currently requires an integer offset argument"
                 );
             }
         }
@@ -1538,6 +1578,7 @@ private:
         }
 
         validate_pointer_constructor_operands(expression);
+        validate_index_access_operands(expression);
 
         if (is_declared_unsafe_call(expression) && !unsafe_context_active_) {
             auto diagnostic_subject = std::string {"unsafe function"};

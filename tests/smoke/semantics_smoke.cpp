@@ -1592,6 +1592,31 @@ void test_raw_offset_nonaddress_base_failure() {
            "raw_offset currently requires an address-like first argument");
 }
 
+void test_raw_offset_noninteger_offset_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_raw_offset_noninteger_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function advance(base: Address) -> Address\n";
+        output << "    return raw_offset(base, \"one\")\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "raw_offset currently requires an integer offset argument");
+}
+
 void test_volatile_read_nonaddress_operand_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_nonaddress_failure.or";
     {
@@ -1625,6 +1650,56 @@ void test_nested_address_of_and_raw_offset_success() {
         output << "unsafe function poke(buf: exclusive Buffer, value: Byte) -> Unit\n";
         output << "    let p = address_of(buf.data[0])\n";
         output << "    raw_write(raw_offset(p, 1), value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_index_access_noninteger_index_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_index_access_noninteger_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function write_byte(device: Device, value: Byte) -> Unit\n";
+        output << "    raw_write(device.ptrs[\"one\"], value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "index access currently requires an integer index expression");
+}
+
+void test_index_access_integer_index_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_index_access_integer_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function write_byte(device: Device, index: UInt32, value: Byte) -> Unit\n";
+        output << "    raw_write(device.ptrs[index], value)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -3751,8 +3826,11 @@ int main() {
     test_address_of_nonstorage_operand_failure();
     test_raw_read_nonaddress_operand_failure();
     test_raw_offset_nonaddress_base_failure();
+    test_raw_offset_noninteger_offset_failure();
     test_volatile_read_nonaddress_operand_failure();
     test_nested_address_of_and_raw_offset_success();
+    test_index_access_noninteger_index_failure();
+    test_index_access_integer_index_success();
     test_call_unsafe_function_outside_unsafe_context_failure();
     test_call_unsafe_function_inside_unsafe_block_success();
     test_pointer_construction_outside_unsafe_context_failure();

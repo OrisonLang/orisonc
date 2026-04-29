@@ -300,6 +300,34 @@ int main() {
                "raw_offset currently requires an address-like first argument"
            ) != std::string::npos);
 
+    auto raw_offset_noninteger_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_raw_offset_noninteger_failure.or";
+    {
+        std::ofstream output(raw_offset_noninteger_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function advance(base: Address) -> Address\n";
+        output << "    return raw_offset(base, \"one\")\n";
+    }
+
+    auto raw_offset_noninteger_failure_path_text = raw_offset_noninteger_failure_path.string();
+    std::array<char const*, 3> raw_offset_noninteger_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_offset_noninteger_failure_path_text.c_str()
+    };
+    auto raw_offset_noninteger_failure_result = app.run(
+        std::span<char const* const>(
+            raw_offset_noninteger_failure_argv.data(),
+            raw_offset_noninteger_failure_argv.size()
+        )
+    );
+
+    assert(raw_offset_noninteger_failure_result.exit_code == 1);
+    assert(raw_offset_noninteger_failure_result.stdout_text.empty());
+    assert(raw_offset_noninteger_failure_result.stderr_text.find(
+               "raw_offset currently requires an integer offset argument"
+           ) != std::string::npos);
+
     auto nested_unsafe_operand_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_nested_unsafe_operand_success.or";
     {
@@ -326,6 +354,64 @@ int main() {
     assert(nested_unsafe_operand_success_result.exit_code == 0);
     assert(nested_unsafe_operand_success_result.stderr_text.empty());
     assert(nested_unsafe_operand_success_result.stdout_text.find("parsed ") != std::string::npos);
+
+    auto index_access_noninteger_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_index_access_noninteger_failure.or";
+    {
+        std::ofstream output(index_access_noninteger_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function write_byte(device: Device, value: Byte) -> Unit\n";
+        output << "    raw_write(device.ptrs[\"one\"], value)\n";
+    }
+
+    auto index_access_noninteger_failure_path_text = index_access_noninteger_failure_path.string();
+    std::array<char const*, 3> index_access_noninteger_failure_argv {
+        "orisonc",
+        "--parse",
+        index_access_noninteger_failure_path_text.c_str()
+    };
+    auto index_access_noninteger_failure_result = app.run(
+        std::span<char const* const>(
+            index_access_noninteger_failure_argv.data(),
+            index_access_noninteger_failure_argv.size()
+        )
+    );
+
+    assert(index_access_noninteger_failure_result.exit_code == 1);
+    assert(index_access_noninteger_failure_result.stdout_text.empty());
+    assert(index_access_noninteger_failure_result.stderr_text.find(
+               "index access currently requires an integer index expression"
+           ) != std::string::npos);
+
+    auto index_access_integer_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_index_access_integer_success.or";
+    {
+        std::ofstream output(index_access_integer_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function write_byte(device: Device, index: UInt32, value: Byte) -> Unit\n";
+        output << "    raw_write(device.ptrs[index], value)\n";
+    }
+
+    auto index_access_integer_success_path_text = index_access_integer_success_path.string();
+    std::array<char const*, 3> index_access_integer_success_argv {
+        "orisonc",
+        "--parse",
+        index_access_integer_success_path_text.c_str()
+    };
+    auto index_access_integer_success_result = app.run(
+        std::span<char const* const>(
+            index_access_integer_success_argv.data(),
+            index_access_integer_success_argv.size()
+        )
+    );
+
+    assert(index_access_integer_success_result.exit_code == 0);
+    assert(index_access_integer_success_result.stderr_text.empty());
+    assert(index_access_integer_success_result.stdout_text.find("parsed ") != std::string::npos);
 
     auto unsafe_call_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_call_failure.or";
