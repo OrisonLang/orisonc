@@ -961,6 +961,62 @@ int main() {
     assert(continue_inside_loop_success_result.stderr_text.empty());
     assert(continue_inside_loop_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto this_outside_method_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_this_outside_method_failure.or";
+    {
+        std::ofstream output(this_outside_method_failure_path);
+        output << "package demo.receiver\n";
+        output << "function current() -> Int64\n";
+        output << "    return this\n";
+    }
+
+    auto this_outside_method_failure_path_text = this_outside_method_failure_path.string();
+    std::array<char const*, 3> this_outside_method_failure_argv {
+        "orisonc",
+        "--parse",
+        this_outside_method_failure_path_text.c_str()
+    };
+    auto this_outside_method_failure_result = app.run(
+        std::span<char const* const>(
+            this_outside_method_failure_argv.data(),
+            this_outside_method_failure_argv.size()
+        )
+    );
+
+    assert(this_outside_method_failure_result.exit_code == 1);
+    assert(this_outside_method_failure_result.stdout_text.empty());
+    assert(this_outside_method_failure_result.stderr_text.find(
+               "receiver 'this' is only valid inside implements or extend methods"
+           ) != std::string::npos);
+
+    auto this_type_signature_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_this_type_signature_failure.or";
+    {
+        std::ofstream output(this_type_signature_failure_path);
+        output << "package demo.receiver\n";
+        output << "function project(value: This) -> This\n";
+        output << "    return value\n";
+    }
+
+    auto this_type_signature_failure_path_text = this_type_signature_failure_path.string();
+    std::array<char const*, 3> this_type_signature_failure_argv {
+        "orisonc",
+        "--parse",
+        this_type_signature_failure_path_text.c_str()
+    };
+    auto this_type_signature_failure_result = app.run(
+        std::span<char const* const>(
+            this_type_signature_failure_argv.data(),
+            this_type_signature_failure_argv.size()
+        )
+    );
+
+    assert(this_type_signature_failure_result.exit_code == 1);
+    assert(this_type_signature_failure_result.stdout_text.empty());
+    assert(this_type_signature_failure_result.stderr_text.find(
+               "This type is only valid inside interface, implements, or extend methods"
+           ) != std::string::npos);
+
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
     {
         std::ofstream output(thread_path);

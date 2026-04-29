@@ -1317,6 +1317,111 @@ void test_continue_inside_loop_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_this_outside_method_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_this_outside_method_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.receiver\n";
+        output << "function current() -> Int64\n";
+        output << "    return this\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "receiver 'this' is only valid inside implements or extend methods");
+}
+
+void test_receiver_parameter_outside_method_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_receiver_parameter_outside_method_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.receiver\n";
+        output << "function current(this: Int64) -> Int64\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 2);
+    assert(diagnostics.entries().front().message ==
+           "receiver parameter 'this' is only valid in implements or extend methods");
+}
+
+void test_this_type_in_ordinary_function_signature_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_this_type_signature_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.receiver\n";
+        output << "function project(value: This) -> This\n";
+        output << "    return value\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 2);
+    assert(diagnostics.entries().front().line == 2);
+    assert(diagnostics.entries().front().message ==
+           "This type is only valid inside interface, implements, or extend methods");
+    assert(diagnostics.entries().back().line == 2);
+    assert(diagnostics.entries().back().message ==
+           "This type is only valid inside interface, implements, or extend methods");
+}
+
+void test_this_type_in_local_annotation_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_this_type_local_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.receiver\n";
+        output << "function cache() -> Unit\n";
+        output << "    let current: This = unit\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "This type is only valid inside interface, implements, or extend methods");
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -2147,6 +2252,10 @@ int main() {
     test_continue_outside_loop_failure();
     test_break_inside_loop_success();
     test_continue_inside_loop_success();
+    test_this_outside_method_failure();
+    test_receiver_parameter_outside_method_failure();
+    test_this_type_in_ordinary_function_signature_failure();
+    test_this_type_in_local_annotation_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

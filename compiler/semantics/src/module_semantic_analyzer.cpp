@@ -99,6 +99,16 @@ private:
         return rendered;
     }
 
+    void validate_receiver_type_usage(syntax::TypeSyntax const& type, std::size_t line) {
+        if (type.name == "This" && !receiver_context_active_) {
+            diagnostics_.error(line, "This type is only valid inside interface, implements, or extend methods");
+        }
+
+        for (auto const& argument : type.generic_arguments) {
+            validate_receiver_type_usage(argument, line);
+        }
+    }
+
     auto is_obviously_safe_capture_type(std::string const& type_name) const -> bool {
         if (type_name.empty()) {
             return false;
@@ -693,6 +703,9 @@ private:
         syntax::FunctionSyntax const& function,
         std::string receiver_type_name = {}
     ) {
+        auto saved_receiver_context_active = receiver_context_active_;
+        receiver_context_active_ = !receiver_type_name.empty();
+
         scope_stack_.clear();
         transferable_constraint_types_.clear();
         shareable_constraint_types_.clear();
@@ -708,6 +721,10 @@ private:
         }
         push_scope();
         for (auto const& parameter : function.parameters) {
+            if (parameter.name == "this" && receiver_type_name.empty()) {
+                diagnostics_.error(function.line, "receiver parameter 'this' is only valid in implements or extend methods");
+            }
+            validate_receiver_type_usage(parameter.type, function.line);
             declare_binding(
                 parameter.name,
                 parameter.name == "this" && !receiver_type_name.empty() ? receiver_type_name
@@ -718,11 +735,14 @@ private:
             );
         }
 
+        validate_receiver_type_usage(function.return_type, function.line);
+
         for (auto const& statement : function.body_statements) {
             analyze_statement(statement, function.is_async);
         }
 
         pop_scope();
+        receiver_context_active_ = saved_receiver_context_active;
     }
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
@@ -731,6 +751,9 @@ private:
             auto type_name = !statement.annotated_type.name.empty()
                                  ? render_type_name(statement.annotated_type)
                                  : infer_expression_type_name(statement.expression);
+            if (!statement.annotated_type.name.empty()) {
+                validate_receiver_type_usage(statement.annotated_type, statement.line);
+            }
             declare_binding(
                 statement.name,
                 type_name,
@@ -969,6 +992,9 @@ private:
         bool allow_thread_value_name = false
     ) {
         if (expression.kind == syntax::ExpressionKind::name) {
+            if (expression.text == "this" && !receiver_context_active_) {
+                diagnostics_.error(expression.line, "receiver 'this' is only valid inside implements or extend methods");
+            }
             auto const* binding = find_binding(expression.text);
             if (!allow_thread_value_name && binding != nullptr && binding->value_origin == ValueOriginKind::thread) {
                 diagnostics_.error(expression.line, "thread value '" + expression.text + "' must be consumed with .join()");
@@ -1203,6 +1229,7 @@ private:
     std::vector<std::string> shareable_impl_types_;
     std::vector<std::vector<Binding>> scope_stack_;
     std::size_t loop_depth_ = 0;
+    bool receiver_context_active_ = false;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
     ConcurrencyExpressionKind current_capture_expression_kind_ = ConcurrencyExpressionKind::task;
