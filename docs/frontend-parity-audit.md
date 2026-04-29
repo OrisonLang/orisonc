@@ -28,4 +28,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
-- 2026-04-29: added matching placeholder `Address`-typed binding and return validation, so explicit `Address` annotations now also require structurally address-like initializer and return expressions on top of the existing low-level pointer/address shape checks.
+- 2026-04-29: started the first shallow low-level type pass by making pointer/address placeholder checks consult inferred binding types, so wrong-typed named values no longer slip through purely structural validation.

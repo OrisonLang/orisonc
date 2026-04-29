@@ -113,6 +113,14 @@ private:
         return type.name == "Address";
     }
 
+    auto is_pointer_type_name(std::string const& type_name) const -> bool {
+        return type_name == "Pointer" || type_name.rfind("Pointer<", 0) == 0;
+    }
+
+    auto is_address_type_name(std::string const& type_name) const -> bool {
+        return type_name == "Address";
+    }
+
     auto is_receiver_self_type_name(std::string const& type_name) const -> bool {
         return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
     }
@@ -278,12 +286,32 @@ private:
             auto const* binding = find_binding(expression.text);
             return binding == nullptr ? std::string {} : binding->type_name;
         }
+        case syntax::ExpressionKind::cast:
+            return expression.text;
         case syntax::ExpressionKind::string_literal:
             return "Text";
         case syntax::ExpressionKind::boolean_literal:
             return "Bool";
         case syntax::ExpressionKind::integer_literal:
             return "Int64";
+        case syntax::ExpressionKind::call:
+            if (!expression.left || expression.left->kind != syntax::ExpressionKind::name) {
+                return {};
+            }
+            if (expression.left->text == "address_of") {
+                return "Address";
+            }
+            if (expression.left->text == "Pointer") {
+                return "Pointer";
+            }
+            if (expression.left->text == "raw_offset" && !expression.arguments.empty()) {
+                auto source_type_name = infer_expression_type_name(expression.arguments.front());
+                if (is_pointer_type_name(source_type_name) || is_address_type_name(source_type_name)) {
+                    return source_type_name;
+                }
+                return {};
+            }
+            return {};
         default:
             return {};
         }
@@ -485,6 +513,17 @@ private:
         std::size_t line,
         std::string_view context_description
     ) {
+        auto inferred_type_name = infer_expression_type_name(expression);
+        if (!inferred_type_name.empty()) {
+            if (!is_pointer_type_name(inferred_type_name)) {
+                diagnostics_.error(
+                    line,
+                    std::string(context_description) + " currently requires a structurally pointer-like expression"
+                );
+            }
+            return;
+        }
+
         if (!is_structurally_pointer_like_expression(expression)) {
             diagnostics_.error(
                 line,
@@ -498,6 +537,21 @@ private:
         std::size_t line,
         std::string_view context_description
     ) {
+        if (expression.kind == syntax::ExpressionKind::integer_literal) {
+            return;
+        }
+
+        auto inferred_type_name = infer_expression_type_name(expression);
+        if (!inferred_type_name.empty()) {
+            if (!is_address_type_name(inferred_type_name)) {
+                diagnostics_.error(
+                    line,
+                    std::string(context_description) + " currently requires a structurally address-like expression"
+                );
+            }
+            return;
+        }
+
         if (!is_structurally_address_like_expression(expression)) {
             diagnostics_.error(
                 line,
