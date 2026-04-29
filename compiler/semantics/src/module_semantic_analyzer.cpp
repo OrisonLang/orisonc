@@ -2,6 +2,7 @@
 
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -32,6 +33,7 @@ public:
     auto analyze() -> SemanticAnalysisResult {
         collect_async_callable_names();
         collect_concurrency_marker_implementations();
+        collect_choice_variant_arities();
 
         for (auto const& function : module_.functions) {
             analyze_function(function);
@@ -328,11 +330,47 @@ private:
                pattern.kind == syntax::ExpressionKind::boolean_literal;
     }
 
+    void validate_switch_pattern_arity(syntax::ExpressionSyntax const& pattern) {
+        if (pattern.kind == syntax::ExpressionKind::call) {
+            if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
+                return;
+            }
+
+            auto variant = choice_variant_arities_.find(pattern.left->text);
+            if (variant != choice_variant_arities_.end() && variant->second != pattern.arguments.size()) {
+                diagnostics_.error(
+                    pattern.line,
+                    "switch constructor pattern '" + pattern.left->text + "' expects " +
+                        std::to_string(variant->second) + " payload value" +
+                        (variant->second == 1 ? "" : "s") + " but received " +
+                        std::to_string(pattern.arguments.size())
+                );
+            }
+            return;
+        }
+
+        if (pattern.kind == syntax::ExpressionKind::name) {
+            auto variant = choice_variant_arities_.find(pattern.text);
+            if (variant != choice_variant_arities_.end() && variant->second != 0) {
+                diagnostics_.error(
+                    pattern.line,
+                    "switch constructor pattern '" + pattern.text + "' expects " +
+                        std::to_string(variant->second) + " payload value" +
+                        (variant->second == 1 ? "" : "s") + " but received 0"
+                );
+            }
+        }
+    }
+
     void analyze_switch_pattern(
         syntax::ExpressionSyntax const& pattern,
         bool in_async_function,
         bool in_constructor_payload = false
     ) {
+        if (!in_constructor_payload) {
+            validate_switch_pattern_arity(pattern);
+        }
+
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
                 diagnostics_.error(
@@ -513,6 +551,15 @@ private:
             }
             if (implementation.interface_type.name == "Shareable") {
                 shareable_impl_types_.push_back(rendered_type);
+            }
+        }
+    }
+
+    void collect_choice_variant_arities() {
+        choice_variant_arities_.clear();
+        for (auto const& choice : module_.choices) {
+            for (auto const& variant : choice.variants) {
+                choice_variant_arities_[variant.name] = variant.payloads.size();
             }
         }
     }
@@ -998,6 +1045,7 @@ private:
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<std::string> async_callable_names_;
     std::vector<AsyncMethodSignature> async_method_signatures_;
+    std::unordered_map<std::string, std::size_t> choice_variant_arities_;
     std::vector<std::string> transferable_constraint_types_;
     std::vector<std::string> shareable_constraint_types_;
     std::vector<std::string> transferable_impl_types_;

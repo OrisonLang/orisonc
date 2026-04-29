@@ -733,6 +733,76 @@ int main() {
                "switch constructor pattern cannot bind 'head' more than once"
            ) != std::string::npos);
 
+    auto switch_constructor_pattern_arity_missing_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_constructor_pattern_arity_missing_failure.or";
+    {
+        std::ofstream output(switch_constructor_pattern_arity_missing_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "async function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Node(head) => 0\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_constructor_pattern_arity_missing_failure_path_text =
+        switch_constructor_pattern_arity_missing_failure_path.string();
+    std::array<char const*, 3> switch_constructor_pattern_arity_missing_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_constructor_pattern_arity_missing_failure_path_text.c_str()
+    };
+    auto switch_constructor_pattern_arity_missing_failure_result = app.run(
+        std::span<char const* const>(
+            switch_constructor_pattern_arity_missing_failure_argv.data(),
+            switch_constructor_pattern_arity_missing_failure_argv.size()
+        )
+    );
+
+    assert(switch_constructor_pattern_arity_missing_failure_result.exit_code == 1);
+    assert(switch_constructor_pattern_arity_missing_failure_result.stdout_text.empty());
+    assert(switch_constructor_pattern_arity_missing_failure_result.stderr_text.find(
+               "switch constructor pattern 'Node' expects 2 payload values but received 1"
+           ) != std::string::npos);
+
+    auto switch_constructor_pattern_arity_extra_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_constructor_pattern_arity_extra_failure.or";
+    {
+        std::ofstream output(switch_constructor_pattern_arity_extra_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "async function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Empty(value) => 0\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_constructor_pattern_arity_extra_failure_path_text =
+        switch_constructor_pattern_arity_extra_failure_path.string();
+    std::array<char const*, 3> switch_constructor_pattern_arity_extra_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_constructor_pattern_arity_extra_failure_path_text.c_str()
+    };
+    auto switch_constructor_pattern_arity_extra_failure_result = app.run(
+        std::span<char const* const>(
+            switch_constructor_pattern_arity_extra_failure_argv.data(),
+            switch_constructor_pattern_arity_extra_failure_argv.size()
+        )
+    );
+
+    assert(switch_constructor_pattern_arity_extra_failure_result.exit_code == 1);
+    assert(switch_constructor_pattern_arity_extra_failure_result.stdout_text.empty());
+    assert(switch_constructor_pattern_arity_extra_failure_result.stderr_text.find(
+               "switch constructor pattern 'Empty' expects 0 payload values but received 1"
+           ) != std::string::npos);
+
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
     {
         std::ofstream output(thread_path);

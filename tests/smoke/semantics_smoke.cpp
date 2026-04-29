@@ -1008,6 +1008,68 @@ void test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_fail
            "switch constructor pattern cannot bind 'head' more than once");
 }
 
+void test_switch_constructor_pattern_rejects_missing_payload_values_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_arity_missing_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "async function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Node(head) => 0\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().message ==
+           "switch constructor pattern 'Node' expects 2 payload values but received 1");
+}
+
+void test_switch_constructor_pattern_rejects_extra_payload_values_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_arity_extra_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "async function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Empty(value) => 0\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().message ==
+           "switch constructor pattern 'Empty' expects 0 payload values but received 1");
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -1827,6 +1889,8 @@ int main() {
     test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure();
     test_switch_constructor_pattern_rejects_duplicate_binding_names_failure();
     test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure();
+    test_switch_constructor_pattern_rejects_missing_payload_values_failure();
+    test_switch_constructor_pattern_rejects_extra_payload_values_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
