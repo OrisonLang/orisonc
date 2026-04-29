@@ -552,12 +552,17 @@ private:
 
         if (statement.kind == syntax::StatementKind::for_statement) {
             analyze_expression(statement.expression, in_async_function);
+            auto baseline_scope = snapshot_scope_stack();
+
+            restore_scope_stack(baseline_scope);
             push_scope();
             declare_binding(statement.name, {}, true);
             for (auto const& nested_statement : statement.nested_statements) {
                 analyze_statement(nested_statement, in_async_function);
             }
             pop_scope();
+
+            restore_scope_stack(merge_scope_snapshots({baseline_scope, snapshot_scope_stack()}));
             return;
         }
 
