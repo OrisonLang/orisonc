@@ -290,6 +290,66 @@ int main() {
                "await cannot be used with thread values; use .join() instead"
            ) != std::string::npos);
 
+    auto if_async_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_if_async_origin_success.or";
+    {
+        std::ofstream output(if_async_origin_path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = request(url)\n";
+        output << "    if flag\n";
+        output << "        pending = request(url)\n";
+        output << "    else\n";
+        output << "        pending = request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto if_async_origin_path_text = if_async_origin_path.string();
+    std::array<char const*, 3> if_async_origin_argv {
+        "orisonc",
+        "--parse",
+        if_async_origin_path_text.c_str()
+    };
+    auto if_async_origin_result =
+        app.run(std::span<char const* const>(if_async_origin_argv.data(), if_async_origin_argv.size()));
+
+    assert(if_async_origin_result.exit_code == 0);
+    assert(if_async_origin_result.stderr_text.empty());
+    assert(if_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+
+    auto switch_thread_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_thread_origin_failure.or";
+    {
+        std::ofstream output(switch_thread_origin_path);
+        output << "package demo.await\n";
+        output << "async function fetch(flag: Bool) -> Int64\n";
+        output << "    var worker = thread\n";
+        output << "        1\n";
+        output << "    switch flag\n";
+        output << "        true => worker = thread\n";
+        output << "            2\n";
+        output << "        false => worker = thread\n";
+        output << "            3\n";
+        output << "    return await worker\n";
+    }
+
+    auto switch_thread_origin_path_text = switch_thread_origin_path.string();
+    std::array<char const*, 3> switch_thread_origin_argv {
+        "orisonc",
+        "--parse",
+        switch_thread_origin_path_text.c_str()
+    };
+    auto switch_thread_origin_result =
+        app.run(std::span<char const* const>(switch_thread_origin_argv.data(), switch_thread_origin_argv.size()));
+
+    assert(switch_thread_origin_result.exit_code == 1);
+    assert(switch_thread_origin_result.stdout_text.empty());
+    assert(switch_thread_origin_result.stderr_text.find(
+               "await cannot be used with thread values; use .join() instead"
+           ) != std::string::npos);
+
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
     {
         std::ofstream output(thread_path);

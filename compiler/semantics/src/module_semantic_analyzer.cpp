@@ -71,6 +71,8 @@ private:
         std::size_t scope_depth = 0;
     };
 
+    using ScopeSnapshot = std::vector<std::vector<Binding>>;
+
     auto render_type_name(syntax::TypeSyntax const& type) const -> std::string {
         std::string rendered = type.name;
         if (type.generic_arguments.empty()) {
@@ -246,6 +248,41 @@ private:
         }
 
         return ValueOriginKind::none;
+    }
+
+    auto snapshot_scope_stack() const -> ScopeSnapshot {
+        return scope_stack_;
+    }
+
+    void restore_scope_stack(ScopeSnapshot snapshot) {
+        scope_stack_ = std::move(snapshot);
+    }
+
+    auto merge_scope_snapshots(std::vector<ScopeSnapshot> const& snapshots) const -> ScopeSnapshot {
+        if (snapshots.empty()) {
+            return {};
+        }
+
+        auto merged = snapshots.front();
+        for (std::size_t snapshot_index = 1; snapshot_index < snapshots.size(); ++snapshot_index) {
+            auto const& snapshot = snapshots[snapshot_index];
+            for (std::size_t scope_index = 0; scope_index < merged.size() && scope_index < snapshot.size(); ++scope_index) {
+                for (std::size_t binding_index = 0;
+                     binding_index < merged[scope_index].size() && binding_index < snapshot[scope_index].size();
+                     ++binding_index) {
+                    auto& merged_binding = merged[scope_index][binding_index];
+                    auto const& snapshot_binding = snapshot[scope_index][binding_index];
+
+                    merged_binding.value_origin =
+                        merge_value_origins(merged_binding.value_origin, snapshot_binding.value_origin);
+                    if (merged_binding.type_name != snapshot_binding.type_name) {
+                        merged_binding.type_name.clear();
+                    }
+                }
+            }
+        }
+
+        return merged;
     }
 
     auto infer_expression_value_origin(syntax::ExpressionSyntax const& expression) const -> ValueOriginKind {
@@ -523,10 +560,64 @@ private:
             pop_scope();
             return;
         }
+
         if (statement.kind != syntax::StatementKind::assignment_statement &&
             statement.kind != syntax::StatementKind::return_statement) {
             analyze_expression(statement.assignment_target, in_async_function);
             analyze_expression(statement.expression, in_async_function);
+        }
+
+        if (statement.kind == syntax::StatementKind::if_statement) {
+            auto baseline_scope = snapshot_scope_stack();
+            std::vector<ScopeSnapshot> branch_results;
+
+            restore_scope_stack(baseline_scope);
+            push_scope();
+            for (auto const& nested_statement : statement.nested_statements) {
+                analyze_statement(nested_statement, in_async_function);
+            }
+            pop_scope();
+            branch_results.push_back(snapshot_scope_stack());
+
+            if (!statement.alternate_statements.empty()) {
+                restore_scope_stack(baseline_scope);
+                push_scope();
+                for (auto const& alternate_statement : statement.alternate_statements) {
+                    analyze_statement(alternate_statement, in_async_function);
+                }
+                pop_scope();
+                branch_results.push_back(snapshot_scope_stack());
+            } else {
+                branch_results.push_back(baseline_scope);
+            }
+
+            restore_scope_stack(merge_scope_snapshots(branch_results));
+            return;
+        }
+
+        if (statement.kind == syntax::StatementKind::switch_statement) {
+            auto baseline_scope = snapshot_scope_stack();
+            std::vector<ScopeSnapshot> case_results;
+            auto has_default_case = false;
+
+            for (auto const& switch_case : statement.switch_cases) {
+                analyze_expression(switch_case.pattern, in_async_function);
+                restore_scope_stack(baseline_scope);
+                push_scope();
+                for (auto const& consequence : switch_case.statements) {
+                    analyze_statement(*consequence, in_async_function);
+                }
+                pop_scope();
+                case_results.push_back(snapshot_scope_stack());
+                has_default_case = has_default_case || switch_case.is_default;
+            }
+
+            if (!has_default_case) {
+                case_results.push_back(baseline_scope);
+            }
+
+            restore_scope_stack(merge_scope_snapshots(case_results));
+            return;
         }
 
         push_scope();
@@ -540,15 +631,6 @@ private:
             analyze_statement(alternate_statement, in_async_function);
         }
         pop_scope();
-
-        for (auto const& switch_case : statement.switch_cases) {
-            analyze_expression(switch_case.pattern, in_async_function);
-            push_scope();
-            for (auto const& consequence : switch_case.statements) {
-                analyze_statement(*consequence, in_async_function);
-            }
-            pop_scope();
-        }
     }
 
     void analyze_expression(
