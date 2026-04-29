@@ -1639,6 +1639,87 @@ void test_nested_address_of_and_raw_offset_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_call_unsafe_function_outside_unsafe_context_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_call_unsafe_function_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Address) -> UInt32\n";
+        output << "    return raw_read(p)\n";
+        output << "function read_twice(p: Address) -> UInt32\n";
+        output << "    return read_word(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "call to unsafe function 'read_word' is only valid inside unsafe functions or unsafe blocks");
+}
+
+void test_call_unsafe_function_inside_unsafe_block_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_call_unsafe_function_block_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Address) -> UInt32\n";
+        output << "    return raw_read(p)\n";
+        output << "function copy_word(p: Address) -> UInt32\n";
+        output << "    unsafe\n";
+        output << "        return read_word(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_call_unsafe_method_outside_unsafe_context_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_call_unsafe_method_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Buffer\n";
+        output << "    data: [Byte]\n";
+        output << "extend Buffer\n";
+        output << "    unsafe function scrub(this: exclusive This) -> Unit\n";
+        output << "        return\n";
+        output << "function clear(buf: Buffer) -> Unit\n";
+        output << "    buf.scrub()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message ==
+           "call to unsafe method 'scrub' is only valid inside unsafe functions or unsafe blocks");
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -2482,6 +2563,9 @@ int main() {
     test_raw_offset_nonaddress_base_failure();
     test_volatile_read_nonaddress_operand_failure();
     test_nested_address_of_and_raw_offset_success();
+    test_call_unsafe_function_outside_unsafe_context_failure();
+    test_call_unsafe_function_inside_unsafe_block_success();
+    test_call_unsafe_method_outside_unsafe_context_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

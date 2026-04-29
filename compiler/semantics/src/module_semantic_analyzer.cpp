@@ -32,12 +32,18 @@ struct AsyncMethodSignature {
     std::string method_name;
 };
 
+struct UnsafeMethodSignature {
+    std::string receiver_type;
+    std::string method_name;
+};
+
 class Analyzer {
 public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
 
     auto analyze() -> SemanticAnalysisResult {
         collect_async_callable_names();
+        collect_unsafe_callable_names();
         collect_concurrency_marker_implementations();
         collect_choice_variant_arities();
 
@@ -163,6 +169,27 @@ private:
         std::string const& method_name
     ) const -> bool {
         for (auto const& signature : async_method_signatures_) {
+            if (signature.receiver_type == receiver_type && signature.method_name == method_name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    auto has_unsafe_callable_name(std::string const& name) const -> bool {
+        for (auto const& unsafe_callable_name : unsafe_callable_names_) {
+            if (unsafe_callable_name == name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    auto has_unsafe_method_signature(
+        std::string const& receiver_type,
+        std::string const& method_name
+    ) const -> bool {
+        for (auto const& signature : unsafe_method_signatures_) {
             if (signature.receiver_type == receiver_type && signature.method_name == method_name) {
                 return true;
             }
@@ -357,6 +384,28 @@ private:
     auto is_unsafe_intrinsic_name(std::string const& name) const -> bool {
         return name == "raw_read" || name == "raw_write" || name == "raw_offset" || name == "address_of" ||
                name == "volatile_read" || name == "volatile_write";
+    }
+
+    auto is_declared_unsafe_call(syntax::ExpressionSyntax const& expression) const -> bool {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left) {
+            return false;
+        }
+
+        if (expression.left->kind == syntax::ExpressionKind::name) {
+            return has_unsafe_callable_name(expression.left->text);
+        }
+
+        if (expression.left->kind == syntax::ExpressionKind::member_access ||
+            expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+            auto receiver_type = infer_receiver_type_name_for_member_call(*expression.left);
+            if (receiver_type.empty()) {
+                return false;
+            }
+
+            return has_unsafe_method_signature(receiver_type, expression.left->text);
+        }
+
+        return false;
     }
 
     auto is_addressable_storage_expression(syntax::ExpressionSyntax const& expression) const -> bool {
@@ -761,6 +810,47 @@ private:
         }
     }
 
+    void collect_unsafe_callable_names() {
+        unsafe_callable_names_.clear();
+        unsafe_method_signatures_.clear();
+
+        for (auto const& function : module_.functions) {
+            if (function.is_unsafe) {
+                unsafe_callable_names_.push_back(function.name);
+            }
+        }
+
+        for (auto const& implementation : module_.implementations) {
+            auto receiver_type_name = render_type_name(implementation.receiver_type);
+            for (auto const& method : implementation.methods) {
+                if (method.is_unsafe) {
+                    unsafe_method_signatures_.push_back(UnsafeMethodSignature {
+                        .receiver_type = receiver_type_name,
+                        .method_name = method.name,
+                    });
+                }
+            }
+        }
+
+        for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
+            for (auto const& method : extension.methods) {
+                if (method.is_unsafe) {
+                    unsafe_method_signatures_.push_back(UnsafeMethodSignature {
+                        .receiver_type = receiver_type_name,
+                        .method_name = method.name,
+                    });
+                }
+            }
+        }
+
+        for (auto const& foreign_export : module_.foreign_exports) {
+            if (foreign_export.function.is_unsafe) {
+                unsafe_callable_names_.push_back(foreign_export.function.name);
+            }
+        }
+    }
+
     void analyze_function(
         syntax::FunctionSyntax const& function,
         std::string receiver_type_name = {}
@@ -1085,6 +1175,23 @@ private:
             );
         }
 
+        if (is_declared_unsafe_call(expression) && !unsafe_context_active_) {
+            auto diagnostic_subject = std::string {"unsafe function"};
+            auto callee_name = std::string {};
+            if (expression.left->kind == syntax::ExpressionKind::name) {
+                callee_name = expression.left->text;
+            } else {
+                diagnostic_subject = "unsafe method";
+                callee_name = expression.left->text;
+            }
+
+            diagnostics_.error(
+                expression.line,
+                "call to " + diagnostic_subject + " '" + callee_name +
+                    "' is only valid inside unsafe functions or unsafe blocks"
+            );
+        }
+
         validate_unsafe_intrinsic_operands(expression);
 
         if (expression.kind == syntax::ExpressionKind::name) {
@@ -1318,6 +1425,8 @@ private:
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<std::string> async_callable_names_;
     std::vector<AsyncMethodSignature> async_method_signatures_;
+    std::vector<std::string> unsafe_callable_names_;
+    std::vector<UnsafeMethodSignature> unsafe_method_signatures_;
     std::unordered_map<std::string, std::size_t> choice_variant_arities_;
     std::vector<std::string> transferable_constraint_types_;
     std::vector<std::string> shareable_constraint_types_;
