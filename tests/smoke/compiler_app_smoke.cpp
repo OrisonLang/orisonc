@@ -189,6 +189,61 @@ int main() {
                "return cannot forward thread values; use .join() instead"
            ) != std::string::npos);
 
+    auto unsafe_intrinsic_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_intrinsic_failure.or";
+    {
+        std::ofstream output(unsafe_intrinsic_failure_path);
+        output << "package demo.unsafe\n";
+        output << "function read_byte(p: Address) -> Byte\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto unsafe_intrinsic_failure_path_text = unsafe_intrinsic_failure_path.string();
+    std::array<char const*, 3> unsafe_intrinsic_failure_argv {
+        "orisonc",
+        "--parse",
+        unsafe_intrinsic_failure_path_text.c_str()
+    };
+    auto unsafe_intrinsic_failure_result = app.run(
+        std::span<char const* const>(
+            unsafe_intrinsic_failure_argv.data(),
+            unsafe_intrinsic_failure_argv.size()
+        )
+    );
+
+    assert(unsafe_intrinsic_failure_result.exit_code == 1);
+    assert(unsafe_intrinsic_failure_result.stdout_text.empty());
+    assert(unsafe_intrinsic_failure_result.stderr_text.find(
+               "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks"
+           ) != std::string::npos);
+
+    auto unsafe_intrinsic_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_intrinsic_success.or";
+    {
+        std::ofstream output(unsafe_intrinsic_success_path);
+        output << "package demo.unsafe\n";
+        output << "function zero_byte(p: Address) -> Unit\n";
+        output << "    unsafe\n";
+        output << "        raw_write(p, 0)\n";
+    }
+
+    auto unsafe_intrinsic_success_path_text = unsafe_intrinsic_success_path.string();
+    std::array<char const*, 3> unsafe_intrinsic_success_argv {
+        "orisonc",
+        "--parse",
+        unsafe_intrinsic_success_path_text.c_str()
+    };
+    auto unsafe_intrinsic_success_result = app.run(
+        std::span<char const* const>(
+            unsafe_intrinsic_success_argv.data(),
+            unsafe_intrinsic_success_argv.size()
+        )
+    );
+
+    assert(unsafe_intrinsic_success_result.exit_code == 0);
+    assert(unsafe_intrinsic_success_result.stderr_text.empty());
+    assert(unsafe_intrinsic_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);

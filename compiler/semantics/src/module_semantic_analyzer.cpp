@@ -354,6 +354,11 @@ private:
         return name == "Some" || name == "Empty" || name == "Ok" || name == "Error";
     }
 
+    auto is_unsafe_intrinsic_name(std::string const& name) const -> bool {
+        return name == "raw_read" || name == "raw_write" || name == "raw_offset" || name == "address_of" ||
+               name == "volatile_read" || name == "volatile_write";
+    }
+
     auto classify_switch_pattern_kind(syntax::ExpressionSyntax const& pattern) const -> SwitchPatternKind {
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
@@ -708,7 +713,9 @@ private:
         std::string receiver_type_name = {}
     ) {
         auto saved_receiver_context_active = receiver_context_active_;
+        auto saved_unsafe_context_active = unsafe_context_active_;
         receiver_context_active_ = !receiver_type_name.empty();
+        unsafe_context_active_ = function.is_unsafe;
 
         scope_stack_.clear();
         transferable_constraint_types_.clear();
@@ -754,6 +761,7 @@ private:
 
         pop_scope();
         receiver_context_active_ = saved_receiver_context_active;
+        unsafe_context_active_ = saved_unsafe_context_active;
     }
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
@@ -871,6 +879,18 @@ private:
             pop_scope();
 
             restore_scope_stack(baseline_scope);
+            return;
+        }
+
+        if (statement.kind == syntax::StatementKind::unsafe_statement) {
+            auto saved_unsafe_context_active = unsafe_context_active_;
+            unsafe_context_active_ = true;
+            push_scope();
+            for (auto const& nested_statement : statement.nested_statements) {
+                analyze_statement(nested_statement, in_async_function);
+            }
+            pop_scope();
+            unsafe_context_active_ = saved_unsafe_context_active;
             return;
         }
 
@@ -1002,6 +1022,16 @@ private:
         bool in_async_function,
         bool allow_thread_value_name = false
     ) {
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name &&
+            is_unsafe_intrinsic_name(expression.left->text) && !unsafe_context_active_) {
+            diagnostics_.error(
+                expression.line,
+                "unsafe intrinsic '" + expression.left->text +
+                    "' is only valid inside unsafe functions or unsafe blocks"
+            );
+        }
+
         if (expression.kind == syntax::ExpressionKind::name) {
             if (expression.text == "this" && !receiver_context_active_) {
                 diagnostics_.error(expression.line, "receiver 'this' is only valid inside implements or extend methods");
@@ -1241,6 +1271,7 @@ private:
     std::vector<std::vector<Binding>> scope_stack_;
     std::size_t loop_depth_ = 0;
     bool receiver_context_active_ = false;
+    bool unsafe_context_active_ = false;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
     ConcurrencyExpressionKind current_capture_expression_kind_ = ConcurrencyExpressionKind::task;

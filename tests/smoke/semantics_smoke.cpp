@@ -1449,6 +1449,74 @@ void test_receiver_parameter_with_nonself_type_inside_method_failure() {
            "receiver parameter 'this' must use This, shared This, or exclusive This");
 }
 
+void test_unsafe_intrinsic_outside_unsafe_context_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unsafe_intrinsic_outside_unsafe_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "function read_byte(p: Address) -> Byte\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks");
+}
+
+void test_unsafe_intrinsic_inside_unsafe_function_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unsafe_intrinsic_inside_unsafe_function.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte(p: Address) -> Byte\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_unsafe_intrinsic_inside_unsafe_block_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unsafe_intrinsic_inside_unsafe_block.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "function zero_byte(p: Address) -> Unit\n";
+        output << "    unsafe\n";
+        output << "        raw_write(p, 0)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -2284,6 +2352,9 @@ int main() {
     test_qualified_this_type_in_ordinary_function_signature_failure();
     test_qualified_this_type_in_local_annotation_failure();
     test_receiver_parameter_with_nonself_type_inside_method_failure();
+    test_unsafe_intrinsic_outside_unsafe_context_failure();
+    test_unsafe_intrinsic_inside_unsafe_function_success();
+    test_unsafe_intrinsic_inside_unsafe_block_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
