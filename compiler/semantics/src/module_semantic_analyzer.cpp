@@ -620,6 +620,36 @@ private:
             return;
         }
 
+        if (statement.kind == syntax::StatementKind::while_statement) {
+            auto baseline_scope = snapshot_scope_stack();
+
+            restore_scope_stack(baseline_scope);
+            push_scope();
+            for (auto const& nested_statement : statement.nested_statements) {
+                analyze_statement(nested_statement, in_async_function);
+            }
+            pop_scope();
+            auto body_result = snapshot_scope_stack();
+
+            restore_scope_stack(merge_scope_snapshots({baseline_scope, body_result}));
+            return;
+        }
+
+        if (statement.kind == syntax::StatementKind::repeat_statement) {
+            auto baseline_scope = snapshot_scope_stack();
+
+            restore_scope_stack(baseline_scope);
+            push_scope();
+            for (auto const& nested_statement : statement.nested_statements) {
+                analyze_statement(nested_statement, in_async_function);
+            }
+            pop_scope();
+            auto body_result = snapshot_scope_stack();
+
+            restore_scope_stack(body_result);
+            return;
+        }
+
         push_scope();
         for (auto const& nested_statement : statement.nested_statements) {
             analyze_statement(nested_statement, in_async_function);

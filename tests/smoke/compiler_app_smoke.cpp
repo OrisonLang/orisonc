@@ -319,6 +319,33 @@ int main() {
     assert(if_async_origin_result.stderr_text.empty());
     assert(if_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto while_async_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_while_async_origin_success.or";
+    {
+        std::ofstream output(while_async_origin_path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = request(url)\n";
+        output << "    while flag\n";
+        output << "        pending = request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto while_async_origin_path_text = while_async_origin_path.string();
+    std::array<char const*, 3> while_async_origin_argv {
+        "orisonc",
+        "--parse",
+        while_async_origin_path_text.c_str()
+    };
+    auto while_async_origin_result =
+        app.run(std::span<char const* const>(while_async_origin_argv.data(), while_async_origin_argv.size()));
+
+    assert(while_async_origin_result.exit_code == 0);
+    assert(while_async_origin_result.stderr_text.empty());
+    assert(while_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto switch_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_thread_origin_failure.or";
     {
@@ -347,6 +374,35 @@ int main() {
     assert(switch_thread_origin_result.exit_code == 1);
     assert(switch_thread_origin_result.stdout_text.empty());
     assert(switch_thread_origin_result.stderr_text.find(
+               "await cannot be used with thread values; use .join() instead"
+           ) != std::string::npos);
+
+    auto repeat_thread_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_repeat_thread_origin_failure.or";
+    {
+        std::ofstream output(repeat_thread_origin_path);
+        output << "package demo.await\n";
+        output << "async function fetch(flag: Bool) -> Int64\n";
+        output << "    var worker = 0\n";
+        output << "    repeat\n";
+        output << "        worker = thread\n";
+        output << "            2\n";
+        output << "    while flag\n";
+        output << "    return await worker\n";
+    }
+
+    auto repeat_thread_origin_path_text = repeat_thread_origin_path.string();
+    std::array<char const*, 3> repeat_thread_origin_argv {
+        "orisonc",
+        "--parse",
+        repeat_thread_origin_path_text.c_str()
+    };
+    auto repeat_thread_origin_result =
+        app.run(std::span<char const* const>(repeat_thread_origin_argv.data(), repeat_thread_origin_argv.size()));
+
+    assert(repeat_thread_origin_result.exit_code == 1);
+    assert(repeat_thread_origin_result.stdout_text.empty());
+    assert(repeat_thread_origin_result.stderr_text.find(
                "await cannot be used with thread values; use .join() instead"
            ) != std::string::npos);
 

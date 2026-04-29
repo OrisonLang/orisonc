@@ -584,6 +584,119 @@ void test_switch_branch_preserves_thread_origin_failure() {
            "await cannot be used with thread values; use .join() instead");
 }
 
+void test_while_loop_preserves_async_call_origin_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_while_loop_async_origin_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = request(url)\n";
+        output << "    while flag\n";
+        output << "        pending = request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_while_loop_preserves_thread_origin_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_while_loop_thread_origin_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function fetch(flag: Bool) -> Int64\n";
+        output << "    var worker = thread\n";
+        output << "        1\n";
+        output << "    while flag\n";
+        output << "        worker = thread\n";
+        output << "            2\n";
+        output << "    return await worker\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message ==
+           "await cannot be used with thread values; use .join() instead");
+}
+
+void test_repeat_loop_preserves_async_call_origin_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_repeat_loop_async_origin_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = 0\n";
+        output << "    repeat\n";
+        output << "        pending = request(url)\n";
+        output << "    while flag\n";
+        output << "    return await pending\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_repeat_loop_preserves_thread_origin_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_repeat_loop_thread_origin_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function fetch(flag: Bool) -> Int64\n";
+        output << "    var worker = 0\n";
+        output << "    repeat\n";
+        output << "        worker = thread\n";
+        output << "            2\n";
+        output << "    while flag\n";
+        output << "    return await worker\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message ==
+           "await cannot be used with thread values; use .join() instead");
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -1389,6 +1502,10 @@ int main() {
     test_if_branch_preserves_thread_origin_failure();
     test_switch_branch_preserves_async_call_origin_success();
     test_switch_branch_preserves_thread_origin_failure();
+    test_while_loop_preserves_async_call_origin_success();
+    test_while_loop_preserves_thread_origin_failure();
+    test_repeat_loop_preserves_async_call_origin_success();
+    test_repeat_loop_preserves_thread_origin_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
