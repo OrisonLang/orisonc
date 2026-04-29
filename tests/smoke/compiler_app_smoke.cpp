@@ -1025,6 +1025,69 @@ int main() {
                "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
            ) != std::string::npos);
 
+    auto raw_write_record_pointer_field_type_failure_path = std::filesystem::temp_directory_path() /
+                                                            "orison_compiler_app_raw_write_record_pointer_field_type_failure.or";
+    {
+        std::ofstream output(raw_write_record_pointer_field_type_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptr: Pointer<Byte>\n";
+        output << "unsafe function write_word(device: Device, value: UInt32) -> Unit\n";
+        output << "    raw_write(device.ptr, value)\n";
+    }
+
+    auto raw_write_record_pointer_field_type_failure_path_text =
+        raw_write_record_pointer_field_type_failure_path.string();
+    std::array<char const*, 3> raw_write_record_pointer_field_type_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_write_record_pointer_field_type_failure_path_text.c_str()
+    };
+    auto raw_write_record_pointer_field_type_failure_result = app.run(
+        std::span<char const* const>(
+            raw_write_record_pointer_field_type_failure_argv.data(),
+            raw_write_record_pointer_field_type_failure_argv.size()
+        )
+    );
+
+    assert(raw_write_record_pointer_field_type_failure_result.exit_code == 1);
+    assert(raw_write_record_pointer_field_type_failure_result.stdout_text.empty());
+    assert(raw_write_record_pointer_field_type_failure_result.stderr_text.find(
+               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+           ) != std::string::npos);
+
+    auto member_field_address_pointer_constructor_success_path = std::filesystem::temp_directory_path() /
+                                                                 "orison_compiler_app_member_field_address_pointer_constructor_success.or";
+    {
+        std::ofstream output(member_field_address_pointer_constructor_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    base: Address\n";
+        output << "extend Device\n";
+        output << "    function byte_ptr(this: shared This) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            return Pointer(this.base)\n";
+        output << "unsafe function write_byte(device: Device, value: Byte) -> Unit\n";
+        output << "    raw_write(device.byte_ptr(), value)\n";
+    }
+
+    auto member_field_address_pointer_constructor_success_path_text =
+        member_field_address_pointer_constructor_success_path.string();
+    std::array<char const*, 3> member_field_address_pointer_constructor_success_argv {
+        "orisonc",
+        "--parse",
+        member_field_address_pointer_constructor_success_path_text.c_str()
+    };
+    auto member_field_address_pointer_constructor_success_result = app.run(
+        std::span<char const* const>(
+            member_field_address_pointer_constructor_success_argv.data(),
+            member_field_address_pointer_constructor_success_argv.size()
+        )
+    );
+
+    assert(member_field_address_pointer_constructor_success_result.exit_code == 0);
+    assert(member_field_address_pointer_constructor_success_result.stderr_text.empty());
+
     auto volatile_read_return_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_return_type_failure.or";
     {

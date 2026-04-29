@@ -43,6 +43,12 @@ struct MethodReturnSignature {
     std::string return_type_name;
 };
 
+struct RecordFieldSignature {
+    std::string record_type;
+    std::string field_name;
+    std::string field_type_name;
+};
+
 class Analyzer {
 public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
@@ -51,6 +57,7 @@ public:
         collect_async_callable_names();
         collect_unsafe_callable_names();
         collect_callable_return_types();
+        collect_record_field_types();
         collect_concurrency_marker_implementations();
         collect_choice_variant_arities();
 
@@ -253,6 +260,18 @@ private:
         return {};
     }
 
+    auto find_record_field_type_name(
+        std::string const& record_type,
+        std::string const& field_name
+    ) const -> std::string {
+        for (auto const& signature : record_field_signatures_) {
+            if (signature.record_type == record_type && signature.field_name == field_name) {
+                return signature.field_type_name;
+            }
+        }
+        return {};
+    }
+
     auto has_concurrency_marker_constraint(
         std::string const& type_name,
         ConcurrencyMarkerKind marker_kind
@@ -334,6 +353,12 @@ private:
             return "Bool";
         case syntax::ExpressionKind::integer_literal:
             return "Int64";
+        case syntax::ExpressionKind::member_access:
+        case syntax::ExpressionKind::null_safe_member_access:
+            if (!expression.left) {
+                return {};
+            }
+            return find_record_field_type_name(infer_expression_type_name(*expression.left), expression.text);
         case syntax::ExpressionKind::call:
             if (!expression.left) {
                 return {};
@@ -1104,6 +1129,20 @@ private:
         }
     }
 
+    void collect_record_field_types() {
+        record_field_signatures_.clear();
+
+        for (auto const& record : module_.records) {
+            for (auto const& field : record.fields) {
+                record_field_signatures_.push_back(RecordFieldSignature {
+                    .record_type = record.name,
+                    .field_name = field.name,
+                    .field_type_name = render_type_name(field.type),
+                });
+            }
+        }
+    }
+
     void analyze_function(
         syntax::FunctionSyntax const& function,
         std::string receiver_type_name = {}
@@ -1738,6 +1777,7 @@ private:
     std::vector<UnsafeMethodSignature> unsafe_method_signatures_;
     std::unordered_map<std::string, std::string> callable_return_types_;
     std::vector<MethodReturnSignature> method_return_signatures_;
+    std::vector<RecordFieldSignature> record_field_signatures_;
     std::unordered_map<std::string, std::size_t> choice_variant_arities_;
     std::vector<std::string> transferable_constraint_types_;
     std::vector<std::string> shareable_constraint_types_;
