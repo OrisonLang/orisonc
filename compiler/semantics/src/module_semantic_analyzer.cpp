@@ -401,6 +401,14 @@ private:
                 expression.line,
                 "Pointer construction currently requires exactly one source argument"
             );
+            return;
+        }
+
+        if (!is_structurally_address_like_expression(expression.arguments.front())) {
+            diagnostics_.error(
+                expression.line,
+                "Pointer construction currently requires an address-like source argument"
+            );
         }
     }
 

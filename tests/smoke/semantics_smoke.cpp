@@ -1794,6 +1794,56 @@ void test_pointer_construction_with_multiple_arguments_failure() {
            "Pointer construction currently requires exactly one source argument");
 }
 
+void test_pointer_construction_with_nonaddress_argument_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_nonaddress_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte() -> Byte\n";
+        output << "    let p = Pointer(\"text\")\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "Pointer construction currently requires an address-like source argument");
+}
+
+void test_pointer_construction_with_address_of_argument_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_addressof_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function first_ptr(buf: exclusive Buffer) -> Address\n";
+        output << "    let p = Pointer(address_of(buf.data[0]))\n";
+        output << "    return p\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -2643,6 +2693,8 @@ int main() {
     test_pointer_construction_inside_unsafe_block_success();
     test_pointer_construction_without_argument_failure();
     test_pointer_construction_with_multiple_arguments_failure();
+    test_pointer_construction_with_nonaddress_argument_failure();
+    test_pointer_construction_with_address_of_argument_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

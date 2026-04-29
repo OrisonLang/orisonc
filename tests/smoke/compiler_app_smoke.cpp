@@ -498,6 +498,62 @@ int main() {
                "Pointer construction currently requires exactly one source argument"
            ) != std::string::npos);
 
+    auto pointer_construction_nonaddress_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_nonaddress_failure.or";
+    {
+        std::ofstream output(pointer_construction_nonaddress_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte() -> Byte\n";
+        output << "    let p = Pointer(\"text\")\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto pointer_construction_nonaddress_failure_path_text = pointer_construction_nonaddress_failure_path.string();
+    std::array<char const*, 3> pointer_construction_nonaddress_failure_argv {
+        "orisonc",
+        "--parse",
+        pointer_construction_nonaddress_failure_path_text.c_str()
+    };
+    auto pointer_construction_nonaddress_failure_result = app.run(
+        std::span<char const* const>(
+            pointer_construction_nonaddress_failure_argv.data(),
+            pointer_construction_nonaddress_failure_argv.size()
+        )
+    );
+
+    assert(pointer_construction_nonaddress_failure_result.exit_code == 1);
+    assert(pointer_construction_nonaddress_failure_result.stdout_text.empty());
+    assert(pointer_construction_nonaddress_failure_result.stderr_text.find(
+               "Pointer construction currently requires an address-like source argument"
+           ) != std::string::npos);
+
+    auto pointer_construction_addressof_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_addressof_success.or";
+    {
+        std::ofstream output(pointer_construction_addressof_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function first_ptr(buf: exclusive Buffer) -> Address\n";
+        output << "    let p = Pointer(address_of(buf.data[0]))\n";
+        output << "    return p\n";
+    }
+
+    auto pointer_construction_addressof_success_path_text = pointer_construction_addressof_success_path.string();
+    std::array<char const*, 3> pointer_construction_addressof_success_argv {
+        "orisonc",
+        "--parse",
+        pointer_construction_addressof_success_path_text.c_str()
+    };
+    auto pointer_construction_addressof_success_result = app.run(
+        std::span<char const* const>(
+            pointer_construction_addressof_success_argv.data(),
+            pointer_construction_addressof_success_argv.size()
+        )
+    );
+
+    assert(pointer_construction_addressof_success_result.exit_code == 0);
+    assert(pointer_construction_addressof_success_result.stderr_text.empty());
+    assert(pointer_construction_addressof_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);
