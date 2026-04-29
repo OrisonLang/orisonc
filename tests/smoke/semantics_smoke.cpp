@@ -1225,6 +1225,98 @@ void test_switch_rejects_nonfinal_default_case_semantically() {
     assert(diagnostics.entries().front().message == "switch default case must be the final case");
 }
 
+void test_break_outside_loop_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_break_outside_loop_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.loops\n";
+        output << "function stop() -> Unit\n";
+        output << "    break\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message == "break statement is only valid inside loops");
+}
+
+void test_continue_outside_loop_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_continue_outside_loop_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.loops\n";
+        output << "function keep_going() -> Unit\n";
+        output << "    continue\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message == "continue statement is only valid inside loops");
+}
+
+void test_break_inside_loop_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_break_inside_loop_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.loops\n";
+        output << "function stop(flag: Bool) -> Unit\n";
+        output << "    while flag\n";
+        output << "        break\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_continue_inside_loop_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_continue_inside_loop_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.loops\n";
+        output << "function scan(items: shared View<Int64>) -> Unit\n";
+        output << "    for item in items\n";
+        output << "        continue\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -2051,6 +2143,10 @@ int main() {
     test_switch_rejects_value_then_constructor_pattern_mix_failure();
     test_switch_rejects_multiple_default_cases_semantically();
     test_switch_rejects_nonfinal_default_case_semantically();
+    test_break_outside_loop_failure();
+    test_continue_outside_loop_failure();
+    test_break_inside_loop_success();
+    test_continue_inside_loop_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

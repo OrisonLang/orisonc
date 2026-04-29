@@ -906,6 +906,61 @@ int main() {
                "switch cannot mix value patterns with constructor patterns"
            ) != std::string::npos);
 
+    auto break_outside_loop_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
+    {
+        std::ofstream output(break_outside_loop_failure_path);
+        output << "package demo.loops\n";
+        output << "function stop() -> Unit\n";
+        output << "    break\n";
+    }
+
+    auto break_outside_loop_failure_path_text = break_outside_loop_failure_path.string();
+    std::array<char const*, 3> break_outside_loop_failure_argv {
+        "orisonc",
+        "--parse",
+        break_outside_loop_failure_path_text.c_str()
+    };
+    auto break_outside_loop_failure_result = app.run(
+        std::span<char const* const>(
+            break_outside_loop_failure_argv.data(),
+            break_outside_loop_failure_argv.size()
+        )
+    );
+
+    assert(break_outside_loop_failure_result.exit_code == 1);
+    assert(break_outside_loop_failure_result.stdout_text.empty());
+    assert(break_outside_loop_failure_result.stderr_text.find(
+               "break statement is only valid inside loops"
+           ) != std::string::npos);
+
+    auto continue_inside_loop_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_continue_inside_loop_success.or";
+    {
+        std::ofstream output(continue_inside_loop_success_path);
+        output << "package demo.loops\n";
+        output << "function scan(items: shared View<Int64>) -> Unit\n";
+        output << "    for item in items\n";
+        output << "        continue\n";
+    }
+
+    auto continue_inside_loop_success_path_text = continue_inside_loop_success_path.string();
+    std::array<char const*, 3> continue_inside_loop_success_argv {
+        "orisonc",
+        "--parse",
+        continue_inside_loop_success_path_text.c_str()
+    };
+    auto continue_inside_loop_success_result = app.run(
+        std::span<char const* const>(
+            continue_inside_loop_success_argv.data(),
+            continue_inside_loop_success_argv.size()
+        )
+    );
+
+    assert(continue_inside_loop_success_result.exit_code == 0);
+    assert(continue_inside_loop_success_result.stderr_text.empty());
+    assert(continue_inside_loop_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
     {
         std::ofstream output(thread_path);

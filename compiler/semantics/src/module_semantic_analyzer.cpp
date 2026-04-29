@@ -760,6 +760,20 @@ private:
             validate_return_expression(statement.expression, statement.line);
         }
 
+        if (statement.kind == syntax::StatementKind::break_statement) {
+            if (loop_depth_ == 0) {
+                diagnostics_.error(statement.line, "break statement is only valid inside loops");
+            }
+            return;
+        }
+
+        if (statement.kind == syntax::StatementKind::continue_statement) {
+            if (loop_depth_ == 0) {
+                diagnostics_.error(statement.line, "continue statement is only valid inside loops");
+            }
+            return;
+        }
+
         if (statement.kind == syntax::StatementKind::for_statement) {
             analyze_expression(statement.expression, in_async_function);
             auto baseline_scope = snapshot_scope_stack();
@@ -767,9 +781,11 @@ private:
             restore_scope_stack(baseline_scope);
             push_scope();
             declare_binding(statement.name, {}, true);
+            ++loop_depth_;
             for (auto const& nested_statement : statement.nested_statements) {
                 analyze_statement(nested_statement, in_async_function);
             }
+            --loop_depth_;
             pop_scope();
 
             restore_scope_stack(merge_scope_snapshots({baseline_scope, snapshot_scope_stack()}));
@@ -905,9 +921,11 @@ private:
 
             restore_scope_stack(baseline_scope);
             push_scope();
+            ++loop_depth_;
             for (auto const& nested_statement : statement.nested_statements) {
                 analyze_statement(nested_statement, in_async_function);
             }
+            --loop_depth_;
             pop_scope();
             auto body_result = snapshot_scope_stack();
 
@@ -920,9 +938,11 @@ private:
 
             restore_scope_stack(baseline_scope);
             push_scope();
+            ++loop_depth_;
             for (auto const& nested_statement : statement.nested_statements) {
                 analyze_statement(nested_statement, in_async_function);
             }
+            --loop_depth_;
             pop_scope();
             auto body_result = snapshot_scope_stack();
 
@@ -1182,6 +1202,7 @@ private:
     std::vector<std::string> transferable_impl_types_;
     std::vector<std::string> shareable_impl_types_;
     std::vector<std::vector<Binding>> scope_stack_;
+    std::size_t loop_depth_ = 0;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
     ConcurrencyExpressionKind current_capture_expression_kind_ = ConcurrencyExpressionKind::task;
