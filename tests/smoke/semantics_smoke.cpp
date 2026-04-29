@@ -2345,6 +2345,62 @@ void test_member_field_address_inference_enables_pointer_constructor_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_raw_write_indexed_record_pointer_field_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_write_indexed_record_pointer_field_type_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function write_word(device: Device, index: Int64, value: UInt32) -> Unit\n";
+        output << "    raw_write(device.ptrs[index], value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
+}
+
+void test_indexed_member_field_address_inference_enables_pointer_constructor_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_indexed_member_field_address_pointer_constructor_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "extend Device\n";
+        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            return Pointer(this.bases[index])\n";
+        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
+        output << "    raw_write(device.byte_ptr(index), value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_volatile_read_return_type_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_return_type_failure.or";
@@ -3552,6 +3608,8 @@ int main() {
     test_raw_write_member_raw_offset_helper_pointer_type_mismatch_failure();
     test_raw_write_record_pointer_field_type_mismatch_failure();
     test_member_field_address_inference_enables_pointer_constructor_success();
+    test_raw_write_indexed_record_pointer_field_type_mismatch_failure();
+    test_indexed_member_field_address_inference_enables_pointer_constructor_success();
     test_volatile_read_return_type_mismatch_failure();
     test_volatile_read_return_type_match_success();
     test_volatile_write_value_type_mismatch_failure();

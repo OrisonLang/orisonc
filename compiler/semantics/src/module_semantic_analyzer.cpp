@@ -353,6 +353,11 @@ private:
             return "Bool";
         case syntax::ExpressionKind::integer_literal:
             return "Int64";
+        case syntax::ExpressionKind::index_access:
+            if (!expression.left) {
+                return {};
+            }
+            return pointer_pointee_type_name(infer_expression_type_name(*expression.left));
         case syntax::ExpressionKind::member_access:
         case syntax::ExpressionKind::null_safe_member_access:
             if (!expression.left) {
@@ -521,6 +526,17 @@ private:
                 expression.line,
                 "Pointer construction currently requires exactly one source argument"
             );
+            return;
+        }
+
+        auto source_type_name = infer_expression_type_name(expression.arguments.front());
+        if (!source_type_name.empty()) {
+            if (!is_address_type_name(source_type_name)) {
+                diagnostics_.error(
+                    expression.line,
+                    "Pointer construction currently requires an address-like source argument"
+                );
+            }
             return;
         }
 
