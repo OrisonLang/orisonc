@@ -638,6 +638,90 @@ int main() {
     assert(pointer_typed_binding_success_result.stderr_text.empty());
     assert(pointer_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto address_typed_binding_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_address_typed_binding_failure.or";
+    {
+        std::ofstream output(address_typed_binding_failure_path);
+        output << "package demo.unsafe\n";
+        output << "function read_base() -> Address\n";
+        output << "    let base: Address = \"text\"\n";
+        output << "    return 0x4000_1000\n";
+    }
+
+    auto address_typed_binding_failure_path_text = address_typed_binding_failure_path.string();
+    std::array<char const*, 3> address_typed_binding_failure_argv {
+        "orisonc",
+        "--parse",
+        address_typed_binding_failure_path_text.c_str()
+    };
+    auto address_typed_binding_failure_result = app.run(
+        std::span<char const* const>(
+            address_typed_binding_failure_argv.data(),
+            address_typed_binding_failure_argv.size()
+        )
+    );
+
+    assert(address_typed_binding_failure_result.exit_code == 1);
+    assert(address_typed_binding_failure_result.stdout_text.empty());
+    assert(address_typed_binding_failure_result.stderr_text.find(
+               "address-typed binding initializer currently requires a structurally address-like expression"
+           ) != std::string::npos);
+
+    auto address_return_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_address_return_failure.or";
+    {
+        std::ofstream output(address_return_failure_path);
+        output << "package demo.unsafe\n";
+        output << "function base() -> Address\n";
+        output << "    return \"text\"\n";
+    }
+
+    auto address_return_failure_path_text = address_return_failure_path.string();
+    std::array<char const*, 3> address_return_failure_argv {
+        "orisonc",
+        "--parse",
+        address_return_failure_path_text.c_str()
+    };
+    auto address_return_failure_result = app.run(
+        std::span<char const* const>(
+            address_return_failure_argv.data(),
+            address_return_failure_argv.size()
+        )
+    );
+
+    assert(address_return_failure_result.exit_code == 1);
+    assert(address_return_failure_result.stdout_text.empty());
+    assert(address_return_failure_result.stderr_text.find(
+               "address-returning function currently requires a structurally address-like expression"
+           ) != std::string::npos);
+
+    auto address_typed_binding_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_address_typed_binding_success.or";
+    {
+        std::ofstream output(address_typed_binding_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function first_addr(buf: exclusive Buffer) -> Address\n";
+        output << "    let base: Address = address_of(buf.data[0])\n";
+        output << "    return base\n";
+    }
+
+    auto address_typed_binding_success_path_text = address_typed_binding_success_path.string();
+    std::array<char const*, 3> address_typed_binding_success_argv {
+        "orisonc",
+        "--parse",
+        address_typed_binding_success_path_text.c_str()
+    };
+    auto address_typed_binding_success_result = app.run(
+        std::span<char const* const>(
+            address_typed_binding_success_argv.data(),
+            address_typed_binding_success_argv.size()
+        )
+    );
+
+    assert(address_typed_binding_success_result.exit_code == 0);
+    assert(address_typed_binding_success_result.stderr_text.empty());
+    assert(address_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);

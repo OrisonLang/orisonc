@@ -109,6 +109,10 @@ private:
         return type.name == "Pointer";
     }
 
+    auto is_address_type(syntax::TypeSyntax const& type) const -> bool {
+        return type.name == "Address";
+    }
+
     auto is_receiver_self_type_name(std::string const& type_name) const -> bool {
         return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
     }
@@ -485,6 +489,19 @@ private:
             diagnostics_.error(
                 line,
                 std::string(context_description) + " currently requires a structurally pointer-like expression"
+            );
+        }
+    }
+
+    void validate_address_typed_expression(
+        syntax::ExpressionSyntax const& expression,
+        std::size_t line,
+        std::string_view context_description
+    ) {
+        if (!is_structurally_address_like_expression(expression)) {
+            diagnostics_.error(
+                line,
+                std::string(context_description) + " currently requires a structurally address-like expression"
             );
         }
     }
@@ -914,9 +931,11 @@ private:
         auto saved_receiver_context_active = receiver_context_active_;
         auto saved_unsafe_context_active = unsafe_context_active_;
         auto saved_current_function_returns_pointer = current_function_returns_pointer_;
+        auto saved_current_function_returns_address = current_function_returns_address_;
         receiver_context_active_ = !receiver_type_name.empty();
         unsafe_context_active_ = function.is_unsafe;
         current_function_returns_pointer_ = is_pointer_type(function.return_type);
+        current_function_returns_address_ = is_address_type(function.return_type);
 
         scope_stack_.clear();
         transferable_constraint_types_.clear();
@@ -964,6 +983,7 @@ private:
         receiver_context_active_ = saved_receiver_context_active;
         unsafe_context_active_ = saved_unsafe_context_active;
         current_function_returns_pointer_ = saved_current_function_returns_pointer;
+        current_function_returns_address_ = saved_current_function_returns_address;
     }
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
@@ -979,6 +999,13 @@ private:
                         statement.expression,
                         statement.line,
                         "pointer-typed binding initializer"
+                    );
+                }
+                if (is_address_type(statement.annotated_type)) {
+                    validate_address_typed_expression(
+                        statement.expression,
+                        statement.line,
+                        "address-typed binding initializer"
                     );
                 }
             }
@@ -1014,6 +1041,13 @@ private:
                     statement.expression,
                     statement.line,
                     "pointer-returning function"
+                );
+            }
+            if (current_function_returns_address_) {
+                validate_address_typed_expression(
+                    statement.expression,
+                    statement.line,
+                    "address-returning function"
                 );
             }
         }
@@ -1519,6 +1553,7 @@ private:
     bool receiver_context_active_ = false;
     bool unsafe_context_active_ = false;
     bool current_function_returns_pointer_ = false;
+    bool current_function_returns_address_ = false;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
     ConcurrencyExpressionKind current_capture_expression_kind_ = ConcurrencyExpressionKind::task;

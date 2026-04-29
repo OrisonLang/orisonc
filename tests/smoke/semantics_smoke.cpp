@@ -1942,6 +1942,104 @@ void test_pointer_return_with_pointer_expression_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_address_typed_binding_with_nonaddress_initializer_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_typed_binding_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "function read_base() -> Address\n";
+        output << "    let base: Address = \"text\"\n";
+        output << "    return 0x4000_1000\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "address-typed binding initializer currently requires a structurally address-like expression");
+}
+
+void test_address_typed_binding_with_address_initializer_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_typed_binding_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function first_addr(buf: exclusive Buffer) -> Address\n";
+        output << "    let base: Address = address_of(buf.data[0])\n";
+        output << "    return base\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_address_return_with_nonaddress_expression_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_return_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "function base() -> Address\n";
+        output << "    return \"text\"\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "address-returning function currently requires a structurally address-like expression");
+}
+
+void test_address_return_with_address_expression_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_return_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function base(buf: exclusive Buffer) -> Address\n";
+        output << "    return address_of(buf.data[0])\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -2797,6 +2895,10 @@ int main() {
     test_pointer_typed_binding_with_pointer_initializer_success();
     test_pointer_return_with_nonpointer_expression_failure();
     test_pointer_return_with_pointer_expression_success();
+    test_address_typed_binding_with_nonaddress_initializer_failure();
+    test_address_typed_binding_with_address_initializer_success();
+    test_address_return_with_nonaddress_expression_failure();
+    test_address_return_with_address_expression_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
