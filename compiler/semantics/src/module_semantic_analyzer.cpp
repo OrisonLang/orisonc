@@ -37,6 +37,12 @@ struct UnsafeMethodSignature {
     std::string method_name;
 };
 
+struct MethodReturnSignature {
+    std::string receiver_type;
+    std::string method_name;
+    std::string return_type_name;
+};
+
 class Analyzer {
 public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
@@ -44,6 +50,7 @@ public:
     auto analyze() -> SemanticAnalysisResult {
         collect_async_callable_names();
         collect_unsafe_callable_names();
+        collect_callable_return_types();
         collect_concurrency_marker_implementations();
         collect_choice_variant_arities();
 
@@ -226,6 +233,26 @@ private:
         return false;
     }
 
+    auto find_callable_return_type_name(std::string const& name) const -> std::string {
+        auto found = callable_return_types_.find(name);
+        if (found == callable_return_types_.end()) {
+            return {};
+        }
+        return found->second;
+    }
+
+    auto find_method_return_type_name(
+        std::string const& receiver_type,
+        std::string const& method_name
+    ) const -> std::string {
+        for (auto const& signature : method_return_signatures_) {
+            if (signature.receiver_type == receiver_type && signature.method_name == method_name) {
+                return signature.return_type_name;
+            }
+        }
+        return {};
+    }
+
     auto has_concurrency_marker_constraint(
         std::string const& type_name,
         ConcurrencyMarkerKind marker_kind
@@ -308,13 +335,28 @@ private:
         case syntax::ExpressionKind::integer_literal:
             return "Int64";
         case syntax::ExpressionKind::call:
-            if (!expression.left || expression.left->kind != syntax::ExpressionKind::name) {
+            if (!expression.left) {
+                return {};
+            }
+            if (expression.left->kind == syntax::ExpressionKind::member_access ||
+                expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+                auto receiver_type_name = infer_receiver_type_name_for_member_call(*expression.left);
+                if (receiver_type_name.empty()) {
+                    return {};
+                }
+
+                return find_method_return_type_name(receiver_type_name, expression.left->text);
+            }
+            if (expression.left->kind != syntax::ExpressionKind::name) {
                 return {};
             }
             if (expression.left->text == "address_of") {
                 return "Address";
             }
             if (expression.left->text == "Pointer") {
+                if (!expected_pointer_type_name_.empty()) {
+                    return expected_pointer_type_name_;
+                }
                 return "Pointer";
             }
             if (expression.left->text == "raw_offset" && !expression.arguments.empty()) {
@@ -328,7 +370,7 @@ private:
                 !expression.arguments.empty()) {
                 return pointer_pointee_type_name(infer_expression_type_name(expression.arguments.front()));
             }
-            return {};
+            return find_callable_return_type_name(expression.left->text);
         default:
             return {};
         }
@@ -596,8 +638,26 @@ private:
             return;
         }
 
-        if (expression.arguments.empty() ||
-            !is_structurally_address_like_expression(expression.arguments.front())) {
+        if (expression.arguments.empty()) {
+            diagnostics_.error(
+                expression.line,
+                intrinsic_name + " currently requires an address-like first argument"
+            );
+            return;
+        }
+
+        auto first_argument_type_name = infer_expression_type_name(expression.arguments.front());
+        if (first_argument_type_name.empty()) {
+            if (!is_structurally_address_like_expression(expression.arguments.front()) &&
+                !is_structurally_pointer_like_expression(expression.arguments.front())) {
+                diagnostics_.error(
+                    expression.line,
+                    intrinsic_name + " currently requires an address-like first argument"
+                );
+                return;
+            }
+        } else if (!is_address_type_name(first_argument_type_name) &&
+                   !is_pointer_type_name(first_argument_type_name)) {
             diagnostics_.error(
                 expression.line,
                 intrinsic_name + " currently requires an address-like first argument"
@@ -1009,6 +1069,41 @@ private:
         }
     }
 
+    void collect_callable_return_types() {
+        callable_return_types_.clear();
+        method_return_signatures_.clear();
+
+        for (auto const& function : module_.functions) {
+            callable_return_types_[function.name] = render_type_name(function.return_type);
+        }
+
+        for (auto const& implementation : module_.implementations) {
+            auto receiver_type_name = render_type_name(implementation.receiver_type);
+            for (auto const& method : implementation.methods) {
+                method_return_signatures_.push_back(MethodReturnSignature {
+                    .receiver_type = receiver_type_name,
+                    .method_name = method.name,
+                    .return_type_name = render_type_name(method.return_type),
+                });
+            }
+        }
+
+        for (auto const& extension : module_.extensions) {
+            auto receiver_type_name = render_type_name(extension.receiver_type);
+            for (auto const& method : extension.methods) {
+                method_return_signatures_.push_back(MethodReturnSignature {
+                    .receiver_type = receiver_type_name,
+                    .method_name = method.name,
+                    .return_type_name = render_type_name(method.return_type),
+                });
+            }
+        }
+
+        for (auto const& foreign_export : module_.foreign_exports) {
+            callable_return_types_[foreign_export.function.name] = render_type_name(foreign_export.function.return_type);
+        }
+    }
+
     void analyze_function(
         syntax::FunctionSyntax const& function,
         std::string receiver_type_name = {}
@@ -1017,10 +1112,12 @@ private:
         auto saved_unsafe_context_active = unsafe_context_active_;
         auto saved_current_function_returns_pointer = current_function_returns_pointer_;
         auto saved_current_function_returns_address = current_function_returns_address_;
+        auto saved_current_function_return_type_name = current_function_return_type_name_;
         receiver_context_active_ = !receiver_type_name.empty();
         unsafe_context_active_ = function.is_unsafe;
         current_function_returns_pointer_ = is_pointer_type(function.return_type);
         current_function_returns_address_ = is_address_type(function.return_type);
+        current_function_return_type_name_ = render_type_name(function.return_type);
 
         scope_stack_.clear();
         transferable_constraint_types_.clear();
@@ -1069,10 +1166,15 @@ private:
         unsafe_context_active_ = saved_unsafe_context_active;
         current_function_returns_pointer_ = saved_current_function_returns_pointer;
         current_function_returns_address_ = saved_current_function_returns_address;
+        current_function_return_type_name_ = saved_current_function_return_type_name;
     }
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
         if (statement.kind == syntax::StatementKind::let_binding || statement.kind == syntax::StatementKind::var_binding) {
+            auto saved_expected_pointer_type_name = expected_pointer_type_name_;
+            if (!statement.annotated_type.name.empty() && is_pointer_type(statement.annotated_type)) {
+                expected_pointer_type_name_ = render_type_name(statement.annotated_type);
+            }
             analyze_expression(statement.expression, in_async_function);
             auto type_name = !statement.annotated_type.name.empty()
                                  ? render_type_name(statement.annotated_type)
@@ -1102,6 +1204,7 @@ private:
                 false,
                 infer_expression_value_origin(statement.expression)
             );
+            expected_pointer_type_name_ = saved_expected_pointer_type_name;
             return;
         }
 
@@ -1119,6 +1222,10 @@ private:
         }
 
         if (statement.kind == syntax::StatementKind::return_statement) {
+            auto saved_expected_pointer_type_name = expected_pointer_type_name_;
+            if (current_function_returns_pointer_) {
+                expected_pointer_type_name_ = current_function_return_type_name_;
+            }
             analyze_expression(statement.expression, in_async_function, true);
             validate_return_expression(statement.expression, statement.line);
             if (current_function_returns_pointer_) {
@@ -1135,6 +1242,7 @@ private:
                     "address-returning function"
                 );
             }
+            expected_pointer_type_name_ = saved_expected_pointer_type_name;
         }
 
         if (statement.kind == syntax::StatementKind::break_statement) {
@@ -1628,6 +1736,8 @@ private:
     std::vector<AsyncMethodSignature> async_method_signatures_;
     std::vector<std::string> unsafe_callable_names_;
     std::vector<UnsafeMethodSignature> unsafe_method_signatures_;
+    std::unordered_map<std::string, std::string> callable_return_types_;
+    std::vector<MethodReturnSignature> method_return_signatures_;
     std::unordered_map<std::string, std::size_t> choice_variant_arities_;
     std::vector<std::string> transferable_constraint_types_;
     std::vector<std::string> shareable_constraint_types_;
@@ -1639,6 +1749,8 @@ private:
     bool unsafe_context_active_ = false;
     bool current_function_returns_pointer_ = false;
     bool current_function_returns_address_ = false;
+    std::string current_function_return_type_name_;
+    std::string expected_pointer_type_name_;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
     ConcurrencyExpressionKind current_capture_expression_kind_ = ConcurrencyExpressionKind::task;
