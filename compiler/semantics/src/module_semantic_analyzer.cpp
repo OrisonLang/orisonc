@@ -324,7 +324,8 @@ private:
                 }
                 return {};
             }
-            if (expression.left->text == "raw_read" && !expression.arguments.empty()) {
+            if ((expression.left->text == "raw_read" || expression.left->text == "volatile_read") &&
+                !expression.arguments.empty()) {
                 return pointer_pointee_type_name(infer_expression_type_name(expression.arguments.front()));
             }
             return {};
@@ -604,13 +605,14 @@ private:
             return;
         }
 
-        if (intrinsic_name == "raw_write" && expression.arguments.size() >= 2) {
+        if ((intrinsic_name == "raw_write" || intrinsic_name == "volatile_write") &&
+            expression.arguments.size() >= 2) {
             auto pointee_type_name = pointer_pointee_type_name(infer_expression_type_name(expression.arguments.front()));
             auto value_type_name = infer_expression_type_name(expression.arguments[1]);
             if (!pointee_type_name.empty() && !value_type_name.empty() && pointee_type_name != value_type_name) {
                 diagnostics_.error(
                     expression.line,
-                    "raw_write value type '" + value_type_name +
+                    intrinsic_name + " value type '" + value_type_name +
                         "' does not match pointer element type '" + pointee_type_name + "'"
                 );
             }

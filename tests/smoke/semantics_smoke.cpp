@@ -2093,6 +2093,102 @@ void test_raw_write_value_type_match_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_volatile_read_return_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_return_type_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>\n";
+        output << "    return volatile_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "pointer-returning function currently requires a structurally pointer-like expression");
+}
+
+void test_volatile_read_return_type_match_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_return_type_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte(p: Pointer<Byte>) -> Byte\n";
+        output << "    return volatile_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_volatile_write_value_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_volatile_write_value_type_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
+        output << "    volatile_write(p, value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "volatile_write value type 'Byte' does not match pointer element type 'UInt32'");
+}
+
+void test_volatile_write_value_type_match_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_volatile_write_value_type_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>, value: UInt32) -> Unit\n";
+        output << "    volatile_write(p, value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_address_typed_binding_with_nonaddress_initializer_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_typed_binding_failure.or";
@@ -3107,6 +3203,10 @@ int main() {
     test_raw_read_return_type_match_success();
     test_raw_write_value_type_mismatch_failure();
     test_raw_write_value_type_match_success();
+    test_volatile_read_return_type_mismatch_failure();
+    test_volatile_read_return_type_match_success();
+    test_volatile_write_value_type_mismatch_failure();
+    test_volatile_write_value_type_match_success();
     test_address_typed_binding_with_nonaddress_initializer_failure();
     test_address_typed_binding_with_address_initializer_success();
     test_address_typed_binding_with_wrong_typed_name_failure();
