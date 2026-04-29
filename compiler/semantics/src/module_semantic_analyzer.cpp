@@ -364,6 +364,18 @@ private:
         return SwitchPatternKind::value;
     }
 
+    auto switch_case_line(syntax::SwitchCaseSyntax const& switch_case) const -> std::size_t {
+        if (switch_case.pattern.line != 0) {
+            return switch_case.pattern.line;
+        }
+
+        if (!switch_case.statements.empty() && switch_case.statements.front()) {
+            return switch_case.statements.front()->line;
+        }
+
+        return 0;
+    }
+
     void validate_switch_pattern_arity(syntax::ExpressionSyntax const& pattern) {
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
@@ -818,8 +830,32 @@ private:
             auto has_default_case = false;
             auto saw_value_pattern = false;
             auto saw_constructor_pattern = false;
+            auto saw_semantic_default = false;
 
-            for (auto const& switch_case : statement.switch_cases) {
+            for (std::size_t case_index = 0; case_index < statement.switch_cases.size(); ++case_index) {
+                auto const& switch_case = statement.switch_cases[case_index];
+                auto valid_pattern = true;
+
+                if (switch_case.is_default) {
+                    if (saw_semantic_default) {
+                        diagnostics_.error(
+                            switch_case_line(switch_case),
+                            "switch statement may only contain one default case"
+                        );
+                        valid_pattern = false;
+                    }
+
+                    if (case_index + 1 != statement.switch_cases.size()) {
+                        diagnostics_.error(
+                            switch_case_line(switch_case),
+                            "switch default case must be the final case"
+                        );
+                        valid_pattern = false;
+                    }
+
+                    saw_semantic_default = true;
+                }
+
                 if (!switch_case.is_default) {
                     auto pattern_kind = classify_switch_pattern_kind(switch_case.pattern);
                     if (pattern_kind == SwitchPatternKind::value) {
@@ -839,7 +875,7 @@ private:
                     continue;
                 }
 
-                auto valid_pattern = analyze_switch_pattern(switch_case.pattern, in_async_function);
+                valid_pattern = analyze_switch_pattern(switch_case.pattern, in_async_function) && valid_pattern;
                 restore_scope_stack(baseline_scope);
                 push_scope();
                 if (!switch_case.is_default && valid_pattern) {
