@@ -379,6 +379,91 @@ void test_assignment_preserves_thread_origin_failure() {
            "await cannot be used with thread values; use .join() instead");
 }
 
+void test_ternary_preserves_async_call_origin_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_ternary_async_origin_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let left = request(url)\n";
+        output << "    let right = request(url)\n";
+        output << "    let pending = flag ? left : right\n";
+        output << "    return await pending\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_ternary_preserves_thread_origin_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_ternary_thread_origin_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function fetch(flag: Bool) -> Int64\n";
+        output << "    let left = thread\n";
+        output << "        1\n";
+        output << "    let right = thread\n";
+        output << "        2\n";
+        output << "    let worker = flag ? left : right\n";
+        output << "    return await worker\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message ==
+           "await cannot be used with thread values; use .join() instead");
+}
+
+void test_return_ternary_async_origin_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_return_ternary_async_origin_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let left = request(url)\n";
+        output << "    let right = request(url)\n";
+        output << "    return flag ? left : right\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().message ==
+           "return cannot forward task or async-call values; use await instead");
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -1177,6 +1262,9 @@ int main() {
     test_return_thread_value_failure();
     test_assignment_preserves_async_call_origin_success();
     test_assignment_preserves_thread_origin_failure();
+    test_ternary_preserves_async_call_origin_success();
+    test_ternary_preserves_thread_origin_failure();
+    test_return_ternary_async_origin_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

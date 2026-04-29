@@ -240,6 +240,14 @@ private:
         return infer_expression_type_name(*callee_expression.left);
     }
 
+    auto merge_value_origins(ValueOriginKind left, ValueOriginKind right) const -> ValueOriginKind {
+        if (left == right) {
+            return left;
+        }
+
+        return ValueOriginKind::none;
+    }
+
     auto infer_expression_value_origin(syntax::ExpressionSyntax const& expression) const -> ValueOriginKind {
         switch (expression.kind) {
         case syntax::ExpressionKind::task:
@@ -261,6 +269,14 @@ private:
             auto const* binding = find_binding(expression.text);
             return binding == nullptr ? ValueOriginKind::none : binding->value_origin;
         }
+        case syntax::ExpressionKind::ternary:
+            if (!expression.right || !expression.alternate) {
+                return ValueOriginKind::none;
+            }
+            return merge_value_origins(
+                infer_expression_value_origin(*expression.right),
+                infer_expression_value_origin(*expression.alternate)
+            );
         case syntax::ExpressionKind::cast:
             return expression.left ? infer_expression_value_origin(*expression.left) : ValueOriginKind::none;
         default:
@@ -622,11 +638,15 @@ private:
         }
 
         if (expression.right) {
-            analyze_expression(*expression.right, in_async_function);
+            auto right_allows_thread_value_name =
+                expression.kind == syntax::ExpressionKind::ternary;
+            analyze_expression(*expression.right, in_async_function, right_allows_thread_value_name);
         }
 
         if (expression.alternate) {
-            analyze_expression(*expression.alternate, in_async_function);
+            auto alternate_allows_thread_value_name =
+                expression.kind == syntax::ExpressionKind::ternary;
+            analyze_expression(*expression.alternate, in_async_function, alternate_allows_thread_value_name);
         }
     }
 

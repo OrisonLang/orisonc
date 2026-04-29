@@ -234,6 +234,62 @@ int main() {
     assert(assignment_async_origin_result.stderr_text.empty());
     assert(assignment_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto ternary_async_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_ternary_async_origin_success.or";
+    {
+        std::ofstream output(ternary_async_origin_path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let left = request(url)\n";
+        output << "    let right = request(url)\n";
+        output << "    let pending = flag ? left : right\n";
+        output << "    return await pending\n";
+    }
+
+    auto ternary_async_origin_path_text = ternary_async_origin_path.string();
+    std::array<char const*, 3> ternary_async_origin_argv {
+        "orisonc",
+        "--parse",
+        ternary_async_origin_path_text.c_str()
+    };
+    auto ternary_async_origin_result =
+        app.run(std::span<char const* const>(ternary_async_origin_argv.data(), ternary_async_origin_argv.size()));
+
+    assert(ternary_async_origin_result.exit_code == 0);
+    assert(ternary_async_origin_result.stderr_text.empty());
+    assert(ternary_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+
+    auto ternary_thread_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_ternary_thread_origin_failure.or";
+    {
+        std::ofstream output(ternary_thread_origin_path);
+        output << "package demo.await\n";
+        output << "async function fetch(flag: Bool) -> Int64\n";
+        output << "    let left = thread\n";
+        output << "        1\n";
+        output << "    let right = thread\n";
+        output << "        2\n";
+        output << "    let worker = flag ? left : right\n";
+        output << "    return await worker\n";
+    }
+
+    auto ternary_thread_origin_path_text = ternary_thread_origin_path.string();
+    std::array<char const*, 3> ternary_thread_origin_argv {
+        "orisonc",
+        "--parse",
+        ternary_thread_origin_path_text.c_str()
+    };
+    auto ternary_thread_origin_result =
+        app.run(std::span<char const* const>(ternary_thread_origin_argv.data(), ternary_thread_origin_argv.size()));
+
+    assert(ternary_thread_origin_result.exit_code == 1);
+    assert(ternary_thread_origin_result.stdout_text.empty());
+    assert(ternary_thread_origin_result.stderr_text.find(
+               "await cannot be used with thread values; use .join() instead"
+           ) != std::string::npos);
+
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
     {
         std::ofstream output(thread_path);
