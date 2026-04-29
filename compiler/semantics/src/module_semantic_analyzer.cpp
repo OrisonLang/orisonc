@@ -391,6 +391,19 @@ private:
                expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Pointer";
     }
 
+    void validate_pointer_constructor_operands(syntax::ExpressionSyntax const& expression) {
+        if (!is_pointer_constructor_call(expression)) {
+            return;
+        }
+
+        if (expression.arguments.size() != 1) {
+            diagnostics_.error(
+                expression.line,
+                "Pointer construction currently requires exactly one source argument"
+            );
+        }
+    }
+
     auto is_declared_unsafe_call(syntax::ExpressionSyntax const& expression) const -> bool {
         if (expression.kind != syntax::ExpressionKind::call || !expression.left) {
             return false;
@@ -1186,6 +1199,8 @@ private:
                 "Pointer construction is only valid inside unsafe functions or unsafe blocks"
             );
         }
+
+        validate_pointer_constructor_operands(expression);
 
         if (is_declared_unsafe_call(expression) && !unsafe_context_active_) {
             auto diagnostic_subject = std::string {"unsafe function"};

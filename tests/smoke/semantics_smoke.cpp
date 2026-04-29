@@ -1742,6 +1742,58 @@ void test_pointer_construction_inside_unsafe_block_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_pointer_construction_without_argument_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_noarg_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte() -> Byte\n";
+        output << "    let p = Pointer()\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "Pointer construction currently requires exactly one source argument");
+}
+
+void test_pointer_construction_with_multiple_arguments_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_multiarg_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte(addr: Address) -> Byte\n";
+        output << "    let p = Pointer(addr, addr)\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "Pointer construction currently requires exactly one source argument");
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -2589,6 +2641,8 @@ int main() {
     test_call_unsafe_function_inside_unsafe_block_success();
     test_pointer_construction_outside_unsafe_context_failure();
     test_pointer_construction_inside_unsafe_block_success();
+    test_pointer_construction_without_argument_failure();
+    test_pointer_construction_with_multiple_arguments_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
