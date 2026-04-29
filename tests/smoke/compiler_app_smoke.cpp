@@ -244,6 +244,89 @@ int main() {
     assert(unsafe_intrinsic_success_result.stderr_text.empty());
     assert(unsafe_intrinsic_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto address_of_shape_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_address_of_shape_failure.or";
+    {
+        std::ofstream output(address_of_shape_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function pointer() -> Address\n";
+        output << "    return address_of(1)\n";
+    }
+
+    auto address_of_shape_failure_path_text = address_of_shape_failure_path.string();
+    std::array<char const*, 3> address_of_shape_failure_argv {
+        "orisonc",
+        "--parse",
+        address_of_shape_failure_path_text.c_str()
+    };
+    auto address_of_shape_failure_result = app.run(
+        std::span<char const* const>(
+            address_of_shape_failure_argv.data(),
+            address_of_shape_failure_argv.size()
+        )
+    );
+
+    assert(address_of_shape_failure_result.exit_code == 1);
+    assert(address_of_shape_failure_result.stdout_text.empty());
+    assert(address_of_shape_failure_result.stderr_text.find(
+               "address_of currently requires an addressable storage operand"
+           ) != std::string::npos);
+
+    auto raw_offset_shape_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_raw_offset_shape_failure.or";
+    {
+        std::ofstream output(raw_offset_shape_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function advance() -> Address\n";
+        output << "    return raw_offset(1, 2)\n";
+    }
+
+    auto raw_offset_shape_failure_path_text = raw_offset_shape_failure_path.string();
+    std::array<char const*, 3> raw_offset_shape_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_offset_shape_failure_path_text.c_str()
+    };
+    auto raw_offset_shape_failure_result = app.run(
+        std::span<char const* const>(
+            raw_offset_shape_failure_argv.data(),
+            raw_offset_shape_failure_argv.size()
+        )
+    );
+
+    assert(raw_offset_shape_failure_result.exit_code == 1);
+    assert(raw_offset_shape_failure_result.stdout_text.empty());
+    assert(raw_offset_shape_failure_result.stderr_text.find(
+               "raw_offset currently requires an address-like first argument"
+           ) != std::string::npos);
+
+    auto nested_unsafe_operand_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_nested_unsafe_operand_success.or";
+    {
+        std::ofstream output(nested_unsafe_operand_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function poke(buf: exclusive Buffer, value: Byte) -> Unit\n";
+        output << "    let p = address_of(buf.data[0])\n";
+        output << "    raw_write(raw_offset(p, 1), value)\n";
+    }
+
+    auto nested_unsafe_operand_success_path_text = nested_unsafe_operand_success_path.string();
+    std::array<char const*, 3> nested_unsafe_operand_success_argv {
+        "orisonc",
+        "--parse",
+        nested_unsafe_operand_success_path_text.c_str()
+    };
+    auto nested_unsafe_operand_success_result = app.run(
+        std::span<char const* const>(
+            nested_unsafe_operand_success_argv.data(),
+            nested_unsafe_operand_success_argv.size()
+        )
+    );
+
+    assert(nested_unsafe_operand_success_result.exit_code == 0);
+    assert(nested_unsafe_operand_success_result.stderr_text.empty());
+    assert(nested_unsafe_operand_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);

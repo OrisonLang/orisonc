@@ -359,6 +359,59 @@ private:
                name == "volatile_read" || name == "volatile_write";
     }
 
+    auto is_addressable_storage_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+        switch (expression.kind) {
+        case syntax::ExpressionKind::name:
+            return true;
+        case syntax::ExpressionKind::member_access:
+        case syntax::ExpressionKind::index_access:
+            return expression.left && is_addressable_storage_expression(*expression.left);
+        default:
+            return false;
+        }
+    }
+
+    auto is_structurally_address_like_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+        if (expression.kind == syntax::ExpressionKind::name) {
+            return true;
+        }
+
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name) {
+            return expression.left->text == "address_of" || expression.left->text == "raw_offset";
+        }
+
+        return false;
+    }
+
+    void validate_unsafe_intrinsic_operands(syntax::ExpressionSyntax const& expression) {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
+            expression.left->kind != syntax::ExpressionKind::name ||
+            !is_unsafe_intrinsic_name(expression.left->text)) {
+            return;
+        }
+
+        auto const& intrinsic_name = expression.left->text;
+        if (intrinsic_name == "address_of") {
+            if (expression.arguments.empty() ||
+                !is_addressable_storage_expression(expression.arguments.front())) {
+                diagnostics_.error(
+                    expression.line,
+                    "address_of currently requires an addressable storage operand"
+                );
+            }
+            return;
+        }
+
+        if (expression.arguments.empty() ||
+            !is_structurally_address_like_expression(expression.arguments.front())) {
+            diagnostics_.error(
+                expression.line,
+                intrinsic_name + " currently requires an address-like first argument"
+            );
+        }
+    }
+
     auto classify_switch_pattern_kind(syntax::ExpressionSyntax const& pattern) const -> SwitchPatternKind {
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
@@ -1031,6 +1084,8 @@ private:
                     "' is only valid inside unsafe functions or unsafe blocks"
             );
         }
+
+        validate_unsafe_intrinsic_operands(expression);
 
         if (expression.kind == syntax::ExpressionKind::name) {
             if (expression.text == "this" && !receiver_context_active_) {
