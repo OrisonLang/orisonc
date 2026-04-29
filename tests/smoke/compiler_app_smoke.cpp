@@ -626,7 +626,38 @@ int main() {
     assert(switch_name_pattern_binding_failure_result.exit_code == 1);
     assert(switch_name_pattern_binding_failure_result.stdout_text.empty());
     assert(switch_name_pattern_binding_failure_result.stderr_text.find(
-               "concurrency expression cannot capture mutable outer local 'head'"
+               "switch constructor pattern 'head' does not match any declared choice variant"
+           ) != std::string::npos);
+
+    auto switch_call_pattern_unknown_variant_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_call_pattern_unknown_variant_failure.or";
+    {
+        std::ofstream output(switch_call_pattern_unknown_variant_failure_path);
+        output << "package demo.patterns\n";
+        output << "async function read(value: Int64) -> Int64\n";
+        output << "    switch value\n";
+        output << "        Missing(head) => 0\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_call_pattern_unknown_variant_failure_path_text =
+        switch_call_pattern_unknown_variant_failure_path.string();
+    std::array<char const*, 3> switch_call_pattern_unknown_variant_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_call_pattern_unknown_variant_failure_path_text.c_str()
+    };
+    auto switch_call_pattern_unknown_variant_failure_result = app.run(
+        std::span<char const* const>(
+            switch_call_pattern_unknown_variant_failure_argv.data(),
+            switch_call_pattern_unknown_variant_failure_argv.size()
+        )
+    );
+
+    assert(switch_call_pattern_unknown_variant_failure_result.exit_code == 1);
+    assert(switch_call_pattern_unknown_variant_failure_result.stdout_text.empty());
+    assert(switch_call_pattern_unknown_variant_failure_result.stderr_text.find(
+               "switch constructor pattern 'Missing' does not match any declared choice variant"
            ) != std::string::npos);
 
     auto switch_nested_constructor_pattern_shape_failure_path =

@@ -851,7 +851,7 @@ void test_switch_constructor_pattern_binds_case_local_names_success() {
     );
 }
 
-void test_switch_top_level_name_pattern_does_not_bind_case_local_name_failure() {
+void test_switch_top_level_name_pattern_rejects_unknown_variant_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_name_pattern_binding_failure.or";
     {
@@ -878,9 +878,37 @@ void test_switch_top_level_name_pattern_does_not_bind_case_local_name_failure() 
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().line == 5);
     assert(diagnostics.entries().front().message ==
-           "concurrency expression cannot capture mutable outer local 'head'");
+           "switch constructor pattern 'head' does not match any declared choice variant");
+}
+
+void test_switch_call_pattern_rejects_unknown_variant_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_call_pattern_unknown_variant_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "async function read(value: Int64) -> Int64\n";
+        output << "    switch value\n";
+        output << "        Missing(head) => 0\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 4);
+    assert(diagnostics.entries().front().message ==
+           "switch constructor pattern 'Missing' does not match any declared choice variant");
 }
 
 void test_switch_nested_constructor_pattern_binds_nested_names_success() {
@@ -1884,7 +1912,8 @@ int main() {
     test_guard_failure_path_does_not_override_async_origin_success();
     test_guard_failure_path_does_not_create_async_origin_failure();
     test_switch_constructor_pattern_binds_case_local_names_success();
-    test_switch_top_level_name_pattern_does_not_bind_case_local_name_failure();
+    test_switch_top_level_name_pattern_rejects_unknown_variant_failure();
+    test_switch_call_pattern_rejects_unknown_variant_failure();
     test_switch_nested_constructor_pattern_binds_nested_names_success();
     test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure();
     test_switch_constructor_pattern_rejects_duplicate_binding_names_failure();

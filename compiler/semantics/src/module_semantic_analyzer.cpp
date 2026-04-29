@@ -330,6 +330,10 @@ private:
                pattern.kind == syntax::ExpressionKind::boolean_literal;
     }
 
+    auto is_builtin_constructor_name(std::string const& name) const -> bool {
+        return name == "Some" || name == "Empty" || name == "Ok" || name == "Error";
+    }
+
     void validate_switch_pattern_arity(syntax::ExpressionSyntax const& pattern) {
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
@@ -362,12 +366,47 @@ private:
         }
     }
 
-    void analyze_switch_pattern(
+    auto validate_switch_pattern_head(syntax::ExpressionSyntax const& pattern) -> bool {
+        if (pattern.kind == syntax::ExpressionKind::call) {
+            if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
+                return true;
+            }
+
+            if (!choice_variant_arities_.contains(pattern.left->text) &&
+                !is_builtin_constructor_name(pattern.left->text)) {
+                diagnostics_.error(
+                    pattern.line,
+                    "switch constructor pattern '" + pattern.left->text + "' does not match any declared choice variant"
+                );
+                return false;
+            }
+            return true;
+        }
+
+        if (pattern.kind == syntax::ExpressionKind::name && !pattern.text.empty()) {
+            if (!choice_variant_arities_.contains(pattern.text) &&
+                !is_builtin_constructor_name(pattern.text) &&
+                pattern.text != "default") {
+                diagnostics_.error(
+                    pattern.line,
+                    "switch constructor pattern '" + pattern.text + "' does not match any declared choice variant"
+                );
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    auto analyze_switch_pattern(
         syntax::ExpressionSyntax const& pattern,
         bool in_async_function,
         bool in_constructor_payload = false
-    ) {
+    ) -> bool {
         if (!in_constructor_payload) {
+            if (!validate_switch_pattern_head(pattern)) {
+                return false;
+            }
             validate_switch_pattern_arity(pattern);
         }
 
@@ -377,13 +416,14 @@ private:
                     pattern.line,
                     "switch constructor pattern currently requires a constructor name"
                 );
-                return;
+                return false;
             }
 
+            auto valid = true;
             for (auto const& argument : pattern.arguments) {
                 if (argument.kind == syntax::ExpressionKind::name || is_literal_switch_subpattern(argument) ||
                     argument.kind == syntax::ExpressionKind::call) {
-                    analyze_switch_pattern(argument, in_async_function, true);
+                    valid = analyze_switch_pattern(argument, in_async_function, true) && valid;
                     continue;
                 }
 
@@ -391,16 +431,17 @@ private:
                     argument.line,
                     "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
                 );
+                valid = false;
             }
-            return;
+            return valid;
         }
 
         if (pattern.kind == syntax::ExpressionKind::name) {
-            return;
+            return true;
         }
 
         if (is_literal_switch_subpattern(pattern)) {
-            return;
+            return true;
         }
 
         if (in_constructor_payload) {
@@ -408,10 +449,11 @@ private:
                 pattern.line,
                 "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
             );
-            return;
+            return false;
         }
 
         analyze_expression(pattern, in_async_function);
+        return true;
     }
 
     void declare_switch_pattern_bindings(
@@ -746,15 +788,17 @@ private:
             auto has_default_case = false;
 
             for (auto const& switch_case : statement.switch_cases) {
-                analyze_switch_pattern(switch_case.pattern, in_async_function);
+                auto valid_pattern = analyze_switch_pattern(switch_case.pattern, in_async_function);
                 restore_scope_stack(baseline_scope);
                 push_scope();
-                if (!switch_case.is_default) {
+                if (!switch_case.is_default && valid_pattern) {
                     std::unordered_set<std::string> bound_names;
                     declare_switch_pattern_bindings(switch_case.pattern, false, bound_names);
                 }
-                for (auto const& consequence : switch_case.statements) {
-                    analyze_statement(*consequence, in_async_function);
+                if (valid_pattern) {
+                    for (auto const& consequence : switch_case.statements) {
+                        analyze_statement(*consequence, in_async_function);
+                    }
                 }
                 pop_scope();
                 case_results.push_back(snapshot_scope_stack());
