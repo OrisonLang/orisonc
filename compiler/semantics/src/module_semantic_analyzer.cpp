@@ -105,6 +105,10 @@ private:
         return rendered;
     }
 
+    auto is_pointer_type(syntax::TypeSyntax const& type) const -> bool {
+        return type.name == "Pointer";
+    }
+
     auto is_receiver_self_type_name(std::string const& type_name) const -> bool {
         return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
     }
@@ -457,6 +461,32 @@ private:
         }
 
         return false;
+    }
+
+    auto is_structurally_pointer_like_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+        if (expression.kind == syntax::ExpressionKind::name) {
+            return true;
+        }
+
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name) {
+            return expression.left->text == "Pointer" || expression.left->text == "raw_offset";
+        }
+
+        return false;
+    }
+
+    void validate_pointer_typed_expression(
+        syntax::ExpressionSyntax const& expression,
+        std::size_t line,
+        std::string_view context_description
+    ) {
+        if (!is_structurally_pointer_like_expression(expression)) {
+            diagnostics_.error(
+                line,
+                std::string(context_description) + " currently requires a structurally pointer-like expression"
+            );
+        }
     }
 
     void validate_unsafe_intrinsic_operands(syntax::ExpressionSyntax const& expression) {
@@ -883,8 +913,10 @@ private:
     ) {
         auto saved_receiver_context_active = receiver_context_active_;
         auto saved_unsafe_context_active = unsafe_context_active_;
+        auto saved_current_function_returns_pointer = current_function_returns_pointer_;
         receiver_context_active_ = !receiver_type_name.empty();
         unsafe_context_active_ = function.is_unsafe;
+        current_function_returns_pointer_ = is_pointer_type(function.return_type);
 
         scope_stack_.clear();
         transferable_constraint_types_.clear();
@@ -931,6 +963,7 @@ private:
         pop_scope();
         receiver_context_active_ = saved_receiver_context_active;
         unsafe_context_active_ = saved_unsafe_context_active;
+        current_function_returns_pointer_ = saved_current_function_returns_pointer;
     }
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
@@ -941,6 +974,13 @@ private:
                                  : infer_expression_type_name(statement.expression);
             if (!statement.annotated_type.name.empty()) {
                 validate_receiver_type_usage(statement.annotated_type, statement.line);
+                if (is_pointer_type(statement.annotated_type)) {
+                    validate_pointer_typed_expression(
+                        statement.expression,
+                        statement.line,
+                        "pointer-typed binding initializer"
+                    );
+                }
             }
             declare_binding(
                 statement.name,
@@ -969,6 +1009,13 @@ private:
         if (statement.kind == syntax::StatementKind::return_statement) {
             analyze_expression(statement.expression, in_async_function, true);
             validate_return_expression(statement.expression, statement.line);
+            if (current_function_returns_pointer_) {
+                validate_pointer_typed_expression(
+                    statement.expression,
+                    statement.line,
+                    "pointer-returning function"
+                );
+            }
         }
 
         if (statement.kind == syntax::StatementKind::break_statement) {
@@ -1471,6 +1518,7 @@ private:
     std::size_t loop_depth_ = 0;
     bool receiver_context_active_ = false;
     bool unsafe_context_active_ = false;
+    bool current_function_returns_pointer_ = false;
     static constexpr std::size_t no_capture_scope_depth = static_cast<std::size_t>(-1);
     std::size_t capture_scope_depth_ = no_capture_scope_depth;
     ConcurrencyExpressionKind current_capture_expression_kind_ = ConcurrencyExpressionKind::task;

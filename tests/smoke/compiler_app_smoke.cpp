@@ -554,6 +554,90 @@ int main() {
     assert(pointer_construction_addressof_success_result.stderr_text.empty());
     assert(pointer_construction_addressof_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto pointer_typed_binding_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_failure.or";
+    {
+        std::ofstream output(pointer_typed_binding_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte() -> Byte\n";
+        output << "    let p: Pointer<Byte> = \"text\"\n";
+        output << "    return 0\n";
+    }
+
+    auto pointer_typed_binding_failure_path_text = pointer_typed_binding_failure_path.string();
+    std::array<char const*, 3> pointer_typed_binding_failure_argv {
+        "orisonc",
+        "--parse",
+        pointer_typed_binding_failure_path_text.c_str()
+    };
+    auto pointer_typed_binding_failure_result = app.run(
+        std::span<char const* const>(
+            pointer_typed_binding_failure_argv.data(),
+            pointer_typed_binding_failure_argv.size()
+        )
+    );
+
+    assert(pointer_typed_binding_failure_result.exit_code == 1);
+    assert(pointer_typed_binding_failure_result.stdout_text.empty());
+    assert(pointer_typed_binding_failure_result.stderr_text.find(
+               "pointer-typed binding initializer currently requires a structurally pointer-like expression"
+           ) != std::string::npos);
+
+    auto pointer_return_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_return_failure.or";
+    {
+        std::ofstream output(pointer_return_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_ptr() -> Pointer<Byte>\n";
+        output << "    return \"text\"\n";
+    }
+
+    auto pointer_return_failure_path_text = pointer_return_failure_path.string();
+    std::array<char const*, 3> pointer_return_failure_argv {
+        "orisonc",
+        "--parse",
+        pointer_return_failure_path_text.c_str()
+    };
+    auto pointer_return_failure_result = app.run(
+        std::span<char const* const>(
+            pointer_return_failure_argv.data(),
+            pointer_return_failure_argv.size()
+        )
+    );
+
+    assert(pointer_return_failure_result.exit_code == 1);
+    assert(pointer_return_failure_result.stdout_text.empty());
+    assert(pointer_return_failure_result.stderr_text.find(
+               "pointer-returning function currently requires a structurally pointer-like expression"
+           ) != std::string::npos);
+
+    auto pointer_typed_binding_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_success.or";
+    {
+        std::ofstream output(pointer_typed_binding_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_byte(base: Pointer<Byte>) -> Byte\n";
+        output << "    let p: Pointer<Byte> = raw_offset(base, 1)\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto pointer_typed_binding_success_path_text = pointer_typed_binding_success_path.string();
+    std::array<char const*, 3> pointer_typed_binding_success_argv {
+        "orisonc",
+        "--parse",
+        pointer_typed_binding_success_path_text.c_str()
+    };
+    auto pointer_typed_binding_success_result = app.run(
+        std::span<char const* const>(
+            pointer_typed_binding_success_argv.data(),
+            pointer_typed_binding_success_argv.size()
+        )
+    );
+
+    assert(pointer_typed_binding_success_result.exit_code == 0);
+    assert(pointer_typed_binding_success_result.stderr_text.empty());
+    assert(pointer_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);

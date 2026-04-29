@@ -1844,6 +1844,104 @@ void test_pointer_construction_with_address_of_argument_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_pointer_typed_binding_with_nonpointer_initializer_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_typed_binding_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_byte() -> Byte\n";
+        output << "    let p: Pointer<Byte> = \"text\"\n";
+        output << "    return 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "pointer-typed binding initializer currently requires a structurally pointer-like expression");
+}
+
+void test_pointer_typed_binding_with_pointer_initializer_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_typed_binding_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_byte(base: Pointer<Byte>) -> Byte\n";
+        output << "    let p: Pointer<Byte> = raw_offset(base, 1)\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_pointer_return_with_nonpointer_expression_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_ptr() -> Pointer<Byte>\n";
+        output << "    return \"text\"\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "pointer-returning function currently requires a structurally pointer-like expression");
+}
+
+void test_pointer_return_with_pointer_expression_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
+        output << "    return raw_offset(base, 1)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -2695,6 +2793,10 @@ int main() {
     test_pointer_construction_with_multiple_arguments_failure();
     test_pointer_construction_with_nonaddress_argument_failure();
     test_pointer_construction_with_address_of_argument_success();
+    test_pointer_typed_binding_with_nonpointer_initializer_failure();
+    test_pointer_typed_binding_with_pointer_initializer_success();
+    test_pointer_return_with_nonpointer_expression_failure();
+    test_pointer_return_with_pointer_expression_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
