@@ -840,6 +840,62 @@ int main() {
     assert(address_typed_binding_success_result.stderr_text.empty());
     assert(address_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto raw_read_return_type_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_return_type_failure.or";
+    {
+        std::ofstream output(raw_read_return_type_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto raw_read_return_type_failure_path_text = raw_read_return_type_failure_path.string();
+    std::array<char const*, 3> raw_read_return_type_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_read_return_type_failure_path_text.c_str()
+    };
+    auto raw_read_return_type_failure_result = app.run(
+        std::span<char const* const>(
+            raw_read_return_type_failure_argv.data(),
+            raw_read_return_type_failure_argv.size()
+        )
+    );
+
+    assert(raw_read_return_type_failure_result.exit_code == 1);
+    assert(raw_read_return_type_failure_result.stdout_text.empty());
+    assert(raw_read_return_type_failure_result.stderr_text.find(
+               "pointer-returning function currently requires a structurally pointer-like expression"
+           ) != std::string::npos);
+
+    auto raw_write_value_type_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_value_type_failure.or";
+    {
+        std::ofstream output(raw_write_value_type_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
+        output << "    raw_write(p, value)\n";
+    }
+
+    auto raw_write_value_type_failure_path_text = raw_write_value_type_failure_path.string();
+    std::array<char const*, 3> raw_write_value_type_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_write_value_type_failure_path_text.c_str()
+    };
+    auto raw_write_value_type_failure_result = app.run(
+        std::span<char const* const>(
+            raw_write_value_type_failure_argv.data(),
+            raw_write_value_type_failure_argv.size()
+        )
+    );
+
+    assert(raw_write_value_type_failure_result.exit_code == 1);
+    assert(raw_write_value_type_failure_result.stdout_text.empty());
+    assert(raw_write_value_type_failure_result.stderr_text.find(
+               "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
+           ) != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);

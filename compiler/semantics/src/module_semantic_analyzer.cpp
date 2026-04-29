@@ -121,6 +121,19 @@ private:
         return type_name == "Address";
     }
 
+    auto pointer_pointee_type_name(std::string const& type_name) const -> std::string {
+        if (!is_pointer_type_name(type_name)) {
+            return {};
+        }
+
+        constexpr std::string_view prefix = "Pointer<";
+        if (type_name.rfind(prefix, 0) != 0 || type_name.size() <= prefix.size() || type_name.back() != '>') {
+            return {};
+        }
+
+        return type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1);
+    }
+
     auto is_receiver_self_type_name(std::string const& type_name) const -> bool {
         return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
     }
@@ -310,6 +323,9 @@ private:
                     return source_type_name;
                 }
                 return {};
+            }
+            if (expression.left->text == "raw_read" && !expression.arguments.empty()) {
+                return pointer_pointee_type_name(infer_expression_type_name(expression.arguments.front()));
             }
             return {};
         default:
@@ -585,6 +601,19 @@ private:
                 expression.line,
                 intrinsic_name + " currently requires an address-like first argument"
             );
+            return;
+        }
+
+        if (intrinsic_name == "raw_write" && expression.arguments.size() >= 2) {
+            auto pointee_type_name = pointer_pointee_type_name(infer_expression_type_name(expression.arguments.front()));
+            auto value_type_name = infer_expression_type_name(expression.arguments[1]);
+            if (!pointee_type_name.empty() && !value_type_name.empty() && pointee_type_name != value_type_name) {
+                diagnostics_.error(
+                    expression.line,
+                    "raw_write value type '" + value_type_name +
+                        "' does not match pointer element type '" + pointee_type_name + "'"
+                );
+            }
         }
     }
 
