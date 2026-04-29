@@ -946,6 +946,68 @@ void test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failur
            "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern");
 }
 
+void test_switch_constructor_pattern_rejects_duplicate_binding_names_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_duplicate_binding_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "async function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Node(head, head) => 0\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().message ==
+           "switch constructor pattern cannot bind 'head' more than once");
+}
+
+void test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_switch_nested_constructor_pattern_duplicate_binding_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "async function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Node(head, Node(head, tail)) => 0\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().message ==
+           "switch constructor pattern cannot bind 'head' more than once");
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -1763,6 +1825,8 @@ int main() {
     test_switch_top_level_name_pattern_does_not_bind_case_local_name_failure();
     test_switch_nested_constructor_pattern_binds_nested_names_success();
     test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure();
+    test_switch_constructor_pattern_rejects_duplicate_binding_names_failure();
+    test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

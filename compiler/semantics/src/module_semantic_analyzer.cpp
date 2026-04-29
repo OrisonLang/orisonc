@@ -2,6 +2,7 @@
 
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 namespace orison::semantics {
@@ -375,15 +376,26 @@ private:
         analyze_expression(pattern, in_async_function);
     }
 
-    void declare_switch_pattern_bindings(syntax::ExpressionSyntax const& pattern, bool bind_name) {
+    void declare_switch_pattern_bindings(
+        syntax::ExpressionSyntax const& pattern,
+        bool bind_name,
+        std::unordered_set<std::string>& bound_names
+    ) {
         if (pattern.kind == syntax::ExpressionKind::call) {
             for (auto const& argument : pattern.arguments) {
-                declare_switch_pattern_bindings(argument, true);
+                declare_switch_pattern_bindings(argument, true, bound_names);
             }
             return;
         }
 
         if (bind_name && pattern.kind == syntax::ExpressionKind::name && !pattern.text.empty()) {
+            if (!bound_names.insert(pattern.text).second) {
+                diagnostics_.error(
+                    pattern.line,
+                    "switch constructor pattern cannot bind '" + pattern.text + "' more than once"
+                );
+                return;
+            }
             declare_binding(pattern.text, {}, false);
         }
     }
@@ -691,7 +703,8 @@ private:
                 restore_scope_stack(baseline_scope);
                 push_scope();
                 if (!switch_case.is_default) {
-                    declare_switch_pattern_bindings(switch_case.pattern, false);
+                    std::unordered_set<std::string> bound_names;
+                    declare_switch_pattern_bindings(switch_case.pattern, false, bound_names);
                 }
                 for (auto const& consequence : switch_case.statements) {
                     analyze_statement(*consequence, in_async_function);
