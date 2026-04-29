@@ -21,6 +21,12 @@ enum class ValueOriginKind {
     async_call,
 };
 
+enum class SwitchPatternKind {
+    value,
+    constructor,
+    invalid,
+};
+
 struct AsyncMethodSignature {
     std::string receiver_type;
     std::string method_name;
@@ -332,6 +338,30 @@ private:
 
     auto is_builtin_constructor_name(std::string const& name) const -> bool {
         return name == "Some" || name == "Empty" || name == "Ok" || name == "Error";
+    }
+
+    auto classify_switch_pattern_kind(syntax::ExpressionSyntax const& pattern) const -> SwitchPatternKind {
+        if (pattern.kind == syntax::ExpressionKind::call) {
+            if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
+                return SwitchPatternKind::invalid;
+            }
+
+            if (choice_variant_arities_.contains(pattern.left->text) || is_builtin_constructor_name(pattern.left->text)) {
+                return SwitchPatternKind::constructor;
+            }
+
+            return SwitchPatternKind::invalid;
+        }
+
+        if (pattern.kind == syntax::ExpressionKind::name) {
+            if (choice_variant_arities_.contains(pattern.text) || is_builtin_constructor_name(pattern.text)) {
+                return SwitchPatternKind::constructor;
+            }
+
+            return SwitchPatternKind::invalid;
+        }
+
+        return SwitchPatternKind::value;
     }
 
     void validate_switch_pattern_arity(syntax::ExpressionSyntax const& pattern) {
@@ -786,8 +816,29 @@ private:
             auto baseline_scope = snapshot_scope_stack();
             std::vector<ScopeSnapshot> case_results;
             auto has_default_case = false;
+            auto saw_value_pattern = false;
+            auto saw_constructor_pattern = false;
 
             for (auto const& switch_case : statement.switch_cases) {
+                if (!switch_case.is_default) {
+                    auto pattern_kind = classify_switch_pattern_kind(switch_case.pattern);
+                    if (pattern_kind == SwitchPatternKind::value) {
+                        saw_value_pattern = true;
+                    } else if (pattern_kind == SwitchPatternKind::constructor) {
+                        saw_constructor_pattern = true;
+                    }
+                }
+
+                if (!switch_case.is_default && saw_value_pattern && saw_constructor_pattern) {
+                    diagnostics_.error(
+                        switch_case.pattern.line,
+                        "switch cannot mix value patterns with constructor patterns"
+                    );
+                    case_results.push_back(baseline_scope);
+                    has_default_case = has_default_case || switch_case.is_default;
+                    continue;
+                }
+
                 auto valid_pattern = analyze_switch_pattern(switch_case.pattern, in_async_function);
                 restore_scope_stack(baseline_scope);
                 push_scope();

@@ -834,6 +834,78 @@ int main() {
                "switch constructor pattern 'Empty' expects 0 payload values but received 1"
            ) != std::string::npos);
 
+    auto switch_pattern_mix_constructor_value_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_pattern_mix_constructor_value_failure.or";
+    {
+        std::ofstream output(switch_pattern_mix_constructor_value_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Empty => 0\n";
+        output << "        1 => 1\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_pattern_mix_constructor_value_failure_path_text =
+        switch_pattern_mix_constructor_value_failure_path.string();
+    std::array<char const*, 3> switch_pattern_mix_constructor_value_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_pattern_mix_constructor_value_failure_path_text.c_str()
+    };
+    auto switch_pattern_mix_constructor_value_failure_result = app.run(
+        std::span<char const* const>(
+            switch_pattern_mix_constructor_value_failure_argv.data(),
+            switch_pattern_mix_constructor_value_failure_argv.size()
+        )
+    );
+
+    assert(switch_pattern_mix_constructor_value_failure_result.exit_code == 1);
+    assert(switch_pattern_mix_constructor_value_failure_result.stdout_text.empty());
+    assert(switch_pattern_mix_constructor_value_failure_result.stderr_text.find(
+               "switch cannot mix value patterns with constructor patterns"
+           ) != std::string::npos);
+
+    auto switch_pattern_mix_value_constructor_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_pattern_mix_value_constructor_failure.or";
+    {
+        std::ofstream output(switch_pattern_mix_value_constructor_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice MaybeInt\n";
+        output << "    Empty\n";
+        output << "    Some(value: Int64)\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        Some(value) => value\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_pattern_mix_value_constructor_failure_path_text =
+        switch_pattern_mix_value_constructor_failure_path.string();
+    std::array<char const*, 3> switch_pattern_mix_value_constructor_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_pattern_mix_value_constructor_failure_path_text.c_str()
+    };
+    auto switch_pattern_mix_value_constructor_failure_result = app.run(
+        std::span<char const* const>(
+            switch_pattern_mix_value_constructor_failure_argv.data(),
+            switch_pattern_mix_value_constructor_failure_argv.size()
+        )
+    );
+
+    assert(switch_pattern_mix_value_constructor_failure_result.exit_code == 1);
+    assert(switch_pattern_mix_value_constructor_failure_result.stdout_text.empty());
+    assert(switch_pattern_mix_value_constructor_failure_result.stderr_text.find(
+               "switch cannot mix value patterns with constructor patterns"
+           ) != std::string::npos);
+
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
     {
         std::ofstream output(thread_path);

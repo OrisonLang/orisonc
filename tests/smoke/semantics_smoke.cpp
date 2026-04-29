@@ -1098,6 +1098,70 @@ void test_switch_constructor_pattern_rejects_extra_payload_values_failure() {
            "switch constructor pattern 'Empty' expects 0 payload values but received 1");
 }
 
+void test_switch_rejects_constructor_then_value_pattern_mix_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_pattern_mix_constructor_value_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Empty => 0\n";
+        output << "        1 => 1\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message ==
+           "switch cannot mix value patterns with constructor patterns");
+}
+
+void test_switch_rejects_value_then_constructor_pattern_mix_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_pattern_mix_value_constructor_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice MaybeInt\n";
+        output << "    Empty\n";
+        output << "    Some(value: Int64)\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        Some(value) => value\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message ==
+           "switch cannot mix value patterns with constructor patterns");
+}
+
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
     {
@@ -1920,6 +1984,8 @@ int main() {
     test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure();
     test_switch_constructor_pattern_rejects_missing_payload_values_failure();
     test_switch_constructor_pattern_rejects_extra_payload_values_failure();
+    test_switch_rejects_constructor_then_value_pattern_mix_failure();
+    test_switch_rejects_value_then_constructor_pattern_mix_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
