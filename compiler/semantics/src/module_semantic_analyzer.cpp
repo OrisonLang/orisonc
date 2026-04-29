@@ -281,6 +281,20 @@ private:
         return origin == ValueOriginKind::task || origin == ValueOriginKind::async_call;
     }
 
+    auto validate_await_operand(syntax::ExpressionSyntax const& operand, std::size_t line) -> void {
+        auto origin = infer_expression_value_origin(operand);
+        if (origin == ValueOriginKind::task || origin == ValueOriginKind::async_call) {
+            return;
+        }
+
+        if (origin == ValueOriginKind::thread) {
+            diagnostics_.error(line, "await cannot be used with thread values; use .join() instead");
+            return;
+        }
+
+        diagnostics_.error(line, "await expression currently requires a task value or declared async call result");
+    }
+
     auto is_declared_async_call(syntax::ExpressionSyntax const& expression) const -> bool {
         if (expression.kind != syntax::ExpressionKind::call || !expression.left) {
             return false;
@@ -305,6 +319,25 @@ private:
 
     auto is_structurally_thread_expression(syntax::ExpressionSyntax const& expression) const -> bool {
         return infer_expression_value_origin(expression) == ValueOriginKind::thread;
+    }
+
+    auto validate_join_receiver(syntax::ExpressionSyntax const& receiver_expression, std::size_t line) -> void {
+        auto origin = infer_expression_value_origin(receiver_expression);
+        if (origin == ValueOriginKind::thread) {
+            return;
+        }
+
+        if (origin == ValueOriginKind::task) {
+            diagnostics_.error(line, "join() cannot be used with task values; use await instead");
+            return;
+        }
+
+        if (origin == ValueOriginKind::async_call) {
+            diagnostics_.error(line, "join() cannot be used with declared async call results; use await instead");
+            return;
+        }
+
+        diagnostics_.error(line, "join() currently requires a thread value receiver");
     }
 
     auto infer_statement_value_type_name(syntax::StatementSyntax const& statement) const -> std::string {
@@ -477,12 +510,8 @@ private:
             diagnostics_.error(expression.line, "await expression is only valid inside async functions");
         }
 
-        if (expression.kind == syntax::ExpressionKind::unary && expression.text == "await" && expression.left &&
-            !is_structurally_awaitable_expression(*expression.left)) {
-            diagnostics_.error(
-                expression.line,
-                "await expression currently requires a task value or declared async call result"
-            );
+        if (expression.kind == syntax::ExpressionKind::unary && expression.text == "await" && expression.left) {
+            validate_await_operand(*expression.left, expression.line);
         }
 
         if (expression.kind == syntax::ExpressionKind::task && !in_async_function) {
@@ -492,10 +521,7 @@ private:
         if (expression.kind == syntax::ExpressionKind::call && expression.left &&
             expression.left->kind == syntax::ExpressionKind::member_access && expression.left->text == "join" &&
             expression.left->left) {
-            if (!is_structurally_thread_expression(*expression.left->left)) {
-                diagnostics_.error(expression.line, "join() currently requires a thread value receiver");
-            }
-
+            validate_join_receiver(*expression.left->left, expression.line);
             analyze_expression(*expression.left->left, in_async_function, true);
             for (auto const& argument : expression.arguments) {
                 analyze_expression(argument, in_async_function);
@@ -548,7 +574,9 @@ private:
         }
 
         if (expression.left) {
-            analyze_expression(*expression.left, in_async_function, allow_thread_value_name);
+            auto left_allows_thread_value_name =
+                allow_thread_value_name || (expression.kind == syntax::ExpressionKind::unary && expression.text == "await");
+            analyze_expression(*expression.left, in_async_function, left_allows_thread_value_name);
         }
 
         if (expression.right) {

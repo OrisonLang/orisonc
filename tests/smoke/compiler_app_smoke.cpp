@@ -111,6 +111,32 @@ int main() {
                "await expression currently requires a task value or declared async call result"
            ) != std::string::npos);
 
+    auto await_thread_value_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_await_thread_value_failure.or";
+    {
+        std::ofstream output(await_thread_value_path);
+        output << "package demo.await\n";
+        output << "async function fetch() -> Int64\n";
+        output << "    let worker = thread\n";
+        output << "        1\n";
+        output << "    return await worker\n";
+    }
+
+    auto await_thread_value_path_text = await_thread_value_path.string();
+    std::array<char const*, 3> await_thread_value_argv {
+        "orisonc",
+        "--parse",
+        await_thread_value_path_text.c_str()
+    };
+    auto await_thread_value_result =
+        app.run(std::span<char const* const>(await_thread_value_argv.data(), await_thread_value_argv.size()));
+
+    assert(await_thread_value_result.exit_code == 1);
+    assert(await_thread_value_result.stdout_text.empty());
+    assert(await_thread_value_result.stderr_text.find(
+               "await cannot be used with thread values; use .join() instead"
+           ) != std::string::npos);
+
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
         std::ofstream output(task_path);
@@ -275,7 +301,34 @@ int main() {
     assert(join_receiver_result.exit_code == 1);
     assert(join_receiver_result.stdout_text.empty());
     assert(join_receiver_result.stderr_text.find(
-               "join() currently requires a thread value receiver"
+               "join() cannot be used with task values; use await instead"
+           ) != std::string::npos);
+
+    auto join_async_call_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_join_async_call_failure.or";
+    {
+        std::ofstream output(join_async_call_path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let pending = request(url)\n";
+        output << "    return pending.join()\n";
+    }
+
+    auto join_async_call_path_text = join_async_call_path.string();
+    std::array<char const*, 3> join_async_call_argv {
+        "orisonc",
+        "--parse",
+        join_async_call_path_text.c_str()
+    };
+    auto join_async_call_result =
+        app.run(std::span<char const* const>(join_async_call_argv.data(), join_async_call_argv.size()));
+
+    assert(join_async_call_result.exit_code == 1);
+    assert(join_async_call_result.stdout_text.empty());
+    assert(join_async_call_result.stderr_text.find(
+               "join() cannot be used with declared async call results; use await instead"
            ) != std::string::npos);
 
     auto thread_value_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";

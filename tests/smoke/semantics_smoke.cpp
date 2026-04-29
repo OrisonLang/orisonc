@@ -155,12 +155,10 @@ void test_await_thread_value_failure() {
     orison::semantics::ModuleSemanticAnalyzer analyzer;
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 2);
-    assert(diagnostics.entries()[0].line == 5);
-    assert(diagnostics.entries()[0].message ==
-           "await expression currently requires a task value or declared async call result");
-    assert(diagnostics.entries()[1].line == 5);
-    assert(diagnostics.entries()[1].message == "thread value 'worker' must be consumed with .join()");
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "await cannot be used with thread values; use .join() instead");
 }
 
 void test_await_non_async_call_value_failure() {
@@ -341,7 +339,35 @@ void test_join_non_thread_receiver_failure() {
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message == "join() currently requires a thread value receiver");
+    assert(diagnostics.entries().front().message == "join() cannot be used with task values; use await instead");
+}
+
+void test_join_async_call_receiver_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_join_async_call_receiver_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    let pending = request(url)\n";
+        output << "    return pending.join()\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 6);
+    assert(diagnostics.entries().front().message ==
+           "join() cannot be used with declared async call results; use await instead");
 }
 
 void test_thread_value_without_join_failure() {
@@ -1015,6 +1041,7 @@ int main() {
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
     test_join_non_thread_receiver_failure();
+    test_join_async_call_receiver_failure();
     test_thread_value_without_join_failure();
     test_concurrency_capture_classification_success();
     test_thread_capture_owned_parameter_type_failure();
