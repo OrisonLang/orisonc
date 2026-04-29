@@ -430,7 +430,7 @@ void test_ternary_preserves_thread_origin_failure() {
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 9);
+    assert(diagnostics.entries().front().line == 8);
     assert(diagnostics.entries().front().message ==
            "await cannot be used with thread values; use .join() instead");
 }
@@ -809,9 +809,78 @@ void test_guard_failure_path_does_not_create_async_origin_failure() {
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().line == 9);
     assert(diagnostics.entries().front().message ==
            "await expression currently requires a task value or declared async call result");
+}
+
+void test_switch_constructor_pattern_binds_case_local_names_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_binding_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "async function sum(xs: List<Int64>) -> Int64\n";
+        output << "    var head = 0\n";
+        output << "    switch xs\n";
+        output << "        Empty => 0\n";
+        output << "        Node(head, tail) =>\n";
+        output << "            let request_task = task\n";
+        output << "                head\n";
+        output << "            return await request_task\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+    assert(diagnostics.concurrency_captures.size() == 1);
+    assert(diagnostics.concurrency_captures.front().name == "head");
+    assert(
+        diagnostics.concurrency_captures.front().capture_kind ==
+        orison::semantics::ConcurrencyCaptureKind::immutable_outer_local
+    );
+}
+
+void test_switch_top_level_name_pattern_does_not_bind_case_local_name_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_name_pattern_binding_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "async function read(value: Int64) -> Int64\n";
+        output << "    var head = 0\n";
+        output << "    switch value\n";
+        output << "        head =>\n";
+        output << "            let request_task = task\n";
+        output << "                head\n";
+        output << "            return await request_task\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().message ==
+           "concurrency expression cannot capture mutable outer local 'head'");
 }
 
 void test_task_outside_async_function_failure() {
@@ -1627,6 +1696,8 @@ int main() {
     test_for_loop_preserves_thread_origin_failure();
     test_guard_failure_path_does_not_override_async_origin_success();
     test_guard_failure_path_does_not_create_async_origin_failure();
+    test_switch_constructor_pattern_binds_case_local_names_success();
+    test_switch_top_level_name_pattern_does_not_bind_case_local_name_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

@@ -321,6 +321,36 @@ private:
         }
     }
 
+    void analyze_switch_pattern(syntax::ExpressionSyntax const& pattern, bool in_async_function) {
+        if (pattern.kind == syntax::ExpressionKind::call) {
+            for (auto const& argument : pattern.arguments) {
+                if (argument.kind == syntax::ExpressionKind::call) {
+                    analyze_switch_pattern(argument, in_async_function);
+                }
+            }
+            return;
+        }
+
+        if (pattern.kind == syntax::ExpressionKind::name) {
+            return;
+        }
+
+        analyze_expression(pattern, in_async_function);
+    }
+
+    void declare_switch_pattern_bindings(syntax::ExpressionSyntax const& pattern, bool bind_name) {
+        if (pattern.kind == syntax::ExpressionKind::call) {
+            for (auto const& argument : pattern.arguments) {
+                declare_switch_pattern_bindings(argument, true);
+            }
+            return;
+        }
+
+        if (bind_name && pattern.kind == syntax::ExpressionKind::name && !pattern.text.empty()) {
+            declare_binding(pattern.text, {}, false);
+        }
+    }
+
     auto is_value_return_statement(syntax::StatementSyntax const& statement) const -> bool {
         return statement.kind == syntax::StatementKind::return_statement &&
                (!statement.expression.text.empty() || statement.expression.left || statement.expression.right ||
@@ -620,9 +650,12 @@ private:
             auto has_default_case = false;
 
             for (auto const& switch_case : statement.switch_cases) {
-                analyze_expression(switch_case.pattern, in_async_function);
+                analyze_switch_pattern(switch_case.pattern, in_async_function);
                 restore_scope_stack(baseline_scope);
                 push_scope();
+                if (!switch_case.is_default) {
+                    declare_switch_pattern_bindings(switch_case.pattern, false);
+                }
                 for (auto const& consequence : switch_case.statements) {
                     analyze_statement(*consequence, in_async_function);
                 }

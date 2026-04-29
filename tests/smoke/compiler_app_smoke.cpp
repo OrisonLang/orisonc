@@ -402,6 +402,41 @@ int main() {
     assert(guard_async_origin_result.stderr_text.empty());
     assert(guard_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto switch_constructor_pattern_binding_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_constructor_pattern_binding_success.or";
+    {
+        std::ofstream output(switch_constructor_pattern_binding_path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "async function sum(xs: List<Int64>) -> Int64\n";
+        output << "    var head = 0\n";
+        output << "    switch xs\n";
+        output << "        Empty => 0\n";
+        output << "        Node(head, tail) =>\n";
+        output << "            let request_task = task\n";
+        output << "                head\n";
+        output << "            return await request_task\n";
+    }
+
+    auto switch_constructor_pattern_binding_path_text = switch_constructor_pattern_binding_path.string();
+    std::array<char const*, 3> switch_constructor_pattern_binding_argv {
+        "orisonc",
+        "--parse",
+        switch_constructor_pattern_binding_path_text.c_str()
+    };
+    auto switch_constructor_pattern_binding_result = app.run(
+        std::span<char const* const>(
+            switch_constructor_pattern_binding_argv.data(),
+            switch_constructor_pattern_binding_argv.size()
+        )
+    );
+
+    assert(switch_constructor_pattern_binding_result.exit_code == 0);
+    assert(switch_constructor_pattern_binding_result.stderr_text.empty());
+    assert(switch_constructor_pattern_binding_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto switch_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_thread_origin_failure.or";
     {
@@ -523,6 +558,40 @@ int main() {
     assert(guard_async_missing_origin_result.stdout_text.empty());
     assert(guard_async_missing_origin_result.stderr_text.find(
                "await expression currently requires a task value or declared async call result"
+           ) != std::string::npos);
+
+    auto switch_name_pattern_binding_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_name_pattern_binding_failure.or";
+    {
+        std::ofstream output(switch_name_pattern_binding_failure_path);
+        output << "package demo.patterns\n";
+        output << "async function read(value: Int64) -> Int64\n";
+        output << "    var head = 0\n";
+        output << "    switch value\n";
+        output << "        head =>\n";
+        output << "            let request_task = task\n";
+        output << "                head\n";
+        output << "            return await request_task\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_name_pattern_binding_failure_path_text = switch_name_pattern_binding_failure_path.string();
+    std::array<char const*, 3> switch_name_pattern_binding_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_name_pattern_binding_failure_path_text.c_str()
+    };
+    auto switch_name_pattern_binding_failure_result = app.run(
+        std::span<char const* const>(
+            switch_name_pattern_binding_failure_argv.data(),
+            switch_name_pattern_binding_failure_argv.size()
+        )
+    );
+
+    assert(switch_name_pattern_binding_failure_result.exit_code == 1);
+    assert(switch_name_pattern_binding_failure_result.stdout_text.empty());
+    assert(switch_name_pattern_binding_failure_result.stderr_text.find(
+               "concurrency expression cannot capture mutable outer local 'head'"
            ) != std::string::npos);
 
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
