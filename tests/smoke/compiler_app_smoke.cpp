@@ -354,36 +354,6 @@ int main() {
                "call to unsafe function 'read_word' is only valid inside unsafe functions or unsafe blocks"
            ) != std::string::npos);
 
-    auto unsafe_method_failure_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_method_failure.or";
-    {
-        std::ofstream output(unsafe_method_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: [Byte]\n";
-        output << "extend Buffer\n";
-        output << "    unsafe function scrub(this: exclusive This) -> Unit\n";
-        output << "        return\n";
-        output << "function clear(buf: Buffer) -> Unit\n";
-        output << "    buf.scrub()\n";
-    }
-
-    auto unsafe_method_failure_path_text = unsafe_method_failure_path.string();
-    std::array<char const*, 3> unsafe_method_failure_argv {
-        "orisonc",
-        "--parse",
-        unsafe_method_failure_path_text.c_str()
-    };
-    auto unsafe_method_failure_result = app.run(
-        std::span<char const* const>(unsafe_method_failure_argv.data(), unsafe_method_failure_argv.size())
-    );
-
-    assert(unsafe_method_failure_result.exit_code == 1);
-    assert(unsafe_method_failure_result.stdout_text.empty());
-    assert(unsafe_method_failure_result.stderr_text.find(
-               "call to unsafe method 'scrub' is only valid inside unsafe functions or unsafe blocks"
-           ) != std::string::npos);
-
     auto unsafe_call_block_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_call_block_success.or";
     {
@@ -412,6 +382,63 @@ int main() {
     assert(unsafe_call_block_success_result.exit_code == 0);
     assert(unsafe_call_block_success_result.stderr_text.empty());
     assert(unsafe_call_block_success_result.stdout_text.find("parsed ") != std::string::npos);
+
+    auto pointer_construction_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_failure.or";
+    {
+        std::ofstream output(pointer_construction_failure_path);
+        output << "package demo.unsafe\n";
+        output << "function read_byte(addr: Address) -> Byte\n";
+        output << "    let p = Pointer(addr)\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto pointer_construction_failure_path_text = pointer_construction_failure_path.string();
+    std::array<char const*, 3> pointer_construction_failure_argv {
+        "orisonc",
+        "--parse",
+        pointer_construction_failure_path_text.c_str()
+    };
+    auto pointer_construction_failure_result = app.run(
+        std::span<char const* const>(
+            pointer_construction_failure_argv.data(),
+            pointer_construction_failure_argv.size()
+        )
+    );
+
+    assert(pointer_construction_failure_result.exit_code == 1);
+    assert(pointer_construction_failure_result.stdout_text.empty());
+    assert(pointer_construction_failure_result.stderr_text.find(
+               "Pointer construction is only valid inside unsafe functions or unsafe blocks"
+           ) != std::string::npos);
+
+    auto pointer_construction_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_success.or";
+    {
+        std::ofstream output(pointer_construction_success_path);
+        output << "package demo.unsafe\n";
+        output << "function scribble(addr: Address) -> Unit\n";
+        output << "    unsafe\n";
+        output << "        let p = Pointer(addr)\n";
+        output << "        raw_write(p, 0)\n";
+    }
+
+    auto pointer_construction_success_path_text = pointer_construction_success_path.string();
+    std::array<char const*, 3> pointer_construction_success_argv {
+        "orisonc",
+        "--parse",
+        pointer_construction_success_path_text.c_str()
+    };
+    auto pointer_construction_success_result = app.run(
+        std::span<char const* const>(
+            pointer_construction_success_argv.data(),
+            pointer_construction_success_argv.size()
+        )
+    );
+
+    assert(pointer_construction_success_result.exit_code == 0);
+    assert(pointer_construction_success_result.stderr_text.empty());
+    assert(pointer_construction_success_result.stdout_text.find("parsed ") != std::string::npos);
 
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {

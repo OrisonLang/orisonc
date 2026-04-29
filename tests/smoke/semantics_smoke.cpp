@@ -1690,18 +1690,14 @@ void test_call_unsafe_function_inside_unsafe_block_success() {
     assert(!diagnostics.has_errors());
 }
 
-void test_call_unsafe_method_outside_unsafe_context_failure() {
-    auto path = std::filesystem::temp_directory_path() / "orison_semantics_call_unsafe_method_failure.or";
+void test_pointer_construction_outside_unsafe_context_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_failure.or";
     {
         std::ofstream output(path);
         output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: [Byte]\n";
-        output << "extend Buffer\n";
-        output << "    unsafe function scrub(this: exclusive This) -> Unit\n";
-        output << "        return\n";
-        output << "function clear(buf: Buffer) -> Unit\n";
-        output << "    buf.scrub()\n";
+        output << "function read_byte(addr: Address) -> Byte\n";
+        output << "    let p = Pointer(addr)\n";
+        output << "    return raw_read(p)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -1714,10 +1710,36 @@ void test_call_unsafe_method_outside_unsafe_context_failure() {
     orison::semantics::ModuleSemanticAnalyzer analyzer;
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().size() == 2);
+    assert(diagnostics.entries().front().line == 3);
     assert(diagnostics.entries().front().message ==
-           "call to unsafe method 'scrub' is only valid inside unsafe functions or unsafe blocks");
+           "Pointer construction is only valid inside unsafe functions or unsafe blocks");
+    assert(diagnostics.entries().back().line == 4);
+    assert(diagnostics.entries().back().message ==
+           "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks");
+}
+
+void test_pointer_construction_inside_unsafe_block_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_block_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "function scribble(addr: Address) -> Unit\n";
+        output << "    unsafe\n";
+        output << "        let p = Pointer(addr)\n";
+        output << "        raw_write(p, 0)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
 }
 
 void test_task_outside_async_function_failure() {
@@ -2565,7 +2587,8 @@ int main() {
     test_nested_address_of_and_raw_offset_success();
     test_call_unsafe_function_outside_unsafe_context_failure();
     test_call_unsafe_function_inside_unsafe_block_success();
-    test_call_unsafe_method_outside_unsafe_context_failure();
+    test_pointer_construction_outside_unsafe_context_failure();
+    test_pointer_construction_inside_unsafe_block_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

@@ -386,6 +386,11 @@ private:
                name == "volatile_read" || name == "volatile_write";
     }
 
+    auto is_pointer_constructor_call(syntax::ExpressionSyntax const& expression) const -> bool {
+        return expression.kind == syntax::ExpressionKind::call && expression.left &&
+               expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Pointer";
+    }
+
     auto is_declared_unsafe_call(syntax::ExpressionSyntax const& expression) const -> bool {
         if (expression.kind != syntax::ExpressionKind::call || !expression.left) {
             return false;
@@ -1172,6 +1177,13 @@ private:
                 expression.line,
                 "unsafe intrinsic '" + expression.left->text +
                     "' is only valid inside unsafe functions or unsafe blocks"
+            );
+        }
+
+        if (is_pointer_constructor_call(expression) && !unsafe_context_active_) {
+            diagnostics_.error(
+                expression.line,
+                "Pointer construction is only valid inside unsafe functions or unsafe blocks"
             );
         }
 
