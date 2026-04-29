@@ -2459,6 +2459,57 @@ void test_rebound_indexed_member_field_address_inference_enables_pointer_constru
     assert(!diagnostics.has_errors());
 }
 
+void test_return_rebound_indexed_record_pointer_field_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_return_rebound_indexed_record_pointer_field_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptrs: Pointer<Pointer<Byte>>\n";
+        output << "unsafe function byte_ptr(device: Device, index: Int64) -> Pointer<Byte>\n";
+        output << "    let p = device.ptrs[index]\n";
+        output << "    return p\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_return_rebound_indexed_member_field_address_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_return_rebound_indexed_member_field_address_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "extend Device\n";
+        output << "    unsafe function base_at(this: shared This, index: Int64) -> Address\n";
+        output << "        let base = this.bases[index]\n";
+        output << "        return base\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_volatile_read_return_type_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_return_type_failure.or";
@@ -3670,6 +3721,8 @@ int main() {
     test_indexed_member_field_address_inference_enables_pointer_constructor_success();
     test_rebound_indexed_record_pointer_field_type_mismatch_failure();
     test_rebound_indexed_member_field_address_inference_enables_pointer_constructor_success();
+    test_return_rebound_indexed_record_pointer_field_success();
+    test_return_rebound_indexed_member_field_address_success();
     test_volatile_read_return_type_mismatch_failure();
     test_volatile_read_return_type_match_success();
     test_volatile_write_value_type_mismatch_failure();
