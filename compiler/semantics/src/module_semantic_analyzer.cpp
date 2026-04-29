@@ -321,17 +321,54 @@ private:
         }
     }
 
-    void analyze_switch_pattern(syntax::ExpressionSyntax const& pattern, bool in_async_function) {
+    auto is_literal_switch_subpattern(syntax::ExpressionSyntax const& pattern) const -> bool {
+        return pattern.kind == syntax::ExpressionKind::integer_literal ||
+               pattern.kind == syntax::ExpressionKind::string_literal ||
+               pattern.kind == syntax::ExpressionKind::boolean_literal;
+    }
+
+    void analyze_switch_pattern(
+        syntax::ExpressionSyntax const& pattern,
+        bool in_async_function,
+        bool in_constructor_payload = false
+    ) {
         if (pattern.kind == syntax::ExpressionKind::call) {
+            if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
+                diagnostics_.error(
+                    pattern.line,
+                    "switch constructor pattern currently requires a constructor name"
+                );
+                return;
+            }
+
             for (auto const& argument : pattern.arguments) {
-                if (argument.kind == syntax::ExpressionKind::call) {
-                    analyze_switch_pattern(argument, in_async_function);
+                if (argument.kind == syntax::ExpressionKind::name || is_literal_switch_subpattern(argument) ||
+                    argument.kind == syntax::ExpressionKind::call) {
+                    analyze_switch_pattern(argument, in_async_function, true);
+                    continue;
                 }
+
+                diagnostics_.error(
+                    argument.line,
+                    "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
+                );
             }
             return;
         }
 
         if (pattern.kind == syntax::ExpressionKind::name) {
+            return;
+        }
+
+        if (is_literal_switch_subpattern(pattern)) {
+            return;
+        }
+
+        if (in_constructor_payload) {
+            diagnostics_.error(
+                pattern.line,
+                "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
+            );
             return;
         }
 
