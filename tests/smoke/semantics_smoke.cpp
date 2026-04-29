@@ -430,7 +430,7 @@ void test_ternary_preserves_thread_origin_failure() {
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().line == 9);
     assert(diagnostics.entries().front().message ==
            "await cannot be used with thread values; use .join() instead");
 }
@@ -751,6 +751,67 @@ void test_for_loop_preserves_thread_origin_failure() {
     assert(diagnostics.entries().front().line == 8);
     assert(diagnostics.entries().front().message ==
            "await cannot be used with thread values; use .join() instead");
+}
+
+void test_guard_failure_path_does_not_override_async_origin_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_guard_failure_path_async_origin_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = request(url)\n";
+        output << "    guard flag else\n";
+        output << "        pending = thread\n";
+        output << "            2\n";
+        output << "        return await request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_guard_failure_path_does_not_create_async_origin_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_guard_failure_path_async_origin_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = 0\n";
+        output << "    guard flag else\n";
+        output << "        pending = request(url)\n";
+        output << "        return await request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message ==
+           "await expression currently requires a task value or declared async call result");
 }
 
 void test_task_outside_async_function_failure() {
@@ -1564,6 +1625,8 @@ int main() {
     test_repeat_loop_preserves_thread_origin_failure();
     test_for_loop_preserves_async_call_origin_success();
     test_for_loop_preserves_thread_origin_failure();
+    test_guard_failure_path_does_not_override_async_origin_success();
+    test_guard_failure_path_does_not_create_async_origin_failure();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

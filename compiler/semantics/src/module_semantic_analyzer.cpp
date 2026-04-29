@@ -600,6 +600,20 @@ private:
             return;
         }
 
+        if (statement.kind == syntax::StatementKind::guard_statement) {
+            auto baseline_scope = snapshot_scope_stack();
+
+            restore_scope_stack(baseline_scope);
+            push_scope();
+            for (auto const& nested_statement : statement.nested_statements) {
+                analyze_statement(nested_statement, in_async_function);
+            }
+            pop_scope();
+
+            restore_scope_stack(baseline_scope);
+            return;
+        }
+
         if (statement.kind == syntax::StatementKind::switch_statement) {
             auto baseline_scope = snapshot_scope_stack();
             std::vector<ScopeSnapshot> case_results;

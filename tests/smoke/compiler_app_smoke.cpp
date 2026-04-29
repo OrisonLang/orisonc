@@ -373,6 +373,35 @@ int main() {
     assert(for_async_origin_result.stderr_text.empty());
     assert(for_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto guard_async_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_guard_async_origin_success.or";
+    {
+        std::ofstream output(guard_async_origin_path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = request(url)\n";
+        output << "    guard flag else\n";
+        output << "        pending = thread\n";
+        output << "            2\n";
+        output << "        return await request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto guard_async_origin_path_text = guard_async_origin_path.string();
+    std::array<char const*, 3> guard_async_origin_argv {
+        "orisonc",
+        "--parse",
+        guard_async_origin_path_text.c_str()
+    };
+    auto guard_async_origin_result =
+        app.run(std::span<char const* const>(guard_async_origin_argv.data(), guard_async_origin_argv.size()));
+
+    assert(guard_async_origin_result.exit_code == 0);
+    assert(guard_async_origin_result.stderr_text.empty());
+    assert(guard_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto switch_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_thread_origin_failure.or";
     {
@@ -460,6 +489,40 @@ int main() {
     assert(for_thread_origin_result.stdout_text.empty());
     assert(for_thread_origin_result.stderr_text.find(
                "await cannot be used with thread values; use .join() instead"
+           ) != std::string::npos);
+
+    auto guard_async_missing_origin_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_guard_async_origin_failure.or";
+    {
+        std::ofstream output(guard_async_missing_origin_path);
+        output << "package demo.await\n";
+        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
+        output << "    return fetch_remote(url)\n";
+        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
+        output << "    var pending = 0\n";
+        output << "    guard flag else\n";
+        output << "        pending = request(url)\n";
+        output << "        return await request(url)\n";
+        output << "    return await pending\n";
+    }
+
+    auto guard_async_missing_origin_path_text = guard_async_missing_origin_path.string();
+    std::array<char const*, 3> guard_async_missing_origin_argv {
+        "orisonc",
+        "--parse",
+        guard_async_missing_origin_path_text.c_str()
+    };
+    auto guard_async_missing_origin_result = app.run(
+        std::span<char const* const>(
+            guard_async_missing_origin_argv.data(),
+            guard_async_missing_origin_argv.size()
+        )
+    );
+
+    assert(guard_async_missing_origin_result.exit_code == 1);
+    assert(guard_async_missing_origin_result.stdout_text.empty());
+    assert(guard_async_missing_origin_result.stderr_text.find(
+               "await expression currently requires a task value or declared async call result"
            ) != std::string::npos);
 
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
