@@ -59,6 +59,13 @@ struct RecordFieldSignature {
     syntax::TypeSyntax field_type;
 };
 
+struct ChoiceVariantSignature {
+    syntax::TypeSyntax choice_type;
+    std::vector<std::string> generic_parameters;
+    std::string variant_name;
+    std::vector<syntax::NamedTypeSyntax> payloads;
+};
+
 class Analyzer {
 public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
@@ -69,7 +76,7 @@ public:
         collect_callable_return_types();
         collect_record_field_types();
         collect_concurrency_marker_implementations();
-        collect_choice_variant_arities();
+        collect_choice_variant_metadata();
 
         for (auto const& function : module_.functions) {
             analyze_function(function);
@@ -742,6 +749,29 @@ private:
             }
         }
         return {};
+    }
+
+    auto find_choice_variant_signature(
+        std::string const& variant_name,
+        syntax::TypeSyntax const& choice_type
+    ) const -> ChoiceVariantSignature const* {
+        for (auto const& signature : choice_variant_signatures_) {
+            if (signature.variant_name != variant_name) {
+                continue;
+            }
+
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (match_generic_type_pattern(
+                    signature.choice_type,
+                    choice_type,
+                    signature.generic_parameters,
+                    bindings
+                )) {
+                return &signature;
+            }
+        }
+
+        return nullptr;
     }
 
     auto has_concurrency_marker_constraint(
@@ -1594,12 +1624,45 @@ private:
 
     void declare_switch_pattern_bindings(
         syntax::ExpressionSyntax const& pattern,
+        std::optional<syntax::TypeSyntax> const& pattern_type,
         bool bind_name,
         std::unordered_set<std::string>& bound_names
     ) {
         if (pattern.kind == syntax::ExpressionKind::call) {
-            for (auto const& argument : pattern.arguments) {
-                declare_switch_pattern_bindings(argument, true, bound_names);
+            if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name || !pattern_type.has_value()) {
+                for (auto const& argument : pattern.arguments) {
+                    declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names);
+                }
+                return;
+            }
+
+            auto const* variant_signature = find_choice_variant_signature(pattern.left->text, *pattern_type);
+            if (variant_signature == nullptr) {
+                for (auto const& argument : pattern.arguments) {
+                    declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names);
+                }
+                return;
+            }
+
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (!match_generic_type_pattern(
+                    variant_signature->choice_type,
+                    *pattern_type,
+                    variant_signature->generic_parameters,
+                    bindings
+                )) {
+                for (auto const& argument : pattern.arguments) {
+                    declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names);
+                }
+                return;
+            }
+
+            for (std::size_t index = 0; index < pattern.arguments.size(); ++index) {
+                std::optional<syntax::TypeSyntax> payload_type;
+                if (index < variant_signature->payloads.size()) {
+                    payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
+                }
+                declare_switch_pattern_bindings(pattern.arguments[index], payload_type, true, bound_names);
             }
             return;
         }
@@ -1612,7 +1675,12 @@ private:
                 );
                 return;
             }
-            declare_binding(pattern.text, {}, false);
+
+            declare_binding(
+                pattern.text,
+                pattern_type.has_value() ? render_type_name(*pattern_type) : std::string {},
+                false
+            );
         }
     }
 
@@ -1733,11 +1801,26 @@ private:
         }
     }
 
-    void collect_choice_variant_arities() {
+    void collect_choice_variant_metadata() {
         choice_variant_arities_.clear();
+        choice_variant_signatures_.clear();
         for (auto const& choice : module_.choices) {
+            syntax::TypeSyntax choice_type;
+            choice_type.name = choice.name;
+            for (auto const& generic_parameter : choice.generic_parameters) {
+                syntax::TypeSyntax generic_argument;
+                generic_argument.name = generic_parameter;
+                choice_type.generic_arguments.push_back(generic_argument);
+            }
+
             for (auto const& variant : choice.variants) {
                 choice_variant_arities_[variant.name] = variant.payloads.size();
+                choice_variant_signatures_.push_back(ChoiceVariantSignature {
+                    .choice_type = choice_type,
+                    .generic_parameters = choice.generic_parameters,
+                    .variant_name = variant.name,
+                    .payloads = variant.payloads,
+                });
             }
         }
     }
@@ -2188,7 +2271,13 @@ private:
                 push_scope();
                 if (!switch_case.is_default && valid_pattern) {
                     std::unordered_set<std::string> bound_names;
-                    declare_switch_pattern_bindings(switch_case.pattern, false, bound_names);
+                    std::optional<syntax::TypeSyntax> pattern_type;
+                    auto pattern_type_name = infer_expression_type_name(statement.expression);
+                    if (!pattern_type_name.empty()) {
+                        pattern_type = parse_rendered_type_name(pattern_type_name);
+                    }
+
+                    declare_switch_pattern_bindings(switch_case.pattern, pattern_type, false, bound_names);
                 }
                 if (valid_pattern) {
                     for (auto const& consequence : switch_case.statements) {
@@ -2536,6 +2625,7 @@ private:
     std::vector<MethodReturnSignature> method_return_signatures_;
     std::vector<RecordFieldSignature> record_field_signatures_;
     std::unordered_map<std::string, std::size_t> choice_variant_arities_;
+    std::vector<ChoiceVariantSignature> choice_variant_signatures_;
     std::vector<std::string> transferable_constraint_types_;
     std::vector<std::string> shareable_constraint_types_;
     std::vector<std::string> transferable_impl_types_;
