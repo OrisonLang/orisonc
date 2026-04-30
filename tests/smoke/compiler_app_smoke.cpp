@@ -1000,6 +1000,73 @@ int main() {
                "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
            ) != std::string::npos);
 
+    auto raw_write_generic_receiver_method_pointer_same_width_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_raw_write_generic_receiver_method_pointer_same_width_success.or";
+    {
+        std::ofstream output(raw_write_generic_receiver_method_pointer_same_width_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device<T>\n";
+        output << "    id: Int64\n";
+        output << "extend Device<T>\n";
+        output << "    function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>\n";
+        output << "        return base\n";
+        output << "unsafe function write_word(device: Device<Int32>, base: Pointer<Int32>, value: UInt32) -> Unit\n";
+        output << "    raw_write(device.ptr(base), value)\n";
+    }
+
+    auto raw_write_generic_receiver_method_pointer_same_width_success_path_text =
+        raw_write_generic_receiver_method_pointer_same_width_success_path.string();
+    std::array<char const*, 3> raw_write_generic_receiver_method_pointer_same_width_success_argv {
+        "orisonc",
+        "--parse",
+        raw_write_generic_receiver_method_pointer_same_width_success_path_text.c_str()
+    };
+    auto raw_write_generic_receiver_method_pointer_same_width_success_result = app.run(
+        std::span<char const* const>(
+            raw_write_generic_receiver_method_pointer_same_width_success_argv.data(),
+            raw_write_generic_receiver_method_pointer_same_width_success_argv.size()
+        )
+    );
+
+    assert(raw_write_generic_receiver_method_pointer_same_width_success_result.exit_code == 0);
+    assert(raw_write_generic_receiver_method_pointer_same_width_success_result.stderr_text.empty());
+
+    auto raw_write_generic_receiver_method_pointer_mismatch_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_raw_write_generic_receiver_method_pointer_mismatch_failure.or";
+    {
+        std::ofstream output(raw_write_generic_receiver_method_pointer_mismatch_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Device<T>\n";
+        output << "    id: Int64\n";
+        output << "extend Device<T>\n";
+        output << "    function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>\n";
+        output << "        return base\n";
+        output << "unsafe function write_word(device: Device<Byte>, base: Pointer<Byte>, value: UInt32) -> Unit\n";
+        output << "    raw_write(device.ptr(base), value)\n";
+    }
+
+    auto raw_write_generic_receiver_method_pointer_mismatch_failure_path_text =
+        raw_write_generic_receiver_method_pointer_mismatch_failure_path.string();
+    std::array<char const*, 3> raw_write_generic_receiver_method_pointer_mismatch_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_write_generic_receiver_method_pointer_mismatch_failure_path_text.c_str()
+    };
+    auto raw_write_generic_receiver_method_pointer_mismatch_failure_result = app.run(
+        std::span<char const* const>(
+            raw_write_generic_receiver_method_pointer_mismatch_failure_argv.data(),
+            raw_write_generic_receiver_method_pointer_mismatch_failure_argv.size()
+        )
+    );
+
+    assert(raw_write_generic_receiver_method_pointer_mismatch_failure_result.exit_code == 1);
+    assert(raw_write_generic_receiver_method_pointer_mismatch_failure_result.stdout_text.empty());
+    assert(raw_write_generic_receiver_method_pointer_mismatch_failure_result.stderr_text.find(
+               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+           ) != std::string::npos);
+
     auto pointer_typed_binding_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_success.or";
     {
@@ -1343,6 +1410,72 @@ int main() {
 
     assert(address_return_generic_helper_success_result.exit_code == 0);
     assert(address_return_generic_helper_success_result.stderr_text.empty());
+
+    auto await_generic_receiver_async_method_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_await_generic_receiver_async_method_success.or";
+    {
+        std::ofstream output(await_generic_receiver_async_method_success_path);
+        output << "package demo.async\n";
+        output << "record Launcher<T>\n";
+        output << "    id: Int64\n";
+        output << "extend Launcher<T>\n";
+        output << "    async function launch(this: shared This, item: T) -> T\n";
+        output << "        return item\n";
+        output << "async function run(launcher: Launcher<Int64>, item: Int64) -> Int64\n";
+        output << "    return await launcher.launch(item)\n";
+    }
+
+    auto await_generic_receiver_async_method_success_path_text =
+        await_generic_receiver_async_method_success_path.string();
+    std::array<char const*, 3> await_generic_receiver_async_method_success_argv {
+        "orisonc",
+        "--parse",
+        await_generic_receiver_async_method_success_path_text.c_str()
+    };
+    auto await_generic_receiver_async_method_success_result = app.run(
+        std::span<char const* const>(
+            await_generic_receiver_async_method_success_argv.data(),
+            await_generic_receiver_async_method_success_argv.size()
+        )
+    );
+
+    assert(await_generic_receiver_async_method_success_result.exit_code == 0);
+    assert(await_generic_receiver_async_method_success_result.stderr_text.empty());
+
+    auto generic_receiver_unsafe_method_requires_unsafe_context_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_generic_receiver_unsafe_method_requires_unsafe_context_failure.or";
+    {
+        std::ofstream output(generic_receiver_unsafe_method_requires_unsafe_context_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Device<T>\n";
+        output << "    id: Int64\n";
+        output << "extend Device<T>\n";
+        output << "    unsafe function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>\n";
+        output << "        return base\n";
+        output << "function read_byte(device: Device<Byte>, base: Pointer<Byte>) -> Byte\n";
+        output << "    return raw_read(device.ptr(base))\n";
+    }
+
+    auto generic_receiver_unsafe_method_requires_unsafe_context_failure_path_text =
+        generic_receiver_unsafe_method_requires_unsafe_context_failure_path.string();
+    std::array<char const*, 3> generic_receiver_unsafe_method_requires_unsafe_context_failure_argv {
+        "orisonc",
+        "--parse",
+        generic_receiver_unsafe_method_requires_unsafe_context_failure_path_text.c_str()
+    };
+    auto generic_receiver_unsafe_method_requires_unsafe_context_failure_result = app.run(
+        std::span<char const* const>(
+            generic_receiver_unsafe_method_requires_unsafe_context_failure_argv.data(),
+            generic_receiver_unsafe_method_requires_unsafe_context_failure_argv.size()
+        )
+    );
+
+    assert(generic_receiver_unsafe_method_requires_unsafe_context_failure_result.exit_code == 1);
+    assert(generic_receiver_unsafe_method_requires_unsafe_context_failure_result.stdout_text.empty());
+    assert(generic_receiver_unsafe_method_requires_unsafe_context_failure_result.stderr_text.find(
+               "call to unsafe method 'ptr' requires an unsafe function or unsafe block"
+           ) != std::string::npos);
 
     auto raw_read_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_typed_binding_failure.or";

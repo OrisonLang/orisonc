@@ -28,17 +28,17 @@ enum class SwitchPatternKind {
 };
 
 struct AsyncMethodSignature {
-    std::string receiver_type;
+    syntax::TypeSyntax receiver_type;
     std::string method_name;
 };
 
 struct UnsafeMethodSignature {
-    std::string receiver_type;
+    syntax::TypeSyntax receiver_type;
     std::string method_name;
 };
 
 struct MethodReturnSignature {
-    std::string receiver_type;
+    syntax::TypeSyntax receiver_type;
     std::string method_name;
     std::vector<std::string> generic_parameters;
     std::vector<syntax::ParameterSyntax> parameters;
@@ -398,8 +398,14 @@ private:
         std::string const& receiver_type,
         std::string const& method_name
     ) const -> bool {
+        auto parsed_receiver_type = parse_rendered_type_name(receiver_type);
+        if (!parsed_receiver_type.has_value()) {
+            return false;
+        }
+
         for (auto const& signature : async_method_signatures_) {
-            if (signature.receiver_type == receiver_type && signature.method_name == method_name) {
+            if (signature.method_name == method_name &&
+                receiver_matches_signature(signature.receiver_type, *parsed_receiver_type)) {
                 return true;
             }
         }
@@ -419,8 +425,14 @@ private:
         std::string const& receiver_type,
         std::string const& method_name
     ) const -> bool {
+        auto parsed_receiver_type = parse_rendered_type_name(receiver_type);
+        if (!parsed_receiver_type.has_value()) {
+            return false;
+        }
+
         for (auto const& signature : unsafe_method_signatures_) {
-            if (signature.receiver_type == receiver_type && signature.method_name == method_name) {
+            if (signature.method_name == method_name &&
+                receiver_matches_signature(signature.receiver_type, *parsed_receiver_type)) {
                 return true;
             }
         }
@@ -556,6 +568,34 @@ private:
         return substituted;
     }
 
+    void collect_receiver_generic_placeholder_names(
+        syntax::TypeSyntax const& type,
+        std::unordered_set<std::string>& placeholders
+    ) const {
+        for (auto const& argument : type.generic_arguments) {
+            if (argument.generic_arguments.empty()) {
+                placeholders.insert(argument.name);
+            }
+
+            collect_receiver_generic_placeholder_names(argument, placeholders);
+        }
+    }
+
+    auto receiver_matches_signature(
+        syntax::TypeSyntax const& receiver_pattern,
+        syntax::TypeSyntax const& actual_receiver_type
+    ) const -> bool {
+        std::unordered_set<std::string> receiver_placeholder_set;
+        collect_receiver_generic_placeholder_names(receiver_pattern, receiver_placeholder_set);
+        std::vector<std::string> receiver_placeholders(
+            receiver_placeholder_set.begin(),
+            receiver_placeholder_set.end()
+        );
+
+        std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        return match_generic_type_pattern(receiver_pattern, actual_receiver_type, receiver_placeholders, bindings);
+    }
+
     auto infer_specialized_return_type_name(
         std::vector<std::string> const& generic_parameters,
         std::vector<syntax::ParameterSyntax> const& parameters,
@@ -587,6 +627,55 @@ private:
         return render_type_name(substitute_generic_type_bindings(return_type, bindings));
     }
 
+    auto infer_specialized_method_return_type_name(
+        MethodReturnSignature const& signature,
+        syntax::TypeSyntax const& actual_receiver_type,
+        std::vector<syntax::ExpressionSyntax> const& arguments
+    ) const -> std::string {
+        std::unordered_set<std::string> receiver_placeholder_set;
+        collect_receiver_generic_placeholder_names(signature.receiver_type, receiver_placeholder_set);
+        std::vector<std::string> receiver_placeholders(
+            receiver_placeholder_set.begin(),
+            receiver_placeholder_set.end()
+        );
+
+        std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        if (!match_generic_type_pattern(signature.receiver_type, actual_receiver_type, receiver_placeholders, bindings)) {
+            return {};
+        }
+
+        if (signature.parameters.size() != arguments.size()) {
+            return render_type_name(substitute_generic_type_bindings(signature.return_type, bindings));
+        }
+
+        auto all_generic_parameters = signature.generic_parameters;
+        all_generic_parameters.insert(
+            all_generic_parameters.end(),
+            receiver_placeholders.begin(),
+            receiver_placeholders.end()
+        );
+
+        for (std::size_t index = 0; index < signature.parameters.size(); ++index) {
+            auto argument_type_name = infer_expression_type_name(arguments[index]);
+            if (argument_type_name.empty()) {
+                return render_type_name(substitute_generic_type_bindings(signature.return_type, bindings));
+            }
+
+            auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
+            if (!parsed_argument_type.has_value() ||
+                !match_generic_type_pattern(
+                    signature.parameters[index].type,
+                    *parsed_argument_type,
+                    all_generic_parameters,
+                    bindings
+                )) {
+                return render_type_name(substitute_generic_type_bindings(signature.return_type, bindings));
+            }
+        }
+
+        return render_type_name(substitute_generic_type_bindings(signature.return_type, bindings));
+    }
+
     auto find_callable_return_type_name(
         std::string const& name,
         std::vector<syntax::ExpressionSyntax> const& arguments
@@ -610,14 +699,18 @@ private:
         std::string const& method_name,
         std::vector<syntax::ExpressionSyntax> const& arguments
     ) const -> std::string {
+        auto parsed_receiver_type = parse_rendered_type_name(receiver_type);
+        if (!parsed_receiver_type.has_value()) {
+            return {};
+        }
+
         for (auto const& signature : method_return_signatures_) {
-            if (signature.receiver_type == receiver_type && signature.method_name == method_name) {
-                return infer_specialized_return_type_name(
-                    signature.generic_parameters,
-                    signature.parameters,
-                    signature.return_type,
-                    arguments
-                );
+            if (signature.method_name == method_name) {
+                auto specialized_return_type_name =
+                    infer_specialized_method_return_type_name(signature, *parsed_receiver_type, arguments);
+                if (!specialized_return_type_name.empty()) {
+                    return specialized_return_type_name;
+                }
             }
         }
         return {};
@@ -1644,11 +1737,10 @@ private:
         }
 
         for (auto const& implementation : module_.implementations) {
-            auto receiver_type_name = render_type_name(implementation.receiver_type);
             for (auto const& method : implementation.methods) {
                 if (method.is_async) {
                     async_method_signatures_.push_back(AsyncMethodSignature {
-                        .receiver_type = receiver_type_name,
+                        .receiver_type = implementation.receiver_type,
                         .method_name = method.name,
                     });
                 }
@@ -1656,11 +1748,10 @@ private:
         }
 
         for (auto const& extension : module_.extensions) {
-            auto receiver_type_name = render_type_name(extension.receiver_type);
             for (auto const& method : extension.methods) {
                 if (method.is_async) {
                     async_method_signatures_.push_back(AsyncMethodSignature {
-                        .receiver_type = receiver_type_name,
+                        .receiver_type = extension.receiver_type,
                         .method_name = method.name,
                     });
                 }
@@ -1685,11 +1776,10 @@ private:
         }
 
         for (auto const& implementation : module_.implementations) {
-            auto receiver_type_name = render_type_name(implementation.receiver_type);
             for (auto const& method : implementation.methods) {
                 if (method.is_unsafe) {
                     unsafe_method_signatures_.push_back(UnsafeMethodSignature {
-                        .receiver_type = receiver_type_name,
+                        .receiver_type = implementation.receiver_type,
                         .method_name = method.name,
                     });
                 }
@@ -1697,11 +1787,10 @@ private:
         }
 
         for (auto const& extension : module_.extensions) {
-            auto receiver_type_name = render_type_name(extension.receiver_type);
             for (auto const& method : extension.methods) {
                 if (method.is_unsafe) {
                     unsafe_method_signatures_.push_back(UnsafeMethodSignature {
-                        .receiver_type = receiver_type_name,
+                        .receiver_type = extension.receiver_type,
                         .method_name = method.name,
                     });
                 }
@@ -1729,10 +1818,9 @@ private:
         }
 
         for (auto const& implementation : module_.implementations) {
-            auto receiver_type_name = render_type_name(implementation.receiver_type);
             for (auto const& method : implementation.methods) {
                 method_return_signatures_.push_back(MethodReturnSignature {
-                    .receiver_type = receiver_type_name,
+                    .receiver_type = implementation.receiver_type,
                     .method_name = method.name,
                     .generic_parameters = method.generic_parameters,
                     .parameters = method.parameters,
@@ -1742,10 +1830,9 @@ private:
         }
 
         for (auto const& extension : module_.extensions) {
-            auto receiver_type_name = render_type_name(extension.receiver_type);
             for (auto const& method : extension.methods) {
                 method_return_signatures_.push_back(MethodReturnSignature {
-                    .receiver_type = receiver_type_name,
+                    .receiver_type = extension.receiver_type,
                     .method_name = method.name,
                     .generic_parameters = method.generic_parameters,
                     .parameters = method.parameters,
