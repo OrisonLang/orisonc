@@ -1919,6 +1919,60 @@ void test_pointer_construction_with_address_of_argument_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_pointer_typed_binding_with_mismatched_address_of_source_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_pointer_typed_binding_addressof_source_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Buffer\n";
+        output << "    data: Pointer<Byte>\n";
+        output << "unsafe function first_word_ptr(buf: Buffer) -> Pointer<UInt32>\n";
+        output << "    let p: Pointer<UInt32> = Pointer(address_of(buf.data[0]))\n";
+        output << "    return p\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "Pointer construction source type 'Byte' does not match expected pointer element type 'UInt32'");
+}
+
+void test_pointer_typed_binding_with_matching_address_of_source_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_pointer_typed_binding_addressof_source_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Buffer\n";
+        output << "    data: Pointer<Byte>\n";
+        output << "unsafe function first_byte_ptr(buf: Buffer) -> Pointer<Byte>\n";
+        output << "    let p: Pointer<Byte> = Pointer(address_of(buf.data[0]))\n";
+        output << "    return p\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_pointer_typed_binding_with_nonpointer_initializer_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_typed_binding_failure.or";
@@ -2120,6 +2174,58 @@ void test_pointer_return_with_wrong_typed_name_failure() {
     assert(diagnostics.entries().front().line == 4);
     assert(diagnostics.entries().front().message ==
            "pointer-returning function currently requires a structurally pointer-like expression");
+}
+
+void test_pointer_return_with_mismatched_address_of_source_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_addressof_source_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Buffer\n";
+        output << "    data: Pointer<Byte>\n";
+        output << "unsafe function first_word_ptr(buf: Buffer) -> Pointer<UInt32>\n";
+        output << "    return Pointer(address_of(buf.data[0]))\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "Pointer construction source type 'Byte' does not match expected pointer element type 'UInt32'");
+}
+
+void test_pointer_return_with_matching_address_of_source_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_addressof_source_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Buffer\n";
+        output << "    data: Pointer<Byte>\n";
+        output << "unsafe function first_byte_ptr(buf: Buffer) -> Pointer<Byte>\n";
+        output << "    return Pointer(address_of(buf.data[0]))\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
 }
 
 void test_raw_read_return_type_mismatch_failure() {
@@ -4079,6 +4185,8 @@ int main() {
     test_pointer_construction_with_multiple_arguments_failure();
     test_pointer_construction_with_nonaddress_argument_failure();
     test_pointer_construction_with_address_of_argument_success();
+    test_pointer_typed_binding_with_mismatched_address_of_source_failure();
+    test_pointer_typed_binding_with_matching_address_of_source_success();
     test_pointer_typed_binding_with_nonpointer_initializer_failure();
     test_pointer_typed_binding_with_pointer_initializer_success();
     test_raw_read_typed_binding_result_mismatch_failure();
@@ -4087,6 +4195,8 @@ int main() {
     test_pointer_return_with_nonpointer_expression_failure();
     test_pointer_return_with_pointer_expression_success();
     test_pointer_return_with_wrong_typed_name_failure();
+    test_pointer_return_with_mismatched_address_of_source_failure();
+    test_pointer_return_with_matching_address_of_source_success();
     test_raw_read_return_type_mismatch_failure();
     test_raw_read_return_type_match_success();
     test_raw_write_value_type_mismatch_failure();

@@ -526,6 +526,37 @@ int main() {
     assert(pointer_construction_success_result.stderr_text.empty());
     assert(pointer_construction_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto pointer_construction_addressof_typed_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_addressof_typed_failure.or";
+    {
+        std::ofstream output(pointer_construction_addressof_typed_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Buffer\n";
+        output << "    data: Pointer<Byte>\n";
+        output << "unsafe function first_word_ptr(buf: Buffer) -> Pointer<UInt32>\n";
+        output << "    return Pointer(address_of(buf.data[0]))\n";
+    }
+
+    auto pointer_construction_addressof_typed_failure_path_text =
+        pointer_construction_addressof_typed_failure_path.string();
+    std::array<char const*, 3> pointer_construction_addressof_typed_failure_argv {
+        "orisonc",
+        "--parse",
+        pointer_construction_addressof_typed_failure_path_text.c_str()
+    };
+    auto pointer_construction_addressof_typed_failure_result = app.run(
+        std::span<char const* const>(
+            pointer_construction_addressof_typed_failure_argv.data(),
+            pointer_construction_addressof_typed_failure_argv.size()
+        )
+    );
+
+    assert(pointer_construction_addressof_typed_failure_result.exit_code == 1);
+    assert(pointer_construction_addressof_typed_failure_result.stdout_text.empty());
+    assert(pointer_construction_addressof_typed_failure_result.stderr_text.find(
+               "Pointer construction source type 'Byte' does not match expected pointer element type 'UInt32'"
+           ) != std::string::npos);
+
     auto pointer_construction_noarg_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_noarg_failure.or";
     {

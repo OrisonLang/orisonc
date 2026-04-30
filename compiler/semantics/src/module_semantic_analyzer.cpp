@@ -583,6 +583,16 @@ private:
         return {};
     }
 
+    auto address_of_operand_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
+            expression.left->kind != syntax::ExpressionKind::name || expression.left->text != "address_of" ||
+            expression.arguments.empty()) {
+            return {};
+        }
+
+        return infer_expression_type_name(expression.arguments.front());
+    }
+
     auto validate_read_result_type(
         syntax::ExpressionSyntax const& expression,
         std::string const& expected_type_name,
@@ -620,12 +630,23 @@ private:
             return;
         }
 
+        auto expected_pointee_type_name = pointer_pointee_type_name(expected_pointer_type_name_);
+        auto source_operand_type_name = address_of_operand_type_name(expression.arguments.front());
         auto source_type_name = infer_expression_type_name(expression.arguments.front());
         if (!source_type_name.empty()) {
             if (!is_address_type_name(source_type_name)) {
                 diagnostics_.error(
                     expression.line,
                     "Pointer construction currently requires an address-like source argument"
+                );
+            }
+
+            if (!expected_pointee_type_name.empty() && !source_operand_type_name.empty() &&
+                expected_pointee_type_name != source_operand_type_name) {
+                diagnostics_.error(
+                    expression.line,
+                    "Pointer construction source type '" + source_operand_type_name +
+                        "' does not match expected pointer element type '" + expected_pointee_type_name + "'"
                 );
             }
             return;
@@ -635,6 +656,16 @@ private:
             diagnostics_.error(
                 expression.line,
                 "Pointer construction currently requires an address-like source argument"
+            );
+            return;
+        }
+
+        if (!expected_pointee_type_name.empty() && !source_operand_type_name.empty() &&
+            expected_pointee_type_name != source_operand_type_name) {
+            diagnostics_.error(
+                expression.line,
+                "Pointer construction source type '" + source_operand_type_name +
+                    "' does not match expected pointer element type '" + expected_pointee_type_name + "'"
             );
         }
     }
