@@ -5126,6 +5126,56 @@ void test_address_typed_binding_with_address_initializer_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_address_typed_binding_with_field_address_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_address_typed_binding_field_address_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    base: Address\n";
+        output << "function read_base(device: Device) -> Address\n";
+        output << "    let base: Address = device.base\n";
+        output << "    return base\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_address_typed_binding_with_indexed_address_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_address_typed_binding_indexed_address_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "function read_base(device: Device, index: Int64) -> Address\n";
+        output << "    let base: Address = device.bases[index]\n";
+        output << "    return base\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_address_typed_binding_with_wrong_typed_name_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_typed_binding_name_failure.or";
@@ -5188,6 +5238,34 @@ void test_address_return_with_address_expression_success() {
         output << "package demo.unsafe\n";
         output << "unsafe function base(buf: exclusive Buffer) -> Address\n";
         output << "    return address_of(buf.data[0])\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_address_return_with_helper_returned_address_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_address_return_helper_returned_address_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "extend Device\n";
+        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
+        output << "        let base = this.bases[index]\n";
+        output << "        return base\n";
+        output << "function read_base(device: Device, index: Int64) -> Address\n";
+        output << "    return device.base_at(index)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -6209,6 +6287,9 @@ int main() {
     test_address_return_with_nonaddress_expression_failure();
     test_address_return_with_address_expression_success();
     test_address_return_with_wrong_typed_name_failure();
+    test_address_typed_binding_with_field_address_success();
+    test_address_typed_binding_with_indexed_address_success();
+    test_address_return_with_helper_returned_address_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

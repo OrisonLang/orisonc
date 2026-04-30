@@ -1163,6 +1163,96 @@ int main() {
     assert(address_typed_binding_success_result.stderr_text.empty());
     assert(address_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto address_typed_binding_field_address_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_address_typed_binding_field_address_success.or";
+    {
+        std::ofstream output(address_typed_binding_field_address_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    base: Address\n";
+        output << "function read_base(device: Device) -> Address\n";
+        output << "    let base: Address = device.base\n";
+        output << "    return base\n";
+    }
+
+    auto address_typed_binding_field_address_success_path_text =
+        address_typed_binding_field_address_success_path.string();
+    std::array<char const*, 3> address_typed_binding_field_address_success_argv {
+        "orisonc",
+        "--parse",
+        address_typed_binding_field_address_success_path_text.c_str()
+    };
+    auto address_typed_binding_field_address_success_result = app.run(
+        std::span<char const* const>(
+            address_typed_binding_field_address_success_argv.data(),
+            address_typed_binding_field_address_success_argv.size()
+        )
+    );
+
+    assert(address_typed_binding_field_address_success_result.exit_code == 0);
+    assert(address_typed_binding_field_address_success_result.stderr_text.empty());
+
+    auto address_typed_binding_indexed_address_success_path = std::filesystem::temp_directory_path() /
+                                                              "orison_compiler_app_address_typed_binding_indexed_address_success.or";
+    {
+        std::ofstream output(address_typed_binding_indexed_address_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "function read_base(device: Device, index: Int64) -> Address\n";
+        output << "    let base: Address = device.bases[index]\n";
+        output << "    return base\n";
+    }
+
+    auto address_typed_binding_indexed_address_success_path_text =
+        address_typed_binding_indexed_address_success_path.string();
+    std::array<char const*, 3> address_typed_binding_indexed_address_success_argv {
+        "orisonc",
+        "--parse",
+        address_typed_binding_indexed_address_success_path_text.c_str()
+    };
+    auto address_typed_binding_indexed_address_success_result = app.run(
+        std::span<char const* const>(
+            address_typed_binding_indexed_address_success_argv.data(),
+            address_typed_binding_indexed_address_success_argv.size()
+        )
+    );
+
+    assert(address_typed_binding_indexed_address_success_result.exit_code == 0);
+    assert(address_typed_binding_indexed_address_success_result.stderr_text.empty());
+
+    auto address_return_helper_returned_address_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_address_return_helper_returned_address_success.or";
+    {
+        std::ofstream output(address_return_helper_returned_address_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    bases: Pointer<Address>\n";
+        output << "extend Device\n";
+        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
+        output << "        let base = this.bases[index]\n";
+        output << "        return base\n";
+        output << "function read_base(device: Device, index: Int64) -> Address\n";
+        output << "    return device.base_at(index)\n";
+    }
+
+    auto address_return_helper_returned_address_success_path_text =
+        address_return_helper_returned_address_success_path.string();
+    std::array<char const*, 3> address_return_helper_returned_address_success_argv {
+        "orisonc",
+        "--parse",
+        address_return_helper_returned_address_success_path_text.c_str()
+    };
+    auto address_return_helper_returned_address_success_result = app.run(
+        std::span<char const* const>(
+            address_return_helper_returned_address_success_argv.data(),
+            address_return_helper_returned_address_success_argv.size()
+        )
+    );
+
+    assert(address_return_helper_returned_address_success_result.exit_code == 0);
+    assert(address_return_helper_returned_address_success_result.stderr_text.empty());
+
     auto raw_read_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_typed_binding_failure.or";
     {
