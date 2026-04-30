@@ -243,6 +243,30 @@ private:
                expected_info->is_fixed_width && inferred_info->bit_width == expected_info->bit_width;
     }
 
+    auto merge_compatible_integer_type_names(
+        std::string const& left_type_name,
+        std::string const& right_type_name
+    ) const -> std::string {
+        if (left_type_name.empty() || right_type_name.empty() ||
+            !is_integer_type_name(left_type_name) || !is_integer_type_name(right_type_name)) {
+            return {};
+        }
+
+        if (left_type_name == "Int64" && right_type_name != "Int64") {
+            return right_type_name;
+        }
+
+        if (right_type_name == "Int64" && left_type_name != "Int64") {
+            return left_type_name;
+        }
+
+        if (are_low_level_read_types_compatible(left_type_name, right_type_name)) {
+            return left_type_name;
+        }
+
+        return {};
+    }
+
     auto pointer_pointee_type_name(std::string const& type_name) const -> std::string {
         if (!is_pointer_type_name(type_name)) {
             return {};
@@ -453,6 +477,20 @@ private:
             auto const* binding = find_binding(expression.text);
             return binding == nullptr ? std::string {} : binding->type_name;
         }
+        case syntax::ExpressionKind::unary:
+            if (!expression.left) {
+                return {};
+            }
+            if (expression.text == "-"
+                || expression.text == "bit_not") {
+                auto operand_type_name = infer_expression_type_name(*expression.left);
+                return is_integer_type_name(operand_type_name) ? operand_type_name : std::string {};
+            }
+            if (expression.text == "not") {
+                auto operand_type_name = infer_expression_type_name(*expression.left);
+                return operand_type_name == "Bool" ? "Bool" : std::string {};
+            }
+            return {};
         case syntax::ExpressionKind::cast:
             return expression.text;
         case syntax::ExpressionKind::string_literal:
@@ -521,6 +559,44 @@ private:
                 return explicit_pointer_source_pointee_type_name(expression.arguments.front());
             }
             return find_callable_return_type_name(expression.left->text);
+        case syntax::ExpressionKind::binary:
+            if (!expression.left || !expression.right) {
+                return {};
+            }
+            if (expression.text == "==" || expression.text == "!=" || expression.text == "<" ||
+                expression.text == "<=" || expression.text == ">" || expression.text == ">=" ||
+                expression.text == "and" || expression.text == "or") {
+                return "Bool";
+            }
+            if (expression.text == "+" || expression.text == "-" || expression.text == "*" ||
+                expression.text == "/" || expression.text == "%" || expression.text == "bit_and" ||
+                expression.text == "bit_or" || expression.text == "bit_xor") {
+                return merge_compatible_integer_type_names(
+                    infer_expression_type_name(*expression.left),
+                    infer_expression_type_name(*expression.right)
+                );
+            }
+            if (expression.text == "shift_left" || expression.text == "shift_right") {
+                auto left_type_name = infer_expression_type_name(*expression.left);
+                auto right_type_name = infer_expression_type_name(*expression.right);
+                return is_integer_type_name(left_type_name) && is_integer_type_name(right_type_name)
+                           ? left_type_name
+                           : std::string {};
+            }
+            return {};
+        case syntax::ExpressionKind::ternary:
+            if (!expression.right || !expression.alternate) {
+                return {};
+            }
+            {
+                auto consequence_type_name = infer_expression_type_name(*expression.right);
+                auto alternate_type_name = infer_expression_type_name(*expression.alternate);
+                if (consequence_type_name == alternate_type_name) {
+                    return consequence_type_name;
+                }
+
+                return merge_compatible_integer_type_names(consequence_type_name, alternate_type_name);
+            }
         default:
             return {};
         }
