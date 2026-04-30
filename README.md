@@ -34,8 +34,6 @@ Orison currently aims for:
 
 - `ORISON_SPEC.md` - language feature and keyword reference
 - `ORISON_TOUR.md` - end-to-end syntax tour
-- `AGENTS.md` - repository rules for AI-augmented development
-- `MEMORY.md` - persistent project context and design learnings
 - `docs/adr/` - architecture decision records
 
 ## Tooling plan
