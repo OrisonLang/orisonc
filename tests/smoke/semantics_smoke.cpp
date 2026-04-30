@@ -2478,6 +2478,84 @@ void test_pointer_return_with_same_width_helper_pointer_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_raw_write_generic_helper_returned_pointer_same_width_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_write_generic_helper_returned_pointer_same_width_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>\n";
+        output << "    return base\n";
+        output << "unsafe function write_word(base: Pointer<Int32>, value: UInt32) -> Unit\n";
+        output << "    raw_write(id_ptr(base), value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_raw_write_generic_helper_returned_pointer_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_write_generic_helper_returned_pointer_mismatch_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>\n";
+        output << "    return base\n";
+        output << "unsafe function write_word(base: Pointer<Byte>, value: UInt32) -> Unit\n";
+        output << "    raw_write(id_ptr(base), value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message ==
+           "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
+}
+
+void test_address_return_with_generic_helper_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_address_return_with_generic_helper_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "function id<T>(value: T) -> T\n";
+        output << "    return value\n";
+        output << "record Device\n";
+        output << "    base: Address\n";
+        output << "function read_base(device: Device) -> Address\n";
+        output << "    return id(device.base)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_pointer_return_with_mismatched_address_of_source_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_addressof_source_failure.or";
@@ -6185,6 +6263,8 @@ int main() {
     test_pointer_return_with_same_width_helper_pointer_success();
     test_pointer_return_with_mismatched_address_of_source_failure();
     test_pointer_return_with_matching_address_of_source_success();
+    test_raw_write_generic_helper_returned_pointer_same_width_success();
+    test_raw_write_generic_helper_returned_pointer_mismatch_failure();
     test_raw_read_return_type_mismatch_failure();
     test_raw_read_return_type_match_success();
     test_raw_read_return_same_width_integer_success();
@@ -6290,6 +6370,7 @@ int main() {
     test_address_typed_binding_with_field_address_success();
     test_address_typed_binding_with_indexed_address_success();
     test_address_return_with_helper_returned_address_success();
+    test_address_return_with_generic_helper_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();

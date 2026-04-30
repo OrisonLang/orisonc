@@ -939,6 +939,67 @@ int main() {
     assert(pointer_return_same_width_helper_pointer_success_result.exit_code == 0);
     assert(pointer_return_same_width_helper_pointer_success_result.stderr_text.empty());
 
+    auto raw_write_generic_helper_returned_pointer_same_width_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_raw_write_generic_helper_returned_pointer_same_width_success.or";
+    {
+        std::ofstream output(raw_write_generic_helper_returned_pointer_same_width_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>\n";
+        output << "    return base\n";
+        output << "unsafe function write_word(base: Pointer<Int32>, value: UInt32) -> Unit\n";
+        output << "    raw_write(id_ptr(base), value)\n";
+    }
+
+    auto raw_write_generic_helper_returned_pointer_same_width_success_path_text =
+        raw_write_generic_helper_returned_pointer_same_width_success_path.string();
+    std::array<char const*, 3> raw_write_generic_helper_returned_pointer_same_width_success_argv {
+        "orisonc",
+        "--parse",
+        raw_write_generic_helper_returned_pointer_same_width_success_path_text.c_str()
+    };
+    auto raw_write_generic_helper_returned_pointer_same_width_success_result = app.run(
+        std::span<char const* const>(
+            raw_write_generic_helper_returned_pointer_same_width_success_argv.data(),
+            raw_write_generic_helper_returned_pointer_same_width_success_argv.size()
+        )
+    );
+
+    assert(raw_write_generic_helper_returned_pointer_same_width_success_result.exit_code == 0);
+    assert(raw_write_generic_helper_returned_pointer_same_width_success_result.stderr_text.empty());
+
+    auto raw_write_generic_helper_returned_pointer_mismatch_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_raw_write_generic_helper_returned_pointer_mismatch_failure.or";
+    {
+        std::ofstream output(raw_write_generic_helper_returned_pointer_mismatch_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>\n";
+        output << "    return base\n";
+        output << "unsafe function write_word(base: Pointer<Byte>, value: UInt32) -> Unit\n";
+        output << "    raw_write(id_ptr(base), value)\n";
+    }
+
+    auto raw_write_generic_helper_returned_pointer_mismatch_failure_path_text =
+        raw_write_generic_helper_returned_pointer_mismatch_failure_path.string();
+    std::array<char const*, 3> raw_write_generic_helper_returned_pointer_mismatch_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_write_generic_helper_returned_pointer_mismatch_failure_path_text.c_str()
+    };
+    auto raw_write_generic_helper_returned_pointer_mismatch_failure_result = app.run(
+        std::span<char const* const>(
+            raw_write_generic_helper_returned_pointer_mismatch_failure_argv.data(),
+            raw_write_generic_helper_returned_pointer_mismatch_failure_argv.size()
+        )
+    );
+
+    assert(raw_write_generic_helper_returned_pointer_mismatch_failure_result.exit_code == 1);
+    assert(raw_write_generic_helper_returned_pointer_mismatch_failure_result.stdout_text.empty());
+    assert(raw_write_generic_helper_returned_pointer_mismatch_failure_result.stderr_text.find(
+               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+           ) != std::string::npos);
+
     auto pointer_typed_binding_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_success.or";
     {
@@ -1252,6 +1313,36 @@ int main() {
 
     assert(address_return_helper_returned_address_success_result.exit_code == 0);
     assert(address_return_helper_returned_address_success_result.stderr_text.empty());
+
+    auto address_return_generic_helper_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_address_return_generic_helper_success.or";
+    {
+        std::ofstream output(address_return_generic_helper_success_path);
+        output << "package demo.unsafe\n";
+        output << "function id<T>(value: T) -> T\n";
+        output << "    return value\n";
+        output << "record Device\n";
+        output << "    base: Address\n";
+        output << "function read_base(device: Device) -> Address\n";
+        output << "    return id(device.base)\n";
+    }
+
+    auto address_return_generic_helper_success_path_text =
+        address_return_generic_helper_success_path.string();
+    std::array<char const*, 3> address_return_generic_helper_success_argv {
+        "orisonc",
+        "--parse",
+        address_return_generic_helper_success_path_text.c_str()
+    };
+    auto address_return_generic_helper_success_result = app.run(
+        std::span<char const* const>(
+            address_return_generic_helper_success_argv.data(),
+            address_return_generic_helper_success_argv.size()
+        )
+    );
+
+    assert(address_return_generic_helper_success_result.exit_code == 0);
+    assert(address_return_generic_helper_success_result.stderr_text.empty());
 
     auto raw_read_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_typed_binding_failure.or";

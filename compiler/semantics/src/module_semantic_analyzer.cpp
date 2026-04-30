@@ -40,7 +40,16 @@ struct UnsafeMethodSignature {
 struct MethodReturnSignature {
     std::string receiver_type;
     std::string method_name;
-    std::string return_type_name;
+    std::vector<std::string> generic_parameters;
+    std::vector<syntax::ParameterSyntax> parameters;
+    syntax::TypeSyntax return_type;
+};
+
+struct CallableSignature {
+    std::string name;
+    std::vector<std::string> generic_parameters;
+    std::vector<syntax::ParameterSyntax> parameters;
+    syntax::TypeSyntax return_type;
 };
 
 struct RecordFieldSignature {
@@ -418,21 +427,197 @@ private:
         return false;
     }
 
-    auto find_callable_return_type_name(std::string const& name) const -> std::string {
-        auto found = callable_return_types_.find(name);
-        if (found == callable_return_types_.end()) {
-            return {};
+    auto parse_rendered_type_name(
+        std::string const& type_name,
+        std::size_t& index
+    ) const -> std::optional<syntax::TypeSyntax> {
+        while (index < type_name.size() && type_name[index] == ' ') {
+            ++index;
         }
-        return found->second;
+
+        if (index >= type_name.size()) {
+            return std::nullopt;
+        }
+
+        syntax::TypeSyntax parsed_type;
+        while (index < type_name.size() && type_name[index] != '<' && type_name[index] != '>' &&
+               type_name[index] != ',') {
+            parsed_type.name += type_name[index];
+            ++index;
+        }
+
+        while (!parsed_type.name.empty() && parsed_type.name.back() == ' ') {
+            parsed_type.name.pop_back();
+        }
+
+        if (parsed_type.name.empty()) {
+            return std::nullopt;
+        }
+
+        if (index < type_name.size() && type_name[index] == '<') {
+            ++index;
+            while (index < type_name.size()) {
+                auto argument = parse_rendered_type_name(type_name, index);
+                if (!argument.has_value()) {
+                    return std::nullopt;
+                }
+                parsed_type.generic_arguments.push_back(*argument);
+
+                while (index < type_name.size() && type_name[index] == ' ') {
+                    ++index;
+                }
+
+                if (index >= type_name.size()) {
+                    return std::nullopt;
+                }
+
+                if (type_name[index] == ',') {
+                    ++index;
+                    continue;
+                }
+
+                if (type_name[index] == '>') {
+                    ++index;
+                    break;
+                }
+
+                return std::nullopt;
+            }
+        }
+
+        return parsed_type;
+    }
+
+    auto parse_rendered_type_name(std::string const& type_name) const -> std::optional<syntax::TypeSyntax> {
+        std::size_t index = 0;
+        auto parsed_type = parse_rendered_type_name(type_name, index);
+        if (!parsed_type.has_value()) {
+            return std::nullopt;
+        }
+
+        while (index < type_name.size() && type_name[index] == ' ') {
+            ++index;
+        }
+
+        return index == type_name.size() ? parsed_type : std::nullopt;
+    }
+
+    auto match_generic_type_pattern(
+        syntax::TypeSyntax const& pattern,
+        syntax::TypeSyntax const& actual,
+        std::vector<std::string> const& generic_parameters,
+        std::unordered_map<std::string, syntax::TypeSyntax>& bindings
+    ) const -> bool {
+        if (pattern.generic_arguments.empty()) {
+            for (auto const& generic_parameter : generic_parameters) {
+                if (pattern.name == generic_parameter) {
+                    auto found = bindings.find(pattern.name);
+                    if (found == bindings.end()) {
+                        bindings.emplace(pattern.name, actual);
+                        return true;
+                    }
+
+                    return render_type_name(found->second) == render_type_name(actual);
+                }
+            }
+        }
+
+        if (pattern.name != actual.name || pattern.generic_arguments.size() != actual.generic_arguments.size()) {
+            return false;
+        }
+
+        for (std::size_t index = 0; index < pattern.generic_arguments.size(); ++index) {
+            if (!match_generic_type_pattern(
+                    pattern.generic_arguments[index],
+                    actual.generic_arguments[index],
+                    generic_parameters,
+                    bindings
+                )) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    auto substitute_generic_type_bindings(
+        syntax::TypeSyntax const& type,
+        std::unordered_map<std::string, syntax::TypeSyntax> const& bindings
+    ) const -> syntax::TypeSyntax {
+        auto found = bindings.find(type.name);
+        if (type.generic_arguments.empty() && found != bindings.end()) {
+            return found->second;
+        }
+
+        syntax::TypeSyntax substituted {.name = type.name};
+        for (auto const& argument : type.generic_arguments) {
+            substituted.generic_arguments.push_back(substitute_generic_type_bindings(argument, bindings));
+        }
+        return substituted;
+    }
+
+    auto infer_specialized_return_type_name(
+        std::vector<std::string> const& generic_parameters,
+        std::vector<syntax::ParameterSyntax> const& parameters,
+        syntax::TypeSyntax const& return_type,
+        std::vector<syntax::ExpressionSyntax> const& arguments
+    ) const -> std::string {
+        if (generic_parameters.empty()) {
+            return render_type_name(return_type);
+        }
+
+        if (parameters.size() != arguments.size()) {
+            return render_type_name(return_type);
+        }
+
+        std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        for (std::size_t index = 0; index < parameters.size(); ++index) {
+            auto argument_type_name = infer_expression_type_name(arguments[index]);
+            if (argument_type_name.empty()) {
+                return render_type_name(return_type);
+            }
+
+            auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
+            if (!parsed_argument_type.has_value() ||
+                !match_generic_type_pattern(parameters[index].type, *parsed_argument_type, generic_parameters, bindings)) {
+                return render_type_name(return_type);
+            }
+        }
+
+        return render_type_name(substitute_generic_type_bindings(return_type, bindings));
+    }
+
+    auto find_callable_return_type_name(
+        std::string const& name,
+        std::vector<syntax::ExpressionSyntax> const& arguments
+    ) const -> std::string {
+        for (auto const& signature : callable_signatures_) {
+            if (signature.name == name) {
+                return infer_specialized_return_type_name(
+                    signature.generic_parameters,
+                    signature.parameters,
+                    signature.return_type,
+                    arguments
+                );
+            }
+        }
+
+        return {};
     }
 
     auto find_method_return_type_name(
         std::string const& receiver_type,
-        std::string const& method_name
+        std::string const& method_name,
+        std::vector<syntax::ExpressionSyntax> const& arguments
     ) const -> std::string {
         for (auto const& signature : method_return_signatures_) {
             if (signature.receiver_type == receiver_type && signature.method_name == method_name) {
-                return signature.return_type_name;
+                return infer_specialized_return_type_name(
+                    signature.generic_parameters,
+                    signature.parameters,
+                    signature.return_type,
+                    arguments
+                );
             }
         }
         return {};
@@ -594,7 +779,7 @@ private:
                     return {};
                 }
 
-                return find_method_return_type_name(receiver_type_name, expression.left->text);
+                return find_method_return_type_name(receiver_type_name, expression.left->text, expression.arguments);
             }
             if (expression.left->kind != syntax::ExpressionKind::name) {
                 return {};
@@ -631,7 +816,7 @@ private:
                 }
                 return explicit_pointer_source_pointee_type_name(expression.arguments.front());
             }
-            return find_callable_return_type_name(expression.left->text);
+            return find_callable_return_type_name(expression.left->text, expression.arguments);
         case syntax::ExpressionKind::binary:
             if (!expression.left || !expression.right) {
                 return {};
@@ -1531,11 +1716,16 @@ private:
     }
 
     void collect_callable_return_types() {
-        callable_return_types_.clear();
+        callable_signatures_.clear();
         method_return_signatures_.clear();
 
         for (auto const& function : module_.functions) {
-            callable_return_types_[function.name] = render_type_name(function.return_type);
+            callable_signatures_.push_back(CallableSignature {
+                .name = function.name,
+                .generic_parameters = function.generic_parameters,
+                .parameters = function.parameters,
+                .return_type = function.return_type,
+            });
         }
 
         for (auto const& implementation : module_.implementations) {
@@ -1544,7 +1734,9 @@ private:
                 method_return_signatures_.push_back(MethodReturnSignature {
                     .receiver_type = receiver_type_name,
                     .method_name = method.name,
-                    .return_type_name = render_type_name(method.return_type),
+                    .generic_parameters = method.generic_parameters,
+                    .parameters = method.parameters,
+                    .return_type = method.return_type,
                 });
             }
         }
@@ -1555,13 +1747,20 @@ private:
                 method_return_signatures_.push_back(MethodReturnSignature {
                     .receiver_type = receiver_type_name,
                     .method_name = method.name,
-                    .return_type_name = render_type_name(method.return_type),
+                    .generic_parameters = method.generic_parameters,
+                    .parameters = method.parameters,
+                    .return_type = method.return_type,
                 });
             }
         }
 
         for (auto const& foreign_export : module_.foreign_exports) {
-            callable_return_types_[foreign_export.function.name] = render_type_name(foreign_export.function.return_type);
+            callable_signatures_.push_back(CallableSignature {
+                .name = foreign_export.function.name,
+                .generic_parameters = foreign_export.function.generic_parameters,
+                .parameters = foreign_export.function.parameters,
+                .return_type = foreign_export.function.return_type,
+            });
         }
     }
 
@@ -2224,7 +2423,7 @@ private:
     std::vector<AsyncMethodSignature> async_method_signatures_;
     std::vector<std::string> unsafe_callable_names_;
     std::vector<UnsafeMethodSignature> unsafe_method_signatures_;
-    std::unordered_map<std::string, std::string> callable_return_types_;
+    std::vector<CallableSignature> callable_signatures_;
     std::vector<MethodReturnSignature> method_return_signatures_;
     std::vector<RecordFieldSignature> record_field_signatures_;
     std::unordered_map<std::string, std::size_t> choice_variant_arities_;
