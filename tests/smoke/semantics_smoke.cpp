@@ -2218,6 +2218,28 @@ void test_raw_write_value_type_match_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_raw_write_integer_literal_value_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_raw_write_integer_literal_value_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>) -> Unit\n";
+        output << "    raw_write(p, 0)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_raw_write_helper_pointer_constructor_type_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_write_helper_pointer_type_failure.or";
@@ -2830,6 +2852,28 @@ void test_volatile_write_value_type_match_success() {
         output << "package demo.unsafe\n";
         output << "unsafe function write_word(p: Pointer<UInt32>, value: UInt32) -> Unit\n";
         output << "    volatile_write(p, value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_volatile_write_integer_literal_value_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_volatile_write_integer_literal_value_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>) -> Unit\n";
+        output << "    volatile_write(p, 0)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -3951,6 +3995,7 @@ int main() {
     test_raw_read_return_type_match_success();
     test_raw_write_value_type_mismatch_failure();
     test_raw_write_value_type_match_success();
+    test_raw_write_integer_literal_value_success();
     test_raw_write_helper_pointer_constructor_type_mismatch_failure();
     test_raw_write_helper_pointer_constructor_type_match_success();
     test_raw_write_member_helper_pointer_constructor_type_mismatch_failure();
@@ -3974,6 +4019,7 @@ int main() {
     test_volatile_read_typed_binding_result_match_success();
     test_volatile_write_value_type_mismatch_failure();
     test_volatile_write_value_type_match_success();
+    test_volatile_write_integer_literal_value_success();
     test_volatile_write_helper_pointer_constructor_type_mismatch_failure();
     test_volatile_write_member_helper_pointer_constructor_type_mismatch_failure();
     test_volatile_write_raw_offset_helper_pointer_type_mismatch_failure();

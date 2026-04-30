@@ -151,6 +151,30 @@ private:
         return false;
     }
 
+    auto is_integer_literal_compatible_with_pointee(
+        std::string const& pointee_type_name,
+        syntax::ExpressionSyntax const& value_expression
+    ) const -> bool {
+        return value_expression.kind == syntax::ExpressionKind::integer_literal &&
+               is_integer_type_name(pointee_type_name);
+    }
+
+    auto are_low_level_write_types_compatible(
+        std::string const& pointee_type_name,
+        syntax::ExpressionSyntax const& value_expression
+    ) const -> bool {
+        auto value_type_name = infer_expression_type_name(value_expression);
+        if (value_type_name.empty()) {
+            return true;
+        }
+
+        if (pointee_type_name == value_type_name) {
+            return true;
+        }
+
+        return is_integer_literal_compatible_with_pointee(pointee_type_name, value_expression);
+    }
+
     auto pointer_pointee_type_name(std::string const& type_name) const -> std::string {
         if (!is_pointer_type_name(type_name)) {
             return {};
@@ -777,7 +801,8 @@ private:
             expression.arguments.size() >= 2) {
             auto pointee_type_name = pointer_pointee_type_name(infer_expression_type_name(expression.arguments.front()));
             auto value_type_name = infer_expression_type_name(expression.arguments[1]);
-            if (!pointee_type_name.empty() && !value_type_name.empty() && pointee_type_name != value_type_name) {
+            if (!pointee_type_name.empty() && !value_type_name.empty() &&
+                !are_low_level_write_types_compatible(pointee_type_name, expression.arguments[1])) {
                 diagnostics_.error(
                     expression.line,
                     intrinsic_name + " value type '" + value_type_name +
