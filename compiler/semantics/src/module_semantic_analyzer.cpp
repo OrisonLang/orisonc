@@ -151,6 +151,35 @@ private:
         return false;
     }
 
+    struct IntegerTypeInfo {
+        int bit_width = 0;
+        bool is_fixed_width = false;
+    };
+
+    auto integer_type_info(std::string const& type_name) const -> std::optional<IntegerTypeInfo> {
+        if (type_name == "Int8" || type_name == "UInt8") {
+            return IntegerTypeInfo {.bit_width = 8, .is_fixed_width = true};
+        }
+        if (type_name == "Int16" || type_name == "UInt16") {
+            return IntegerTypeInfo {.bit_width = 16, .is_fixed_width = true};
+        }
+        if (type_name == "Int32" || type_name == "UInt32") {
+            return IntegerTypeInfo {.bit_width = 32, .is_fixed_width = true};
+        }
+        if (type_name == "Int64" || type_name == "UInt64") {
+            return IntegerTypeInfo {.bit_width = 64, .is_fixed_width = true};
+        }
+        if (type_name == "Int128" || type_name == "UInt128") {
+            return IntegerTypeInfo {.bit_width = 128, .is_fixed_width = true};
+        }
+
+        if (type_name == "IntSize" || type_name == "UIntSize" || type_name == "Byte" || type_name == "Char") {
+            return IntegerTypeInfo {.bit_width = 0, .is_fixed_width = false};
+        }
+
+        return std::nullopt;
+    }
+
     auto is_integer_literal_compatible_with_pointee(
         std::string const& pointee_type_name,
         syntax::ExpressionSyntax const& value_expression
@@ -169,8 +198,18 @@ private:
         }
 
         auto source_type_name = infer_expression_type_name(*value_expression.left);
-        return !source_type_name.empty() && is_integer_type_name(source_type_name) &&
-               value_expression.text == pointee_type_name;
+        if (source_type_name.empty() || !is_integer_type_name(source_type_name)) {
+            return false;
+        }
+
+        if (value_expression.text == pointee_type_name) {
+            return true;
+        }
+
+        auto cast_target_info = integer_type_info(value_expression.text);
+        auto pointee_info = integer_type_info(pointee_type_name);
+        return cast_target_info.has_value() && pointee_info.has_value() && cast_target_info->is_fixed_width &&
+               pointee_info->is_fixed_width && cast_target_info->bit_width == pointee_info->bit_width;
     }
 
     auto are_low_level_write_types_compatible(
