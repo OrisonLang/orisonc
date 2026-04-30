@@ -1063,6 +1063,72 @@ void test_switch_constructor_pattern_uses_subject_specific_arity_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_switch_nested_constructor_pattern_rejects_variant_from_different_payload_choice_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrong_payload_choice_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    None\n";
+        output << "    Some(value: T)\n";
+        output << "choice Result<T>\n";
+        output << "    Ok(value: T)\n";
+        output << "    Error\n";
+        output << "choice Envelope<T>\n";
+        output << "    Wrap(inner: Result<T>)\n";
+        output << "function read(env: Envelope<Int64>) -> Int64\n";
+        output << "    switch env\n";
+        output << "        Wrap(Some(value)) => value\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 12);
+    assert(diagnostics.entries().front().message ==
+           "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'");
+}
+
+void test_switch_nested_constructor_pattern_uses_payload_specific_arity_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_specific_arity_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "choice PairFlag\n";
+        output << "    Some(left: Int64, right: Int64)\n";
+        output << "choice Envelope\n";
+        output << "    Wrap(inner: PairFlag)\n";
+        output << "function read(env: Envelope) -> Int64\n";
+        output << "    switch env\n";
+        output << "        Wrap(Some(left, right)) => left\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_constructor_pattern_shape_failure.or";
@@ -6484,6 +6550,8 @@ int main() {
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure();
     test_switch_constructor_pattern_rejects_variant_from_different_choice_failure();
     test_switch_constructor_pattern_uses_subject_specific_arity_success();
+    test_switch_nested_constructor_pattern_rejects_variant_from_different_payload_choice_failure();
+    test_switch_nested_constructor_pattern_uses_payload_specific_arity_success();
     test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure();
     test_switch_constructor_pattern_rejects_duplicate_binding_names_failure();
     test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure();

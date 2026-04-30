@@ -786,6 +786,24 @@ private:
         return signature->payloads.size();
     }
 
+    auto resolve_choice_pattern_subject_type(
+        std::string const& variant_name,
+        syntax::TypeSyntax const& subject_type
+    ) const -> std::optional<syntax::TypeSyntax> {
+        if (find_choice_variant_signature(variant_name, subject_type) != nullptr) {
+            return subject_type;
+        }
+
+        if (subject_type.name == "Box" && subject_type.generic_arguments.size() == 1) {
+            auto const& wrapped_type = subject_type.generic_arguments.front();
+            if (find_choice_variant_signature(variant_name, wrapped_type) != nullptr) {
+                return wrapped_type;
+            }
+        }
+
+        return std::nullopt;
+    }
+
     auto has_concurrency_marker_constraint(
         std::string const& type_name,
         ConcurrencyMarkerKind marker_kind
@@ -1523,7 +1541,10 @@ private:
 
             std::optional<std::size_t> expected_arity;
             if (subject_type.has_value()) {
-                expected_arity = find_choice_variant_payload_arity(pattern.left->text, *subject_type);
+                auto resolved_subject_type = resolve_choice_pattern_subject_type(pattern.left->text, *subject_type);
+                if (resolved_subject_type.has_value()) {
+                    expected_arity = find_choice_variant_payload_arity(pattern.left->text, *resolved_subject_type);
+                }
             } else {
                 auto variant = choice_variant_arities_.find(pattern.left->text);
                 if (variant != choice_variant_arities_.end()) {
@@ -1546,7 +1567,10 @@ private:
         if (pattern.kind == syntax::ExpressionKind::name) {
             std::optional<std::size_t> expected_arity;
             if (subject_type.has_value()) {
-                expected_arity = find_choice_variant_payload_arity(pattern.text, *subject_type);
+                auto resolved_subject_type = resolve_choice_pattern_subject_type(pattern.text, *subject_type);
+                if (resolved_subject_type.has_value()) {
+                    expected_arity = find_choice_variant_payload_arity(pattern.text, *resolved_subject_type);
+                }
             } else {
                 auto variant = choice_variant_arities_.find(pattern.text);
                 if (variant != choice_variant_arities_.end()) {
@@ -1574,8 +1598,10 @@ private:
                 return true;
             }
 
-            auto matches_subject_variant =
-                subject_type.has_value() && find_choice_variant_signature(pattern.left->text, *subject_type) != nullptr;
+            auto resolved_subject_type = subject_type.has_value()
+                                             ? resolve_choice_pattern_subject_type(pattern.left->text, *subject_type)
+                                             : std::nullopt;
+            auto matches_subject_variant = resolved_subject_type.has_value();
             if (!matches_subject_variant && !choice_variant_arities_.contains(pattern.left->text) &&
                 !(subject_type.has_value() ? false : is_builtin_constructor_name(pattern.left->text))) {
                 diagnostics_.error(
@@ -1597,8 +1623,10 @@ private:
         }
 
         if (pattern.kind == syntax::ExpressionKind::name && !pattern.text.empty()) {
-            auto matches_subject_variant =
-                subject_type.has_value() && find_choice_variant_signature(pattern.text, *subject_type) != nullptr;
+            auto resolved_subject_type = subject_type.has_value()
+                                             ? resolve_choice_pattern_subject_type(pattern.text, *subject_type)
+                                             : std::nullopt;
+            auto matches_subject_variant = resolved_subject_type.has_value();
             if (!matches_subject_variant && !choice_variant_arities_.contains(pattern.text) &&
                 !(subject_type.has_value() ? false : is_builtin_constructor_name(pattern.text)) &&
                 pattern.text != "default") {
@@ -1629,7 +1657,9 @@ private:
         std::optional<syntax::TypeSyntax> const& subject_type = std::nullopt,
         bool in_constructor_payload = false
     ) -> bool {
-        if (!in_constructor_payload) {
+        auto should_validate_constructor_head =
+            !in_constructor_payload || (pattern.kind == syntax::ExpressionKind::call && subject_type.has_value());
+        if (should_validate_constructor_head) {
             if (!validate_switch_pattern_head(pattern, subject_type)) {
                 return false;
             }
@@ -1646,10 +1676,36 @@ private:
             }
 
             auto valid = true;
-            for (auto const& argument : pattern.arguments) {
+            std::optional<ChoiceVariantSignature const*> variant_signature;
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (subject_type.has_value()) {
+                auto resolved_subject_type = resolve_choice_pattern_subject_type(pattern.left->text, *subject_type);
+                auto const* matched_signature =
+                    resolved_subject_type.has_value()
+                        ? find_choice_variant_signature(pattern.left->text, *resolved_subject_type)
+                        : nullptr;
+                if (matched_signature != nullptr &&
+                    match_generic_type_pattern(
+                        matched_signature->choice_type,
+                        *resolved_subject_type,
+                        matched_signature->generic_parameters,
+                        bindings
+                    )) {
+                    variant_signature = matched_signature;
+                }
+            }
+
+            for (std::size_t index = 0; index < pattern.arguments.size(); ++index) {
+                auto const& argument = pattern.arguments[index];
+                std::optional<syntax::TypeSyntax> payload_type;
+                if (variant_signature.has_value() && index < (*variant_signature)->payloads.size()) {
+                    payload_type =
+                        substitute_generic_type_bindings((*variant_signature)->payloads[index].type, bindings);
+                }
+
                 if (argument.kind == syntax::ExpressionKind::name || is_literal_switch_subpattern(argument) ||
                     argument.kind == syntax::ExpressionKind::call) {
-                    valid = analyze_switch_pattern(argument, in_async_function, std::nullopt, true) && valid;
+                    valid = analyze_switch_pattern(argument, in_async_function, payload_type, true) && valid;
                     continue;
                 }
 
@@ -1696,7 +1752,10 @@ private:
                 return;
             }
 
-            auto const* variant_signature = find_choice_variant_signature(pattern.left->text, *pattern_type);
+            auto resolved_pattern_type = resolve_choice_pattern_subject_type(pattern.left->text, *pattern_type);
+            auto const* variant_signature = resolved_pattern_type.has_value()
+                                                ? find_choice_variant_signature(pattern.left->text, *resolved_pattern_type)
+                                                : nullptr;
             if (variant_signature == nullptr) {
                 for (auto const& argument : pattern.arguments) {
                     declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names);
@@ -1707,7 +1766,7 @@ private:
             std::unordered_map<std::string, syntax::TypeSyntax> bindings;
             if (!match_generic_type_pattern(
                     variant_signature->choice_type,
-                    *pattern_type,
+                    *resolved_pattern_type,
                     variant_signature->generic_parameters,
                     bindings
                 )) {
