@@ -2023,6 +2023,56 @@ void test_pointer_typed_binding_with_pointer_initializer_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_pointer_typed_binding_with_mismatched_raw_offset_source_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_pointer_typed_binding_rawoffset_source_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>\n";
+        output << "    let p: Pointer<UInt32> = raw_offset(base, 1)\n";
+        output << "    return p\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'");
+}
+
+void test_pointer_typed_binding_with_matching_raw_offset_source_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_pointer_typed_binding_rawoffset_source_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
+        output << "    let p: Pointer<Byte> = raw_offset(base, 1)\n";
+        output << "    return p\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_raw_read_typed_binding_result_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_read_typed_binding_mismatch.or";
@@ -2134,6 +2184,54 @@ void test_pointer_return_with_pointer_expression_success() {
         std::ofstream output(path);
         output << "package demo.unsafe\n";
         output << "unsafe function next_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
+        output << "    return raw_offset(base, 1)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_pointer_return_with_mismatched_raw_offset_source_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_rawoffset_source_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>\n";
+        output << "    return raw_offset(base, 1)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'");
+}
+
+void test_pointer_return_with_matching_raw_offset_source_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_rawoffset_source_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
         output << "    return raw_offset(base, 1)\n";
     }
 
@@ -4189,11 +4287,15 @@ int main() {
     test_pointer_typed_binding_with_matching_address_of_source_success();
     test_pointer_typed_binding_with_nonpointer_initializer_failure();
     test_pointer_typed_binding_with_pointer_initializer_success();
+    test_pointer_typed_binding_with_mismatched_raw_offset_source_failure();
+    test_pointer_typed_binding_with_matching_raw_offset_source_success();
     test_raw_read_typed_binding_result_mismatch_failure();
     test_raw_read_typed_binding_result_match_success();
     test_pointer_typed_binding_with_wrong_typed_name_failure();
     test_pointer_return_with_nonpointer_expression_failure();
     test_pointer_return_with_pointer_expression_success();
+    test_pointer_return_with_mismatched_raw_offset_source_failure();
+    test_pointer_return_with_matching_raw_offset_source_success();
     test_pointer_return_with_wrong_typed_name_failure();
     test_pointer_return_with_mismatched_address_of_source_failure();
     test_pointer_return_with_matching_address_of_source_success();

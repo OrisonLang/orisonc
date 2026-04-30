@@ -814,6 +814,34 @@ int main() {
     assert(pointer_typed_binding_success_result.stderr_text.empty());
     assert(pointer_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto pointer_raw_offset_typed_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_rawoffset_typed_failure.or";
+    {
+        std::ofstream output(pointer_raw_offset_typed_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function next_word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>\n";
+        output << "    return raw_offset(base, 1)\n";
+    }
+
+    auto pointer_raw_offset_typed_failure_path_text = pointer_raw_offset_typed_failure_path.string();
+    std::array<char const*, 3> pointer_raw_offset_typed_failure_argv {
+        "orisonc",
+        "--parse",
+        pointer_raw_offset_typed_failure_path_text.c_str()
+    };
+    auto pointer_raw_offset_typed_failure_result = app.run(
+        std::span<char const* const>(
+            pointer_raw_offset_typed_failure_argv.data(),
+            pointer_raw_offset_typed_failure_argv.size()
+        )
+    );
+
+    assert(pointer_raw_offset_typed_failure_result.exit_code == 1);
+    assert(pointer_raw_offset_typed_failure_result.stdout_text.empty());
+    assert(pointer_raw_offset_typed_failure_result.stderr_text.find(
+               "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+           ) != std::string::npos);
+
     auto address_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_typed_binding_failure.or";
     {

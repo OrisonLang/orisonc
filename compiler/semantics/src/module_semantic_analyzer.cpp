@@ -593,6 +593,27 @@ private:
         return infer_expression_type_name(expression.arguments.front());
     }
 
+    auto explicit_pointer_source_pointee_type_name(syntax::ExpressionSyntax const& expression) const
+        -> std::string {
+        auto inferred_type_name = infer_expression_type_name(expression);
+        auto inferred_pointee_type_name = pointer_pointee_type_name(inferred_type_name);
+        if (!inferred_pointee_type_name.empty()) {
+            return inferred_pointee_type_name;
+        }
+
+        if (is_pointer_constructor_call(expression) && !expression.arguments.empty()) {
+            return address_of_operand_type_name(expression.arguments.front());
+        }
+
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset" &&
+            !expression.arguments.empty()) {
+            return explicit_pointer_source_pointee_type_name(expression.arguments.front());
+        }
+
+        return {};
+    }
+
     auto validate_read_result_type(
         syntax::ExpressionSyntax const& expression,
         std::string const& expected_type_name,
@@ -750,6 +771,20 @@ private:
         std::string_view context_description
     ) {
         auto inferred_type_name = infer_expression_type_name(expression);
+        auto expected_pointee_type_name = pointer_pointee_type_name(expected_pointer_type_name_);
+        if (!expected_pointee_type_name.empty() && expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset") {
+            auto source_pointee_type_name = explicit_pointer_source_pointee_type_name(expression.arguments.front());
+            if (!source_pointee_type_name.empty() && source_pointee_type_name != expected_pointee_type_name) {
+                diagnostics_.error(
+                    line,
+                    "raw_offset source pointer element type '" + source_pointee_type_name +
+                        "' does not match expected pointer element type '" + expected_pointee_type_name + "'"
+                );
+                return;
+            }
+        }
+
         if (!inferred_type_name.empty()) {
             if (!is_pointer_type_name(inferred_type_name)) {
                 diagnostics_.error(
