@@ -1458,6 +1458,62 @@ void test_switch_accepts_same_width_integer_cast_value_pattern_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_switch_rejects_duplicate_boolean_value_pattern_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_boolean_value_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        true => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message == "switch value pattern 'true' is duplicated");
+}
+
+void test_switch_rejects_duplicate_string_value_pattern_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_string_value_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(state: Text) -> Int64\n";
+        output << "    switch state\n";
+        output << "        \"ready\" => 1\n";
+        output << "        \"ready\" => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message == "switch value pattern '\"ready\"' is duplicated");
+}
+
 void test_switch_rejects_multiple_default_cases_semantically() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_multiple_default_semantic_failure.or";
     {
@@ -6673,6 +6729,8 @@ int main() {
     test_switch_rejects_value_then_constructor_pattern_mix_failure();
     test_switch_rejects_mismatched_value_pattern_type_failure();
     test_switch_accepts_same_width_integer_cast_value_pattern_success();
+    test_switch_rejects_duplicate_boolean_value_pattern_failure();
+    test_switch_rejects_duplicate_string_value_pattern_failure();
     test_switch_rejects_multiple_default_cases_semantically();
     test_switch_rejects_nonfinal_default_case_semantically();
     test_break_outside_loop_failure();

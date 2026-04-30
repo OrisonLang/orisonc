@@ -1125,6 +1125,29 @@ private:
                pattern.kind == syntax::ExpressionKind::boolean_literal;
     }
 
+    auto switch_literal_pattern_key(syntax::ExpressionSyntax const& pattern) const -> std::optional<std::string> {
+        if (pattern.kind == syntax::ExpressionKind::integer_literal) {
+            return "int:" + pattern.text;
+        }
+        if (pattern.kind == syntax::ExpressionKind::boolean_literal) {
+            return "bool:" + pattern.text;
+        }
+        if (pattern.kind == syntax::ExpressionKind::string_literal) {
+            return "string:" + pattern.text;
+        }
+        return std::nullopt;
+    }
+
+    auto render_switch_literal_pattern(syntax::ExpressionSyntax const& pattern) const -> std::string {
+        if (pattern.kind == syntax::ExpressionKind::string_literal) {
+            if (pattern.text.size() >= 2 && pattern.text.front() == '"' && pattern.text.back() == '"') {
+                return pattern.text;
+            }
+            return "\"" + pattern.text + "\"";
+        }
+        return pattern.text;
+    }
+
     auto is_switch_value_pattern_type_compatible(
         syntax::ExpressionSyntax const& pattern,
         std::string const& subject_type_name,
@@ -2394,6 +2417,7 @@ private:
             auto saw_value_pattern = false;
             auto saw_constructor_pattern = false;
             auto saw_semantic_default = false;
+            std::unordered_set<std::string> seen_literal_value_patterns;
             std::optional<syntax::TypeSyntax> switch_subject_type;
             auto switch_subject_type_name = infer_expression_type_name(statement.expression);
             if (!switch_subject_type_name.empty()) {
@@ -2428,6 +2452,15 @@ private:
                     auto pattern_kind = classify_switch_pattern_kind(switch_case.pattern);
                     if (pattern_kind == SwitchPatternKind::value) {
                         saw_value_pattern = true;
+                        auto literal_key = switch_literal_pattern_key(switch_case.pattern);
+                        if (literal_key.has_value() && !seen_literal_value_patterns.insert(*literal_key).second) {
+                            diagnostics_.error(
+                                switch_case.pattern.line,
+                                "switch value pattern '" + render_switch_literal_pattern(switch_case.pattern) +
+                                    "' is duplicated"
+                            );
+                            valid_pattern = false;
+                        }
                     } else if (pattern_kind == SwitchPatternKind::constructor) {
                         saw_constructor_pattern = true;
                     }

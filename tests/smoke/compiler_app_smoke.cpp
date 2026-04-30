@@ -4960,6 +4960,68 @@ int main() {
     assert(switch_value_pattern_same_width_success_result.stderr_text.empty());
     assert(switch_value_pattern_same_width_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto switch_duplicate_boolean_value_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_boolean_value_failure.or";
+    {
+        std::ofstream output(switch_duplicate_boolean_value_failure_path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        true => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_duplicate_boolean_value_failure_path_text = switch_duplicate_boolean_value_failure_path.string();
+    std::array<char const*, 3> switch_duplicate_boolean_value_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_duplicate_boolean_value_failure_path_text.c_str()
+    };
+    auto switch_duplicate_boolean_value_failure_result = app.run(
+        std::span<char const* const>(
+            switch_duplicate_boolean_value_failure_argv.data(),
+            switch_duplicate_boolean_value_failure_argv.size()
+        )
+    );
+
+    assert(switch_duplicate_boolean_value_failure_result.exit_code == 1);
+    assert(switch_duplicate_boolean_value_failure_result.stdout_text.empty());
+    assert(switch_duplicate_boolean_value_failure_result.stderr_text.find(
+               "switch value pattern 'true' is duplicated"
+           ) != std::string::npos);
+
+    auto switch_duplicate_string_value_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_string_value_failure.or";
+    {
+        std::ofstream output(switch_duplicate_string_value_failure_path);
+        output << "package demo.switches\n";
+        output << "function classify(state: Text) -> Int64\n";
+        output << "    switch state\n";
+        output << "        \"ready\" => 1\n";
+        output << "        \"ready\" => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_duplicate_string_value_failure_path_text = switch_duplicate_string_value_failure_path.string();
+    std::array<char const*, 3> switch_duplicate_string_value_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_duplicate_string_value_failure_path_text.c_str()
+    };
+    auto switch_duplicate_string_value_failure_result = app.run(
+        std::span<char const* const>(
+            switch_duplicate_string_value_failure_argv.data(),
+            switch_duplicate_string_value_failure_argv.size()
+        )
+    );
+
+    assert(switch_duplicate_string_value_failure_result.exit_code == 1);
+    assert(switch_duplicate_string_value_failure_result.stdout_text.empty());
+    assert(switch_duplicate_string_value_failure_result.stderr_text.find(
+               "switch value pattern '\"ready\"' is duplicated"
+           ) != std::string::npos);
+
     auto break_outside_loop_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
     {
