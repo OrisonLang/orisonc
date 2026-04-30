@@ -2638,6 +2638,87 @@ void test_raw_write_computed_ternary_pointer_sized_mismatch_failure() {
            "raw_write value type 'IntSize' does not match pointer element type 'UInt32'");
 }
 
+void test_raw_write_rebound_computed_value_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_raw_write_rebound_computed_value_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit\n";
+        output << "    let masked = value bit_or 1\n";
+        output << "    raw_write(out, masked)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_raw_write_branch_merged_computed_value_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_write_branch_merged_computed_value_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: Int32, right: Int32) -> Unit\n";
+        output << "    var selected = left\n";
+        output << "    if flag\n";
+        output << "        selected = left bit_or 1\n";
+        output << "    else\n";
+        output << "        selected = right + 1\n";
+        output << "    raw_write(out, selected)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_raw_write_branch_merged_pointer_sized_value_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_write_branch_merged_pointer_sized_value_mismatch_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit\n";
+        output << "    var selected = left\n";
+        output << "    if flag\n";
+        output << "        selected = left + 1\n";
+        output << "    else\n";
+        output << "        selected = right shift_left 1\n";
+        output << "    raw_write(out, selected)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message ==
+           "raw_write value type 'IntSize' does not match pointer element type 'UInt32'");
+}
+
 void test_raw_write_integer_literal_value_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_write_integer_literal_value_success.or";
@@ -3760,6 +3841,87 @@ void test_volatile_write_computed_ternary_pointer_sized_mismatch_failure() {
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'");
+}
+
+void test_volatile_write_rebound_computed_value_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_write_rebound_computed_value_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit\n";
+        output << "    let masked = value bit_or 1\n";
+        output << "    volatile_write(out, masked)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_volatile_write_branch_merged_computed_value_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_write_branch_merged_computed_value_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: Int32, right: Int32) -> Unit\n";
+        output << "    var selected = left\n";
+        output << "    if flag\n";
+        output << "        selected = left bit_or 1\n";
+        output << "    else\n";
+        output << "        selected = right + 1\n";
+        output << "    volatile_write(out, selected)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_volatile_write_branch_merged_pointer_sized_value_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_write_branch_merged_pointer_sized_value_mismatch_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit\n";
+        output << "    var selected = left\n";
+        output << "    if flag\n";
+        output << "        selected = left + 1\n";
+        output << "    else\n";
+        output << "        selected = right shift_left 1\n";
+        output << "    volatile_write(out, selected)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
     assert(diagnostics.entries().front().message ==
            "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'");
 }
@@ -5172,6 +5334,9 @@ int main() {
     test_raw_write_computed_integer_sum_success();
     test_raw_write_computed_bitwise_value_success();
     test_raw_write_computed_ternary_pointer_sized_mismatch_failure();
+    test_raw_write_rebound_computed_value_success();
+    test_raw_write_branch_merged_computed_value_success();
+    test_raw_write_branch_merged_pointer_sized_value_mismatch_failure();
     test_raw_write_integer_literal_value_success();
     test_raw_write_integer_cast_value_success();
     test_raw_write_same_width_integer_cast_success();
@@ -5215,6 +5380,9 @@ int main() {
     test_volatile_write_computed_integer_sum_success();
     test_volatile_write_computed_bitwise_value_success();
     test_volatile_write_computed_ternary_pointer_sized_mismatch_failure();
+    test_volatile_write_rebound_computed_value_success();
+    test_volatile_write_branch_merged_computed_value_success();
+    test_volatile_write_branch_merged_pointer_sized_value_mismatch_failure();
     test_volatile_write_integer_literal_value_success();
     test_volatile_write_integer_cast_value_success();
     test_volatile_write_same_width_integer_cast_success();
