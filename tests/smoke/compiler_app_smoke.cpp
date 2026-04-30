@@ -4902,6 +4902,64 @@ int main() {
                "switch cannot mix value patterns with constructor patterns"
            ) != std::string::npos);
 
+    auto switch_value_pattern_type_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_value_pattern_type_failure.or";
+    {
+        std::ofstream output(switch_value_pattern_type_failure_path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        \"ready\" => 1\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_value_pattern_type_failure_path_text = switch_value_pattern_type_failure_path.string();
+    std::array<char const*, 3> switch_value_pattern_type_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_value_pattern_type_failure_path_text.c_str()
+    };
+    auto switch_value_pattern_type_failure_result = app.run(
+        std::span<char const* const>(
+            switch_value_pattern_type_failure_argv.data(),
+            switch_value_pattern_type_failure_argv.size()
+        )
+    );
+
+    assert(switch_value_pattern_type_failure_result.exit_code == 1);
+    assert(switch_value_pattern_type_failure_result.stdout_text.empty());
+    assert(switch_value_pattern_type_failure_result.stderr_text.find(
+               "switch value pattern type 'Text' does not match switched expression type 'Bool'"
+           ) != std::string::npos);
+
+    auto switch_value_pattern_same_width_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_value_pattern_same_width_success.or";
+    {
+        std::ofstream output(switch_value_pattern_same_width_success_path);
+        output << "package demo.switches\n";
+        output << "function classify(value: UInt32) -> Int64\n";
+        output << "    switch value\n";
+        output << "        1 as Int32 => 1\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_value_pattern_same_width_success_path_text = switch_value_pattern_same_width_success_path.string();
+    std::array<char const*, 3> switch_value_pattern_same_width_success_argv {
+        "orisonc",
+        "--parse",
+        switch_value_pattern_same_width_success_path_text.c_str()
+    };
+    auto switch_value_pattern_same_width_success_result = app.run(
+        std::span<char const* const>(
+            switch_value_pattern_same_width_success_argv.data(),
+            switch_value_pattern_same_width_success_argv.size()
+        )
+    );
+
+    assert(switch_value_pattern_same_width_success_result.exit_code == 0);
+    assert(switch_value_pattern_same_width_success_result.stderr_text.empty());
+    assert(switch_value_pattern_same_width_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto break_outside_loop_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
     {

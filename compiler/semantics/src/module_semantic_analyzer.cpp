@@ -1125,6 +1125,55 @@ private:
                pattern.kind == syntax::ExpressionKind::boolean_literal;
     }
 
+    auto is_switch_value_pattern_type_compatible(
+        syntax::ExpressionSyntax const& pattern,
+        std::string const& subject_type_name,
+        std::string const& pattern_type_name
+    ) const -> bool {
+        if (subject_type_name.empty() || pattern_type_name.empty()) {
+            return true;
+        }
+
+        if (subject_type_name == pattern_type_name) {
+            return true;
+        }
+
+        if (pattern.kind == syntax::ExpressionKind::integer_literal && is_integer_type_name(subject_type_name)) {
+            return true;
+        }
+
+        if (is_integer_type_name(subject_type_name) && is_integer_type_name(pattern_type_name) &&
+            are_low_level_read_types_compatible(pattern_type_name, subject_type_name)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    void validate_switch_value_pattern_type(
+        syntax::ExpressionSyntax const& pattern,
+        std::optional<syntax::TypeSyntax> const& subject_type
+    ) {
+        if (!subject_type.has_value() || pattern.kind == syntax::ExpressionKind::name ||
+            pattern.kind == syntax::ExpressionKind::call) {
+            return;
+        }
+
+        auto subject_type_name = render_type_name(*subject_type);
+        auto pattern_type_name = infer_expression_type_name(pattern);
+        if (pattern_type_name.empty()) {
+            return;
+        }
+
+        if (!is_switch_value_pattern_type_compatible(pattern, subject_type_name, pattern_type_name)) {
+            diagnostics_.error(
+                pattern.line,
+                "switch value pattern type '" + pattern_type_name + "' does not match switched expression type '" +
+                    subject_type_name + "'"
+            );
+        }
+    }
+
     auto is_builtin_constructor_name(std::string const& name) const -> bool {
         return name == "Some" || name == "Empty" || name == "Ok" || name == "Error";
     }
@@ -1723,6 +1772,9 @@ private:
         }
 
         if (is_literal_switch_subpattern(pattern)) {
+            if (!in_constructor_payload) {
+                validate_switch_value_pattern_type(pattern, subject_type);
+            }
             return true;
         }
 
@@ -1735,6 +1787,7 @@ private:
         }
 
         analyze_expression(pattern, in_async_function);
+        validate_switch_value_pattern_type(pattern, subject_type);
         return true;
     }
 

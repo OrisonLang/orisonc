@@ -1406,6 +1406,58 @@ void test_switch_rejects_value_then_constructor_pattern_mix_failure() {
            "switch cannot mix value patterns with constructor patterns");
 }
 
+void test_switch_rejects_mismatched_value_pattern_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_value_pattern_type_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        \"ready\" => 1\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 4);
+    assert(diagnostics.entries().front().message ==
+           "switch value pattern type 'Text' does not match switched expression type 'Bool'");
+}
+
+void test_switch_accepts_same_width_integer_cast_value_pattern_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_value_pattern_same_width_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(value: UInt32) -> Int64\n";
+        output << "    switch value\n";
+        output << "        1 as Int32 => 1\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_switch_rejects_multiple_default_cases_semantically() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_multiple_default_semantic_failure.or";
     {
@@ -6619,6 +6671,8 @@ int main() {
     test_switch_constructor_pattern_rejects_extra_payload_values_failure();
     test_switch_rejects_constructor_then_value_pattern_mix_failure();
     test_switch_rejects_value_then_constructor_pattern_mix_failure();
+    test_switch_rejects_mismatched_value_pattern_type_failure();
+    test_switch_accepts_same_width_integer_cast_value_pattern_success();
     test_switch_rejects_multiple_default_cases_semantically();
     test_switch_rejects_nonfinal_default_case_semantically();
     test_break_outside_loop_failure();
