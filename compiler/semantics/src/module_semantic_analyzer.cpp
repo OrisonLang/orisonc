@@ -887,7 +887,7 @@ private:
             }
 
             if (!expected_pointee_type_name.empty() && !source_operand_type_name.empty() &&
-                expected_pointee_type_name != source_operand_type_name) {
+                !are_low_level_read_types_compatible(source_operand_type_name, expected_pointee_type_name)) {
                 diagnostics_.error(
                     expression.line,
                     "Pointer construction source type '" + source_operand_type_name +
@@ -906,7 +906,7 @@ private:
         }
 
         if (!expected_pointee_type_name.empty() && !source_operand_type_name.empty() &&
-            expected_pointee_type_name != source_operand_type_name) {
+            !are_low_level_read_types_compatible(source_operand_type_name, expected_pointee_type_name)) {
             diagnostics_.error(
                 expression.line,
                 "Pointer construction source type '" + source_operand_type_name +
@@ -999,7 +999,8 @@ private:
         if (!expected_pointee_type_name.empty() && expression.kind == syntax::ExpressionKind::call && expression.left &&
             expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset") {
             auto source_pointee_type_name = explicit_pointer_source_pointee_type_name(expression.arguments.front());
-            if (!source_pointee_type_name.empty() && source_pointee_type_name != expected_pointee_type_name) {
+            if (!source_pointee_type_name.empty() &&
+                !are_low_level_read_types_compatible(source_pointee_type_name, expected_pointee_type_name)) {
                 diagnostics_.error(
                     line,
                     "raw_offset source pointer element type '" + source_pointee_type_name +
