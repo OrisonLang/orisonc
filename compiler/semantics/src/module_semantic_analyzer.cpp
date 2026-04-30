@@ -221,7 +221,7 @@ private:
             return true;
         }
 
-        if (pointee_type_name == value_type_name) {
+        if (are_low_level_read_types_compatible(value_type_name, pointee_type_name)) {
             return true;
         }
 

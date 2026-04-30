@@ -2520,6 +2520,54 @@ void test_raw_write_value_type_match_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_raw_write_same_width_integer_value_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_raw_write_same_width_integer_value_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>, value: Int32) -> Unit\n";
+        output << "    raw_write(p, value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_raw_write_pointer_sized_integer_value_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_write_pointer_sized_integer_value_mismatch_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>, value: IntSize) -> Unit\n";
+        output << "    raw_write(p, value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "raw_write value type 'IntSize' does not match pointer element type 'UInt32'");
+}
+
 void test_raw_write_integer_literal_value_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_write_integer_literal_value_success.or";
@@ -3526,6 +3574,54 @@ void test_volatile_write_value_type_match_success() {
     orison::semantics::ModuleSemanticAnalyzer analyzer;
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(!diagnostics.has_errors());
+}
+
+void test_volatile_write_same_width_integer_value_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_write_same_width_integer_value_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>, value: Int32) -> Unit\n";
+        output << "    volatile_write(p, value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_volatile_write_pointer_sized_integer_value_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_write_pointer_sized_integer_value_mismatch_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(p: Pointer<UInt32>, value: IntSize) -> Unit\n";
+        output << "    volatile_write(p, value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'");
 }
 
 void test_volatile_write_integer_literal_value_success() {
@@ -4931,6 +5027,8 @@ int main() {
     test_raw_read_return_pointer_sized_integer_mismatch_failure();
     test_raw_write_value_type_mismatch_failure();
     test_raw_write_value_type_match_success();
+    test_raw_write_same_width_integer_value_success();
+    test_raw_write_pointer_sized_integer_value_mismatch_failure();
     test_raw_write_integer_literal_value_success();
     test_raw_write_integer_cast_value_success();
     test_raw_write_same_width_integer_cast_success();
@@ -4969,6 +5067,8 @@ int main() {
     test_volatile_read_typed_binding_pointer_sized_integer_mismatch_failure();
     test_volatile_write_value_type_mismatch_failure();
     test_volatile_write_value_type_match_success();
+    test_volatile_write_same_width_integer_value_success();
+    test_volatile_write_pointer_sized_integer_value_mismatch_failure();
     test_volatile_write_integer_literal_value_success();
     test_volatile_write_integer_cast_value_success();
     test_volatile_write_same_width_integer_cast_success();
