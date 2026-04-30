@@ -4262,6 +4262,74 @@ int main() {
                "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
            ) != std::string::npos);
 
+    auto switch_wrong_choice_variant_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_wrong_choice_variant_failure.or";
+    {
+        std::ofstream output(switch_wrong_choice_variant_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    None\n";
+        output << "    Some(value: T)\n";
+        output << "choice Result<T>\n";
+        output << "    Ok(value: T)\n";
+        output << "    Error\n";
+        output << "function read(result: Result<Int64>) -> Int64\n";
+        output << "    switch result\n";
+        output << "        Some(value) => value\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_wrong_choice_variant_failure_path_text = switch_wrong_choice_variant_failure_path.string();
+    std::array<char const*, 3> switch_wrong_choice_variant_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_wrong_choice_variant_failure_path_text.c_str()
+    };
+    auto switch_wrong_choice_variant_failure_result = app.run(
+        std::span<char const* const>(
+            switch_wrong_choice_variant_failure_argv.data(),
+            switch_wrong_choice_variant_failure_argv.size()
+        )
+    );
+
+    assert(switch_wrong_choice_variant_failure_result.exit_code == 1);
+    assert(switch_wrong_choice_variant_failure_result.stdout_text.empty());
+    assert(switch_wrong_choice_variant_failure_result.stderr_text.find(
+               "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
+           ) != std::string::npos);
+
+    auto switch_subject_specific_arity_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_subject_specific_arity_success.or";
+    {
+        std::ofstream output(switch_subject_specific_arity_success_path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "choice Flag\n";
+        output << "    Some\n";
+        output << "function read(flag: Flag) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        Some => 1\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_subject_specific_arity_success_path_text = switch_subject_specific_arity_success_path.string();
+    std::array<char const*, 3> switch_subject_specific_arity_success_argv {
+        "orisonc",
+        "--parse",
+        switch_subject_specific_arity_success_path_text.c_str()
+    };
+    auto switch_subject_specific_arity_success_result = app.run(
+        std::span<char const* const>(
+            switch_subject_specific_arity_success_argv.data(),
+            switch_subject_specific_arity_success_argv.size()
+        )
+    );
+
+    assert(switch_subject_specific_arity_success_result.exit_code == 0);
+    assert(switch_subject_specific_arity_success_result.stderr_text.empty());
+    assert(switch_subject_specific_arity_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto switch_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_thread_origin_failure.or";
     {

@@ -1001,6 +1001,68 @@ void test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_fa
            "raw_write value type 'Byte' does not match pointer element type 'UInt32'");
 }
 
+void test_switch_constructor_pattern_rejects_variant_from_different_choice_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_wrong_choice_variant_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    None\n";
+        output << "    Some(value: T)\n";
+        output << "choice Result<T>\n";
+        output << "    Ok(value: T)\n";
+        output << "    Error\n";
+        output << "function read(result: Result<Int64>) -> Int64\n";
+        output << "    switch result\n";
+        output << "        Some(value) => value\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 10);
+    assert(diagnostics.entries().front().message ==
+           "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'");
+}
+
+void test_switch_constructor_pattern_uses_subject_specific_arity_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_subject_specific_arity_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "choice Flag\n";
+        output << "    Some\n";
+        output << "function read(flag: Flag) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        Some => 1\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
 void test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_constructor_pattern_shape_failure.or";
@@ -6420,6 +6482,8 @@ int main() {
     test_switch_nested_constructor_pattern_binds_nested_names_success();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure();
+    test_switch_constructor_pattern_rejects_variant_from_different_choice_failure();
+    test_switch_constructor_pattern_uses_subject_specific_arity_success();
     test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure();
     test_switch_constructor_pattern_rejects_duplicate_binding_names_failure();
     test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure();

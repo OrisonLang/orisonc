@@ -774,6 +774,18 @@ private:
         return nullptr;
     }
 
+    auto find_choice_variant_payload_arity(
+        std::string const& variant_name,
+        syntax::TypeSyntax const& choice_type
+    ) const -> std::optional<std::size_t> {
+        auto const* signature = find_choice_variant_signature(variant_name, choice_type);
+        if (signature == nullptr) {
+            return std::nullopt;
+        }
+
+        return signature->payloads.size();
+    }
+
     auto has_concurrency_marker_constraint(
         std::string const& type_name,
         ConcurrencyMarkerKind marker_kind
@@ -1500,19 +1512,31 @@ private:
         return 0;
     }
 
-    void validate_switch_pattern_arity(syntax::ExpressionSyntax const& pattern) {
+    void validate_switch_pattern_arity(
+        syntax::ExpressionSyntax const& pattern,
+        std::optional<syntax::TypeSyntax> const& subject_type
+    ) {
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
                 return;
             }
 
-            auto variant = choice_variant_arities_.find(pattern.left->text);
-            if (variant != choice_variant_arities_.end() && variant->second != pattern.arguments.size()) {
+            std::optional<std::size_t> expected_arity;
+            if (subject_type.has_value()) {
+                expected_arity = find_choice_variant_payload_arity(pattern.left->text, *subject_type);
+            } else {
+                auto variant = choice_variant_arities_.find(pattern.left->text);
+                if (variant != choice_variant_arities_.end()) {
+                    expected_arity = variant->second;
+                }
+            }
+
+            if (expected_arity.has_value() && *expected_arity != pattern.arguments.size()) {
                 diagnostics_.error(
                     pattern.line,
                     "switch constructor pattern '" + pattern.left->text + "' expects " +
-                        std::to_string(variant->second) + " payload value" +
-                        (variant->second == 1 ? "" : "s") + " but received " +
+                        std::to_string(*expected_arity) + " payload value" +
+                        (*expected_arity == 1 ? "" : "s") + " but received " +
                         std::to_string(pattern.arguments.size())
                 );
             }
@@ -1520,29 +1544,52 @@ private:
         }
 
         if (pattern.kind == syntax::ExpressionKind::name) {
-            auto variant = choice_variant_arities_.find(pattern.text);
-            if (variant != choice_variant_arities_.end() && variant->second != 0) {
+            std::optional<std::size_t> expected_arity;
+            if (subject_type.has_value()) {
+                expected_arity = find_choice_variant_payload_arity(pattern.text, *subject_type);
+            } else {
+                auto variant = choice_variant_arities_.find(pattern.text);
+                if (variant != choice_variant_arities_.end()) {
+                    expected_arity = variant->second;
+                }
+            }
+
+            if (expected_arity.has_value() && *expected_arity != 0) {
                 diagnostics_.error(
                     pattern.line,
                     "switch constructor pattern '" + pattern.text + "' expects " +
-                        std::to_string(variant->second) + " payload value" +
-                        (variant->second == 1 ? "" : "s") + " but received 0"
+                        std::to_string(*expected_arity) + " payload value" +
+                        (*expected_arity == 1 ? "" : "s") + " but received 0"
                 );
             }
         }
     }
 
-    auto validate_switch_pattern_head(syntax::ExpressionSyntax const& pattern) -> bool {
+    auto validate_switch_pattern_head(
+        syntax::ExpressionSyntax const& pattern,
+        std::optional<syntax::TypeSyntax> const& subject_type
+    ) -> bool {
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
                 return true;
             }
 
-            if (!choice_variant_arities_.contains(pattern.left->text) &&
-                !is_builtin_constructor_name(pattern.left->text)) {
+            auto matches_subject_variant =
+                subject_type.has_value() && find_choice_variant_signature(pattern.left->text, *subject_type) != nullptr;
+            if (!matches_subject_variant && !choice_variant_arities_.contains(pattern.left->text) &&
+                !(subject_type.has_value() ? false : is_builtin_constructor_name(pattern.left->text))) {
                 diagnostics_.error(
                     pattern.line,
                     "switch constructor pattern '" + pattern.left->text + "' does not match any declared choice variant"
+                );
+                return false;
+            }
+
+            if (!matches_subject_variant && subject_type.has_value() && choice_variant_arities_.contains(pattern.left->text)) {
+                diagnostics_.error(
+                    pattern.line,
+                    "switch constructor pattern '" + pattern.left->text + "' does not belong to switched choice type '" +
+                        render_type_name(*subject_type) + "'"
                 );
                 return false;
             }
@@ -1550,12 +1597,24 @@ private:
         }
 
         if (pattern.kind == syntax::ExpressionKind::name && !pattern.text.empty()) {
-            if (!choice_variant_arities_.contains(pattern.text) &&
-                !is_builtin_constructor_name(pattern.text) &&
+            auto matches_subject_variant =
+                subject_type.has_value() && find_choice_variant_signature(pattern.text, *subject_type) != nullptr;
+            if (!matches_subject_variant && !choice_variant_arities_.contains(pattern.text) &&
+                !(subject_type.has_value() ? false : is_builtin_constructor_name(pattern.text)) &&
                 pattern.text != "default") {
                 diagnostics_.error(
                     pattern.line,
                     "switch constructor pattern '" + pattern.text + "' does not match any declared choice variant"
+                );
+                return false;
+            }
+
+            if (!matches_subject_variant && subject_type.has_value() && choice_variant_arities_.contains(pattern.text) &&
+                pattern.text != "default") {
+                diagnostics_.error(
+                    pattern.line,
+                    "switch constructor pattern '" + pattern.text + "' does not belong to switched choice type '" +
+                        render_type_name(*subject_type) + "'"
                 );
                 return false;
             }
@@ -1567,13 +1626,14 @@ private:
     auto analyze_switch_pattern(
         syntax::ExpressionSyntax const& pattern,
         bool in_async_function,
+        std::optional<syntax::TypeSyntax> const& subject_type = std::nullopt,
         bool in_constructor_payload = false
     ) -> bool {
         if (!in_constructor_payload) {
-            if (!validate_switch_pattern_head(pattern)) {
+            if (!validate_switch_pattern_head(pattern, subject_type)) {
                 return false;
             }
-            validate_switch_pattern_arity(pattern);
+            validate_switch_pattern_arity(pattern, subject_type);
         }
 
         if (pattern.kind == syntax::ExpressionKind::call) {
@@ -1589,7 +1649,7 @@ private:
             for (auto const& argument : pattern.arguments) {
                 if (argument.kind == syntax::ExpressionKind::name || is_literal_switch_subpattern(argument) ||
                     argument.kind == syntax::ExpressionKind::call) {
-                    valid = analyze_switch_pattern(argument, in_async_function, true) && valid;
+                    valid = analyze_switch_pattern(argument, in_async_function, std::nullopt, true) && valid;
                     continue;
                 }
 
@@ -2222,6 +2282,11 @@ private:
             auto saw_value_pattern = false;
             auto saw_constructor_pattern = false;
             auto saw_semantic_default = false;
+            std::optional<syntax::TypeSyntax> switch_subject_type;
+            auto switch_subject_type_name = infer_expression_type_name(statement.expression);
+            if (!switch_subject_type_name.empty()) {
+                switch_subject_type = parse_rendered_type_name(switch_subject_type_name);
+            }
 
             for (std::size_t case_index = 0; case_index < statement.switch_cases.size(); ++case_index) {
                 auto const& switch_case = statement.switch_cases[case_index];
@@ -2266,18 +2331,13 @@ private:
                     continue;
                 }
 
-                valid_pattern = analyze_switch_pattern(switch_case.pattern, in_async_function) && valid_pattern;
+                valid_pattern =
+                    analyze_switch_pattern(switch_case.pattern, in_async_function, switch_subject_type) && valid_pattern;
                 restore_scope_stack(baseline_scope);
                 push_scope();
                 if (!switch_case.is_default && valid_pattern) {
                     std::unordered_set<std::string> bound_names;
-                    std::optional<syntax::TypeSyntax> pattern_type;
-                    auto pattern_type_name = infer_expression_type_name(statement.expression);
-                    if (!pattern_type_name.empty()) {
-                        pattern_type = parse_rendered_type_name(pattern_type_name);
-                    }
-
-                    declare_switch_pattern_bindings(switch_case.pattern, pattern_type, false, bound_names);
+                    declare_switch_pattern_bindings(switch_case.pattern, switch_subject_type, false, bound_names);
                 }
                 if (valid_pattern) {
                     for (auto const& consequence : switch_case.statements) {

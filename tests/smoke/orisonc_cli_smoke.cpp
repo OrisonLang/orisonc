@@ -49,6 +49,9 @@ int main() {
         output << "    return worker.join()\n";
         output << "unsafe function read_word(addr: Address) -> UInt32\n";
         output << "    return raw_read(addr)\n";
+        output << "choice MaybeText\n";
+        output << "    Some(value: Text)\n";
+        output << "    Empty\n";
         output << "public interface Reader\n";
         output << "    function read(this: exclusive This, into: exclusive View<Byte>) -> Outcome<Int32, ParseError>\n";
         output << "implements Reader for FileReader\n";
@@ -57,9 +60,9 @@ int main() {
         output << "extend FileReader\n";
         output << "    public function reset(this: exclusive This) -> Unit\n";
         output << "        return input.length()\n";
-        output << "package function main<R>(input: shared.View<Byte>, reader: exclusive R) -> Outcome<Int32, ParseError>\n";
+        output << "package function main<R>(input: shared.View<Byte>, state: MaybeText, reader: exclusive R) -> Outcome<Int32, ParseError>\n";
         output << "where R: Reader\n";
-        output << "    switch reader\n";
+        output << "    switch state\n";
         output << "        Some(value) => return value.length()\n";
         output << "        Empty => return input.length()\n";
         output << "        default => return input.length()\n";
@@ -72,7 +75,7 @@ int main() {
 
     assert(output.find("parsed ") != std::string::npos);
     assert(output.find("package demo.cli") != std::string::npos);
-    assert(output.find("top-level declarations: 11") != std::string::npos);
+    assert(output.find("top-level declarations: 12") != std::string::npos);
     assert(output.find("imports: 1") != std::string::npos);
     assert(output.find("foreign imports: 1") != std::string::npos);
     assert(output.find("foreign exports: 1") != std::string::npos);
@@ -90,7 +93,7 @@ int main() {
     assert(output.find("first type alias visibility: public") != std::string::npos);
     assert(output.find("first type alias target: UInt16") != std::string::npos);
     assert(output.find("records: 0") != std::string::npos);
-    assert(output.find("choices: 0") != std::string::npos);
+    assert(output.find("choices: 1") != std::string::npos);
     assert(output.find("interfaces: 1") != std::string::npos);
     assert(output.find("implementations: 1") != std::string::npos);
     assert(output.find("extensions: 1") != std::string::npos);
