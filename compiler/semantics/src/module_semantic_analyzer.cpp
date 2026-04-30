@@ -446,13 +446,25 @@ private:
             if (expression.left->text == "raw_offset" && !expression.arguments.empty()) {
                 auto source_type_name = infer_expression_type_name(expression.arguments.front());
                 if (is_pointer_type_name(source_type_name) || is_address_type_name(source_type_name)) {
+                    if (source_type_name == "Pointer") {
+                        auto recovered_pointer_type_name =
+                            recover_explicit_pointer_type_name(expression.arguments.front());
+                        if (!recovered_pointer_type_name.empty()) {
+                            return recovered_pointer_type_name;
+                        }
+                    }
                     return source_type_name;
                 }
                 return {};
             }
             if ((expression.left->text == "raw_read" || expression.left->text == "volatile_read") &&
                 !expression.arguments.empty()) {
-                return pointer_pointee_type_name(infer_expression_type_name(expression.arguments.front()));
+                auto source_pointer_type_name = infer_expression_type_name(expression.arguments.front());
+                auto pointee_type_name = pointer_pointee_type_name(source_pointer_type_name);
+                if (!pointee_type_name.empty()) {
+                    return pointee_type_name;
+                }
+                return explicit_pointer_source_pointee_type_name(expression.arguments.front());
             }
             return find_callable_return_type_name(expression.left->text);
         default:
@@ -593,6 +605,24 @@ private:
         return infer_expression_type_name(expression.arguments.front());
     }
 
+    auto recover_explicit_pointer_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+        if (is_pointer_constructor_call(expression) && !expression.arguments.empty()) {
+            auto source_type_name = address_of_operand_type_name(expression.arguments.front());
+            if (!source_type_name.empty()) {
+                return "Pointer<" + source_type_name + ">";
+            }
+            return {};
+        }
+
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset" &&
+            !expression.arguments.empty()) {
+            return recover_explicit_pointer_type_name(expression.arguments.front());
+        }
+
+        return {};
+    }
+
     auto explicit_pointer_source_pointee_type_name(syntax::ExpressionSyntax const& expression) const
         -> std::string {
         auto inferred_type_name = infer_expression_type_name(expression);
@@ -601,17 +631,7 @@ private:
             return inferred_pointee_type_name;
         }
 
-        if (is_pointer_constructor_call(expression) && !expression.arguments.empty()) {
-            return address_of_operand_type_name(expression.arguments.front());
-        }
-
-        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
-            expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset" &&
-            !expression.arguments.empty()) {
-            return explicit_pointer_source_pointee_type_name(expression.arguments.front());
-        }
-
-        return {};
+        return pointer_pointee_type_name(recover_explicit_pointer_type_name(expression));
     }
 
     auto validate_read_result_type(
