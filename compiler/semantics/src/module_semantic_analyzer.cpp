@@ -1016,6 +1016,19 @@ private:
                     line,
                     std::string(context_description) + " currently requires a structurally pointer-like expression"
                 );
+                return;
+            }
+
+            if (!expected_pointee_type_name.empty()) {
+                auto inferred_pointee_type_name = pointer_pointee_type_name(inferred_type_name);
+                if (!inferred_pointee_type_name.empty() &&
+                    !are_low_level_read_types_compatible(inferred_pointee_type_name, expected_pointee_type_name)) {
+                    diagnostics_.error(
+                        line,
+                        std::string(context_description) + " pointer element type '" + inferred_pointee_type_name +
+                            "' does not match expected pointer element type '" + expected_pointee_type_name + "'"
+                    );
+                }
             }
             return;
         }

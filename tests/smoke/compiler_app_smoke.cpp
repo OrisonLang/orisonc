@@ -760,6 +760,68 @@ int main() {
                "pointer-typed binding initializer currently requires a structurally pointer-like expression"
            ) != std::string::npos);
 
+    auto pointer_typed_binding_field_pointer_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_field_pointer_failure.or";
+    {
+        std::ofstream output(pointer_typed_binding_field_pointer_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptr: Pointer<Byte>\n";
+        output << "unsafe function next_ptr(device: Device) -> Pointer<UInt32>\n";
+        output << "    let p: Pointer<UInt32> = device.ptr\n";
+        output << "    return p\n";
+    }
+
+    auto pointer_typed_binding_field_pointer_failure_path_text =
+        pointer_typed_binding_field_pointer_failure_path.string();
+    std::array<char const*, 3> pointer_typed_binding_field_pointer_failure_argv {
+        "orisonc",
+        "--parse",
+        pointer_typed_binding_field_pointer_failure_path_text.c_str()
+    };
+    auto pointer_typed_binding_field_pointer_failure_result = app.run(
+        std::span<char const* const>(
+            pointer_typed_binding_field_pointer_failure_argv.data(),
+            pointer_typed_binding_field_pointer_failure_argv.size()
+        )
+    );
+
+    assert(pointer_typed_binding_field_pointer_failure_result.exit_code == 1);
+    assert(pointer_typed_binding_field_pointer_failure_result.stdout_text.empty());
+    assert(pointer_typed_binding_field_pointer_failure_result.stderr_text.find(
+               "pointer-typed binding initializer pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+           ) != std::string::npos);
+
+    auto pointer_typed_binding_same_width_field_pointer_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_pointer_typed_binding_same_width_field_pointer_success.or";
+    {
+        std::ofstream output(pointer_typed_binding_same_width_field_pointer_success_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    ptr: Pointer<Int32>\n";
+        output << "unsafe function next_ptr(device: Device) -> Pointer<UInt32>\n";
+        output << "    let p: Pointer<UInt32> = device.ptr\n";
+        output << "    return p\n";
+    }
+
+    auto pointer_typed_binding_same_width_field_pointer_success_path_text =
+        pointer_typed_binding_same_width_field_pointer_success_path.string();
+    std::array<char const*, 3> pointer_typed_binding_same_width_field_pointer_success_argv {
+        "orisonc",
+        "--parse",
+        pointer_typed_binding_same_width_field_pointer_success_path_text.c_str()
+    };
+    auto pointer_typed_binding_same_width_field_pointer_success_result = app.run(
+        std::span<char const* const>(
+            pointer_typed_binding_same_width_field_pointer_success_argv.data(),
+            pointer_typed_binding_same_width_field_pointer_success_argv.size()
+        )
+    );
+
+    assert(pointer_typed_binding_same_width_field_pointer_success_result.exit_code == 0);
+    assert(pointer_typed_binding_same_width_field_pointer_success_result.stderr_text.empty());
+
     auto pointer_return_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_return_failure.or";
     {
@@ -816,6 +878,66 @@ int main() {
     assert(pointer_return_name_failure_result.stderr_text.find(
                "pointer-returning function currently requires a structurally pointer-like expression"
            ) != std::string::npos);
+
+    auto pointer_return_helper_pointer_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_return_helper_pointer_failure.or";
+    {
+        std::ofstream output(pointer_return_helper_pointer_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
+        output << "    return base\n";
+        output << "unsafe function word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>\n";
+        output << "    return byte_ptr(base)\n";
+    }
+
+    auto pointer_return_helper_pointer_failure_path_text =
+        pointer_return_helper_pointer_failure_path.string();
+    std::array<char const*, 3> pointer_return_helper_pointer_failure_argv {
+        "orisonc",
+        "--parse",
+        pointer_return_helper_pointer_failure_path_text.c_str()
+    };
+    auto pointer_return_helper_pointer_failure_result = app.run(
+        std::span<char const* const>(
+            pointer_return_helper_pointer_failure_argv.data(),
+            pointer_return_helper_pointer_failure_argv.size()
+        )
+    );
+
+    assert(pointer_return_helper_pointer_failure_result.exit_code == 1);
+    assert(pointer_return_helper_pointer_failure_result.stdout_text.empty());
+    assert(pointer_return_helper_pointer_failure_result.stderr_text.find(
+               "pointer-returning function pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+           ) != std::string::npos);
+
+    auto pointer_return_same_width_helper_pointer_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_pointer_return_same_width_helper_pointer_success.or";
+    {
+        std::ofstream output(pointer_return_same_width_helper_pointer_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function wordish_ptr(base: Pointer<Int32>) -> Pointer<Int32>\n";
+        output << "    return base\n";
+        output << "unsafe function word_ptr(base: Pointer<Int32>) -> Pointer<UInt32>\n";
+        output << "    return wordish_ptr(base)\n";
+    }
+
+    auto pointer_return_same_width_helper_pointer_success_path_text =
+        pointer_return_same_width_helper_pointer_success_path.string();
+    std::array<char const*, 3> pointer_return_same_width_helper_pointer_success_argv {
+        "orisonc",
+        "--parse",
+        pointer_return_same_width_helper_pointer_success_path_text.c_str()
+    };
+    auto pointer_return_same_width_helper_pointer_success_result = app.run(
+        std::span<char const* const>(
+            pointer_return_same_width_helper_pointer_success_argv.data(),
+            pointer_return_same_width_helper_pointer_success_argv.size()
+        )
+    );
+
+    assert(pointer_return_same_width_helper_pointer_success_result.exit_code == 0);
+    assert(pointer_return_same_width_helper_pointer_success_result.stderr_text.empty());
 
     auto pointer_typed_binding_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_success.or";
