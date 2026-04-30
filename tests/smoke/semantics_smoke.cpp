@@ -2123,6 +2123,56 @@ void test_raw_read_typed_binding_result_match_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_raw_read_typed_binding_same_width_integer_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_typed_binding_same_width_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Int32>) -> Int32\n";
+        output << "    let value: UInt32 = raw_read(p)\n";
+        output << "    return value as Int32\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_raw_read_typed_binding_pointer_sized_integer_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_typed_binding_pointer_sized_mismatch.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Byte>) -> IntSize\n";
+        output << "    let value: IntSize = raw_read(p)\n";
+        output << "    return value\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "raw_read result type 'Byte' does not match binding type 'IntSize'");
+}
+
 void test_pointer_typed_binding_with_wrong_typed_name_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_typed_binding_name_failure.or";
@@ -2372,6 +2422,54 @@ void test_raw_read_return_type_match_success() {
     orison::semantics::ModuleSemanticAnalyzer analyzer;
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(!diagnostics.has_errors());
+}
+
+void test_raw_read_return_same_width_integer_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_raw_read_return_same_width_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Int32>) -> UInt32\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_raw_read_return_pointer_sized_integer_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_return_pointer_sized_mismatch.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Byte>) -> IntSize\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "raw_read result type 'Byte' does not match function return type 'IntSize'");
 }
 
 void test_raw_write_value_type_mismatch_failure() {
@@ -3234,6 +3332,54 @@ void test_volatile_read_return_type_match_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_volatile_read_return_same_width_integer_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_return_same_width_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Int32>) -> UInt32\n";
+        output << "    return volatile_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_volatile_read_return_pointer_sized_integer_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_return_pointer_sized_mismatch.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Byte>) -> IntSize\n";
+        output << "    return volatile_read(p)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "volatile_read result type 'Byte' does not match function return type 'IntSize'");
+}
+
 void test_volatile_read_typed_binding_result_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_typed_binding_mismatch.or";
@@ -3282,6 +3428,56 @@ void test_volatile_read_typed_binding_result_match_success() {
     orison::semantics::ModuleSemanticAnalyzer analyzer;
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(!diagnostics.has_errors());
+}
+
+void test_volatile_read_typed_binding_same_width_integer_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_typed_binding_same_width_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Int32>) -> Int32\n";
+        output << "    let value: UInt32 = volatile_read(p)\n";
+        output << "    return value as Int32\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_volatile_read_typed_binding_pointer_sized_integer_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_typed_binding_pointer_sized_mismatch.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Byte>) -> IntSize\n";
+        output << "    let value: IntSize = volatile_read(p)\n";
+        output << "    return value\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "volatile_read result type 'Byte' does not match binding type 'IntSize'");
 }
 
 void test_volatile_write_value_type_mismatch_failure() {
@@ -4719,6 +4915,8 @@ int main() {
     test_pointer_typed_binding_with_matching_raw_offset_source_success();
     test_raw_read_typed_binding_result_mismatch_failure();
     test_raw_read_typed_binding_result_match_success();
+    test_raw_read_typed_binding_same_width_integer_success();
+    test_raw_read_typed_binding_pointer_sized_integer_mismatch_failure();
     test_pointer_typed_binding_with_wrong_typed_name_failure();
     test_pointer_return_with_nonpointer_expression_failure();
     test_pointer_return_with_pointer_expression_success();
@@ -4729,6 +4927,8 @@ int main() {
     test_pointer_return_with_matching_address_of_source_success();
     test_raw_read_return_type_mismatch_failure();
     test_raw_read_return_type_match_success();
+    test_raw_read_return_same_width_integer_success();
+    test_raw_read_return_pointer_sized_integer_mismatch_failure();
     test_raw_write_value_type_mismatch_failure();
     test_raw_write_value_type_match_success();
     test_raw_write_integer_literal_value_success();
@@ -4761,8 +4961,12 @@ int main() {
     test_return_rebound_indexed_address_used_by_pointer_constructor_success();
     test_volatile_read_return_type_mismatch_failure();
     test_volatile_read_return_type_match_success();
+    test_volatile_read_return_same_width_integer_success();
+    test_volatile_read_return_pointer_sized_integer_mismatch_failure();
     test_volatile_read_typed_binding_result_mismatch_failure();
     test_volatile_read_typed_binding_result_match_success();
+    test_volatile_read_typed_binding_same_width_integer_success();
+    test_volatile_read_typed_binding_pointer_sized_integer_mismatch_failure();
     test_volatile_write_value_type_mismatch_failure();
     test_volatile_write_value_type_match_success();
     test_volatile_write_integer_literal_value_success();

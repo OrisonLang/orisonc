@@ -229,6 +229,20 @@ private:
                is_integer_cast_compatible_with_pointee(pointee_type_name, value_expression);
     }
 
+    auto are_low_level_read_types_compatible(
+        std::string const& inferred_type_name,
+        std::string const& expected_type_name
+    ) const -> bool {
+        if (inferred_type_name == expected_type_name) {
+            return true;
+        }
+
+        auto inferred_info = integer_type_info(inferred_type_name);
+        auto expected_info = integer_type_info(expected_type_name);
+        return inferred_info.has_value() && expected_info.has_value() && inferred_info->is_fixed_width &&
+               expected_info->is_fixed_width && inferred_info->bit_width == expected_info->bit_width;
+    }
+
     auto pointer_pointee_type_name(std::string const& type_name) const -> std::string {
         if (!is_pointer_type_name(type_name)) {
             return {};
@@ -686,7 +700,8 @@ private:
         }
 
         auto inferred_type_name = infer_expression_type_name(expression);
-        if (!inferred_type_name.empty() && inferred_type_name != expected_type_name) {
+        if (!inferred_type_name.empty() &&
+            !are_low_level_read_types_compatible(inferred_type_name, expected_type_name)) {
             diagnostics_.error(
                 line,
                 intrinsic_name + " result type '" + inferred_type_name + "' does not match " +

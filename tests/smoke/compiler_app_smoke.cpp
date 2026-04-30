@@ -1040,6 +1040,32 @@ int main() {
     assert(raw_read_typed_binding_success_result.exit_code == 0);
     assert(raw_read_typed_binding_success_result.stderr_text.empty());
 
+    auto raw_read_same_width_binding_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_same_width_binding_success.or";
+    {
+        std::ofstream output(raw_read_same_width_binding_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Int32>) -> Int32\n";
+        output << "    let value: UInt32 = raw_read(p)\n";
+        output << "    return value as Int32\n";
+    }
+
+    auto raw_read_same_width_binding_success_path_text = raw_read_same_width_binding_success_path.string();
+    std::array<char const*, 3> raw_read_same_width_binding_success_argv {
+        "orisonc",
+        "--parse",
+        raw_read_same_width_binding_success_path_text.c_str()
+    };
+    auto raw_read_same_width_binding_success_result = app.run(
+        std::span<char const* const>(
+            raw_read_same_width_binding_success_argv.data(),
+            raw_read_same_width_binding_success_argv.size()
+        )
+    );
+
+    assert(raw_read_same_width_binding_success_result.exit_code == 0);
+    assert(raw_read_same_width_binding_success_result.stderr_text.empty());
+
     auto raw_read_return_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_return_type_failure.or";
     {
@@ -1067,6 +1093,31 @@ int main() {
     assert(raw_read_return_type_failure_result.stderr_text.find(
                "raw_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
            ) != std::string::npos);
+
+    auto raw_read_same_width_return_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_same_width_return_success.or";
+    {
+        std::ofstream output(raw_read_same_width_return_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Int32>) -> UInt32\n";
+        output << "    return raw_read(p)\n";
+    }
+
+    auto raw_read_same_width_return_success_path_text = raw_read_same_width_return_success_path.string();
+    std::array<char const*, 3> raw_read_same_width_return_success_argv {
+        "orisonc",
+        "--parse",
+        raw_read_same_width_return_success_path_text.c_str()
+    };
+    auto raw_read_same_width_return_success_result = app.run(
+        std::span<char const* const>(
+            raw_read_same_width_return_success_argv.data(),
+            raw_read_same_width_return_success_argv.size()
+        )
+    );
+
+    assert(raw_read_same_width_return_success_result.exit_code == 0);
+    assert(raw_read_same_width_return_success_result.stderr_text.empty());
 
     auto raw_write_value_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_value_type_failure.or";
@@ -1774,6 +1825,32 @@ int main() {
                "volatile_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
            ) != std::string::npos);
 
+    auto volatile_read_same_width_return_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_same_width_return_success.or";
+    {
+        std::ofstream output(volatile_read_same_width_return_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Int32>) -> UInt32\n";
+        output << "    return volatile_read(p)\n";
+    }
+
+    auto volatile_read_same_width_return_success_path_text =
+        volatile_read_same_width_return_success_path.string();
+    std::array<char const*, 3> volatile_read_same_width_return_success_argv {
+        "orisonc",
+        "--parse",
+        volatile_read_same_width_return_success_path_text.c_str()
+    };
+    auto volatile_read_same_width_return_success_result = app.run(
+        std::span<char const* const>(
+            volatile_read_same_width_return_success_argv.data(),
+            volatile_read_same_width_return_success_argv.size()
+        )
+    );
+
+    assert(volatile_read_same_width_return_success_result.exit_code == 0);
+    assert(volatile_read_same_width_return_success_result.stderr_text.empty());
+
     auto volatile_read_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_typed_binding_failure.or";
     {
@@ -1802,6 +1879,33 @@ int main() {
     assert(volatile_read_typed_binding_failure_result.stderr_text.find(
                "volatile_read result type 'Byte' does not match binding type 'UInt32'"
            ) != std::string::npos);
+
+    auto volatile_read_same_width_binding_success_path = std::filesystem::temp_directory_path() /
+                                                         "orison_compiler_app_volatile_read_same_width_binding_success.or";
+    {
+        std::ofstream output(volatile_read_same_width_binding_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function read_word(p: Pointer<Int32>) -> Int32\n";
+        output << "    let value: UInt32 = volatile_read(p)\n";
+        output << "    return value as Int32\n";
+    }
+
+    auto volatile_read_same_width_binding_success_path_text =
+        volatile_read_same_width_binding_success_path.string();
+    std::array<char const*, 3> volatile_read_same_width_binding_success_argv {
+        "orisonc",
+        "--parse",
+        volatile_read_same_width_binding_success_path_text.c_str()
+    };
+    auto volatile_read_same_width_binding_success_result = app.run(
+        std::span<char const* const>(
+            volatile_read_same_width_binding_success_argv.data(),
+            volatile_read_same_width_binding_success_argv.size()
+        )
+    );
+
+    assert(volatile_read_same_width_binding_success_result.exit_code == 0);
+    assert(volatile_read_same_width_binding_success_result.stderr_text.empty());
 
     auto volatile_read_typed_binding_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_typed_binding_success.or";
