@@ -169,7 +169,8 @@ private:
         }
 
         auto source_type_name = infer_expression_type_name(*value_expression.left);
-        return !source_type_name.empty() && is_integer_type_name(source_type_name);
+        return !source_type_name.empty() && is_integer_type_name(source_type_name) &&
+               value_expression.text == pointee_type_name;
     }
 
     auto are_low_level_write_types_compatible(
