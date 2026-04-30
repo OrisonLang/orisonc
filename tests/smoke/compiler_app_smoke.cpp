@@ -1176,6 +1176,41 @@ int main() {
                "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
            ) != std::string::npos);
 
+    auto raw_write_member_returned_raw_read_failure_path = std::filesystem::temp_directory_path() /
+                                                           "orison_compiler_app_raw_write_member_returned_raw_read_failure.or";
+    {
+        std::ofstream output(raw_write_member_returned_raw_read_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    id: Int64\n";
+        output << "extend Device\n";
+        output << "    function byte_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            return raw_offset(base, 1)\n";
+        output << "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit\n";
+        output << "    raw_write(out, raw_read(raw_offset(device.byte_ptr(base), 1)))\n";
+    }
+
+    auto raw_write_member_returned_raw_read_failure_path_text =
+        raw_write_member_returned_raw_read_failure_path.string();
+    std::array<char const*, 3> raw_write_member_returned_raw_read_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_write_member_returned_raw_read_failure_path_text.c_str()
+    };
+    auto raw_write_member_returned_raw_read_failure_result = app.run(
+        std::span<char const* const>(
+            raw_write_member_returned_raw_read_failure_argv.data(),
+            raw_write_member_returned_raw_read_failure_argv.size()
+        )
+    );
+
+    assert(raw_write_member_returned_raw_read_failure_result.exit_code == 1);
+    assert(raw_write_member_returned_raw_read_failure_result.stdout_text.empty());
+    assert(raw_write_member_returned_raw_read_failure_result.stderr_text.find(
+               "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
+           ) != std::string::npos);
+
     auto raw_write_helper_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_helper_type_failure.or";
     {
@@ -1817,6 +1852,41 @@ int main() {
     assert(volatile_write_recovered_volatile_read_failure_result.exit_code == 1);
     assert(volatile_write_recovered_volatile_read_failure_result.stdout_text.empty());
     assert(volatile_write_recovered_volatile_read_failure_result.stderr_text.find(
+               "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+           ) != std::string::npos);
+
+    auto volatile_write_member_returned_volatile_read_failure_path = std::filesystem::temp_directory_path() /
+                                                                     "orison_compiler_app_volatile_write_member_returned_volatile_read_failure.or";
+    {
+        std::ofstream output(volatile_write_member_returned_volatile_read_failure_path);
+        output << "package demo.unsafe\n";
+        output << "record Device\n";
+        output << "    id: Int64\n";
+        output << "extend Device\n";
+        output << "    function word_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>\n";
+        output << "        unsafe\n";
+        output << "            return raw_offset(base, 1)\n";
+        output << "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit\n";
+        output << "    volatile_write(out, volatile_read(raw_offset(device.word_ptr(base), 1)))\n";
+    }
+
+    auto volatile_write_member_returned_volatile_read_failure_path_text =
+        volatile_write_member_returned_volatile_read_failure_path.string();
+    std::array<char const*, 3> volatile_write_member_returned_volatile_read_failure_argv {
+        "orisonc",
+        "--parse",
+        volatile_write_member_returned_volatile_read_failure_path_text.c_str()
+    };
+    auto volatile_write_member_returned_volatile_read_failure_result = app.run(
+        std::span<char const* const>(
+            volatile_write_member_returned_volatile_read_failure_argv.data(),
+            volatile_write_member_returned_volatile_read_failure_argv.size()
+        )
+    );
+
+    assert(volatile_write_member_returned_volatile_read_failure_result.exit_code == 1);
+    assert(volatile_write_member_returned_volatile_read_failure_result.stdout_text.empty());
+    assert(volatile_write_member_returned_volatile_read_failure_result.stderr_text.find(
                "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
            ) != std::string::npos);
 
