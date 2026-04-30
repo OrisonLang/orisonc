@@ -159,6 +159,19 @@ private:
                is_integer_type_name(pointee_type_name);
     }
 
+    auto is_integer_cast_compatible_with_pointee(
+        std::string const& pointee_type_name,
+        syntax::ExpressionSyntax const& value_expression
+    ) const -> bool {
+        if (value_expression.kind != syntax::ExpressionKind::cast || !value_expression.left ||
+            !is_integer_type_name(pointee_type_name) || !is_integer_type_name(value_expression.text)) {
+            return false;
+        }
+
+        auto source_type_name = infer_expression_type_name(*value_expression.left);
+        return !source_type_name.empty() && is_integer_type_name(source_type_name);
+    }
+
     auto are_low_level_write_types_compatible(
         std::string const& pointee_type_name,
         syntax::ExpressionSyntax const& value_expression
@@ -172,7 +185,8 @@ private:
             return true;
         }
 
-        return is_integer_literal_compatible_with_pointee(pointee_type_name, value_expression);
+        return is_integer_literal_compatible_with_pointee(pointee_type_name, value_expression) ||
+               is_integer_cast_compatible_with_pointee(pointee_type_name, value_expression);
     }
 
     auto pointer_pointee_type_name(std::string const& type_name) const -> std::string {
