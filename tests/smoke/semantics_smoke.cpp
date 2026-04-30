@@ -943,6 +943,64 @@ void test_switch_nested_constructor_pattern_binds_nested_names_success() {
     assert(diagnostics.concurrency_captures.front().name == "next");
 }
 
+void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrapped_payload_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "unsafe function write_next(xs: List<Int32>, out: Pointer<UInt32>) -> Unit\n";
+        output << "    switch xs\n";
+        output << "        Node(head, Node(next, tail)) => raw_write(out, next)\n";
+        output << "        default => return\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrapped_payload_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "unsafe function write_next(xs: List<Byte>, out: Pointer<UInt32>) -> Unit\n";
+        output << "    switch xs\n";
+        output << "        Node(head, Node(next, tail)) => raw_write(out, next)\n";
+        output << "        default => return\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().message ==
+           "raw_write value type 'Byte' does not match pointer element type 'UInt32'");
+}
+
 void test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_generic_constructor_payload_success.or";
@@ -6546,6 +6604,8 @@ int main() {
     test_switch_top_level_name_pattern_rejects_unknown_variant_failure();
     test_switch_call_pattern_rejects_unknown_variant_failure();
     test_switch_nested_constructor_pattern_binds_nested_names_success();
+    test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_success();
+    test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure();
     test_switch_constructor_pattern_rejects_variant_from_different_choice_failure();
