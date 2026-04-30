@@ -1438,6 +1438,88 @@ int main() {
                "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
            ) != std::string::npos);
 
+    auto raw_write_array_indexed_value_success_path = std::filesystem::temp_directory_path() /
+                                                      "orison_compiler_app_raw_write_array_indexed_value_success.or";
+    {
+        std::ofstream output(raw_write_array_indexed_value_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, items: DynamicArray<Int32>) -> Unit\n";
+        output << "    raw_write(out, items[0])\n";
+    }
+
+    auto raw_write_array_indexed_value_success_path_text =
+        raw_write_array_indexed_value_success_path.string();
+    std::array<char const*, 3> raw_write_array_indexed_value_success_argv {
+        "orisonc",
+        "--parse",
+        raw_write_array_indexed_value_success_path_text.c_str()
+    };
+    auto raw_write_array_indexed_value_success_result = app.run(
+        std::span<char const* const>(
+            raw_write_array_indexed_value_success_argv.data(),
+            raw_write_array_indexed_value_success_argv.size()
+        )
+    );
+
+    assert(raw_write_array_indexed_value_success_result.exit_code == 0);
+    assert(raw_write_array_indexed_value_success_result.stderr_text.empty());
+
+    auto raw_write_bound_array_literal_indexed_value_success_path = std::filesystem::temp_directory_path() /
+                                                                    "orison_compiler_app_raw_write_bound_array_literal_indexed_value_success.or";
+    {
+        std::ofstream output(raw_write_bound_array_literal_indexed_value_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, left: Int32, right: Int32) -> Unit\n";
+        output << "    let staged = [left, right]\n";
+        output << "    raw_write(out, staged[0])\n";
+    }
+
+    auto raw_write_bound_array_literal_indexed_value_success_path_text =
+        raw_write_bound_array_literal_indexed_value_success_path.string();
+    std::array<char const*, 3> raw_write_bound_array_literal_indexed_value_success_argv {
+        "orisonc",
+        "--parse",
+        raw_write_bound_array_literal_indexed_value_success_path_text.c_str()
+    };
+    auto raw_write_bound_array_literal_indexed_value_success_result = app.run(
+        std::span<char const* const>(
+            raw_write_bound_array_literal_indexed_value_success_argv.data(),
+            raw_write_bound_array_literal_indexed_value_success_argv.size()
+        )
+    );
+
+    assert(raw_write_bound_array_literal_indexed_value_success_result.exit_code == 0);
+    assert(raw_write_bound_array_literal_indexed_value_success_result.stderr_text.empty());
+
+    auto raw_write_array_indexed_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
+                                                              "orison_compiler_app_raw_write_array_indexed_pointer_sized_failure.or";
+    {
+        std::ofstream output(raw_write_array_indexed_pointer_sized_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, items: DynamicArray<IntSize>) -> Unit\n";
+        output << "    raw_write(out, items[0])\n";
+    }
+
+    auto raw_write_array_indexed_pointer_sized_failure_path_text =
+        raw_write_array_indexed_pointer_sized_failure_path.string();
+    std::array<char const*, 3> raw_write_array_indexed_pointer_sized_failure_argv {
+        "orisonc",
+        "--parse",
+        raw_write_array_indexed_pointer_sized_failure_path_text.c_str()
+    };
+    auto raw_write_array_indexed_pointer_sized_failure_result = app.run(
+        std::span<char const* const>(
+            raw_write_array_indexed_pointer_sized_failure_argv.data(),
+            raw_write_array_indexed_pointer_sized_failure_argv.size()
+        )
+    );
+
+    assert(raw_write_array_indexed_pointer_sized_failure_result.exit_code == 1);
+    assert(raw_write_array_indexed_pointer_sized_failure_result.stdout_text.empty());
+    assert(raw_write_array_indexed_pointer_sized_failure_result.stderr_text.find(
+               "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
+           ) != std::string::npos);
+
     auto raw_write_integer_literal_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_integer_literal_success.or";
     {
@@ -2540,6 +2622,88 @@ int main() {
     assert(volatile_write_switch_merged_pointer_sized_failure_result.exit_code == 1);
     assert(volatile_write_switch_merged_pointer_sized_failure_result.stdout_text.empty());
     assert(volatile_write_switch_merged_pointer_sized_failure_result.stderr_text.find(
+               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+           ) != std::string::npos);
+
+    auto volatile_write_array_indexed_value_success_path = std::filesystem::temp_directory_path() /
+                                                           "orison_compiler_app_volatile_write_array_indexed_value_success.or";
+    {
+        std::ofstream output(volatile_write_array_indexed_value_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, items: DynamicArray<Int32>) -> Unit\n";
+        output << "    volatile_write(out, items[0])\n";
+    }
+
+    auto volatile_write_array_indexed_value_success_path_text =
+        volatile_write_array_indexed_value_success_path.string();
+    std::array<char const*, 3> volatile_write_array_indexed_value_success_argv {
+        "orisonc",
+        "--parse",
+        volatile_write_array_indexed_value_success_path_text.c_str()
+    };
+    auto volatile_write_array_indexed_value_success_result = app.run(
+        std::span<char const* const>(
+            volatile_write_array_indexed_value_success_argv.data(),
+            volatile_write_array_indexed_value_success_argv.size()
+        )
+    );
+
+    assert(volatile_write_array_indexed_value_success_result.exit_code == 0);
+    assert(volatile_write_array_indexed_value_success_result.stderr_text.empty());
+
+    auto volatile_write_bound_array_literal_indexed_value_success_path = std::filesystem::temp_directory_path() /
+                                                                         "orison_compiler_app_volatile_write_bound_array_literal_indexed_value_success.or";
+    {
+        std::ofstream output(volatile_write_bound_array_literal_indexed_value_success_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, left: Int32, right: Int32) -> Unit\n";
+        output << "    let staged = [left, right]\n";
+        output << "    volatile_write(out, staged[0])\n";
+    }
+
+    auto volatile_write_bound_array_literal_indexed_value_success_path_text =
+        volatile_write_bound_array_literal_indexed_value_success_path.string();
+    std::array<char const*, 3> volatile_write_bound_array_literal_indexed_value_success_argv {
+        "orisonc",
+        "--parse",
+        volatile_write_bound_array_literal_indexed_value_success_path_text.c_str()
+    };
+    auto volatile_write_bound_array_literal_indexed_value_success_result = app.run(
+        std::span<char const* const>(
+            volatile_write_bound_array_literal_indexed_value_success_argv.data(),
+            volatile_write_bound_array_literal_indexed_value_success_argv.size()
+        )
+    );
+
+    assert(volatile_write_bound_array_literal_indexed_value_success_result.exit_code == 0);
+    assert(volatile_write_bound_array_literal_indexed_value_success_result.stderr_text.empty());
+
+    auto volatile_write_array_indexed_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
+                                                                   "orison_compiler_app_volatile_write_array_indexed_pointer_sized_failure.or";
+    {
+        std::ofstream output(volatile_write_array_indexed_pointer_sized_failure_path);
+        output << "package demo.unsafe\n";
+        output << "unsafe function write_word(out: Pointer<UInt32>, items: DynamicArray<IntSize>) -> Unit\n";
+        output << "    volatile_write(out, items[0])\n";
+    }
+
+    auto volatile_write_array_indexed_pointer_sized_failure_path_text =
+        volatile_write_array_indexed_pointer_sized_failure_path.string();
+    std::array<char const*, 3> volatile_write_array_indexed_pointer_sized_failure_argv {
+        "orisonc",
+        "--parse",
+        volatile_write_array_indexed_pointer_sized_failure_path_text.c_str()
+    };
+    auto volatile_write_array_indexed_pointer_sized_failure_result = app.run(
+        std::span<char const* const>(
+            volatile_write_array_indexed_pointer_sized_failure_argv.data(),
+            volatile_write_array_indexed_pointer_sized_failure_argv.size()
+        )
+    );
+
+    assert(volatile_write_array_indexed_pointer_sized_failure_result.exit_code == 1);
+    assert(volatile_write_array_indexed_pointer_sized_failure_result.stdout_text.empty());
+    assert(volatile_write_array_indexed_pointer_sized_failure_result.stderr_text.find(
                "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
            ) != std::string::npos);
 

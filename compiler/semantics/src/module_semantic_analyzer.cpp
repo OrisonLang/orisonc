@@ -280,6 +280,52 @@ private:
         return type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1);
     }
 
+    auto first_generic_argument_type_name(std::string const& type_name) const -> std::string {
+        auto open_angle = type_name.find('<');
+        if (open_angle == std::string::npos || type_name.empty() || type_name.back() != '>') {
+            return {};
+        }
+
+        auto depth = 0;
+        std::string argument;
+        for (std::size_t index = open_angle + 1; index + 1 < type_name.size(); ++index) {
+            auto const character = type_name[index];
+            if (character == '<') {
+                ++depth;
+                argument += character;
+                continue;
+            }
+            if (character == '>') {
+                --depth;
+                argument += character;
+                continue;
+            }
+            if (character == ',' && depth == 0) {
+                break;
+            }
+            argument += character;
+        }
+
+        while (!argument.empty() && argument.front() == ' ') {
+            argument.erase(argument.begin());
+        }
+        while (!argument.empty() && argument.back() == ' ') {
+            argument.pop_back();
+        }
+        return argument;
+    }
+
+    auto container_element_type_name(std::string const& type_name) const -> std::string {
+        if (type_name.rfind("Array<", 0) == 0 || type_name.rfind("View<", 0) == 0 ||
+            type_name.rfind("DynamicArray<", 0) == 0 || type_name.rfind("shared.View<", 0) == 0 ||
+            type_name.rfind("exclusive.View<", 0) == 0 || type_name.rfind("shared.DynamicArray<", 0) == 0 ||
+            type_name.rfind("exclusive.DynamicArray<", 0) == 0) {
+            return first_generic_argument_type_name(type_name);
+        }
+
+        return {};
+    }
+
     auto is_receiver_self_type_name(std::string const& type_name) const -> bool {
         return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
     }
@@ -499,11 +545,38 @@ private:
             return "Bool";
         case syntax::ExpressionKind::integer_literal:
             return "Int64";
+        case syntax::ExpressionKind::array_literal:
+            if (expression.arguments.empty()) {
+                return {};
+            }
+            {
+                auto element_type_name = infer_expression_type_name(expression.arguments.front());
+                if (element_type_name.empty()) {
+                    return {};
+                }
+                for (std::size_t index = 1; index < expression.arguments.size(); ++index) {
+                    element_type_name = merge_compatible_integer_type_names(
+                        element_type_name,
+                        infer_expression_type_name(expression.arguments[index])
+                    );
+                    if (element_type_name.empty()) {
+                        return {};
+                    }
+                }
+                return "Array<" + element_type_name + ", " + std::to_string(expression.arguments.size()) + ">";
+            }
         case syntax::ExpressionKind::index_access:
             if (!expression.left) {
                 return {};
             }
-            return pointer_pointee_type_name(infer_expression_type_name(*expression.left));
+            {
+                auto source_type_name = infer_expression_type_name(*expression.left);
+                auto pointee_type_name = pointer_pointee_type_name(source_type_name);
+                if (!pointee_type_name.empty()) {
+                    return pointee_type_name;
+                }
+                return container_element_type_name(source_type_name);
+            }
         case syntax::ExpressionKind::member_access:
         case syntax::ExpressionKind::null_safe_member_access:
             if (!expression.left) {
