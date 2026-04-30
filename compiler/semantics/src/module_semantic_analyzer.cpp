@@ -53,9 +53,10 @@ struct CallableSignature {
 };
 
 struct RecordFieldSignature {
-    std::string record_type;
+    syntax::TypeSyntax record_type;
+    std::vector<std::string> generic_parameters;
     std::string field_name;
-    std::string field_type_name;
+    syntax::TypeSyntax field_type;
 };
 
 class Analyzer {
@@ -720,9 +721,24 @@ private:
         std::string const& record_type,
         std::string const& field_name
     ) const -> std::string {
+        auto parsed_record_type = parse_rendered_type_name(record_type);
+        if (!parsed_record_type.has_value()) {
+            return {};
+        }
+
         for (auto const& signature : record_field_signatures_) {
-            if (signature.record_type == record_type && signature.field_name == field_name) {
-                return signature.field_type_name;
+            if (signature.field_name != field_name) {
+                continue;
+            }
+
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (match_generic_type_pattern(
+                    signature.record_type,
+                    *parsed_record_type,
+                    signature.generic_parameters,
+                    bindings
+                )) {
+                return render_type_name(substitute_generic_type_bindings(signature.field_type, bindings));
             }
         }
         return {};
@@ -1855,11 +1871,17 @@ private:
         record_field_signatures_.clear();
 
         for (auto const& record : module_.records) {
+            syntax::TypeSyntax record_type {.name = record.name};
+            for (auto const& generic_parameter : record.generic_parameters) {
+                record_type.generic_arguments.push_back(syntax::TypeSyntax {.name = generic_parameter});
+            }
+
             for (auto const& field : record.fields) {
                 record_field_signatures_.push_back(RecordFieldSignature {
-                    .record_type = record.name,
+                    .record_type = record_type,
+                    .generic_parameters = record.generic_parameters,
                     .field_name = field.name,
-                    .field_type_name = render_type_name(field.type),
+                    .field_type = field.type,
                 });
             }
         }

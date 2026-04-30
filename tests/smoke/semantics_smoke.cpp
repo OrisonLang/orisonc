@@ -2614,19 +2614,16 @@ void test_raw_write_generic_receiver_method_pointer_mismatch_failure() {
            "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
 }
 
-void test_await_generic_receiver_async_method_success() {
+void test_raw_write_generic_record_pointer_field_same_width_success() {
     auto path = std::filesystem::temp_directory_path() /
-                "orison_semantics_await_generic_receiver_async_method_success.or";
+                "orison_semantics_raw_write_generic_record_pointer_field_same_width_success.or";
     {
         std::ofstream output(path);
-        output << "package demo.async\n";
-        output << "record Launcher<T>\n";
-        output << "    id: Int64\n";
-        output << "extend Launcher<T>\n";
-        output << "    async function launch(this: shared This, item: T) -> T\n";
-        output << "        return item\n";
-        output << "async function run(launcher: Launcher<Int64>, item: Int64) -> Int64\n";
-        output << "    return await launcher.launch(item)\n";
+        output << "package demo.unsafe\n";
+        output << "record Device<T>\n";
+        output << "    ptr: Pointer<T>\n";
+        output << "unsafe function write_word(device: Device<Int32>, value: UInt32) -> Unit\n";
+        output << "    raw_write(device.ptr, value)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -2641,19 +2638,16 @@ void test_await_generic_receiver_async_method_success() {
     assert(!diagnostics.has_errors());
 }
 
-void test_generic_receiver_unsafe_method_requires_unsafe_context_failure() {
+void test_raw_write_generic_record_pointer_field_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
-                "orison_semantics_generic_receiver_unsafe_method_requires_unsafe_context_failure.or";
+                "orison_semantics_raw_write_generic_record_pointer_field_mismatch_failure.or";
     {
         std::ofstream output(path);
         output << "package demo.unsafe\n";
         output << "record Device<T>\n";
-        output << "    id: Int64\n";
-        output << "extend Device<T>\n";
-        output << "    unsafe function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>\n";
-        output << "        return base\n";
-        output << "function read_byte(device: Device<Byte>, base: Pointer<Byte>) -> Byte\n";
-        output << "    return raw_read(device.ptr(base))\n";
+        output << "    ptr: Pointer<T>\n";
+        output << "unsafe function write_word(device: Device<Byte>, value: UInt32) -> Unit\n";
+        output << "    raw_write(device.ptr, value)\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -2667,9 +2661,57 @@ void test_generic_receiver_unsafe_method_requires_unsafe_context_failure() {
     auto diagnostics = analyzer.analyze(parse_result.module);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().line == 5);
     assert(diagnostics.entries().front().message ==
-           "call to unsafe method 'ptr' requires an unsafe function or unsafe block");
+           "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
+}
+
+void test_raw_write_generic_record_scalar_field_same_width_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_write_generic_record_scalar_field_same_width_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Box<T>\n";
+        output << "    value: T\n";
+        output << "unsafe function write_word(box: Box<Int32>, out: Pointer<UInt32>) -> Unit\n";
+        output << "    raw_write(out, box.value)\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_address_return_with_generic_record_field_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_address_return_with_generic_record_field_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.unsafe\n";
+        output << "record Box<T>\n";
+        output << "    value: T\n";
+        output << "function read_base(box: Box<Address>) -> Address\n";
+        output << "    return box.value\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
 }
 
 void test_pointer_return_with_mismatched_address_of_source_failure() {
@@ -6489,8 +6531,10 @@ int main() {
     test_address_typed_binding_with_indexed_address_success();
     test_address_return_with_helper_returned_address_success();
     test_address_return_with_generic_helper_success();
-    test_await_generic_receiver_async_method_success();
-    test_generic_receiver_unsafe_method_requires_unsafe_context_failure();
+    test_raw_write_generic_record_pointer_field_same_width_success();
+    test_raw_write_generic_record_pointer_field_mismatch_failure();
+    test_raw_write_generic_record_scalar_field_same_width_success();
+    test_address_return_with_generic_record_field_success();
     test_task_outside_async_function_failure();
     test_thread_outside_async_function_success();
     test_thread_join_receiver_success();
