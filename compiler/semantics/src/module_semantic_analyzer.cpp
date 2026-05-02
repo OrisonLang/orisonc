@@ -1,5 +1,6 @@
 #include "orison/semantics/module_semantic_analyzer.hpp"
 
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -136,23 +137,23 @@ private:
         return rendered;
     }
 
-    auto is_pointer_type(syntax::TypeSyntax const& type) const -> bool {
+    static auto is_pointer_type(syntax::TypeSyntax const& type) -> bool {
         return type.name == "Pointer";
     }
 
-    auto is_address_type(syntax::TypeSyntax const& type) const -> bool {
+    static auto is_address_type(syntax::TypeSyntax const& type) -> bool {
         return type.name == "Address";
     }
 
-    auto is_pointer_type_name(std::string const& type_name) const -> bool {
+    static auto is_pointer_type_name(std::string const& type_name) -> bool {
         return type_name == "Pointer" || type_name.rfind("Pointer<", 0) == 0;
     }
 
-    auto is_address_type_name(std::string const& type_name) const -> bool {
+    static auto is_address_type_name(std::string const& type_name) -> bool {
         return type_name == "Address";
     }
 
-    auto is_integer_type_name(std::string const& type_name) const -> bool {
+    static auto is_integer_type_name(std::string const& type_name) -> bool {
         static constexpr char const* integer_types[] = {
             "Int8",    "Int16",   "Int32",   "Int64",   "Int128",  "IntSize",
             "UInt8",   "UInt16",  "UInt32",  "UInt64",  "UInt128", "UIntSize",
@@ -173,7 +174,7 @@ private:
         bool is_fixed_width = false;
     };
 
-    auto integer_type_info(std::string const& type_name) const -> std::optional<IntegerTypeInfo> {
+    static auto integer_type_info(std::string const& type_name) -> std::optional<IntegerTypeInfo> {
         if (type_name == "Int8" || type_name == "UInt8") {
             return IntegerTypeInfo {.bit_width = 8, .is_fixed_width = true};
         }
@@ -197,10 +198,10 @@ private:
         return std::nullopt;
     }
 
-    auto is_integer_literal_compatible_with_pointee(
+    static auto is_integer_literal_compatible_with_pointee(
         std::string const& pointee_type_name,
         syntax::ExpressionSyntax const& value_expression
-    ) const -> bool {
+    ) -> bool {
         return value_expression.kind == syntax::ExpressionKind::integer_literal &&
                is_integer_type_name(pointee_type_name);
     }
@@ -246,10 +247,10 @@ private:
                is_integer_cast_compatible_with_pointee(pointee_type_name, value_expression);
     }
 
-    auto are_low_level_read_types_compatible(
+    static auto are_low_level_read_types_compatible(
         std::string const& inferred_type_name,
         std::string const& expected_type_name
-    ) const -> bool {
+    ) -> bool {
         if (inferred_type_name == expected_type_name) {
             return true;
         }
@@ -260,10 +261,10 @@ private:
                expected_info->is_fixed_width && inferred_info->bit_width == expected_info->bit_width;
     }
 
-    auto merge_compatible_integer_type_names(
+    static auto merge_compatible_integer_type_names(
         std::string const& left_type_name,
         std::string const& right_type_name
-    ) const -> std::string {
+    ) -> std::string {
         if (left_type_name.empty() || right_type_name.empty() ||
             !is_integer_type_name(left_type_name) || !is_integer_type_name(right_type_name)) {
             return {};
@@ -284,7 +285,7 @@ private:
         return {};
     }
 
-    auto pointer_pointee_type_name(std::string const& type_name) const -> std::string {
+    static auto pointer_pointee_type_name(std::string const& type_name) -> std::string {
         if (!is_pointer_type_name(type_name)) {
             return {};
         }
@@ -297,7 +298,7 @@ private:
         return type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1);
     }
 
-    auto first_generic_argument_type_name(std::string const& type_name) const -> std::string {
+    static auto first_generic_argument_type_name(std::string const& type_name) -> std::string {
         auto open_angle = type_name.find('<');
         if (open_angle == std::string::npos || type_name.empty() || type_name.back() != '>') {
             return {};
@@ -332,7 +333,7 @@ private:
         return argument;
     }
 
-    auto container_element_type_name(std::string const& type_name) const -> std::string {
+    static auto container_element_type_name(std::string const& type_name) -> std::string {
         if (type_name.rfind("Array<", 0) == 0 || type_name.rfind("View<", 0) == 0 ||
             type_name.rfind("DynamicArray<", 0) == 0 || type_name.rfind("shared.View<", 0) == 0 ||
             type_name.rfind("exclusive.View<", 0) == 0 || type_name.rfind("shared.DynamicArray<", 0) == 0 ||
@@ -343,7 +344,7 @@ private:
         return {};
     }
 
-    auto is_receiver_self_type_name(std::string const& type_name) const -> bool {
+    static auto is_receiver_self_type_name(std::string const& type_name) -> bool {
         return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
     }
 
@@ -357,7 +358,7 @@ private:
         }
     }
 
-    auto is_obviously_safe_capture_type(std::string const& type_name) const -> bool {
+    static auto is_obviously_safe_capture_type(std::string const& type_name) -> bool {
         if (type_name.empty()) {
             return false;
         }
@@ -381,10 +382,10 @@ private:
         return false;
     }
 
-    auto has_marker_type(
+    static auto has_marker_type(
         std::vector<std::string> const& marker_types,
         std::string const& type_name
-    ) const -> bool {
+    ) -> bool {
         for (auto const& constrained_type : marker_types) {
             if (constrained_type == type_name) {
                 return true;
@@ -447,10 +448,10 @@ private:
         return false;
     }
 
-    auto parse_rendered_type_name(
+    static auto parse_rendered_type_name(
         std::string const& type_name,
         std::size_t& index
-    ) const -> std::optional<syntax::TypeSyntax> {
+    ) -> std::optional<syntax::TypeSyntax> {
         while (index < type_name.size() && type_name[index] == ' ') {
             ++index;
         }
@@ -508,7 +509,7 @@ private:
         return parsed_type;
     }
 
-    auto parse_rendered_type_name(std::string const& type_name) const -> std::optional<syntax::TypeSyntax> {
+    static auto parse_rendered_type_name(std::string const& type_name) -> std::optional<syntax::TypeSyntax> {
         std::size_t index = 0;
         auto parsed_type = parse_rendered_type_name(type_name, index);
         if (!parsed_type.has_value()) {
@@ -560,10 +561,10 @@ private:
         return true;
     }
 
-    auto substitute_generic_type_bindings(
+    static auto substitute_generic_type_bindings(
         syntax::TypeSyntax const& type,
         std::unordered_map<std::string, syntax::TypeSyntax> const& bindings
-    ) const -> syntax::TypeSyntax {
+    ) -> syntax::TypeSyntax {
         auto found = bindings.find(type.name);
         if (type.generic_arguments.empty() && found != bindings.end()) {
             return found->second;
@@ -576,10 +577,10 @@ private:
         return substituted;
     }
 
-    void collect_receiver_generic_placeholder_names(
+    static void collect_receiver_generic_placeholder_names(
         syntax::TypeSyntax const& type,
         std::unordered_set<std::string>& placeholders
-    ) const {
+    ) {
         for (auto const& argument : type.generic_arguments) {
             if (argument.generic_arguments.empty()) {
                 placeholders.insert(argument.name);
@@ -1040,7 +1041,7 @@ private:
         return infer_expression_type_name(*callee_expression.left);
     }
 
-    auto merge_value_origins(ValueOriginKind left, ValueOriginKind right) const -> ValueOriginKind {
+    static auto merge_value_origins(ValueOriginKind left, ValueOriginKind right) -> ValueOriginKind {
         if (left == right) {
             return left;
         }
@@ -1056,7 +1057,7 @@ private:
         scope_stack_ = std::move(snapshot);
     }
 
-    auto merge_scope_snapshots(std::vector<ScopeSnapshot> const& snapshots) const -> ScopeSnapshot {
+    static auto merge_scope_snapshots(std::vector<ScopeSnapshot> const& snapshots) -> ScopeSnapshot {
         if (snapshots.empty()) {
             return {};
         }
@@ -1119,13 +1120,13 @@ private:
         }
     }
 
-    auto is_literal_switch_subpattern(syntax::ExpressionSyntax const& pattern) const -> bool {
+    static auto is_literal_switch_subpattern(syntax::ExpressionSyntax const& pattern) -> bool {
         return pattern.kind == syntax::ExpressionKind::integer_literal ||
                pattern.kind == syntax::ExpressionKind::string_literal ||
                pattern.kind == syntax::ExpressionKind::boolean_literal;
     }
 
-    auto switch_literal_pattern_key(syntax::ExpressionSyntax const& pattern) const -> std::optional<std::string> {
+    static auto switch_literal_pattern_key(syntax::ExpressionSyntax const& pattern) -> std::optional<std::string> {
         if (pattern.kind == syntax::ExpressionKind::integer_literal) {
             return "int:" + pattern.text;
         }
@@ -1138,7 +1139,7 @@ private:
         return std::nullopt;
     }
 
-    auto render_switch_literal_pattern(syntax::ExpressionSyntax const& pattern) const -> std::string {
+    static auto render_switch_literal_pattern(syntax::ExpressionSyntax const& pattern) -> std::string {
         if (pattern.kind == syntax::ExpressionKind::string_literal) {
             if (pattern.text.size() >= 2 && pattern.text.front() == '"' && pattern.text.back() == '"') {
                 return pattern.text;
@@ -1148,11 +1149,11 @@ private:
         return pattern.text;
     }
 
-    auto is_switch_value_pattern_type_compatible(
+    static auto is_switch_value_pattern_type_compatible(
         syntax::ExpressionSyntax const& pattern,
         std::string const& subject_type_name,
         std::string const& pattern_type_name
-    ) const -> bool {
+    ) -> bool {
         if (subject_type_name.empty() || pattern_type_name.empty()) {
             return true;
         }
@@ -1197,21 +1198,21 @@ private:
         }
     }
 
-    auto is_builtin_constructor_name(std::string const& name) const -> bool {
+    static auto is_builtin_constructor_name(std::string const& name) -> bool {
         return name == "Some" || name == "Empty" || name == "Ok" || name == "Error";
     }
 
-    auto is_unsafe_intrinsic_name(std::string const& name) const -> bool {
+    static auto is_unsafe_intrinsic_name(std::string const& name) -> bool {
         return name == "raw_read" || name == "raw_write" || name == "raw_offset" || name == "address_of" ||
                name == "volatile_read" || name == "volatile_write";
     }
 
-    auto is_pointer_constructor_call(syntax::ExpressionSyntax const& expression) const -> bool {
+    static auto is_pointer_constructor_call(syntax::ExpressionSyntax const& expression) -> bool {
         return expression.kind == syntax::ExpressionKind::call && expression.left &&
                expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Pointer";
     }
 
-    auto read_intrinsic_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+    static auto read_intrinsic_name(syntax::ExpressionSyntax const& expression) -> std::string {
         if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
             expression.left->kind != syntax::ExpressionKind::name) {
             return {};
@@ -1377,7 +1378,7 @@ private:
         return false;
     }
 
-    auto is_addressable_storage_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+    static auto is_addressable_storage_expression(syntax::ExpressionSyntax const& expression) -> bool {
         switch (expression.kind) {
         case syntax::ExpressionKind::name:
             return true;
@@ -1389,7 +1390,7 @@ private:
         }
     }
 
-    auto is_structurally_address_like_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+    static auto is_structurally_address_like_expression(syntax::ExpressionSyntax const& expression) -> bool {
         if (expression.kind == syntax::ExpressionKind::name) {
             return true;
         }
@@ -1402,7 +1403,7 @@ private:
         return false;
     }
 
-    auto is_structurally_pointer_like_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+    static auto is_structurally_pointer_like_expression(syntax::ExpressionSyntax const& expression) -> bool {
         if (expression.kind == syntax::ExpressionKind::name) {
             return true;
         }
@@ -1590,7 +1591,7 @@ private:
         return SwitchPatternKind::value;
     }
 
-    auto switch_case_line(syntax::SwitchCaseSyntax const& switch_case) const -> std::size_t {
+    static auto switch_case_line(syntax::SwitchCaseSyntax const& switch_case) -> std::size_t {
         if (switch_case.pattern.line != 0) {
             return switch_case.pattern.line;
         }
@@ -1879,18 +1880,18 @@ private:
         }
     }
 
-    auto is_value_return_statement(syntax::StatementSyntax const& statement) const -> bool {
+    static auto is_value_return_statement(syntax::StatementSyntax const& statement) -> bool {
         return statement.kind == syntax::StatementKind::return_statement &&
                (!statement.expression.text.empty() || statement.expression.left || statement.expression.right ||
                 statement.expression.alternate || !statement.expression.arguments.empty() ||
                 !statement.expression.nested_statements.empty());
     }
 
-    auto expression_requires_value_boundary(syntax::ExpressionSyntax const& expression) const -> bool {
+    static auto expression_requires_value_boundary(syntax::ExpressionSyntax const& expression) -> bool {
         return expression.kind == syntax::ExpressionKind::task || expression.kind == syntax::ExpressionKind::thread;
     }
 
-    auto classify_concurrency_expression(syntax::ExpressionSyntax const& expression) const -> ConcurrencyExpressionKind {
+    static auto classify_concurrency_expression(syntax::ExpressionSyntax const& expression) -> ConcurrencyExpressionKind {
         return expression.kind == syntax::ExpressionKind::thread ? ConcurrencyExpressionKind::thread
                                                                  : ConcurrencyExpressionKind::task;
     }
@@ -2724,10 +2725,10 @@ private:
     }
 
     auto find_binding(std::string const& name) const -> Binding const* {
-        for (auto scope_index = scope_stack_.rbegin(); scope_index != scope_stack_.rend(); ++scope_index) {
-            for (auto binding = scope_index->rbegin(); binding != scope_index->rend(); ++binding) {
-                if (binding->name == name) {
-                    return &*binding;
+        for (const auto & scope_index : std::views::reverse(scope_stack_)) {
+            for (const auto & binding : std::views::reverse(scope_index)) {
+                if (binding.name == name) {
+                    return &binding;
                 }
             }
         }
@@ -2739,13 +2740,13 @@ private:
         std::string type_name,
         ValueOriginKind value_origin
     ) {
-        for (auto scope_index = scope_stack_.rbegin(); scope_index != scope_stack_.rend(); ++scope_index) {
-            for (auto binding = scope_index->rbegin(); binding != scope_index->rend(); ++binding) {
-                if (binding->name == name) {
+        for (auto & scope_index : std::views::reverse(scope_stack_)) {
+            for (auto & binding : std::views::reverse(scope_index)) {
+                if (binding.name == name) {
                     if (!type_name.empty()) {
-                        binding->type_name = std::move(type_name);
+                        binding.type_name = std::move(type_name);
                     }
-                    binding->value_origin = value_origin;
+                    binding.value_origin = value_origin;
                     return;
                 }
             }
@@ -2850,7 +2851,7 @@ private:
 
 }  // namespace
 
-auto ModuleSemanticAnalyzer::analyze(syntax::ModuleSyntax const& module) const -> SemanticAnalysisResult {
+auto ModuleSemanticAnalyzer::analyze(syntax::ModuleSyntax const& module) -> SemanticAnalysisResult {
     return Analyzer(module).analyze();
 }
 

@@ -33,22 +33,22 @@ struct SemanticAnalysisResult {
     diagnostics::DiagnosticBag diagnostics;
     std::vector<ConcurrencyCapture> concurrency_captures;
 
-    auto has_errors() const -> bool {
+    [[nodiscard]] auto has_errors() const -> bool {
         return diagnostics.has_errors();
     }
 
-    auto entries() const -> std::vector<diagnostics::Diagnostic> const& {
+    [[nodiscard]] auto entries() const -> std::vector<diagnostics::Diagnostic> const& {
         return diagnostics.entries();
     }
 
-    auto render(std::string_view path) const -> std::string {
+    [[nodiscard]] auto render(std::string_view path) const -> std::string {
         return diagnostics.render(path);
     }
 };
 
 class ModuleSemanticAnalyzer {
 public:
-    auto analyze(syntax::ModuleSyntax const& module) const -> SemanticAnalysisResult;
+    [[nodiscard]] static auto analyze(syntax::ModuleSyntax const& module) -> SemanticAnalysisResult;
 };
 
 }  // namespace orison::semantics

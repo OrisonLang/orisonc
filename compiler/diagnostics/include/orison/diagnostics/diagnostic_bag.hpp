@@ -15,9 +15,9 @@ class DiagnosticBag {
 public:
     void error(std::size_t line, std::string message);
 
-    auto has_errors() const -> bool;
-    auto entries() const -> std::vector<Diagnostic> const&;
-    auto render(std::string_view path) const -> std::string;
+    [[nodiscard]] auto has_errors() const -> bool;
+    [[nodiscard]] auto entries() const -> std::vector<Diagnostic> const&;
+    [[nodiscard]] auto render(std::string_view path) const -> std::string;
 
 private:
     std::vector<Diagnostic> entries_;

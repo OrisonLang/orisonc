@@ -71,7 +71,7 @@ int main() {
     assert(source_file.has_value());
 
     orison::syntax::Lexer lexer;
-    auto result = lexer.lex(*source_file);
+    auto result = orison::syntax::Lexer::lex(*source_file);
 
     assert(!result.diagnostics.has_errors());
     assert(result.tokens.size() >= 24);
