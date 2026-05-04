@@ -13,12 +13,12 @@ int main(int argc, char** argv) {
     }
 
     orison::driver::CompilerApp app;
-    auto result = app.run(std::span<char const* const>(storage.data(), count));
-    if (!result.stdout_text.empty()) {
-        std::fputs(result.stdout_text.c_str(), stdout);
+    const auto [exit_code, stdout_text, stderr_text] = orison::driver::CompilerApp::run(std::span<char const* const>(storage.data(), count));
+    if (!stdout_text.empty()) {
+        std::fputs(stdout_text.c_str(), stdout);
     }
-    if (!result.stderr_text.empty()) {
-        std::fputs(result.stderr_text.c_str(), stderr);
+    if (!stderr_text.empty()) {
+        std::fputs(stderr_text.c_str(), stderr);
     }
-    return result.exit_code;
+    return exit_code;
 }

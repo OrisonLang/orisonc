@@ -163,7 +163,7 @@ auto keyword_kind(std::string_view text) -> TokenKind {
 
 }  // namespace
 
-auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
+auto Lexer::lex(source::SourceFile const& source_file) -> LexResult {
     LexResult result;
     auto const& input = source_file.content();
 

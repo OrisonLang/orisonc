@@ -228,7 +228,7 @@ struct ParseResult {
 
 class ModuleParser {
 public:
-    auto parse(source::SourceFile const& source_file) const -> ParseResult;
+    [[nodiscard]] static auto parse(source::SourceFile const& source_file) -> ParseResult;
 };
 
 }  // namespace orison::syntax

@@ -12,8 +12,8 @@ public:
 
     SourceFile(std::filesystem::path path, std::string content);
 
-    auto path() const -> std::filesystem::path const&;
-    auto content() const -> std::string const&;
+    [[nodiscard]] auto path() const -> std::filesystem::path const&;
+    [[nodiscard]] auto content() const -> std::string const&;
 
 private:
     std::filesystem::path path_;

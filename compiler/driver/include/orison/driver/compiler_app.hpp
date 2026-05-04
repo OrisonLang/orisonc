@@ -8,7 +8,7 @@ namespace orison::driver {
 
 class CompilerApp {
 public:
-    auto run(std::span<char const* const> args) const -> CompileResult;
+    [[nodiscard]] static auto run(std::span<char const* const> args) -> CompileResult;
 };
 
 }  // namespace orison::driver

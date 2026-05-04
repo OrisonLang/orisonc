@@ -129,11 +129,11 @@ private:
         }
     }
 
-    auto current() const -> Token const& {
+    [[nodiscard]] auto current() const -> Token const& {
         return tokens_[index_];
     }
 
-    auto peek(std::size_t offset = 1) const -> Token const& {
+    [[nodiscard]] auto peek(std::size_t offset = 1) const -> Token const& {
         auto target = index_ + offset;
         if (target >= tokens_.size()) {
             return tokens_.back();
@@ -141,16 +141,16 @@ private:
         return tokens_[target];
     }
 
-    auto is(TokenKind kind) const -> bool {
+    [[nodiscard]] auto is(TokenKind kind) const -> bool {
         return current().kind == kind;
     }
 
-    auto is_visibility_modifier(TokenKind kind) const -> bool {
+    [[nodiscard]] static auto is_visibility_modifier(TokenKind kind) -> bool {
         return kind == TokenKind::keyword_public || kind == TokenKind::keyword_package ||
                kind == TokenKind::keyword_private;
     }
 
-    auto visibility_from_token(TokenKind kind) const -> Visibility {
+    [[nodiscard]] static auto visibility_from_token(TokenKind kind) -> Visibility {
         switch (kind) {
         case TokenKind::keyword_public:
             return Visibility::public_visibility;
@@ -163,7 +163,7 @@ private:
         }
     }
 
-    auto current_starts_visibility_qualified_declaration() const -> bool {
+    [[nodiscard]] auto current_starts_visibility_qualified_declaration() const -> bool {
         if (!is_visibility_modifier(current().kind)) {
             return false;
         }
@@ -235,7 +235,7 @@ private:
         return value;
     }
 
-    auto is_name_component_token(TokenKind kind) const -> bool {
+    static auto is_name_component_token(TokenKind kind) -> bool {
         switch (kind) {
         case TokenKind::identifier:
         case TokenKind::keyword_package:
@@ -644,7 +644,7 @@ private:
         return visibility;
     }
 
-    auto precedence(TokenKind kind) const -> int {
+    static auto precedence(TokenKind kind) -> int {
         switch (kind) {
         case TokenKind::keyword_or:
             return 1;
@@ -1029,11 +1029,11 @@ private:
         return left;
     }
 
-    auto is_assignable_expression(ExpressionSyntax const& expression) const -> bool {
+    static auto is_assignable_expression(ExpressionSyntax const& expression) -> bool {
         return expression.kind == ExpressionKind::name || expression.kind == ExpressionKind::member_access;
     }
 
-    auto current_starts_assignment_statement() const -> bool {
+    [[nodiscard]] auto current_starts_assignment_statement() const -> bool {
         if (!is(TokenKind::identifier)) {
             return false;
         }
@@ -2104,13 +2104,13 @@ private:
 
 }  // namespace
 
-auto ModuleParser::parse(source::SourceFile const& source_file) const -> ParseResult {
+auto ModuleParser::parse(source::SourceFile const& source_file) -> ParseResult {
     Lexer lexer;
-    auto lex_result = lexer.lex(source_file);
+    auto [tokens, diagnostics] = Lexer::lex(source_file);
 
-    Parser parser(std::move(lex_result.tokens));
+    Parser parser(std::move(tokens));
     auto parse_result = parser.parse();
-    for (auto const& diagnostic : lex_result.diagnostics.entries()) {
+    for (auto const& diagnostic : diagnostics.entries()) {
         parse_result.diagnostics.error(diagnostic.line, diagnostic.message);
     }
     return parse_result;

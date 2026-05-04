@@ -15,7 +15,7 @@ struct LexResult {
 
 class Lexer {
 public:
-    auto lex(source::SourceFile const& source_file) const -> LexResult;
+    [[nodiscard]] static auto lex(source::SourceFile const& source_file) -> LexResult;
 };
 
 }  // namespace orison::syntax

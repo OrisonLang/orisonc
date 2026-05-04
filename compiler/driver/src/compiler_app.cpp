@@ -185,7 +185,7 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 
 }  // namespace
 
-auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
+auto CompilerApp::run(std::span<char const* const> args) -> CompileResult {
     if (args.size() > 1 && std::string_view(args[1]) == "--version") {
         return CompileResult {.exit_code = 0, .stdout_text = "orisonc 0.1.0-dev\n"};
     }
