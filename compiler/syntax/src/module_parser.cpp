@@ -2106,11 +2106,11 @@ private:
 
 auto ModuleParser::parse(source::SourceFile const& source_file) -> ParseResult {
     Lexer lexer;
-    auto lex_result = Lexer::lex(source_file);
+    auto [tokens, diagnostics] = Lexer::lex(source_file);
 
-    Parser parser(std::move(lex_result.tokens));
+    Parser parser(std::move(tokens));
     auto parse_result = parser.parse();
-    for (auto const& diagnostic : lex_result.diagnostics.entries()) {
+    for (auto const& diagnostic : diagnostics.entries()) {
         parse_result.diagnostics.error(diagnostic.line, diagnostic.message);
     }
     return parse_result;
