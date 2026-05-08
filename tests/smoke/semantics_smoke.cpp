@@ -1688,6 +1688,38 @@ void test_switch_rejects_duplicate_zero_payload_choice_constructor_failure() {
     assert(diagnostics.entries().front().message == "switch constructor pattern 'Closed' is duplicated");
 }
 
+void test_switch_rejects_missing_zero_payload_choice_variant_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_choice_variant_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice IOError\n";
+        output << "    Closed\n";
+        output << "    EndOfInput\n";
+        output << "    PermissionDenied\n";
+        output << "function classify(error: IOError) -> Int64\n";
+        output << "    switch error\n";
+        output << "        Closed => 1\n";
+        output << "        EndOfInput => 2\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 7);
+    assert(diagnostics.entries().front().message ==
+           "switch is missing zero-payload choice variant 'PermissionDenied'");
+}
+
 void test_switch_rejects_multiple_default_cases_semantically() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_multiple_default_semantic_failure.or";
     {
@@ -6911,6 +6943,7 @@ int main() {
     test_switch_rejects_redundant_zero_payload_choice_default_failure();
     test_switch_accepts_exhaustive_zero_payload_choice_without_default_success();
     test_switch_rejects_duplicate_zero_payload_choice_constructor_failure();
+    test_switch_rejects_missing_zero_payload_choice_variant_failure();
     test_switch_rejects_multiple_default_cases_semantically();
     test_switch_rejects_nonfinal_default_case_semantically();
     test_break_outside_loop_failure();

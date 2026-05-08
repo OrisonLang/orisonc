@@ -5220,6 +5220,41 @@ int main() {
                "switch constructor pattern 'Closed' is duplicated"
            ) != std::string::npos);
 
+    auto switch_missing_choice_variant_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_missing_choice_variant_failure.or";
+    {
+        std::ofstream output(switch_missing_choice_variant_failure_path);
+        output << "package demo.switches\n";
+        output << "choice IOError\n";
+        output << "    Closed\n";
+        output << "    EndOfInput\n";
+        output << "    PermissionDenied\n";
+        output << "function classify(error: IOError) -> Int64\n";
+        output << "    switch error\n";
+        output << "        Closed => 1\n";
+        output << "        EndOfInput => 2\n";
+    }
+
+    auto switch_missing_choice_variant_failure_path_text =
+        switch_missing_choice_variant_failure_path.string();
+    std::array<char const*, 3> switch_missing_choice_variant_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_missing_choice_variant_failure_path_text.c_str()
+    };
+    auto switch_missing_choice_variant_failure_result = app.run(
+        std::span<char const* const>(
+            switch_missing_choice_variant_failure_argv.data(),
+            switch_missing_choice_variant_failure_argv.size()
+        )
+    );
+
+    assert(switch_missing_choice_variant_failure_result.exit_code == 1);
+    assert(switch_missing_choice_variant_failure_result.stdout_text.empty());
+    assert(switch_missing_choice_variant_failure_result.stderr_text.find(
+               "switch is missing zero-payload choice variant 'PermissionDenied'"
+           ) != std::string::npos);
+
     auto break_outside_loop_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
     {
