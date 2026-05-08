@@ -5283,6 +5283,9 @@ int main() {
     assert(switch_duplicate_choice_constructor_failure_result.stderr_text.find(
                "switch constructor pattern 'Closed' is duplicated"
            ) != std::string::npos);
+    assert(switch_duplicate_choice_constructor_failure_result.stderr_text.find(
+               "switch is missing zero-payload choice variant"
+           ) == std::string::npos);
 
     auto switch_missing_choice_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_missing_choice_variant_failure.or";
