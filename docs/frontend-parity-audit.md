@@ -54,3 +54,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-08: wildcard/literal payload overlap now has order-reversed regression coverage too, so `Int(1)` followed by `Int(value)` is rejected symmetrically with `Int(value)` followed by `Int(1)`.
 - 2026-05-08: mixed simple payload non-overlap now has leading-literal regression coverage too, so `Both(1, left)` followed by `Both(2, right)` remains valid when the first constrained payload differs.
 - 2026-05-08: nested payload constructor overlap now has a first narrow implementation for identical nested simple constructor shapes, so `Wrap(Some(value))` followed by `Wrap(Some(other))` is rejected without attempting broader nested pattern algebra.
+- 2026-05-08: nested payload constructor overlap now also has literal boundary coverage, so `Wrap(Some(1))` followed by `Wrap(Some(1))` is rejected while `Wrap(Some(1))` followed by `Wrap(Some(2))` remains valid.
