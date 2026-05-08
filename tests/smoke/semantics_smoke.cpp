@@ -1485,6 +1485,34 @@ void test_switch_rejects_duplicate_boolean_value_pattern_failure() {
     assert(diagnostics.entries().front().message == "switch value pattern 'true' is duplicated");
 }
 
+void test_switch_duplicate_bool_without_default_does_not_cascade_to_missing_pattern_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_duplicate_bool_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        true => 2\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 5);
+    assert(diagnostics.entries().front().message == "switch value pattern 'true' is duplicated");
+}
+
 void test_switch_rejects_duplicate_string_value_pattern_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_string_value_failure.or";
@@ -6961,6 +6989,7 @@ int main() {
     test_switch_rejects_mismatched_value_pattern_type_failure();
     test_switch_accepts_same_width_integer_cast_value_pattern_success();
     test_switch_rejects_duplicate_boolean_value_pattern_failure();
+    test_switch_duplicate_bool_without_default_does_not_cascade_to_missing_pattern_failure();
     test_switch_rejects_duplicate_string_value_pattern_failure();
     test_switch_rejects_duplicate_integer_cast_value_pattern_failure();
     test_switch_rejects_redundant_bool_default_failure();

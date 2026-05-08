@@ -4990,6 +4990,41 @@ int main() {
                "switch value pattern 'true' is duplicated"
            ) != std::string::npos);
 
+    auto switch_duplicate_bool_without_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_bool_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_duplicate_bool_without_default_no_cascade_failure_path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        true => 2\n";
+    }
+
+    auto switch_duplicate_bool_without_default_no_cascade_failure_path_text =
+        switch_duplicate_bool_without_default_no_cascade_failure_path.string();
+    std::array<char const*, 3> switch_duplicate_bool_without_default_no_cascade_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_duplicate_bool_without_default_no_cascade_failure_path_text.c_str()
+    };
+    auto switch_duplicate_bool_without_default_no_cascade_failure_result = app.run(
+        std::span<char const* const>(
+            switch_duplicate_bool_without_default_no_cascade_failure_argv.data(),
+            switch_duplicate_bool_without_default_no_cascade_failure_argv.size()
+        )
+    );
+
+    assert(switch_duplicate_bool_without_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_duplicate_bool_without_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_duplicate_bool_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch value pattern 'true' is duplicated"
+           ) != std::string::npos);
+    assert(switch_duplicate_bool_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch is missing boolean value pattern"
+           ) == std::string::npos);
+
     auto switch_duplicate_string_value_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_string_value_failure.or";
     {
