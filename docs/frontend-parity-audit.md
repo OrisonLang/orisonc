@@ -49,3 +49,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-08: payload literal constructor overlap now reuses the same small integer constant-equivalence rule as top-level value patterns, so `Int(1)` followed by `Int(1 as Int64)` is rejected without introducing a general constant evaluator.
 - 2026-05-08: simple payload constructor overlap now treats name-binding payloads as wildcards against literal payloads, so `Int(value)` followed by `Int(1)` is rejected while nested payload-pattern overlap remains deferred.
 - 2026-05-08: wildcard/literal payload overlap now has explicit CLI no-cascade coverage, keeping mixed simple-payload overlap diagnostics separate from top-level value-pattern duplicate wording.
+- 2026-05-08: multi-payload simple constructor overlap is now covered explicitly for partial wildcard/literal matches such as `Both(left, 1)` followed by `Both(other, 1)`, still without attempting nested pattern reasoning.

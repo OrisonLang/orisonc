@@ -5476,6 +5476,42 @@ int main() {
                "switch value pattern"
            ) == std::string::npos);
 
+    auto switch_multi_payload_partial_overlap_choice_constructor_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_multi_payload_partial_overlap_choice_constructor_failure.or";
+    {
+        std::ofstream output(switch_multi_payload_partial_overlap_choice_constructor_failure_path);
+        output << "package demo.switches\n";
+        output << "choice PairChoice\n";
+        output << "    Both(left: Int64, right: Int64)\n";
+        output << "    Empty\n";
+        output << "function classify(item: PairChoice) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Both(left, 1) => 1\n";
+        output << "        Both(other, 1) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_multi_payload_partial_overlap_choice_constructor_failure_path_text =
+        switch_multi_payload_partial_overlap_choice_constructor_failure_path.string();
+    std::array<char const*, 3> switch_multi_payload_partial_overlap_choice_constructor_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_multi_payload_partial_overlap_choice_constructor_failure_path_text.c_str()
+    };
+    auto switch_multi_payload_partial_overlap_choice_constructor_failure_result = app.run(
+        std::span<char const* const>(
+            switch_multi_payload_partial_overlap_choice_constructor_failure_argv.data(),
+            switch_multi_payload_partial_overlap_choice_constructor_failure_argv.size()
+        )
+    );
+
+    assert(switch_multi_payload_partial_overlap_choice_constructor_failure_result.exit_code == 1);
+    assert(switch_multi_payload_partial_overlap_choice_constructor_failure_result.stdout_text.empty());
+    assert(switch_multi_payload_partial_overlap_choice_constructor_failure_result.stderr_text.find(
+               "switch constructor pattern 'Both(...)' is duplicated"
+           ) != std::string::npos);
+
     auto switch_missing_choice_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_missing_choice_variant_failure.or";
     {
