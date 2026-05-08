@@ -1660,7 +1660,7 @@ private:
         return 0;
     }
 
-    auto name_only_payload_constructor_pattern_key(
+    auto simple_payload_constructor_pattern_key(
         syntax::ExpressionSyntax const& pattern,
         std::optional<syntax::TypeSyntax> const& subject_type
     ) const -> std::optional<std::string> {
@@ -1679,13 +1679,38 @@ private:
             return std::nullopt;
         }
 
-        for (auto const& argument : pattern.arguments) {
-            if (argument.kind != syntax::ExpressionKind::name) {
-                return std::nullopt;
+        auto all_name_payloads = true;
+        auto all_literal_payloads = true;
+        std::string key = pattern.left->text + "(";
+        for (std::size_t index = 0; index < pattern.arguments.size(); ++index) {
+            auto const& argument = pattern.arguments[index];
+            if (index > 0) {
+                key += ",";
             }
+
+            if (argument.kind == syntax::ExpressionKind::name) {
+                all_literal_payloads = false;
+                key += "*";
+                continue;
+            }
+
+            auto literal_key = switch_literal_pattern_key(argument);
+            if (literal_key.has_value()) {
+                all_name_payloads = false;
+                key += *literal_key;
+                continue;
+            }
+
+            all_name_payloads = false;
+            all_literal_payloads = false;
         }
 
-        return pattern.left->text + "/" + std::to_string(pattern.arguments.size());
+        if (!all_name_payloads && !all_literal_payloads) {
+            return std::nullopt;
+        }
+
+        key += ")";
+        return key;
     }
 
     void validate_switch_pattern_arity(
@@ -2602,7 +2627,7 @@ private:
                         }
 
                         auto constructor_key =
-                            name_only_payload_constructor_pattern_key(switch_case.pattern, switch_subject_type);
+                            simple_payload_constructor_pattern_key(switch_case.pattern, switch_subject_type);
                         if (constructor_key.has_value() &&
                             !seen_name_only_payload_choice_patterns.insert(*constructor_key).second) {
                             diagnostics_.error(
