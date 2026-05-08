@@ -786,6 +786,36 @@ private:
         return signature->payloads.size();
     }
 
+    auto zero_payload_choice_variant_names_if_enum_like(
+        syntax::TypeSyntax const& choice_type
+    ) const -> std::optional<std::unordered_set<std::string>> {
+        std::unordered_set<std::string> variants;
+        auto matched_choice = false;
+        for (auto const& signature : choice_variant_signatures_) {
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (!match_generic_type_pattern(
+                    signature.choice_type,
+                    choice_type,
+                    signature.generic_parameters,
+                    bindings
+                )) {
+                continue;
+            }
+
+            matched_choice = true;
+            if (!signature.payloads.empty()) {
+                return std::nullopt;
+            }
+            variants.insert(signature.variant_name);
+        }
+
+        if (!matched_choice || variants.empty()) {
+            return std::nullopt;
+        }
+
+        return variants;
+    }
+
     auto resolve_choice_pattern_subject_type(
         std::string const& variant_name,
         syntax::TypeSyntax const& subject_type
@@ -2448,10 +2478,15 @@ private:
             auto saw_true_value_pattern = false;
             auto saw_false_value_pattern = false;
             std::unordered_set<std::string> seen_literal_value_patterns;
+            std::optional<std::unordered_set<std::string>> remaining_zero_payload_choice_variants;
             std::optional<syntax::TypeSyntax> switch_subject_type;
             auto switch_subject_type_name = infer_expression_type_name(statement.expression);
             if (!switch_subject_type_name.empty()) {
                 switch_subject_type = parse_rendered_type_name(switch_subject_type_name);
+                if (switch_subject_type.has_value()) {
+                    remaining_zero_payload_choice_variants =
+                        zero_payload_choice_variant_names_if_enum_like(*switch_subject_type);
+                }
             }
 
             for (std::size_t case_index = 0; case_index < statement.switch_cases.size(); ++case_index) {
@@ -2483,6 +2518,15 @@ private:
                         valid_pattern = false;
                     }
 
+                    if (remaining_zero_payload_choice_variants.has_value() &&
+                        remaining_zero_payload_choice_variants->empty()) {
+                        diagnostics_.error(
+                            switch_case_line(switch_case),
+                            "switch default case is redundant after all zero-payload choice variants are covered"
+                        );
+                        valid_pattern = false;
+                    }
+
                     saw_semantic_default = true;
                 }
 
@@ -2505,6 +2549,10 @@ private:
                         }
                     } else if (pattern_kind == SwitchPatternKind::constructor) {
                         saw_constructor_pattern = true;
+                        if (remaining_zero_payload_choice_variants.has_value() &&
+                            switch_case.pattern.kind == syntax::ExpressionKind::name) {
+                            remaining_zero_payload_choice_variants->erase(switch_case.pattern.text);
+                        }
                     }
                 }
 

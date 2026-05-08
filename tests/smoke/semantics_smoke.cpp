@@ -1106,7 +1106,6 @@ void test_switch_constructor_pattern_uses_subject_specific_arity_success() {
         output << "function read(flag: Flag) -> Int64\n";
         output << "    switch flag\n";
         output << "        Some => 1\n";
-        output << "        default => 0\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -1580,6 +1579,69 @@ void test_switch_accepts_exhaustive_bool_without_default_success() {
         output << "    switch flag\n";
         output << "        true => 1\n";
         output << "        false => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_switch_rejects_redundant_zero_payload_choice_default_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_redundant_choice_default_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice IOError\n";
+        output << "    Closed\n";
+        output << "    EndOfInput\n";
+        output << "    PermissionDenied\n";
+        output << "function classify(error: IOError) -> Int64\n";
+        output << "    switch error\n";
+        output << "        Closed => 1\n";
+        output << "        EndOfInput => 2\n";
+        output << "        PermissionDenied => 3\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 11);
+    assert(diagnostics.entries().front().message ==
+           "switch default case is redundant after all zero-payload choice variants are covered");
+}
+
+void test_switch_accepts_exhaustive_zero_payload_choice_without_default_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_exhaustive_choice_without_default_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice IOError\n";
+        output << "    Closed\n";
+        output << "    EndOfInput\n";
+        output << "    PermissionDenied\n";
+        output << "function classify(error: IOError) -> Int64\n";
+        output << "    switch error\n";
+        output << "        Closed => 1\n";
+        output << "        EndOfInput => 2\n";
+        output << "        PermissionDenied => 3\n";
     }
 
     auto source_file = orison::source::SourceFile::read(path);
@@ -6814,6 +6876,8 @@ int main() {
     test_switch_rejects_duplicate_integer_cast_value_pattern_failure();
     test_switch_rejects_redundant_bool_default_failure();
     test_switch_accepts_exhaustive_bool_without_default_success();
+    test_switch_rejects_redundant_zero_payload_choice_default_failure();
+    test_switch_accepts_exhaustive_zero_payload_choice_without_default_success();
     test_switch_rejects_multiple_default_cases_semantically();
     test_switch_rejects_nonfinal_default_case_semantically();
     test_break_outside_loop_failure();
