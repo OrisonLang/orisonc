@@ -5054,6 +5054,66 @@ int main() {
                "switch value pattern '1 as Int32' is duplicated"
            ) != std::string::npos);
 
+    auto switch_redundant_bool_default_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_redundant_bool_default_failure.or";
+    {
+        std::ofstream output(switch_redundant_bool_default_failure_path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        false => 0\n";
+        output << "        default => 2\n";
+    }
+
+    auto switch_redundant_bool_default_failure_path_text = switch_redundant_bool_default_failure_path.string();
+    std::array<char const*, 3> switch_redundant_bool_default_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_redundant_bool_default_failure_path_text.c_str()
+    };
+    auto switch_redundant_bool_default_failure_result = app.run(
+        std::span<char const* const>(
+            switch_redundant_bool_default_failure_argv.data(),
+            switch_redundant_bool_default_failure_argv.size()
+        )
+    );
+
+    assert(switch_redundant_bool_default_failure_result.exit_code == 1);
+    assert(switch_redundant_bool_default_failure_result.stdout_text.empty());
+    assert(switch_redundant_bool_default_failure_result.stderr_text.find(
+               "switch default case is redundant after true and false value patterns"
+           ) != std::string::npos);
+
+    auto switch_exhaustive_bool_without_default_success_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_exhaustive_bool_success.or";
+    {
+        std::ofstream output(switch_exhaustive_bool_without_default_success_path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        false => 0\n";
+    }
+
+    auto switch_exhaustive_bool_without_default_success_path_text =
+        switch_exhaustive_bool_without_default_success_path.string();
+    std::array<char const*, 3> switch_exhaustive_bool_without_default_success_argv {
+        "orisonc",
+        "--parse",
+        switch_exhaustive_bool_without_default_success_path_text.c_str()
+    };
+    auto switch_exhaustive_bool_without_default_success_result = app.run(
+        std::span<char const* const>(
+            switch_exhaustive_bool_without_default_success_argv.data(),
+            switch_exhaustive_bool_without_default_success_argv.size()
+        )
+    );
+
+    assert(switch_exhaustive_bool_without_default_success_result.exit_code == 0);
+    assert(switch_exhaustive_bool_without_default_success_result.stderr_text.empty());
+    assert(switch_exhaustive_bool_without_default_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto break_outside_loop_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
     {

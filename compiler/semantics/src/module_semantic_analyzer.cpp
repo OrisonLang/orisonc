@@ -2445,6 +2445,8 @@ private:
             auto saw_value_pattern = false;
             auto saw_constructor_pattern = false;
             auto saw_semantic_default = false;
+            auto saw_true_value_pattern = false;
+            auto saw_false_value_pattern = false;
             std::unordered_set<std::string> seen_literal_value_patterns;
             std::optional<syntax::TypeSyntax> switch_subject_type;
             auto switch_subject_type_name = infer_expression_type_name(statement.expression);
@@ -2473,6 +2475,14 @@ private:
                         valid_pattern = false;
                     }
 
+                    if (switch_subject_type_name == "Bool" && saw_true_value_pattern && saw_false_value_pattern) {
+                        diagnostics_.error(
+                            switch_case_line(switch_case),
+                            "switch default case is redundant after true and false value patterns"
+                        );
+                        valid_pattern = false;
+                    }
+
                     saw_semantic_default = true;
                 }
 
@@ -2480,6 +2490,10 @@ private:
                     auto pattern_kind = classify_switch_pattern_kind(switch_case.pattern);
                     if (pattern_kind == SwitchPatternKind::value) {
                         saw_value_pattern = true;
+                        if (switch_case.pattern.kind == syntax::ExpressionKind::boolean_literal) {
+                            saw_true_value_pattern = saw_true_value_pattern || switch_case.pattern.text == "true";
+                            saw_false_value_pattern = saw_false_value_pattern || switch_case.pattern.text == "false";
+                        }
                         auto literal_key = switch_literal_pattern_key(switch_case.pattern);
                         if (literal_key.has_value() && !seen_literal_value_patterns.insert(*literal_key).second) {
                             diagnostics_.error(
