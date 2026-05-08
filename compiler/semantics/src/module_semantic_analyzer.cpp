@@ -1660,6 +1660,34 @@ private:
         return 0;
     }
 
+    auto name_only_payload_constructor_pattern_key(
+        syntax::ExpressionSyntax const& pattern,
+        std::optional<syntax::TypeSyntax> const& subject_type
+    ) const -> std::optional<std::string> {
+        if (!subject_type.has_value() || pattern.kind != syntax::ExpressionKind::call ||
+            !pattern.left || pattern.left->kind != syntax::ExpressionKind::name || pattern.arguments.empty()) {
+            return std::nullopt;
+        }
+
+        auto resolved_subject_type = resolve_choice_pattern_subject_type(pattern.left->text, *subject_type);
+        if (!resolved_subject_type.has_value()) {
+            return std::nullopt;
+        }
+
+        auto arity = find_choice_variant_payload_arity(pattern.left->text, *resolved_subject_type);
+        if (!arity.has_value() || *arity != pattern.arguments.size()) {
+            return std::nullopt;
+        }
+
+        for (auto const& argument : pattern.arguments) {
+            if (argument.kind != syntax::ExpressionKind::name) {
+                return std::nullopt;
+            }
+        }
+
+        return pattern.left->text + "/" + std::to_string(pattern.arguments.size());
+    }
+
     void validate_switch_pattern_arity(
         syntax::ExpressionSyntax const& pattern,
         std::optional<syntax::TypeSyntax> const& subject_type
@@ -2480,6 +2508,7 @@ private:
             auto saw_false_value_pattern = false;
             std::unordered_set<std::string> seen_literal_value_patterns;
             std::unordered_set<std::string> seen_zero_payload_choice_variants;
+            std::unordered_set<std::string> seen_name_only_payload_choice_patterns;
             std::optional<std::vector<std::string>> zero_payload_choice_variants;
             std::unordered_set<std::string> zero_payload_choice_variant_lookup;
             std::optional<std::unordered_set<std::string>> remaining_zero_payload_choice_variants;
@@ -2570,6 +2599,18 @@ private:
                                 valid_pattern = false;
                             }
                             remaining_zero_payload_choice_variants->erase(switch_case.pattern.text);
+                        }
+
+                        auto constructor_key =
+                            name_only_payload_constructor_pattern_key(switch_case.pattern, switch_subject_type);
+                        if (constructor_key.has_value() &&
+                            !seen_name_only_payload_choice_patterns.insert(*constructor_key).second) {
+                            diagnostics_.error(
+                                switch_case.pattern.line,
+                                "switch constructor pattern '" + switch_case.pattern.left->text +
+                                    "(...)' is duplicated"
+                            );
+                            valid_pattern = false;
                         }
                     }
                 }

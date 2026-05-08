@@ -1774,6 +1774,38 @@ void test_switch_duplicate_choice_without_default_does_not_cascade_to_missing_va
     assert(diagnostics.entries().front().message == "switch constructor pattern 'Closed' is duplicated");
 }
 
+void test_switch_rejects_duplicate_name_only_payload_choice_constructor_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_duplicate_name_only_payload_choice_constructor_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "function classify(item: Maybe<Int32>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Some(value) => 1\n";
+        output << "        Some(other) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message == "switch constructor pattern 'Some(...)' is duplicated");
+}
+
 void test_switch_rejects_missing_zero_payload_choice_variant_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_choice_variant_failure.or";
@@ -7032,6 +7064,7 @@ int main() {
     test_switch_accepts_exhaustive_zero_payload_choice_without_default_success();
     test_switch_rejects_duplicate_zero_payload_choice_constructor_failure();
     test_switch_duplicate_choice_without_default_does_not_cascade_to_missing_variant_failure();
+    test_switch_rejects_duplicate_name_only_payload_choice_constructor_failure();
     test_switch_rejects_missing_zero_payload_choice_variant_failure();
     test_switch_rejects_multiple_default_cases_semantically();
     test_switch_rejects_nonfinal_default_case_semantically();

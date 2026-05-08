@@ -5287,6 +5287,42 @@ int main() {
                "switch is missing zero-payload choice variant"
            ) == std::string::npos);
 
+    auto switch_duplicate_payload_choice_constructor_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_payload_choice_constructor_failure.or";
+    {
+        std::ofstream output(switch_duplicate_payload_choice_constructor_failure_path);
+        output << "package demo.switches\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "function classify(item: Maybe<Int32>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Some(value) => 1\n";
+        output << "        Some(other) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_duplicate_payload_choice_constructor_failure_path_text =
+        switch_duplicate_payload_choice_constructor_failure_path.string();
+    std::array<char const*, 3> switch_duplicate_payload_choice_constructor_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_duplicate_payload_choice_constructor_failure_path_text.c_str()
+    };
+    auto switch_duplicate_payload_choice_constructor_failure_result = app.run(
+        std::span<char const* const>(
+            switch_duplicate_payload_choice_constructor_failure_argv.data(),
+            switch_duplicate_payload_choice_constructor_failure_argv.size()
+        )
+    );
+
+    assert(switch_duplicate_payload_choice_constructor_failure_result.exit_code == 1);
+    assert(switch_duplicate_payload_choice_constructor_failure_result.stdout_text.empty());
+    assert(switch_duplicate_payload_choice_constructor_failure_result.stderr_text.find(
+               "switch constructor pattern 'Some(...)' is duplicated"
+           ) != std::string::npos);
+
     auto switch_missing_choice_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_missing_choice_variant_failure.or";
     {
