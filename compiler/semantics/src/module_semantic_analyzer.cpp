@@ -2617,6 +2617,15 @@ private:
                 }
             }
 
+            if (switch_patterns_valid && !has_default_case && !saw_constructor_pattern &&
+                switch_subject_type_name == "Bool" && saw_true_value_pattern != saw_false_value_pattern) {
+                diagnostics_.error(
+                    statement.line,
+                    std::string("switch is missing boolean value pattern '") +
+                        (saw_true_value_pattern ? "false" : "true") + "'"
+                );
+            }
+
             if (!has_default_case) {
                 case_results.push_back(baseline_scope);
             }

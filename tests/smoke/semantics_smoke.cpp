@@ -1593,6 +1593,31 @@ void test_switch_accepts_exhaustive_bool_without_default_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_switch_rejects_missing_bool_value_pattern_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_bool_pattern_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message == "switch is missing boolean value pattern 'false'");
+}
+
 void test_switch_rejects_redundant_zero_payload_choice_default_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_redundant_choice_default_failure.or";
@@ -6940,6 +6965,7 @@ int main() {
     test_switch_rejects_duplicate_integer_cast_value_pattern_failure();
     test_switch_rejects_redundant_bool_default_failure();
     test_switch_accepts_exhaustive_bool_without_default_success();
+    test_switch_rejects_missing_bool_value_pattern_failure();
     test_switch_rejects_redundant_zero_payload_choice_default_failure();
     test_switch_accepts_exhaustive_zero_payload_choice_without_default_success();
     test_switch_rejects_duplicate_zero_payload_choice_constructor_failure();
