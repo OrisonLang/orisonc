@@ -5397,6 +5397,9 @@ int main() {
     assert(switch_duplicate_literal_payload_choice_constructor_failure_result.stderr_text.find(
                "switch constructor pattern 'Int(...)' is duplicated"
            ) != std::string::npos);
+    assert(switch_duplicate_literal_payload_choice_constructor_failure_result.stderr_text.find(
+               "switch value pattern"
+           ) == std::string::npos);
 
     auto switch_missing_choice_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_missing_choice_variant_failure.or";
