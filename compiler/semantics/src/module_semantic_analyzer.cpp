@@ -1704,7 +1704,18 @@ private:
         };
         for (std::size_t index = 0; index < pattern.arguments.size(); ++index) {
             auto const& argument = pattern.arguments[index];
+            std::optional<syntax::TypeSyntax> payload_type;
+            if (index < variant_signature->payloads.size()) {
+                payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
+            }
+
             if (argument.kind == syntax::ExpressionKind::name) {
+                if (payload_type.has_value() &&
+                    is_zero_payload_constructor_pattern(argument.text, *payload_type)) {
+                    key.payloads.push_back(argument.text + "()");
+                    continue;
+                }
+
                 key.payloads.push_back("*");
                 continue;
             }
@@ -1716,8 +1727,6 @@ private:
             }
 
             if (argument.kind == syntax::ExpressionKind::call && index < variant_signature->payloads.size()) {
-                auto payload_type =
-                    substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
                 auto nested_key = simple_payload_constructor_pattern_key(argument, payload_type);
                 if (nested_key.has_value()) {
                     key.payloads.push_back(render_payload_constructor_pattern_key(*nested_key));
@@ -1729,6 +1738,19 @@ private:
         }
 
         return key;
+    }
+
+    auto is_zero_payload_constructor_pattern(
+        std::string const& constructor_name,
+        syntax::TypeSyntax const& subject_type
+    ) const -> bool {
+        auto resolved_subject_type = resolve_choice_pattern_subject_type(constructor_name, subject_type);
+        if (!resolved_subject_type.has_value()) {
+            return false;
+        }
+
+        auto arity = find_choice_variant_payload_arity(constructor_name, *resolved_subject_type);
+        return arity.has_value() && *arity == 0;
     }
 
     auto render_payload_constructor_pattern_key(PayloadConstructorPatternKey const& key) const -> std::string {
@@ -2074,6 +2096,10 @@ private:
         }
 
         if (bind_name && pattern.kind == syntax::ExpressionKind::name && !pattern.text.empty()) {
+            if (pattern_type.has_value() && is_zero_payload_constructor_pattern(pattern.text, *pattern_type)) {
+                return;
+            }
+
             if (!bound_names.insert(pattern.text).second) {
                 diagnostics_.error(
                     pattern.line,

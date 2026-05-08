@@ -1195,6 +1195,69 @@ void test_switch_accepts_disjoint_nested_multi_payload_constructor_patterns_succ
     assert(!diagnostics.has_errors());
 }
 
+void test_switch_accepts_mismatched_nested_constructor_patterns_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_mismatched_nested_constructor_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "choice Boxed<T>\n";
+        output << "    Wrap(inner: Maybe<T>)\n";
+        output << "function classify(item: Boxed<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Wrap(Some(value)) => 1\n";
+        output << "        Wrap(Empty) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_switch_rejects_duplicate_nested_zero_payload_constructor_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_nested_zero_payload_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "choice Boxed<T>\n";
+        output << "    Wrap(inner: Maybe<T>)\n";
+        output << "function classify(item: Boxed<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Wrap(Empty) => 1\n";
+        output << "        Wrap(Empty) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 10);
+    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+}
+
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrapped_payload_failure.or";
@@ -7519,6 +7582,8 @@ int main() {
     test_switch_rejects_nested_literal_wildcard_payload_constructor_overlap_failure();
     test_switch_rejects_nested_multi_payload_constructor_overlap_failure();
     test_switch_accepts_disjoint_nested_multi_payload_constructor_patterns_success();
+    test_switch_accepts_mismatched_nested_constructor_patterns_success();
+    test_switch_rejects_duplicate_nested_zero_payload_constructor_failure();
     test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure();

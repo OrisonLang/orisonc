@@ -4456,6 +4456,80 @@ int main() {
     assert(switch_disjoint_nested_multi_payload_success_result.stderr_text.empty());
     assert(switch_disjoint_nested_multi_payload_success_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto switch_mismatched_nested_constructor_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_mismatched_nested_constructor_success.or";
+    {
+        std::ofstream output(switch_mismatched_nested_constructor_success_path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "choice Boxed<T>\n";
+        output << "    Wrap(inner: Maybe<T>)\n";
+        output << "function classify(item: Boxed<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Wrap(Some(value)) => 1\n";
+        output << "        Wrap(Empty) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_mismatched_nested_constructor_success_path_text =
+        switch_mismatched_nested_constructor_success_path.string();
+    std::array<char const*, 3> switch_mismatched_nested_constructor_success_argv {
+        "orisonc",
+        "--parse",
+        switch_mismatched_nested_constructor_success_path_text.c_str()
+    };
+    auto switch_mismatched_nested_constructor_success_result = app.run(
+        std::span<char const* const>(
+            switch_mismatched_nested_constructor_success_argv.data(),
+            switch_mismatched_nested_constructor_success_argv.size()
+        )
+    );
+
+    assert(switch_mismatched_nested_constructor_success_result.exit_code == 0);
+    assert(switch_mismatched_nested_constructor_success_result.stderr_text.empty());
+    assert(switch_mismatched_nested_constructor_success_result.stdout_text.find("parsed ") != std::string::npos);
+
+    auto switch_duplicate_nested_zero_payload_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_nested_zero_payload_failure.or";
+    {
+        std::ofstream output(switch_duplicate_nested_zero_payload_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "choice Boxed<T>\n";
+        output << "    Wrap(inner: Maybe<T>)\n";
+        output << "function classify(item: Boxed<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Wrap(Empty) => 1\n";
+        output << "        Wrap(Empty) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_duplicate_nested_zero_payload_failure_path_text =
+        switch_duplicate_nested_zero_payload_failure_path.string();
+    std::array<char const*, 3> switch_duplicate_nested_zero_payload_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_duplicate_nested_zero_payload_failure_path_text.c_str()
+    };
+    auto switch_duplicate_nested_zero_payload_failure_result = app.run(
+        std::span<char const* const>(
+            switch_duplicate_nested_zero_payload_failure_argv.data(),
+            switch_duplicate_nested_zero_payload_failure_argv.size()
+        )
+    );
+
+    assert(switch_duplicate_nested_zero_payload_failure_result.exit_code == 1);
+    assert(switch_duplicate_nested_zero_payload_failure_result.stdout_text.empty());
+    assert(switch_duplicate_nested_zero_payload_failure_result.stderr_text.find(
+               "switch constructor pattern 'Wrap(...)' is duplicated"
+           ) != std::string::npos);
+
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";
     {
