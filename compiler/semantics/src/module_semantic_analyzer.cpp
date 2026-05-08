@@ -1886,7 +1886,7 @@ private:
                         substitute_generic_type_bindings((*variant_signature)->payloads[index].type, bindings);
                 }
 
-                if (argument.kind == syntax::ExpressionKind::name || is_literal_switch_subpattern(argument) ||
+                if (argument.kind == syntax::ExpressionKind::name || switch_literal_pattern_key(argument).has_value() ||
                     argument.kind == syntax::ExpressionKind::call) {
                     valid = analyze_switch_pattern(argument, in_async_function, payload_type, true) && valid;
                     continue;
@@ -1905,7 +1905,7 @@ private:
             return true;
         }
 
-        if (is_literal_switch_subpattern(pattern)) {
+        if (switch_literal_pattern_key(pattern).has_value()) {
             if (!in_constructor_payload) {
                 validate_switch_value_pattern_type(pattern, subject_type);
             }

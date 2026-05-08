@@ -5401,6 +5401,42 @@ int main() {
                "switch value pattern"
            ) == std::string::npos);
 
+    auto switch_equivalent_integer_literal_payload_choice_constructor_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_equivalent_integer_literal_payload_choice_constructor_failure.or";
+    {
+        std::ofstream output(switch_equivalent_integer_literal_payload_choice_constructor_failure_path);
+        output << "package demo.switches\n";
+        output << "choice Number\n";
+        output << "    Int(value: Int64)\n";
+        output << "    Empty\n";
+        output << "function classify(item: Number) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Int(1) => 1\n";
+        output << "        Int(1 as Int64) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_equivalent_integer_literal_payload_choice_constructor_failure_path_text =
+        switch_equivalent_integer_literal_payload_choice_constructor_failure_path.string();
+    std::array<char const*, 3> switch_equivalent_integer_literal_payload_choice_constructor_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_equivalent_integer_literal_payload_choice_constructor_failure_path_text.c_str()
+    };
+    auto switch_equivalent_integer_literal_payload_choice_constructor_failure_result = app.run(
+        std::span<char const* const>(
+            switch_equivalent_integer_literal_payload_choice_constructor_failure_argv.data(),
+            switch_equivalent_integer_literal_payload_choice_constructor_failure_argv.size()
+        )
+    );
+
+    assert(switch_equivalent_integer_literal_payload_choice_constructor_failure_result.exit_code == 1);
+    assert(switch_equivalent_integer_literal_payload_choice_constructor_failure_result.stdout_text.empty());
+    assert(switch_equivalent_integer_literal_payload_choice_constructor_failure_result.stderr_text.find(
+               "switch constructor pattern 'Int(...)' is duplicated"
+           ) != std::string::npos);
+
     auto switch_missing_choice_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_missing_choice_variant_failure.or";
     {
