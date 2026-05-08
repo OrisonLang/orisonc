@@ -1806,6 +1806,38 @@ void test_switch_rejects_duplicate_name_only_payload_choice_constructor_failure(
     assert(diagnostics.entries().front().message == "switch constructor pattern 'Some(...)' is duplicated");
 }
 
+void test_switch_duplicate_payload_choice_constructor_does_not_cascade_to_binding_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_duplicate_payload_choice_constructor_no_cascade_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice PairChoice\n";
+        output << "    Both(left: Int32, right: Int32)\n";
+        output << "    Empty\n";
+        output << "function classify(item: PairChoice) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Both(left, right) => 1\n";
+        output << "        Both(value, value) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message == "switch constructor pattern 'Both(...)' is duplicated");
+}
+
 void test_switch_rejects_missing_zero_payload_choice_variant_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_choice_variant_failure.or";
@@ -7065,6 +7097,7 @@ int main() {
     test_switch_rejects_duplicate_zero_payload_choice_constructor_failure();
     test_switch_duplicate_choice_without_default_does_not_cascade_to_missing_variant_failure();
     test_switch_rejects_duplicate_name_only_payload_choice_constructor_failure();
+    test_switch_duplicate_payload_choice_constructor_does_not_cascade_to_binding_failure();
     test_switch_rejects_missing_zero_payload_choice_variant_failure();
     test_switch_rejects_multiple_default_cases_semantically();
     test_switch_rejects_nonfinal_default_case_semantically();

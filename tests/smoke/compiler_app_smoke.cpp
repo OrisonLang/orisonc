@@ -5323,6 +5323,45 @@ int main() {
                "switch constructor pattern 'Some(...)' is duplicated"
            ) != std::string::npos);
 
+    auto switch_duplicate_payload_choice_constructor_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_payload_choice_constructor_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_duplicate_payload_choice_constructor_no_cascade_failure_path);
+        output << "package demo.switches\n";
+        output << "choice PairChoice\n";
+        output << "    Both(left: Int32, right: Int32)\n";
+        output << "    Empty\n";
+        output << "function classify(item: PairChoice) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Both(left, right) => 1\n";
+        output << "        Both(value, value) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_duplicate_payload_choice_constructor_no_cascade_failure_path_text =
+        switch_duplicate_payload_choice_constructor_no_cascade_failure_path.string();
+    std::array<char const*, 3> switch_duplicate_payload_choice_constructor_no_cascade_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_duplicate_payload_choice_constructor_no_cascade_failure_path_text.c_str()
+    };
+    auto switch_duplicate_payload_choice_constructor_no_cascade_failure_result = app.run(
+        std::span<char const* const>(
+            switch_duplicate_payload_choice_constructor_no_cascade_failure_argv.data(),
+            switch_duplicate_payload_choice_constructor_no_cascade_failure_argv.size()
+        )
+    );
+
+    assert(switch_duplicate_payload_choice_constructor_no_cascade_failure_result.exit_code == 1);
+    assert(switch_duplicate_payload_choice_constructor_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_duplicate_payload_choice_constructor_no_cascade_failure_result.stderr_text.find(
+               "switch constructor pattern 'Both(...)' is duplicated"
+           ) != std::string::npos);
+    assert(switch_duplicate_payload_choice_constructor_no_cascade_failure_result.stderr_text.find(
+               "cannot bind 'value' more than once"
+           ) == std::string::npos);
+
     auto switch_missing_choice_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_missing_choice_variant_failure.or";
     {
