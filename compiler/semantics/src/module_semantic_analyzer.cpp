@@ -2478,14 +2478,16 @@ private:
             auto saw_true_value_pattern = false;
             auto saw_false_value_pattern = false;
             std::unordered_set<std::string> seen_literal_value_patterns;
+            std::unordered_set<std::string> seen_zero_payload_choice_variants;
+            std::optional<std::unordered_set<std::string>> zero_payload_choice_variants;
             std::optional<std::unordered_set<std::string>> remaining_zero_payload_choice_variants;
             std::optional<syntax::TypeSyntax> switch_subject_type;
             auto switch_subject_type_name = infer_expression_type_name(statement.expression);
             if (!switch_subject_type_name.empty()) {
                 switch_subject_type = parse_rendered_type_name(switch_subject_type_name);
                 if (switch_subject_type.has_value()) {
-                    remaining_zero_payload_choice_variants =
-                        zero_payload_choice_variant_names_if_enum_like(*switch_subject_type);
+                    zero_payload_choice_variants = zero_payload_choice_variant_names_if_enum_like(*switch_subject_type);
+                    remaining_zero_payload_choice_variants = zero_payload_choice_variants;
                 }
             }
 
@@ -2549,8 +2551,16 @@ private:
                         }
                     } else if (pattern_kind == SwitchPatternKind::constructor) {
                         saw_constructor_pattern = true;
-                        if (remaining_zero_payload_choice_variants.has_value() &&
-                            switch_case.pattern.kind == syntax::ExpressionKind::name) {
+                        if (switch_case.pattern.kind == syntax::ExpressionKind::name &&
+                            zero_payload_choice_variants.has_value() &&
+                            zero_payload_choice_variants->contains(switch_case.pattern.text)) {
+                            if (!seen_zero_payload_choice_variants.insert(switch_case.pattern.text).second) {
+                                diagnostics_.error(
+                                    switch_case.pattern.line,
+                                    "switch constructor pattern '" + switch_case.pattern.text + "' is duplicated"
+                                );
+                                valid_pattern = false;
+                            }
                             remaining_zero_payload_choice_variants->erase(switch_case.pattern.text);
                         }
                     }
