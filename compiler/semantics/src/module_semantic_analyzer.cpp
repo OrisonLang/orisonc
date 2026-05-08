@@ -1125,9 +1125,33 @@ private:
                pattern.kind == syntax::ExpressionKind::boolean_literal;
     }
 
-    auto switch_literal_pattern_key(syntax::ExpressionSyntax const& pattern) const -> std::optional<std::string> {
+    auto normalized_integer_literal_text(std::string const& text) const -> std::string {
+        std::string normalized;
+        for (auto const character : text) {
+            if (character != '_') {
+                normalized += character;
+            }
+        }
+        return normalized;
+    }
+
+    auto switch_integer_constant_text(syntax::ExpressionSyntax const& pattern) const -> std::optional<std::string> {
         if (pattern.kind == syntax::ExpressionKind::integer_literal) {
-            return "int:" + pattern.text;
+            return normalized_integer_literal_text(pattern.text);
+        }
+
+        if (pattern.kind == syntax::ExpressionKind::cast && pattern.left &&
+            pattern.left->kind == syntax::ExpressionKind::integer_literal && is_integer_type_name(pattern.text)) {
+            return normalized_integer_literal_text(pattern.left->text);
+        }
+
+        return std::nullopt;
+    }
+
+    auto switch_literal_pattern_key(syntax::ExpressionSyntax const& pattern) const -> std::optional<std::string> {
+        auto integer_constant = switch_integer_constant_text(pattern);
+        if (integer_constant.has_value()) {
+            return "int:" + *integer_constant;
         }
         if (pattern.kind == syntax::ExpressionKind::boolean_literal) {
             return "bool:" + pattern.text;
@@ -1144,6 +1168,10 @@ private:
                 return pattern.text;
             }
             return "\"" + pattern.text + "\"";
+        }
+        if (pattern.kind == syntax::ExpressionKind::cast && pattern.left &&
+            pattern.left->kind == syntax::ExpressionKind::integer_literal) {
+            return pattern.left->text + " as " + pattern.text;
         }
         return pattern.text;
     }

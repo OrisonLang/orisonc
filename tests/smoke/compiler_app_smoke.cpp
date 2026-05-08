@@ -5022,6 +5022,38 @@ int main() {
                "switch value pattern '\"ready\"' is duplicated"
            ) != std::string::npos);
 
+    auto switch_duplicate_integer_cast_value_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_integer_cast_value_failure.or";
+    {
+        std::ofstream output(switch_duplicate_integer_cast_value_failure_path);
+        output << "package demo.switches\n";
+        output << "function classify(value: UInt32) -> Int64\n";
+        output << "    switch value\n";
+        output << "        1 => 1\n";
+        output << "        1 as Int32 => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_duplicate_integer_cast_value_failure_path_text =
+        switch_duplicate_integer_cast_value_failure_path.string();
+    std::array<char const*, 3> switch_duplicate_integer_cast_value_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_duplicate_integer_cast_value_failure_path_text.c_str()
+    };
+    auto switch_duplicate_integer_cast_value_failure_result = app.run(
+        std::span<char const* const>(
+            switch_duplicate_integer_cast_value_failure_argv.data(),
+            switch_duplicate_integer_cast_value_failure_argv.size()
+        )
+    );
+
+    assert(switch_duplicate_integer_cast_value_failure_result.exit_code == 1);
+    assert(switch_duplicate_integer_cast_value_failure_result.stdout_text.empty());
+    assert(switch_duplicate_integer_cast_value_failure_result.stderr_text.find(
+               "switch value pattern '1 as Int32' is duplicated"
+           ) != std::string::npos);
+
     auto break_outside_loop_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
     {
