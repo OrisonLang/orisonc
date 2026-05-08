@@ -4194,6 +4194,42 @@ int main() {
     assert(switch_nested_constructor_pattern_binding_result.stderr_text.empty());
     assert(switch_nested_constructor_pattern_binding_result.stdout_text.find("parsed ") != std::string::npos);
 
+    auto switch_nested_payload_overlap_out_of_scope_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_nested_payload_overlap_out_of_scope_success.or";
+    {
+        std::ofstream output(switch_nested_payload_overlap_out_of_scope_success_path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "choice Boxed<T>\n";
+        output << "    Wrap(inner: Maybe<T>)\n";
+        output << "function classify(item: Boxed<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Wrap(Some(value)) => 1\n";
+        output << "        Wrap(Some(other)) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_nested_payload_overlap_out_of_scope_success_path_text =
+        switch_nested_payload_overlap_out_of_scope_success_path.string();
+    std::array<char const*, 3> switch_nested_payload_overlap_out_of_scope_success_argv {
+        "orisonc",
+        "--parse",
+        switch_nested_payload_overlap_out_of_scope_success_path_text.c_str()
+    };
+    auto switch_nested_payload_overlap_out_of_scope_success_result = app.run(
+        std::span<char const* const>(
+            switch_nested_payload_overlap_out_of_scope_success_argv.data(),
+            switch_nested_payload_overlap_out_of_scope_success_argv.size()
+        )
+    );
+
+    assert(switch_nested_payload_overlap_out_of_scope_success_result.exit_code == 0);
+    assert(switch_nested_payload_overlap_out_of_scope_success_result.stderr_text.empty());
+    assert(switch_nested_payload_overlap_out_of_scope_success_result.stdout_text.find("parsed ") != std::string::npos);
+
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";
     {
