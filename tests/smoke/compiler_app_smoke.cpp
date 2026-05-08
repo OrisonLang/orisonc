@@ -4194,11 +4194,11 @@ int main() {
     assert(switch_nested_constructor_pattern_binding_result.stderr_text.empty());
     assert(switch_nested_constructor_pattern_binding_result.stdout_text.find("parsed ") != std::string::npos);
 
-    auto switch_nested_payload_overlap_out_of_scope_success_path =
+    auto switch_nested_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
-        "orison_compiler_app_switch_nested_payload_overlap_out_of_scope_success.or";
+        "orison_compiler_app_switch_nested_payload_overlap_failure.or";
     {
-        std::ofstream output(switch_nested_payload_overlap_out_of_scope_success_path);
+        std::ofstream output(switch_nested_payload_overlap_failure_path);
         output << "package demo.patterns\n";
         output << "choice Maybe<T>\n";
         output << "    Some(value: T)\n";
@@ -4212,23 +4212,25 @@ int main() {
         output << "        default => 0\n";
     }
 
-    auto switch_nested_payload_overlap_out_of_scope_success_path_text =
-        switch_nested_payload_overlap_out_of_scope_success_path.string();
-    std::array<char const*, 3> switch_nested_payload_overlap_out_of_scope_success_argv {
+    auto switch_nested_payload_overlap_failure_path_text =
+        switch_nested_payload_overlap_failure_path.string();
+    std::array<char const*, 3> switch_nested_payload_overlap_failure_argv {
         "orisonc",
         "--parse",
-        switch_nested_payload_overlap_out_of_scope_success_path_text.c_str()
+        switch_nested_payload_overlap_failure_path_text.c_str()
     };
-    auto switch_nested_payload_overlap_out_of_scope_success_result = app.run(
+    auto switch_nested_payload_overlap_failure_result = app.run(
         std::span<char const* const>(
-            switch_nested_payload_overlap_out_of_scope_success_argv.data(),
-            switch_nested_payload_overlap_out_of_scope_success_argv.size()
+            switch_nested_payload_overlap_failure_argv.data(),
+            switch_nested_payload_overlap_failure_argv.size()
         )
     );
 
-    assert(switch_nested_payload_overlap_out_of_scope_success_result.exit_code == 0);
-    assert(switch_nested_payload_overlap_out_of_scope_success_result.stderr_text.empty());
-    assert(switch_nested_payload_overlap_out_of_scope_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert(switch_nested_payload_overlap_failure_result.exit_code == 1);
+    assert(switch_nested_payload_overlap_failure_result.stdout_text.empty());
+    assert(switch_nested_payload_overlap_failure_result.stderr_text.find(
+               "switch constructor pattern 'Wrap(...)' is duplicated"
+           ) != std::string::npos);
 
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";

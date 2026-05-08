@@ -1684,10 +1684,26 @@ private:
             return std::nullopt;
         }
 
+        auto const* variant_signature = find_choice_variant_signature(pattern.left->text, *resolved_subject_type);
+        if (variant_signature == nullptr) {
+            return std::nullopt;
+        }
+
+        std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        if (!match_generic_type_pattern(
+                variant_signature->choice_type,
+                *resolved_subject_type,
+                variant_signature->generic_parameters,
+                bindings
+            )) {
+            return std::nullopt;
+        }
+
         PayloadConstructorPatternKey key {
             .constructor_name = pattern.left->text,
         };
-        for (auto const& argument : pattern.arguments) {
+        for (std::size_t index = 0; index < pattern.arguments.size(); ++index) {
+            auto const& argument = pattern.arguments[index];
             if (argument.kind == syntax::ExpressionKind::name) {
                 key.payloads.push_back("*");
                 continue;
@@ -1699,10 +1715,32 @@ private:
                 continue;
             }
 
+            if (argument.kind == syntax::ExpressionKind::call && index < variant_signature->payloads.size()) {
+                auto payload_type =
+                    substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
+                auto nested_key = simple_payload_constructor_pattern_key(argument, payload_type);
+                if (nested_key.has_value()) {
+                    key.payloads.push_back(render_payload_constructor_pattern_key(*nested_key));
+                    continue;
+                }
+            }
+
             return std::nullopt;
         }
 
         return key;
+    }
+
+    auto render_payload_constructor_pattern_key(PayloadConstructorPatternKey const& key) const -> std::string {
+        std::string rendered = key.constructor_name + "(";
+        for (std::size_t index = 0; index < key.payloads.size(); ++index) {
+            if (index > 0) {
+                rendered += ",";
+            }
+            rendered += key.payloads[index];
+        }
+        rendered += ")";
+        return rendered;
     }
 
     auto payload_constructor_patterns_overlap(

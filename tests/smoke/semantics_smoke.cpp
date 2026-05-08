@@ -970,9 +970,9 @@ void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_l
     assert(!diagnostics.has_errors());
 }
 
-void test_switch_accepts_nested_payload_constructor_overlap_out_of_scope_success() {
+void test_switch_rejects_nested_payload_constructor_overlap_failure() {
     auto path =
-        std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_overlap_out_of_scope_success.or";
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_overlap_failure.or";
     {
         std::ofstream output(path);
         output << "package demo.patterns\n";
@@ -997,7 +997,10 @@ void test_switch_accepts_nested_payload_constructor_overlap_out_of_scope_success
 
     orison::semantics::ModuleSemanticAnalyzer analyzer;
     auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 10);
+    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
 }
 
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure() {
@@ -7317,7 +7320,7 @@ int main() {
     test_switch_call_pattern_rejects_unknown_variant_failure();
     test_switch_nested_constructor_pattern_binds_nested_names_success();
     test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_success();
-    test_switch_accepts_nested_payload_constructor_overlap_out_of_scope_success();
+    test_switch_rejects_nested_payload_constructor_overlap_failure();
     test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure();
