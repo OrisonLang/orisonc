@@ -51,3 +51,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-08: wildcard/literal payload overlap now has explicit CLI no-cascade coverage, keeping mixed simple-payload overlap diagnostics separate from top-level value-pattern duplicate wording.
 - 2026-05-08: multi-payload simple constructor overlap is now covered explicitly for partial wildcard/literal matches such as `Both(left, 1)` followed by `Both(other, 1)`, still without attempting nested pattern reasoning.
 - 2026-05-08: multi-payload simple constructor overlap now also has disjoint-literal regression coverage, so `Both(left, 1)` followed by `Both(other, 2)` remains valid because the literal-constrained positions do not overlap.
+- 2026-05-08: wildcard/literal payload overlap now has order-reversed regression coverage too, so `Int(1)` followed by `Int(value)` is rejected symmetrically with `Int(value)` followed by `Int(1)`.

@@ -5476,6 +5476,42 @@ int main() {
                "switch value pattern"
            ) == std::string::npos);
 
+    auto switch_literal_then_wildcard_payload_choice_constructor_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_literal_then_wildcard_payload_choice_constructor_failure.or";
+    {
+        std::ofstream output(switch_literal_then_wildcard_payload_choice_constructor_failure_path);
+        output << "package demo.switches\n";
+        output << "choice Number\n";
+        output << "    Int(value: Int64)\n";
+        output << "    Empty\n";
+        output << "function classify(item: Number) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Int(1) => 1\n";
+        output << "        Int(value) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_literal_then_wildcard_payload_choice_constructor_failure_path_text =
+        switch_literal_then_wildcard_payload_choice_constructor_failure_path.string();
+    std::array<char const*, 3> switch_literal_then_wildcard_payload_choice_constructor_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_literal_then_wildcard_payload_choice_constructor_failure_path_text.c_str()
+    };
+    auto switch_literal_then_wildcard_payload_choice_constructor_failure_result = app.run(
+        std::span<char const* const>(
+            switch_literal_then_wildcard_payload_choice_constructor_failure_argv.data(),
+            switch_literal_then_wildcard_payload_choice_constructor_failure_argv.size()
+        )
+    );
+
+    assert(switch_literal_then_wildcard_payload_choice_constructor_failure_result.exit_code == 1);
+    assert(switch_literal_then_wildcard_payload_choice_constructor_failure_result.stdout_text.empty());
+    assert(switch_literal_then_wildcard_payload_choice_constructor_failure_result.stderr_text.find(
+               "switch constructor pattern 'Int(...)' is duplicated"
+           ) != std::string::npos);
+
     auto switch_multi_payload_partial_overlap_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_multi_payload_partial_overlap_choice_constructor_failure.or";

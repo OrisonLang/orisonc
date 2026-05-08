@@ -1934,6 +1934,38 @@ void test_switch_rejects_wildcard_then_literal_payload_choice_constructor_failur
     assert(diagnostics.entries().front().message == "switch constructor pattern 'Int(...)' is duplicated");
 }
 
+void test_switch_rejects_literal_then_wildcard_payload_choice_constructor_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_literal_then_wildcard_payload_choice_constructor_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice Number\n";
+        output << "    Int(value: Int64)\n";
+        output << "    Empty\n";
+        output << "function classify(item: Number) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Int(1) => 1\n";
+        output << "        Int(value) => 2\n";
+        output << "        default => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 8);
+    assert(diagnostics.entries().front().message == "switch constructor pattern 'Int(...)' is duplicated");
+}
+
 void test_switch_rejects_multi_payload_partial_overlap_choice_constructor_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
@@ -7258,6 +7290,7 @@ int main() {
     test_switch_rejects_duplicate_literal_payload_choice_constructor_failure();
     test_switch_rejects_equivalent_integer_literal_payload_choice_constructor_failure();
     test_switch_rejects_wildcard_then_literal_payload_choice_constructor_failure();
+    test_switch_rejects_literal_then_wildcard_payload_choice_constructor_failure();
     test_switch_rejects_multi_payload_partial_overlap_choice_constructor_failure();
     test_switch_accepts_multi_payload_disjoint_literal_choice_constructor_success();
     test_switch_rejects_missing_zero_payload_choice_variant_failure();
