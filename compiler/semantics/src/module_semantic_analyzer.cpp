@@ -66,6 +66,11 @@ struct ChoiceVariantSignature {
     std::vector<syntax::NamedTypeSyntax> payloads;
 };
 
+struct PayloadConstructorPatternKey {
+    std::string constructor_name;
+    std::vector<std::string> payloads;
+};
+
 class Analyzer {
 public:
     explicit Analyzer(syntax::ModuleSyntax const& module) : module_(module) {}
@@ -1663,7 +1668,7 @@ private:
     auto simple_payload_constructor_pattern_key(
         syntax::ExpressionSyntax const& pattern,
         std::optional<syntax::TypeSyntax> const& subject_type
-    ) const -> std::optional<std::string> {
+    ) const -> std::optional<PayloadConstructorPatternKey> {
         if (!subject_type.has_value() || pattern.kind != syntax::ExpressionKind::call ||
             !pattern.left || pattern.left->kind != syntax::ExpressionKind::name || pattern.arguments.empty()) {
             return std::nullopt;
@@ -1679,38 +1684,43 @@ private:
             return std::nullopt;
         }
 
-        auto all_name_payloads = true;
-        auto all_literal_payloads = true;
-        std::string key = pattern.left->text + "(";
-        for (std::size_t index = 0; index < pattern.arguments.size(); ++index) {
-            auto const& argument = pattern.arguments[index];
-            if (index > 0) {
-                key += ",";
-            }
-
+        PayloadConstructorPatternKey key {
+            .constructor_name = pattern.left->text,
+        };
+        for (auto const& argument : pattern.arguments) {
             if (argument.kind == syntax::ExpressionKind::name) {
-                all_literal_payloads = false;
-                key += "*";
+                key.payloads.push_back("*");
                 continue;
             }
 
             auto literal_key = switch_literal_pattern_key(argument);
             if (literal_key.has_value()) {
-                all_name_payloads = false;
-                key += *literal_key;
+                key.payloads.push_back(*literal_key);
                 continue;
             }
 
-            all_name_payloads = false;
-            all_literal_payloads = false;
-        }
-
-        if (!all_name_payloads && !all_literal_payloads) {
             return std::nullopt;
         }
 
-        key += ")";
         return key;
+    }
+
+    auto payload_constructor_patterns_overlap(
+        PayloadConstructorPatternKey const& left,
+        PayloadConstructorPatternKey const& right
+    ) const -> bool {
+        if (left.constructor_name != right.constructor_name || left.payloads.size() != right.payloads.size()) {
+            return false;
+        }
+
+        for (std::size_t index = 0; index < left.payloads.size(); ++index) {
+            if (left.payloads[index] != "*" && right.payloads[index] != "*" &&
+                left.payloads[index] != right.payloads[index]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     void validate_switch_pattern_arity(
@@ -2533,7 +2543,7 @@ private:
             auto saw_false_value_pattern = false;
             std::unordered_set<std::string> seen_literal_value_patterns;
             std::unordered_set<std::string> seen_zero_payload_choice_variants;
-            std::unordered_set<std::string> seen_name_only_payload_choice_patterns;
+            std::vector<PayloadConstructorPatternKey> seen_simple_payload_choice_patterns;
             std::optional<std::vector<std::string>> zero_payload_choice_variants;
             std::unordered_set<std::string> zero_payload_choice_variant_lookup;
             std::optional<std::unordered_set<std::string>> remaining_zero_payload_choice_variants;
@@ -2628,14 +2638,19 @@ private:
 
                         auto constructor_key =
                             simple_payload_constructor_pattern_key(switch_case.pattern, switch_subject_type);
-                        if (constructor_key.has_value() &&
-                            !seen_name_only_payload_choice_patterns.insert(*constructor_key).second) {
-                            diagnostics_.error(
-                                switch_case.pattern.line,
-                                "switch constructor pattern '" + switch_case.pattern.left->text +
-                                    "(...)' is duplicated"
-                            );
-                            valid_pattern = false;
+                        if (constructor_key.has_value()) {
+                            for (auto const& seen_constructor_key : seen_simple_payload_choice_patterns) {
+                                if (payload_constructor_patterns_overlap(seen_constructor_key, *constructor_key)) {
+                                    diagnostics_.error(
+                                        switch_case.pattern.line,
+                                        "switch constructor pattern '" + switch_case.pattern.left->text +
+                                            "(...)' is duplicated"
+                                    );
+                                    valid_pattern = false;
+                                    break;
+                                }
+                            }
+                            seen_simple_payload_choice_patterns.push_back(*constructor_key);
                         }
                     }
                 }
