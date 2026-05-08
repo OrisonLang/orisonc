@@ -1743,6 +1743,59 @@ private:
         return rendered;
     }
 
+    auto parse_rendered_payload_constructor_pattern_key(std::string const& text) const
+        -> std::optional<PayloadConstructorPatternKey> {
+        auto const open = text.find('(');
+        if (open == std::string::npos || open == 0 || text.back() != ')') {
+            return std::nullopt;
+        }
+
+        PayloadConstructorPatternKey key {
+            .constructor_name = text.substr(0, open),
+        };
+
+        std::size_t payload_start = open + 1;
+        std::size_t depth = 0;
+        for (std::size_t index = open + 1; index + 1 < text.size(); ++index) {
+            if (text[index] == '(') {
+                ++depth;
+                continue;
+            }
+            if (text[index] == ')') {
+                if (depth == 0) {
+                    return std::nullopt;
+                }
+                --depth;
+                continue;
+            }
+            if (text[index] == ',' && depth == 0) {
+                key.payloads.push_back(text.substr(payload_start, index - payload_start));
+                payload_start = index + 1;
+            }
+        }
+
+        if (depth != 0) {
+            return std::nullopt;
+        }
+
+        key.payloads.push_back(text.substr(payload_start, text.size() - payload_start - 1));
+        return key;
+    }
+
+    auto payload_pattern_keys_overlap(std::string const& left, std::string const& right) const -> bool {
+        if (left == "*" || right == "*" || left == right) {
+            return true;
+        }
+
+        auto left_constructor = parse_rendered_payload_constructor_pattern_key(left);
+        auto right_constructor = parse_rendered_payload_constructor_pattern_key(right);
+        if (left_constructor.has_value() && right_constructor.has_value()) {
+            return payload_constructor_patterns_overlap(*left_constructor, *right_constructor);
+        }
+
+        return false;
+    }
+
     auto payload_constructor_patterns_overlap(
         PayloadConstructorPatternKey const& left,
         PayloadConstructorPatternKey const& right
@@ -1752,8 +1805,7 @@ private:
         }
 
         for (std::size_t index = 0; index < left.payloads.size(); ++index) {
-            if (left.payloads[index] != "*" && right.payloads[index] != "*" &&
-                left.payloads[index] != right.payloads[index]) {
+            if (!payload_pattern_keys_overlap(left.payloads[index], right.payloads[index])) {
                 return false;
             }
         }
