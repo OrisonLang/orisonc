@@ -155,6 +155,23 @@ void write_pair_choice_exhaustiveness_fixture(
     }
 }
 
+void write_multi_payload_choice_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice MultiPayload\n";
+    output << "    First(value: Int64)\n";
+    output << "    Second(value: Int64)\n";
+    output << "    Empty\n";
+    output << "function classify(item: MultiPayload) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+}
+
 auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     auto path_text = path.string();
@@ -5750,6 +5767,32 @@ int main() {
     assert_parse_failure_contains(
         run_parse(app, switch_missing_payload_choice_variant_failure_path),
         "switch is missing choice variant 'Empty'"
+    );
+
+    auto switch_first_missing_multi_payload_choice_variant_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_first_missing_multi_payload_choice_variant_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(
+        switch_first_missing_multi_payload_choice_variant_failure_path,
+        {"Second(value) => value", "Empty => 0"}
+    );
+
+    assert_parse_failure_contains(
+        run_parse(app, switch_first_missing_multi_payload_choice_variant_failure_path),
+        "switch is missing choice variant 'First'"
+    );
+
+    auto switch_second_missing_multi_payload_choice_variant_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_second_missing_multi_payload_choice_variant_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(
+        switch_second_missing_multi_payload_choice_variant_failure_path,
+        {"First(value) => value", "Empty => 0"}
+    );
+
+    assert_parse_failure_contains(
+        run_parse(app, switch_second_missing_multi_payload_choice_variant_failure_path),
+        "switch is missing choice variant 'Second'"
     );
 
     auto switch_duplicate_payload_choice_without_default_no_cascade_failure_path =

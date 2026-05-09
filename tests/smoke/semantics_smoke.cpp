@@ -155,6 +155,23 @@ void write_pair_choice_exhaustiveness_fixture(
     }
 }
 
+void write_multi_payload_choice_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice MultiPayload\n";
+    output << "    First(value: Int64)\n";
+    output << "    Second(value: Int64)\n";
+    output << "    Empty\n";
+    output << "function classify(item: MultiPayload) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -2151,6 +2168,26 @@ void test_switch_rejects_missing_payload_choice_variant_without_default_failure(
 
     auto diagnostics = analyze_orison_fixture(path);
     assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Empty'");
+}
+
+void test_switch_rejects_first_missing_multi_payload_choice_variant_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_first_missing_multi_payload_choice_variant_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(path, {"Second(value) => value", "Empty => 0"});
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(diagnostics, 7, "switch is missing choice variant 'First'");
+}
+
+void test_switch_rejects_second_missing_multi_payload_choice_variant_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_second_missing_multi_payload_choice_variant_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(path, {"First(value) => value", "Empty => 0"});
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(diagnostics, 7, "switch is missing choice variant 'Second'");
 }
 
 void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure() {
@@ -7793,6 +7830,8 @@ int main() {
     test_switch_accepts_partial_multi_payload_choice_arm_with_default_success();
     test_switch_rejects_partial_multi_payload_choice_arm_without_default_failure();
     test_switch_rejects_missing_payload_choice_variant_without_default_failure();
+    test_switch_rejects_first_missing_multi_payload_choice_variant_failure();
+    test_switch_rejects_second_missing_multi_payload_choice_variant_failure();
     test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure();
     test_switch_rejects_duplicate_zero_payload_choice_constructor_failure();
     test_switch_duplicate_choice_without_default_does_not_cascade_to_missing_variant_failure();
