@@ -1699,6 +1699,52 @@ void test_switch_constructor_pattern_rejects_extra_payload_values_failure() {
            "switch constructor pattern 'Empty' expects 0 payload values but received 1");
 }
 
+void test_switch_constructor_pattern_arity_without_default_does_not_cascade_to_missing_variant_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_constructor_pattern_arity_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Node(head) => 0\n";
+    }
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(
+        diagnostics,
+        7,
+        "switch constructor pattern 'Node' expects 2 payload values but received 1"
+    );
+}
+
+void test_switch_zero_payload_constructor_arity_without_default_does_not_cascade_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_zero_payload_constructor_arity_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Empty(value) => 0\n";
+    }
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(
+        diagnostics,
+        7,
+        "switch constructor pattern 'Empty' expects 0 payload values but received 1"
+    );
+}
+
 void test_switch_rejects_constructor_then_value_pattern_mix_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_pattern_mix_constructor_value_failure.or";
@@ -7879,6 +7925,8 @@ int main() {
     test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure();
     test_switch_constructor_pattern_rejects_missing_payload_values_failure();
     test_switch_constructor_pattern_rejects_extra_payload_values_failure();
+    test_switch_constructor_pattern_arity_without_default_does_not_cascade_to_missing_variant_failure();
+    test_switch_zero_payload_constructor_arity_without_default_does_not_cascade_failure();
     test_switch_rejects_constructor_then_value_pattern_mix_failure();
     test_switch_rejects_value_then_constructor_pattern_mix_failure();
     test_switch_pattern_mix_without_default_does_not_cascade_to_missing_variant_failure();

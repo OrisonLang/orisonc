@@ -5222,6 +5222,56 @@ int main() {
                "switch constructor pattern 'Empty' expects 0 payload values but received 1"
            ) != std::string::npos);
 
+    auto switch_constructor_pattern_arity_without_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_constructor_pattern_arity_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_constructor_pattern_arity_without_default_no_cascade_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Node(head) => 0\n";
+    }
+
+    auto switch_constructor_pattern_arity_without_default_no_cascade_failure_result =
+        run_parse(app, switch_constructor_pattern_arity_without_default_no_cascade_failure_path);
+    assert(switch_constructor_pattern_arity_without_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_constructor_pattern_arity_without_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_constructor_pattern_arity_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch constructor pattern 'Node' expects 2 payload values but received 1"
+           ) != std::string::npos);
+    assert(switch_constructor_pattern_arity_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch is missing"
+           ) == std::string::npos);
+
+    auto switch_zero_payload_constructor_arity_without_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_zero_payload_constructor_arity_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Empty(value) => 0\n";
+    }
+
+    auto switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result =
+        run_parse(app, switch_zero_payload_constructor_arity_without_default_no_cascade_failure_path);
+    assert(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch constructor pattern 'Empty' expects 0 payload values but received 1"
+           ) != std::string::npos);
+    assert(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch is missing"
+           ) == std::string::npos);
+
     auto switch_pattern_mix_constructor_value_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_pattern_mix_constructor_value_failure.or";

@@ -1990,13 +1990,13 @@ private:
         return true;
     }
 
-    void validate_switch_pattern_arity(
+    auto validate_switch_pattern_arity(
         syntax::ExpressionSyntax const& pattern,
         std::optional<syntax::TypeSyntax> const& subject_type
-    ) {
+    ) -> bool {
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name) {
-                return;
+                return true;
             }
 
             std::optional<std::size_t> expected_arity;
@@ -2020,8 +2020,9 @@ private:
                         (*expected_arity == 1 ? "" : "s") + " but received " +
                         std::to_string(pattern.arguments.size())
                 );
+                return false;
             }
-            return;
+            return true;
         }
 
         if (pattern.kind == syntax::ExpressionKind::name) {
@@ -2045,8 +2046,11 @@ private:
                         std::to_string(*expected_arity) + " payload value" +
                         (*expected_arity == 1 ? "" : "s") + " but received 0"
                 );
+                return false;
             }
         }
+
+        return true;
     }
 
     auto validate_switch_pattern_head(
@@ -2123,7 +2127,9 @@ private:
             if (!validate_switch_pattern_head(pattern, subject_type)) {
                 return false;
             }
-            validate_switch_pattern_arity(pattern, subject_type);
+            if (!validate_switch_pattern_arity(pattern, subject_type)) {
+                return false;
+            }
         }
 
         if (pattern.kind == syntax::ExpressionKind::call) {
