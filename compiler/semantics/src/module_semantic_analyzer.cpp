@@ -2930,6 +2930,21 @@ private:
                 }
             }
 
+            if (switch_patterns_valid && !has_default_case && !saw_value_pattern &&
+                remaining_payload_bearing_choice_variants.has_value() &&
+                !remaining_payload_bearing_choice_variants->empty() &&
+                payload_bearing_choice_variants.has_value()) {
+                for (auto const& variant_name : *payload_bearing_choice_variants) {
+                    if (remaining_payload_bearing_choice_variants->contains(variant_name)) {
+                        diagnostics_.error(
+                            statement.line,
+                            "switch is missing choice variant '" + variant_name + "'"
+                        );
+                        break;
+                    }
+                }
+            }
+
             if (switch_patterns_valid && !has_default_case && !saw_constructor_pattern &&
                 switch_subject_type_name == "Bool" && saw_true_value_pattern != saw_false_value_pattern) {
                 diagnostics_.error(
