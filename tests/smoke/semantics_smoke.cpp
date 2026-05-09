@@ -2011,6 +2011,64 @@ void test_switch_accepts_exhaustive_payload_choice_without_default_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_switch_accepts_literal_payload_choice_arm_with_default_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_default_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice MaybeInt\n";
+        output << "    Some(value: Int64)\n";
+        output << "    Empty\n";
+        output << "function classify(item: MaybeInt) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Some(1) => 1\n";
+        output << "        Empty => 0\n";
+        output << "        default => 2\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(!diagnostics.has_errors());
+}
+
+void test_switch_rejects_literal_payload_choice_arm_without_default_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_missing_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice MaybeInt\n";
+        output << "    Some(value: Int64)\n";
+        output << "    Empty\n";
+        output << "function classify(item: MaybeInt) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Some(1) => 1\n";
+        output << "        Empty => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 6);
+    assert(diagnostics.entries().front().message == "switch is missing choice variant 'Some'");
+}
+
 void test_switch_rejects_missing_payload_choice_variant_without_default_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_payload_choice_variant_failure.or";
@@ -7692,6 +7750,8 @@ int main() {
     test_switch_accepts_exhaustive_zero_payload_choice_without_default_success();
     test_switch_rejects_redundant_payload_choice_default_after_full_cover_failure();
     test_switch_accepts_exhaustive_payload_choice_without_default_success();
+    test_switch_accepts_literal_payload_choice_arm_with_default_success();
+    test_switch_rejects_literal_payload_choice_arm_without_default_failure();
     test_switch_rejects_missing_payload_choice_variant_without_default_failure();
     test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure();
     test_switch_rejects_duplicate_zero_payload_choice_constructor_failure();
