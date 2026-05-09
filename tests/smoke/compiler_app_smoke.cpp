@@ -5644,6 +5644,16 @@ int main() {
 
     assert_parse_success(run_parse(app, switch_exhaustive_payload_choice_without_default_success_path));
 
+    auto switch_reversed_exhaustive_payload_choice_without_default_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_reversed_exhaustive_payload_choice_success.or";
+    write_maybe_choice_exhaustiveness_fixture(
+        switch_reversed_exhaustive_payload_choice_without_default_success_path,
+        {"Empty => 0", "Some(value) => value"}
+    );
+
+    assert_parse_success(run_parse(app, switch_reversed_exhaustive_payload_choice_without_default_success_path));
+
     auto switch_literal_payload_choice_default_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_literal_payload_choice_default_success.or";
@@ -5665,6 +5675,19 @@ int main() {
 
     assert_parse_failure_contains(
         run_parse(app, switch_literal_payload_choice_missing_failure_path),
+        "switch is missing choice variant 'Some'"
+    );
+
+    auto switch_reversed_literal_payload_choice_missing_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_reversed_literal_payload_choice_missing_failure.or";
+    write_maybe_int_exhaustiveness_fixture(
+        switch_reversed_literal_payload_choice_missing_failure_path,
+        {"Empty => 0", "Some(1) => 1"}
+    );
+
+    assert_parse_failure_contains(
+        run_parse(app, switch_reversed_literal_payload_choice_missing_failure_path),
         "switch is missing choice variant 'Some'"
     );
 

@@ -2057,6 +2057,16 @@ void test_switch_accepts_exhaustive_payload_choice_without_default_success() {
     assert(!diagnostics.has_errors());
 }
 
+void test_switch_accepts_reversed_exhaustive_payload_choice_without_default_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_reversed_exhaustive_payload_choice_success.or";
+    write_maybe_choice_exhaustiveness_fixture(path, {"Empty => 0", "Some(value) => value"});
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert(!diagnostics.has_errors());
+}
+
 void test_switch_accepts_literal_payload_choice_arm_with_default_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_default_success.or";
@@ -2070,6 +2080,19 @@ void test_switch_rejects_literal_payload_choice_arm_without_default_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_missing_failure.or";
     write_maybe_int_exhaustiveness_fixture(path, {"Some(1) => 1", "Empty => 0"});
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 6);
+    assert(diagnostics.entries().front().message == "switch is missing choice variant 'Some'");
+}
+
+void test_switch_rejects_reversed_literal_payload_choice_arm_without_default_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_reversed_literal_payload_choice_missing_failure.or";
+    write_maybe_int_exhaustiveness_fixture(path, {"Empty => 0", "Some(1) => 1"});
 
     auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
@@ -7768,8 +7791,10 @@ int main() {
     test_switch_accepts_exhaustive_zero_payload_choice_without_default_success();
     test_switch_rejects_redundant_payload_choice_default_after_full_cover_failure();
     test_switch_accepts_exhaustive_payload_choice_without_default_success();
+    test_switch_accepts_reversed_exhaustive_payload_choice_without_default_success();
     test_switch_accepts_literal_payload_choice_arm_with_default_success();
     test_switch_rejects_literal_payload_choice_arm_without_default_failure();
+    test_switch_rejects_reversed_literal_payload_choice_arm_without_default_failure();
     test_switch_accepts_nested_payload_choice_arm_with_default_success();
     test_switch_rejects_nested_payload_choice_arm_without_default_failure();
     test_switch_accepts_partial_multi_payload_choice_arm_with_default_success();
