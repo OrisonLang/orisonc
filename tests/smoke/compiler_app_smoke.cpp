@@ -5750,6 +5750,78 @@ int main() {
                "switch is missing choice variant 'Wrap'"
            ) != std::string::npos);
 
+    auto switch_partial_multi_payload_choice_default_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_partial_multi_payload_choice_default_success.or";
+    {
+        std::ofstream output(switch_partial_multi_payload_choice_default_success_path);
+        output << "package demo.switches\n";
+        output << "choice PairChoice\n";
+        output << "    Both(left: Int64, right: Int64)\n";
+        output << "    Empty\n";
+        output << "function classify(item: PairChoice) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Both(left, 1) => left\n";
+        output << "        Empty => 0\n";
+        output << "        default => 2\n";
+    }
+
+    auto switch_partial_multi_payload_choice_default_success_path_text =
+        switch_partial_multi_payload_choice_default_success_path.string();
+    std::array<char const*, 3> switch_partial_multi_payload_choice_default_success_argv {
+        "orisonc",
+        "--parse",
+        switch_partial_multi_payload_choice_default_success_path_text.c_str()
+    };
+    auto switch_partial_multi_payload_choice_default_success_result = app.run(
+        std::span<char const* const>(
+            switch_partial_multi_payload_choice_default_success_argv.data(),
+            switch_partial_multi_payload_choice_default_success_argv.size()
+        )
+    );
+
+    assert(switch_partial_multi_payload_choice_default_success_result.exit_code == 0);
+    assert(switch_partial_multi_payload_choice_default_success_result.stderr_text.empty());
+    assert(
+        switch_partial_multi_payload_choice_default_success_result.stdout_text.find("parsed ") !=
+        std::string::npos
+    );
+
+    auto switch_partial_multi_payload_choice_missing_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_partial_multi_payload_choice_missing_failure.or";
+    {
+        std::ofstream output(switch_partial_multi_payload_choice_missing_failure_path);
+        output << "package demo.switches\n";
+        output << "choice PairChoice\n";
+        output << "    Both(left: Int64, right: Int64)\n";
+        output << "    Empty\n";
+        output << "function classify(item: PairChoice) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Both(left, 1) => left\n";
+        output << "        Empty => 0\n";
+    }
+
+    auto switch_partial_multi_payload_choice_missing_failure_path_text =
+        switch_partial_multi_payload_choice_missing_failure_path.string();
+    std::array<char const*, 3> switch_partial_multi_payload_choice_missing_failure_argv {
+        "orisonc",
+        "--parse",
+        switch_partial_multi_payload_choice_missing_failure_path_text.c_str()
+    };
+    auto switch_partial_multi_payload_choice_missing_failure_result = app.run(
+        std::span<char const* const>(
+            switch_partial_multi_payload_choice_missing_failure_argv.data(),
+            switch_partial_multi_payload_choice_missing_failure_argv.size()
+        )
+    );
+
+    assert(switch_partial_multi_payload_choice_missing_failure_result.exit_code == 1);
+    assert(switch_partial_multi_payload_choice_missing_failure_result.stdout_text.empty());
+    assert(switch_partial_multi_payload_choice_missing_failure_result.stderr_text.find(
+               "switch is missing choice variant 'Both'"
+           ) != std::string::npos);
+
     auto switch_missing_payload_choice_variant_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_missing_payload_choice_variant_failure.or";
