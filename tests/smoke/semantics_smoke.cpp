@@ -2951,6 +2951,56 @@ void test_switch_rejects_nonfinal_default_case_semantically() {
     assert(diagnostics.entries().front().message == "switch default case must be the final case");
 }
 
+void test_switch_nonfinal_default_suppresses_branch_analysis_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_nonfinal_default_branch_no_cascade.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        default => await flag\n";
+        output << "        true => 1\n";
+    }
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(diagnostics, 4, "switch default case must be the final case");
+}
+
+void test_switch_multiple_default_suppresses_branch_analysis_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_multiple_default_branch_no_cascade.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        false => await flag\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    auto& switch_statement = parse_result.module.functions.front().body_statements.front();
+    assert(switch_statement.kind == orison::syntax::StatementKind::switch_statement);
+    switch_statement.switch_cases.front().is_default = true;
+    switch_statement.switch_cases.back().is_default = true;
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 2);
+    assert(diagnostics.entries().front().line == 4);
+    assert(diagnostics.entries().front().message == "switch default case must be the final case");
+    assert(diagnostics.entries().back().line == 5);
+    assert(diagnostics.entries().back().message == "switch statement may only contain one default case");
+}
+
 void test_break_outside_loop_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_break_outside_loop_failure.or";
     {
@@ -8170,6 +8220,8 @@ int main() {
     test_switch_rejects_missing_zero_payload_choice_variant_failure();
     test_switch_rejects_multiple_default_cases_semantically();
     test_switch_rejects_nonfinal_default_case_semantically();
+    test_switch_nonfinal_default_suppresses_branch_analysis_failure();
+    test_switch_multiple_default_suppresses_branch_analysis_failure();
     test_break_outside_loop_failure();
     test_continue_outside_loop_failure();
     test_break_inside_loop_success();

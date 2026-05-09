@@ -86,3 +86,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-09: duplicate constructor payload bindings now have direct and nested no-default no-cascade coverage, so duplicate-binding diagnostics remain primary and suppress choice-exhaustiveness follow-up diagnostics.
 - 2026-05-09: redundant-default diagnostics are now gated on prior valid switch patterns, so earlier duplicate value-pattern errors suppress redundant-default follow-up diagnostics.
 - 2026-05-09: redundant-default no-cascade coverage now also spans zero-payload and payload-bearing choice switches, keeping duplicate constructor diagnostics primary when an otherwise-exhaustive choice switch has a trailing default.
+- 2026-05-09: default structural diagnostics now have branch-analysis no-cascade coverage, so non-final and duplicate semantic defaults suppress unrelated diagnostics from their branch bodies.

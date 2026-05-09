@@ -6545,6 +6545,29 @@ int main() {
                "switch is missing zero-payload choice variant 'PermissionDenied'"
            ) != std::string::npos);
 
+    auto switch_nonfinal_default_branch_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_nonfinal_default_branch_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_nonfinal_default_branch_no_cascade_failure_path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        default => await flag\n";
+        output << "        true => 1\n";
+    }
+
+    auto switch_nonfinal_default_branch_no_cascade_failure_result =
+        run_parse(app, switch_nonfinal_default_branch_no_cascade_failure_path);
+    assert(switch_nonfinal_default_branch_no_cascade_failure_result.exit_code == 1);
+    assert(switch_nonfinal_default_branch_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_nonfinal_default_branch_no_cascade_failure_result.stderr_text.find(
+               "switch default case must be the final case"
+           ) != std::string::npos);
+    assert(switch_nonfinal_default_branch_no_cascade_failure_result.stderr_text.find(
+               "await expression is only valid inside async functions"
+           ) == std::string::npos);
+
     auto break_outside_loop_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
     {
