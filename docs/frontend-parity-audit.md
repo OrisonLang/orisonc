@@ -81,3 +81,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-09: switch choice-coverage bookkeeping in the semantic analyzer now lives behind a small helper structure, centralizing remaining-variant tracking, full-coverage checks, and declaration-order first-missing queries without changing diagnostics.
 - 2026-05-09: mixed value/constructor switch patterns now have no-default no-cascade coverage, so the pattern-kind mixing diagnostic stays primary and suppresses missing-variant follow-up errors.
 - 2026-05-09: invalid constructor-pattern arity now has no-default no-cascade coverage too, so missing or extra payload diagnostics remain primary and suppress choice-exhaustiveness follow-up errors.
+- 2026-05-09: invalid constructor-pattern heads now have no-default no-cascade coverage, so unknown variants and variants from the wrong switched choice type suppress choice-exhaustiveness follow-up diagnostics.

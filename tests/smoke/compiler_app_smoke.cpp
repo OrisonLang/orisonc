@@ -4755,6 +4755,34 @@ int main() {
                "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
            ) != std::string::npos);
 
+    auto switch_wrong_choice_without_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_wrong_choice_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_wrong_choice_without_default_no_cascade_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    None\n";
+        output << "    Some(value: T)\n";
+        output << "choice Result<T>\n";
+        output << "    Ok(value: T)\n";
+        output << "    Error\n";
+        output << "function read(result: Result<Int64>) -> Int64\n";
+        output << "    switch result\n";
+        output << "        Some(value) => value\n";
+    }
+
+    auto switch_wrong_choice_without_default_no_cascade_failure_result =
+        run_parse(app, switch_wrong_choice_without_default_no_cascade_failure_path);
+    assert(switch_wrong_choice_without_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_wrong_choice_without_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_wrong_choice_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
+           ) != std::string::npos);
+    assert(switch_wrong_choice_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch is missing"
+           ) == std::string::npos);
+
     auto switch_subject_specific_arity_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_subject_specific_arity_success.or";
     {
@@ -5047,6 +5075,31 @@ int main() {
     assert(switch_call_pattern_unknown_variant_failure_result.stderr_text.find(
                "switch constructor pattern 'Missing' does not match any declared choice variant"
            ) != std::string::npos);
+
+    auto switch_unknown_constructor_without_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_unknown_constructor_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_unknown_constructor_without_default_no_cascade_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "function read(item: Maybe<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Missing(value) => value\n";
+    }
+
+    auto switch_unknown_constructor_without_default_no_cascade_failure_result =
+        run_parse(app, switch_unknown_constructor_without_default_no_cascade_failure_path);
+    assert(switch_unknown_constructor_without_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_unknown_constructor_without_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_unknown_constructor_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch constructor pattern 'Missing' does not match any declared choice variant"
+           ) != std::string::npos);
+    assert(switch_unknown_constructor_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch is missing"
+           ) == std::string::npos);
 
     auto switch_nested_constructor_pattern_shape_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_constructor_pattern_shape_failure.or";

@@ -1112,6 +1112,29 @@ void test_switch_call_pattern_rejects_unknown_variant_failure() {
            "switch constructor pattern 'Missing' does not match any declared choice variant");
 }
 
+void test_switch_unknown_constructor_without_default_does_not_cascade_to_missing_variant_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_unknown_constructor_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "function read(item: Maybe<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Missing(value) => value\n";
+    }
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(
+        diagnostics,
+        7,
+        "switch constructor pattern 'Missing' does not match any declared choice variant"
+    );
+}
+
 void test_switch_nested_constructor_pattern_binds_nested_names_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_constructor_pattern_success.or";
@@ -1449,6 +1472,32 @@ void test_switch_constructor_pattern_rejects_variant_from_different_choice_failu
     assert(diagnostics.entries().front().line == 10);
     assert(diagnostics.entries().front().message ==
            "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'");
+}
+
+void test_switch_wrong_choice_constructor_without_default_does_not_cascade_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_wrong_choice_constructor_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    None\n";
+        output << "    Some(value: T)\n";
+        output << "choice Result<T>\n";
+        output << "    Ok(value: T)\n";
+        output << "    Error\n";
+        output << "function read(result: Result<Int64>) -> Int64\n";
+        output << "    switch result\n";
+        output << "        Some(value) => value\n";
+    }
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(
+        diagnostics,
+        10,
+        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
+    );
 }
 
 void test_switch_constructor_pattern_uses_subject_specific_arity_success() {
@@ -7895,6 +7944,7 @@ int main() {
     test_switch_constructor_pattern_binds_case_local_names_success();
     test_switch_top_level_name_pattern_rejects_unknown_variant_failure();
     test_switch_call_pattern_rejects_unknown_variant_failure();
+    test_switch_unknown_constructor_without_default_does_not_cascade_to_missing_variant_failure();
     test_switch_nested_constructor_pattern_binds_nested_names_success();
     test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_success();
     test_switch_rejects_nested_payload_constructor_overlap_failure();
@@ -7917,6 +7967,7 @@ int main() {
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure();
     test_switch_constructor_pattern_rejects_variant_from_different_choice_failure();
+    test_switch_wrong_choice_constructor_without_default_does_not_cascade_failure();
     test_switch_constructor_pattern_uses_subject_specific_arity_success();
     test_switch_nested_constructor_pattern_rejects_variant_from_different_payload_choice_failure();
     test_switch_nested_constructor_pattern_uses_payload_specific_arity_success();
