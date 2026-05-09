@@ -157,7 +157,8 @@ void write_pair_choice_exhaustiveness_fixture(
 
 void write_multi_payload_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
-    std::initializer_list<std::string_view> arms
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
 ) {
     std::ofstream output(path);
     output << "package demo.switches\n";
@@ -169,6 +170,9 @@ void write_multi_payload_choice_exhaustiveness_fixture(
     output << "    switch item\n";
     for (auto arm : arms) {
         output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
     }
 }
 
@@ -5778,6 +5782,20 @@ int main() {
     );
 
     assert_parse_success(run_parse(app, switch_exhaustive_multi_payload_choice_without_default_success_path));
+
+    auto switch_redundant_multi_payload_choice_default_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_redundant_multi_payload_choice_default_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(
+        switch_redundant_multi_payload_choice_default_failure_path,
+        {"First(value) => value", "Second(value) => value", "Empty => 0"},
+        true
+    );
+
+    assert_parse_failure_contains(
+        run_parse(app, switch_redundant_multi_payload_choice_default_failure_path),
+        "switch default case is redundant after all choice variants are covered"
+    );
 
     auto switch_first_missing_multi_payload_choice_variant_failure_path =
         std::filesystem::temp_directory_path() /

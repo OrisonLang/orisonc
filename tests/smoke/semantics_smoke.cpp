@@ -157,7 +157,8 @@ void write_pair_choice_exhaustiveness_fixture(
 
 void write_multi_payload_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
-    std::initializer_list<std::string_view> arms
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
 ) {
     std::ofstream output(path);
     output << "package demo.switches\n";
@@ -169,6 +170,9 @@ void write_multi_payload_choice_exhaustiveness_fixture(
     output << "    switch item\n";
     for (auto arm : arms) {
         output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
     }
 }
 
@@ -2181,6 +2185,24 @@ void test_switch_accepts_exhaustive_multi_payload_choice_without_default_success
 
     auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
+}
+
+void test_switch_rejects_redundant_multi_payload_choice_default_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_redundant_multi_payload_choice_default_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(
+        path,
+        {"First(value) => value", "Second(value) => value", "Empty => 0"},
+        true
+    );
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(
+        diagnostics,
+        11,
+        "switch default case is redundant after all choice variants are covered"
+    );
 }
 
 void test_switch_rejects_first_missing_multi_payload_choice_variant_failure() {
@@ -7844,6 +7866,7 @@ int main() {
     test_switch_rejects_partial_multi_payload_choice_arm_without_default_failure();
     test_switch_rejects_missing_payload_choice_variant_without_default_failure();
     test_switch_accepts_exhaustive_multi_payload_choice_without_default_success();
+    test_switch_rejects_redundant_multi_payload_choice_default_failure();
     test_switch_rejects_first_missing_multi_payload_choice_variant_failure();
     test_switch_rejects_second_missing_multi_payload_choice_variant_failure();
     test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure();
