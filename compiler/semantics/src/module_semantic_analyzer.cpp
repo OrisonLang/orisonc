@@ -124,6 +124,87 @@ private:
 
     using ScopeSnapshot = std::vector<std::vector<Binding>>;
 
+    struct SwitchChoiceCoverage {
+        std::optional<std::vector<std::string>> zero_payload_variants;
+        std::unordered_set<std::string> zero_payload_variant_lookup;
+        std::optional<std::unordered_set<std::string>> remaining_zero_payload_variants;
+        std::optional<std::vector<std::string>> payload_bearing_variants;
+        std::unordered_set<std::string> payload_bearing_variant_lookup;
+        std::optional<std::unordered_set<std::string>> remaining_payload_bearing_variants;
+
+        void set_zero_payload_variants(std::vector<std::string> const& variants) {
+            zero_payload_variants = variants;
+            zero_payload_variant_lookup = std::unordered_set<std::string>(variants.begin(), variants.end());
+            remaining_zero_payload_variants = zero_payload_variant_lookup;
+        }
+
+        void set_payload_bearing_variants(std::vector<std::string> const& variants) {
+            payload_bearing_variants = variants;
+            payload_bearing_variant_lookup = std::unordered_set<std::string>(variants.begin(), variants.end());
+            remaining_payload_bearing_variants = payload_bearing_variant_lookup;
+        }
+
+        auto is_zero_payload_variant(std::string const& variant_name) const -> bool {
+            return zero_payload_variants.has_value() && zero_payload_variant_lookup.contains(variant_name);
+        }
+
+        auto tracks_payload_bearing_variant(std::string const& variant_name) const -> bool {
+            return remaining_payload_bearing_variants.has_value() &&
+                   payload_bearing_variant_lookup.contains(variant_name);
+        }
+
+        void cover_zero_payload_variant(std::string const& variant_name) {
+            if (remaining_zero_payload_variants.has_value()) {
+                remaining_zero_payload_variants->erase(variant_name);
+            }
+            cover_payload_bearing_variant(variant_name);
+        }
+
+        void cover_payload_bearing_variant(std::string const& variant_name) {
+            if (tracks_payload_bearing_variant(variant_name)) {
+                remaining_payload_bearing_variants->erase(variant_name);
+            }
+        }
+
+        auto all_zero_payload_variants_covered() const -> bool {
+            return remaining_zero_payload_variants.has_value() && remaining_zero_payload_variants->empty();
+        }
+
+        auto all_payload_bearing_variants_covered() const -> bool {
+            return remaining_payload_bearing_variants.has_value() && remaining_payload_bearing_variants->empty();
+        }
+
+        auto first_missing_zero_payload_variant() const -> std::optional<std::string> {
+            if (!zero_payload_variants.has_value() || !remaining_zero_payload_variants.has_value() ||
+                remaining_zero_payload_variants->empty()) {
+                return std::nullopt;
+            }
+
+            for (auto const& variant_name : *zero_payload_variants) {
+                if (remaining_zero_payload_variants->contains(variant_name)) {
+                    return variant_name;
+                }
+            }
+
+            return std::nullopt;
+        }
+
+        auto first_missing_payload_bearing_variant() const -> std::optional<std::string> {
+            if (!payload_bearing_variants.has_value() || !remaining_payload_bearing_variants.has_value() ||
+                remaining_payload_bearing_variants->empty()) {
+                return std::nullopt;
+            }
+
+            for (auto const& variant_name : *payload_bearing_variants) {
+                if (remaining_payload_bearing_variants->contains(variant_name)) {
+                    return variant_name;
+                }
+            }
+
+            return std::nullopt;
+        }
+    };
+
     auto render_type_name(syntax::TypeSyntax const& type) const -> std::string {
         std::string rendered = type.name;
         if (type.generic_arguments.empty()) {
@@ -2734,33 +2815,20 @@ private:
             std::unordered_set<std::string> seen_literal_value_patterns;
             std::unordered_set<std::string> seen_zero_payload_choice_variants;
             std::vector<PayloadConstructorPatternKey> seen_simple_payload_choice_patterns;
-            std::optional<std::vector<std::string>> zero_payload_choice_variants;
-            std::unordered_set<std::string> zero_payload_choice_variant_lookup;
-            std::optional<std::unordered_set<std::string>> remaining_zero_payload_choice_variants;
-            std::optional<std::vector<std::string>> payload_bearing_choice_variants;
-            std::unordered_set<std::string> payload_bearing_choice_variant_lookup;
-            std::optional<std::unordered_set<std::string>> remaining_payload_bearing_choice_variants;
+            SwitchChoiceCoverage choice_coverage;
             std::optional<syntax::TypeSyntax> switch_subject_type;
             auto switch_subject_type_name = infer_expression_type_name(statement.expression);
             if (!switch_subject_type_name.empty()) {
                 switch_subject_type = parse_rendered_type_name(switch_subject_type_name);
                 if (switch_subject_type.has_value()) {
-                    zero_payload_choice_variants = zero_payload_choice_variant_names_if_enum_like(*switch_subject_type);
+                    auto zero_payload_choice_variants =
+                        zero_payload_choice_variant_names_if_enum_like(*switch_subject_type);
                     if (zero_payload_choice_variants.has_value()) {
-                        zero_payload_choice_variant_lookup = std::unordered_set<std::string>(
-                            zero_payload_choice_variants->begin(),
-                            zero_payload_choice_variants->end()
-                        );
-                        remaining_zero_payload_choice_variants = zero_payload_choice_variant_lookup;
+                        choice_coverage.set_zero_payload_variants(*zero_payload_choice_variants);
                     }
-                    payload_bearing_choice_variants =
-                        choice_variant_names_if_payload_bearing(*switch_subject_type);
+                    auto payload_bearing_choice_variants = choice_variant_names_if_payload_bearing(*switch_subject_type);
                     if (payload_bearing_choice_variants.has_value()) {
-                        payload_bearing_choice_variant_lookup = std::unordered_set<std::string>(
-                            payload_bearing_choice_variants->begin(),
-                            payload_bearing_choice_variants->end()
-                        );
-                        remaining_payload_bearing_choice_variants = payload_bearing_choice_variant_lookup;
+                        choice_coverage.set_payload_bearing_variants(*payload_bearing_choice_variants);
                     }
                 }
             }
@@ -2794,8 +2862,7 @@ private:
                         valid_pattern = false;
                     }
 
-                    if (remaining_zero_payload_choice_variants.has_value() &&
-                        remaining_zero_payload_choice_variants->empty()) {
+                    if (choice_coverage.all_zero_payload_variants_covered()) {
                         diagnostics_.error(
                             switch_case_line(switch_case),
                             "switch default case is redundant after all zero-payload choice variants are covered"
@@ -2803,8 +2870,7 @@ private:
                         valid_pattern = false;
                     }
 
-                    if (remaining_payload_bearing_choice_variants.has_value() &&
-                        remaining_payload_bearing_choice_variants->empty()) {
+                    if (choice_coverage.all_payload_bearing_variants_covered()) {
                         diagnostics_.error(
                             switch_case_line(switch_case),
                             "switch default case is redundant after all choice variants are covered"
@@ -2835,8 +2901,7 @@ private:
                     } else if (pattern_kind == SwitchPatternKind::constructor) {
                         saw_constructor_pattern = true;
                         if (switch_case.pattern.kind == syntax::ExpressionKind::name &&
-                            zero_payload_choice_variants.has_value() &&
-                            zero_payload_choice_variant_lookup.contains(switch_case.pattern.text)) {
+                            choice_coverage.is_zero_payload_variant(switch_case.pattern.text)) {
                             if (!seen_zero_payload_choice_variants.insert(switch_case.pattern.text).second) {
                                 diagnostics_.error(
                                     switch_case.pattern.line,
@@ -2844,18 +2909,13 @@ private:
                                 );
                                 valid_pattern = false;
                             }
-                            remaining_zero_payload_choice_variants->erase(switch_case.pattern.text);
-                            if (remaining_payload_bearing_choice_variants.has_value() &&
-                                payload_bearing_choice_variant_lookup.contains(switch_case.pattern.text)) {
-                                remaining_payload_bearing_choice_variants->erase(switch_case.pattern.text);
-                            }
+                            choice_coverage.cover_zero_payload_variant(switch_case.pattern.text);
                         }
                         if (switch_case.pattern.kind == syntax::ExpressionKind::name &&
                             switch_subject_type.has_value() &&
-                            remaining_payload_bearing_choice_variants.has_value() &&
-                            payload_bearing_choice_variant_lookup.contains(switch_case.pattern.text) &&
+                            choice_coverage.tracks_payload_bearing_variant(switch_case.pattern.text) &&
                             is_zero_payload_constructor_pattern(switch_case.pattern.text, *switch_subject_type)) {
-                            remaining_payload_bearing_choice_variants->erase(switch_case.pattern.text);
+                            choice_coverage.cover_payload_bearing_variant(switch_case.pattern.text);
                         }
 
                         auto constructor_key =
@@ -2880,9 +2940,8 @@ private:
                             switch_subject_type
                         );
                         if (fully_covered_variant.has_value() &&
-                            remaining_payload_bearing_choice_variants.has_value() &&
-                            payload_bearing_choice_variant_lookup.contains(*fully_covered_variant)) {
-                            remaining_payload_bearing_choice_variants->erase(*fully_covered_variant);
+                            choice_coverage.tracks_payload_bearing_variant(*fully_covered_variant)) {
+                            choice_coverage.cover_payload_bearing_variant(*fully_covered_variant);
                         }
                     }
                 }
@@ -2916,32 +2975,20 @@ private:
                 has_default_case = has_default_case || switch_case.is_default;
             }
 
-            if (switch_patterns_valid && !has_default_case && !saw_value_pattern &&
-                remaining_zero_payload_choice_variants.has_value() &&
-                !remaining_zero_payload_choice_variants->empty() && zero_payload_choice_variants.has_value()) {
-                for (auto const& variant_name : *zero_payload_choice_variants) {
-                    if (remaining_zero_payload_choice_variants->contains(variant_name)) {
-                        diagnostics_.error(
-                            statement.line,
-                            "switch is missing zero-payload choice variant '" + variant_name + "'"
-                        );
-                        break;
-                    }
+            if (switch_patterns_valid && !has_default_case && !saw_value_pattern) {
+                auto missing_variant = choice_coverage.first_missing_zero_payload_variant();
+                if (missing_variant.has_value()) {
+                    diagnostics_.error(
+                        statement.line,
+                        "switch is missing zero-payload choice variant '" + *missing_variant + "'"
+                    );
                 }
             }
 
-            if (switch_patterns_valid && !has_default_case && !saw_value_pattern &&
-                remaining_payload_bearing_choice_variants.has_value() &&
-                !remaining_payload_bearing_choice_variants->empty() &&
-                payload_bearing_choice_variants.has_value()) {
-                for (auto const& variant_name : *payload_bearing_choice_variants) {
-                    if (remaining_payload_bearing_choice_variants->contains(variant_name)) {
-                        diagnostics_.error(
-                            statement.line,
-                            "switch is missing choice variant '" + variant_name + "'"
-                        );
-                        break;
-                    }
+            if (switch_patterns_valid && !has_default_case && !saw_value_pattern) {
+                auto missing_variant = choice_coverage.first_missing_payload_bearing_variant();
+                if (missing_variant.has_value()) {
+                    diagnostics_.error(statement.line, "switch is missing choice variant '" + *missing_variant + "'");
                 }
             }
 
