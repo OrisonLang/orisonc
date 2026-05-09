@@ -5836,6 +5836,36 @@ int main() {
                "switch default case is redundant after all zero-payload choice variants are covered"
            ) != std::string::npos);
 
+    auto switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path);
+        output << "package demo.switches\n";
+        output << "choice IOError\n";
+        output << "    Closed\n";
+        output << "    EndOfInput\n";
+        output << "    PermissionDenied\n";
+        output << "function classify(error: IOError) -> Int64\n";
+        output << "    switch error\n";
+        output << "        Closed => 1\n";
+        output << "        EndOfInput => 2\n";
+        output << "        PermissionDenied => 3\n";
+        output << "        Closed => 4\n";
+        output << "        default => 0\n";
+    }
+
+    auto switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result =
+        run_parse(app, switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path);
+    assert(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result.stderr_text.find(
+               "switch constructor pattern 'Closed' is duplicated"
+           ) != std::string::npos);
+    assert(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result.stderr_text.find(
+               "switch default case is redundant"
+           ) == std::string::npos);
+
     auto switch_exhaustive_choice_without_default_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_exhaustive_choice_success.or";
     {
@@ -6025,6 +6055,26 @@ int main() {
         run_parse(app, switch_redundant_multi_payload_choice_default_failure_path),
         "switch default case is redundant after all choice variants are covered"
     );
+
+    auto switch_duplicate_payload_choice_redundant_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_payload_choice_redundant_default_no_cascade_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(
+        switch_duplicate_payload_choice_redundant_default_no_cascade_failure_path,
+        {"First(value) => value", "Second(value) => value", "Empty => 0", "First(other) => other"},
+        true
+    );
+
+    auto switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result =
+        run_parse(app, switch_duplicate_payload_choice_redundant_default_no_cascade_failure_path);
+    assert(switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result.stderr_text.find(
+               "switch constructor pattern 'First(...)' is duplicated"
+           ) != std::string::npos);
+    assert(switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result.stderr_text.find(
+               "switch default case is redundant"
+           ) == std::string::npos);
 
     auto switch_first_missing_multi_payload_choice_variant_failure_path =
         std::filesystem::temp_directory_path() /

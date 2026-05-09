@@ -2264,6 +2264,30 @@ void test_switch_rejects_redundant_zero_payload_choice_default_failure() {
            "switch default case is redundant after all zero-payload choice variants are covered");
 }
 
+void test_switch_duplicate_zero_payload_choice_suppresses_redundant_default_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_duplicate_zero_payload_choice_redundant_default_no_cascade.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "choice IOError\n";
+        output << "    Closed\n";
+        output << "    EndOfInput\n";
+        output << "    PermissionDenied\n";
+        output << "function classify(error: IOError) -> Int64\n";
+        output << "    switch error\n";
+        output << "        Closed => 1\n";
+        output << "        EndOfInput => 2\n";
+        output << "        PermissionDenied => 3\n";
+        output << "        Closed => 4\n";
+        output << "        default => 0\n";
+    }
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(diagnostics, 11, "switch constructor pattern 'Closed' is duplicated");
+}
+
 void test_switch_accepts_exhaustive_zero_payload_choice_without_default_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_exhaustive_choice_without_default_success.or";
@@ -2429,6 +2453,20 @@ void test_switch_rejects_redundant_multi_payload_choice_default_failure() {
         11,
         "switch default case is redundant after all choice variants are covered"
     );
+}
+
+void test_switch_duplicate_payload_choice_suppresses_redundant_default_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_duplicate_payload_choice_redundant_default_no_cascade.or";
+    write_multi_payload_choice_exhaustiveness_fixture(
+        path,
+        {"First(value) => value", "Second(value) => value", "Empty => 0", "First(other) => other"},
+        true
+    );
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(diagnostics, 11, "switch constructor pattern 'First(...)' is duplicated");
 }
 
 void test_switch_rejects_first_missing_multi_payload_choice_variant_failure() {
@@ -8098,6 +8136,7 @@ int main() {
     test_switch_accepts_exhaustive_bool_without_default_success();
     test_switch_rejects_missing_bool_value_pattern_failure();
     test_switch_rejects_redundant_zero_payload_choice_default_failure();
+    test_switch_duplicate_zero_payload_choice_suppresses_redundant_default_failure();
     test_switch_accepts_exhaustive_zero_payload_choice_without_default_success();
     test_switch_rejects_redundant_payload_choice_default_after_full_cover_failure();
     test_switch_accepts_exhaustive_payload_choice_without_default_success();
@@ -8112,6 +8151,7 @@ int main() {
     test_switch_rejects_missing_payload_choice_variant_without_default_failure();
     test_switch_accepts_exhaustive_multi_payload_choice_without_default_success();
     test_switch_rejects_redundant_multi_payload_choice_default_failure();
+    test_switch_duplicate_payload_choice_suppresses_redundant_default_failure();
     test_switch_rejects_first_missing_multi_payload_choice_variant_failure();
     test_switch_rejects_second_missing_multi_payload_choice_variant_failure();
     test_switch_duplicate_multi_payload_choice_without_default_does_not_cascade_failure();
