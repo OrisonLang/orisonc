@@ -4,7 +4,65 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <initializer_list>
 #include <span>
+#include <string_view>
+
+namespace {
+
+void write_boxed_maybe_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = true
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "choice Boxed<T>\n";
+    output << "    Wrap(inner: Maybe<T>)\n";
+    output << "function classify(item: Boxed<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
+void write_boxed_pair_maybe_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice PairMaybe<T>\n";
+    output << "    PairSome(left: T, right: Int64)\n";
+    output << "    Empty\n";
+    output << "choice Boxed<T>\n";
+    output << "    Wrap(inner: PairMaybe<T>)\n";
+    output << "function classify(item: Boxed<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    output << "        default => 0\n";
+}
+
+auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--parse",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
+}  // namespace
 
 int main() {
     orison::driver::CompilerApp app;
@@ -4197,34 +4255,12 @@ int main() {
     auto switch_nested_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_nested_payload_overlap_failure.or";
-    {
-        std::ofstream output(switch_nested_payload_overlap_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => 1\n";
-        output << "        Wrap(Some(other)) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_nested_payload_overlap_failure_path_text =
-        switch_nested_payload_overlap_failure_path.string();
-    std::array<char const*, 3> switch_nested_payload_overlap_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_payload_overlap_failure_path_text.c_str()
-    };
-    auto switch_nested_payload_overlap_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_payload_overlap_failure_argv.data(),
-            switch_nested_payload_overlap_failure_argv.size()
-        )
+    write_boxed_maybe_switch_fixture(
+        switch_nested_payload_overlap_failure_path,
+        {"Wrap(Some(value)) => 1", "Wrap(Some(other)) => 2"}
     );
+    auto switch_nested_payload_overlap_failure_result =
+        run_parse(app, switch_nested_payload_overlap_failure_path);
 
     assert(switch_nested_payload_overlap_failure_result.exit_code == 1);
     assert(switch_nested_payload_overlap_failure_result.stdout_text.empty());
@@ -4235,34 +4271,12 @@ int main() {
     auto switch_nested_literal_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_nested_literal_payload_overlap_failure.or";
-    {
-        std::ofstream output(switch_nested_literal_payload_overlap_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(1)) => 1\n";
-        output << "        Wrap(Some(1)) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_nested_literal_payload_overlap_failure_path_text =
-        switch_nested_literal_payload_overlap_failure_path.string();
-    std::array<char const*, 3> switch_nested_literal_payload_overlap_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_literal_payload_overlap_failure_path_text.c_str()
-    };
-    auto switch_nested_literal_payload_overlap_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_literal_payload_overlap_failure_argv.data(),
-            switch_nested_literal_payload_overlap_failure_argv.size()
-        )
+    write_boxed_maybe_switch_fixture(
+        switch_nested_literal_payload_overlap_failure_path,
+        {"Wrap(Some(1)) => 1", "Wrap(Some(1)) => 2"}
     );
+    auto switch_nested_literal_payload_overlap_failure_result =
+        run_parse(app, switch_nested_literal_payload_overlap_failure_path);
 
     assert(switch_nested_literal_payload_overlap_failure_result.exit_code == 1);
     assert(switch_nested_literal_payload_overlap_failure_result.stdout_text.empty());
@@ -4273,34 +4287,12 @@ int main() {
     auto switch_disjoint_nested_literal_payload_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_disjoint_nested_literal_payload_success.or";
-    {
-        std::ofstream output(switch_disjoint_nested_literal_payload_success_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(1)) => 1\n";
-        output << "        Wrap(Some(2)) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_disjoint_nested_literal_payload_success_path_text =
-        switch_disjoint_nested_literal_payload_success_path.string();
-    std::array<char const*, 3> switch_disjoint_nested_literal_payload_success_argv {
-        "orisonc",
-        "--parse",
-        switch_disjoint_nested_literal_payload_success_path_text.c_str()
-    };
-    auto switch_disjoint_nested_literal_payload_success_result = app.run(
-        std::span<char const* const>(
-            switch_disjoint_nested_literal_payload_success_argv.data(),
-            switch_disjoint_nested_literal_payload_success_argv.size()
-        )
+    write_boxed_maybe_switch_fixture(
+        switch_disjoint_nested_literal_payload_success_path,
+        {"Wrap(Some(1)) => 1", "Wrap(Some(2)) => 2"}
     );
+    auto switch_disjoint_nested_literal_payload_success_result =
+        run_parse(app, switch_disjoint_nested_literal_payload_success_path);
 
     assert(switch_disjoint_nested_literal_payload_success_result.exit_code == 0);
     assert(switch_disjoint_nested_literal_payload_success_result.stderr_text.empty());
@@ -4309,34 +4301,12 @@ int main() {
     auto switch_nested_wildcard_literal_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_nested_wildcard_literal_payload_overlap_failure.or";
-    {
-        std::ofstream output(switch_nested_wildcard_literal_payload_overlap_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => 1\n";
-        output << "        Wrap(Some(1)) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_nested_wildcard_literal_payload_overlap_failure_path_text =
-        switch_nested_wildcard_literal_payload_overlap_failure_path.string();
-    std::array<char const*, 3> switch_nested_wildcard_literal_payload_overlap_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_wildcard_literal_payload_overlap_failure_path_text.c_str()
-    };
-    auto switch_nested_wildcard_literal_payload_overlap_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_wildcard_literal_payload_overlap_failure_argv.data(),
-            switch_nested_wildcard_literal_payload_overlap_failure_argv.size()
-        )
+    write_boxed_maybe_switch_fixture(
+        switch_nested_wildcard_literal_payload_overlap_failure_path,
+        {"Wrap(Some(value)) => 1", "Wrap(Some(1)) => 2"}
     );
+    auto switch_nested_wildcard_literal_payload_overlap_failure_result =
+        run_parse(app, switch_nested_wildcard_literal_payload_overlap_failure_path);
 
     assert(switch_nested_wildcard_literal_payload_overlap_failure_result.exit_code == 1);
     assert(switch_nested_wildcard_literal_payload_overlap_failure_result.stdout_text.empty());
@@ -4347,34 +4317,12 @@ int main() {
     auto switch_nested_literal_wildcard_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_nested_literal_wildcard_payload_overlap_failure.or";
-    {
-        std::ofstream output(switch_nested_literal_wildcard_payload_overlap_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(1)) => 1\n";
-        output << "        Wrap(Some(value)) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_nested_literal_wildcard_payload_overlap_failure_path_text =
-        switch_nested_literal_wildcard_payload_overlap_failure_path.string();
-    std::array<char const*, 3> switch_nested_literal_wildcard_payload_overlap_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_literal_wildcard_payload_overlap_failure_path_text.c_str()
-    };
-    auto switch_nested_literal_wildcard_payload_overlap_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_literal_wildcard_payload_overlap_failure_argv.data(),
-            switch_nested_literal_wildcard_payload_overlap_failure_argv.size()
-        )
+    write_boxed_maybe_switch_fixture(
+        switch_nested_literal_wildcard_payload_overlap_failure_path,
+        {"Wrap(Some(1)) => 1", "Wrap(Some(value)) => 2"}
     );
+    auto switch_nested_literal_wildcard_payload_overlap_failure_result =
+        run_parse(app, switch_nested_literal_wildcard_payload_overlap_failure_path);
 
     assert(switch_nested_literal_wildcard_payload_overlap_failure_result.exit_code == 1);
     assert(switch_nested_literal_wildcard_payload_overlap_failure_result.stdout_text.empty());
@@ -4385,34 +4333,12 @@ int main() {
     auto switch_nested_multi_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_nested_multi_payload_overlap_failure.or";
-    {
-        std::ofstream output(switch_nested_multi_payload_overlap_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice PairMaybe<T>\n";
-        output << "    PairSome(left: T, right: Int64)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: PairMaybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(PairSome(left, 1)) => 1\n";
-        output << "        Wrap(PairSome(other, 1)) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_nested_multi_payload_overlap_failure_path_text =
-        switch_nested_multi_payload_overlap_failure_path.string();
-    std::array<char const*, 3> switch_nested_multi_payload_overlap_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_multi_payload_overlap_failure_path_text.c_str()
-    };
-    auto switch_nested_multi_payload_overlap_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_multi_payload_overlap_failure_argv.data(),
-            switch_nested_multi_payload_overlap_failure_argv.size()
-        )
+    write_boxed_pair_maybe_switch_fixture(
+        switch_nested_multi_payload_overlap_failure_path,
+        {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 1)) => 2"}
     );
+    auto switch_nested_multi_payload_overlap_failure_result =
+        run_parse(app, switch_nested_multi_payload_overlap_failure_path);
 
     assert(switch_nested_multi_payload_overlap_failure_result.exit_code == 1);
     assert(switch_nested_multi_payload_overlap_failure_result.stdout_text.empty());
@@ -4423,34 +4349,12 @@ int main() {
     auto switch_disjoint_nested_multi_payload_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_disjoint_nested_multi_payload_success.or";
-    {
-        std::ofstream output(switch_disjoint_nested_multi_payload_success_path);
-        output << "package demo.patterns\n";
-        output << "choice PairMaybe<T>\n";
-        output << "    PairSome(left: T, right: Int64)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: PairMaybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(PairSome(left, 1)) => 1\n";
-        output << "        Wrap(PairSome(other, 2)) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_disjoint_nested_multi_payload_success_path_text =
-        switch_disjoint_nested_multi_payload_success_path.string();
-    std::array<char const*, 3> switch_disjoint_nested_multi_payload_success_argv {
-        "orisonc",
-        "--parse",
-        switch_disjoint_nested_multi_payload_success_path_text.c_str()
-    };
-    auto switch_disjoint_nested_multi_payload_success_result = app.run(
-        std::span<char const* const>(
-            switch_disjoint_nested_multi_payload_success_argv.data(),
-            switch_disjoint_nested_multi_payload_success_argv.size()
-        )
+    write_boxed_pair_maybe_switch_fixture(
+        switch_disjoint_nested_multi_payload_success_path,
+        {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 2)) => 2"}
     );
+    auto switch_disjoint_nested_multi_payload_success_result =
+        run_parse(app, switch_disjoint_nested_multi_payload_success_path);
 
     assert(switch_disjoint_nested_multi_payload_success_result.exit_code == 0);
     assert(switch_disjoint_nested_multi_payload_success_result.stderr_text.empty());
@@ -4459,34 +4363,12 @@ int main() {
     auto switch_mismatched_nested_constructor_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_mismatched_nested_constructor_success.or";
-    {
-        std::ofstream output(switch_mismatched_nested_constructor_success_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => 1\n";
-        output << "        Wrap(Empty) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_mismatched_nested_constructor_success_path_text =
-        switch_mismatched_nested_constructor_success_path.string();
-    std::array<char const*, 3> switch_mismatched_nested_constructor_success_argv {
-        "orisonc",
-        "--parse",
-        switch_mismatched_nested_constructor_success_path_text.c_str()
-    };
-    auto switch_mismatched_nested_constructor_success_result = app.run(
-        std::span<char const* const>(
-            switch_mismatched_nested_constructor_success_argv.data(),
-            switch_mismatched_nested_constructor_success_argv.size()
-        )
+    write_boxed_maybe_switch_fixture(
+        switch_mismatched_nested_constructor_success_path,
+        {"Wrap(Some(value)) => 1", "Wrap(Empty) => 2"}
     );
+    auto switch_mismatched_nested_constructor_success_result =
+        run_parse(app, switch_mismatched_nested_constructor_success_path);
 
     assert(switch_mismatched_nested_constructor_success_result.exit_code == 0);
     assert(switch_mismatched_nested_constructor_success_result.stderr_text.empty());
@@ -4495,34 +4377,12 @@ int main() {
     auto switch_duplicate_nested_zero_payload_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_duplicate_nested_zero_payload_failure.or";
-    {
-        std::ofstream output(switch_duplicate_nested_zero_payload_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Empty) => 1\n";
-        output << "        Wrap(Empty) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_duplicate_nested_zero_payload_failure_path_text =
-        switch_duplicate_nested_zero_payload_failure_path.string();
-    std::array<char const*, 3> switch_duplicate_nested_zero_payload_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_duplicate_nested_zero_payload_failure_path_text.c_str()
-    };
-    auto switch_duplicate_nested_zero_payload_failure_result = app.run(
-        std::span<char const* const>(
-            switch_duplicate_nested_zero_payload_failure_argv.data(),
-            switch_duplicate_nested_zero_payload_failure_argv.size()
-        )
+    write_boxed_maybe_switch_fixture(
+        switch_duplicate_nested_zero_payload_failure_path,
+        {"Wrap(Empty) => 1", "Wrap(Empty) => 2"}
     );
+    auto switch_duplicate_nested_zero_payload_failure_result =
+        run_parse(app, switch_duplicate_nested_zero_payload_failure_path);
 
     assert(switch_duplicate_nested_zero_payload_failure_result.exit_code == 1);
     assert(switch_duplicate_nested_zero_payload_failure_result.stdout_text.empty());
@@ -4533,33 +4393,13 @@ int main() {
     auto switch_duplicate_nested_zero_payload_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_duplicate_nested_zero_payload_no_cascade_failure.or";
-    {
-        std::ofstream output(switch_duplicate_nested_zero_payload_no_cascade_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Empty) => 1\n";
-        output << "        Wrap(Empty) => 2\n";
-    }
-
-    auto switch_duplicate_nested_zero_payload_no_cascade_failure_path_text =
-        switch_duplicate_nested_zero_payload_no_cascade_failure_path.string();
-    std::array<char const*, 3> switch_duplicate_nested_zero_payload_no_cascade_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_duplicate_nested_zero_payload_no_cascade_failure_path_text.c_str()
-    };
-    auto switch_duplicate_nested_zero_payload_no_cascade_failure_result = app.run(
-        std::span<char const* const>(
-            switch_duplicate_nested_zero_payload_no_cascade_failure_argv.data(),
-            switch_duplicate_nested_zero_payload_no_cascade_failure_argv.size()
-        )
+    write_boxed_maybe_switch_fixture(
+        switch_duplicate_nested_zero_payload_no_cascade_failure_path,
+        {"Wrap(Empty) => 1", "Wrap(Empty) => 2"},
+        false
     );
+    auto switch_duplicate_nested_zero_payload_no_cascade_failure_result =
+        run_parse(app, switch_duplicate_nested_zero_payload_no_cascade_failure_path);
 
     assert(switch_duplicate_nested_zero_payload_no_cascade_failure_result.exit_code == 1);
     assert(switch_duplicate_nested_zero_payload_no_cascade_failure_result.stdout_text.empty());

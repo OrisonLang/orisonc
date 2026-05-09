@@ -5,8 +5,63 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <initializer_list>
+#include <string_view>
 
 namespace {
+
+void write_boxed_maybe_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = true
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "choice Boxed<T>\n";
+    output << "    Wrap(inner: Maybe<T>)\n";
+    output << "function classify(item: Boxed<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
+void write_boxed_pair_maybe_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice PairMaybe<T>\n";
+    output << "    PairSome(left: T, right: Int64)\n";
+    output << "    Empty\n";
+    output << "choice Boxed<T>\n";
+    output << "    Wrap(inner: PairMaybe<T>)\n";
+    output << "function classify(item: Boxed<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    output << "        default => 0\n";
+}
+
+auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    return analyzer.analyze(parse_result.module);
+}
 
 void test_await_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_success.or";
@@ -973,30 +1028,9 @@ void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_l
 void test_switch_rejects_nested_payload_constructor_overlap_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_overlap_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => 1\n";
-        output << "        Wrap(Some(other)) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_maybe_switch_fixture(path, {"Wrap(Some(value)) => 1", "Wrap(Some(other)) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 10);
@@ -1006,30 +1040,9 @@ void test_switch_rejects_nested_payload_constructor_overlap_failure() {
 void test_switch_rejects_nested_literal_payload_constructor_overlap_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_literal_payload_overlap_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(1)) => 1\n";
-        output << "        Wrap(Some(1)) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_maybe_switch_fixture(path, {"Wrap(Some(1)) => 1", "Wrap(Some(1)) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 10);
@@ -1039,60 +1052,18 @@ void test_switch_rejects_nested_literal_payload_constructor_overlap_failure() {
 void test_switch_accepts_disjoint_nested_literal_payload_constructor_patterns_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_disjoint_nested_literal_payload_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(1)) => 1\n";
-        output << "        Wrap(Some(2)) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_maybe_switch_fixture(path, {"Wrap(Some(1)) => 1", "Wrap(Some(2)) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
 }
 
 void test_switch_rejects_nested_wildcard_literal_payload_constructor_overlap_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wildcard_literal_payload_overlap_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => 1\n";
-        output << "        Wrap(Some(1)) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_maybe_switch_fixture(path, {"Wrap(Some(value)) => 1", "Wrap(Some(1)) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 10);
@@ -1102,30 +1073,9 @@ void test_switch_rejects_nested_wildcard_literal_payload_constructor_overlap_fai
 void test_switch_rejects_nested_literal_wildcard_payload_constructor_overlap_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_literal_wildcard_payload_overlap_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(1)) => 1\n";
-        output << "        Wrap(Some(value)) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_maybe_switch_fixture(path, {"Wrap(Some(1)) => 1", "Wrap(Some(value)) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 10);
@@ -1135,30 +1085,12 @@ void test_switch_rejects_nested_literal_wildcard_payload_constructor_overlap_fai
 void test_switch_rejects_nested_multi_payload_constructor_overlap_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_multi_payload_overlap_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice PairMaybe<T>\n";
-        output << "    PairSome(left: T, right: Int64)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: PairMaybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(PairSome(left, 1)) => 1\n";
-        output << "        Wrap(PairSome(other, 1)) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_pair_maybe_switch_fixture(
+        path,
+        {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 1)) => 2"}
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 10);
@@ -1168,90 +1100,30 @@ void test_switch_rejects_nested_multi_payload_constructor_overlap_failure() {
 void test_switch_accepts_disjoint_nested_multi_payload_constructor_patterns_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_disjoint_nested_multi_payload_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice PairMaybe<T>\n";
-        output << "    PairSome(left: T, right: Int64)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: PairMaybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(PairSome(left, 1)) => 1\n";
-        output << "        Wrap(PairSome(other, 2)) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_pair_maybe_switch_fixture(
+        path,
+        {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 2)) => 2"}
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
 }
 
 void test_switch_accepts_mismatched_nested_constructor_patterns_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_mismatched_nested_constructor_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => 1\n";
-        output << "        Wrap(Empty) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_maybe_switch_fixture(path, {"Wrap(Some(value)) => 1", "Wrap(Empty) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
 }
 
 void test_switch_rejects_duplicate_nested_zero_payload_constructor_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_nested_zero_payload_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Empty) => 1\n";
-        output << "        Wrap(Empty) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_boxed_maybe_switch_fixture(path, {"Wrap(Empty) => 1", "Wrap(Empty) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 10);
@@ -1261,29 +1133,9 @@ void test_switch_rejects_duplicate_nested_zero_payload_constructor_failure() {
 void test_switch_rejects_duplicate_nested_zero_payload_constructor_no_cascade_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_nested_zero_payload_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(inner: Maybe<T>)\n";
-        output << "function classify(item: Boxed<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Empty) => 1\n";
-        output << "        Wrap(Empty) => 2\n";
-    }
+    write_boxed_maybe_switch_fixture(path, {"Wrap(Empty) => 1", "Wrap(Empty) => 2"}, false);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 10);
