@@ -2225,6 +2225,16 @@ void test_switch_rejects_second_missing_multi_payload_choice_variant_failure() {
     assert_single_diagnostic(diagnostics, 7, "switch is missing choice variant 'Second'");
 }
 
+void test_switch_duplicate_multi_payload_choice_without_default_does_not_cascade_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_duplicate_multi_payload_choice_no_cascade_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(path, {"First(value) => value", "First(other) => other"});
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(diagnostics, 9, "switch constructor pattern 'First(...)' is duplicated");
+}
+
 void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
@@ -7869,6 +7879,7 @@ int main() {
     test_switch_rejects_redundant_multi_payload_choice_default_failure();
     test_switch_rejects_first_missing_multi_payload_choice_variant_failure();
     test_switch_rejects_second_missing_multi_payload_choice_variant_failure();
+    test_switch_duplicate_multi_payload_choice_without_default_does_not_cascade_failure();
     test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure();
     test_switch_rejects_duplicate_zero_payload_choice_constructor_failure();
     test_switch_duplicate_choice_without_default_does_not_cascade_to_missing_variant_failure();

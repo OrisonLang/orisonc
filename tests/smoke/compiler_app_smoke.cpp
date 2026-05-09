@@ -5823,6 +5823,25 @@ int main() {
         "switch is missing choice variant 'Second'"
     );
 
+    auto switch_duplicate_multi_payload_choice_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_multi_payload_choice_no_cascade_failure.or";
+    write_multi_payload_choice_exhaustiveness_fixture(
+        switch_duplicate_multi_payload_choice_no_cascade_failure_path,
+        {"First(value) => value", "First(other) => other"}
+    );
+
+    auto switch_duplicate_multi_payload_choice_no_cascade_failure_result =
+        run_parse(app, switch_duplicate_multi_payload_choice_no_cascade_failure_path);
+    assert(switch_duplicate_multi_payload_choice_no_cascade_failure_result.exit_code == 1);
+    assert(switch_duplicate_multi_payload_choice_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_duplicate_multi_payload_choice_no_cascade_failure_result.stderr_text.find(
+               "switch constructor pattern 'First(...)' is duplicated"
+           ) != std::string::npos);
+    assert(switch_duplicate_multi_payload_choice_no_cascade_failure_result.stderr_text.find(
+               "switch is missing choice variant"
+           ) == std::string::npos);
+
     auto switch_duplicate_payload_choice_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_duplicate_payload_choice_without_default_no_cascade_failure.or";
