@@ -2208,18 +2208,19 @@ private:
         return true;
     }
 
-    void declare_switch_pattern_bindings(
+    auto declare_switch_pattern_bindings(
         syntax::ExpressionSyntax const& pattern,
         std::optional<syntax::TypeSyntax> const& pattern_type,
         bool bind_name,
         std::unordered_set<std::string>& bound_names
-    ) {
+    ) -> bool {
         if (pattern.kind == syntax::ExpressionKind::call) {
             if (!pattern.left || pattern.left->kind != syntax::ExpressionKind::name || !pattern_type.has_value()) {
+                auto valid = true;
                 for (auto const& argument : pattern.arguments) {
-                    declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names);
+                    valid = declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names) && valid;
                 }
-                return;
+                return valid;
             }
 
             auto resolved_pattern_type = resolve_choice_pattern_subject_type(pattern.left->text, *pattern_type);
@@ -2227,10 +2228,11 @@ private:
                                                 ? find_choice_variant_signature(pattern.left->text, *resolved_pattern_type)
                                                 : nullptr;
             if (variant_signature == nullptr) {
+                auto valid = true;
                 for (auto const& argument : pattern.arguments) {
-                    declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names);
+                    valid = declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names) && valid;
                 }
-                return;
+                return valid;
             }
 
             std::unordered_map<std::string, syntax::TypeSyntax> bindings;
@@ -2240,25 +2242,28 @@ private:
                     variant_signature->generic_parameters,
                     bindings
                 )) {
+                auto valid = true;
                 for (auto const& argument : pattern.arguments) {
-                    declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names);
+                    valid = declare_switch_pattern_bindings(argument, std::nullopt, true, bound_names) && valid;
                 }
-                return;
+                return valid;
             }
 
+            auto valid = true;
             for (std::size_t index = 0; index < pattern.arguments.size(); ++index) {
                 std::optional<syntax::TypeSyntax> payload_type;
                 if (index < variant_signature->payloads.size()) {
                     payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
                 }
-                declare_switch_pattern_bindings(pattern.arguments[index], payload_type, true, bound_names);
+                valid =
+                    declare_switch_pattern_bindings(pattern.arguments[index], payload_type, true, bound_names) && valid;
             }
-            return;
+            return valid;
         }
 
         if (bind_name && pattern.kind == syntax::ExpressionKind::name && !pattern.text.empty()) {
             if (pattern_type.has_value() && is_zero_payload_constructor_pattern(pattern.text, *pattern_type)) {
-                return;
+                return true;
             }
 
             if (!bound_names.insert(pattern.text).second) {
@@ -2266,7 +2271,7 @@ private:
                     pattern.line,
                     "switch constructor pattern cannot bind '" + pattern.text + "' more than once"
                 );
-                return;
+                return false;
             }
 
             declare_binding(
@@ -2275,6 +2280,7 @@ private:
                 false
             );
         }
+        return true;
     }
 
     auto is_value_return_statement(syntax::StatementSyntax const& statement) const -> bool {
@@ -2964,13 +2970,15 @@ private:
 
                 valid_pattern =
                     analyze_switch_pattern(switch_case.pattern, in_async_function, switch_subject_type) && valid_pattern;
-                switch_patterns_valid = switch_patterns_valid && valid_pattern;
                 restore_scope_stack(baseline_scope);
                 push_scope();
                 if (!switch_case.is_default && valid_pattern) {
                     std::unordered_set<std::string> bound_names;
-                    declare_switch_pattern_bindings(switch_case.pattern, switch_subject_type, false, bound_names);
+                    valid_pattern =
+                        declare_switch_pattern_bindings(switch_case.pattern, switch_subject_type, false, bound_names) &&
+                        valid_pattern;
                 }
+                switch_patterns_valid = switch_patterns_valid && valid_pattern;
                 if (valid_pattern) {
                     for (auto const& consequence : switch_case.statements) {
                         analyze_statement(*consequence, in_async_function);
