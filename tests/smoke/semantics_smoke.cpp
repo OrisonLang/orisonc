@@ -177,6 +177,17 @@ void assert_wrap_duplicate_diagnostic(
     assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
 }
 
+void assert_single_diagnostic(
+    orison::semantics::SemanticAnalysisResult const& diagnostics,
+    std::size_t expected_line,
+    std::string_view expected_message
+) {
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == expected_line);
+    assert(diagnostics.entries().front().message == expected_message);
+}
+
 void test_await_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_success.or";
     {
@@ -2041,11 +2052,11 @@ void test_switch_rejects_redundant_payload_choice_default_after_full_cover_failu
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Empty => 0"}, true);
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 9);
-    assert(diagnostics.entries().front().message ==
-           "switch default case is redundant after all choice variants are covered");
+    assert_single_diagnostic(
+        diagnostics,
+        9,
+        "switch default case is redundant after all choice variants are covered"
+    );
 }
 
 void test_switch_accepts_exhaustive_payload_choice_without_default_success() {
@@ -2082,10 +2093,7 @@ void test_switch_rejects_literal_payload_choice_arm_without_default_failure() {
     write_maybe_int_exhaustiveness_fixture(path, {"Some(1) => 1", "Empty => 0"});
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 6);
-    assert(diagnostics.entries().front().message == "switch is missing choice variant 'Some'");
+    assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Some'");
 }
 
 void test_switch_rejects_reversed_literal_payload_choice_arm_without_default_failure() {
@@ -2095,10 +2103,7 @@ void test_switch_rejects_reversed_literal_payload_choice_arm_without_default_fai
     write_maybe_int_exhaustiveness_fixture(path, {"Empty => 0", "Some(1) => 1"});
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 6);
-    assert(diagnostics.entries().front().message == "switch is missing choice variant 'Some'");
+    assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Some'");
 }
 
 void test_switch_accepts_nested_payload_choice_arm_with_default_success() {
@@ -2116,10 +2121,7 @@ void test_switch_rejects_nested_payload_choice_arm_without_default_failure() {
     write_boxed_maybe_exhaustiveness_fixture(path, {"Wrap(Some(value)) => value", "Blank => 0"});
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 9);
-    assert(diagnostics.entries().front().message == "switch is missing choice variant 'Wrap'");
+    assert_single_diagnostic(diagnostics, 9, "switch is missing choice variant 'Wrap'");
 }
 
 void test_switch_accepts_partial_multi_payload_choice_arm_with_default_success() {
@@ -2139,10 +2141,7 @@ void test_switch_rejects_partial_multi_payload_choice_arm_without_default_failur
     write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => left", "Empty => 0"});
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 6);
-    assert(diagnostics.entries().front().message == "switch is missing choice variant 'Both'");
+    assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Both'");
 }
 
 void test_switch_rejects_missing_payload_choice_variant_without_default_failure() {
@@ -2151,10 +2150,7 @@ void test_switch_rejects_missing_payload_choice_variant_without_default_failure(
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value"});
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 6);
-    assert(diagnostics.entries().front().message == "switch is missing choice variant 'Empty'");
+    assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Empty'");
 }
 
 void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure() {
@@ -2164,10 +2160,7 @@ void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_mi
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Some(other) => other"});
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Some(...)' is duplicated");
+    assert_single_diagnostic(diagnostics, 8, "switch constructor pattern 'Some(...)' is duplicated");
 }
 
 void test_switch_rejects_duplicate_zero_payload_choice_constructor_failure() {
