@@ -209,6 +209,14 @@ void assert_single_diagnostic(
     assert(diagnostics.entries().front().message == expected_message);
 }
 
+void assert_fixture_single_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view expected_message
+) {
+    assert_single_diagnostic(analyze_orison_fixture(path), expected_line, expected_message);
+}
+
 void test_await_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_success.or";
     {
@@ -1127,9 +1135,8 @@ void test_switch_unknown_constructor_without_default_does_not_cascade_to_missing
         output << "        Missing(value) => value\n";
     }
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(
-        diagnostics,
+    assert_fixture_single_diagnostic(
+        path,
         7,
         "switch constructor pattern 'Missing' does not match any declared choice variant"
     );
@@ -1492,9 +1499,8 @@ void test_switch_wrong_choice_constructor_without_default_does_not_cascade_failu
         output << "        Some(value) => value\n";
     }
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(
-        diagnostics,
+    assert_fixture_single_diagnostic(
+        path,
         10,
         "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
     );
@@ -1848,9 +1854,8 @@ void test_switch_constructor_pattern_arity_without_default_does_not_cascade_to_m
         output << "        Node(head) => 0\n";
     }
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(
-        diagnostics,
+    assert_fixture_single_diagnostic(
+        path,
         7,
         "switch constructor pattern 'Node' expects 2 payload values but received 1"
     );
@@ -1871,9 +1876,8 @@ void test_switch_zero_payload_constructor_arity_without_default_does_not_cascade
         output << "        Empty(value) => 0\n";
     }
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(
-        diagnostics,
+    assert_fixture_single_diagnostic(
+        path,
         7,
         "switch constructor pattern 'Empty' expects 0 payload values but received 1"
     );
@@ -2177,8 +2181,7 @@ void test_switch_duplicate_bool_suppresses_redundant_default_failure() {
         output << "        default => 3\n";
     }
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 6, "switch value pattern 'false' is duplicated");
+    assert_fixture_single_diagnostic(path, 6, "switch value pattern 'false' is duplicated");
 }
 
 void test_switch_accepts_exhaustive_bool_without_default_success() {
@@ -2284,8 +2287,7 @@ void test_switch_duplicate_zero_payload_choice_suppresses_redundant_default_fail
         output << "        default => 0\n";
     }
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 11, "switch constructor pattern 'Closed' is duplicated");
+    assert_fixture_single_diagnostic(path, 11, "switch constructor pattern 'Closed' is duplicated");
 }
 
 void test_switch_accepts_exhaustive_zero_payload_choice_without_default_success() {
@@ -2322,9 +2324,8 @@ void test_switch_rejects_redundant_payload_choice_default_after_full_cover_failu
         std::filesystem::temp_directory_path() / "orison_semantics_switch_redundant_payload_choice_default_failure.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Empty => 0"}, true);
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(
-        diagnostics,
+    assert_fixture_single_diagnostic(
+        path,
         9,
         "switch default case is redundant after all choice variants are covered"
     );
@@ -2363,8 +2364,7 @@ void test_switch_rejects_literal_payload_choice_arm_without_default_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_missing_failure.or";
     write_maybe_int_exhaustiveness_fixture(path, {"Some(1) => 1", "Empty => 0"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Some'");
+    assert_fixture_single_diagnostic(path, 6, "switch is missing choice variant 'Some'");
 }
 
 void test_switch_rejects_reversed_literal_payload_choice_arm_without_default_failure() {
@@ -2373,8 +2373,7 @@ void test_switch_rejects_reversed_literal_payload_choice_arm_without_default_fai
         "orison_semantics_switch_reversed_literal_payload_choice_missing_failure.or";
     write_maybe_int_exhaustiveness_fixture(path, {"Empty => 0", "Some(1) => 1"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Some'");
+    assert_fixture_single_diagnostic(path, 6, "switch is missing choice variant 'Some'");
 }
 
 void test_switch_accepts_nested_payload_choice_arm_with_default_success() {
@@ -2391,8 +2390,7 @@ void test_switch_rejects_nested_payload_choice_arm_without_default_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_choice_missing_failure.or";
     write_boxed_maybe_exhaustiveness_fixture(path, {"Wrap(Some(value)) => value", "Blank => 0"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 9, "switch is missing choice variant 'Wrap'");
+    assert_fixture_single_diagnostic(path, 9, "switch is missing choice variant 'Wrap'");
 }
 
 void test_switch_accepts_partial_multi_payload_choice_arm_with_default_success() {
@@ -2411,8 +2409,7 @@ void test_switch_rejects_partial_multi_payload_choice_arm_without_default_failur
         "orison_semantics_switch_partial_multi_payload_choice_missing_failure.or";
     write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => left", "Empty => 0"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Both'");
+    assert_fixture_single_diagnostic(path, 6, "switch is missing choice variant 'Both'");
 }
 
 void test_switch_rejects_missing_payload_choice_variant_without_default_failure() {
@@ -2420,8 +2417,7 @@ void test_switch_rejects_missing_payload_choice_variant_without_default_failure(
         std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_payload_choice_variant_failure.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 6, "switch is missing choice variant 'Empty'");
+    assert_fixture_single_diagnostic(path, 6, "switch is missing choice variant 'Empty'");
 }
 
 void test_switch_accepts_exhaustive_multi_payload_choice_without_default_success() {
@@ -2447,9 +2443,8 @@ void test_switch_rejects_redundant_multi_payload_choice_default_failure() {
         true
     );
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(
-        diagnostics,
+    assert_fixture_single_diagnostic(
+        path,
         11,
         "switch default case is redundant after all choice variants are covered"
     );
@@ -2465,8 +2460,7 @@ void test_switch_duplicate_payload_choice_suppresses_redundant_default_failure()
         true
     );
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 11, "switch constructor pattern 'First(...)' is duplicated");
+    assert_fixture_single_diagnostic(path, 11, "switch constructor pattern 'First(...)' is duplicated");
 }
 
 void test_switch_rejects_first_missing_multi_payload_choice_variant_failure() {
@@ -2475,8 +2469,7 @@ void test_switch_rejects_first_missing_multi_payload_choice_variant_failure() {
         "orison_semantics_switch_first_missing_multi_payload_choice_variant_failure.or";
     write_multi_payload_choice_exhaustiveness_fixture(path, {"Second(value) => value", "Empty => 0"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 7, "switch is missing choice variant 'First'");
+    assert_fixture_single_diagnostic(path, 7, "switch is missing choice variant 'First'");
 }
 
 void test_switch_rejects_second_missing_multi_payload_choice_variant_failure() {
@@ -2485,8 +2478,7 @@ void test_switch_rejects_second_missing_multi_payload_choice_variant_failure() {
         "orison_semantics_switch_second_missing_multi_payload_choice_variant_failure.or";
     write_multi_payload_choice_exhaustiveness_fixture(path, {"First(value) => value", "Empty => 0"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 7, "switch is missing choice variant 'Second'");
+    assert_fixture_single_diagnostic(path, 7, "switch is missing choice variant 'Second'");
 }
 
 void test_switch_duplicate_multi_payload_choice_without_default_does_not_cascade_failure() {
@@ -2495,8 +2487,7 @@ void test_switch_duplicate_multi_payload_choice_without_default_does_not_cascade
         "orison_semantics_switch_duplicate_multi_payload_choice_no_cascade_failure.or";
     write_multi_payload_choice_exhaustiveness_fixture(path, {"First(value) => value", "First(other) => other"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 9, "switch constructor pattern 'First(...)' is duplicated");
+    assert_fixture_single_diagnostic(path, 9, "switch constructor pattern 'First(...)' is duplicated");
 }
 
 void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure() {
@@ -2505,8 +2496,7 @@ void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_mi
         "orison_semantics_switch_duplicate_payload_choice_without_default_no_cascade_failure.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Some(other) => other"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 8, "switch constructor pattern 'Some(...)' is duplicated");
+    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Some(...)' is duplicated");
 }
 
 void test_switch_rejects_duplicate_zero_payload_choice_constructor_failure() {
@@ -2963,8 +2953,7 @@ void test_switch_nonfinal_default_suppresses_branch_analysis_failure() {
         output << "        true => 1\n";
     }
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert_single_diagnostic(diagnostics, 4, "switch default case must be the final case");
+    assert_fixture_single_diagnostic(path, 4, "switch default case must be the final case");
 }
 
 void test_switch_multiple_default_suppresses_branch_analysis_failure() {
