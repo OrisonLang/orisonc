@@ -51,6 +51,27 @@ void write_boxed_pair_maybe_switch_fixture(
     output << "        default => 0\n";
 }
 
+void write_boxed_outer_maybe_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "choice Outer<T>\n";
+    output << "    Hold(inner: Maybe<T>)\n";
+    output << "choice Boxed<T>\n";
+    output << "    Wrap(inner: Outer<T>)\n";
+    output << "function classify(item: Boxed<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    output << "        default => 0\n";
+}
+
 auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     auto path_text = path.string();
@@ -4382,6 +4403,18 @@ int main() {
         run_parse(app, switch_duplicate_nested_zero_payload_no_cascade_failure_path);
 
     assert_wrap_duplicate_parse_failure(switch_duplicate_nested_zero_payload_no_cascade_failure_result);
+
+    auto switch_deep_nested_payload_overlap_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_deep_nested_payload_overlap_failure.or";
+    write_boxed_outer_maybe_switch_fixture(
+        switch_deep_nested_payload_overlap_failure_path,
+        {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Some(other))) => 2"}
+    );
+    auto switch_deep_nested_payload_overlap_failure_result =
+        run_parse(app, switch_deep_nested_payload_overlap_failure_path);
+
+    assert_wrap_duplicate_parse_failure(switch_deep_nested_payload_overlap_failure_result);
 
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";

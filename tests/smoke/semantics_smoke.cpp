@@ -51,6 +51,27 @@ void write_boxed_pair_maybe_switch_fixture(
     output << "        default => 0\n";
 }
 
+void write_boxed_outer_maybe_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "choice Outer<T>\n";
+    output << "    Hold(inner: Maybe<T>)\n";
+    output << "choice Boxed<T>\n";
+    output << "    Wrap(inner: Outer<T>)\n";
+    output << "function classify(item: Boxed<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    output << "        default => 0\n";
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -63,10 +84,13 @@ auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semant
     return analyzer.analyze(parse_result.module);
 }
 
-void assert_wrap_duplicate_diagnostic(orison::semantics::SemanticAnalysisResult const& diagnostics) {
+void assert_wrap_duplicate_diagnostic(
+    orison::semantics::SemanticAnalysisResult const& diagnostics,
+    std::size_t expected_line = 10
+) {
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
+    assert(diagnostics.entries().front().line == expected_line);
     assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
 }
 
@@ -1119,6 +1143,17 @@ void test_switch_rejects_duplicate_nested_zero_payload_constructor_no_cascade_fa
     write_boxed_maybe_switch_fixture(path, {"Wrap(Empty) => 1", "Wrap(Empty) => 2"}, false);
 
     assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
+}
+
+void test_switch_rejects_deep_nested_payload_constructor_overlap_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_deep_nested_payload_overlap_failure.or";
+    write_boxed_outer_maybe_switch_fixture(
+        path,
+        {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Some(other))) => 2"}
+    );
+
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path), 12);
 }
 
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure() {
@@ -7448,6 +7483,7 @@ int main() {
     test_switch_accepts_mismatched_nested_constructor_patterns_success();
     test_switch_rejects_duplicate_nested_zero_payload_constructor_failure();
     test_switch_rejects_duplicate_nested_zero_payload_constructor_no_cascade_failure();
+    test_switch_rejects_deep_nested_payload_constructor_overlap_failure();
     test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure();
