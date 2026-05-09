@@ -1156,6 +1156,18 @@ void test_switch_rejects_deep_nested_payload_constructor_overlap_failure() {
     assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path), 12);
 }
 
+void test_switch_accepts_disjoint_deep_nested_literal_payload_constructor_patterns_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_disjoint_deep_nested_literal_payload_success.or";
+    write_boxed_outer_maybe_switch_fixture(
+        path,
+        {"Wrap(Hold(Some(1))) => 1", "Wrap(Hold(Some(2))) => 2"}
+    );
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert(!diagnostics.has_errors());
+}
+
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrapped_payload_failure.or";
@@ -7484,6 +7496,7 @@ int main() {
     test_switch_rejects_duplicate_nested_zero_payload_constructor_failure();
     test_switch_rejects_duplicate_nested_zero_payload_constructor_no_cascade_failure();
     test_switch_rejects_deep_nested_payload_constructor_overlap_failure();
+    test_switch_accepts_disjoint_deep_nested_literal_payload_constructor_patterns_success();
     test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success();
     test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure();

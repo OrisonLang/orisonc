@@ -4416,6 +4416,18 @@ int main() {
 
     assert_wrap_duplicate_parse_failure(switch_deep_nested_payload_overlap_failure_result);
 
+    auto switch_disjoint_deep_nested_literal_payload_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_disjoint_deep_nested_literal_payload_success.or";
+    write_boxed_outer_maybe_switch_fixture(
+        switch_disjoint_deep_nested_literal_payload_success_path,
+        {"Wrap(Hold(Some(1))) => 1", "Wrap(Hold(Some(2))) => 2"}
+    );
+    auto switch_disjoint_deep_nested_literal_payload_success_result =
+        run_parse(app, switch_disjoint_deep_nested_literal_payload_success_path);
+
+    assert_parse_success(switch_disjoint_deep_nested_literal_payload_success_result);
+
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";
     {

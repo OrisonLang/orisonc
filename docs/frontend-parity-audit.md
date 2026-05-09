@@ -63,3 +63,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-08: nested switch-pattern duplicate diagnostic assertions now use focused local helpers in the semantics and CLI smoke suites, keeping the repeated `Wrap(...)` overlap expectation in one place per suite.
 - 2026-05-08: nested switch-pattern CLI success assertions now use a local parse-success helper too, keeping the repeated parsed-output contract centralized for nearby positive smoke cases.
 - 2026-05-08: deeper nested constructor overlap now has semantics and CLI coverage, so `Wrap(Hold(Some(value)))` followed by `Wrap(Hold(Some(other)))` is rejected through recursive payload-key comparison beyond one nested constructor level.
+- 2026-05-08: deeper nested constructor non-overlap now has complementary coverage too, so `Wrap(Hold(Some(1)))` followed by `Wrap(Hold(Some(2)))` remains valid when the innermost literal payloads differ.
