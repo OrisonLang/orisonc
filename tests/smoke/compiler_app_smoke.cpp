@@ -5294,6 +5294,32 @@ int main() {
                "switch cannot mix value patterns with constructor patterns"
            ) != std::string::npos);
 
+    auto switch_pattern_mix_without_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_pattern_mix_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_pattern_mix_without_default_no_cascade_failure_path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "function classify(item: Maybe<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Some(value) => value\n";
+        output << "        1 => 1\n";
+    }
+
+    auto switch_pattern_mix_without_default_no_cascade_failure_result =
+        run_parse(app, switch_pattern_mix_without_default_no_cascade_failure_path);
+    assert(switch_pattern_mix_without_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_pattern_mix_without_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_pattern_mix_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch cannot mix value patterns with constructor patterns"
+           ) != std::string::npos);
+    assert(switch_pattern_mix_without_default_no_cascade_failure_result.stderr_text.find(
+               "switch is missing choice variant"
+           ) == std::string::npos);
+
     auto switch_value_pattern_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_value_pattern_type_failure.or";
     {

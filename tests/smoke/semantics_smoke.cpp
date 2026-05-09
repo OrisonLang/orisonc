@@ -1763,6 +1763,34 @@ void test_switch_rejects_value_then_constructor_pattern_mix_failure() {
            "switch cannot mix value patterns with constructor patterns");
 }
 
+void test_switch_pattern_mix_without_default_does_not_cascade_to_missing_variant_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_pattern_mix_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice Maybe<T>\n";
+        output << "    Some(value: T)\n";
+        output << "    Empty\n";
+        output << "function classify(item: Maybe<Int64>) -> Int64\n";
+        output << "    switch item\n";
+        output << "        Some(value) => value\n";
+        output << "        1 => 1\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert_single_diagnostic(diagnostics, 8, "switch cannot mix value patterns with constructor patterns");
+}
+
 void test_switch_rejects_mismatched_value_pattern_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_value_pattern_type_failure.or";
@@ -7853,6 +7881,7 @@ int main() {
     test_switch_constructor_pattern_rejects_extra_payload_values_failure();
     test_switch_rejects_constructor_then_value_pattern_mix_failure();
     test_switch_rejects_value_then_constructor_pattern_mix_failure();
+    test_switch_pattern_mix_without_default_does_not_cascade_to_missing_variant_failure();
     test_switch_rejects_mismatched_value_pattern_type_failure();
     test_switch_accepts_same_width_integer_cast_value_pattern_success();
     test_switch_rejects_duplicate_boolean_value_pattern_failure();
