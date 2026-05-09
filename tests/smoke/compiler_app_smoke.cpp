@@ -62,6 +62,12 @@ auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path con
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+void assert_wrap_duplicate_parse_failure(orison::driver::CompileResult const& result) {
+    assert(result.exit_code == 1);
+    assert(result.stdout_text.empty());
+    assert(result.stderr_text.find("switch constructor pattern 'Wrap(...)' is duplicated") != std::string::npos);
+}
+
 }  // namespace
 
 int main() {
@@ -4262,11 +4268,7 @@ int main() {
     auto switch_nested_payload_overlap_failure_result =
         run_parse(app, switch_nested_payload_overlap_failure_path);
 
-    assert(switch_nested_payload_overlap_failure_result.exit_code == 1);
-    assert(switch_nested_payload_overlap_failure_result.stdout_text.empty());
-    assert(switch_nested_payload_overlap_failure_result.stderr_text.find(
-               "switch constructor pattern 'Wrap(...)' is duplicated"
-           ) != std::string::npos);
+    assert_wrap_duplicate_parse_failure(switch_nested_payload_overlap_failure_result);
 
     auto switch_nested_literal_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -4278,11 +4280,7 @@ int main() {
     auto switch_nested_literal_payload_overlap_failure_result =
         run_parse(app, switch_nested_literal_payload_overlap_failure_path);
 
-    assert(switch_nested_literal_payload_overlap_failure_result.exit_code == 1);
-    assert(switch_nested_literal_payload_overlap_failure_result.stdout_text.empty());
-    assert(switch_nested_literal_payload_overlap_failure_result.stderr_text.find(
-               "switch constructor pattern 'Wrap(...)' is duplicated"
-           ) != std::string::npos);
+    assert_wrap_duplicate_parse_failure(switch_nested_literal_payload_overlap_failure_result);
 
     auto switch_disjoint_nested_literal_payload_success_path =
         std::filesystem::temp_directory_path() /
@@ -4308,11 +4306,7 @@ int main() {
     auto switch_nested_wildcard_literal_payload_overlap_failure_result =
         run_parse(app, switch_nested_wildcard_literal_payload_overlap_failure_path);
 
-    assert(switch_nested_wildcard_literal_payload_overlap_failure_result.exit_code == 1);
-    assert(switch_nested_wildcard_literal_payload_overlap_failure_result.stdout_text.empty());
-    assert(switch_nested_wildcard_literal_payload_overlap_failure_result.stderr_text.find(
-               "switch constructor pattern 'Wrap(...)' is duplicated"
-           ) != std::string::npos);
+    assert_wrap_duplicate_parse_failure(switch_nested_wildcard_literal_payload_overlap_failure_result);
 
     auto switch_nested_literal_wildcard_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -4324,11 +4318,7 @@ int main() {
     auto switch_nested_literal_wildcard_payload_overlap_failure_result =
         run_parse(app, switch_nested_literal_wildcard_payload_overlap_failure_path);
 
-    assert(switch_nested_literal_wildcard_payload_overlap_failure_result.exit_code == 1);
-    assert(switch_nested_literal_wildcard_payload_overlap_failure_result.stdout_text.empty());
-    assert(switch_nested_literal_wildcard_payload_overlap_failure_result.stderr_text.find(
-               "switch constructor pattern 'Wrap(...)' is duplicated"
-           ) != std::string::npos);
+    assert_wrap_duplicate_parse_failure(switch_nested_literal_wildcard_payload_overlap_failure_result);
 
     auto switch_nested_multi_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -4340,11 +4330,7 @@ int main() {
     auto switch_nested_multi_payload_overlap_failure_result =
         run_parse(app, switch_nested_multi_payload_overlap_failure_path);
 
-    assert(switch_nested_multi_payload_overlap_failure_result.exit_code == 1);
-    assert(switch_nested_multi_payload_overlap_failure_result.stdout_text.empty());
-    assert(switch_nested_multi_payload_overlap_failure_result.stderr_text.find(
-               "switch constructor pattern 'Wrap(...)' is duplicated"
-           ) != std::string::npos);
+    assert_wrap_duplicate_parse_failure(switch_nested_multi_payload_overlap_failure_result);
 
     auto switch_disjoint_nested_multi_payload_success_path =
         std::filesystem::temp_directory_path() /
@@ -4384,11 +4370,7 @@ int main() {
     auto switch_duplicate_nested_zero_payload_failure_result =
         run_parse(app, switch_duplicate_nested_zero_payload_failure_path);
 
-    assert(switch_duplicate_nested_zero_payload_failure_result.exit_code == 1);
-    assert(switch_duplicate_nested_zero_payload_failure_result.stdout_text.empty());
-    assert(switch_duplicate_nested_zero_payload_failure_result.stderr_text.find(
-               "switch constructor pattern 'Wrap(...)' is duplicated"
-           ) != std::string::npos);
+    assert_wrap_duplicate_parse_failure(switch_duplicate_nested_zero_payload_failure_result);
 
     auto switch_duplicate_nested_zero_payload_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
@@ -4401,11 +4383,7 @@ int main() {
     auto switch_duplicate_nested_zero_payload_no_cascade_failure_result =
         run_parse(app, switch_duplicate_nested_zero_payload_no_cascade_failure_path);
 
-    assert(switch_duplicate_nested_zero_payload_no_cascade_failure_result.exit_code == 1);
-    assert(switch_duplicate_nested_zero_payload_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_duplicate_nested_zero_payload_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'Wrap(...)' is duplicated"
-           ) != std::string::npos);
+    assert_wrap_duplicate_parse_failure(switch_duplicate_nested_zero_payload_no_cascade_failure_result);
 
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";

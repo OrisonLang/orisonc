@@ -63,6 +63,13 @@ auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semant
     return analyzer.analyze(parse_result.module);
 }
 
+void assert_wrap_duplicate_diagnostic(orison::semantics::SemanticAnalysisResult const& diagnostics) {
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(diagnostics.entries().front().line == 10);
+    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+}
+
 void test_await_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_success.or";
     {
@@ -1030,11 +1037,7 @@ void test_switch_rejects_nested_payload_constructor_overlap_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_overlap_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(value)) => 1", "Wrap(Some(other)) => 2"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
 }
 
 void test_switch_rejects_nested_literal_payload_constructor_overlap_failure() {
@@ -1042,11 +1045,7 @@ void test_switch_rejects_nested_literal_payload_constructor_overlap_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_literal_payload_overlap_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(1)) => 1", "Wrap(Some(1)) => 2"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
 }
 
 void test_switch_accepts_disjoint_nested_literal_payload_constructor_patterns_success() {
@@ -1063,11 +1062,7 @@ void test_switch_rejects_nested_wildcard_literal_payload_constructor_overlap_fai
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wildcard_literal_payload_overlap_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(value)) => 1", "Wrap(Some(1)) => 2"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
 }
 
 void test_switch_rejects_nested_literal_wildcard_payload_constructor_overlap_failure() {
@@ -1075,11 +1070,7 @@ void test_switch_rejects_nested_literal_wildcard_payload_constructor_overlap_fai
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_literal_wildcard_payload_overlap_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(1)) => 1", "Wrap(Some(value)) => 2"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
 }
 
 void test_switch_rejects_nested_multi_payload_constructor_overlap_failure() {
@@ -1090,11 +1081,7 @@ void test_switch_rejects_nested_multi_payload_constructor_overlap_failure() {
         {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 1)) => 2"}
     );
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
 }
 
 void test_switch_accepts_disjoint_nested_multi_payload_constructor_patterns_success() {
@@ -1123,11 +1110,7 @@ void test_switch_rejects_duplicate_nested_zero_payload_constructor_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_nested_zero_payload_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Empty) => 1", "Wrap(Empty) => 2"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
 }
 
 void test_switch_rejects_duplicate_nested_zero_payload_constructor_no_cascade_failure() {
@@ -1135,11 +1118,7 @@ void test_switch_rejects_duplicate_nested_zero_payload_constructor_no_cascade_fa
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_nested_zero_payload_no_cascade_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Empty) => 1", "Wrap(Empty) => 2"}, false);
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
 }
 
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure() {
