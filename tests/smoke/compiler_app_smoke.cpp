@@ -5769,6 +5769,16 @@ int main() {
         "switch is missing choice variant 'Empty'"
     );
 
+    auto switch_exhaustive_multi_payload_choice_without_default_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_exhaustive_multi_payload_choice_success.or";
+    write_multi_payload_choice_exhaustiveness_fixture(
+        switch_exhaustive_multi_payload_choice_without_default_success_path,
+        {"First(value) => value", "Second(value) => value", "Empty => 0"}
+    );
+
+    assert_parse_success(run_parse(app, switch_exhaustive_multi_payload_choice_without_default_success_path));
+
     auto switch_first_missing_multi_payload_choice_variant_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_first_missing_multi_payload_choice_variant_failure.or";

@@ -75,3 +75,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-09: payload-bearing choice exhaustiveness now has order-reversed smoke coverage too, so `Empty` before `Some(value)` remains exhaustive while `Empty` before literal-constrained `Some(1)` still reports `Some` as missing.
 - 2026-05-09: payload-bearing choice exhaustiveness semantic smoke assertions now share a local single-diagnostic helper, keeping the repeated line/message checks consistent as new boundary cases are added.
 - 2026-05-09: payload-bearing choice exhaustiveness now has multi-payload-variant missing-order coverage, so switches over choices with `First(value)`, `Second(value)`, and `Empty` report the first declared uncovered payload-bearing variant deterministically.
+- 2026-05-09: multi-payload-variant choice exhaustiveness now also has positive coverage, so full-cover arms for `First(value)`, `Second(value)`, and `Empty` are accepted without a `default`.
