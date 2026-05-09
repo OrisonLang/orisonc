@@ -61,3 +61,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-08: duplicate nested zero-payload constructor overlap now has no-default no-cascade coverage, keeping duplicate `Wrap(Empty)` as the only diagnostic when future exhaustiveness checks grow around payload-bearing choices.
 - 2026-05-08: nested switch-pattern smoke fixtures now share small local helpers for common `Boxed<Maybe<T>>` and `Boxed<PairMaybe<T>>` source generation, reducing repeated fixture boilerplate while preserving the same parity cases.
 - 2026-05-08: nested switch-pattern duplicate diagnostic assertions now use focused local helpers in the semantics and CLI smoke suites, keeping the repeated `Wrap(...)` overlap expectation in one place per suite.
+- 2026-05-08: nested switch-pattern CLI success assertions now use a local parse-success helper too, keeping the repeated parsed-output contract centralized for nearby positive smoke cases.
