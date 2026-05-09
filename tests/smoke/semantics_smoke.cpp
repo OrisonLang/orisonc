@@ -1624,6 +1624,37 @@ void test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failur
            "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern");
 }
 
+void test_switch_constructor_payload_shape_without_default_does_not_cascade_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_switch_constructor_payload_shape_without_default_no_cascade_failure.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.patterns\n";
+        output << "choice List<T>\n";
+        output << "    Empty\n";
+        output << "    Node(head: T, tail: Box<List<T>>)\n";
+        output << "function sum(xs: List<Int64>) -> Int64\n";
+        output << "    switch xs\n";
+        output << "        Node(head + 1, tail) => 0\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto diagnostics = analyzer.analyze(parse_result.module);
+    assert_single_diagnostic(
+        diagnostics,
+        7,
+        "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
+    );
+}
+
 void test_switch_constructor_pattern_rejects_duplicate_binding_names_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_duplicate_binding_failure.or";
@@ -7972,6 +8003,7 @@ int main() {
     test_switch_nested_constructor_pattern_rejects_variant_from_different_payload_choice_failure();
     test_switch_nested_constructor_pattern_uses_payload_specific_arity_success();
     test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure();
+    test_switch_constructor_payload_shape_without_default_does_not_cascade_failure();
     test_switch_constructor_pattern_rejects_duplicate_binding_names_failure();
     test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure();
     test_switch_constructor_pattern_rejects_missing_payload_values_failure();
