@@ -821,6 +821,35 @@ private:
         return variants;
     }
 
+    auto choice_variant_names_if_payload_bearing(
+        syntax::TypeSyntax const& choice_type
+    ) const -> std::optional<std::vector<std::string>> {
+        std::vector<std::string> variants;
+        auto matched_choice = false;
+        auto has_payload_variant = false;
+        for (auto const& signature : choice_variant_signatures_) {
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (!match_generic_type_pattern(
+                    signature.choice_type,
+                    choice_type,
+                    signature.generic_parameters,
+                    bindings
+                )) {
+                continue;
+            }
+
+            matched_choice = true;
+            has_payload_variant = has_payload_variant || !signature.payloads.empty();
+            variants.push_back(signature.variant_name);
+        }
+
+        if (!matched_choice || !has_payload_variant || variants.empty()) {
+            return std::nullopt;
+        }
+
+        return variants;
+    }
+
     auto resolve_choice_pattern_subject_type(
         std::string const& variant_name,
         syntax::TypeSyntax const& subject_type
@@ -1738,6 +1767,51 @@ private:
         }
 
         return key;
+    }
+
+    auto fully_covering_choice_constructor_pattern_variant_name(
+        syntax::ExpressionSyntax const& pattern,
+        std::optional<syntax::TypeSyntax> const& subject_type
+    ) const -> std::optional<std::string> {
+        if (!subject_type.has_value() || pattern.kind != syntax::ExpressionKind::call ||
+            !pattern.left || pattern.left->kind != syntax::ExpressionKind::name || pattern.arguments.empty()) {
+            return std::nullopt;
+        }
+
+        auto resolved_subject_type = resolve_choice_pattern_subject_type(pattern.left->text, *subject_type);
+        if (!resolved_subject_type.has_value()) {
+            return std::nullopt;
+        }
+
+        auto const* variant_signature = find_choice_variant_signature(pattern.left->text, *resolved_subject_type);
+        if (variant_signature == nullptr || variant_signature->payloads.empty() ||
+            variant_signature->payloads.size() != pattern.arguments.size()) {
+            return std::nullopt;
+        }
+
+        std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        if (!match_generic_type_pattern(
+                variant_signature->choice_type,
+                *resolved_subject_type,
+                variant_signature->generic_parameters,
+                bindings
+            )) {
+            return std::nullopt;
+        }
+
+        for (std::size_t index = 0; index < pattern.arguments.size(); ++index) {
+            auto const& argument = pattern.arguments[index];
+            if (argument.kind != syntax::ExpressionKind::name) {
+                return std::nullopt;
+            }
+
+            auto payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
+            if (is_zero_payload_constructor_pattern(argument.text, payload_type)) {
+                return std::nullopt;
+            }
+        }
+
+        return pattern.left->text;
     }
 
     auto is_zero_payload_constructor_pattern(
@@ -2663,6 +2737,9 @@ private:
             std::optional<std::vector<std::string>> zero_payload_choice_variants;
             std::unordered_set<std::string> zero_payload_choice_variant_lookup;
             std::optional<std::unordered_set<std::string>> remaining_zero_payload_choice_variants;
+            std::optional<std::vector<std::string>> payload_bearing_choice_variants;
+            std::unordered_set<std::string> payload_bearing_choice_variant_lookup;
+            std::optional<std::unordered_set<std::string>> remaining_payload_bearing_choice_variants;
             std::optional<syntax::TypeSyntax> switch_subject_type;
             auto switch_subject_type_name = infer_expression_type_name(statement.expression);
             if (!switch_subject_type_name.empty()) {
@@ -2675,6 +2752,15 @@ private:
                             zero_payload_choice_variants->end()
                         );
                         remaining_zero_payload_choice_variants = zero_payload_choice_variant_lookup;
+                    }
+                    payload_bearing_choice_variants =
+                        choice_variant_names_if_payload_bearing(*switch_subject_type);
+                    if (payload_bearing_choice_variants.has_value()) {
+                        payload_bearing_choice_variant_lookup = std::unordered_set<std::string>(
+                            payload_bearing_choice_variants->begin(),
+                            payload_bearing_choice_variants->end()
+                        );
+                        remaining_payload_bearing_choice_variants = payload_bearing_choice_variant_lookup;
                     }
                 }
             }
@@ -2717,6 +2803,15 @@ private:
                         valid_pattern = false;
                     }
 
+                    if (remaining_payload_bearing_choice_variants.has_value() &&
+                        remaining_payload_bearing_choice_variants->empty()) {
+                        diagnostics_.error(
+                            switch_case_line(switch_case),
+                            "switch default case is redundant after all choice variants are covered"
+                        );
+                        valid_pattern = false;
+                    }
+
                     saw_semantic_default = true;
                 }
 
@@ -2750,6 +2845,17 @@ private:
                                 valid_pattern = false;
                             }
                             remaining_zero_payload_choice_variants->erase(switch_case.pattern.text);
+                            if (remaining_payload_bearing_choice_variants.has_value() &&
+                                payload_bearing_choice_variant_lookup.contains(switch_case.pattern.text)) {
+                                remaining_payload_bearing_choice_variants->erase(switch_case.pattern.text);
+                            }
+                        }
+                        if (switch_case.pattern.kind == syntax::ExpressionKind::name &&
+                            switch_subject_type.has_value() &&
+                            remaining_payload_bearing_choice_variants.has_value() &&
+                            payload_bearing_choice_variant_lookup.contains(switch_case.pattern.text) &&
+                            is_zero_payload_constructor_pattern(switch_case.pattern.text, *switch_subject_type)) {
+                            remaining_payload_bearing_choice_variants->erase(switch_case.pattern.text);
                         }
 
                         auto constructor_key =
@@ -2767,6 +2873,16 @@ private:
                                 }
                             }
                             seen_simple_payload_choice_patterns.push_back(*constructor_key);
+                        }
+
+                        auto fully_covered_variant = fully_covering_choice_constructor_pattern_variant_name(
+                            switch_case.pattern,
+                            switch_subject_type
+                        );
+                        if (fully_covered_variant.has_value() &&
+                            remaining_payload_bearing_choice_variants.has_value() &&
+                            payload_bearing_choice_variant_lookup.contains(*fully_covered_variant)) {
+                            remaining_payload_bearing_choice_variants->erase(*fully_covered_variant);
                         }
                     }
                 }

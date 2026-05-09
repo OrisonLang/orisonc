@@ -65,7 +65,6 @@ int main() {
         output << "    switch state\n";
         output << "        Some(value) => return value.length()\n";
         output << "        Empty => return input.length()\n";
-        output << "        default => return input.length()\n";
         output << "    return input.read(2)\n";
     }
 
