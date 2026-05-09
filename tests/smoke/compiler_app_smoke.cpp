@@ -4428,6 +4428,30 @@ int main() {
 
     assert_parse_success(switch_disjoint_deep_nested_literal_payload_success_result);
 
+    auto switch_deep_nested_wildcard_literal_payload_overlap_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_deep_nested_wildcard_literal_payload_overlap_failure.or";
+    write_boxed_outer_maybe_switch_fixture(
+        switch_deep_nested_wildcard_literal_payload_overlap_failure_path,
+        {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Some(1))) => 2"}
+    );
+    auto switch_deep_nested_wildcard_literal_payload_overlap_failure_result =
+        run_parse(app, switch_deep_nested_wildcard_literal_payload_overlap_failure_path);
+
+    assert_wrap_duplicate_parse_failure(switch_deep_nested_wildcard_literal_payload_overlap_failure_result);
+
+    auto switch_deep_nested_literal_wildcard_payload_overlap_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_deep_nested_literal_wildcard_payload_overlap_failure.or";
+    write_boxed_outer_maybe_switch_fixture(
+        switch_deep_nested_literal_wildcard_payload_overlap_failure_path,
+        {"Wrap(Hold(Some(1))) => 1", "Wrap(Hold(Some(value))) => 2"}
+    );
+    auto switch_deep_nested_literal_wildcard_payload_overlap_failure_result =
+        run_parse(app, switch_deep_nested_literal_wildcard_payload_overlap_failure_path);
+
+    assert_wrap_duplicate_parse_failure(switch_deep_nested_literal_wildcard_payload_overlap_failure_result);
+
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";
     {
