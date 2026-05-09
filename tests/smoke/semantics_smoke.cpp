@@ -72,6 +72,89 @@ void write_boxed_outer_maybe_switch_fixture(
     output << "        default => 0\n";
 }
 
+void write_maybe_choice_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "function classify(item: Maybe<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 1\n";
+    }
+}
+
+void write_maybe_int_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice MaybeInt\n";
+    output << "    Some(value: Int64)\n";
+    output << "    Empty\n";
+    output << "function classify(item: MaybeInt) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 2\n";
+    }
+}
+
+void write_boxed_maybe_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "choice Boxed<T>\n";
+    output << "    Wrap(value: T)\n";
+    output << "    Blank\n";
+    output << "function classify(item: Boxed<Maybe<Int64>>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 1\n";
+    }
+}
+
+void write_pair_choice_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice PairChoice\n";
+    output << "    Both(left: Int64, right: Int64)\n";
+    output << "    Empty\n";
+    output << "function classify(item: PairChoice) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 2\n";
+    }
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1955,28 +2038,9 @@ void test_switch_accepts_exhaustive_zero_payload_choice_without_default_success(
 void test_switch_rejects_redundant_payload_choice_default_after_full_cover_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_redundant_payload_choice_default_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-        output << "        Empty => 0\n";
-        output << "        default => 1\n";
-    }
+    write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Empty => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 9);
@@ -1987,82 +2051,27 @@ void test_switch_rejects_redundant_payload_choice_default_after_full_cover_failu
 void test_switch_accepts_exhaustive_payload_choice_without_default_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_exhaustive_payload_choice_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-        output << "        Empty => 0\n";
-    }
+    write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Empty => 0"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
 }
 
 void test_switch_accepts_literal_payload_choice_arm_with_default_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_default_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice MaybeInt\n";
-        output << "    Some(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: MaybeInt) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(1) => 1\n";
-        output << "        Empty => 0\n";
-        output << "        default => 2\n";
-    }
+    write_maybe_int_exhaustiveness_fixture(path, {"Some(1) => 1", "Empty => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
 }
 
 void test_switch_rejects_literal_payload_choice_arm_without_default_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_missing_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice MaybeInt\n";
-        output << "    Some(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: MaybeInt) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(1) => 1\n";
-        output << "        Empty => 0\n";
-    }
+    write_maybe_int_exhaustiveness_fixture(path, {"Some(1) => 1", "Empty => 0"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 6);
@@ -2072,61 +2081,18 @@ void test_switch_rejects_literal_payload_choice_arm_without_default_failure() {
 void test_switch_accepts_nested_payload_choice_arm_with_default_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_choice_default_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(value: T)\n";
-        output << "    Blank\n";
-        output << "function classify(item: Boxed<Maybe<Int64>>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => value\n";
-        output << "        Blank => 0\n";
-        output << "        default => 1\n";
-    }
+    write_boxed_maybe_exhaustiveness_fixture(path, {"Wrap(Some(value)) => value", "Blank => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
 }
 
 void test_switch_rejects_nested_payload_choice_arm_without_default_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_choice_missing_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(value: T)\n";
-        output << "    Blank\n";
-        output << "function classify(item: Boxed<Maybe<Int64>>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => value\n";
-        output << "        Blank => 0\n";
-    }
+    write_boxed_maybe_exhaustiveness_fixture(path, {"Wrap(Some(value)) => value", "Blank => 0"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 9);
@@ -2137,28 +2103,9 @@ void test_switch_accepts_partial_multi_payload_choice_arm_with_default_success()
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_partial_multi_payload_choice_default_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice PairChoice\n";
-        output << "    Both(left: Int64, right: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: PairChoice) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Both(left, 1) => left\n";
-        output << "        Empty => 0\n";
-        output << "        default => 2\n";
-    }
+    write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => left", "Empty => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
 }
 
@@ -2166,27 +2113,9 @@ void test_switch_rejects_partial_multi_payload_choice_arm_without_default_failur
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_partial_multi_payload_choice_missing_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice PairChoice\n";
-        output << "    Both(left: Int64, right: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: PairChoice) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Both(left, 1) => left\n";
-        output << "        Empty => 0\n";
-    }
+    write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => left", "Empty => 0"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 6);
@@ -2196,26 +2125,9 @@ void test_switch_rejects_partial_multi_payload_choice_arm_without_default_failur
 void test_switch_rejects_missing_payload_choice_variant_without_default_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_payload_choice_variant_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-    }
+    write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 6);
@@ -2226,27 +2138,9 @@ void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_mi
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_duplicate_payload_choice_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-        output << "        Some(other) => other\n";
-    }
+    write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Some(other) => other"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 8);

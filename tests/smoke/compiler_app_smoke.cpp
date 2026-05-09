@@ -72,6 +72,89 @@ void write_boxed_outer_maybe_switch_fixture(
     output << "        default => 0\n";
 }
 
+void write_maybe_choice_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "function classify(item: Maybe<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 1\n";
+    }
+}
+
+void write_maybe_int_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice MaybeInt\n";
+    output << "    Some(value: Int64)\n";
+    output << "    Empty\n";
+    output << "function classify(item: MaybeInt) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 2\n";
+    }
+}
+
+void write_boxed_maybe_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "choice Boxed<T>\n";
+    output << "    Wrap(value: T)\n";
+    output << "    Blank\n";
+    output << "function classify(item: Boxed<Maybe<Int64>>) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 1\n";
+    }
+}
+
+void write_pair_choice_exhaustiveness_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice PairChoice\n";
+    output << "    Both(left: Int64, right: Int64)\n";
+    output << "    Empty\n";
+    output << "function classify(item: PairChoice) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 2\n";
+    }
+}
+
 auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     auto path_text = path.string();
@@ -93,6 +176,15 @@ void assert_parse_success(orison::driver::CompileResult const& result) {
     assert(result.exit_code == 0);
     assert(result.stderr_text.empty());
     assert(result.stdout_text.find("parsed ") != std::string::npos);
+}
+
+void assert_parse_failure_contains(
+    orison::driver::CompileResult const& result,
+    std::string_view expected_message
+) {
+    assert(result.exit_code == 1);
+    assert(result.stdout_text.empty());
+    assert(result.stderr_text.find(expected_message) != std::string::npos);
 }
 
 }  // namespace
@@ -5531,360 +5623,122 @@ int main() {
     auto switch_redundant_payload_choice_default_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_redundant_payload_choice_default_failure.or";
-    {
-        std::ofstream output(switch_redundant_payload_choice_default_failure_path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-        output << "        Empty => 0\n";
-        output << "        default => 1\n";
-    }
-
-    auto switch_redundant_payload_choice_default_failure_path_text =
-        switch_redundant_payload_choice_default_failure_path.string();
-    std::array<char const*, 3> switch_redundant_payload_choice_default_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_redundant_payload_choice_default_failure_path_text.c_str()
-    };
-    auto switch_redundant_payload_choice_default_failure_result = app.run(
-        std::span<char const* const>(
-            switch_redundant_payload_choice_default_failure_argv.data(),
-            switch_redundant_payload_choice_default_failure_argv.size()
-        )
+    write_maybe_choice_exhaustiveness_fixture(
+        switch_redundant_payload_choice_default_failure_path,
+        {"Some(value) => value", "Empty => 0"},
+        true
     );
 
-    assert(switch_redundant_payload_choice_default_failure_result.exit_code == 1);
-    assert(switch_redundant_payload_choice_default_failure_result.stdout_text.empty());
-    assert(switch_redundant_payload_choice_default_failure_result.stderr_text.find(
-               "switch default case is redundant after all choice variants are covered"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_redundant_payload_choice_default_failure_path),
+        "switch default case is redundant after all choice variants are covered"
+    );
 
     auto switch_exhaustive_payload_choice_without_default_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_exhaustive_payload_choice_success.or";
-    {
-        std::ofstream output(switch_exhaustive_payload_choice_without_default_success_path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-        output << "        Empty => 0\n";
-    }
-
-    auto switch_exhaustive_payload_choice_without_default_success_path_text =
-        switch_exhaustive_payload_choice_without_default_success_path.string();
-    std::array<char const*, 3> switch_exhaustive_payload_choice_without_default_success_argv {
-        "orisonc",
-        "--parse",
-        switch_exhaustive_payload_choice_without_default_success_path_text.c_str()
-    };
-    auto switch_exhaustive_payload_choice_without_default_success_result = app.run(
-        std::span<char const* const>(
-            switch_exhaustive_payload_choice_without_default_success_argv.data(),
-            switch_exhaustive_payload_choice_without_default_success_argv.size()
-        )
+    write_maybe_choice_exhaustiveness_fixture(
+        switch_exhaustive_payload_choice_without_default_success_path,
+        {"Some(value) => value", "Empty => 0"}
     );
 
-    assert(switch_exhaustive_payload_choice_without_default_success_result.exit_code == 0);
-    assert(switch_exhaustive_payload_choice_without_default_success_result.stderr_text.empty());
-    assert(
-        switch_exhaustive_payload_choice_without_default_success_result.stdout_text.find("parsed ") !=
-        std::string::npos
-    );
+    assert_parse_success(run_parse(app, switch_exhaustive_payload_choice_without_default_success_path));
 
     auto switch_literal_payload_choice_default_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_literal_payload_choice_default_success.or";
-    {
-        std::ofstream output(switch_literal_payload_choice_default_success_path);
-        output << "package demo.switches\n";
-        output << "choice MaybeInt\n";
-        output << "    Some(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: MaybeInt) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(1) => 1\n";
-        output << "        Empty => 0\n";
-        output << "        default => 2\n";
-    }
-
-    auto switch_literal_payload_choice_default_success_path_text =
-        switch_literal_payload_choice_default_success_path.string();
-    std::array<char const*, 3> switch_literal_payload_choice_default_success_argv {
-        "orisonc",
-        "--parse",
-        switch_literal_payload_choice_default_success_path_text.c_str()
-    };
-    auto switch_literal_payload_choice_default_success_result = app.run(
-        std::span<char const* const>(
-            switch_literal_payload_choice_default_success_argv.data(),
-            switch_literal_payload_choice_default_success_argv.size()
-        )
+    write_maybe_int_exhaustiveness_fixture(
+        switch_literal_payload_choice_default_success_path,
+        {"Some(1) => 1", "Empty => 0"},
+        true
     );
 
-    assert(switch_literal_payload_choice_default_success_result.exit_code == 0);
-    assert(switch_literal_payload_choice_default_success_result.stderr_text.empty());
-    assert(
-        switch_literal_payload_choice_default_success_result.stdout_text.find("parsed ") !=
-        std::string::npos
-    );
+    assert_parse_success(run_parse(app, switch_literal_payload_choice_default_success_path));
 
     auto switch_literal_payload_choice_missing_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_literal_payload_choice_missing_failure.or";
-    {
-        std::ofstream output(switch_literal_payload_choice_missing_failure_path);
-        output << "package demo.switches\n";
-        output << "choice MaybeInt\n";
-        output << "    Some(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: MaybeInt) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(1) => 1\n";
-        output << "        Empty => 0\n";
-    }
-
-    auto switch_literal_payload_choice_missing_failure_path_text =
-        switch_literal_payload_choice_missing_failure_path.string();
-    std::array<char const*, 3> switch_literal_payload_choice_missing_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_literal_payload_choice_missing_failure_path_text.c_str()
-    };
-    auto switch_literal_payload_choice_missing_failure_result = app.run(
-        std::span<char const* const>(
-            switch_literal_payload_choice_missing_failure_argv.data(),
-            switch_literal_payload_choice_missing_failure_argv.size()
-        )
+    write_maybe_int_exhaustiveness_fixture(
+        switch_literal_payload_choice_missing_failure_path,
+        {"Some(1) => 1", "Empty => 0"}
     );
 
-    assert(switch_literal_payload_choice_missing_failure_result.exit_code == 1);
-    assert(switch_literal_payload_choice_missing_failure_result.stdout_text.empty());
-    assert(switch_literal_payload_choice_missing_failure_result.stderr_text.find(
-               "switch is missing choice variant 'Some'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_literal_payload_choice_missing_failure_path),
+        "switch is missing choice variant 'Some'"
+    );
 
     auto switch_nested_payload_choice_default_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_nested_payload_choice_default_success.or";
-    {
-        std::ofstream output(switch_nested_payload_choice_default_success_path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(value: T)\n";
-        output << "    Blank\n";
-        output << "function classify(item: Boxed<Maybe<Int64>>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => value\n";
-        output << "        Blank => 0\n";
-        output << "        default => 1\n";
-    }
-
-    auto switch_nested_payload_choice_default_success_path_text =
-        switch_nested_payload_choice_default_success_path.string();
-    std::array<char const*, 3> switch_nested_payload_choice_default_success_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_payload_choice_default_success_path_text.c_str()
-    };
-    auto switch_nested_payload_choice_default_success_result = app.run(
-        std::span<char const* const>(
-            switch_nested_payload_choice_default_success_argv.data(),
-            switch_nested_payload_choice_default_success_argv.size()
-        )
+    write_boxed_maybe_exhaustiveness_fixture(
+        switch_nested_payload_choice_default_success_path,
+        {"Wrap(Some(value)) => value", "Blank => 0"},
+        true
     );
 
-    assert(switch_nested_payload_choice_default_success_result.exit_code == 0);
-    assert(switch_nested_payload_choice_default_success_result.stderr_text.empty());
-    assert(
-        switch_nested_payload_choice_default_success_result.stdout_text.find("parsed ") !=
-        std::string::npos
-    );
+    assert_parse_success(run_parse(app, switch_nested_payload_choice_default_success_path));
 
     auto switch_nested_payload_choice_missing_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_nested_payload_choice_missing_failure.or";
-    {
-        std::ofstream output(switch_nested_payload_choice_missing_failure_path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "choice Boxed<T>\n";
-        output << "    Wrap(value: T)\n";
-        output << "    Blank\n";
-        output << "function classify(item: Boxed<Maybe<Int64>>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Wrap(Some(value)) => value\n";
-        output << "        Blank => 0\n";
-    }
-
-    auto switch_nested_payload_choice_missing_failure_path_text =
-        switch_nested_payload_choice_missing_failure_path.string();
-    std::array<char const*, 3> switch_nested_payload_choice_missing_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_payload_choice_missing_failure_path_text.c_str()
-    };
-    auto switch_nested_payload_choice_missing_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_payload_choice_missing_failure_argv.data(),
-            switch_nested_payload_choice_missing_failure_argv.size()
-        )
+    write_boxed_maybe_exhaustiveness_fixture(
+        switch_nested_payload_choice_missing_failure_path,
+        {"Wrap(Some(value)) => value", "Blank => 0"}
     );
 
-    assert(switch_nested_payload_choice_missing_failure_result.exit_code == 1);
-    assert(switch_nested_payload_choice_missing_failure_result.stdout_text.empty());
-    assert(switch_nested_payload_choice_missing_failure_result.stderr_text.find(
-               "switch is missing choice variant 'Wrap'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_nested_payload_choice_missing_failure_path),
+        "switch is missing choice variant 'Wrap'"
+    );
 
     auto switch_partial_multi_payload_choice_default_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_partial_multi_payload_choice_default_success.or";
-    {
-        std::ofstream output(switch_partial_multi_payload_choice_default_success_path);
-        output << "package demo.switches\n";
-        output << "choice PairChoice\n";
-        output << "    Both(left: Int64, right: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: PairChoice) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Both(left, 1) => left\n";
-        output << "        Empty => 0\n";
-        output << "        default => 2\n";
-    }
-
-    auto switch_partial_multi_payload_choice_default_success_path_text =
-        switch_partial_multi_payload_choice_default_success_path.string();
-    std::array<char const*, 3> switch_partial_multi_payload_choice_default_success_argv {
-        "orisonc",
-        "--parse",
-        switch_partial_multi_payload_choice_default_success_path_text.c_str()
-    };
-    auto switch_partial_multi_payload_choice_default_success_result = app.run(
-        std::span<char const* const>(
-            switch_partial_multi_payload_choice_default_success_argv.data(),
-            switch_partial_multi_payload_choice_default_success_argv.size()
-        )
+    write_pair_choice_exhaustiveness_fixture(
+        switch_partial_multi_payload_choice_default_success_path,
+        {"Both(left, 1) => left", "Empty => 0"},
+        true
     );
 
-    assert(switch_partial_multi_payload_choice_default_success_result.exit_code == 0);
-    assert(switch_partial_multi_payload_choice_default_success_result.stderr_text.empty());
-    assert(
-        switch_partial_multi_payload_choice_default_success_result.stdout_text.find("parsed ") !=
-        std::string::npos
-    );
+    assert_parse_success(run_parse(app, switch_partial_multi_payload_choice_default_success_path));
 
     auto switch_partial_multi_payload_choice_missing_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_partial_multi_payload_choice_missing_failure.or";
-    {
-        std::ofstream output(switch_partial_multi_payload_choice_missing_failure_path);
-        output << "package demo.switches\n";
-        output << "choice PairChoice\n";
-        output << "    Both(left: Int64, right: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: PairChoice) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Both(left, 1) => left\n";
-        output << "        Empty => 0\n";
-    }
-
-    auto switch_partial_multi_payload_choice_missing_failure_path_text =
-        switch_partial_multi_payload_choice_missing_failure_path.string();
-    std::array<char const*, 3> switch_partial_multi_payload_choice_missing_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_partial_multi_payload_choice_missing_failure_path_text.c_str()
-    };
-    auto switch_partial_multi_payload_choice_missing_failure_result = app.run(
-        std::span<char const* const>(
-            switch_partial_multi_payload_choice_missing_failure_argv.data(),
-            switch_partial_multi_payload_choice_missing_failure_argv.size()
-        )
+    write_pair_choice_exhaustiveness_fixture(
+        switch_partial_multi_payload_choice_missing_failure_path,
+        {"Both(left, 1) => left", "Empty => 0"}
     );
 
-    assert(switch_partial_multi_payload_choice_missing_failure_result.exit_code == 1);
-    assert(switch_partial_multi_payload_choice_missing_failure_result.stdout_text.empty());
-    assert(switch_partial_multi_payload_choice_missing_failure_result.stderr_text.find(
-               "switch is missing choice variant 'Both'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_partial_multi_payload_choice_missing_failure_path),
+        "switch is missing choice variant 'Both'"
+    );
 
     auto switch_missing_payload_choice_variant_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_missing_payload_choice_variant_failure.or";
-    {
-        std::ofstream output(switch_missing_payload_choice_variant_failure_path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-    }
-
-    auto switch_missing_payload_choice_variant_failure_path_text =
-        switch_missing_payload_choice_variant_failure_path.string();
-    std::array<char const*, 3> switch_missing_payload_choice_variant_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_missing_payload_choice_variant_failure_path_text.c_str()
-    };
-    auto switch_missing_payload_choice_variant_failure_result = app.run(
-        std::span<char const* const>(
-            switch_missing_payload_choice_variant_failure_argv.data(),
-            switch_missing_payload_choice_variant_failure_argv.size()
-        )
+    write_maybe_choice_exhaustiveness_fixture(
+        switch_missing_payload_choice_variant_failure_path,
+        {"Some(value) => value"}
     );
 
-    assert(switch_missing_payload_choice_variant_failure_result.exit_code == 1);
-    assert(switch_missing_payload_choice_variant_failure_result.stdout_text.empty());
-    assert(switch_missing_payload_choice_variant_failure_result.stderr_text.find(
-               "switch is missing choice variant 'Empty'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_missing_payload_choice_variant_failure_path),
+        "switch is missing choice variant 'Empty'"
+    );
 
     auto switch_duplicate_payload_choice_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_duplicate_payload_choice_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(switch_duplicate_payload_choice_without_default_no_cascade_failure_path);
-        output << "package demo.switches\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-        output << "        Some(other) => other\n";
-    }
-
-    auto switch_duplicate_payload_choice_without_default_no_cascade_failure_path_text =
-        switch_duplicate_payload_choice_without_default_no_cascade_failure_path.string();
-    std::array<char const*, 3> switch_duplicate_payload_choice_without_default_no_cascade_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_duplicate_payload_choice_without_default_no_cascade_failure_path_text.c_str()
-    };
-    auto switch_duplicate_payload_choice_without_default_no_cascade_failure_result = app.run(
-        std::span<char const* const>(
-            switch_duplicate_payload_choice_without_default_no_cascade_failure_argv.data(),
-            switch_duplicate_payload_choice_without_default_no_cascade_failure_argv.size()
-        )
+    write_maybe_choice_exhaustiveness_fixture(
+        switch_duplicate_payload_choice_without_default_no_cascade_failure_path,
+        {"Some(value) => value", "Some(other) => other"}
     );
 
+    auto switch_duplicate_payload_choice_without_default_no_cascade_failure_result =
+        run_parse(app, switch_duplicate_payload_choice_without_default_no_cascade_failure_path);
     assert(switch_duplicate_payload_choice_without_default_no_cascade_failure_result.exit_code == 1);
     assert(switch_duplicate_payload_choice_without_default_no_cascade_failure_result.stdout_text.empty());
     assert(switch_duplicate_payload_choice_without_default_no_cascade_failure_result.stderr_text.find(
