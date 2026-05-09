@@ -208,6 +208,15 @@ void assert_parse_failure_contains(
     assert(result.stderr_text.find(expected_message) != std::string::npos);
 }
 
+void assert_parse_failure_contains_without(
+    orison::driver::CompileResult const& result,
+    std::string_view expected_message,
+    std::string_view unexpected_message
+) {
+    assert_parse_failure_contains(result, expected_message);
+    assert(result.stderr_text.find(unexpected_message) == std::string::npos);
+}
+
 }  // namespace
 
 int main() {
@@ -4774,14 +4783,11 @@ int main() {
 
     auto switch_wrong_choice_without_default_no_cascade_failure_result =
         run_parse(app, switch_wrong_choice_without_default_no_cascade_failure_path);
-    assert(switch_wrong_choice_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_wrong_choice_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_wrong_choice_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
-           ) != std::string::npos);
-    assert(switch_wrong_choice_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_wrong_choice_without_default_no_cascade_failure_result,
+        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'",
+        "switch is missing"
+    );
 
     auto switch_subject_specific_arity_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_subject_specific_arity_success.or";
@@ -5092,14 +5098,11 @@ int main() {
 
     auto switch_unknown_constructor_without_default_no_cascade_failure_result =
         run_parse(app, switch_unknown_constructor_without_default_no_cascade_failure_path);
-    assert(switch_unknown_constructor_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_unknown_constructor_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_unknown_constructor_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'Missing' does not match any declared choice variant"
-           ) != std::string::npos);
-    assert(switch_unknown_constructor_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_unknown_constructor_without_default_no_cascade_failure_result,
+        "switch constructor pattern 'Missing' does not match any declared choice variant",
+        "switch is missing"
+    );
 
     auto switch_nested_constructor_pattern_shape_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_constructor_pattern_shape_failure.or";
@@ -5151,14 +5154,11 @@ int main() {
 
     auto switch_constructor_payload_shape_without_default_no_cascade_failure_result =
         run_parse(app, switch_constructor_payload_shape_without_default_no_cascade_failure_path);
-    assert(switch_constructor_payload_shape_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_constructor_payload_shape_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_constructor_payload_shape_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
-           ) != std::string::npos);
-    assert(switch_constructor_payload_shape_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_constructor_payload_shape_without_default_no_cascade_failure_result,
+        "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern",
+        "switch is missing"
+    );
 
     auto switch_constructor_pattern_duplicate_binding_failure_path =
         std::filesystem::temp_directory_path() /
@@ -5211,14 +5211,11 @@ int main() {
 
     auto switch_constructor_duplicate_binding_without_default_no_cascade_failure_result =
         run_parse(app, switch_constructor_duplicate_binding_without_default_no_cascade_failure_path);
-    assert(switch_constructor_duplicate_binding_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_constructor_duplicate_binding_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_constructor_duplicate_binding_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern cannot bind 'head' more than once"
-           ) != std::string::npos);
-    assert(switch_constructor_duplicate_binding_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_constructor_duplicate_binding_without_default_no_cascade_failure_result,
+        "switch constructor pattern cannot bind 'head' more than once",
+        "switch is missing"
+    );
 
     auto switch_nested_constructor_pattern_duplicate_binding_failure_path =
         std::filesystem::temp_directory_path() /
@@ -5271,14 +5268,11 @@ int main() {
 
     auto switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_result =
         run_parse(app, switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_path);
-    assert(switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern cannot bind 'head' more than once"
-           ) != std::string::npos);
-    assert(switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_result,
+        "switch constructor pattern cannot bind 'head' more than once",
+        "switch is missing"
+    );
 
     auto switch_constructor_pattern_arity_missing_failure_path =
         std::filesystem::temp_directory_path() /
@@ -5366,14 +5360,11 @@ int main() {
 
     auto switch_constructor_pattern_arity_without_default_no_cascade_failure_result =
         run_parse(app, switch_constructor_pattern_arity_without_default_no_cascade_failure_path);
-    assert(switch_constructor_pattern_arity_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_constructor_pattern_arity_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_constructor_pattern_arity_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'Node' expects 2 payload values but received 1"
-           ) != std::string::npos);
-    assert(switch_constructor_pattern_arity_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_constructor_pattern_arity_without_default_no_cascade_failure_result,
+        "switch constructor pattern 'Node' expects 2 payload values but received 1",
+        "switch is missing"
+    );
 
     auto switch_zero_payload_constructor_arity_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
@@ -5391,14 +5382,11 @@ int main() {
 
     auto switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result =
         run_parse(app, switch_zero_payload_constructor_arity_without_default_no_cascade_failure_path);
-    assert(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'Empty' expects 0 payload values but received 1"
-           ) != std::string::npos);
-    assert(switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result,
+        "switch constructor pattern 'Empty' expects 0 payload values but received 1",
+        "switch is missing"
+    );
 
     auto switch_pattern_mix_constructor_value_failure_path =
         std::filesystem::temp_directory_path() /
@@ -5489,14 +5477,11 @@ int main() {
 
     auto switch_pattern_mix_without_default_no_cascade_failure_result =
         run_parse(app, switch_pattern_mix_without_default_no_cascade_failure_path);
-    assert(switch_pattern_mix_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_pattern_mix_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_pattern_mix_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch cannot mix value patterns with constructor patterns"
-           ) != std::string::npos);
-    assert(switch_pattern_mix_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing choice variant"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_pattern_mix_without_default_no_cascade_failure_result,
+        "switch cannot mix value patterns with constructor patterns",
+        "switch is missing choice variant"
+    );
 
     auto switch_value_pattern_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_value_pattern_type_failure.or";
@@ -5613,14 +5598,11 @@ int main() {
         )
     );
 
-    assert(switch_duplicate_bool_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_duplicate_bool_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_duplicate_bool_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch value pattern 'true' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_bool_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing boolean value pattern"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_bool_without_default_no_cascade_failure_result,
+        "switch value pattern 'true' is duplicated",
+        "switch is missing boolean value pattern"
+    );
 
     auto switch_duplicate_string_value_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_string_value_failure.or";
@@ -5732,14 +5714,11 @@ int main() {
 
     auto switch_duplicate_bool_redundant_default_no_cascade_failure_result =
         run_parse(app, switch_duplicate_bool_redundant_default_no_cascade_failure_path);
-    assert(switch_duplicate_bool_redundant_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_duplicate_bool_redundant_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_duplicate_bool_redundant_default_no_cascade_failure_result.stderr_text.find(
-               "switch value pattern 'false' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_bool_redundant_default_no_cascade_failure_result.stderr_text.find(
-               "switch default case is redundant"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_bool_redundant_default_no_cascade_failure_result,
+        "switch value pattern 'false' is duplicated",
+        "switch default case is redundant"
+    );
 
     auto switch_exhaustive_bool_without_default_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_exhaustive_bool_success.or";
@@ -5857,14 +5836,11 @@ int main() {
 
     auto switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result =
         run_parse(app, switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path);
-    assert(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'Closed' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result.stderr_text.find(
-               "switch default case is redundant"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result,
+        "switch constructor pattern 'Closed' is duplicated",
+        "switch default case is redundant"
+    );
 
     auto switch_exhaustive_choice_without_default_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_exhaustive_choice_success.or";
@@ -6067,14 +6043,11 @@ int main() {
 
     auto switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result =
         run_parse(app, switch_duplicate_payload_choice_redundant_default_no_cascade_failure_path);
-    assert(switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'First(...)' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result.stderr_text.find(
-               "switch default case is redundant"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result,
+        "switch constructor pattern 'First(...)' is duplicated",
+        "switch default case is redundant"
+    );
 
     auto switch_first_missing_multi_payload_choice_variant_failure_path =
         std::filesystem::temp_directory_path() /
@@ -6112,14 +6085,11 @@ int main() {
 
     auto switch_duplicate_multi_payload_choice_no_cascade_failure_result =
         run_parse(app, switch_duplicate_multi_payload_choice_no_cascade_failure_path);
-    assert(switch_duplicate_multi_payload_choice_no_cascade_failure_result.exit_code == 1);
-    assert(switch_duplicate_multi_payload_choice_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_duplicate_multi_payload_choice_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'First(...)' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_multi_payload_choice_no_cascade_failure_result.stderr_text.find(
-               "switch is missing choice variant"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_multi_payload_choice_no_cascade_failure_result,
+        "switch constructor pattern 'First(...)' is duplicated",
+        "switch is missing choice variant"
+    );
 
     auto switch_duplicate_payload_choice_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
@@ -6131,14 +6101,11 @@ int main() {
 
     auto switch_duplicate_payload_choice_without_default_no_cascade_failure_result =
         run_parse(app, switch_duplicate_payload_choice_without_default_no_cascade_failure_path);
-    assert(switch_duplicate_payload_choice_without_default_no_cascade_failure_result.exit_code == 1);
-    assert(switch_duplicate_payload_choice_without_default_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_duplicate_payload_choice_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'Some(...)' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_payload_choice_without_default_no_cascade_failure_result.stderr_text.find(
-               "switch is missing choice variant"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_payload_choice_without_default_no_cascade_failure_result,
+        "switch constructor pattern 'Some(...)' is duplicated",
+        "switch is missing choice variant"
+    );
 
     auto switch_duplicate_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_choice_constructor_failure.or";
@@ -6170,14 +6137,11 @@ int main() {
         )
     );
 
-    assert(switch_duplicate_choice_constructor_failure_result.exit_code == 1);
-    assert(switch_duplicate_choice_constructor_failure_result.stdout_text.empty());
-    assert(switch_duplicate_choice_constructor_failure_result.stderr_text.find(
-               "switch constructor pattern 'Closed' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_choice_constructor_failure_result.stderr_text.find(
-               "switch is missing zero-payload choice variant"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_choice_constructor_failure_result,
+        "switch constructor pattern 'Closed' is duplicated",
+        "switch is missing zero-payload choice variant"
+    );
 
     auto switch_duplicate_payload_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
@@ -6245,14 +6209,11 @@ int main() {
         )
     );
 
-    assert(switch_duplicate_payload_choice_constructor_no_cascade_failure_result.exit_code == 1);
-    assert(switch_duplicate_payload_choice_constructor_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_duplicate_payload_choice_constructor_no_cascade_failure_result.stderr_text.find(
-               "switch constructor pattern 'Both(...)' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_payload_choice_constructor_no_cascade_failure_result.stderr_text.find(
-               "cannot bind 'value' more than once"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_payload_choice_constructor_no_cascade_failure_result,
+        "switch constructor pattern 'Both(...)' is duplicated",
+        "cannot bind 'value' more than once"
+    );
 
     auto switch_duplicate_literal_payload_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
@@ -6284,14 +6245,11 @@ int main() {
         )
     );
 
-    assert(switch_duplicate_literal_payload_choice_constructor_failure_result.exit_code == 1);
-    assert(switch_duplicate_literal_payload_choice_constructor_failure_result.stdout_text.empty());
-    assert(switch_duplicate_literal_payload_choice_constructor_failure_result.stderr_text.find(
-               "switch constructor pattern 'Int(...)' is duplicated"
-           ) != std::string::npos);
-    assert(switch_duplicate_literal_payload_choice_constructor_failure_result.stderr_text.find(
-               "switch value pattern"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_duplicate_literal_payload_choice_constructor_failure_result,
+        "switch constructor pattern 'Int(...)' is duplicated",
+        "switch value pattern"
+    );
 
     auto switch_equivalent_integer_literal_payload_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
@@ -6359,14 +6317,11 @@ int main() {
         )
     );
 
-    assert(switch_wildcard_then_literal_payload_choice_constructor_failure_result.exit_code == 1);
-    assert(switch_wildcard_then_literal_payload_choice_constructor_failure_result.stdout_text.empty());
-    assert(switch_wildcard_then_literal_payload_choice_constructor_failure_result.stderr_text.find(
-               "switch constructor pattern 'Int(...)' is duplicated"
-           ) != std::string::npos);
-    assert(switch_wildcard_then_literal_payload_choice_constructor_failure_result.stderr_text.find(
-               "switch value pattern"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_wildcard_then_literal_payload_choice_constructor_failure_result,
+        "switch constructor pattern 'Int(...)' is duplicated",
+        "switch value pattern"
+    );
 
     auto switch_literal_then_wildcard_payload_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
@@ -6559,14 +6514,11 @@ int main() {
 
     auto switch_nonfinal_default_branch_no_cascade_failure_result =
         run_parse(app, switch_nonfinal_default_branch_no_cascade_failure_path);
-    assert(switch_nonfinal_default_branch_no_cascade_failure_result.exit_code == 1);
-    assert(switch_nonfinal_default_branch_no_cascade_failure_result.stdout_text.empty());
-    assert(switch_nonfinal_default_branch_no_cascade_failure_result.stderr_text.find(
-               "switch default case must be the final case"
-           ) != std::string::npos);
-    assert(switch_nonfinal_default_branch_no_cascade_failure_result.stderr_text.find(
-               "await expression is only valid inside async functions"
-           ) == std::string::npos);
+    assert_parse_failure_contains_without(
+        switch_nonfinal_default_branch_no_cascade_failure_result,
+        "switch default case must be the final case",
+        "await expression is only valid inside async functions"
+    );
 
     auto break_outside_loop_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
