@@ -4452,6 +4452,30 @@ int main() {
 
     assert_wrap_duplicate_parse_failure(switch_deep_nested_literal_wildcard_payload_overlap_failure_result);
 
+    auto switch_mismatched_deep_nested_zero_payload_success_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_mismatched_deep_nested_zero_payload_success.or";
+    write_boxed_outer_maybe_switch_fixture(
+        switch_mismatched_deep_nested_zero_payload_success_path,
+        {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Empty)) => 2"}
+    );
+    auto switch_mismatched_deep_nested_zero_payload_success_result =
+        run_parse(app, switch_mismatched_deep_nested_zero_payload_success_path);
+
+    assert_parse_success(switch_mismatched_deep_nested_zero_payload_success_result);
+
+    auto switch_duplicate_deep_nested_zero_payload_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_deep_nested_zero_payload_failure.or";
+    write_boxed_outer_maybe_switch_fixture(
+        switch_duplicate_deep_nested_zero_payload_failure_path,
+        {"Wrap(Hold(Empty)) => 1", "Wrap(Hold(Empty)) => 2"}
+    );
+    auto switch_duplicate_deep_nested_zero_payload_failure_result =
+        run_parse(app, switch_duplicate_deep_nested_zero_payload_failure_path);
+
+    assert_wrap_duplicate_parse_failure(switch_duplicate_deep_nested_zero_payload_failure_result);
+
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";
     {

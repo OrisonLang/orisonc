@@ -65,3 +65,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-08: deeper nested constructor overlap now has semantics and CLI coverage, so `Wrap(Hold(Some(value)))` followed by `Wrap(Hold(Some(other)))` is rejected through recursive payload-key comparison beyond one nested constructor level.
 - 2026-05-08: deeper nested constructor non-overlap now has complementary coverage too, so `Wrap(Hold(Some(1)))` followed by `Wrap(Hold(Some(2)))` remains valid when the innermost literal payloads differ.
 - 2026-05-08: deeper nested wildcard/literal constructor overlap now has bidirectional coverage, so `Wrap(Hold(Some(value)))` and `Wrap(Hold(Some(1)))` collide in either order through the recursive payload-key path.
+- 2026-05-08: deeper nested zero-payload constructor distinction now has coverage too, so `Wrap(Hold(Some(value)))` and `Wrap(Hold(Empty))` remain distinct while duplicate `Wrap(Hold(Empty))` arms are rejected.
