@@ -2163,6 +2163,24 @@ void test_switch_rejects_redundant_bool_default_failure() {
            "switch default case is redundant after true and false value patterns");
 }
 
+void test_switch_duplicate_bool_suppresses_redundant_default_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_bool_redundant_default_no_cascade.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        false => 0\n";
+        output << "        false => 2\n";
+        output << "        default => 3\n";
+    }
+
+    auto diagnostics = analyze_orison_fixture(path);
+    assert_single_diagnostic(diagnostics, 6, "switch value pattern 'false' is duplicated");
+}
+
 void test_switch_accepts_exhaustive_bool_without_default_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_exhaustive_bool_without_default_success.or";
@@ -8076,6 +8094,7 @@ int main() {
     test_switch_rejects_duplicate_string_value_pattern_failure();
     test_switch_rejects_duplicate_integer_cast_value_pattern_failure();
     test_switch_rejects_redundant_bool_default_failure();
+    test_switch_duplicate_bool_suppresses_redundant_default_failure();
     test_switch_accepts_exhaustive_bool_without_default_success();
     test_switch_rejects_missing_bool_value_pattern_failure();
     test_switch_rejects_redundant_zero_payload_choice_default_failure();

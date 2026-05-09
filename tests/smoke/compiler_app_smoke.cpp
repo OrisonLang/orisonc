@@ -5716,6 +5716,31 @@ int main() {
                "switch default case is redundant after true and false value patterns"
            ) != std::string::npos);
 
+    auto switch_duplicate_bool_redundant_default_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() /
+        "orison_compiler_app_switch_duplicate_bool_redundant_default_no_cascade_failure.or";
+    {
+        std::ofstream output(switch_duplicate_bool_redundant_default_no_cascade_failure_path);
+        output << "package demo.switches\n";
+        output << "function classify(flag: Bool) -> Int64\n";
+        output << "    switch flag\n";
+        output << "        true => 1\n";
+        output << "        false => 0\n";
+        output << "        false => 2\n";
+        output << "        default => 3\n";
+    }
+
+    auto switch_duplicate_bool_redundant_default_no_cascade_failure_result =
+        run_parse(app, switch_duplicate_bool_redundant_default_no_cascade_failure_path);
+    assert(switch_duplicate_bool_redundant_default_no_cascade_failure_result.exit_code == 1);
+    assert(switch_duplicate_bool_redundant_default_no_cascade_failure_result.stdout_text.empty());
+    assert(switch_duplicate_bool_redundant_default_no_cascade_failure_result.stderr_text.find(
+               "switch value pattern 'false' is duplicated"
+           ) != std::string::npos);
+    assert(switch_duplicate_bool_redundant_default_no_cascade_failure_result.stderr_text.find(
+               "switch default case is redundant"
+           ) == std::string::npos);
+
     auto switch_exhaustive_bool_without_default_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_exhaustive_bool_success.or";
     {

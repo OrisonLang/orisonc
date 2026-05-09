@@ -2866,7 +2866,8 @@ private:
                         valid_pattern = false;
                     }
 
-                    if (switch_subject_type_name == "Bool" && saw_true_value_pattern && saw_false_value_pattern) {
+                    if (switch_patterns_valid && switch_subject_type_name == "Bool" && saw_true_value_pattern &&
+                        saw_false_value_pattern) {
                         diagnostics_.error(
                             switch_case_line(switch_case),
                             "switch default case is redundant after true and false value patterns"
@@ -2874,7 +2875,7 @@ private:
                         valid_pattern = false;
                     }
 
-                    if (choice_coverage.all_zero_payload_variants_covered()) {
+                    if (switch_patterns_valid && choice_coverage.all_zero_payload_variants_covered()) {
                         diagnostics_.error(
                             switch_case_line(switch_case),
                             "switch default case is redundant after all zero-payload choice variants are covered"
@@ -2882,7 +2883,7 @@ private:
                         valid_pattern = false;
                     }
 
-                    if (choice_coverage.all_payload_bearing_variants_covered()) {
+                    if (switch_patterns_valid && choice_coverage.all_payload_bearing_variants_covered()) {
                         diagnostics_.error(
                             switch_case_line(switch_case),
                             "switch default case is redundant after all choice variants are covered"
