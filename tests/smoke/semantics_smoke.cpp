@@ -265,6 +265,19 @@ void write_maybe_int_exhaustiveness_fixture(
     }
 }
 
+void write_value_then_constructor_pattern_mix_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice MaybeInt\n";
+    output << "    Empty\n";
+    output << "    Some(value: Int64)\n";
+    output << "function classify(flag: Bool) -> Int64\n";
+    output << "    switch flag\n";
+    output << "        true => 1\n";
+    output << "        Some(value) => value\n";
+    output << "        default => 0\n";
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1654,93 +1667,26 @@ void test_switch_zero_payload_constructor_arity_without_default_does_not_cascade
 void test_switch_rejects_constructor_then_value_pattern_mix_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_pattern_mix_constructor_value_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Empty => 0\n";
-        output << "        1 => 1\n";
-        output << "        default => 0\n";
-    }
+    write_list_switch_fixture(path, {"Empty => 0", "1 => 1"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message ==
-           "switch cannot mix value patterns with constructor patterns");
+    assert_fixture_single_diagnostic(path, 8, "switch cannot mix value patterns with constructor patterns");
 }
 
 void test_switch_rejects_value_then_constructor_pattern_mix_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_pattern_mix_value_constructor_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice MaybeInt\n";
-        output << "    Empty\n";
-        output << "    Some(value: Int64)\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        true => 1\n";
-        output << "        Some(value) => value\n";
-        output << "        default => 0\n";
-    }
+    write_value_then_constructor_pattern_mix_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message ==
-           "switch cannot mix value patterns with constructor patterns");
+    assert_fixture_single_diagnostic(path, 8, "switch cannot mix value patterns with constructor patterns");
 }
 
 void test_switch_pattern_mix_without_default_does_not_cascade_to_missing_variant_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_pattern_mix_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Some(value) => value\n";
-        output << "        1 => 1\n";
-    }
+    write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "1 => 1"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert_single_diagnostic(diagnostics, 8, "switch cannot mix value patterns with constructor patterns");
+    assert_fixture_single_diagnostic(path, 8, "switch cannot mix value patterns with constructor patterns");
 }
 
 void test_switch_rejects_mismatched_value_pattern_type_failure() {
