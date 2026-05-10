@@ -1572,20 +1572,7 @@ void test_switch_constructor_pattern_rejects_duplicate_binding_names_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_duplicate_binding_failure.or";
     write_list_switch_fixture(path, {"Node(head, head) => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "switch constructor pattern cannot bind 'head' more than once");
+    assert_fixture_single_diagnostic(path, 7, "switch constructor pattern cannot bind 'head' more than once");
 }
 
 void test_switch_constructor_duplicate_binding_without_default_does_not_cascade_failure() {
@@ -1594,16 +1581,7 @@ void test_switch_constructor_duplicate_binding_without_default_does_not_cascade_
         "orison_semantics_switch_constructor_duplicate_binding_without_default_no_cascade_failure.or";
     write_list_switch_fixture(path, {"Node(head, head) => 0"}, false, false);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert_single_diagnostic(diagnostics, 7, "switch constructor pattern cannot bind 'head' more than once");
+    assert_fixture_single_diagnostic(path, 7, "switch constructor pattern cannot bind 'head' more than once");
 }
 
 void test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure() {
@@ -1611,20 +1589,7 @@ void test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_fail
                 "orison_semantics_switch_nested_constructor_pattern_duplicate_binding_failure.or";
     write_list_switch_fixture(path, {"Node(head, Node(head, tail)) => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "switch constructor pattern cannot bind 'head' more than once");
+    assert_fixture_single_diagnostic(path, 7, "switch constructor pattern cannot bind 'head' more than once");
 }
 
 void test_switch_nested_constructor_duplicate_binding_without_default_does_not_cascade_failure() {
@@ -1633,16 +1598,7 @@ void test_switch_nested_constructor_duplicate_binding_without_default_does_not_c
         "orison_semantics_switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure.or";
     write_list_switch_fixture(path, {"Node(head, Node(head, tail)) => 0"}, false, false);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert_single_diagnostic(diagnostics, 7, "switch constructor pattern cannot bind 'head' more than once");
+    assert_fixture_single_diagnostic(path, 7, "switch constructor pattern cannot bind 'head' more than once");
 }
 
 void test_switch_constructor_pattern_rejects_missing_payload_values_failure() {

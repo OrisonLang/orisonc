@@ -5037,25 +5037,10 @@ int main() {
         "orison_compiler_app_switch_constructor_pattern_duplicate_binding_failure.or";
     write_list_switch_fixture(switch_constructor_pattern_duplicate_binding_failure_path, {"Node(head, head) => 0"}, true);
 
-    auto switch_constructor_pattern_duplicate_binding_failure_path_text =
-        switch_constructor_pattern_duplicate_binding_failure_path.string();
-    std::array<char const*, 3> switch_constructor_pattern_duplicate_binding_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_constructor_pattern_duplicate_binding_failure_path_text.c_str()
-    };
-    auto switch_constructor_pattern_duplicate_binding_failure_result = app.run(
-        std::span<char const* const>(
-            switch_constructor_pattern_duplicate_binding_failure_argv.data(),
-            switch_constructor_pattern_duplicate_binding_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_constructor_pattern_duplicate_binding_failure_path),
+        "switch constructor pattern cannot bind 'head' more than once"
     );
-
-    assert(switch_constructor_pattern_duplicate_binding_failure_result.exit_code == 1);
-    assert(switch_constructor_pattern_duplicate_binding_failure_result.stdout_text.empty());
-    assert(switch_constructor_pattern_duplicate_binding_failure_result.stderr_text.find(
-               "switch constructor pattern cannot bind 'head' more than once"
-           ) != std::string::npos);
 
     auto switch_constructor_duplicate_binding_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
@@ -5084,25 +5069,10 @@ int main() {
         true
     );
 
-    auto switch_nested_constructor_pattern_duplicate_binding_failure_path_text =
-        switch_nested_constructor_pattern_duplicate_binding_failure_path.string();
-    std::array<char const*, 3> switch_nested_constructor_pattern_duplicate_binding_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_constructor_pattern_duplicate_binding_failure_path_text.c_str()
-    };
-    auto switch_nested_constructor_pattern_duplicate_binding_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_constructor_pattern_duplicate_binding_failure_argv.data(),
-            switch_nested_constructor_pattern_duplicate_binding_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_nested_constructor_pattern_duplicate_binding_failure_path),
+        "switch constructor pattern cannot bind 'head' more than once"
     );
-
-    assert(switch_nested_constructor_pattern_duplicate_binding_failure_result.exit_code == 1);
-    assert(switch_nested_constructor_pattern_duplicate_binding_failure_result.stdout_text.empty());
-    assert(switch_nested_constructor_pattern_duplicate_binding_failure_result.stderr_text.find(
-               "switch constructor pattern cannot bind 'head' more than once"
-           ) != std::string::npos);
 
     auto switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
