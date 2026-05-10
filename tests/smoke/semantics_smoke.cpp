@@ -183,6 +183,21 @@ void write_nested_list_raw_write_fixture(std::filesystem::path const& path, std:
     output << "        default => return\n";
 }
 
+void write_nested_list_async_capture_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice List<T>\n";
+    output << "    Empty\n";
+    output << "    Node(head: T, tail: Box<List<T>>)\n";
+    output << "async function sum(xs: List<Int64>) -> Int64\n";
+    output << "    switch xs\n";
+    output << "        Node(head, Node(next, tail)) =>\n";
+    output << "            let request_task = task\n";
+    output << "                next\n";
+    output << "            return await request_task\n";
+    output << "        default => 0\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -330,6 +345,13 @@ void assert_fixture_single_diagnostic(
 
 void assert_fixture_success(std::filesystem::path const& path) {
     assert(!analyze_orison_fixture(path).has_errors());
+}
+
+void assert_fixture_single_capture(std::filesystem::path const& path, std::string_view expected_name) {
+    auto diagnostics = analyze_orison_fixture(path);
+    assert(!diagnostics.has_errors());
+    assert(diagnostics.concurrency_captures.size() == 1);
+    assert(diagnostics.concurrency_captures.front().name == expected_name);
 }
 
 void test_await_inside_async_function_success() {
@@ -1260,33 +1282,9 @@ void test_switch_unknown_constructor_without_default_does_not_cascade_to_missing
 void test_switch_nested_constructor_pattern_binds_nested_names_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_constructor_pattern_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "async function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head, Node(next, tail)) =>\n";
-        output << "            let request_task = task\n";
-        output << "                next\n";
-        output << "            return await request_task\n";
-        output << "        default => 0\n";
-    }
+    write_nested_list_async_capture_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
-    assert(diagnostics.concurrency_captures.size() == 1);
-    assert(diagnostics.concurrency_captures.front().name == "next");
+    assert_fixture_single_capture(path, "next");
 }
 
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_success() {
