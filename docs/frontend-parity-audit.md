@@ -97,3 +97,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-09: nested list async-capture smoke fixtures now share local `List<T>` source writers across semantic and CLI tests, keeping `Node(head, Node(next, tail))` binding and `next` task-capture coverage aligned.
 - 2026-05-09: top-level list async-capture smoke fixtures now share local `List<T>` source writers across semantic and CLI tests, keeping `Node(head, tail)` binding and immutable outer-local capture coverage aligned.
 - 2026-05-09: unknown constructor no-cascade smoke fixtures now share local `Maybe<T>` source writers across semantic and CLI tests, keeping the primary `Missing(...)` diagnostic aligned.
+- 2026-05-09: invalid constructor payload-shape smoke assertions now share the existing focused semantic and CLI failure helpers, keeping the `Node(head + 1, tail)` diagnostic checks aligned with the shared `List<T>` fixture writer.

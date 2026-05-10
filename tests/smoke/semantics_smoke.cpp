@@ -1547,20 +1547,11 @@ void test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failur
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_constructor_pattern_shape_failure.or";
     write_list_switch_fixture(path, {"Node(head + 1, tail) => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern");
+    assert_fixture_single_diagnostic(
+        path,
+        7,
+        "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
+    );
 }
 
 void test_switch_constructor_payload_shape_without_default_does_not_cascade_failure() {
@@ -1569,17 +1560,8 @@ void test_switch_constructor_payload_shape_without_default_does_not_cascade_fail
         "orison_semantics_switch_constructor_payload_shape_without_default_no_cascade_failure.or";
     write_list_switch_fixture(path, {"Node(head + 1, tail) => 0"}, false, false);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert_single_diagnostic(
-        diagnostics,
+    assert_fixture_single_diagnostic(
+        path,
         7,
         "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
     );
