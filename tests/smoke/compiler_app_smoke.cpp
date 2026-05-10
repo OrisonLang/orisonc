@@ -5097,50 +5097,20 @@ int main() {
         "orison_compiler_app_switch_constructor_pattern_arity_missing_failure.or";
     write_list_switch_fixture(switch_constructor_pattern_arity_missing_failure_path, {"Node(head) => 0"}, true);
 
-    auto switch_constructor_pattern_arity_missing_failure_path_text =
-        switch_constructor_pattern_arity_missing_failure_path.string();
-    std::array<char const*, 3> switch_constructor_pattern_arity_missing_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_constructor_pattern_arity_missing_failure_path_text.c_str()
-    };
-    auto switch_constructor_pattern_arity_missing_failure_result = app.run(
-        std::span<char const* const>(
-            switch_constructor_pattern_arity_missing_failure_argv.data(),
-            switch_constructor_pattern_arity_missing_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_constructor_pattern_arity_missing_failure_path),
+        "switch constructor pattern 'Node' expects 2 payload values but received 1"
     );
-
-    assert(switch_constructor_pattern_arity_missing_failure_result.exit_code == 1);
-    assert(switch_constructor_pattern_arity_missing_failure_result.stdout_text.empty());
-    assert(switch_constructor_pattern_arity_missing_failure_result.stderr_text.find(
-               "switch constructor pattern 'Node' expects 2 payload values but received 1"
-           ) != std::string::npos);
 
     auto switch_constructor_pattern_arity_extra_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_constructor_pattern_arity_extra_failure.or";
     write_list_switch_fixture(switch_constructor_pattern_arity_extra_failure_path, {"Empty(value) => 0"}, true);
 
-    auto switch_constructor_pattern_arity_extra_failure_path_text =
-        switch_constructor_pattern_arity_extra_failure_path.string();
-    std::array<char const*, 3> switch_constructor_pattern_arity_extra_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_constructor_pattern_arity_extra_failure_path_text.c_str()
-    };
-    auto switch_constructor_pattern_arity_extra_failure_result = app.run(
-        std::span<char const* const>(
-            switch_constructor_pattern_arity_extra_failure_argv.data(),
-            switch_constructor_pattern_arity_extra_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_constructor_pattern_arity_extra_failure_path),
+        "switch constructor pattern 'Empty' expects 0 payload values but received 1"
     );
-
-    assert(switch_constructor_pattern_arity_extra_failure_result.exit_code == 1);
-    assert(switch_constructor_pattern_arity_extra_failure_result.stdout_text.empty());
-    assert(switch_constructor_pattern_arity_extra_failure_result.stderr_text.find(
-               "switch constructor pattern 'Empty' expects 0 payload values but received 1"
-           ) != std::string::npos);
 
     auto switch_constructor_pattern_arity_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /

@@ -1606,20 +1606,11 @@ void test_switch_constructor_pattern_rejects_missing_payload_values_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_arity_missing_failure.or";
     write_list_switch_fixture(path, {"Node(head) => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "switch constructor pattern 'Node' expects 2 payload values but received 1");
+    assert_fixture_single_diagnostic(
+        path,
+        7,
+        "switch constructor pattern 'Node' expects 2 payload values but received 1"
+    );
 }
 
 void test_switch_constructor_pattern_rejects_extra_payload_values_failure() {
@@ -1627,20 +1618,11 @@ void test_switch_constructor_pattern_rejects_extra_payload_values_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_arity_extra_failure.or";
     write_list_switch_fixture(path, {"Empty(value) => 0"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "switch constructor pattern 'Empty' expects 0 payload values but received 1");
+    assert_fixture_single_diagnostic(
+        path,
+        7,
+        "switch constructor pattern 'Empty' expects 0 payload values but received 1"
+    );
 }
 
 void test_switch_constructor_pattern_arity_without_default_does_not_cascade_to_missing_variant_failure() {
