@@ -89,3 +89,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-09: default structural diagnostics now have branch-analysis no-cascade coverage, so non-final and duplicate semantic defaults suppress unrelated diagnostics from their branch bodies.
 - 2026-05-09: CLI switch no-cascade assertions now share a parse-failure helper that checks both required primary diagnostics and forbidden cascade diagnostics.
 - 2026-05-09: semantic switch fixture assertions now share a fixture-level single-diagnostic helper, reducing repeated analyze-then-assert boilerplate across no-cascade and exhaustiveness coverage.
+- 2026-05-09: `List<T>` constructor-pattern smoke fixtures now share local source writers across semantic and CLI tests, keeping invalid payload shape, duplicate binding, and arity diagnostics aligned.

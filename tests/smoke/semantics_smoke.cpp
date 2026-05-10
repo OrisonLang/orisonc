@@ -72,6 +72,27 @@ void write_boxed_outer_maybe_switch_fixture(
     output << "        default => 0\n";
 }
 
+void write_list_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool async_function = false,
+    bool include_default = true
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice List<T>\n";
+    output << "    Empty\n";
+    output << "    Node(head: T, tail: Box<List<T>>)\n";
+    output << (async_function ? "async " : "") << "function sum(xs: List<Int64>) -> Int64\n";
+    output << "    switch xs\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1602,17 +1623,7 @@ void test_switch_nested_constructor_pattern_uses_payload_specific_arity_success(
 void test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_constructor_pattern_shape_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "async function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head + 1, tail) => 0\n";
-        output << "        default => 0\n";
-    }
+    write_list_switch_fixture(path, {"Node(head + 1, tail) => 0"}, true);
 
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1634,16 +1645,7 @@ void test_switch_constructor_payload_shape_without_default_does_not_cascade_fail
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_constructor_payload_shape_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head + 1, tail) => 0\n";
-    }
+    write_list_switch_fixture(path, {"Node(head + 1, tail) => 0"}, false, false);
 
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1664,17 +1666,7 @@ void test_switch_constructor_payload_shape_without_default_does_not_cascade_fail
 void test_switch_constructor_pattern_rejects_duplicate_binding_names_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_duplicate_binding_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "async function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head, head) => 0\n";
-        output << "        default => 0\n";
-    }
+    write_list_switch_fixture(path, {"Node(head, head) => 0"}, true);
 
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1696,16 +1688,7 @@ void test_switch_constructor_duplicate_binding_without_default_does_not_cascade_
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_constructor_duplicate_binding_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head, head) => 0\n";
-    }
+    write_list_switch_fixture(path, {"Node(head, head) => 0"}, false, false);
 
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1722,17 +1705,7 @@ void test_switch_constructor_duplicate_binding_without_default_does_not_cascade_
 void test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_switch_nested_constructor_pattern_duplicate_binding_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "async function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head, Node(head, tail)) => 0\n";
-        output << "        default => 0\n";
-    }
+    write_list_switch_fixture(path, {"Node(head, Node(head, tail)) => 0"}, true);
 
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1754,16 +1727,7 @@ void test_switch_nested_constructor_duplicate_binding_without_default_does_not_c
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head, Node(head, tail)) => 0\n";
-    }
+    write_list_switch_fixture(path, {"Node(head, Node(head, tail)) => 0"}, false, false);
 
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1780,17 +1744,7 @@ void test_switch_nested_constructor_duplicate_binding_without_default_does_not_c
 void test_switch_constructor_pattern_rejects_missing_payload_values_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_arity_missing_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "async function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head) => 0\n";
-        output << "        default => 0\n";
-    }
+    write_list_switch_fixture(path, {"Node(head) => 0"}, true);
 
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1811,17 +1765,7 @@ void test_switch_constructor_pattern_rejects_missing_payload_values_failure() {
 void test_switch_constructor_pattern_rejects_extra_payload_values_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_arity_extra_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "async function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Empty(value) => 0\n";
-        output << "        default => 0\n";
-    }
+    write_list_switch_fixture(path, {"Empty(value) => 0"}, true);
 
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -1843,16 +1787,7 @@ void test_switch_constructor_pattern_arity_without_default_does_not_cascade_to_m
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_constructor_pattern_arity_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Node(head) => 0\n";
-    }
+    write_list_switch_fixture(path, {"Node(head) => 0"}, false, false);
 
     assert_fixture_single_diagnostic(
         path,
@@ -1865,16 +1800,7 @@ void test_switch_zero_payload_constructor_arity_without_default_does_not_cascade
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_zero_payload_constructor_arity_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "function sum(xs: List<Int64>) -> Int64\n";
-        output << "    switch xs\n";
-        output << "        Empty(value) => 0\n";
-    }
+    write_list_switch_fixture(path, {"Empty(value) => 0"}, false, false);
 
     assert_fixture_single_diagnostic(
         path,
