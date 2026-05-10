@@ -170,6 +170,17 @@ void write_maybe_raw_write_fixture(std::filesystem::path const& path, std::strin
     output << "        default => return\n";
 }
 
+void write_maybe_unknown_constructor_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << "function read(item: Maybe<Int64>) -> Int64\n";
+    output << "    switch item\n";
+    output << "        Missing(value) => value\n";
+}
+
 void write_nested_list_raw_write_fixture(std::filesystem::path const& path, std::string_view list_payload_type) {
     std::ofstream output(path);
     output << "package demo.patterns\n";
@@ -1264,16 +1275,7 @@ void test_switch_unknown_constructor_without_default_does_not_cascade_to_missing
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_unknown_constructor_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "    Empty\n";
-        output << "function read(item: Maybe<Int64>) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Missing(value) => value\n";
-    }
+    write_maybe_unknown_constructor_fixture(path);
 
     assert_fixture_single_diagnostic(
         path,
