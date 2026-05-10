@@ -157,6 +157,19 @@ void write_envelope_pair_flag_switch_with_maybe_same_name_fixture(std::filesyste
     output << "        default => 0\n";
 }
 
+void write_maybe_raw_write_fixture(std::filesystem::path const& path, std::string_view maybe_payload_type) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    None\n";
+    output << "    Some(value: T)\n";
+    output << "unsafe function write_word(maybe: Maybe<" << maybe_payload_type;
+    output << ">, out: Pointer<UInt32>) -> Unit\n";
+    output << "    switch maybe\n";
+    output << "        Some(value) => raw_write(out, value)\n";
+    output << "        default => return\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -4748,70 +4761,19 @@ int main() {
     auto switch_generic_constructor_payload_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_generic_constructor_payload_success.or";
-    {
-        std::ofstream output(switch_generic_constructor_payload_success_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "unsafe function write_word(maybe: Maybe<Int32>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    switch maybe\n";
-        output << "        Some(value) => raw_write(out, value)\n";
-        output << "        default => return\n";
-    }
+    write_maybe_raw_write_fixture(switch_generic_constructor_payload_success_path, "Int32");
 
-    auto switch_generic_constructor_payload_success_path_text =
-        switch_generic_constructor_payload_success_path.string();
-    std::array<char const*, 3> switch_generic_constructor_payload_success_argv {
-        "orisonc",
-        "--parse",
-        switch_generic_constructor_payload_success_path_text.c_str()
-    };
-    auto switch_generic_constructor_payload_success_result = app.run(
-        std::span<char const* const>(
-            switch_generic_constructor_payload_success_argv.data(),
-            switch_generic_constructor_payload_success_argv.size()
-        )
-    );
-
-    assert(switch_generic_constructor_payload_success_result.exit_code == 0);
-    assert(switch_generic_constructor_payload_success_result.stderr_text.empty());
-    assert(switch_generic_constructor_payload_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, switch_generic_constructor_payload_success_path));
 
     auto switch_generic_constructor_payload_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_generic_constructor_payload_failure.or";
-    {
-        std::ofstream output(switch_generic_constructor_payload_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "unsafe function write_word(maybe: Maybe<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    switch maybe\n";
-        output << "        Some(value) => raw_write(out, value)\n";
-        output << "        default => return\n";
-    }
+    write_maybe_raw_write_fixture(switch_generic_constructor_payload_failure_path, "Byte");
 
-    auto switch_generic_constructor_payload_failure_path_text =
-        switch_generic_constructor_payload_failure_path.string();
-    std::array<char const*, 3> switch_generic_constructor_payload_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_generic_constructor_payload_failure_path_text.c_str()
-    };
-    auto switch_generic_constructor_payload_failure_result = app.run(
-        std::span<char const* const>(
-            switch_generic_constructor_payload_failure_argv.data(),
-            switch_generic_constructor_payload_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_generic_constructor_payload_failure_path),
+        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
     );
-
-    assert(switch_generic_constructor_payload_failure_result.exit_code == 1);
-    assert(switch_generic_constructor_payload_failure_result.stdout_text.empty());
-    assert(switch_generic_constructor_payload_failure_result.stderr_text.find(
-               "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
 
     auto switch_wrong_choice_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_wrong_choice_variant_failure.or";

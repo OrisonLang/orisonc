@@ -157,6 +157,19 @@ void write_envelope_pair_flag_switch_with_maybe_same_name_fixture(std::filesyste
     output << "        default => 0\n";
 }
 
+void write_maybe_raw_write_fixture(std::filesystem::path const& path, std::string_view maybe_payload_type) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    None\n";
+    output << "    Some(value: T)\n";
+    output << "unsafe function write_word(maybe: Maybe<" << maybe_payload_type;
+    output << ">, out: Pointer<UInt32>) -> Unit\n";
+    output << "    switch maybe\n";
+    output << "        Some(value) => raw_write(out, value)\n";
+    output << "        default => return\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1481,59 +1494,21 @@ void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_l
 void test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_generic_constructor_payload_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "unsafe function write_word(maybe: Maybe<Int32>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    switch maybe\n";
-        output << "        Some(value) => raw_write(out, value)\n";
-        output << "        default => return\n";
-    }
+    write_maybe_raw_write_fixture(path, "Int32");
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_generic_constructor_payload_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "unsafe function write_word(maybe: Maybe<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    switch maybe\n";
-        output << "        Some(value) => raw_write(out, value)\n";
-        output << "        default => return\n";
-    }
+    write_maybe_raw_write_fixture(path, "Byte");
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'Byte' does not match pointer element type 'UInt32'");
+    assert_fixture_single_diagnostic(
+        path,
+        7,
+        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 }
 
 void test_switch_constructor_pattern_rejects_variant_from_different_choice_failure() {
