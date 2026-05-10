@@ -198,6 +198,22 @@ void write_nested_list_async_capture_fixture(std::filesystem::path const& path) 
     output << "        default => 0\n";
 }
 
+void write_list_async_head_capture_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice List<T>\n";
+    output << "    Empty\n";
+    output << "    Node(head: T, tail: Box<List<T>>)\n";
+    output << "async function sum(xs: List<Int64>) -> Int64\n";
+    output << "    var head = 0\n";
+    output << "    switch xs\n";
+    output << "        Empty => 0\n";
+    output << "        Node(head, tail) =>\n";
+    output << "            let request_task = task\n";
+    output << "                head\n";
+    output << "            return await request_task\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -352,6 +368,18 @@ void assert_fixture_single_capture(std::filesystem::path const& path, std::strin
     assert(!diagnostics.has_errors());
     assert(diagnostics.concurrency_captures.size() == 1);
     assert(diagnostics.concurrency_captures.front().name == expected_name);
+}
+
+void assert_fixture_single_capture_kind(
+    std::filesystem::path const& path,
+    std::string_view expected_name,
+    orison::semantics::ConcurrencyCaptureKind expected_kind
+) {
+    auto diagnostics = analyze_orison_fixture(path);
+    assert(!diagnostics.has_errors());
+    assert(diagnostics.concurrency_captures.size() == 1);
+    assert(diagnostics.concurrency_captures.front().name == expected_name);
+    assert(diagnostics.concurrency_captures.front().capture_kind == expected_kind);
 }
 
 void test_await_inside_async_function_success() {
@@ -1163,36 +1191,11 @@ void test_guard_failure_path_does_not_create_async_origin_failure() {
 void test_switch_constructor_pattern_binds_case_local_names_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_binding_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "async function sum(xs: List<Int64>) -> Int64\n";
-        output << "    var head = 0\n";
-        output << "    switch xs\n";
-        output << "        Empty => 0\n";
-        output << "        Node(head, tail) =>\n";
-        output << "            let request_task = task\n";
-        output << "                head\n";
-        output << "            return await request_task\n";
-    }
+    write_list_async_head_capture_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
-    assert(diagnostics.concurrency_captures.size() == 1);
-    assert(diagnostics.concurrency_captures.front().name == "head");
-    assert(
-        diagnostics.concurrency_captures.front().capture_kind ==
+    assert_fixture_single_capture_kind(
+        path,
+        "head",
         orison::semantics::ConcurrencyCaptureKind::immutable_outer_local
     );
 }

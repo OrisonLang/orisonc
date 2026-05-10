@@ -198,6 +198,22 @@ void write_nested_list_async_capture_fixture(std::filesystem::path const& path) 
     output << "        default => 0\n";
 }
 
+void write_list_async_head_capture_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice List<T>\n";
+    output << "    Empty\n";
+    output << "    Node(head: T, tail: Box<List<T>>)\n";
+    output << "async function sum(xs: List<Int64>) -> Int64\n";
+    output << "    var head = 0\n";
+    output << "    switch xs\n";
+    output << "        Empty => 0\n";
+    output << "        Node(head, tail) =>\n";
+    output << "            let request_task = task\n";
+    output << "                head\n";
+    output << "            return await request_task\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -4465,38 +4481,9 @@ int main() {
 
     auto switch_constructor_pattern_binding_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_constructor_pattern_binding_success.or";
-    {
-        std::ofstream output(switch_constructor_pattern_binding_path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "async function sum(xs: List<Int64>) -> Int64\n";
-        output << "    var head = 0\n";
-        output << "    switch xs\n";
-        output << "        Empty => 0\n";
-        output << "        Node(head, tail) =>\n";
-        output << "            let request_task = task\n";
-        output << "                head\n";
-        output << "            return await request_task\n";
-    }
+    write_list_async_head_capture_fixture(switch_constructor_pattern_binding_path);
 
-    auto switch_constructor_pattern_binding_path_text = switch_constructor_pattern_binding_path.string();
-    std::array<char const*, 3> switch_constructor_pattern_binding_argv {
-        "orisonc",
-        "--parse",
-        switch_constructor_pattern_binding_path_text.c_str()
-    };
-    auto switch_constructor_pattern_binding_result = app.run(
-        std::span<char const* const>(
-            switch_constructor_pattern_binding_argv.data(),
-            switch_constructor_pattern_binding_argv.size()
-        )
-    );
-
-    assert(switch_constructor_pattern_binding_result.exit_code == 0);
-    assert(switch_constructor_pattern_binding_result.stderr_text.empty());
-    assert(switch_constructor_pattern_binding_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, switch_constructor_pattern_binding_path));
 
     auto switch_nested_constructor_pattern_binding_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_constructor_pattern_success.or";

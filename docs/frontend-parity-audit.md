@@ -95,3 +95,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-09: generic constructor payload raw-write smoke fixtures now share local `Maybe<T>` source writers across semantic and CLI tests, keeping payload type-binding success and pointer-element mismatch diagnostics aligned.
 - 2026-05-09: nested list constructor raw-write smoke fixtures now share local `List<T>` source writers across semantic and CLI tests, keeping wrapped payload type-binding success and mismatch diagnostics aligned.
 - 2026-05-09: nested list async-capture smoke fixtures now share local `List<T>` source writers across semantic and CLI tests, keeping `Node(head, Node(next, tail))` binding and `next` task-capture coverage aligned.
+- 2026-05-09: top-level list async-capture smoke fixtures now share local `List<T>` source writers across semantic and CLI tests, keeping `Node(head, tail)` binding and immutable outer-local capture coverage aligned.
