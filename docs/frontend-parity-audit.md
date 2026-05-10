@@ -93,3 +93,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-09: wrong-choice constructor smoke fixtures now share local `Maybe<T>`/`Result<T>` source writers across semantic and CLI tests, keeping top-level and nested wrong-choice diagnostics aligned.
 - 2026-05-09: subject-specific constructor arity smoke fixtures now share local same-name `Some` source writers across semantic and CLI tests, keeping top-level zero-payload and nested multi-payload success coverage aligned.
 - 2026-05-09: generic constructor payload raw-write smoke fixtures now share local `Maybe<T>` source writers across semantic and CLI tests, keeping payload type-binding success and pointer-element mismatch diagnostics aligned.
+- 2026-05-09: nested list constructor raw-write smoke fixtures now share local `List<T>` source writers across semantic and CLI tests, keeping wrapped payload type-binding success and mismatch diagnostics aligned.

@@ -170,6 +170,19 @@ void write_maybe_raw_write_fixture(std::filesystem::path const& path, std::strin
     output << "        default => return\n";
 }
 
+void write_nested_list_raw_write_fixture(std::filesystem::path const& path, std::string_view list_payload_type) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice List<T>\n";
+    output << "    Empty\n";
+    output << "    Node(head: T, tail: Box<List<T>>)\n";
+    output << "unsafe function write_next(xs: List<" << list_payload_type;
+    output << ">, out: Pointer<UInt32>) -> Unit\n";
+    output << "    switch xs\n";
+    output << "        Node(head, Node(next, tail)) => raw_write(out, next)\n";
+    output << "        default => return\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1279,28 +1292,9 @@ void test_switch_nested_constructor_pattern_binds_nested_names_success() {
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrapped_payload_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "unsafe function write_next(xs: List<Int32>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    switch xs\n";
-        output << "        Node(head, Node(next, tail)) => raw_write(out, next)\n";
-        output << "        default => return\n";
-    }
+    write_nested_list_raw_write_fixture(path, "Int32");
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_nested_payload_constructor_overlap_failure() {
@@ -1463,32 +1457,13 @@ void test_switch_rejects_duplicate_deep_nested_zero_payload_constructor_failure(
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrapped_payload_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "unsafe function write_next(xs: List<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    switch xs\n";
-        output << "        Node(head, Node(next, tail)) => raw_write(out, next)\n";
-        output << "        default => return\n";
-    }
+    write_nested_list_raw_write_fixture(path, "Byte");
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'Byte' does not match pointer element type 'UInt32'");
+    assert_fixture_single_diagnostic(
+        path,
+        7,
+        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 }
 
 void test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success() {

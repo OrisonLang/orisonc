@@ -170,6 +170,19 @@ void write_maybe_raw_write_fixture(std::filesystem::path const& path, std::strin
     output << "        default => return\n";
 }
 
+void write_nested_list_raw_write_fixture(std::filesystem::path const& path, std::string_view list_payload_type) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice List<T>\n";
+    output << "    Empty\n";
+    output << "    Node(head: T, tail: Box<List<T>>)\n";
+    output << "unsafe function write_next(xs: List<" << list_payload_type;
+    output << ">, out: Pointer<UInt32>) -> Unit\n";
+    output << "    switch xs\n";
+    output << "        Node(head, Node(next, tail)) => raw_write(out, next)\n";
+    output << "        default => return\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -4698,65 +4711,18 @@ int main() {
 
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";
-    {
-        std::ofstream output(switch_nested_wrapped_payload_success_path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "unsafe function write_next(xs: List<Int32>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    switch xs\n";
-        output << "        Node(head, Node(next, tail)) => raw_write(out, next)\n";
-        output << "        default => return\n";
-    }
+    write_nested_list_raw_write_fixture(switch_nested_wrapped_payload_success_path, "Int32");
 
-    auto switch_nested_wrapped_payload_success_path_text = switch_nested_wrapped_payload_success_path.string();
-    std::array<char const*, 3> switch_nested_wrapped_payload_success_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_wrapped_payload_success_path_text.c_str()
-    };
-    auto switch_nested_wrapped_payload_success_result = app.run(
-        std::span<char const* const>(
-            switch_nested_wrapped_payload_success_argv.data(),
-            switch_nested_wrapped_payload_success_argv.size()
-        )
-    );
-
-    assert_parse_success(switch_nested_wrapped_payload_success_result);
+    assert_parse_success(run_parse(app, switch_nested_wrapped_payload_success_path));
 
     auto switch_nested_wrapped_payload_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_failure.or";
-    {
-        std::ofstream output(switch_nested_wrapped_payload_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice List<T>\n";
-        output << "    Empty\n";
-        output << "    Node(head: T, tail: Box<List<T>>)\n";
-        output << "unsafe function write_next(xs: List<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    switch xs\n";
-        output << "        Node(head, Node(next, tail)) => raw_write(out, next)\n";
-        output << "        default => return\n";
-    }
+    write_nested_list_raw_write_fixture(switch_nested_wrapped_payload_failure_path, "Byte");
 
-    auto switch_nested_wrapped_payload_failure_path_text = switch_nested_wrapped_payload_failure_path.string();
-    std::array<char const*, 3> switch_nested_wrapped_payload_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_wrapped_payload_failure_path_text.c_str()
-    };
-    auto switch_nested_wrapped_payload_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_wrapped_payload_failure_argv.data(),
-            switch_nested_wrapped_payload_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_nested_wrapped_payload_failure_path),
+        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
     );
-
-    assert(switch_nested_wrapped_payload_failure_result.exit_code == 1);
-    assert(switch_nested_wrapped_payload_failure_result.stdout_text.empty());
-    assert(switch_nested_wrapped_payload_failure_result.stderr_text.find(
-               "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
 
     auto switch_generic_constructor_payload_success_path =
         std::filesystem::temp_directory_path() /
