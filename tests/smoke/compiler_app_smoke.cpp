@@ -130,6 +130,33 @@ void write_envelope_result_switch_with_maybe_variant_fixture(std::filesystem::pa
     output << "        default => 0\n";
 }
 
+void write_flag_switch_with_maybe_same_name_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "choice Flag\n";
+    output << "    Some\n";
+    output << "function read(flag: Flag) -> Int64\n";
+    output << "    switch flag\n";
+    output << "        Some => 1\n";
+}
+
+void write_envelope_pair_flag_switch_with_maybe_same_name_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "choice PairFlag\n";
+    output << "    Some(left: Int64, right: Int64)\n";
+    output << "choice Envelope\n";
+    output << "    Wrap(inner: PairFlag)\n";
+    output << "function read(env: Envelope) -> Int64\n";
+    output << "    switch env\n";
+    output << "        Wrap(Some(left, right)) => left\n";
+    output << "        default => 0\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -4827,34 +4854,9 @@ int main() {
 
     auto switch_subject_specific_arity_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_subject_specific_arity_success.or";
-    {
-        std::ofstream output(switch_subject_specific_arity_success_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "choice Flag\n";
-        output << "    Some\n";
-        output << "function read(flag: Flag) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        Some => 1\n";
-    }
+    write_flag_switch_with_maybe_same_name_fixture(switch_subject_specific_arity_success_path);
 
-    auto switch_subject_specific_arity_success_path_text = switch_subject_specific_arity_success_path.string();
-    std::array<char const*, 3> switch_subject_specific_arity_success_argv {
-        "orisonc",
-        "--parse",
-        switch_subject_specific_arity_success_path_text.c_str()
-    };
-    auto switch_subject_specific_arity_success_result = app.run(
-        std::span<char const* const>(
-            switch_subject_specific_arity_success_argv.data(),
-            switch_subject_specific_arity_success_argv.size()
-        )
-    );
-
-    assert(switch_subject_specific_arity_success_result.exit_code == 0);
-    assert(switch_subject_specific_arity_success_result.stderr_text.empty());
-    assert(switch_subject_specific_arity_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, switch_subject_specific_arity_success_path));
 
     auto switch_nested_wrong_payload_choice_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrong_payload_choice_failure.or";
@@ -4882,38 +4884,11 @@ int main() {
 
     auto switch_nested_payload_specific_arity_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_payload_specific_arity_success.or";
-    {
-        std::ofstream output(switch_nested_payload_specific_arity_success_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "choice PairFlag\n";
-        output << "    Some(left: Int64, right: Int64)\n";
-        output << "choice Envelope\n";
-        output << "    Wrap(inner: PairFlag)\n";
-        output << "function read(env: Envelope) -> Int64\n";
-        output << "    switch env\n";
-        output << "        Wrap(Some(left, right)) => left\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_nested_payload_specific_arity_success_path_text =
-        switch_nested_payload_specific_arity_success_path.string();
-    std::array<char const*, 3> switch_nested_payload_specific_arity_success_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_payload_specific_arity_success_path_text.c_str()
-    };
-    auto switch_nested_payload_specific_arity_success_result = app.run(
-        std::span<char const* const>(
-            switch_nested_payload_specific_arity_success_argv.data(),
-            switch_nested_payload_specific_arity_success_argv.size()
-        )
+    write_envelope_pair_flag_switch_with_maybe_same_name_fixture(
+        switch_nested_payload_specific_arity_success_path
     );
 
-    assert(switch_nested_payload_specific_arity_success_result.exit_code == 0);
-    assert(switch_nested_payload_specific_arity_success_result.stderr_text.empty());
-    assert(switch_nested_payload_specific_arity_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, switch_nested_payload_specific_arity_success_path));
 
     auto switch_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_thread_origin_failure.or";

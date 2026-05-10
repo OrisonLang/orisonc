@@ -130,6 +130,33 @@ void write_envelope_result_switch_with_maybe_variant_fixture(std::filesystem::pa
     output << "        default => 0\n";
 }
 
+void write_flag_switch_with_maybe_same_name_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "choice Flag\n";
+    output << "    Some\n";
+    output << "function read(flag: Flag) -> Int64\n";
+    output << "    switch flag\n";
+    output << "        Some => 1\n";
+}
+
+void write_envelope_pair_flag_switch_with_maybe_same_name_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "choice PairFlag\n";
+    output << "    Some(left: Int64, right: Int64)\n";
+    output << "choice Envelope\n";
+    output << "    Wrap(inner: PairFlag)\n";
+    output << "function read(env: Envelope) -> Int64\n";
+    output << "    switch env\n";
+    output << "        Wrap(Some(left, right)) => left\n";
+    output << "        default => 0\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -273,6 +300,10 @@ void assert_fixture_single_diagnostic(
     std::string_view expected_message
 ) {
     assert_single_diagnostic(analyze_orison_fixture(path), expected_line, expected_message);
+}
+
+void assert_fixture_success(std::filesystem::path const& path) {
+    assert(!analyze_orison_fixture(path).has_errors());
 }
 
 void test_await_inside_async_function_success() {
@@ -1533,28 +1564,9 @@ void test_switch_wrong_choice_constructor_without_default_does_not_cascade_failu
 void test_switch_constructor_pattern_uses_subject_specific_arity_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_subject_specific_arity_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "choice Flag\n";
-        output << "    Some\n";
-        output << "function read(flag: Flag) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        Some => 1\n";
-    }
+    write_flag_switch_with_maybe_same_name_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_nested_constructor_pattern_rejects_variant_from_different_payload_choice_failure() {
@@ -1572,31 +1584,9 @@ void test_switch_nested_constructor_pattern_rejects_variant_from_different_paylo
 void test_switch_nested_constructor_pattern_uses_payload_specific_arity_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_specific_arity_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    Some(value: T)\n";
-        output << "choice PairFlag\n";
-        output << "    Some(left: Int64, right: Int64)\n";
-        output << "choice Envelope\n";
-        output << "    Wrap(inner: PairFlag)\n";
-        output << "function read(env: Envelope) -> Int64\n";
-        output << "    switch env\n";
-        output << "        Wrap(Some(left, right)) => left\n";
-        output << "        default => 0\n";
-    }
+    write_envelope_pair_flag_switch_with_maybe_same_name_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failure() {
