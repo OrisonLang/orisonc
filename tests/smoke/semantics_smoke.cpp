@@ -93,6 +93,43 @@ void write_list_switch_fixture(
     }
 }
 
+void write_result_switch_with_maybe_variant_fixture(
+    std::filesystem::path const& path,
+    bool include_default = true
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    None\n";
+    output << "    Some(value: T)\n";
+    output << "choice Result<T>\n";
+    output << "    Ok(value: T)\n";
+    output << "    Error\n";
+    output << "function read(result: Result<Int64>) -> Int64\n";
+    output << "    switch result\n";
+    output << "        Some(value) => value\n";
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
+void write_envelope_result_switch_with_maybe_variant_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    None\n";
+    output << "    Some(value: T)\n";
+    output << "choice Result<T>\n";
+    output << "    Ok(value: T)\n";
+    output << "    Error\n";
+    output << "choice Envelope<T>\n";
+    output << "    Wrap(inner: Result<T>)\n";
+    output << "function read(env: Envelope<Int64>) -> Int64\n";
+    output << "    switch env\n";
+    output << "        Wrap(Some(value)) => value\n";
+    output << "        default => 0\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1471,54 +1508,20 @@ void test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_fa
 void test_switch_constructor_pattern_rejects_variant_from_different_choice_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_wrong_choice_variant_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "choice Result<T>\n";
-        output << "    Ok(value: T)\n";
-        output << "    Error\n";
-        output << "function read(result: Result<Int64>) -> Int64\n";
-        output << "    switch result\n";
-        output << "        Some(value) => value\n";
-        output << "        default => 0\n";
-    }
+    write_result_switch_with_maybe_variant_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 10);
-    assert(diagnostics.entries().front().message ==
-           "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'");
+    assert_fixture_single_diagnostic(
+        path,
+        10,
+        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
+    );
 }
 
 void test_switch_wrong_choice_constructor_without_default_does_not_cascade_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_wrong_choice_constructor_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "choice Result<T>\n";
-        output << "    Ok(value: T)\n";
-        output << "    Error\n";
-        output << "function read(result: Result<Int64>) -> Int64\n";
-        output << "    switch result\n";
-        output << "        Some(value) => value\n";
-    }
+    write_result_switch_with_maybe_variant_fixture(path, false);
 
     assert_fixture_single_diagnostic(
         path,
@@ -1557,37 +1560,13 @@ void test_switch_constructor_pattern_uses_subject_specific_arity_success() {
 void test_switch_nested_constructor_pattern_rejects_variant_from_different_payload_choice_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrong_payload_choice_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "choice Result<T>\n";
-        output << "    Ok(value: T)\n";
-        output << "    Error\n";
-        output << "choice Envelope<T>\n";
-        output << "    Wrap(inner: Result<T>)\n";
-        output << "function read(env: Envelope<Int64>) -> Int64\n";
-        output << "    switch env\n";
-        output << "        Wrap(Some(value)) => value\n";
-        output << "        default => 0\n";
-    }
+    write_envelope_result_switch_with_maybe_variant_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 12);
-    assert(diagnostics.entries().front().message ==
-           "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'");
+    assert_fixture_single_diagnostic(
+        path,
+        12,
+        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
+    );
 }
 
 void test_switch_nested_constructor_pattern_uses_payload_specific_arity_success() {

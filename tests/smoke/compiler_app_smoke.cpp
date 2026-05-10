@@ -93,6 +93,43 @@ void write_list_switch_fixture(
     }
 }
 
+void write_result_switch_with_maybe_variant_fixture(
+    std::filesystem::path const& path,
+    bool include_default = true
+) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    None\n";
+    output << "    Some(value: T)\n";
+    output << "choice Result<T>\n";
+    output << "    Ok(value: T)\n";
+    output << "    Error\n";
+    output << "function read(result: Result<Int64>) -> Int64\n";
+    output << "    switch result\n";
+    output << "        Some(value) => value\n";
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
+void write_envelope_result_switch_with_maybe_variant_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.patterns\n";
+    output << "choice Maybe<T>\n";
+    output << "    None\n";
+    output << "    Some(value: T)\n";
+    output << "choice Result<T>\n";
+    output << "    Ok(value: T)\n";
+    output << "    Error\n";
+    output << "choice Envelope<T>\n";
+    output << "    Wrap(inner: Result<T>)\n";
+    output << "function read(env: Envelope<Int64>) -> Int64\n";
+    output << "    switch env\n";
+    output << "        Wrap(Some(value)) => value\n";
+    output << "        default => 0\n";
+}
+
 void write_maybe_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -4751,20 +4788,7 @@ int main() {
 
     auto switch_wrong_choice_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_wrong_choice_variant_failure.or";
-    {
-        std::ofstream output(switch_wrong_choice_variant_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "choice Result<T>\n";
-        output << "    Ok(value: T)\n";
-        output << "    Error\n";
-        output << "function read(result: Result<Int64>) -> Int64\n";
-        output << "    switch result\n";
-        output << "        Some(value) => value\n";
-        output << "        default => 0\n";
-    }
+    write_result_switch_with_maybe_variant_fixture(switch_wrong_choice_variant_failure_path);
 
     auto switch_wrong_choice_variant_failure_path_text = switch_wrong_choice_variant_failure_path.string();
     std::array<char const*, 3> switch_wrong_choice_variant_failure_argv {
@@ -4788,19 +4812,10 @@ int main() {
     auto switch_wrong_choice_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_wrong_choice_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(switch_wrong_choice_without_default_no_cascade_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "choice Result<T>\n";
-        output << "    Ok(value: T)\n";
-        output << "    Error\n";
-        output << "function read(result: Result<Int64>) -> Int64\n";
-        output << "    switch result\n";
-        output << "        Some(value) => value\n";
-    }
+    write_result_switch_with_maybe_variant_fixture(
+        switch_wrong_choice_without_default_no_cascade_failure_path,
+        false
+    );
 
     auto switch_wrong_choice_without_default_no_cascade_failure_result =
         run_parse(app, switch_wrong_choice_without_default_no_cascade_failure_path);
@@ -4843,22 +4858,7 @@ int main() {
 
     auto switch_nested_wrong_payload_choice_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrong_payload_choice_failure.or";
-    {
-        std::ofstream output(switch_nested_wrong_payload_choice_failure_path);
-        output << "package demo.patterns\n";
-        output << "choice Maybe<T>\n";
-        output << "    None\n";
-        output << "    Some(value: T)\n";
-        output << "choice Result<T>\n";
-        output << "    Ok(value: T)\n";
-        output << "    Error\n";
-        output << "choice Envelope<T>\n";
-        output << "    Wrap(inner: Result<T>)\n";
-        output << "function read(env: Envelope<Int64>) -> Int64\n";
-        output << "    switch env\n";
-        output << "        Wrap(Some(value)) => value\n";
-        output << "        default => 0\n";
-    }
+    write_envelope_result_switch_with_maybe_variant_fixture(switch_nested_wrong_payload_choice_failure_path);
 
     auto switch_nested_wrong_payload_choice_failure_path_text =
         switch_nested_wrong_payload_choice_failure_path.string();

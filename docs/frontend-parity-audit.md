@@ -90,3 +90,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-09: CLI switch no-cascade assertions now share a parse-failure helper that checks both required primary diagnostics and forbidden cascade diagnostics.
 - 2026-05-09: semantic switch fixture assertions now share a fixture-level single-diagnostic helper, reducing repeated analyze-then-assert boilerplate across no-cascade and exhaustiveness coverage.
 - 2026-05-09: `List<T>` constructor-pattern smoke fixtures now share local source writers across semantic and CLI tests, keeping invalid payload shape, duplicate binding, and arity diagnostics aligned.
+- 2026-05-09: wrong-choice constructor smoke fixtures now share local `Maybe<T>`/`Result<T>` source writers across semantic and CLI tests, keeping top-level and nested wrong-choice diagnostics aligned.
