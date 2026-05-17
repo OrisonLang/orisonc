@@ -2434,33 +2434,9 @@ void test_switch_accepts_multi_payload_disjoint_leading_literal_choice_construct
 void test_switch_rejects_missing_zero_payload_choice_variant_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_choice_variant_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice IOError\n";
-        output << "    Closed\n";
-        output << "    EndOfInput\n";
-        output << "    PermissionDenied\n";
-        output << "function classify(error: IOError) -> Int64\n";
-        output << "    switch error\n";
-        output << "        Closed => 1\n";
-        output << "        EndOfInput => 2\n";
-    }
+    write_zero_payload_choice_switch_fixture(path, {"Closed => 1", "EndOfInput => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "switch is missing zero-payload choice variant 'PermissionDenied'");
+    assert_fixture_single_diagnostic(path, 7, "switch is missing zero-payload choice variant 'PermissionDenied'");
 }
 
 void test_switch_rejects_multiple_default_cases_semantically() {
