@@ -296,6 +296,18 @@ void write_same_width_integer_value_pattern_fixture(std::filesystem::path const&
     output << "        default => 0\n";
 }
 
+void write_duplicate_bool_value_pattern_fixture(std::filesystem::path const& path, bool include_default = true) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "function classify(flag: Bool) -> Int64\n";
+    output << "    switch flag\n";
+    output << "        true => 1\n";
+    output << "        true => 2\n";
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -5232,63 +5244,20 @@ int main() {
 
     auto switch_duplicate_boolean_value_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_boolean_value_failure.or";
-    {
-        std::ofstream output(switch_duplicate_boolean_value_failure_path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        true => 1\n";
-        output << "        true => 2\n";
-        output << "        default => 0\n";
-    }
+    write_duplicate_bool_value_pattern_fixture(switch_duplicate_boolean_value_failure_path);
 
-    auto switch_duplicate_boolean_value_failure_path_text = switch_duplicate_boolean_value_failure_path.string();
-    std::array<char const*, 3> switch_duplicate_boolean_value_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_duplicate_boolean_value_failure_path_text.c_str()
-    };
-    auto switch_duplicate_boolean_value_failure_result = app.run(
-        std::span<char const* const>(
-            switch_duplicate_boolean_value_failure_argv.data(),
-            switch_duplicate_boolean_value_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_duplicate_boolean_value_failure_path),
+        "switch value pattern 'true' is duplicated"
     );
-
-    assert(switch_duplicate_boolean_value_failure_result.exit_code == 1);
-    assert(switch_duplicate_boolean_value_failure_result.stdout_text.empty());
-    assert(switch_duplicate_boolean_value_failure_result.stderr_text.find(
-               "switch value pattern 'true' is duplicated"
-           ) != std::string::npos);
 
     auto switch_duplicate_bool_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_duplicate_bool_without_default_no_cascade_failure.or";
-    {
-        std::ofstream output(switch_duplicate_bool_without_default_no_cascade_failure_path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        true => 1\n";
-        output << "        true => 2\n";
-    }
-
-    auto switch_duplicate_bool_without_default_no_cascade_failure_path_text =
-        switch_duplicate_bool_without_default_no_cascade_failure_path.string();
-    std::array<char const*, 3> switch_duplicate_bool_without_default_no_cascade_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_duplicate_bool_without_default_no_cascade_failure_path_text.c_str()
-    };
-    auto switch_duplicate_bool_without_default_no_cascade_failure_result = app.run(
-        std::span<char const* const>(
-            switch_duplicate_bool_without_default_no_cascade_failure_argv.data(),
-            switch_duplicate_bool_without_default_no_cascade_failure_argv.size()
-        )
-    );
+    write_duplicate_bool_value_pattern_fixture(switch_duplicate_bool_without_default_no_cascade_failure_path, false);
 
     assert_parse_failure_contains_without(
-        switch_duplicate_bool_without_default_no_cascade_failure_result,
+        run_parse(app, switch_duplicate_bool_without_default_no_cascade_failure_path),
         "switch value pattern 'true' is duplicated",
         "switch is missing boolean value pattern"
     );
