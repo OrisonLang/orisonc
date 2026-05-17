@@ -1838,27 +1838,9 @@ void test_switch_accepts_exhaustive_bool_without_default_success() {
 
 void test_switch_rejects_missing_bool_value_pattern_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_bool_pattern_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        true => 1\n";
-    }
+    write_bool_value_pattern_switch_fixture(path, {"true => 1"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message == "switch is missing boolean value pattern 'false'");
+    assert_fixture_single_diagnostic(path, 3, "switch is missing boolean value pattern 'false'");
 }
 
 void test_switch_rejects_redundant_zero_payload_choice_default_failure() {

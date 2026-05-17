@@ -5356,32 +5356,12 @@ int main() {
 
     auto switch_missing_bool_pattern_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_missing_bool_pattern_failure.or";
-    {
-        std::ofstream output(switch_missing_bool_pattern_failure_path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        true => 1\n";
-    }
+    write_bool_value_pattern_switch_fixture(switch_missing_bool_pattern_failure_path, {"true => 1"});
 
-    auto switch_missing_bool_pattern_failure_path_text = switch_missing_bool_pattern_failure_path.string();
-    std::array<char const*, 3> switch_missing_bool_pattern_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_missing_bool_pattern_failure_path_text.c_str()
-    };
-    auto switch_missing_bool_pattern_failure_result = app.run(
-        std::span<char const* const>(
-            switch_missing_bool_pattern_failure_argv.data(),
-            switch_missing_bool_pattern_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_missing_bool_pattern_failure_path),
+        "switch is missing boolean value pattern 'false'"
     );
-
-    assert(switch_missing_bool_pattern_failure_result.exit_code == 1);
-    assert(switch_missing_bool_pattern_failure_result.stdout_text.empty());
-    assert(switch_missing_bool_pattern_failure_result.stderr_text.find(
-               "switch is missing boolean value pattern 'false'"
-           ) != std::string::npos);
 
     auto switch_redundant_choice_default_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_redundant_choice_default_failure.or";
