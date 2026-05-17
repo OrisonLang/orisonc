@@ -5654,36 +5654,13 @@ int main() {
 
     auto switch_duplicate_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_choice_constructor_failure.or";
-    {
-        std::ofstream output(switch_duplicate_choice_constructor_failure_path);
-        output << "package demo.switches\n";
-        output << "choice IOError\n";
-        output << "    Closed\n";
-        output << "    EndOfInput\n";
-        output << "    PermissionDenied\n";
-        output << "function classify(error: IOError) -> Int64\n";
-        output << "    switch error\n";
-        output << "        Closed => 1\n";
-        output << "        EndOfInput => 2\n";
-        output << "        Closed => 3\n";
-    }
-
-    auto switch_duplicate_choice_constructor_failure_path_text =
-        switch_duplicate_choice_constructor_failure_path.string();
-    std::array<char const*, 3> switch_duplicate_choice_constructor_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_duplicate_choice_constructor_failure_path_text.c_str()
-    };
-    auto switch_duplicate_choice_constructor_failure_result = app.run(
-        std::span<char const* const>(
-            switch_duplicate_choice_constructor_failure_argv.data(),
-            switch_duplicate_choice_constructor_failure_argv.size()
-        )
+    write_zero_payload_choice_switch_fixture(
+        switch_duplicate_choice_constructor_failure_path,
+        {"Closed => 1", "EndOfInput => 2", "Closed => 3"}
     );
 
     assert_parse_failure_contains_without(
-        switch_duplicate_choice_constructor_failure_result,
+        run_parse(app, switch_duplicate_choice_constructor_failure_path),
         "switch constructor pattern 'Closed' is duplicated",
         "switch is missing zero-payload choice variant"
     );
