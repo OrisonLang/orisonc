@@ -345,6 +345,27 @@ void write_bool_value_pattern_switch_fixture(
     }
 }
 
+void write_zero_payload_choice_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice IOError\n";
+    output << "    Closed\n";
+    output << "    EndOfInput\n";
+    output << "    PermissionDenied\n";
+    output << "function classify(error: IOError) -> Int64\n";
+    output << "    switch error\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -5365,101 +5386,40 @@ int main() {
 
     auto switch_redundant_choice_default_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_redundant_choice_default_failure.or";
-    {
-        std::ofstream output(switch_redundant_choice_default_failure_path);
-        output << "package demo.switches\n";
-        output << "choice IOError\n";
-        output << "    Closed\n";
-        output << "    EndOfInput\n";
-        output << "    PermissionDenied\n";
-        output << "function classify(error: IOError) -> Int64\n";
-        output << "    switch error\n";
-        output << "        Closed => 1\n";
-        output << "        EndOfInput => 2\n";
-        output << "        PermissionDenied => 3\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_redundant_choice_default_failure_path_text =
-        switch_redundant_choice_default_failure_path.string();
-    std::array<char const*, 3> switch_redundant_choice_default_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_redundant_choice_default_failure_path_text.c_str()
-    };
-    auto switch_redundant_choice_default_failure_result = app.run(
-        std::span<char const* const>(
-            switch_redundant_choice_default_failure_argv.data(),
-            switch_redundant_choice_default_failure_argv.size()
-        )
+    write_zero_payload_choice_switch_fixture(
+        switch_redundant_choice_default_failure_path,
+        {"Closed => 1", "EndOfInput => 2", "PermissionDenied => 3"},
+        true
     );
 
-    assert(switch_redundant_choice_default_failure_result.exit_code == 1);
-    assert(switch_redundant_choice_default_failure_result.stdout_text.empty());
-    assert(switch_redundant_choice_default_failure_result.stderr_text.find(
-               "switch default case is redundant after all zero-payload choice variants are covered"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_redundant_choice_default_failure_path),
+        "switch default case is redundant after all zero-payload choice variants are covered"
+    );
 
     auto switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure.or";
-    {
-        std::ofstream output(switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path);
-        output << "package demo.switches\n";
-        output << "choice IOError\n";
-        output << "    Closed\n";
-        output << "    EndOfInput\n";
-        output << "    PermissionDenied\n";
-        output << "function classify(error: IOError) -> Int64\n";
-        output << "    switch error\n";
-        output << "        Closed => 1\n";
-        output << "        EndOfInput => 2\n";
-        output << "        PermissionDenied => 3\n";
-        output << "        Closed => 4\n";
-        output << "        default => 0\n";
-    }
+    write_zero_payload_choice_switch_fixture(
+        switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path,
+        {"Closed => 1", "EndOfInput => 2", "PermissionDenied => 3", "Closed => 4"},
+        true
+    );
 
-    auto switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result =
-        run_parse(app, switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_result,
+        run_parse(app, switch_duplicate_zero_payload_choice_redundant_default_no_cascade_failure_path),
         "switch constructor pattern 'Closed' is duplicated",
         "switch default case is redundant"
     );
 
     auto switch_exhaustive_choice_without_default_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_exhaustive_choice_success.or";
-    {
-        std::ofstream output(switch_exhaustive_choice_without_default_success_path);
-        output << "package demo.switches\n";
-        output << "choice IOError\n";
-        output << "    Closed\n";
-        output << "    EndOfInput\n";
-        output << "    PermissionDenied\n";
-        output << "function classify(error: IOError) -> Int64\n";
-        output << "    switch error\n";
-        output << "        Closed => 1\n";
-        output << "        EndOfInput => 2\n";
-        output << "        PermissionDenied => 3\n";
-    }
-
-    auto switch_exhaustive_choice_without_default_success_path_text =
-        switch_exhaustive_choice_without_default_success_path.string();
-    std::array<char const*, 3> switch_exhaustive_choice_without_default_success_argv {
-        "orisonc",
-        "--parse",
-        switch_exhaustive_choice_without_default_success_path_text.c_str()
-    };
-    auto switch_exhaustive_choice_without_default_success_result = app.run(
-        std::span<char const* const>(
-            switch_exhaustive_choice_without_default_success_argv.data(),
-            switch_exhaustive_choice_without_default_success_argv.size()
-        )
+    write_zero_payload_choice_switch_fixture(
+        switch_exhaustive_choice_without_default_success_path,
+        {"Closed => 1", "EndOfInput => 2", "PermissionDenied => 3"}
     );
 
-    assert(switch_exhaustive_choice_without_default_success_result.exit_code == 0);
-    assert(switch_exhaustive_choice_without_default_success_result.stderr_text.empty());
-    assert(switch_exhaustive_choice_without_default_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, switch_exhaustive_choice_without_default_success_path));
 
     auto switch_redundant_payload_choice_default_failure_path =
         std::filesystem::temp_directory_path() /

@@ -345,6 +345,27 @@ void write_bool_value_pattern_switch_fixture(
     }
 }
 
+void write_zero_payload_choice_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = false
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice IOError\n";
+    output << "    Closed\n";
+    output << "    EndOfInput\n";
+    output << "    PermissionDenied\n";
+    output << "function classify(error: IOError) -> Int64\n";
+    output << "    switch error\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1846,56 +1867,28 @@ void test_switch_rejects_missing_bool_value_pattern_failure() {
 void test_switch_rejects_redundant_zero_payload_choice_default_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_redundant_choice_default_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice IOError\n";
-        output << "    Closed\n";
-        output << "    EndOfInput\n";
-        output << "    PermissionDenied\n";
-        output << "function classify(error: IOError) -> Int64\n";
-        output << "    switch error\n";
-        output << "        Closed => 1\n";
-        output << "        EndOfInput => 2\n";
-        output << "        PermissionDenied => 3\n";
-        output << "        default => 0\n";
-    }
+    write_zero_payload_choice_switch_fixture(
+        path,
+        {"Closed => 1", "EndOfInput => 2", "PermissionDenied => 3"},
+        true
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 11);
-    assert(diagnostics.entries().front().message ==
-           "switch default case is redundant after all zero-payload choice variants are covered");
+    assert_fixture_single_diagnostic(
+        path,
+        11,
+        "switch default case is redundant after all zero-payload choice variants are covered"
+    );
 }
 
 void test_switch_duplicate_zero_payload_choice_suppresses_redundant_default_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_duplicate_zero_payload_choice_redundant_default_no_cascade.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice IOError\n";
-        output << "    Closed\n";
-        output << "    EndOfInput\n";
-        output << "    PermissionDenied\n";
-        output << "function classify(error: IOError) -> Int64\n";
-        output << "    switch error\n";
-        output << "        Closed => 1\n";
-        output << "        EndOfInput => 2\n";
-        output << "        PermissionDenied => 3\n";
-        output << "        Closed => 4\n";
-        output << "        default => 0\n";
-    }
+    write_zero_payload_choice_switch_fixture(
+        path,
+        {"Closed => 1", "EndOfInput => 2", "PermissionDenied => 3", "Closed => 4"},
+        true
+    );
 
     assert_fixture_single_diagnostic(path, 11, "switch constructor pattern 'Closed' is duplicated");
 }
@@ -1903,30 +1896,12 @@ void test_switch_duplicate_zero_payload_choice_suppresses_redundant_default_fail
 void test_switch_accepts_exhaustive_zero_payload_choice_without_default_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_exhaustive_choice_without_default_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice IOError\n";
-        output << "    Closed\n";
-        output << "    EndOfInput\n";
-        output << "    PermissionDenied\n";
-        output << "function classify(error: IOError) -> Int64\n";
-        output << "    switch error\n";
-        output << "        Closed => 1\n";
-        output << "        EndOfInput => 2\n";
-        output << "        PermissionDenied => 3\n";
-    }
+    write_zero_payload_choice_switch_fixture(
+        path,
+        {"Closed => 1", "EndOfInput => 2", "PermissionDenied => 3"}
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_redundant_payload_choice_default_after_full_cover_failure() {
