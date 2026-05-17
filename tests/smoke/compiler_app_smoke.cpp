@@ -278,6 +278,15 @@ void write_value_then_constructor_pattern_mix_fixture(std::filesystem::path cons
     output << "        default => 0\n";
 }
 
+void write_bool_switch_text_value_pattern_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "function classify(flag: Bool) -> Int64\n";
+    output << "    switch flag\n";
+    output << "        \"ready\" => 1\n";
+    output << "        default => 0\n";
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -5199,33 +5208,12 @@ int main() {
 
     auto switch_value_pattern_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_value_pattern_type_failure.or";
-    {
-        std::ofstream output(switch_value_pattern_type_failure_path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        \"ready\" => 1\n";
-        output << "        default => 0\n";
-    }
+    write_bool_switch_text_value_pattern_fixture(switch_value_pattern_type_failure_path);
 
-    auto switch_value_pattern_type_failure_path_text = switch_value_pattern_type_failure_path.string();
-    std::array<char const*, 3> switch_value_pattern_type_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_value_pattern_type_failure_path_text.c_str()
-    };
-    auto switch_value_pattern_type_failure_result = app.run(
-        std::span<char const* const>(
-            switch_value_pattern_type_failure_argv.data(),
-            switch_value_pattern_type_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_value_pattern_type_failure_path),
+        "switch value pattern type 'Text' does not match switched expression type 'Bool'"
     );
-
-    assert(switch_value_pattern_type_failure_result.exit_code == 1);
-    assert(switch_value_pattern_type_failure_result.stdout_text.empty());
-    assert(switch_value_pattern_type_failure_result.stderr_text.find(
-               "switch value pattern type 'Text' does not match switched expression type 'Bool'"
-           ) != std::string::npos);
 
     auto switch_value_pattern_same_width_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_value_pattern_same_width_success.or";

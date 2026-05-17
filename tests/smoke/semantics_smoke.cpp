@@ -278,6 +278,15 @@ void write_value_then_constructor_pattern_mix_fixture(std::filesystem::path cons
     output << "        default => 0\n";
 }
 
+void write_bool_switch_text_value_pattern_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "function classify(flag: Bool) -> Int64\n";
+    output << "    switch flag\n";
+    output << "        \"ready\" => 1\n";
+    output << "        default => 0\n";
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1692,29 +1701,13 @@ void test_switch_pattern_mix_without_default_does_not_cascade_to_missing_variant
 void test_switch_rejects_mismatched_value_pattern_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_value_pattern_type_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        \"ready\" => 1\n";
-        output << "        default => 0\n";
-    }
+    write_bool_switch_text_value_pattern_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message ==
-           "switch value pattern type 'Text' does not match switched expression type 'Bool'");
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "switch value pattern type 'Text' does not match switched expression type 'Bool'"
+    );
 }
 
 void test_switch_accepts_same_width_integer_cast_value_pattern_success() {
