@@ -287,6 +287,15 @@ void write_bool_switch_text_value_pattern_fixture(std::filesystem::path const& p
     output << "        default => 0\n";
 }
 
+void write_same_width_integer_value_pattern_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "function classify(value: UInt32) -> Int64\n";
+    output << "    switch value\n";
+    output << "        1 as Int32 => 1\n";
+    output << "        default => 0\n";
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1713,25 +1722,9 @@ void test_switch_rejects_mismatched_value_pattern_type_failure() {
 void test_switch_accepts_same_width_integer_cast_value_pattern_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_value_pattern_same_width_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "function classify(value: UInt32) -> Int64\n";
-        output << "    switch value\n";
-        output << "        1 as Int32 => 1\n";
-        output << "        default => 0\n";
-    }
+    write_same_width_integer_value_pattern_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_duplicate_boolean_value_pattern_failure() {

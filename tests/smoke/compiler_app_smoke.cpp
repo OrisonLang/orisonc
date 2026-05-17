@@ -287,6 +287,15 @@ void write_bool_switch_text_value_pattern_fixture(std::filesystem::path const& p
     output << "        default => 0\n";
 }
 
+void write_same_width_integer_value_pattern_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "function classify(value: UInt32) -> Int64\n";
+    output << "    switch value\n";
+    output << "        1 as Int32 => 1\n";
+    output << "        default => 0\n";
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -5217,31 +5226,9 @@ int main() {
 
     auto switch_value_pattern_same_width_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_value_pattern_same_width_success.or";
-    {
-        std::ofstream output(switch_value_pattern_same_width_success_path);
-        output << "package demo.switches\n";
-        output << "function classify(value: UInt32) -> Int64\n";
-        output << "    switch value\n";
-        output << "        1 as Int32 => 1\n";
-        output << "        default => 0\n";
-    }
+    write_same_width_integer_value_pattern_fixture(switch_value_pattern_same_width_success_path);
 
-    auto switch_value_pattern_same_width_success_path_text = switch_value_pattern_same_width_success_path.string();
-    std::array<char const*, 3> switch_value_pattern_same_width_success_argv {
-        "orisonc",
-        "--parse",
-        switch_value_pattern_same_width_success_path_text.c_str()
-    };
-    auto switch_value_pattern_same_width_success_result = app.run(
-        std::span<char const* const>(
-            switch_value_pattern_same_width_success_argv.data(),
-            switch_value_pattern_same_width_success_argv.size()
-        )
-    );
-
-    assert(switch_value_pattern_same_width_success_result.exit_code == 0);
-    assert(switch_value_pattern_same_width_success_result.stderr_text.empty());
-    assert(switch_value_pattern_same_width_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, switch_value_pattern_same_width_success_path));
 
     auto switch_duplicate_boolean_value_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_duplicate_boolean_value_failure.or";
