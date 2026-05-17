@@ -308,6 +308,16 @@ void write_duplicate_bool_value_pattern_fixture(std::filesystem::path const& pat
     }
 }
 
+void write_duplicate_text_value_pattern_fixture(std::filesystem::path const& path) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "function classify(state: Text) -> Int64\n";
+    output << "    switch state\n";
+    output << "        \"ready\" => 1\n";
+    output << "        \"ready\" => 2\n";
+    output << "        default => 0\n";
+}
+
 void write_boxed_maybe_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -1759,29 +1769,9 @@ void test_switch_duplicate_bool_without_default_does_not_cascade_to_missing_patt
 void test_switch_rejects_duplicate_string_value_pattern_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_string_value_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "function classify(state: Text) -> Int64\n";
-        output << "    switch state\n";
-        output << "        \"ready\" => 1\n";
-        output << "        \"ready\" => 2\n";
-        output << "        default => 0\n";
-    }
+    write_duplicate_text_value_pattern_fixture(path);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message == "switch value pattern '\"ready\"' is duplicated");
+    assert_fixture_single_diagnostic(path, 5, "switch value pattern '\"ready\"' is duplicated");
 }
 
 void test_switch_rejects_duplicate_integer_cast_value_pattern_failure() {
