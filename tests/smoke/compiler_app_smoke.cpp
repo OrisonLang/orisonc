@@ -5819,14 +5819,10 @@ int main() {
     auto switch_nonfinal_default_branch_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_nonfinal_default_branch_no_cascade_failure.or";
-    {
-        std::ofstream output(switch_nonfinal_default_branch_no_cascade_failure_path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        default => await flag\n";
-        output << "        true => 1\n";
-    }
+    write_bool_value_pattern_switch_fixture(
+        switch_nonfinal_default_branch_no_cascade_failure_path,
+        {"default => await flag", "true => 1"}
+    );
 
     auto switch_nonfinal_default_branch_no_cascade_failure_result =
         run_parse(app, switch_nonfinal_default_branch_no_cascade_failure_path);
