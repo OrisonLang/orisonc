@@ -462,6 +462,26 @@ auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semant
     return analyzer.analyze(parse_result.module);
 }
 
+template <typename MutateSwitch>
+auto analyze_mutated_first_switch_fixture(
+    std::filesystem::path const& path,
+    MutateSwitch mutate_switch
+) -> orison::semantics::SemanticAnalysisResult {
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    auto& switch_statement = parse_result.module.functions.front().body_statements.front();
+    assert(switch_statement.kind == orison::syntax::StatementKind::switch_statement);
+    mutate_switch(switch_statement);
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    return analyzer.analyze(parse_result.module);
+}
+
 void assert_wrap_duplicate_diagnostic(
     orison::semantics::SemanticAnalysisResult const& diagnostics,
     std::size_t expected_line = 10
@@ -2212,29 +2232,12 @@ void test_switch_rejects_missing_zero_payload_choice_variant_failure() {
 
 void test_switch_rejects_multiple_default_cases_semantically() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_multiple_default_semantic_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        true => 1\n";
-        output << "        false => 0\n";
-    }
+    write_bool_value_pattern_switch_fixture(path, {"true => 1", "false => 0"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    auto& switch_statement = parse_result.module.functions.front().body_statements.front();
-    assert(switch_statement.kind == orison::syntax::StatementKind::switch_statement);
-    switch_statement.switch_cases.front().is_default = true;
-    switch_statement.switch_cases.back().is_default = true;
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_mutated_first_switch_fixture(path, [](auto& switch_statement) {
+        switch_statement.switch_cases.front().is_default = true;
+        switch_statement.switch_cases.back().is_default = true;
+    });
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 2);
     assert(diagnostics.entries().front().line == 4);
@@ -2245,28 +2248,11 @@ void test_switch_rejects_multiple_default_cases_semantically() {
 
 void test_switch_rejects_nonfinal_default_case_semantically() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_nonfinal_default_semantic_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        true => 1\n";
-        output << "        false => 0\n";
-    }
+    write_bool_value_pattern_switch_fixture(path, {"true => 1", "false => 0"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    auto& switch_statement = parse_result.module.functions.front().body_statements.front();
-    assert(switch_statement.kind == orison::syntax::StatementKind::switch_statement);
-    switch_statement.switch_cases.front().is_default = true;
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_mutated_first_switch_fixture(path, [](auto& switch_statement) {
+        switch_statement.switch_cases.front().is_default = true;
+    });
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 1);
     assert(diagnostics.entries().front().line == 4);
@@ -2276,14 +2262,7 @@ void test_switch_rejects_nonfinal_default_case_semantically() {
 void test_switch_nonfinal_default_suppresses_branch_analysis_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nonfinal_default_branch_no_cascade.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        default => await flag\n";
-        output << "        true => 1\n";
-    }
+    write_bool_value_pattern_switch_fixture(path, {"default => await flag", "true => 1"});
 
     assert_fixture_single_diagnostic(path, 4, "switch default case must be the final case");
 }
@@ -2291,29 +2270,12 @@ void test_switch_nonfinal_default_suppresses_branch_analysis_failure() {
 void test_switch_multiple_default_suppresses_branch_analysis_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_switch_multiple_default_branch_no_cascade.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "function classify(flag: Bool) -> Int64\n";
-        output << "    switch flag\n";
-        output << "        true => 1\n";
-        output << "        false => await flag\n";
-    }
+    write_bool_value_pattern_switch_fixture(path, {"true => 1", "false => await flag"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    auto& switch_statement = parse_result.module.functions.front().body_statements.front();
-    assert(switch_statement.kind == orison::syntax::StatementKind::switch_statement);
-    switch_statement.switch_cases.front().is_default = true;
-    switch_statement.switch_cases.back().is_default = true;
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_mutated_first_switch_fixture(path, [](auto& switch_statement) {
+        switch_statement.switch_cases.front().is_default = true;
+        switch_statement.switch_cases.back().is_default = true;
+    });
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 2);
     assert(diagnostics.entries().front().line == 4);
