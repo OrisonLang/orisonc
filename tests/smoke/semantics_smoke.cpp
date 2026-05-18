@@ -409,6 +409,26 @@ void write_pair_choice_exhaustiveness_fixture(
     }
 }
 
+void write_number_choice_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = true
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice Number\n";
+    output << "    Int(value: Int64)\n";
+    output << "    Empty\n";
+    output << "function classify(item: Number) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
 void write_multi_payload_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -2123,128 +2143,36 @@ void test_switch_rejects_duplicate_literal_payload_choice_constructor_failure() 
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_duplicate_literal_payload_choice_constructor_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Number\n";
-        output << "    Int(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Number) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Int(1) => 1\n";
-        output << "        Int(1) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_number_choice_switch_fixture(path, {"Int(1) => 1", "Int(1) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Int(...)' is duplicated");
+    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Int(...)' is duplicated");
 }
 
 void test_switch_rejects_equivalent_integer_literal_payload_choice_constructor_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_equivalent_integer_literal_payload_choice_constructor_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Number\n";
-        output << "    Int(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Number) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Int(1) => 1\n";
-        output << "        Int(1 as Int64) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_number_choice_switch_fixture(path, {"Int(1) => 1", "Int(1 as Int64) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Int(...)' is duplicated");
+    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Int(...)' is duplicated");
 }
 
 void test_switch_rejects_wildcard_then_literal_payload_choice_constructor_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_wildcard_then_literal_payload_choice_constructor_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Number\n";
-        output << "    Int(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Number) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Int(value) => 1\n";
-        output << "        Int(1) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_number_choice_switch_fixture(path, {"Int(value) => 1", "Int(1) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Int(...)' is duplicated");
+    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Int(...)' is duplicated");
 }
 
 void test_switch_rejects_literal_then_wildcard_payload_choice_constructor_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_literal_then_wildcard_payload_choice_constructor_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice Number\n";
-        output << "    Int(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Number) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Int(1) => 1\n";
-        output << "        Int(value) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_number_choice_switch_fixture(path, {"Int(1) => 1", "Int(value) => 2"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Int(...)' is duplicated");
+    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Int(...)' is duplicated");
 }
 
 void test_switch_rejects_multi_payload_partial_overlap_choice_constructor_failure() {

@@ -409,6 +409,26 @@ void write_pair_choice_exhaustiveness_fixture(
     }
 }
 
+void write_number_choice_switch_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> arms,
+    bool include_default = true
+) {
+    std::ofstream output(path);
+    output << "package demo.switches\n";
+    output << "choice Number\n";
+    output << "    Int(value: Int64)\n";
+    output << "    Empty\n";
+    output << "function classify(item: Number) -> Int64\n";
+    output << "    switch item\n";
+    for (auto arm : arms) {
+        output << "        " << arm << "\n";
+    }
+    if (include_default) {
+        output << "        default => 0\n";
+    }
+}
+
 void write_multi_payload_choice_exhaustiveness_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> arms,
@@ -5697,35 +5717,13 @@ int main() {
     auto switch_duplicate_literal_payload_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_duplicate_literal_payload_choice_constructor_failure.or";
-    {
-        std::ofstream output(switch_duplicate_literal_payload_choice_constructor_failure_path);
-        output << "package demo.switches\n";
-        output << "choice Number\n";
-        output << "    Int(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Number) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Int(1) => 1\n";
-        output << "        Int(1) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_duplicate_literal_payload_choice_constructor_failure_path_text =
-        switch_duplicate_literal_payload_choice_constructor_failure_path.string();
-    std::array<char const*, 3> switch_duplicate_literal_payload_choice_constructor_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_duplicate_literal_payload_choice_constructor_failure_path_text.c_str()
-    };
-    auto switch_duplicate_literal_payload_choice_constructor_failure_result = app.run(
-        std::span<char const* const>(
-            switch_duplicate_literal_payload_choice_constructor_failure_argv.data(),
-            switch_duplicate_literal_payload_choice_constructor_failure_argv.size()
-        )
+    write_number_choice_switch_fixture(
+        switch_duplicate_literal_payload_choice_constructor_failure_path,
+        {"Int(1) => 1", "Int(1) => 2"}
     );
 
     assert_parse_failure_contains_without(
-        switch_duplicate_literal_payload_choice_constructor_failure_result,
+        run_parse(app, switch_duplicate_literal_payload_choice_constructor_failure_path),
         "switch constructor pattern 'Int(...)' is duplicated",
         "switch value pattern"
     );
@@ -5733,71 +5731,26 @@ int main() {
     auto switch_equivalent_integer_literal_payload_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_equivalent_integer_literal_payload_choice_constructor_failure.or";
-    {
-        std::ofstream output(switch_equivalent_integer_literal_payload_choice_constructor_failure_path);
-        output << "package demo.switches\n";
-        output << "choice Number\n";
-        output << "    Int(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Number) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Int(1) => 1\n";
-        output << "        Int(1 as Int64) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_equivalent_integer_literal_payload_choice_constructor_failure_path_text =
-        switch_equivalent_integer_literal_payload_choice_constructor_failure_path.string();
-    std::array<char const*, 3> switch_equivalent_integer_literal_payload_choice_constructor_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_equivalent_integer_literal_payload_choice_constructor_failure_path_text.c_str()
-    };
-    auto switch_equivalent_integer_literal_payload_choice_constructor_failure_result = app.run(
-        std::span<char const* const>(
-            switch_equivalent_integer_literal_payload_choice_constructor_failure_argv.data(),
-            switch_equivalent_integer_literal_payload_choice_constructor_failure_argv.size()
-        )
+    write_number_choice_switch_fixture(
+        switch_equivalent_integer_literal_payload_choice_constructor_failure_path,
+        {"Int(1) => 1", "Int(1 as Int64) => 2"}
     );
 
-    assert(switch_equivalent_integer_literal_payload_choice_constructor_failure_result.exit_code == 1);
-    assert(switch_equivalent_integer_literal_payload_choice_constructor_failure_result.stdout_text.empty());
-    assert(switch_equivalent_integer_literal_payload_choice_constructor_failure_result.stderr_text.find(
-               "switch constructor pattern 'Int(...)' is duplicated"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_equivalent_integer_literal_payload_choice_constructor_failure_path),
+        "switch constructor pattern 'Int(...)' is duplicated"
+    );
 
     auto switch_wildcard_then_literal_payload_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_wildcard_then_literal_payload_choice_constructor_failure.or";
-    {
-        std::ofstream output(switch_wildcard_then_literal_payload_choice_constructor_failure_path);
-        output << "package demo.switches\n";
-        output << "choice Number\n";
-        output << "    Int(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Number) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Int(value) => 1\n";
-        output << "        Int(1) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_wildcard_then_literal_payload_choice_constructor_failure_path_text =
-        switch_wildcard_then_literal_payload_choice_constructor_failure_path.string();
-    std::array<char const*, 3> switch_wildcard_then_literal_payload_choice_constructor_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_wildcard_then_literal_payload_choice_constructor_failure_path_text.c_str()
-    };
-    auto switch_wildcard_then_literal_payload_choice_constructor_failure_result = app.run(
-        std::span<char const* const>(
-            switch_wildcard_then_literal_payload_choice_constructor_failure_argv.data(),
-            switch_wildcard_then_literal_payload_choice_constructor_failure_argv.size()
-        )
+    write_number_choice_switch_fixture(
+        switch_wildcard_then_literal_payload_choice_constructor_failure_path,
+        {"Int(value) => 1", "Int(1) => 2"}
     );
 
     assert_parse_failure_contains_without(
-        switch_wildcard_then_literal_payload_choice_constructor_failure_result,
+        run_parse(app, switch_wildcard_then_literal_payload_choice_constructor_failure_path),
         "switch constructor pattern 'Int(...)' is duplicated",
         "switch value pattern"
     );
@@ -5805,38 +5758,15 @@ int main() {
     auto switch_literal_then_wildcard_payload_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_switch_literal_then_wildcard_payload_choice_constructor_failure.or";
-    {
-        std::ofstream output(switch_literal_then_wildcard_payload_choice_constructor_failure_path);
-        output << "package demo.switches\n";
-        output << "choice Number\n";
-        output << "    Int(value: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: Number) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Int(1) => 1\n";
-        output << "        Int(value) => 2\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_literal_then_wildcard_payload_choice_constructor_failure_path_text =
-        switch_literal_then_wildcard_payload_choice_constructor_failure_path.string();
-    std::array<char const*, 3> switch_literal_then_wildcard_payload_choice_constructor_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_literal_then_wildcard_payload_choice_constructor_failure_path_text.c_str()
-    };
-    auto switch_literal_then_wildcard_payload_choice_constructor_failure_result = app.run(
-        std::span<char const* const>(
-            switch_literal_then_wildcard_payload_choice_constructor_failure_argv.data(),
-            switch_literal_then_wildcard_payload_choice_constructor_failure_argv.size()
-        )
+    write_number_choice_switch_fixture(
+        switch_literal_then_wildcard_payload_choice_constructor_failure_path,
+        {"Int(1) => 1", "Int(value) => 2"}
     );
 
-    assert(switch_literal_then_wildcard_payload_choice_constructor_failure_result.exit_code == 1);
-    assert(switch_literal_then_wildcard_payload_choice_constructor_failure_result.stdout_text.empty());
-    assert(switch_literal_then_wildcard_payload_choice_constructor_failure_result.stderr_text.find(
-               "switch constructor pattern 'Int(...)' is duplicated"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_literal_then_wildcard_payload_choice_constructor_failure_path),
+        "switch constructor pattern 'Int(...)' is duplicated"
+    );
 
     auto switch_multi_payload_partial_overlap_choice_constructor_failure_path =
         std::filesystem::temp_directory_path() /
