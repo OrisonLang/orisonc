@@ -2179,90 +2179,27 @@ void test_switch_rejects_multi_payload_partial_overlap_choice_constructor_failur
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_multi_payload_partial_overlap_choice_constructor_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice PairChoice\n";
-        output << "    Both(left: Int64, right: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: PairChoice) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Both(left, 1) => 1\n";
-        output << "        Both(other, 1) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => 1", "Both(other, 1) => 2"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message == "switch constructor pattern 'Both(...)' is duplicated");
+    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Both(...)' is duplicated");
 }
 
 void test_switch_accepts_multi_payload_disjoint_literal_choice_constructor_success() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_multi_payload_disjoint_literal_choice_constructor_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice PairChoice\n";
-        output << "    Both(left: Int64, right: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: PairChoice) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Both(left, 1) => 1\n";
-        output << "        Both(other, 2) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => 1", "Both(other, 2) => 2"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_accepts_multi_payload_disjoint_leading_literal_choice_constructor_success() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_switch_multi_payload_disjoint_leading_literal_choice_constructor_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.switches\n";
-        output << "choice PairChoice\n";
-        output << "    Both(left: Int64, right: Int64)\n";
-        output << "    Empty\n";
-        output << "function classify(item: PairChoice) -> Int64\n";
-        output << "    switch item\n";
-        output << "        Both(1, left) => 1\n";
-        output << "        Both(2, right) => 2\n";
-        output << "        default => 0\n";
-    }
+    write_pair_choice_exhaustiveness_fixture(path, {"Both(1, left) => 1", "Both(2, right) => 2"}, true);
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_missing_zero_payload_choice_variant_failure() {
