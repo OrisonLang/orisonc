@@ -6028,73 +6028,57 @@ int main() {
     );
 
     auto join_receiver_path = std::filesystem::temp_directory_path() / "orison_compiler_app_join_receiver_failure.or";
-    {
-        std::ofstream output(join_receiver_path);
-        output << "package demo.thread\n";
-        output << "async function fetch() -> Int64\n";
-        output << "    let request_task = task\n";
-        output << "        1\n";
-        output << "    return request_task.join()\n";
-    }
+    write_concurrency_fixture(
+        join_receiver_path,
+        "demo.thread",
+        {
+            "async function fetch() -> Int64",
+            "    let request_task = task",
+            "        1",
+            "    return request_task.join()",
+        }
+    );
 
-    auto join_receiver_path_text = join_receiver_path.string();
-    std::array<char const*, 3> join_receiver_argv {"orisonc", "--parse", join_receiver_path_text.c_str()};
-    auto join_receiver_result =
-        app.run(std::span<char const* const>(join_receiver_argv.data(), join_receiver_argv.size()));
-
-    assert(join_receiver_result.exit_code == 1);
-    assert(join_receiver_result.stdout_text.empty());
-    assert(join_receiver_result.stderr_text.find(
-               "join() cannot be used with task values; use await instead"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, join_receiver_path),
+        "join() cannot be used with task values; use await instead"
+    );
 
     auto join_async_call_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_join_async_call_failure.or";
-    {
-        std::ofstream output(join_async_call_path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let pending = request(url)\n";
-        output << "    return pending.join()\n";
-    }
+    write_concurrency_fixture(
+        join_async_call_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let pending = request(url)",
+            "    return pending.join()",
+        }
+    );
 
-    auto join_async_call_path_text = join_async_call_path.string();
-    std::array<char const*, 3> join_async_call_argv {
-        "orisonc",
-        "--parse",
-        join_async_call_path_text.c_str()
-    };
-    auto join_async_call_result =
-        app.run(std::span<char const* const>(join_async_call_argv.data(), join_async_call_argv.size()));
-
-    assert(join_async_call_result.exit_code == 1);
-    assert(join_async_call_result.stdout_text.empty());
-    assert(join_async_call_result.stderr_text.find(
-               "join() cannot be used with declared async call results; use await instead"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, join_async_call_path),
+        "join() cannot be used with declared async call results; use await instead"
+    );
 
     auto thread_value_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
-    {
-        std::ofstream output(thread_value_path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        1\n";
-        output << "    return worker\n";
-    }
+    write_concurrency_fixture(
+        thread_value_path,
+        "demo.thread",
+        {
+            "function parallel_sum() -> Int64",
+            "    let worker = thread",
+            "        1",
+            "    return worker",
+        }
+    );
 
-    auto thread_value_path_text = thread_value_path.string();
-    std::array<char const*, 3> thread_value_argv {"orisonc", "--parse", thread_value_path_text.c_str()};
-    auto thread_value_result =
-        app.run(std::span<char const* const>(thread_value_argv.data(), thread_value_argv.size()));
-
-    assert(thread_value_result.exit_code == 1);
-    assert(thread_value_result.stdout_text.empty());
-    assert(thread_value_result.stderr_text.find(
-               "return cannot forward thread values; use .join() instead"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, thread_value_path),
+        "return cannot forward thread values; use .join() instead"
+    );
 
     auto concrete_marker_path = std::filesystem::temp_directory_path() / "orison_compiler_app_concrete_marker_success.or";
     write_concurrency_fixture(
