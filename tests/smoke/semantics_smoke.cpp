@@ -6818,25 +6818,19 @@ void test_thread_capture_shareable_generic_failure() {
 
 void test_task_capture_shareable_generic_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_shareable_generic_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "async function launch<T>(item: T) -> T\n";
-        output << "where T: Shareable\n";
-        output << "    let worker = task\n";
-        output << "        item\n";
-        output << "    return await worker\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "async function launch<T>(item: T) -> T",
+            "where T: Shareable",
+            "    let worker = task",
+            "        item",
+            "    return await worker",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
+    auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.concurrency_captures.size() == 1);
     assert(analysis.concurrency_captures[0].name == "item");
@@ -6847,27 +6841,21 @@ void test_task_capture_shareable_generic_success() {
 
 void test_task_capture_shareable_concrete_type_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_shareable_concrete_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "implements Shareable for Buffer\n";
-        output << "    function placeholder(this: shared This) -> Unit\n";
-        output << "        return\n";
-        output << "async function launch_processing(buffer: Buffer) -> Buffer\n";
-        output << "    let worker = task\n";
-        output << "        buffer\n";
-        output << "    return await worker\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "implements Shareable for Buffer",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "async function launch_processing(buffer: Buffer) -> Buffer",
+            "    let worker = task",
+            "        buffer",
+            "    return await worker",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
+    auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.concurrency_captures.size() == 1);
     assert(analysis.concurrency_captures[0].name == "buffer");
@@ -6901,169 +6889,115 @@ void test_thread_capture_shareable_concrete_type_failure() {
 
 void test_thread_result_owned_concrete_type_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_result_owned_concrete_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function launch_processing() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        let produced: Buffer = make_buffer()\n";
-        output << "        produced\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function launch_processing() -> Int64",
+            "    let worker = thread",
+            "        let produced: Buffer = make_buffer()",
+            "        produced",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
-    assert(analysis.has_errors());
-    assert(analysis.entries().size() == 1);
-    assert(analysis.entries().front().line == 5);
-    assert(analysis.entries().front().message ==
-           "thread result type 'Buffer' requires future Transferable analysis");
+    assert_fixture_single_diagnostic(path, 5, "thread result type 'Buffer' requires future Transferable analysis");
 }
 
 void test_thread_result_transferable_concrete_type_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_result_transferable_concrete_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "implements Transferable for Buffer\n";
-        output << "    function placeholder(this: shared This) -> Unit\n";
-        output << "        return\n";
-        output << "function launch_processing() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        let produced: Buffer = make_buffer()\n";
-        output << "        produced\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "implements Transferable for Buffer",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "function launch_processing() -> Int64",
+            "    let worker = thread",
+            "        let produced: Buffer = make_buffer()",
+            "        produced",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
-    assert(!analysis.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_thread_result_shareable_generic_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_result_shareable_generic_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function launch<T>() -> Int64\n";
-        output << "where T: Shareable\n";
-        output << "    let worker = thread\n";
-        output << "        let produced: T = build()\n";
-        output << "        produced\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function launch<T>() -> Int64",
+            "where T: Shareable",
+            "    let worker = thread",
+            "        let produced: T = build()",
+            "        produced",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
-    assert(analysis.has_errors());
-    assert(analysis.entries().size() == 1);
-    assert(analysis.entries().front().line == 6);
-    assert(analysis.entries().front().message ==
-           "thread result type 'T' requires future Transferable analysis");
+    assert_fixture_single_diagnostic(path, 6, "thread result type 'T' requires future Transferable analysis");
 }
 
 void test_task_result_shareable_generic_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_result_shareable_generic_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "async function launch<T>() -> T\n";
-        output << "where T: Shareable\n";
-        output << "    let worker = task\n";
-        output << "        let produced: T = build()\n";
-        output << "        produced\n";
-        output << "    return await worker\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "async function launch<T>() -> T",
+            "where T: Shareable",
+            "    let worker = task",
+            "        let produced: T = build()",
+            "        produced",
+            "    return await worker",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
-    assert(!analysis.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_task_result_shareable_concrete_type_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_result_shareable_concrete_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "implements Shareable for Buffer\n";
-        output << "    function placeholder(this: shared This) -> Unit\n";
-        output << "        return\n";
-        output << "async function launch_processing() -> Buffer\n";
-        output << "    let worker = task\n";
-        output << "        let produced: Buffer = make_buffer()\n";
-        output << "        produced\n";
-        output << "    return await worker\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "implements Shareable for Buffer",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "async function launch_processing() -> Buffer",
+            "    let worker = task",
+            "        let produced: Buffer = make_buffer()",
+            "        produced",
+            "    return await worker",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
-    assert(!analysis.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_thread_result_shareable_concrete_type_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_result_shareable_concrete_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "implements Shareable for Buffer\n";
-        output << "    function placeholder(this: shared This) -> Unit\n";
-        output << "        return\n";
-        output << "function launch_processing() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        let produced: Buffer = make_buffer()\n";
-        output << "        produced\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "implements Shareable for Buffer",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "function launch_processing() -> Int64",
+            "    let worker = thread",
+            "        let produced: Buffer = make_buffer()",
+            "        produced",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
-    assert(analysis.has_errors());
-    assert(analysis.entries().size() == 1);
-    assert(analysis.entries().front().line == 8);
-    assert(analysis.entries().front().message ==
-           "thread result type 'Buffer' requires future Transferable analysis");
+    assert_fixture_single_diagnostic(path, 8, "thread result type 'Buffer' requires future Transferable analysis");
 }
 
 void test_task_expression_value_boundary_failure() {
