@@ -463,6 +463,17 @@ void write_loop_control_fixture(
     }
 }
 
+void write_receiver_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> lines
+) {
+    std::ofstream output(path);
+    output << "package demo.receiver\n";
+    for (auto line : lines) {
+        output << line << "\n";
+    }
+}
+
 auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     auto path_text = path.string();
@@ -5866,89 +5877,36 @@ int main() {
 
     auto this_outside_method_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_this_outside_method_failure.or";
-    {
-        std::ofstream output(this_outside_method_failure_path);
-        output << "package demo.receiver\n";
-        output << "function current() -> Int64\n";
-        output << "    return this\n";
-    }
+    write_receiver_fixture(this_outside_method_failure_path, {"function current() -> Int64", "    return this"});
 
-    auto this_outside_method_failure_path_text = this_outside_method_failure_path.string();
-    std::array<char const*, 3> this_outside_method_failure_argv {
-        "orisonc",
-        "--parse",
-        this_outside_method_failure_path_text.c_str()
-    };
-    auto this_outside_method_failure_result = app.run(
-        std::span<char const* const>(
-            this_outside_method_failure_argv.data(),
-            this_outside_method_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, this_outside_method_failure_path),
+        "receiver 'this' is only valid inside implements or extend methods"
     );
-
-    assert(this_outside_method_failure_result.exit_code == 1);
-    assert(this_outside_method_failure_result.stdout_text.empty());
-    assert(this_outside_method_failure_result.stderr_text.find(
-               "receiver 'this' is only valid inside implements or extend methods"
-           ) != std::string::npos);
 
     auto this_type_signature_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_this_type_signature_failure.or";
-    {
-        std::ofstream output(this_type_signature_failure_path);
-        output << "package demo.receiver\n";
-        output << "function project(value: shared This) -> shared This\n";
-        output << "    return value\n";
-    }
-
-    auto this_type_signature_failure_path_text = this_type_signature_failure_path.string();
-    std::array<char const*, 3> this_type_signature_failure_argv {
-        "orisonc",
-        "--parse",
-        this_type_signature_failure_path_text.c_str()
-    };
-    auto this_type_signature_failure_result = app.run(
-        std::span<char const* const>(
-            this_type_signature_failure_argv.data(),
-            this_type_signature_failure_argv.size()
-        )
+    write_receiver_fixture(
+        this_type_signature_failure_path,
+        {"function project(value: shared This) -> shared This", "    return value"}
     );
 
-    assert(this_type_signature_failure_result.exit_code == 1);
-    assert(this_type_signature_failure_result.stdout_text.empty());
-    assert(this_type_signature_failure_result.stderr_text.find(
-               "This type is only valid inside interface, implements, or extend methods"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, this_type_signature_failure_path),
+        "This type is only valid inside interface, implements, or extend methods"
+    );
 
     auto receiver_parameter_nonself_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_receiver_parameter_nonself_type_failure.or";
-    {
-        std::ofstream output(receiver_parameter_nonself_type_failure_path);
-        output << "package demo.receiver\n";
-        output << "extend Buffer\n";
-        output << "    function reset(this: Int64) -> Unit\n";
-        output << "        return\n";
-    }
-
-    auto receiver_parameter_nonself_type_failure_path_text =
-        receiver_parameter_nonself_type_failure_path.string();
-    std::array<char const*, 3> receiver_parameter_nonself_type_failure_argv {
-        "orisonc",
-        "--parse",
-        receiver_parameter_nonself_type_failure_path_text.c_str()
-    };
-    auto receiver_parameter_nonself_type_failure_result = app.run(
-        std::span<char const* const>(
-            receiver_parameter_nonself_type_failure_argv.data(),
-            receiver_parameter_nonself_type_failure_argv.size()
-        )
+    write_receiver_fixture(
+        receiver_parameter_nonself_type_failure_path,
+        {"extend Buffer", "    function reset(this: Int64) -> Unit", "        return"}
     );
 
-    assert(receiver_parameter_nonself_type_failure_result.exit_code == 1);
-    assert(receiver_parameter_nonself_type_failure_result.stdout_text.empty());
-    assert(receiver_parameter_nonself_type_failure_result.stderr_text.find(
-               "receiver parameter 'this' must use This, shared This, or exclusive This"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, receiver_parameter_nonself_type_failure_path),
+        "receiver parameter 'this' must use This, shared This, or exclusive This"
+    );
 
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
     {

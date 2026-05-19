@@ -463,6 +463,17 @@ void write_loop_control_fixture(
     }
 }
 
+void write_receiver_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> lines
+) {
+    std::ofstream output(path);
+    output << "package demo.receiver\n";
+    for (auto line : lines) {
+        output << line << "\n";
+    }
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -2331,74 +2342,33 @@ void test_continue_inside_loop_success() {
 
 void test_this_outside_method_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_this_outside_method_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.receiver\n";
-        output << "function current() -> Int64\n";
-        output << "    return this\n";
-    }
+    write_receiver_fixture(path, {"function current() -> Int64", "    return this"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "receiver 'this' is only valid inside implements or extend methods");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "receiver 'this' is only valid inside implements or extend methods"
+    );
 }
 
 void test_receiver_parameter_outside_method_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_receiver_parameter_outside_method_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.receiver\n";
-        output << "function current(this: Int64) -> Int64\n";
-        output << "    return 0\n";
-    }
+    write_receiver_fixture(path, {"function current(this: Int64) -> Int64", "    return 0"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 2);
-    assert(diagnostics.entries().front().message ==
-           "receiver parameter 'this' is only valid in implements or extend methods");
+    assert_fixture_single_diagnostic(
+        path,
+        2,
+        "receiver parameter 'this' is only valid in implements or extend methods"
+    );
 }
 
 void test_qualified_this_type_in_ordinary_function_signature_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_this_type_signature_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.receiver\n";
-        output << "function project(value: shared This) -> shared This\n";
-        output << "    return value\n";
-    }
+    write_receiver_fixture(path, {"function project(value: shared This) -> shared This", "    return value"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 2);
     assert(diagnostics.entries().front().line == 2);
@@ -2411,54 +2381,25 @@ void test_qualified_this_type_in_ordinary_function_signature_failure() {
 
 void test_qualified_this_type_in_local_annotation_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_this_type_local_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.receiver\n";
-        output << "function cache() -> Unit\n";
-        output << "    let current: exclusive This = unit\n";
-    }
+    write_receiver_fixture(path, {"function cache() -> Unit", "    let current: exclusive This = unit"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "This type is only valid inside interface, implements, or extend methods");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "This type is only valid inside interface, implements, or extend methods"
+    );
 }
 
 void test_receiver_parameter_with_nonself_type_inside_method_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_receiver_parameter_nonself_type_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.receiver\n";
-        output << "extend Buffer\n";
-        output << "    function reset(this: Int64) -> Unit\n";
-        output << "        return\n";
-    }
+    write_receiver_fixture(path, {"extend Buffer", "    function reset(this: Int64) -> Unit", "        return"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "receiver parameter 'this' must use This, shared This, or exclusive This");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "receiver parameter 'this' must use This, shared This, or exclusive This"
+    );
 }
 
 void test_unsafe_intrinsic_outside_unsafe_context_failure() {
