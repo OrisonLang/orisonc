@@ -450,6 +450,19 @@ void write_multi_payload_choice_exhaustiveness_fixture(
     }
 }
 
+void write_loop_control_fixture(
+    std::filesystem::path const& path,
+    std::string_view function_header,
+    std::initializer_list<std::string_view> body_lines
+) {
+    std::ofstream output(path);
+    output << "package demo.loops\n";
+    output << "function " << function_header << "\n";
+    for (auto line : body_lines) {
+        output << "    " << line << "\n";
+    }
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -2286,94 +2299,34 @@ void test_switch_multiple_default_suppresses_branch_analysis_failure() {
 
 void test_break_outside_loop_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_break_outside_loop_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.loops\n";
-        output << "function stop() -> Unit\n";
-        output << "    break\n";
-    }
+    write_loop_control_fixture(path, "stop() -> Unit", {"break"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message == "break statement is only valid inside loops");
+    assert_fixture_single_diagnostic(path, 3, "break statement is only valid inside loops");
 }
 
 void test_continue_outside_loop_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_continue_outside_loop_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.loops\n";
-        output << "function keep_going() -> Unit\n";
-        output << "    continue\n";
-    }
+    write_loop_control_fixture(path, "keep_going() -> Unit", {"continue"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message == "continue statement is only valid inside loops");
+    assert_fixture_single_diagnostic(path, 3, "continue statement is only valid inside loops");
 }
 
 void test_break_inside_loop_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_break_inside_loop_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.loops\n";
-        output << "function stop(flag: Bool) -> Unit\n";
-        output << "    while flag\n";
-        output << "        break\n";
-    }
+    write_loop_control_fixture(path, "stop(flag: Bool) -> Unit", {"while flag", "    break"});
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_continue_inside_loop_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_continue_inside_loop_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.loops\n";
-        output << "function scan(items: shared View<Int64>) -> Unit\n";
-        output << "    for item in items\n";
-        output << "        continue\n";
-    }
+    write_loop_control_fixture(
+        path,
+        "scan(items: shared View<Int64>) -> Unit",
+        {"for item in items", "    continue"}
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_this_outside_method_failure() {
