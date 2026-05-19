@@ -474,6 +474,18 @@ void write_receiver_fixture(
     }
 }
 
+void write_concurrency_fixture(
+    std::filesystem::path const& path,
+    std::string_view package_name,
+    std::initializer_list<std::string_view> lines
+) {
+    std::ofstream output(path);
+    output << "package " << package_name << "\n";
+    for (auto line : lines) {
+        output << line << "\n";
+    }
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -7095,186 +7107,133 @@ void test_thread_result_shareable_concrete_type_failure() {
 
 void test_task_expression_value_boundary_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_value_boundary_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let request_task = task\n";
-        output << "        let response = request(url)\n";
-        output << "    return await request_task\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let request_task = task",
+            "        let response = request(url)",
+            "    return await request_task",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message ==
-           "task expression body must end with an expression statement or value return");
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "task expression body must end with an expression statement or value return"
+    );
 }
 
 void test_task_expression_value_return_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_value_return_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let request_task = task\n";
-        output << "        return request(url)\n";
-        output << "    return await request_task\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let request_task = task",
+            "        return request(url)",
+            "    return await request_task",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_thread_expression_value_boundary_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_value_boundary_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum(data: shared View<Int64>) -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        let total = sum(data)\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function parallel_sum(data: shared View<Int64>) -> Int64",
+            "    let worker = thread",
+            "        let total = sum(data)",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message ==
-           "thread expression body must end with an expression statement or value return");
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "thread expression body must end with an expression statement or value return"
+    );
 }
 
 void test_thread_expression_value_return_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_value_return_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum(data: shared View<Int64>) -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        return sum(data)\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function parallel_sum(data: shared View<Int64>) -> Int64",
+            "    let worker = thread",
+            "        return sum(data)",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_task_capture_mutable_outer_local_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_capture_mutable_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var attempts = 0\n";
-        output << "    let request_task = task\n";
-        output << "        attempts\n";
-        output << "    return await request_task\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    var attempts = 0",
+            "    let request_task = task",
+            "        attempts",
+            "    return await request_task",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "concurrency expression cannot capture mutable outer local 'attempts'");
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "concurrency expression cannot capture mutable outer local 'attempts'"
+    );
 }
 
 void test_thread_capture_mutable_outer_local_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_capture_mutable_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum(data: shared View<Int64>) -> Int64\n";
-        output << "    var total = 0\n";
-        output << "    let worker = thread\n";
-        output << "        total\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function parallel_sum(data: shared View<Int64>) -> Int64",
+            "    var total = 0",
+            "    let worker = thread",
+            "        total",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "concurrency expression cannot capture mutable outer local 'total'");
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "concurrency expression cannot capture mutable outer local 'total'"
+    );
 }
 
 void test_thread_capture_receiver_this_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_capture_this_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "extend Worker\n";
-        output << "    function spawn(this: shared This) -> Int64\n";
-        output << "        let worker = thread\n";
-        output << "            this.id\n";
-        output << "        return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "extend Worker",
+            "    function spawn(this: shared This) -> Int64",
+            "        let worker = thread",
+            "            this.id",
+            "        return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "concurrency expression cannot capture receiver 'this'");
+    assert_fixture_single_diagnostic(path, 5, "concurrency expression cannot capture receiver 'this'");
 }
 
 }  // namespace
