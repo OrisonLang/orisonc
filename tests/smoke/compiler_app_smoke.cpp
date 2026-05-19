@@ -540,177 +540,125 @@ int main() {
     assert(result.stderr_text.empty());
 
     auto path = std::filesystem::temp_directory_path() / "orison_compiler_app_await_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return await request(url)\n";
-    }
-
-    auto path_text = path.string();
-    std::array<char const*, 3> parse_argv {"orisonc", "--parse", path_text.c_str()};
-    auto parse_result = app.run(std::span<char const* const>(parse_argv.data(), parse_argv.size()));
-
-    assert(parse_result.exit_code == 1);
-    assert(parse_result.stdout_text.empty());
-    assert(parse_result.stderr_text.find("await expression is only valid inside async functions") != std::string::npos);
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    return await request(url)",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, path),
+        "await expression is only valid inside async functions"
+    );
 
     auto await_value_path = std::filesystem::temp_directory_path() / "orison_compiler_app_await_value_failure.or";
-    {
-        std::ofstream output(await_value_path);
-        output << "package demo.await\n";
-        output << "async function fetch() -> Int64\n";
-        output << "    let count = 1\n";
-        output << "    return await count\n";
-    }
-
-    auto await_value_path_text = await_value_path.string();
-    std::array<char const*, 3> await_value_argv {"orisonc", "--parse", await_value_path_text.c_str()};
-    auto await_value_result = app.run(std::span<char const* const>(await_value_argv.data(), await_value_argv.size()));
-
-    assert(await_value_result.exit_code == 1);
-    assert(await_value_result.stdout_text.empty());
-    assert(await_value_result.stderr_text.find(
-               "await expression currently requires a task value or declared async call result"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        await_value_path,
+        "demo.await",
+        {
+            "async function fetch() -> Int64",
+            "    let count = 1",
+            "    return await count",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, await_value_path),
+        "await expression currently requires a task value or declared async call result"
+    );
 
     auto await_non_async_call_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_await_non_async_call_failure.or";
-    {
-        std::ofstream output(await_non_async_call_path);
-        output << "package demo.await\n";
-        output << "function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let pending = request(url)\n";
-        output << "    return await pending\n";
-    }
-
-    auto await_non_async_call_path_text = await_non_async_call_path.string();
-    std::array<char const*, 3> await_non_async_call_argv {
-        "orisonc",
-        "--parse",
-        await_non_async_call_path_text.c_str()
-    };
-    auto await_non_async_call_result =
-        app.run(std::span<char const* const>(await_non_async_call_argv.data(), await_non_async_call_argv.size()));
-
-    assert(await_non_async_call_result.exit_code == 1);
-    assert(await_non_async_call_result.stdout_text.empty());
-    assert(await_non_async_call_result.stderr_text.find(
-               "await expression currently requires a task value or declared async call result"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        await_non_async_call_path,
+        "demo.await",
+        {
+            "function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let pending = request(url)",
+            "    return await pending",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, await_non_async_call_path),
+        "await expression currently requires a task value or declared async call result"
+    );
 
     auto await_member_name_collision_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_await_member_name_collision_failure.or";
-    {
-        std::ofstream output(await_member_name_collision_path);
-        output << "package demo.await\n";
-        output << "async function run(text: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(text)\n";
-        output << "extend Printer\n";
-        output << "    function run(this: shared This) -> Outcome<Text, IOError>\n";
-        output << "        return render(this)\n";
-        output << "async function fetch(printer: Printer) -> Outcome<Text, IOError>\n";
-        output << "    let pending = printer.run()\n";
-        output << "    return await pending\n";
-    }
-
-    auto await_member_name_collision_path_text = await_member_name_collision_path.string();
-    std::array<char const*, 3> await_member_name_collision_argv {
-        "orisonc",
-        "--parse",
-        await_member_name_collision_path_text.c_str()
-    };
-    auto await_member_name_collision_result = app.run(
-        std::span<char const* const>(await_member_name_collision_argv.data(), await_member_name_collision_argv.size())
+    write_concurrency_fixture(
+        await_member_name_collision_path,
+        "demo.await",
+        {
+            "async function run(text: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(text)",
+            "extend Printer",
+            "    function run(this: shared This) -> Outcome<Text, IOError>",
+            "        return render(this)",
+            "async function fetch(printer: Printer) -> Outcome<Text, IOError>",
+            "    let pending = printer.run()",
+            "    return await pending",
+        }
     );
-
-    assert(await_member_name_collision_result.exit_code == 1);
-    assert(await_member_name_collision_result.stdout_text.empty());
-    assert(await_member_name_collision_result.stderr_text.find(
-               "await expression currently requires a task value or declared async call result"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, await_member_name_collision_path),
+        "await expression currently requires a task value or declared async call result"
+    );
 
     auto await_thread_value_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_await_thread_value_failure.or";
-    {
-        std::ofstream output(await_thread_value_path);
-        output << "package demo.await\n";
-        output << "async function fetch() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        1\n";
-        output << "    return await worker\n";
-    }
-
-    auto await_thread_value_path_text = await_thread_value_path.string();
-    std::array<char const*, 3> await_thread_value_argv {
-        "orisonc",
-        "--parse",
-        await_thread_value_path_text.c_str()
-    };
-    auto await_thread_value_result =
-        app.run(std::span<char const* const>(await_thread_value_argv.data(), await_thread_value_argv.size()));
-
-    assert(await_thread_value_result.exit_code == 1);
-    assert(await_thread_value_result.stdout_text.empty());
-    assert(await_thread_value_result.stderr_text.find(
-               "await cannot be used with thread values; use .join() instead"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        await_thread_value_path,
+        "demo.await",
+        {
+            "async function fetch() -> Int64",
+            "    let worker = thread",
+            "        1",
+            "    return await worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, await_thread_value_path),
+        "await cannot be used with thread values; use .join() instead"
+    );
 
     auto return_task_value_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_return_task_value_failure.or";
-    {
-        std::ofstream output(return_task_value_path);
-        output << "package demo.task\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let request_task = task\n";
-        output << "        request(url)\n";
-        output << "    return request_task\n";
-    }
-
-    auto return_task_value_path_text = return_task_value_path.string();
-    std::array<char const*, 3> return_task_value_argv {
-        "orisonc",
-        "--parse",
-        return_task_value_path_text.c_str()
-    };
-    auto return_task_value_result =
-        app.run(std::span<char const* const>(return_task_value_argv.data(), return_task_value_argv.size()));
-
-    assert(return_task_value_result.exit_code == 1);
-    assert(return_task_value_result.stdout_text.empty());
-    assert(return_task_value_result.stderr_text.find(
-               "return cannot forward task or async-call values; use await instead"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        return_task_value_path,
+        "demo.task",
+        {
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let request_task = task",
+            "        request(url)",
+            "    return request_task",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, return_task_value_path),
+        "return cannot forward task or async-call values; use await instead"
+    );
 
     auto return_thread_value_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_return_thread_value_failure.or";
-    {
-        std::ofstream output(return_thread_value_path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        1\n";
-        output << "    return worker\n";
-    }
-
-    auto return_thread_value_path_text = return_thread_value_path.string();
-    std::array<char const*, 3> return_thread_value_argv {
-        "orisonc",
-        "--parse",
-        return_thread_value_path_text.c_str()
-    };
-    auto return_thread_value_result =
-        app.run(std::span<char const* const>(return_thread_value_argv.data(), return_thread_value_argv.size()));
-
-    assert(return_thread_value_result.exit_code == 1);
-    assert(return_thread_value_result.stdout_text.empty());
-    assert(return_thread_value_result.stderr_text.find(
-               "return cannot forward thread values; use .join() instead"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        return_thread_value_path,
+        "demo.thread",
+        {
+            "function parallel_sum() -> Int64",
+            "    let worker = thread",
+            "        1",
+            "    return worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, return_thread_value_path),
+        "return cannot forward thread values; use .join() instead"
+    );
 
     auto unsafe_intrinsic_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_intrinsic_failure.or";
