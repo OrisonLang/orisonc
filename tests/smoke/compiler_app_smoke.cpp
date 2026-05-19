@@ -5974,70 +5974,58 @@ int main() {
     );
 
     auto typed_capture_path = std::filesystem::temp_directory_path() / "orison_compiler_app_typed_capture_failure.or";
-    {
-        std::ofstream output(typed_capture_path);
-        output << "package demo.thread\n";
-        output << "function launch_processing(buffer: Buffer) -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        process(buffer)\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        typed_capture_path,
+        "demo.thread",
+        {
+            "function launch_processing(buffer: Buffer) -> Int64",
+            "    let worker = thread",
+            "        process(buffer)",
+            "    return worker.join()",
+        }
+    );
 
-    auto typed_capture_path_text = typed_capture_path.string();
-    std::array<char const*, 3> typed_capture_argv {"orisonc", "--parse", typed_capture_path_text.c_str()};
-    auto typed_capture_result =
-        app.run(std::span<char const* const>(typed_capture_argv.data(), typed_capture_argv.size()));
-
-    assert(typed_capture_result.exit_code == 1);
-    assert(typed_capture_result.stdout_text.empty());
-    assert(typed_capture_result.stderr_text.find(
-               "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, typed_capture_path),
+        "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis"
+    );
 
     auto generic_capture_path = std::filesystem::temp_directory_path() / "orison_compiler_app_generic_capture_failure.or";
-    {
-        std::ofstream output(generic_capture_path);
-        output << "package demo.thread\n";
-        output << "function launch<T>(item: T) -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        process(item)\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        generic_capture_path,
+        "demo.thread",
+        {
+            "function launch<T>(item: T) -> Int64",
+            "    let worker = thread",
+            "        process(item)",
+            "    return worker.join()",
+        }
+    );
 
-    auto generic_capture_path_text = generic_capture_path.string();
-    std::array<char const*, 3> generic_capture_argv {"orisonc", "--parse", generic_capture_path_text.c_str()};
-    auto generic_capture_result =
-        app.run(std::span<char const* const>(generic_capture_argv.data(), generic_capture_argv.size()));
-
-    assert(generic_capture_result.exit_code == 1);
-    assert(generic_capture_result.stdout_text.empty());
-    assert(generic_capture_result.stderr_text.find(
-               "thread capture 'item' of type 'T' requires future Transferable analysis"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, generic_capture_path),
+        "thread capture 'item' of type 'T' requires future Transferable analysis"
+    );
 
     auto shareable_thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_shareable_thread_failure.or";
-    {
-        std::ofstream output(shareable_thread_path);
-        output << "package demo.thread\n";
-        output << "implements Shareable for Buffer\n";
-        output << "    function placeholder(this: shared This) -> Unit\n";
-        output << "        return\n";
-        output << "function launch_processing(buffer: Buffer) -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        process(buffer)\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        shareable_thread_path,
+        "demo.thread",
+        {
+            "implements Shareable for Buffer",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "function launch_processing(buffer: Buffer) -> Int64",
+            "    let worker = thread",
+            "        process(buffer)",
+            "    return worker.join()",
+        }
+    );
 
-    auto shareable_thread_path_text = shareable_thread_path.string();
-    std::array<char const*, 3> shareable_thread_argv {"orisonc", "--parse", shareable_thread_path_text.c_str()};
-    auto shareable_thread_result =
-        app.run(std::span<char const* const>(shareable_thread_argv.data(), shareable_thread_argv.size()));
-
-    assert(shareable_thread_result.exit_code == 1);
-    assert(shareable_thread_result.stdout_text.empty());
-    assert(shareable_thread_result.stderr_text.find(
-               "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, shareable_thread_path),
+        "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis"
+    );
 
     auto join_receiver_path = std::filesystem::temp_directory_path() / "orison_compiler_app_join_receiver_failure.or";
     {
