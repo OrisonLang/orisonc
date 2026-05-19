@@ -619,168 +619,116 @@ void test_await_async_call_value_success() {
 
 void test_await_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_sync_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return await request(url)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    return await request(url)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message == "await expression is only valid inside async functions");
+    assert_fixture_single_diagnostic(path, 5, "await expression is only valid inside async functions");
 }
 
 void test_await_outside_async_method_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_method_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function request(id: Int64) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(id)\n";
-        output << "extend Worker\n";
-        output << "    function poll(this: shared This) -> Outcome<Text, IOError>\n";
-        output << "        return await request(this.id)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function request(id: Int64) -> Outcome<Text, IOError>",
+            "    return fetch_remote(id)",
+            "extend Worker",
+            "    function poll(this: shared This) -> Outcome<Text, IOError>",
+            "        return await request(this.id)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 6);
-    assert(diagnostics.entries().front().message == "await expression is only valid inside async functions");
+    assert_fixture_single_diagnostic(path, 6, "await expression is only valid inside async functions");
 }
 
 void test_await_plain_value_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_plain_value_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function fetch() -> Int64\n";
-        output << "    let count = 1\n";
-        output << "    return await count\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function fetch() -> Int64",
+            "    let count = 1",
+            "    return await count",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message ==
-           "await expression currently requires a task value or declared async call result");
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "await expression currently requires a task value or declared async call result"
+    );
 }
 
 void test_await_thread_value_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_thread_value_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function fetch() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        1\n";
-        output << "    return await worker\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function fetch() -> Int64",
+            "    let worker = thread",
+            "        1",
+            "    return await worker",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "await cannot be used with thread values; use .join() instead");
+    assert_fixture_single_diagnostic(path, 5, "await cannot be used with thread values; use .join() instead");
 }
 
 void test_await_non_async_call_value_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_non_async_call_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let pending = request(url)\n";
-        output << "    return await pending\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let pending = request(url)",
+            "    return await pending",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 6);
-    assert(diagnostics.entries().front().message ==
-           "await expression currently requires a task value or declared async call result");
+    assert_fixture_single_diagnostic(
+        path,
+        6,
+        "await expression currently requires a task value or declared async call result"
+    );
 }
 
 void test_await_member_call_not_marked_async_from_top_level_name_collision_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_await_member_name_collision_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function run(text: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(text)\n";
-        output << "extend Printer\n";
-        output << "    function run(this: shared This) -> Outcome<Text, IOError>\n";
-        output << "        return render(this)\n";
-        output << "async function fetch(printer: Printer) -> Outcome<Text, IOError>\n";
-        output << "    let pending = printer.run()\n";
-        output << "    return await pending\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function run(text: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(text)",
+            "extend Printer",
+            "    function run(this: shared This) -> Outcome<Text, IOError>",
+            "        return render(this)",
+            "async function fetch(printer: Printer) -> Outcome<Text, IOError>",
+            "    let pending = printer.run()",
+            "    return await pending",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 9);
-    assert(diagnostics.entries().front().message ==
-           "await expression currently requires a task value or declared async call result");
+    assert_fixture_single_diagnostic(
+        path,
+        9,
+        "await expression currently requires a task value or declared async call result"
+    );
 }
 
 void test_task_inside_async_function_success() {
@@ -808,83 +756,59 @@ void test_task_inside_async_function_success() {
 
 void test_return_task_value_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_return_task_value_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let request_task = task\n";
-        output << "        request(url)\n";
-        output << "    return request_task\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let request_task = task",
+            "        request(url)",
+            "    return request_task",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "return cannot forward task or async-call values; use await instead");
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "return cannot forward task or async-call values; use await instead"
+    );
 }
 
 void test_return_async_call_value_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_return_async_call_value_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let pending = request(url)\n";
-        output << "    return pending\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let pending = request(url)",
+            "    return pending",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 6);
-    assert(diagnostics.entries().front().message ==
-           "return cannot forward task or async-call values; use await instead");
+    assert_fixture_single_diagnostic(
+        path,
+        6,
+        "return cannot forward task or async-call values; use await instead"
+    );
 }
 
 void test_return_thread_value_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_return_thread_value_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        1\n";
-        output << "    return worker\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function parallel_sum() -> Int64",
+            "    let worker = thread",
+            "        1",
+            "    return worker",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message == "return cannot forward thread values; use .join() instead");
+    assert_fixture_single_diagnostic(path, 5, "return cannot forward thread values; use .join() instead");
 }
 
 void test_assignment_preserves_async_call_origin_success() {
