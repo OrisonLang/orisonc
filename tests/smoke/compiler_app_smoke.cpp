@@ -3034,126 +3034,86 @@ int main() {
 
     auto switch_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_thread_origin_failure.or";
-    {
-        std::ofstream output(switch_thread_origin_path);
-        output << "package demo.await\n";
-        output << "async function fetch(flag: Bool) -> Int64\n";
-        output << "    var worker = thread\n";
-        output << "        1\n";
-        output << "    switch flag\n";
-        output << "        true => worker = thread\n";
-        output << "            2\n";
-        output << "        false => worker = thread\n";
-        output << "            3\n";
-        output << "    return await worker\n";
-    }
-
-    auto switch_thread_origin_path_text = switch_thread_origin_path.string();
-    std::array<char const*, 3> switch_thread_origin_argv {
-        "orisonc",
-        "--parse",
-        switch_thread_origin_path_text.c_str()
-    };
-    auto switch_thread_origin_result =
-        app.run(std::span<char const* const>(switch_thread_origin_argv.data(), switch_thread_origin_argv.size()));
-
-    assert(switch_thread_origin_result.exit_code == 1);
-    assert(switch_thread_origin_result.stdout_text.empty());
-    assert(switch_thread_origin_result.stderr_text.find(
-               "await cannot be used with thread values; use .join() instead"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        switch_thread_origin_path,
+        "demo.await",
+        {
+            "async function fetch(flag: Bool) -> Int64",
+            "    var worker = thread",
+            "        1",
+            "    switch flag",
+            "        true => worker = thread",
+            "            2",
+            "        false => worker = thread",
+            "            3",
+            "    return await worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, switch_thread_origin_path),
+        "await cannot be used with thread values; use .join() instead"
+    );
 
     auto repeat_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_repeat_thread_origin_failure.or";
-    {
-        std::ofstream output(repeat_thread_origin_path);
-        output << "package demo.await\n";
-        output << "async function fetch(flag: Bool) -> Int64\n";
-        output << "    var worker = 0\n";
-        output << "    repeat\n";
-        output << "        worker = thread\n";
-        output << "            2\n";
-        output << "    while flag\n";
-        output << "    return await worker\n";
-    }
-
-    auto repeat_thread_origin_path_text = repeat_thread_origin_path.string();
-    std::array<char const*, 3> repeat_thread_origin_argv {
-        "orisonc",
-        "--parse",
-        repeat_thread_origin_path_text.c_str()
-    };
-    auto repeat_thread_origin_result =
-        app.run(std::span<char const* const>(repeat_thread_origin_argv.data(), repeat_thread_origin_argv.size()));
-
-    assert(repeat_thread_origin_result.exit_code == 1);
-    assert(repeat_thread_origin_result.stdout_text.empty());
-    assert(repeat_thread_origin_result.stderr_text.find(
-               "await cannot be used with thread values; use .join() instead"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        repeat_thread_origin_path,
+        "demo.await",
+        {
+            "async function fetch(flag: Bool) -> Int64",
+            "    var worker = 0",
+            "    repeat",
+            "        worker = thread",
+            "            2",
+            "    while flag",
+            "    return await worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, repeat_thread_origin_path),
+        "await cannot be used with thread values; use .join() instead"
+    );
 
     auto for_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_for_thread_origin_failure.or";
-    {
-        std::ofstream output(for_thread_origin_path);
-        output << "package demo.await\n";
-        output << "async function fetch(items: shared View<Int64>) -> Int64\n";
-        output << "    var worker = thread\n";
-        output << "        1\n";
-        output << "    for item in items\n";
-        output << "        worker = thread\n";
-        output << "            2\n";
-        output << "    return await worker\n";
-    }
-
-    auto for_thread_origin_path_text = for_thread_origin_path.string();
-    std::array<char const*, 3> for_thread_origin_argv {
-        "orisonc",
-        "--parse",
-        for_thread_origin_path_text.c_str()
-    };
-    auto for_thread_origin_result =
-        app.run(std::span<char const* const>(for_thread_origin_argv.data(), for_thread_origin_argv.size()));
-
-    assert(for_thread_origin_result.exit_code == 1);
-    assert(for_thread_origin_result.stdout_text.empty());
-    assert(for_thread_origin_result.stderr_text.find(
-               "await cannot be used with thread values; use .join() instead"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        for_thread_origin_path,
+        "demo.await",
+        {
+            "async function fetch(items: shared View<Int64>) -> Int64",
+            "    var worker = thread",
+            "        1",
+            "    for item in items",
+            "        worker = thread",
+            "            2",
+            "    return await worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, for_thread_origin_path),
+        "await cannot be used with thread values; use .join() instead"
+    );
 
     auto guard_async_missing_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_guard_async_origin_failure.or";
-    {
-        std::ofstream output(guard_async_missing_origin_path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var pending = 0\n";
-        output << "    guard flag else\n";
-        output << "        pending = request(url)\n";
-        output << "        return await request(url)\n";
-        output << "    return await pending\n";
-    }
-
-    auto guard_async_missing_origin_path_text = guard_async_missing_origin_path.string();
-    std::array<char const*, 3> guard_async_missing_origin_argv {
-        "orisonc",
-        "--parse",
-        guard_async_missing_origin_path_text.c_str()
-    };
-    auto guard_async_missing_origin_result = app.run(
-        std::span<char const* const>(
-            guard_async_missing_origin_argv.data(),
-            guard_async_missing_origin_argv.size()
-        )
+    write_concurrency_fixture(
+        guard_async_missing_origin_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "    var pending = 0",
+            "    guard flag else",
+            "        pending = request(url)",
+            "        return await request(url)",
+            "    return await pending",
+        }
     );
-
-    assert(guard_async_missing_origin_result.exit_code == 1);
-    assert(guard_async_missing_origin_result.stdout_text.empty());
-    assert(guard_async_missing_origin_result.stderr_text.find(
-               "await expression currently requires a task value or declared async call result"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, guard_async_missing_origin_path),
+        "await expression currently requires a task value or declared async call result"
+    );
 
     auto switch_name_pattern_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_name_pattern_binding_failure.or";
