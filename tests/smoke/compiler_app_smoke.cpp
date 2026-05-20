@@ -3001,10 +3001,8 @@ int main() {
         false
     );
 
-    auto switch_wrong_choice_without_default_no_cascade_failure_result =
-        run_parse(app, switch_wrong_choice_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_wrong_choice_without_default_no_cascade_failure_result,
+        run_parse(app, switch_wrong_choice_without_default_no_cascade_failure_path),
         "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'",
         "switch is missing"
     );
@@ -3158,10 +3156,8 @@ int main() {
         "orison_compiler_app_switch_unknown_constructor_without_default_no_cascade_failure.or";
     write_maybe_unknown_constructor_fixture(switch_unknown_constructor_without_default_no_cascade_failure_path);
 
-    auto switch_unknown_constructor_without_default_no_cascade_failure_result =
-        run_parse(app, switch_unknown_constructor_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_unknown_constructor_without_default_no_cascade_failure_result,
+        run_parse(app, switch_unknown_constructor_without_default_no_cascade_failure_path),
         "switch constructor pattern 'Missing' does not match any declared choice variant",
         "switch is missing"
     );
@@ -3634,10 +3630,8 @@ int main() {
         true
     );
 
-    auto switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result =
-        run_parse(app, switch_duplicate_payload_choice_redundant_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_duplicate_payload_choice_redundant_default_no_cascade_failure_result,
+        run_parse(app, switch_duplicate_payload_choice_redundant_default_no_cascade_failure_path),
         "switch constructor pattern 'First(...)' is duplicated",
         "switch default case is redundant"
     );
@@ -3676,10 +3670,8 @@ int main() {
         {"First(value) => value", "First(other) => other"}
     );
 
-    auto switch_duplicate_multi_payload_choice_no_cascade_failure_result =
-        run_parse(app, switch_duplicate_multi_payload_choice_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_duplicate_multi_payload_choice_no_cascade_failure_result,
+        run_parse(app, switch_duplicate_multi_payload_choice_no_cascade_failure_path),
         "switch constructor pattern 'First(...)' is duplicated",
         "switch is missing choice variant"
     );
@@ -3692,10 +3684,8 @@ int main() {
         {"Some(value) => value", "Some(other) => other"}
     );
 
-    auto switch_duplicate_payload_choice_without_default_no_cascade_failure_result =
-        run_parse(app, switch_duplicate_payload_choice_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_duplicate_payload_choice_without_default_no_cascade_failure_result,
+        run_parse(app, switch_duplicate_payload_choice_without_default_no_cascade_failure_path),
         "switch constructor pattern 'Some(...)' is duplicated",
         "switch is missing choice variant"
     );
@@ -3852,10 +3842,8 @@ int main() {
         {"default => await flag", "true => 1"}
     );
 
-    auto switch_nonfinal_default_branch_no_cascade_failure_result =
-        run_parse(app, switch_nonfinal_default_branch_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_nonfinal_default_branch_no_cascade_failure_result,
+        run_parse(app, switch_nonfinal_default_branch_no_cascade_failure_path),
         "switch default case must be the final case",
         "await expression is only valid inside async functions"
     );
