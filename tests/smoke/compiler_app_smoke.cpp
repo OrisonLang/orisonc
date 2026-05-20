@@ -1492,239 +1492,127 @@ int main() {
 
     auto raw_write_computed_integer_sum_success_path = std::filesystem::temp_directory_path() /
                                                        "orison_compiler_app_raw_write_computed_integer_sum_success.or";
-    {
-        std::ofstream output(raw_write_computed_integer_sum_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(input: Pointer<Int32>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    raw_write(out, raw_read(input) + 1)\n";
-    }
-
-    auto raw_write_computed_integer_sum_success_path_text =
-        raw_write_computed_integer_sum_success_path.string();
-    std::array<char const*, 3> raw_write_computed_integer_sum_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_computed_integer_sum_success_path_text.c_str()
-    };
-    auto raw_write_computed_integer_sum_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_computed_integer_sum_success_argv.data(),
-            raw_write_computed_integer_sum_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_computed_integer_sum_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(input: Pointer<Int32>, out: Pointer<UInt32>) -> Unit",
+            "    raw_write(out, raw_read(input) + 1)",
+        }
     );
-
-    assert(raw_write_computed_integer_sum_success_result.exit_code == 0);
-    assert(raw_write_computed_integer_sum_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_computed_integer_sum_success_path));
 
     auto raw_write_computed_bitwise_value_success_path = std::filesystem::temp_directory_path() /
                                                          "orison_compiler_app_raw_write_computed_bitwise_value_success.or";
-    {
-        std::ofstream output(raw_write_computed_bitwise_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit\n";
-        output << "    raw_write(out, value bit_or 1)\n";
-    }
-
-    auto raw_write_computed_bitwise_value_success_path_text =
-        raw_write_computed_bitwise_value_success_path.string();
-    std::array<char const*, 3> raw_write_computed_bitwise_value_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_computed_bitwise_value_success_path_text.c_str()
-    };
-    auto raw_write_computed_bitwise_value_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_computed_bitwise_value_success_argv.data(),
-            raw_write_computed_bitwise_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_computed_bitwise_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit",
+            "    raw_write(out, value bit_or 1)",
+        }
     );
-
-    assert(raw_write_computed_bitwise_value_success_result.exit_code == 0);
-    assert(raw_write_computed_bitwise_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_computed_bitwise_value_success_path));
 
     auto raw_write_computed_ternary_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
                                                                  "orison_compiler_app_raw_write_computed_ternary_pointer_sized_failure.or";
-    {
-        std::ofstream output(raw_write_computed_ternary_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit\n";
-        output << "    raw_write(out, flag ? left : right)\n";
-    }
-
-    auto raw_write_computed_ternary_pointer_sized_failure_path_text =
-        raw_write_computed_ternary_pointer_sized_failure_path.string();
-    std::array<char const*, 3> raw_write_computed_ternary_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_computed_ternary_pointer_sized_failure_path_text.c_str()
-    };
-    auto raw_write_computed_ternary_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_computed_ternary_pointer_sized_failure_argv.data(),
-            raw_write_computed_ternary_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_computed_ternary_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit",
+            "    raw_write(out, flag ? left : right)",
+        }
     );
-
-    assert(raw_write_computed_ternary_pointer_sized_failure_result.exit_code == 1);
-    assert(raw_write_computed_ternary_pointer_sized_failure_result.stdout_text.empty());
-    assert(raw_write_computed_ternary_pointer_sized_failure_result.stderr_text.find(
-               "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_computed_ternary_pointer_sized_failure_path),
+        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto raw_write_rebound_computed_value_success_path = std::filesystem::temp_directory_path() /
                                                          "orison_compiler_app_raw_write_rebound_computed_value_success.or";
-    {
-        std::ofstream output(raw_write_rebound_computed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit\n";
-        output << "    let masked = value bit_or 1\n";
-        output << "    raw_write(out, masked)\n";
-    }
-
-    auto raw_write_rebound_computed_value_success_path_text =
-        raw_write_rebound_computed_value_success_path.string();
-    std::array<char const*, 3> raw_write_rebound_computed_value_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_rebound_computed_value_success_path_text.c_str()
-    };
-    auto raw_write_rebound_computed_value_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_rebound_computed_value_success_argv.data(),
-            raw_write_rebound_computed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_rebound_computed_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit",
+            "    let masked = value bit_or 1",
+            "    raw_write(out, masked)",
+        }
     );
-
-    assert(raw_write_rebound_computed_value_success_result.exit_code == 0);
-    assert(raw_write_rebound_computed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_rebound_computed_value_success_path));
 
     auto raw_write_branch_merged_computed_value_success_path = std::filesystem::temp_directory_path() /
                                                                "orison_compiler_app_raw_write_branch_merged_computed_value_success.or";
-    {
-        std::ofstream output(raw_write_branch_merged_computed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: Int32, right: Int32) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    if flag\n";
-        output << "        selected = left bit_or 1\n";
-        output << "    else\n";
-        output << "        selected = right + 1\n";
-        output << "    raw_write(out, selected)\n";
-    }
-
-    auto raw_write_branch_merged_computed_value_success_path_text =
-        raw_write_branch_merged_computed_value_success_path.string();
-    std::array<char const*, 3> raw_write_branch_merged_computed_value_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_branch_merged_computed_value_success_path_text.c_str()
-    };
-    auto raw_write_branch_merged_computed_value_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_branch_merged_computed_value_success_argv.data(),
-            raw_write_branch_merged_computed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_branch_merged_computed_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: Int32, right: Int32) -> Unit",
+            "    var selected = left",
+            "    if flag",
+            "        selected = left bit_or 1",
+            "    else",
+            "        selected = right + 1",
+            "    raw_write(out, selected)",
+        }
     );
-
-    assert(raw_write_branch_merged_computed_value_success_result.exit_code == 0);
-    assert(raw_write_branch_merged_computed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_branch_merged_computed_value_success_path));
 
     auto raw_write_branch_merged_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
                                                               "orison_compiler_app_raw_write_branch_merged_pointer_sized_failure.or";
-    {
-        std::ofstream output(raw_write_branch_merged_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    if flag\n";
-        output << "        selected = left + 1\n";
-        output << "    else\n";
-        output << "        selected = right shift_left 1\n";
-        output << "    raw_write(out, selected)\n";
-    }
-
-    auto raw_write_branch_merged_pointer_sized_failure_path_text =
-        raw_write_branch_merged_pointer_sized_failure_path.string();
-    std::array<char const*, 3> raw_write_branch_merged_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_branch_merged_pointer_sized_failure_path_text.c_str()
-    };
-    auto raw_write_branch_merged_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_branch_merged_pointer_sized_failure_argv.data(),
-            raw_write_branch_merged_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_branch_merged_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit",
+            "    var selected = left",
+            "    if flag",
+            "        selected = left + 1",
+            "    else",
+            "        selected = right shift_left 1",
+            "    raw_write(out, selected)",
+        }
     );
-
-    assert(raw_write_branch_merged_pointer_sized_failure_result.exit_code == 1);
-    assert(raw_write_branch_merged_pointer_sized_failure_result.stdout_text.empty());
-    assert(raw_write_branch_merged_pointer_sized_failure_result.stderr_text.find(
-               "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_branch_merged_pointer_sized_failure_path),
+        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto raw_write_switch_merged_computed_value_success_path = std::filesystem::temp_directory_path() /
                                                                "orison_compiler_app_raw_write_switch_merged_computed_value_success.or";
-    {
-        std::ofstream output(raw_write_switch_merged_computed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: Int32, right: Int32) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    switch selector\n";
-        output << "        0 => selected = left bit_or 1\n";
-        output << "        default => selected = right + 1\n";
-        output << "    raw_write(out, selected)\n";
-    }
-
-    auto raw_write_switch_merged_computed_value_success_path_text =
-        raw_write_switch_merged_computed_value_success_path.string();
-    std::array<char const*, 3> raw_write_switch_merged_computed_value_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_switch_merged_computed_value_success_path_text.c_str()
-    };
-    auto raw_write_switch_merged_computed_value_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_switch_merged_computed_value_success_argv.data(),
-            raw_write_switch_merged_computed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_switch_merged_computed_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: Int32, right: Int32) -> Unit",
+            "    var selected = left",
+            "    switch selector",
+            "        0 => selected = left bit_or 1",
+            "        default => selected = right + 1",
+            "    raw_write(out, selected)",
+        }
     );
-
-    assert(raw_write_switch_merged_computed_value_success_result.exit_code == 0);
-    assert(raw_write_switch_merged_computed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_switch_merged_computed_value_success_path));
 
     auto raw_write_switch_merged_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
                                                               "orison_compiler_app_raw_write_switch_merged_pointer_sized_failure.or";
-    {
-        std::ofstream output(raw_write_switch_merged_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: IntSize, right: IntSize) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    switch selector\n";
-        output << "        0 => selected = left + 1\n";
-        output << "        default => selected = right shift_left 1\n";
-        output << "    raw_write(out, selected)\n";
-    }
-
-    auto raw_write_switch_merged_pointer_sized_failure_path_text =
-        raw_write_switch_merged_pointer_sized_failure_path.string();
-    std::array<char const*, 3> raw_write_switch_merged_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_switch_merged_pointer_sized_failure_path_text.c_str()
-    };
-    auto raw_write_switch_merged_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_switch_merged_pointer_sized_failure_argv.data(),
-            raw_write_switch_merged_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_switch_merged_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: IntSize, right: IntSize) -> Unit",
+            "    var selected = left",
+            "    switch selector",
+            "        0 => selected = left + 1",
+            "        default => selected = right shift_left 1",
+            "    raw_write(out, selected)",
+        }
     );
-
-    assert(raw_write_switch_merged_pointer_sized_failure_result.exit_code == 1);
-    assert(raw_write_switch_merged_pointer_sized_failure_result.stdout_text.empty());
-    assert(raw_write_switch_merged_pointer_sized_failure_result.stderr_text.find(
-               "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_switch_merged_pointer_sized_failure_path),
+        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto raw_write_array_indexed_value_success_path = std::filesystem::temp_directory_path() /
                                                       "orison_compiler_app_raw_write_array_indexed_value_success.or";
