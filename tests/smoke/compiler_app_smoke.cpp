@@ -2556,164 +2556,96 @@ int main() {
 
     auto volatile_write_recovered_volatile_read_failure_path = std::filesystem::temp_directory_path() /
                                                                "orison_compiler_app_volatile_write_recovered_volatile_read_failure.or";
-    {
-        std::ofstream output(volatile_write_recovered_volatile_read_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: Pointer<Byte>\n";
-        output << "unsafe function write_word(buf: Buffer, out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, volatile_read(raw_offset(Pointer(address_of(buf.data[0])), 1)))\n";
-    }
-
-    auto volatile_write_recovered_volatile_read_failure_path_text =
-        volatile_write_recovered_volatile_read_failure_path.string();
-    std::array<char const*, 3> volatile_write_recovered_volatile_read_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_recovered_volatile_read_failure_path_text.c_str()
-    };
-    auto volatile_write_recovered_volatile_read_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_recovered_volatile_read_failure_argv.data(),
-            volatile_write_recovered_volatile_read_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_recovered_volatile_read_failure_path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function write_word(buf: Buffer, out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, volatile_read(raw_offset(Pointer(address_of(buf.data[0])), 1)))",
+        }
     );
-
-    assert(volatile_write_recovered_volatile_read_failure_result.exit_code == 1);
-    assert(volatile_write_recovered_volatile_read_failure_result.stdout_text.empty());
-    assert(volatile_write_recovered_volatile_read_failure_result.stderr_text.find(
-               "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_recovered_volatile_read_failure_path),
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_member_returned_volatile_read_failure_path = std::filesystem::temp_directory_path() /
                                                                      "orison_compiler_app_volatile_write_member_returned_volatile_read_failure.or";
-    {
-        std::ofstream output(volatile_write_member_returned_volatile_read_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function word_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return raw_offset(base, 1)\n";
-        output << "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, volatile_read(raw_offset(device.word_ptr(base), 1)))\n";
-    }
-
-    auto volatile_write_member_returned_volatile_read_failure_path_text =
-        volatile_write_member_returned_volatile_read_failure_path.string();
-    std::array<char const*, 3> volatile_write_member_returned_volatile_read_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_member_returned_volatile_read_failure_path_text.c_str()
-    };
-    auto volatile_write_member_returned_volatile_read_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_member_returned_volatile_read_failure_argv.data(),
-            volatile_write_member_returned_volatile_read_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_member_returned_volatile_read_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function word_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>",
+            "        unsafe",
+            "            return raw_offset(base, 1)",
+            "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, volatile_read(raw_offset(device.word_ptr(base), 1)))",
+        }
     );
-
-    assert(volatile_write_member_returned_volatile_read_failure_result.exit_code == 1);
-    assert(volatile_write_member_returned_volatile_read_failure_result.stdout_text.empty());
-    assert(volatile_write_member_returned_volatile_read_failure_result.stderr_text.find(
-               "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_member_returned_volatile_read_failure_path),
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_helper_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_write_helper_type_failure.or";
-    {
-        std::ofstream output(volatile_write_helper_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function word_ptr(addr: Address) -> Pointer<UInt32>\n";
-        output << "    return Pointer(addr)\n";
-        output << "unsafe function write_word(addr: Address, value: Byte) -> Unit\n";
-        output << "    volatile_write(word_ptr(addr), value)\n";
-    }
-
-    auto volatile_write_helper_type_failure_path_text = volatile_write_helper_type_failure_path.string();
-    std::array<char const*, 3> volatile_write_helper_type_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_helper_type_failure_path_text.c_str()
-    };
-    auto volatile_write_helper_type_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_helper_type_failure_argv.data(),
-            volatile_write_helper_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_helper_type_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function word_ptr(addr: Address) -> Pointer<UInt32>",
+            "    return Pointer(addr)",
+            "unsafe function write_word(addr: Address, value: Byte) -> Unit",
+            "    volatile_write(word_ptr(addr), value)",
+        }
     );
-
-    assert(volatile_write_helper_type_failure_result.exit_code == 1);
-    assert(volatile_write_helper_type_failure_result.stdout_text.empty());
-    assert(volatile_write_helper_type_failure_result.stderr_text.find(
-               "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_helper_type_failure_path),
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_member_helper_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_write_member_helper_type_failure.or";
-    {
-        std::ofstream output(volatile_write_member_helper_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function word_ptr(this: shared This, addr: Address) -> Pointer<UInt32>\n";
-        output << "        unsafe\n";
-        output << "            return Pointer(addr)\n";
-        output << "unsafe function write_word(device: Device, addr: Address, value: Byte) -> Unit\n";
-        output << "    volatile_write(device.word_ptr(addr), value)\n";
-    }
-
-    auto volatile_write_member_helper_type_failure_path_text = volatile_write_member_helper_type_failure_path.string();
-    std::array<char const*, 3> volatile_write_member_helper_type_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_member_helper_type_failure_path_text.c_str()
-    };
-    auto volatile_write_member_helper_type_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_member_helper_type_failure_argv.data(),
-            volatile_write_member_helper_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_member_helper_type_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function word_ptr(this: shared This, addr: Address) -> Pointer<UInt32>",
+            "        unsafe",
+            "            return Pointer(addr)",
+            "unsafe function write_word(device: Device, addr: Address, value: Byte) -> Unit",
+            "    volatile_write(device.word_ptr(addr), value)",
+        }
     );
-
-    assert(volatile_write_member_helper_type_failure_result.exit_code == 1);
-    assert(volatile_write_member_helper_type_failure_result.stdout_text.empty());
-    assert(volatile_write_member_helper_type_failure_result.stderr_text.find(
-               "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_member_helper_type_failure_path),
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_raw_offset_helper_type_failure_path = std::filesystem::temp_directory_path() /
                                                               "orison_compiler_app_volatile_write_raw_offset_helper_type_failure.or";
-    {
-        std::ofstream output(volatile_write_raw_offset_helper_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_word_ptr(base: Pointer<UInt32>) -> Pointer<UInt32>\n";
-        output << "    return raw_offset(base, 1)\n";
-        output << "unsafe function write_word(base: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    volatile_write(next_word_ptr(base), value)\n";
-    }
-
-    auto volatile_write_raw_offset_helper_type_failure_path_text =
-        volatile_write_raw_offset_helper_type_failure_path.string();
-    std::array<char const*, 3> volatile_write_raw_offset_helper_type_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_raw_offset_helper_type_failure_path_text.c_str()
-    };
-    auto volatile_write_raw_offset_helper_type_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_raw_offset_helper_type_failure_argv.data(),
-            volatile_write_raw_offset_helper_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_raw_offset_helper_type_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(base: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    return raw_offset(base, 1)",
+            "unsafe function write_word(base: Pointer<UInt32>, value: Byte) -> Unit",
+            "    volatile_write(next_word_ptr(base), value)",
+        }
     );
-
-    assert(volatile_write_raw_offset_helper_type_failure_result.exit_code == 1);
-    assert(volatile_write_raw_offset_helper_type_failure_result.stdout_text.empty());
-    assert(volatile_write_raw_offset_helper_type_failure_result.stderr_text.find(
-               "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_raw_offset_helper_type_failure_path),
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
     {
