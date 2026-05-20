@@ -1319,121 +1319,65 @@ int main() {
     auto raw_write_generic_record_pointer_field_same_width_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_raw_write_generic_record_pointer_field_same_width_success.or";
-    {
-        std::ofstream output(raw_write_generic_record_pointer_field_same_width_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device<T>\n";
-        output << "    ptr: Pointer<T>\n";
-        output << "unsafe function write_word(device: Device<Int32>, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.ptr, value)\n";
-    }
-
-    auto raw_write_generic_record_pointer_field_same_width_success_path_text =
-        raw_write_generic_record_pointer_field_same_width_success_path.string();
-    std::array<char const*, 3> raw_write_generic_record_pointer_field_same_width_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_generic_record_pointer_field_same_width_success_path_text.c_str()
-    };
-    auto raw_write_generic_record_pointer_field_same_width_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_generic_record_pointer_field_same_width_success_argv.data(),
-            raw_write_generic_record_pointer_field_same_width_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_generic_record_pointer_field_same_width_success_path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    ptr: Pointer<T>",
+            "unsafe function write_word(device: Device<Int32>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr, value)",
+        }
     );
-
-    assert(raw_write_generic_record_pointer_field_same_width_success_result.exit_code == 0);
-    assert(raw_write_generic_record_pointer_field_same_width_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_generic_record_pointer_field_same_width_success_path));
 
     auto raw_write_generic_record_pointer_field_mismatch_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_raw_write_generic_record_pointer_field_mismatch_failure.or";
-    {
-        std::ofstream output(raw_write_generic_record_pointer_field_mismatch_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device<T>\n";
-        output << "    ptr: Pointer<T>\n";
-        output << "unsafe function write_word(device: Device<Byte>, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.ptr, value)\n";
-    }
-
-    auto raw_write_generic_record_pointer_field_mismatch_failure_path_text =
-        raw_write_generic_record_pointer_field_mismatch_failure_path.string();
-    std::array<char const*, 3> raw_write_generic_record_pointer_field_mismatch_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_generic_record_pointer_field_mismatch_failure_path_text.c_str()
-    };
-    auto raw_write_generic_record_pointer_field_mismatch_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_generic_record_pointer_field_mismatch_failure_argv.data(),
-            raw_write_generic_record_pointer_field_mismatch_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_generic_record_pointer_field_mismatch_failure_path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    ptr: Pointer<T>",
+            "unsafe function write_word(device: Device<Byte>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr, value)",
+        }
     );
-
-    assert(raw_write_generic_record_pointer_field_mismatch_failure_result.exit_code == 1);
-    assert(raw_write_generic_record_pointer_field_mismatch_failure_result.stdout_text.empty());
-    assert(raw_write_generic_record_pointer_field_mismatch_failure_result.stderr_text.find(
-               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_generic_record_pointer_field_mismatch_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 
     auto raw_write_generic_record_scalar_field_same_width_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_raw_write_generic_record_scalar_field_same_width_success.or";
-    {
-        std::ofstream output(raw_write_generic_record_scalar_field_same_width_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Box<T>\n";
-        output << "    value: T\n";
-        output << "unsafe function write_word(box: Box<Int32>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    raw_write(out, box.value)\n";
-    }
-
-    auto raw_write_generic_record_scalar_field_same_width_success_path_text =
-        raw_write_generic_record_scalar_field_same_width_success_path.string();
-    std::array<char const*, 3> raw_write_generic_record_scalar_field_same_width_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_generic_record_scalar_field_same_width_success_path_text.c_str()
-    };
-    auto raw_write_generic_record_scalar_field_same_width_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_generic_record_scalar_field_same_width_success_argv.data(),
-            raw_write_generic_record_scalar_field_same_width_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_generic_record_scalar_field_same_width_success_path,
+        "demo.unsafe",
+        {
+            "record Box<T>",
+            "    value: T",
+            "unsafe function write_word(box: Box<Int32>, out: Pointer<UInt32>) -> Unit",
+            "    raw_write(out, box.value)",
+        }
     );
-
-    assert(raw_write_generic_record_scalar_field_same_width_success_result.exit_code == 0);
-    assert(raw_write_generic_record_scalar_field_same_width_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_generic_record_scalar_field_same_width_success_path));
 
     auto address_return_generic_record_field_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_address_return_generic_record_field_success.or";
-    {
-        std::ofstream output(address_return_generic_record_field_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Box<T>\n";
-        output << "    value: T\n";
-        output << "function read_base(box: Box<Address>) -> Address\n";
-        output << "    return box.value\n";
-    }
-
-    auto address_return_generic_record_field_success_path_text =
-        address_return_generic_record_field_success_path.string();
-    std::array<char const*, 3> address_return_generic_record_field_success_argv {
-        "orisonc",
-        "--parse",
-        address_return_generic_record_field_success_path_text.c_str()
-    };
-    auto address_return_generic_record_field_success_result = app.run(
-        std::span<char const* const>(
-            address_return_generic_record_field_success_argv.data(),
-            address_return_generic_record_field_success_argv.size()
-        )
+    write_concurrency_fixture(
+        address_return_generic_record_field_success_path,
+        "demo.unsafe",
+        {
+            "record Box<T>",
+            "    value: T",
+            "function read_base(box: Box<Address>) -> Address",
+            "    return box.value",
+        }
     );
-
-    assert(address_return_generic_record_field_success_result.exit_code == 0);
-    assert(address_return_generic_record_field_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, address_return_generic_record_field_success_path));
 
     auto raw_read_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_typed_binding_failure.or";
