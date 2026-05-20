@@ -125,3 +125,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-18: early async/provenance semantic smoke fixtures now reuse the shared concurrency source writer and single-diagnostic helper for await misuse and task/thread return-forwarding diagnostics.
 - 2026-05-18: early async/provenance CLI smoke fixtures now reuse the shared concurrency source writer plus parse-failure helper for await misuse and task/thread return-forwarding diagnostics, matching the semantic fixture cleanup.
 - 2026-05-19: first unsafe/MMIO CLI smoke fixture cluster now reuses the shared source writer plus parse success/failure helpers for unsafe intrinsic boundaries, operand-shape checks, index checks, and unsafe-call boundary coverage.
+- 2026-05-19: pointer-construction CLI smoke fixtures now reuse the shared source writer plus parse success/failure helpers for unsafe-boundary, typed address-of, arity, source-shape, and direct address-of success coverage.

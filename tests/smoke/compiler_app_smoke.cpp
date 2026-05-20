@@ -811,235 +811,127 @@ int main() {
 
     auto pointer_construction_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_failure.or";
-    {
-        std::ofstream output(pointer_construction_failure_path);
-        output << "package demo.unsafe\n";
-        output << "function read_byte(addr: Address) -> Byte\n";
-        output << "    let p = Pointer(addr)\n";
-        output << "    return raw_read(p)\n";
-    }
-
-    auto pointer_construction_failure_path_text = pointer_construction_failure_path.string();
-    std::array<char const*, 3> pointer_construction_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_construction_failure_path_text.c_str()
-    };
-    auto pointer_construction_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_construction_failure_argv.data(),
-            pointer_construction_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_construction_failure_path,
+        "demo.unsafe",
+        {
+            "function read_byte(addr: Address) -> Byte",
+            "    let p = Pointer(addr)",
+            "    return raw_read(p)",
+        }
     );
-
-    assert(pointer_construction_failure_result.exit_code == 1);
-    assert(pointer_construction_failure_result.stdout_text.empty());
-    assert(pointer_construction_failure_result.stderr_text.find(
-               "Pointer construction is only valid inside unsafe functions or unsafe blocks"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_construction_failure_path),
+        "Pointer construction is only valid inside unsafe functions or unsafe blocks"
+    );
 
     auto pointer_construction_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_success.or";
-    {
-        std::ofstream output(pointer_construction_success_path);
-        output << "package demo.unsafe\n";
-        output << "function scribble(addr: Address) -> Unit\n";
-        output << "    unsafe\n";
-        output << "        let p = Pointer(addr)\n";
-        output << "        raw_write(p, 0)\n";
-    }
-
-    auto pointer_construction_success_path_text = pointer_construction_success_path.string();
-    std::array<char const*, 3> pointer_construction_success_argv {
-        "orisonc",
-        "--parse",
-        pointer_construction_success_path_text.c_str()
-    };
-    auto pointer_construction_success_result = app.run(
-        std::span<char const* const>(
-            pointer_construction_success_argv.data(),
-            pointer_construction_success_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_construction_success_path,
+        "demo.unsafe",
+        {
+            "function scribble(addr: Address) -> Unit",
+            "    unsafe",
+            "        let p = Pointer(addr)",
+            "        raw_write(p, 0)",
+        }
     );
-
-    assert(pointer_construction_success_result.exit_code == 0);
-    assert(pointer_construction_success_result.stderr_text.empty());
-    assert(pointer_construction_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, pointer_construction_success_path));
 
     auto pointer_construction_addressof_typed_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_addressof_typed_failure.or";
-    {
-        std::ofstream output(pointer_construction_addressof_typed_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: Pointer<Byte>\n";
-        output << "unsafe function first_word_ptr(buf: Buffer) -> Pointer<UInt32>\n";
-        output << "    return Pointer(address_of(buf.data[0]))\n";
-    }
-
-    auto pointer_construction_addressof_typed_failure_path_text =
-        pointer_construction_addressof_typed_failure_path.string();
-    std::array<char const*, 3> pointer_construction_addressof_typed_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_construction_addressof_typed_failure_path_text.c_str()
-    };
-    auto pointer_construction_addressof_typed_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_construction_addressof_typed_failure_argv.data(),
-            pointer_construction_addressof_typed_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_construction_addressof_typed_failure_path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function first_word_ptr(buf: Buffer) -> Pointer<UInt32>",
+            "    return Pointer(address_of(buf.data[0]))",
+        }
     );
-
-    assert(pointer_construction_addressof_typed_failure_result.exit_code == 1);
-    assert(pointer_construction_addressof_typed_failure_result.stdout_text.empty());
-    assert(pointer_construction_addressof_typed_failure_result.stderr_text.find(
-               "Pointer construction source type 'Byte' does not match expected pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_construction_addressof_typed_failure_path),
+        "Pointer construction source type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
 
     auto pointer_construction_addressof_same_width_success_path = std::filesystem::temp_directory_path() /
                                                                   "orison_compiler_app_pointer_construction_addressof_same_width_success.or";
-    {
-        std::ofstream output(pointer_construction_addressof_same_width_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Registers\n";
-        output << "    status: Int32\n";
-        output << "record Device\n";
-        output << "    registers: Registers\n";
-        output << "unsafe function status_ptr(device: Device) -> Pointer<UInt32>\n";
-        output << "    return Pointer(address_of(device.registers.status))\n";
-    }
-
-    auto pointer_construction_addressof_same_width_success_path_text =
-        pointer_construction_addressof_same_width_success_path.string();
-    std::array<char const*, 3> pointer_construction_addressof_same_width_success_argv {
-        "orisonc",
-        "--parse",
-        pointer_construction_addressof_same_width_success_path_text.c_str()
-    };
-    auto pointer_construction_addressof_same_width_success_result = app.run(
-        std::span<char const* const>(
-            pointer_construction_addressof_same_width_success_argv.data(),
-            pointer_construction_addressof_same_width_success_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_construction_addressof_same_width_success_path,
+        "demo.unsafe",
+        {
+            "record Registers",
+            "    status: Int32",
+            "record Device",
+            "    registers: Registers",
+            "unsafe function status_ptr(device: Device) -> Pointer<UInt32>",
+            "    return Pointer(address_of(device.registers.status))",
+        }
     );
-
-    assert(pointer_construction_addressof_same_width_success_result.exit_code == 0);
-    assert(pointer_construction_addressof_same_width_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, pointer_construction_addressof_same_width_success_path));
 
     auto pointer_construction_noarg_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_noarg_failure.or";
-    {
-        std::ofstream output(pointer_construction_noarg_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte() -> Byte\n";
-        output << "    let p = Pointer()\n";
-        output << "    return raw_read(p)\n";
-    }
-
-    auto pointer_construction_noarg_failure_path_text = pointer_construction_noarg_failure_path.string();
-    std::array<char const*, 3> pointer_construction_noarg_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_construction_noarg_failure_path_text.c_str()
-    };
-    auto pointer_construction_noarg_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_construction_noarg_failure_argv.data(),
-            pointer_construction_noarg_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_construction_noarg_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte() -> Byte",
+            "    let p = Pointer()",
+            "    return raw_read(p)",
+        }
     );
-
-    assert(pointer_construction_noarg_failure_result.exit_code == 1);
-    assert(pointer_construction_noarg_failure_result.stdout_text.empty());
-    assert(pointer_construction_noarg_failure_result.stderr_text.find(
-               "Pointer construction currently requires exactly one source argument"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_construction_noarg_failure_path),
+        "Pointer construction currently requires exactly one source argument"
+    );
 
     auto pointer_construction_multiarg_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_multiarg_failure.or";
-    {
-        std::ofstream output(pointer_construction_multiarg_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte(addr: Address) -> Byte\n";
-        output << "    let p = Pointer(addr, addr)\n";
-        output << "    return raw_read(p)\n";
-    }
-
-    auto pointer_construction_multiarg_failure_path_text = pointer_construction_multiarg_failure_path.string();
-    std::array<char const*, 3> pointer_construction_multiarg_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_construction_multiarg_failure_path_text.c_str()
-    };
-    auto pointer_construction_multiarg_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_construction_multiarg_failure_argv.data(),
-            pointer_construction_multiarg_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_construction_multiarg_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(addr: Address) -> Byte",
+            "    let p = Pointer(addr, addr)",
+            "    return raw_read(p)",
+        }
     );
-
-    assert(pointer_construction_multiarg_failure_result.exit_code == 1);
-    assert(pointer_construction_multiarg_failure_result.stdout_text.empty());
-    assert(pointer_construction_multiarg_failure_result.stderr_text.find(
-               "Pointer construction currently requires exactly one source argument"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_construction_multiarg_failure_path),
+        "Pointer construction currently requires exactly one source argument"
+    );
 
     auto pointer_construction_nonaddress_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_nonaddress_failure.or";
-    {
-        std::ofstream output(pointer_construction_nonaddress_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte() -> Byte\n";
-        output << "    let p = Pointer(\"text\")\n";
-        output << "    return raw_read(p)\n";
-    }
-
-    auto pointer_construction_nonaddress_failure_path_text = pointer_construction_nonaddress_failure_path.string();
-    std::array<char const*, 3> pointer_construction_nonaddress_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_construction_nonaddress_failure_path_text.c_str()
-    };
-    auto pointer_construction_nonaddress_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_construction_nonaddress_failure_argv.data(),
-            pointer_construction_nonaddress_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_construction_nonaddress_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte() -> Byte",
+            "    let p = Pointer(\"text\")",
+            "    return raw_read(p)",
+        }
     );
-
-    assert(pointer_construction_nonaddress_failure_result.exit_code == 1);
-    assert(pointer_construction_nonaddress_failure_result.stdout_text.empty());
-    assert(pointer_construction_nonaddress_failure_result.stderr_text.find(
-               "Pointer construction currently requires an address-like source argument"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_construction_nonaddress_failure_path),
+        "Pointer construction currently requires an address-like source argument"
+    );
 
     auto pointer_construction_addressof_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_addressof_success.or";
-    {
-        std::ofstream output(pointer_construction_addressof_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function first_ptr(buf: exclusive Buffer) -> Pointer<Byte>\n";
-        output << "    let p = Pointer(address_of(buf.data[0]))\n";
-        output << "    return p\n";
-    }
-
-    auto pointer_construction_addressof_success_path_text = pointer_construction_addressof_success_path.string();
-    std::array<char const*, 3> pointer_construction_addressof_success_argv {
-        "orisonc",
-        "--parse",
-        pointer_construction_addressof_success_path_text.c_str()
-    };
-    auto pointer_construction_addressof_success_result = app.run(
-        std::span<char const* const>(
-            pointer_construction_addressof_success_argv.data(),
-            pointer_construction_addressof_success_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_construction_addressof_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function first_ptr(buf: exclusive Buffer) -> Pointer<Byte>",
+            "    let p = Pointer(address_of(buf.data[0]))",
+            "    return p",
+        }
     );
-
-    assert(pointer_construction_addressof_success_result.exit_code == 0);
-    assert(pointer_construction_addressof_success_result.stderr_text.empty());
-    assert(pointer_construction_addressof_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, pointer_construction_addressof_success_path));
 
     auto pointer_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_failure.or";
