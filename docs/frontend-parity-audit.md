@@ -127,3 +127,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-19: first unsafe/MMIO CLI smoke fixture cluster now reuses the shared source writer plus parse success/failure helpers for unsafe intrinsic boundaries, operand-shape checks, index checks, and unsafe-call boundary coverage.
 - 2026-05-19: pointer-construction CLI smoke fixtures now reuse the shared source writer plus parse success/failure helpers for unsafe-boundary, typed address-of, arity, source-shape, and direct address-of success coverage.
 - 2026-05-19: pointer-typed binding and pointer-return CLI smoke fixtures now reuse the shared source writer plus parse success/failure helpers for structural pointer checks and shallow pointee compatibility coverage.
+- 2026-05-19: generic helper-returned and receiver-method pointer CLI smoke fixtures now reuse the shared source writer plus parse helpers for raw-write same-width success and pointee mismatch diagnostics.
