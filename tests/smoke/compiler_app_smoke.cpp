@@ -662,283 +662,152 @@ int main() {
 
     auto unsafe_intrinsic_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_intrinsic_failure.or";
-    {
-        std::ofstream output(unsafe_intrinsic_failure_path);
-        output << "package demo.unsafe\n";
-        output << "function read_byte(p: Address) -> Byte\n";
-        output << "    return raw_read(p)\n";
-    }
-
-    auto unsafe_intrinsic_failure_path_text = unsafe_intrinsic_failure_path.string();
-    std::array<char const*, 3> unsafe_intrinsic_failure_argv {
-        "orisonc",
-        "--parse",
-        unsafe_intrinsic_failure_path_text.c_str()
-    };
-    auto unsafe_intrinsic_failure_result = app.run(
-        std::span<char const* const>(
-            unsafe_intrinsic_failure_argv.data(),
-            unsafe_intrinsic_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        unsafe_intrinsic_failure_path,
+        "demo.unsafe",
+        {
+            "function read_byte(p: Address) -> Byte",
+            "    return raw_read(p)",
+        }
     );
-
-    assert(unsafe_intrinsic_failure_result.exit_code == 1);
-    assert(unsafe_intrinsic_failure_result.stdout_text.empty());
-    assert(unsafe_intrinsic_failure_result.stderr_text.find(
-               "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, unsafe_intrinsic_failure_path),
+        "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks"
+    );
 
     auto unsafe_intrinsic_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_intrinsic_success.or";
-    {
-        std::ofstream output(unsafe_intrinsic_success_path);
-        output << "package demo.unsafe\n";
-        output << "function zero_byte(p: Address) -> Unit\n";
-        output << "    unsafe\n";
-        output << "        raw_write(p, 0)\n";
-    }
-
-    auto unsafe_intrinsic_success_path_text = unsafe_intrinsic_success_path.string();
-    std::array<char const*, 3> unsafe_intrinsic_success_argv {
-        "orisonc",
-        "--parse",
-        unsafe_intrinsic_success_path_text.c_str()
-    };
-    auto unsafe_intrinsic_success_result = app.run(
-        std::span<char const* const>(
-            unsafe_intrinsic_success_argv.data(),
-            unsafe_intrinsic_success_argv.size()
-        )
+    write_concurrency_fixture(
+        unsafe_intrinsic_success_path,
+        "demo.unsafe",
+        {
+            "function zero_byte(p: Address) -> Unit",
+            "    unsafe",
+            "        raw_write(p, 0)",
+        }
     );
-
-    assert(unsafe_intrinsic_success_result.exit_code == 0);
-    assert(unsafe_intrinsic_success_result.stderr_text.empty());
-    assert(unsafe_intrinsic_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, unsafe_intrinsic_success_path));
 
     auto address_of_shape_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_of_shape_failure.or";
-    {
-        std::ofstream output(address_of_shape_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function pointer() -> Address\n";
-        output << "    return address_of(1)\n";
-    }
-
-    auto address_of_shape_failure_path_text = address_of_shape_failure_path.string();
-    std::array<char const*, 3> address_of_shape_failure_argv {
-        "orisonc",
-        "--parse",
-        address_of_shape_failure_path_text.c_str()
-    };
-    auto address_of_shape_failure_result = app.run(
-        std::span<char const* const>(
-            address_of_shape_failure_argv.data(),
-            address_of_shape_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        address_of_shape_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function pointer() -> Address",
+            "    return address_of(1)",
+        }
     );
-
-    assert(address_of_shape_failure_result.exit_code == 1);
-    assert(address_of_shape_failure_result.stdout_text.empty());
-    assert(address_of_shape_failure_result.stderr_text.find(
-               "address_of currently requires an addressable storage operand"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, address_of_shape_failure_path),
+        "address_of currently requires an addressable storage operand"
+    );
 
     auto raw_offset_shape_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_offset_shape_failure.or";
-    {
-        std::ofstream output(raw_offset_shape_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function advance() -> Address\n";
-        output << "    return raw_offset(1, 2)\n";
-    }
-
-    auto raw_offset_shape_failure_path_text = raw_offset_shape_failure_path.string();
-    std::array<char const*, 3> raw_offset_shape_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_offset_shape_failure_path_text.c_str()
-    };
-    auto raw_offset_shape_failure_result = app.run(
-        std::span<char const* const>(
-            raw_offset_shape_failure_argv.data(),
-            raw_offset_shape_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_offset_shape_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function advance() -> Address",
+            "    return raw_offset(1, 2)",
+        }
     );
-
-    assert(raw_offset_shape_failure_result.exit_code == 1);
-    assert(raw_offset_shape_failure_result.stdout_text.empty());
-    assert(raw_offset_shape_failure_result.stderr_text.find(
-               "raw_offset currently requires an address-like first argument"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_offset_shape_failure_path),
+        "raw_offset currently requires an address-like first argument"
+    );
 
     auto raw_offset_noninteger_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_offset_noninteger_failure.or";
-    {
-        std::ofstream output(raw_offset_noninteger_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function advance(base: Address) -> Address\n";
-        output << "    return raw_offset(base, \"one\")\n";
-    }
-
-    auto raw_offset_noninteger_failure_path_text = raw_offset_noninteger_failure_path.string();
-    std::array<char const*, 3> raw_offset_noninteger_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_offset_noninteger_failure_path_text.c_str()
-    };
-    auto raw_offset_noninteger_failure_result = app.run(
-        std::span<char const* const>(
-            raw_offset_noninteger_failure_argv.data(),
-            raw_offset_noninteger_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_offset_noninteger_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function advance(base: Address) -> Address",
+            "    return raw_offset(base, \"one\")",
+        }
     );
-
-    assert(raw_offset_noninteger_failure_result.exit_code == 1);
-    assert(raw_offset_noninteger_failure_result.stdout_text.empty());
-    assert(raw_offset_noninteger_failure_result.stderr_text.find(
-               "raw_offset currently requires an integer offset argument"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_offset_noninteger_failure_path),
+        "raw_offset currently requires an integer offset argument"
+    );
 
     auto nested_unsafe_operand_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_nested_unsafe_operand_success.or";
-    {
-        std::ofstream output(nested_unsafe_operand_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function poke(buf: exclusive Buffer, value: Byte) -> Unit\n";
-        output << "    let p = address_of(buf.data[0])\n";
-        output << "    raw_write(raw_offset(p, 1), value)\n";
-    }
-
-    auto nested_unsafe_operand_success_path_text = nested_unsafe_operand_success_path.string();
-    std::array<char const*, 3> nested_unsafe_operand_success_argv {
-        "orisonc",
-        "--parse",
-        nested_unsafe_operand_success_path_text.c_str()
-    };
-    auto nested_unsafe_operand_success_result = app.run(
-        std::span<char const* const>(
-            nested_unsafe_operand_success_argv.data(),
-            nested_unsafe_operand_success_argv.size()
-        )
+    write_concurrency_fixture(
+        nested_unsafe_operand_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function poke(buf: exclusive Buffer, value: Byte) -> Unit",
+            "    let p = address_of(buf.data[0])",
+            "    raw_write(raw_offset(p, 1), value)",
+        }
     );
-
-    assert(nested_unsafe_operand_success_result.exit_code == 0);
-    assert(nested_unsafe_operand_success_result.stderr_text.empty());
-    assert(nested_unsafe_operand_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, nested_unsafe_operand_success_path));
 
     auto index_access_noninteger_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_index_access_noninteger_failure.or";
-    {
-        std::ofstream output(index_access_noninteger_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptrs: Pointer<Pointer<Byte>>\n";
-        output << "unsafe function write_byte(device: Device, value: Byte) -> Unit\n";
-        output << "    raw_write(device.ptrs[\"one\"], value)\n";
-    }
-
-    auto index_access_noninteger_failure_path_text = index_access_noninteger_failure_path.string();
-    std::array<char const*, 3> index_access_noninteger_failure_argv {
-        "orisonc",
-        "--parse",
-        index_access_noninteger_failure_path_text.c_str()
-    };
-    auto index_access_noninteger_failure_result = app.run(
-        std::span<char const* const>(
-            index_access_noninteger_failure_argv.data(),
-            index_access_noninteger_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        index_access_noninteger_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptrs: Pointer<Pointer<Byte>>",
+            "unsafe function write_byte(device: Device, value: Byte) -> Unit",
+            "    raw_write(device.ptrs[\"one\"], value)",
+        }
     );
-
-    assert(index_access_noninteger_failure_result.exit_code == 1);
-    assert(index_access_noninteger_failure_result.stdout_text.empty());
-    assert(index_access_noninteger_failure_result.stderr_text.find(
-               "index access currently requires an integer index expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, index_access_noninteger_failure_path),
+        "index access currently requires an integer index expression"
+    );
 
     auto index_access_integer_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_index_access_integer_success.or";
-    {
-        std::ofstream output(index_access_integer_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptrs: Pointer<Pointer<Byte>>\n";
-        output << "unsafe function write_byte(device: Device, index: UInt32, value: Byte) -> Unit\n";
-        output << "    raw_write(device.ptrs[index], value)\n";
-    }
-
-    auto index_access_integer_success_path_text = index_access_integer_success_path.string();
-    std::array<char const*, 3> index_access_integer_success_argv {
-        "orisonc",
-        "--parse",
-        index_access_integer_success_path_text.c_str()
-    };
-    auto index_access_integer_success_result = app.run(
-        std::span<char const* const>(
-            index_access_integer_success_argv.data(),
-            index_access_integer_success_argv.size()
-        )
+    write_concurrency_fixture(
+        index_access_integer_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptrs: Pointer<Pointer<Byte>>",
+            "unsafe function write_byte(device: Device, index: UInt32, value: Byte) -> Unit",
+            "    raw_write(device.ptrs[index], value)",
+        }
     );
-
-    assert(index_access_integer_success_result.exit_code == 0);
-    assert(index_access_integer_success_result.stderr_text.empty());
-    assert(index_access_integer_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, index_access_integer_success_path));
 
     auto unsafe_call_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_call_failure.or";
-    {
-        std::ofstream output(unsafe_call_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Address) -> UInt32\n";
-        output << "    return raw_read(p)\n";
-        output << "function read_twice(p: Address) -> UInt32\n";
-        output << "    return read_word(p)\n";
-    }
-
-    auto unsafe_call_failure_path_text = unsafe_call_failure_path.string();
-    std::array<char const*, 3> unsafe_call_failure_argv {
-        "orisonc",
-        "--parse",
-        unsafe_call_failure_path_text.c_str()
-    };
-    auto unsafe_call_failure_result = app.run(
-        std::span<char const* const>(unsafe_call_failure_argv.data(), unsafe_call_failure_argv.size())
+    write_concurrency_fixture(
+        unsafe_call_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Address) -> UInt32",
+            "    return raw_read(p)",
+            "function read_twice(p: Address) -> UInt32",
+            "    return read_word(p)",
+        }
     );
-
-    assert(unsafe_call_failure_result.exit_code == 1);
-    assert(unsafe_call_failure_result.stdout_text.empty());
-    assert(unsafe_call_failure_result.stderr_text.find(
-               "call to unsafe function 'read_word' is only valid inside unsafe functions or unsafe blocks"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, unsafe_call_failure_path),
+        "call to unsafe function 'read_word' is only valid inside unsafe functions or unsafe blocks"
+    );
 
     auto unsafe_call_block_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_unsafe_call_block_success.or";
-    {
-        std::ofstream output(unsafe_call_block_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Address) -> UInt32\n";
-        output << "    return raw_read(p)\n";
-        output << "function copy_word(p: Address) -> UInt32\n";
-        output << "    unsafe\n";
-        output << "        return read_word(p)\n";
-    }
-
-    auto unsafe_call_block_success_path_text = unsafe_call_block_success_path.string();
-    std::array<char const*, 3> unsafe_call_block_success_argv {
-        "orisonc",
-        "--parse",
-        unsafe_call_block_success_path_text.c_str()
-    };
-    auto unsafe_call_block_success_result = app.run(
-        std::span<char const* const>(
-            unsafe_call_block_success_argv.data(),
-            unsafe_call_block_success_argv.size()
-        )
+    write_concurrency_fixture(
+        unsafe_call_block_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Address) -> UInt32",
+            "    return raw_read(p)",
+            "function copy_word(p: Address) -> UInt32",
+            "    unsafe",
+            "        return read_word(p)",
+        }
     );
-
-    assert(unsafe_call_block_success_result.exit_code == 0);
-    assert(unsafe_call_block_success_result.stderr_text.empty());
-    assert(unsafe_call_block_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, unsafe_call_block_success_path));
 
     auto pointer_construction_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_construction_failure.or";
