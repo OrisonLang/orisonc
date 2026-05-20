@@ -2988,24 +2988,10 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_wrong_choice_variant_failure.or";
     write_result_switch_with_maybe_variant_fixture(switch_wrong_choice_variant_failure_path);
 
-    auto switch_wrong_choice_variant_failure_path_text = switch_wrong_choice_variant_failure_path.string();
-    std::array<char const*, 3> switch_wrong_choice_variant_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_wrong_choice_variant_failure_path_text.c_str()
-    };
-    auto switch_wrong_choice_variant_failure_result = app.run(
-        std::span<char const* const>(
-            switch_wrong_choice_variant_failure_argv.data(),
-            switch_wrong_choice_variant_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_wrong_choice_variant_failure_path),
+        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
     );
-
-    assert(switch_wrong_choice_variant_failure_result.exit_code == 1);
-    assert(switch_wrong_choice_variant_failure_result.stdout_text.empty());
-    assert(switch_wrong_choice_variant_failure_result.stderr_text.find(
-               "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
-           ) != std::string::npos);
 
     auto switch_wrong_choice_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
@@ -3033,25 +3019,10 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrong_payload_choice_failure.or";
     write_envelope_result_switch_with_maybe_variant_fixture(switch_nested_wrong_payload_choice_failure_path);
 
-    auto switch_nested_wrong_payload_choice_failure_path_text =
-        switch_nested_wrong_payload_choice_failure_path.string();
-    std::array<char const*, 3> switch_nested_wrong_payload_choice_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_nested_wrong_payload_choice_failure_path_text.c_str()
-    };
-    auto switch_nested_wrong_payload_choice_failure_result = app.run(
-        std::span<char const* const>(
-            switch_nested_wrong_payload_choice_failure_argv.data(),
-            switch_nested_wrong_payload_choice_failure_argv.size()
-        )
+    assert_parse_failure_contains(
+        run_parse(app, switch_nested_wrong_payload_choice_failure_path),
+        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
     );
-
-    assert(switch_nested_wrong_payload_choice_failure_result.exit_code == 1);
-    assert(switch_nested_wrong_payload_choice_failure_result.stdout_text.empty());
-    assert(switch_nested_wrong_payload_choice_failure_result.stderr_text.find(
-               "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
-           ) != std::string::npos);
 
     auto switch_nested_payload_specific_arity_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_payload_specific_arity_success.or";
