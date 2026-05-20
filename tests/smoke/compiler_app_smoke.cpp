@@ -3185,10 +3185,8 @@ int main() {
         false
     );
 
-    auto switch_constructor_payload_shape_without_default_no_cascade_failure_result =
-        run_parse(app, switch_constructor_payload_shape_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_constructor_payload_shape_without_default_no_cascade_failure_result,
+        run_parse(app, switch_constructor_payload_shape_without_default_no_cascade_failure_path),
         "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern",
         "switch is missing"
     );
@@ -3213,10 +3211,8 @@ int main() {
         false
     );
 
-    auto switch_constructor_duplicate_binding_without_default_no_cascade_failure_result =
-        run_parse(app, switch_constructor_duplicate_binding_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_constructor_duplicate_binding_without_default_no_cascade_failure_result,
+        run_parse(app, switch_constructor_duplicate_binding_without_default_no_cascade_failure_path),
         "switch constructor pattern cannot bind 'head' more than once",
         "switch is missing"
     );
@@ -3245,10 +3241,8 @@ int main() {
         false
     );
 
-    auto switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_result =
-        run_parse(app, switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_result,
+        run_parse(app, switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure_path),
         "switch constructor pattern cannot bind 'head' more than once",
         "switch is missing"
     );
@@ -3283,10 +3277,8 @@ int main() {
         false
     );
 
-    auto switch_constructor_pattern_arity_without_default_no_cascade_failure_result =
-        run_parse(app, switch_constructor_pattern_arity_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_constructor_pattern_arity_without_default_no_cascade_failure_result,
+        run_parse(app, switch_constructor_pattern_arity_without_default_no_cascade_failure_path),
         "switch constructor pattern 'Node' expects 2 payload values but received 1",
         "switch is missing"
     );
@@ -3301,10 +3293,8 @@ int main() {
         false
     );
 
-    auto switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result =
-        run_parse(app, switch_zero_payload_constructor_arity_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_zero_payload_constructor_arity_without_default_no_cascade_failure_result,
+        run_parse(app, switch_zero_payload_constructor_arity_without_default_no_cascade_failure_path),
         "switch constructor pattern 'Empty' expects 0 payload values but received 1",
         "switch is missing"
     );
@@ -3337,10 +3327,8 @@ int main() {
         {"Some(value) => value", "1 => 1"}
     );
 
-    auto switch_pattern_mix_without_default_no_cascade_failure_result =
-        run_parse(app, switch_pattern_mix_without_default_no_cascade_failure_path);
     assert_parse_failure_contains_without(
-        switch_pattern_mix_without_default_no_cascade_failure_result,
+        run_parse(app, switch_pattern_mix_without_default_no_cascade_failure_path),
         "switch cannot mix value patterns with constructor patterns",
         "switch is missing choice variant"
     );
