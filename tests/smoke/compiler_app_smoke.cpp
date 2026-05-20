@@ -1137,347 +1137,184 @@ int main() {
 
     auto pointer_typed_binding_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_success.or";
-    {
-        std::ofstream output(pointer_typed_binding_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_byte(base: Pointer<Byte>) -> Byte\n";
-        output << "    let p: Pointer<Byte> = raw_offset(base, 1)\n";
-        output << "    return raw_read(p)\n";
-    }
-
-    auto pointer_typed_binding_success_path_text = pointer_typed_binding_success_path.string();
-    std::array<char const*, 3> pointer_typed_binding_success_argv {
-        "orisonc",
-        "--parse",
-        pointer_typed_binding_success_path_text.c_str()
-    };
-    auto pointer_typed_binding_success_result = app.run(
-        std::span<char const* const>(
-            pointer_typed_binding_success_argv.data(),
-            pointer_typed_binding_success_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_typed_binding_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_byte(base: Pointer<Byte>) -> Byte",
+            "    let p: Pointer<Byte> = raw_offset(base, 1)",
+            "    return raw_read(p)",
+        }
     );
-
-    assert(pointer_typed_binding_success_result.exit_code == 0);
-    assert(pointer_typed_binding_success_result.stderr_text.empty());
-    assert(pointer_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, pointer_typed_binding_success_path));
 
     auto pointer_raw_offset_typed_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_rawoffset_typed_failure.or";
-    {
-        std::ofstream output(pointer_raw_offset_typed_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>\n";
-        output << "    return raw_offset(base, 1)\n";
-    }
-
-    auto pointer_raw_offset_typed_failure_path_text = pointer_raw_offset_typed_failure_path.string();
-    std::array<char const*, 3> pointer_raw_offset_typed_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_raw_offset_typed_failure_path_text.c_str()
-    };
-    auto pointer_raw_offset_typed_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_raw_offset_typed_failure_argv.data(),
-            pointer_raw_offset_typed_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_raw_offset_typed_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>",
+            "    return raw_offset(base, 1)",
+        }
     );
-
-    assert(pointer_raw_offset_typed_failure_result.exit_code == 1);
-    assert(pointer_raw_offset_typed_failure_result.stdout_text.empty());
-    assert(pointer_raw_offset_typed_failure_result.stderr_text.find(
-               "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_raw_offset_typed_failure_path),
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
 
     auto pointer_raw_offset_same_width_success_path = std::filesystem::temp_directory_path() /
                                                       "orison_compiler_app_pointer_rawoffset_same_width_success.or";
-    {
-        std::ofstream output(pointer_raw_offset_same_width_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_word_ptr(base: Pointer<Int32>) -> Pointer<UInt32>\n";
-        output << "    return raw_offset(base, 1)\n";
-    }
-
-    auto pointer_raw_offset_same_width_success_path_text =
-        pointer_raw_offset_same_width_success_path.string();
-    std::array<char const*, 3> pointer_raw_offset_same_width_success_argv {
-        "orisonc",
-        "--parse",
-        pointer_raw_offset_same_width_success_path_text.c_str()
-    };
-    auto pointer_raw_offset_same_width_success_result = app.run(
-        std::span<char const* const>(
-            pointer_raw_offset_same_width_success_argv.data(),
-            pointer_raw_offset_same_width_success_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_raw_offset_same_width_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(base: Pointer<Int32>) -> Pointer<UInt32>",
+            "    return raw_offset(base, 1)",
+        }
     );
-
-    assert(pointer_raw_offset_same_width_success_result.exit_code == 0);
-    assert(pointer_raw_offset_same_width_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, pointer_raw_offset_same_width_success_path));
 
     auto address_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_typed_binding_failure.or";
-    {
-        std::ofstream output(address_typed_binding_failure_path);
-        output << "package demo.unsafe\n";
-        output << "function read_base() -> Address\n";
-        output << "    let base: Address = \"text\"\n";
-        output << "    return 0x4000_1000\n";
-    }
-
-    auto address_typed_binding_failure_path_text = address_typed_binding_failure_path.string();
-    std::array<char const*, 3> address_typed_binding_failure_argv {
-        "orisonc",
-        "--parse",
-        address_typed_binding_failure_path_text.c_str()
-    };
-    auto address_typed_binding_failure_result = app.run(
-        std::span<char const* const>(
-            address_typed_binding_failure_argv.data(),
-            address_typed_binding_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        address_typed_binding_failure_path,
+        "demo.unsafe",
+        {
+            "function read_base() -> Address",
+            "    let base: Address = \"text\"",
+            "    return 0x4000_1000",
+        }
     );
-
-    assert(address_typed_binding_failure_result.exit_code == 1);
-    assert(address_typed_binding_failure_result.stdout_text.empty());
-    assert(address_typed_binding_failure_result.stderr_text.find(
-               "address-typed binding initializer currently requires a structurally address-like expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, address_typed_binding_failure_path),
+        "address-typed binding initializer currently requires a structurally address-like expression"
+    );
 
     auto address_typed_binding_name_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_typed_binding_name_failure.or";
-    {
-        std::ofstream output(address_typed_binding_name_failure_path);
-        output << "package demo.unsafe\n";
-        output << "function read_base() -> Address\n";
-        output << "    let source = \"text\"\n";
-        output << "    let base: Address = source\n";
-        output << "    return 0x4000_1000\n";
-    }
-
-    auto address_typed_binding_name_failure_path_text = address_typed_binding_name_failure_path.string();
-    std::array<char const*, 3> address_typed_binding_name_failure_argv {
-        "orisonc",
-        "--parse",
-        address_typed_binding_name_failure_path_text.c_str()
-    };
-    auto address_typed_binding_name_failure_result = app.run(
-        std::span<char const* const>(
-            address_typed_binding_name_failure_argv.data(),
-            address_typed_binding_name_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        address_typed_binding_name_failure_path,
+        "demo.unsafe",
+        {
+            "function read_base() -> Address",
+            "    let source = \"text\"",
+            "    let base: Address = source",
+            "    return 0x4000_1000",
+        }
     );
-
-    assert(address_typed_binding_name_failure_result.exit_code == 1);
-    assert(address_typed_binding_name_failure_result.stdout_text.empty());
-    assert(address_typed_binding_name_failure_result.stderr_text.find(
-               "address-typed binding initializer currently requires a structurally address-like expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, address_typed_binding_name_failure_path),
+        "address-typed binding initializer currently requires a structurally address-like expression"
+    );
 
     auto address_return_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_return_failure.or";
-    {
-        std::ofstream output(address_return_failure_path);
-        output << "package demo.unsafe\n";
-        output << "function base() -> Address\n";
-        output << "    return \"text\"\n";
-    }
-
-    auto address_return_failure_path_text = address_return_failure_path.string();
-    std::array<char const*, 3> address_return_failure_argv {
-        "orisonc",
-        "--parse",
-        address_return_failure_path_text.c_str()
-    };
-    auto address_return_failure_result = app.run(
-        std::span<char const* const>(
-            address_return_failure_argv.data(),
-            address_return_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        address_return_failure_path,
+        "demo.unsafe",
+        {
+            "function base() -> Address",
+            "    return \"text\"",
+        }
     );
-
-    assert(address_return_failure_result.exit_code == 1);
-    assert(address_return_failure_result.stdout_text.empty());
-    assert(address_return_failure_result.stderr_text.find(
-               "address-returning function currently requires a structurally address-like expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, address_return_failure_path),
+        "address-returning function currently requires a structurally address-like expression"
+    );
 
     auto address_return_name_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_return_name_failure.or";
-    {
-        std::ofstream output(address_return_name_failure_path);
-        output << "package demo.unsafe\n";
-        output << "function base() -> Address\n";
-        output << "    let source = \"text\"\n";
-        output << "    return source\n";
-    }
-
-    auto address_return_name_failure_path_text = address_return_name_failure_path.string();
-    std::array<char const*, 3> address_return_name_failure_argv {
-        "orisonc",
-        "--parse",
-        address_return_name_failure_path_text.c_str()
-    };
-    auto address_return_name_failure_result = app.run(
-        std::span<char const* const>(
-            address_return_name_failure_argv.data(),
-            address_return_name_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        address_return_name_failure_path,
+        "demo.unsafe",
+        {
+            "function base() -> Address",
+            "    let source = \"text\"",
+            "    return source",
+        }
     );
-
-    assert(address_return_name_failure_result.exit_code == 1);
-    assert(address_return_name_failure_result.stdout_text.empty());
-    assert(address_return_name_failure_result.stderr_text.find(
-               "address-returning function currently requires a structurally address-like expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, address_return_name_failure_path),
+        "address-returning function currently requires a structurally address-like expression"
+    );
 
     auto address_typed_binding_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_typed_binding_success.or";
-    {
-        std::ofstream output(address_typed_binding_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function first_addr(buf: exclusive Buffer) -> Address\n";
-        output << "    let base: Address = address_of(buf.data[0])\n";
-        output << "    return base\n";
-    }
-
-    auto address_typed_binding_success_path_text = address_typed_binding_success_path.string();
-    std::array<char const*, 3> address_typed_binding_success_argv {
-        "orisonc",
-        "--parse",
-        address_typed_binding_success_path_text.c_str()
-    };
-    auto address_typed_binding_success_result = app.run(
-        std::span<char const* const>(
-            address_typed_binding_success_argv.data(),
-            address_typed_binding_success_argv.size()
-        )
+    write_concurrency_fixture(
+        address_typed_binding_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function first_addr(buf: exclusive Buffer) -> Address",
+            "    let base: Address = address_of(buf.data[0])",
+            "    return base",
+        }
     );
-
-    assert(address_typed_binding_success_result.exit_code == 0);
-    assert(address_typed_binding_success_result.stderr_text.empty());
-    assert(address_typed_binding_success_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, address_typed_binding_success_path));
 
     auto address_typed_binding_field_address_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_typed_binding_field_address_success.or";
-    {
-        std::ofstream output(address_typed_binding_field_address_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    base: Address\n";
-        output << "function read_base(device: Device) -> Address\n";
-        output << "    let base: Address = device.base\n";
-        output << "    return base\n";
-    }
-
-    auto address_typed_binding_field_address_success_path_text =
-        address_typed_binding_field_address_success_path.string();
-    std::array<char const*, 3> address_typed_binding_field_address_success_argv {
-        "orisonc",
-        "--parse",
-        address_typed_binding_field_address_success_path_text.c_str()
-    };
-    auto address_typed_binding_field_address_success_result = app.run(
-        std::span<char const* const>(
-            address_typed_binding_field_address_success_argv.data(),
-            address_typed_binding_field_address_success_argv.size()
-        )
+    write_concurrency_fixture(
+        address_typed_binding_field_address_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    base: Address",
+            "function read_base(device: Device) -> Address",
+            "    let base: Address = device.base",
+            "    return base",
+        }
     );
-
-    assert(address_typed_binding_field_address_success_result.exit_code == 0);
-    assert(address_typed_binding_field_address_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, address_typed_binding_field_address_success_path));
 
     auto address_typed_binding_indexed_address_success_path = std::filesystem::temp_directory_path() /
                                                               "orison_compiler_app_address_typed_binding_indexed_address_success.or";
-    {
-        std::ofstream output(address_typed_binding_indexed_address_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    bases: Pointer<Address>\n";
-        output << "function read_base(device: Device, index: Int64) -> Address\n";
-        output << "    let base: Address = device.bases[index]\n";
-        output << "    return base\n";
-    }
-
-    auto address_typed_binding_indexed_address_success_path_text =
-        address_typed_binding_indexed_address_success_path.string();
-    std::array<char const*, 3> address_typed_binding_indexed_address_success_argv {
-        "orisonc",
-        "--parse",
-        address_typed_binding_indexed_address_success_path_text.c_str()
-    };
-    auto address_typed_binding_indexed_address_success_result = app.run(
-        std::span<char const* const>(
-            address_typed_binding_indexed_address_success_argv.data(),
-            address_typed_binding_indexed_address_success_argv.size()
-        )
+    write_concurrency_fixture(
+        address_typed_binding_indexed_address_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    bases: Pointer<Address>",
+            "function read_base(device: Device, index: Int64) -> Address",
+            "    let base: Address = device.bases[index]",
+            "    return base",
+        }
     );
-
-    assert(address_typed_binding_indexed_address_success_result.exit_code == 0);
-    assert(address_typed_binding_indexed_address_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, address_typed_binding_indexed_address_success_path));
 
     auto address_return_helper_returned_address_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_return_helper_returned_address_success.or";
-    {
-        std::ofstream output(address_return_helper_returned_address_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    bases: Pointer<Address>\n";
-        output << "extend Device\n";
-        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
-        output << "        let base = this.bases[index]\n";
-        output << "        return base\n";
-        output << "function read_base(device: Device, index: Int64) -> Address\n";
-        output << "    return device.base_at(index)\n";
-    }
-
-    auto address_return_helper_returned_address_success_path_text =
-        address_return_helper_returned_address_success_path.string();
-    std::array<char const*, 3> address_return_helper_returned_address_success_argv {
-        "orisonc",
-        "--parse",
-        address_return_helper_returned_address_success_path_text.c_str()
-    };
-    auto address_return_helper_returned_address_success_result = app.run(
-        std::span<char const* const>(
-            address_return_helper_returned_address_success_argv.data(),
-            address_return_helper_returned_address_success_argv.size()
-        )
+    write_concurrency_fixture(
+        address_return_helper_returned_address_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    bases: Pointer<Address>",
+            "extend Device",
+            "    function base_at(this: shared This, index: Int64) -> Address",
+            "        let base = this.bases[index]",
+            "        return base",
+            "function read_base(device: Device, index: Int64) -> Address",
+            "    return device.base_at(index)",
+        }
     );
-
-    assert(address_return_helper_returned_address_success_result.exit_code == 0);
-    assert(address_return_helper_returned_address_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, address_return_helper_returned_address_success_path));
 
     auto address_return_generic_helper_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_address_return_generic_helper_success.or";
-    {
-        std::ofstream output(address_return_generic_helper_success_path);
-        output << "package demo.unsafe\n";
-        output << "function id<T>(value: T) -> T\n";
-        output << "    return value\n";
-        output << "record Device\n";
-        output << "    base: Address\n";
-        output << "function read_base(device: Device) -> Address\n";
-        output << "    return id(device.base)\n";
-    }
-
-    auto address_return_generic_helper_success_path_text =
-        address_return_generic_helper_success_path.string();
-    std::array<char const*, 3> address_return_generic_helper_success_argv {
-        "orisonc",
-        "--parse",
-        address_return_generic_helper_success_path_text.c_str()
-    };
-    auto address_return_generic_helper_success_result = app.run(
-        std::span<char const* const>(
-            address_return_generic_helper_success_argv.data(),
-            address_return_generic_helper_success_argv.size()
-        )
+    write_concurrency_fixture(
+        address_return_generic_helper_success_path,
+        "demo.unsafe",
+        {
+            "function id<T>(value: T) -> T",
+            "    return value",
+            "record Device",
+            "    base: Address",
+            "function read_base(device: Device) -> Address",
+            "    return id(device.base)",
+        }
     );
-
-    assert(address_return_generic_helper_success_result.exit_code == 0);
-    assert(address_return_generic_helper_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, address_return_generic_helper_success_path));
 
     auto raw_write_generic_record_pointer_field_same_width_success_path =
         std::filesystem::temp_directory_path() /
