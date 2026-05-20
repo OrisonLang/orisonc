@@ -935,241 +935,133 @@ int main() {
 
     auto pointer_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_failure.or";
-    {
-        std::ofstream output(pointer_typed_binding_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte() -> Byte\n";
-        output << "    let p: Pointer<Byte> = \"text\"\n";
-        output << "    return 0\n";
-    }
-
-    auto pointer_typed_binding_failure_path_text = pointer_typed_binding_failure_path.string();
-    std::array<char const*, 3> pointer_typed_binding_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_typed_binding_failure_path_text.c_str()
-    };
-    auto pointer_typed_binding_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_typed_binding_failure_argv.data(),
-            pointer_typed_binding_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_typed_binding_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte() -> Byte",
+            "    let p: Pointer<Byte> = \"text\"",
+            "    return 0",
+        }
     );
-
-    assert(pointer_typed_binding_failure_result.exit_code == 1);
-    assert(pointer_typed_binding_failure_result.stdout_text.empty());
-    assert(pointer_typed_binding_failure_result.stderr_text.find(
-               "pointer-typed binding initializer currently requires a structurally pointer-like expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_typed_binding_failure_path),
+        "pointer-typed binding initializer currently requires a structurally pointer-like expression"
+    );
 
     auto pointer_typed_binding_name_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_name_failure.or";
-    {
-        std::ofstream output(pointer_typed_binding_name_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte() -> Byte\n";
-        output << "    let source = \"text\"\n";
-        output << "    let p: Pointer<Byte> = source\n";
-        output << "    return 0\n";
-    }
-
-    auto pointer_typed_binding_name_failure_path_text = pointer_typed_binding_name_failure_path.string();
-    std::array<char const*, 3> pointer_typed_binding_name_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_typed_binding_name_failure_path_text.c_str()
-    };
-    auto pointer_typed_binding_name_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_typed_binding_name_failure_argv.data(),
-            pointer_typed_binding_name_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_typed_binding_name_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte() -> Byte",
+            "    let source = \"text\"",
+            "    let p: Pointer<Byte> = source",
+            "    return 0",
+        }
     );
-
-    assert(pointer_typed_binding_name_failure_result.exit_code == 1);
-    assert(pointer_typed_binding_name_failure_result.stdout_text.empty());
-    assert(pointer_typed_binding_name_failure_result.stderr_text.find(
-               "pointer-typed binding initializer currently requires a structurally pointer-like expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_typed_binding_name_failure_path),
+        "pointer-typed binding initializer currently requires a structurally pointer-like expression"
+    );
 
     auto pointer_typed_binding_field_pointer_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_typed_binding_field_pointer_failure.or";
-    {
-        std::ofstream output(pointer_typed_binding_field_pointer_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptr: Pointer<Byte>\n";
-        output << "unsafe function next_ptr(device: Device) -> Pointer<UInt32>\n";
-        output << "    let p: Pointer<UInt32> = device.ptr\n";
-        output << "    return p\n";
-    }
-
-    auto pointer_typed_binding_field_pointer_failure_path_text =
-        pointer_typed_binding_field_pointer_failure_path.string();
-    std::array<char const*, 3> pointer_typed_binding_field_pointer_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_typed_binding_field_pointer_failure_path_text.c_str()
-    };
-    auto pointer_typed_binding_field_pointer_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_typed_binding_field_pointer_failure_argv.data(),
-            pointer_typed_binding_field_pointer_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_typed_binding_field_pointer_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptr: Pointer<Byte>",
+            "unsafe function next_ptr(device: Device) -> Pointer<UInt32>",
+            "    let p: Pointer<UInt32> = device.ptr",
+            "    return p",
+        }
     );
-
-    assert(pointer_typed_binding_field_pointer_failure_result.exit_code == 1);
-    assert(pointer_typed_binding_field_pointer_failure_result.stdout_text.empty());
-    assert(pointer_typed_binding_field_pointer_failure_result.stderr_text.find(
-               "pointer-typed binding initializer pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_typed_binding_field_pointer_failure_path),
+        "pointer-typed binding initializer pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
 
     auto pointer_typed_binding_same_width_field_pointer_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_pointer_typed_binding_same_width_field_pointer_success.or";
-    {
-        std::ofstream output(pointer_typed_binding_same_width_field_pointer_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptr: Pointer<Int32>\n";
-        output << "unsafe function next_ptr(device: Device) -> Pointer<UInt32>\n";
-        output << "    let p: Pointer<UInt32> = device.ptr\n";
-        output << "    return p\n";
-    }
-
-    auto pointer_typed_binding_same_width_field_pointer_success_path_text =
-        pointer_typed_binding_same_width_field_pointer_success_path.string();
-    std::array<char const*, 3> pointer_typed_binding_same_width_field_pointer_success_argv {
-        "orisonc",
-        "--parse",
-        pointer_typed_binding_same_width_field_pointer_success_path_text.c_str()
-    };
-    auto pointer_typed_binding_same_width_field_pointer_success_result = app.run(
-        std::span<char const* const>(
-            pointer_typed_binding_same_width_field_pointer_success_argv.data(),
-            pointer_typed_binding_same_width_field_pointer_success_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_typed_binding_same_width_field_pointer_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptr: Pointer<Int32>",
+            "unsafe function next_ptr(device: Device) -> Pointer<UInt32>",
+            "    let p: Pointer<UInt32> = device.ptr",
+            "    return p",
+        }
     );
-
-    assert(pointer_typed_binding_same_width_field_pointer_success_result.exit_code == 0);
-    assert(pointer_typed_binding_same_width_field_pointer_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, pointer_typed_binding_same_width_field_pointer_success_path));
 
     auto pointer_return_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_return_failure.or";
-    {
-        std::ofstream output(pointer_return_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_ptr() -> Pointer<Byte>\n";
-        output << "    return \"text\"\n";
-    }
-
-    auto pointer_return_failure_path_text = pointer_return_failure_path.string();
-    std::array<char const*, 3> pointer_return_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_return_failure_path_text.c_str()
-    };
-    auto pointer_return_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_return_failure_argv.data(),
-            pointer_return_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_return_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr() -> Pointer<Byte>",
+            "    return \"text\"",
+        }
     );
-
-    assert(pointer_return_failure_result.exit_code == 1);
-    assert(pointer_return_failure_result.stdout_text.empty());
-    assert(pointer_return_failure_result.stderr_text.find(
-               "pointer-returning function currently requires a structurally pointer-like expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_return_failure_path),
+        "pointer-returning function currently requires a structurally pointer-like expression"
+    );
 
     auto pointer_return_name_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_return_name_failure.or";
-    {
-        std::ofstream output(pointer_return_name_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_ptr() -> Pointer<Byte>\n";
-        output << "    let source = \"text\"\n";
-        output << "    return source\n";
-    }
-
-    auto pointer_return_name_failure_path_text = pointer_return_name_failure_path.string();
-    std::array<char const*, 3> pointer_return_name_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_return_name_failure_path_text.c_str()
-    };
-    auto pointer_return_name_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_return_name_failure_argv.data(),
-            pointer_return_name_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_return_name_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr() -> Pointer<Byte>",
+            "    let source = \"text\"",
+            "    return source",
+        }
     );
-
-    assert(pointer_return_name_failure_result.exit_code == 1);
-    assert(pointer_return_name_failure_result.stdout_text.empty());
-    assert(pointer_return_name_failure_result.stderr_text.find(
-               "pointer-returning function currently requires a structurally pointer-like expression"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_return_name_failure_path),
+        "pointer-returning function currently requires a structurally pointer-like expression"
+    );
 
     auto pointer_return_helper_pointer_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_pointer_return_helper_pointer_failure.or";
-    {
-        std::ofstream output(pointer_return_helper_pointer_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "    return base\n";
-        output << "unsafe function word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>\n";
-        output << "    return byte_ptr(base)\n";
-    }
-
-    auto pointer_return_helper_pointer_failure_path_text =
-        pointer_return_helper_pointer_failure_path.string();
-    std::array<char const*, 3> pointer_return_helper_pointer_failure_argv {
-        "orisonc",
-        "--parse",
-        pointer_return_helper_pointer_failure_path_text.c_str()
-    };
-    auto pointer_return_helper_pointer_failure_result = app.run(
-        std::span<char const* const>(
-            pointer_return_helper_pointer_failure_argv.data(),
-            pointer_return_helper_pointer_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_return_helper_pointer_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
+            "    return base",
+            "unsafe function word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>",
+            "    return byte_ptr(base)",
+        }
     );
-
-    assert(pointer_return_helper_pointer_failure_result.exit_code == 1);
-    assert(pointer_return_helper_pointer_failure_result.stdout_text.empty());
-    assert(pointer_return_helper_pointer_failure_result.stderr_text.find(
-               "pointer-returning function pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, pointer_return_helper_pointer_failure_path),
+        "pointer-returning function pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
 
     auto pointer_return_same_width_helper_pointer_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_pointer_return_same_width_helper_pointer_success.or";
-    {
-        std::ofstream output(pointer_return_same_width_helper_pointer_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function wordish_ptr(base: Pointer<Int32>) -> Pointer<Int32>\n";
-        output << "    return base\n";
-        output << "unsafe function word_ptr(base: Pointer<Int32>) -> Pointer<UInt32>\n";
-        output << "    return wordish_ptr(base)\n";
-    }
-
-    auto pointer_return_same_width_helper_pointer_success_path_text =
-        pointer_return_same_width_helper_pointer_success_path.string();
-    std::array<char const*, 3> pointer_return_same_width_helper_pointer_success_argv {
-        "orisonc",
-        "--parse",
-        pointer_return_same_width_helper_pointer_success_path_text.c_str()
-    };
-    auto pointer_return_same_width_helper_pointer_success_result = app.run(
-        std::span<char const* const>(
-            pointer_return_same_width_helper_pointer_success_argv.data(),
-            pointer_return_same_width_helper_pointer_success_argv.size()
-        )
+    write_concurrency_fixture(
+        pointer_return_same_width_helper_pointer_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function wordish_ptr(base: Pointer<Int32>) -> Pointer<Int32>",
+            "    return base",
+            "unsafe function word_ptr(base: Pointer<Int32>) -> Pointer<UInt32>",
+            "    return wordish_ptr(base)",
+        }
     );
-
-    assert(pointer_return_same_width_helper_pointer_success_result.exit_code == 0);
-    assert(pointer_return_same_width_helper_pointer_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, pointer_return_same_width_helper_pointer_success_path));
 
     auto raw_write_generic_helper_returned_pointer_same_width_success_path =
         std::filesystem::temp_directory_path() /
