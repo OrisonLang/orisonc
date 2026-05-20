@@ -2490,137 +2490,69 @@ int main() {
 
     auto volatile_write_integer_literal_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_write_integer_literal_success.or";
-    {
-        std::ofstream output(volatile_write_integer_literal_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(p, 0)\n";
-    }
-
-    auto volatile_write_integer_literal_success_path_text = volatile_write_integer_literal_success_path.string();
-    std::array<char const*, 3> volatile_write_integer_literal_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_integer_literal_success_path_text.c_str()
-    };
-    auto volatile_write_integer_literal_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_integer_literal_success_argv.data(),
-            volatile_write_integer_literal_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_integer_literal_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>) -> Unit",
+            "    volatile_write(p, 0)",
+        }
     );
-
-    assert(volatile_write_integer_literal_success_result.exit_code == 0);
-    assert(volatile_write_integer_literal_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_integer_literal_success_path));
 
     auto volatile_write_integer_cast_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_write_integer_cast_success.or";
-    {
-        std::ofstream output(volatile_write_integer_cast_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    volatile_write(p, value as UInt32)\n";
-    }
-
-    auto volatile_write_integer_cast_success_path_text = volatile_write_integer_cast_success_path.string();
-    std::array<char const*, 3> volatile_write_integer_cast_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_integer_cast_success_path_text.c_str()
-    };
-    auto volatile_write_integer_cast_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_integer_cast_success_argv.data(),
-            volatile_write_integer_cast_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_integer_cast_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    volatile_write(p, value as UInt32)",
+        }
     );
-
-    assert(volatile_write_integer_cast_success_result.exit_code == 0);
-    assert(volatile_write_integer_cast_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_integer_cast_success_path));
 
     auto volatile_write_same_width_integer_cast_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_write_same_width_integer_cast_success.or";
-    {
-        std::ofstream output(volatile_write_same_width_integer_cast_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    volatile_write(p, value as Int32)\n";
-    }
-
-    auto volatile_write_same_width_integer_cast_success_path_text =
-        volatile_write_same_width_integer_cast_success_path.string();
-    std::array<char const*, 3> volatile_write_same_width_integer_cast_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_same_width_integer_cast_success_path_text.c_str()
-    };
-    auto volatile_write_same_width_integer_cast_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_same_width_integer_cast_success_argv.data(),
-            volatile_write_same_width_integer_cast_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_same_width_integer_cast_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    volatile_write(p, value as Int32)",
+        }
     );
-
-    assert(volatile_write_same_width_integer_cast_success_result.exit_code == 0);
-    assert(volatile_write_same_width_integer_cast_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_same_width_integer_cast_success_path));
 
     auto volatile_write_integer_cast_target_failure_path = std::filesystem::temp_directory_path() /
                                                            "orison_compiler_app_volatile_write_integer_cast_target_failure.or";
-    {
-        std::ofstream output(volatile_write_integer_cast_target_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    volatile_write(p, value as Int64)\n";
-    }
-
-    auto volatile_write_integer_cast_target_failure_path_text =
-        volatile_write_integer_cast_target_failure_path.string();
-    std::array<char const*, 3> volatile_write_integer_cast_target_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_integer_cast_target_failure_path_text.c_str()
-    };
-    auto volatile_write_integer_cast_target_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_integer_cast_target_failure_argv.data(),
-            volatile_write_integer_cast_target_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_integer_cast_target_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    volatile_write(p, value as Int64)",
+        }
     );
-
-    assert(volatile_write_integer_cast_target_failure_result.exit_code == 1);
-    assert(volatile_write_integer_cast_target_failure_result.stdout_text.empty());
-    assert(volatile_write_integer_cast_target_failure_result.stderr_text.find(
-               "volatile_write value type 'Int64' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_integer_cast_target_failure_path),
+        "volatile_write value type 'Int64' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_pointer_sized_integer_cast_failure_path = std::filesystem::temp_directory_path() /
                                                                   "orison_compiler_app_volatile_write_pointer_sized_integer_cast_failure.or";
-    {
-        std::ofstream output(volatile_write_pointer_sized_integer_cast_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    volatile_write(p, value as IntSize)\n";
-    }
-
-    auto volatile_write_pointer_sized_integer_cast_failure_path_text =
-        volatile_write_pointer_sized_integer_cast_failure_path.string();
-    std::array<char const*, 3> volatile_write_pointer_sized_integer_cast_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_pointer_sized_integer_cast_failure_path_text.c_str()
-    };
-    auto volatile_write_pointer_sized_integer_cast_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_pointer_sized_integer_cast_failure_argv.data(),
-            volatile_write_pointer_sized_integer_cast_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_pointer_sized_integer_cast_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    volatile_write(p, value as IntSize)",
+        }
     );
-
-    assert(volatile_write_pointer_sized_integer_cast_failure_result.exit_code == 1);
-    assert(volatile_write_pointer_sized_integer_cast_failure_result.stdout_text.empty());
-    assert(volatile_write_pointer_sized_integer_cast_failure_result.stderr_text.find(
-               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_pointer_sized_integer_cast_failure_path),
+        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_recovered_volatile_read_failure_path = std::filesystem::temp_directory_path() /
                                                                "orison_compiler_app_volatile_write_recovered_volatile_read_failure.or";

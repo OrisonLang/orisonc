@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-20: integer literal and integer-cast `volatile_write` CLI smoke fixtures now reuse the shared source writer plus parse helpers for literal, exact-cast, same-width-cast, wider-cast mismatch, and pointer-sized-cast mismatch coverage.
 - 2026-05-20: array-indexed, member-container, nested-scalar-field, and helper-returned-container `volatile_write` CLI smoke fixtures now reuse the shared source writer plus parse helpers for shallow value recovery and pointer-sized mismatch coverage.
 - 2026-05-20: direct and computed `volatile_write` CLI smoke fixtures now reuse the shared source writer plus parse helpers for exact mismatch, same-width success, pointer-sized mismatch, rebound, branch-merged, and switch-merged value-type coverage.
 - 2026-05-20: `volatile_read` return and typed-binding CLI smoke fixtures now reuse the shared source writer plus parse helpers for exact, same-width, and mismatch result-type coverage.
