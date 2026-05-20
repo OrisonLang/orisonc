@@ -2352,267 +2352,141 @@ int main() {
 
     auto volatile_write_array_indexed_value_success_path = std::filesystem::temp_directory_path() /
                                                            "orison_compiler_app_volatile_write_array_indexed_value_success.or";
-    {
-        std::ofstream output(volatile_write_array_indexed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, items: DynamicArray<Int32>) -> Unit\n";
-        output << "    volatile_write(out, items[0])\n";
-    }
-
-    auto volatile_write_array_indexed_value_success_path_text =
-        volatile_write_array_indexed_value_success_path.string();
-    std::array<char const*, 3> volatile_write_array_indexed_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_array_indexed_value_success_path_text.c_str()
-    };
-    auto volatile_write_array_indexed_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_array_indexed_value_success_argv.data(),
-            volatile_write_array_indexed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_array_indexed_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, items: DynamicArray<Int32>) -> Unit",
+            "    volatile_write(out, items[0])",
+        }
     );
-
-    assert(volatile_write_array_indexed_value_success_result.exit_code == 0);
-    assert(volatile_write_array_indexed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_array_indexed_value_success_path));
 
     auto volatile_write_bound_array_literal_indexed_value_success_path = std::filesystem::temp_directory_path() /
                                                                          "orison_compiler_app_volatile_write_bound_array_literal_indexed_value_success.or";
-    {
-        std::ofstream output(volatile_write_bound_array_literal_indexed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, left: Int32, right: Int32) -> Unit\n";
-        output << "    let staged = [left, right]\n";
-        output << "    volatile_write(out, staged[0])\n";
-    }
-
-    auto volatile_write_bound_array_literal_indexed_value_success_path_text =
-        volatile_write_bound_array_literal_indexed_value_success_path.string();
-    std::array<char const*, 3> volatile_write_bound_array_literal_indexed_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_bound_array_literal_indexed_value_success_path_text.c_str()
-    };
-    auto volatile_write_bound_array_literal_indexed_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_bound_array_literal_indexed_value_success_argv.data(),
-            volatile_write_bound_array_literal_indexed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_bound_array_literal_indexed_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, left: Int32, right: Int32) -> Unit",
+            "    let staged = [left, right]",
+            "    volatile_write(out, staged[0])",
+        }
     );
-
-    assert(volatile_write_bound_array_literal_indexed_value_success_result.exit_code == 0);
-    assert(volatile_write_bound_array_literal_indexed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_bound_array_literal_indexed_value_success_path));
 
     auto volatile_write_array_indexed_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
                                                                    "orison_compiler_app_volatile_write_array_indexed_pointer_sized_failure.or";
-    {
-        std::ofstream output(volatile_write_array_indexed_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, items: DynamicArray<IntSize>) -> Unit\n";
-        output << "    volatile_write(out, items[0])\n";
-    }
-
-    auto volatile_write_array_indexed_pointer_sized_failure_path_text =
-        volatile_write_array_indexed_pointer_sized_failure_path.string();
-    std::array<char const*, 3> volatile_write_array_indexed_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_array_indexed_pointer_sized_failure_path_text.c_str()
-    };
-    auto volatile_write_array_indexed_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_array_indexed_pointer_sized_failure_argv.data(),
-            volatile_write_array_indexed_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_array_indexed_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, items: DynamicArray<IntSize>) -> Unit",
+            "    volatile_write(out, items[0])",
+        }
     );
-
-    assert(volatile_write_array_indexed_pointer_sized_failure_result.exit_code == 1);
-    assert(volatile_write_array_indexed_pointer_sized_failure_result.stdout_text.empty());
-    assert(volatile_write_array_indexed_pointer_sized_failure_result.stderr_text.find(
-               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_array_indexed_pointer_sized_failure_path),
+        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_member_container_field_indexed_value_success_path = std::filesystem::temp_directory_path() /
                                                                             "orison_compiler_app_volatile_write_member_container_field_indexed_value_success.or";
-    {
-        std::ofstream output(volatile_write_member_container_field_indexed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    words: DynamicArray<Int32>\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit\n";
-        output << "    volatile_write(out, device.words[0])\n";
-    }
-
-    auto volatile_write_member_container_field_indexed_value_success_path_text =
-        volatile_write_member_container_field_indexed_value_success_path.string();
-    std::array<char const*, 3> volatile_write_member_container_field_indexed_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_member_container_field_indexed_value_success_path_text.c_str()
-    };
-    auto volatile_write_member_container_field_indexed_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_member_container_field_indexed_value_success_argv.data(),
-            volatile_write_member_container_field_indexed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_member_container_field_indexed_value_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    words: DynamicArray<Int32>",
+            "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit",
+            "    volatile_write(out, device.words[0])",
+        }
     );
-
-    assert(volatile_write_member_container_field_indexed_value_success_result.exit_code == 0);
-    assert(volatile_write_member_container_field_indexed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_member_container_field_indexed_value_success_path));
 
     auto volatile_write_nested_scalar_field_value_success_path = std::filesystem::temp_directory_path() /
                                                                  "orison_compiler_app_volatile_write_nested_scalar_field_value_success.or";
-    {
-        std::ofstream output(volatile_write_nested_scalar_field_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Registers\n";
-        output << "    status: Int32\n";
-        output << "record Device\n";
-        output << "    registers: Registers\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit\n";
-        output << "    volatile_write(out, device.registers.status)\n";
-    }
-
-    auto volatile_write_nested_scalar_field_value_success_path_text =
-        volatile_write_nested_scalar_field_value_success_path.string();
-    std::array<char const*, 3> volatile_write_nested_scalar_field_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_nested_scalar_field_value_success_path_text.c_str()
-    };
-    auto volatile_write_nested_scalar_field_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_nested_scalar_field_value_success_argv.data(),
-            volatile_write_nested_scalar_field_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_nested_scalar_field_value_success_path,
+        "demo.unsafe",
+        {
+            "record Registers",
+            "    status: Int32",
+            "record Device",
+            "    registers: Registers",
+            "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit",
+            "    volatile_write(out, device.registers.status)",
+        }
     );
-
-    assert(volatile_write_nested_scalar_field_value_success_result.exit_code == 0);
-    assert(volatile_write_nested_scalar_field_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_nested_scalar_field_value_success_path));
 
     auto volatile_write_nested_scalar_field_computed_value_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_volatile_write_nested_scalar_field_computed_value_success.or";
-    {
-        std::ofstream output(volatile_write_nested_scalar_field_computed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Registers\n";
-        output << "    status: Int32\n";
-        output << "record Device\n";
-        output << "    registers: Registers\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit\n";
-        output << "    volatile_write(out, device.registers.status bit_or 1)\n";
-    }
-
-    auto volatile_write_nested_scalar_field_computed_value_success_path_text =
-        volatile_write_nested_scalar_field_computed_value_success_path.string();
-    std::array<char const*, 3> volatile_write_nested_scalar_field_computed_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_nested_scalar_field_computed_value_success_path_text.c_str()
-    };
-    auto volatile_write_nested_scalar_field_computed_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_nested_scalar_field_computed_value_success_argv.data(),
-            volatile_write_nested_scalar_field_computed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_nested_scalar_field_computed_value_success_path,
+        "demo.unsafe",
+        {
+            "record Registers",
+            "    status: Int32",
+            "record Device",
+            "    registers: Registers",
+            "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit",
+            "    volatile_write(out, device.registers.status bit_or 1)",
+        }
     );
-
-    assert(volatile_write_nested_scalar_field_computed_value_success_result.exit_code == 0);
-    assert(volatile_write_nested_scalar_field_computed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_nested_scalar_field_computed_value_success_path));
 
     auto volatile_write_helper_returned_container_indexed_value_success_path = std::filesystem::temp_directory_path() /
                                                                                "orison_compiler_app_volatile_write_helper_returned_container_indexed_value_success.or";
-    {
-        std::ofstream output(volatile_write_helper_returned_container_indexed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "function words() -> DynamicArray<Int32>\n";
-        output << "    return []\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, words()[0])\n";
-    }
-
-    auto volatile_write_helper_returned_container_indexed_value_success_path_text =
-        volatile_write_helper_returned_container_indexed_value_success_path.string();
-    std::array<char const*, 3> volatile_write_helper_returned_container_indexed_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_helper_returned_container_indexed_value_success_path_text.c_str()
-    };
-    auto volatile_write_helper_returned_container_indexed_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_helper_returned_container_indexed_value_success_argv.data(),
-            volatile_write_helper_returned_container_indexed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_helper_returned_container_indexed_value_success_path,
+        "demo.unsafe",
+        {
+            "function words() -> DynamicArray<Int32>",
+            "    return []",
+            "unsafe function write_word(out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, words()[0])",
+        }
     );
-
-    assert(volatile_write_helper_returned_container_indexed_value_success_result.exit_code == 0);
-    assert(volatile_write_helper_returned_container_indexed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_helper_returned_container_indexed_value_success_path));
 
     auto volatile_write_member_container_field_indexed_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
                                                                                     "orison_compiler_app_volatile_write_member_container_field_indexed_pointer_sized_failure.or";
-    {
-        std::ofstream output(volatile_write_member_container_field_indexed_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    words: DynamicArray<IntSize>\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit\n";
-        output << "    volatile_write(out, device.words[0])\n";
-    }
-
-    auto volatile_write_member_container_field_indexed_pointer_sized_failure_path_text =
-        volatile_write_member_container_field_indexed_pointer_sized_failure_path.string();
-    std::array<char const*, 3> volatile_write_member_container_field_indexed_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_member_container_field_indexed_pointer_sized_failure_path_text.c_str()
-    };
-    auto volatile_write_member_container_field_indexed_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_member_container_field_indexed_pointer_sized_failure_argv.data(),
-            volatile_write_member_container_field_indexed_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_member_container_field_indexed_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    words: DynamicArray<IntSize>",
+            "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit",
+            "    volatile_write(out, device.words[0])",
+        }
     );
-
-    assert(volatile_write_member_container_field_indexed_pointer_sized_failure_result.exit_code == 1);
-    assert(volatile_write_member_container_field_indexed_pointer_sized_failure_result.stdout_text.empty());
-    assert(volatile_write_member_container_field_indexed_pointer_sized_failure_result.stderr_text.find(
-               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_member_container_field_indexed_pointer_sized_failure_path),
+        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_nested_scalar_field_pointer_sized_failure_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_volatile_write_nested_scalar_field_pointer_sized_failure.or";
-    {
-        std::ofstream output(volatile_write_nested_scalar_field_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Registers\n";
-        output << "    status: IntSize\n";
-        output << "record Device\n";
-        output << "    registers: Registers\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit\n";
-        output << "    volatile_write(out, device.registers.status)\n";
-    }
-
-    auto volatile_write_nested_scalar_field_pointer_sized_failure_path_text =
-        volatile_write_nested_scalar_field_pointer_sized_failure_path.string();
-    std::array<char const*, 3> volatile_write_nested_scalar_field_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_nested_scalar_field_pointer_sized_failure_path_text.c_str()
-    };
-    auto volatile_write_nested_scalar_field_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_nested_scalar_field_pointer_sized_failure_argv.data(),
-            volatile_write_nested_scalar_field_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_nested_scalar_field_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "record Registers",
+            "    status: IntSize",
+            "record Device",
+            "    registers: Registers",
+            "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit",
+            "    volatile_write(out, device.registers.status)",
+        }
     );
-
-    assert(volatile_write_nested_scalar_field_pointer_sized_failure_result.exit_code == 1);
-    assert(volatile_write_nested_scalar_field_pointer_sized_failure_result.stdout_text.empty());
-    assert(volatile_write_nested_scalar_field_pointer_sized_failure_result.stderr_text.find(
-               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_nested_scalar_field_pointer_sized_failure_path),
+        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_integer_literal_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_write_integer_literal_success.or";
