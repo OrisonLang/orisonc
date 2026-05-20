@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-20: switch name-pattern and unknown-constructor CLI smoke fixtures now reuse the shared source writer plus parse failure helpers for unresolved constructor-pattern diagnostics.
 - 2026-05-20: switch/repeat/for thread-origin and guard async-missing-origin CLI smoke fixtures now reuse the shared source writer plus parse failure helpers for await provenance diagnostics.
 - 2026-05-20: subject-specific and nested-payload wrong-choice switch CLI smoke fixtures now use shared parse failure helpers for constructor/type mismatch diagnostics instead of manual argv assertions.
 - 2026-05-20: nested constructor-pattern switch CLI smoke fixtures now avoid redundant parse-result locals, using direct parse helper assertions for duplicate-overlap and disjoint-success coverage.

@@ -3117,68 +3117,41 @@ int main() {
 
     auto switch_name_pattern_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_name_pattern_binding_failure.or";
-    {
-        std::ofstream output(switch_name_pattern_binding_failure_path);
-        output << "package demo.patterns\n";
-        output << "async function read(value: Int64) -> Int64\n";
-        output << "    var head = 0\n";
-        output << "    switch value\n";
-        output << "        head =>\n";
-        output << "            let request_task = task\n";
-        output << "                head\n";
-        output << "            return await request_task\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_name_pattern_binding_failure_path_text = switch_name_pattern_binding_failure_path.string();
-    std::array<char const*, 3> switch_name_pattern_binding_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_name_pattern_binding_failure_path_text.c_str()
-    };
-    auto switch_name_pattern_binding_failure_result = app.run(
-        std::span<char const* const>(
-            switch_name_pattern_binding_failure_argv.data(),
-            switch_name_pattern_binding_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        switch_name_pattern_binding_failure_path,
+        "demo.patterns",
+        {
+            "async function read(value: Int64) -> Int64",
+            "    var head = 0",
+            "    switch value",
+            "        head =>",
+            "            let request_task = task",
+            "                head",
+            "            return await request_task",
+            "        default => 0",
+        }
     );
-
-    assert(switch_name_pattern_binding_failure_result.exit_code == 1);
-    assert(switch_name_pattern_binding_failure_result.stdout_text.empty());
-    assert(switch_name_pattern_binding_failure_result.stderr_text.find(
-               "switch constructor pattern 'head' does not match any declared choice variant"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_name_pattern_binding_failure_path),
+        "switch constructor pattern 'head' does not match any declared choice variant"
+    );
 
     auto switch_call_pattern_unknown_variant_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_call_pattern_unknown_variant_failure.or";
-    {
-        std::ofstream output(switch_call_pattern_unknown_variant_failure_path);
-        output << "package demo.patterns\n";
-        output << "async function read(value: Int64) -> Int64\n";
-        output << "    switch value\n";
-        output << "        Missing(head) => 0\n";
-        output << "        default => 0\n";
-    }
-
-    auto switch_call_pattern_unknown_variant_failure_path_text =
-        switch_call_pattern_unknown_variant_failure_path.string();
-    std::array<char const*, 3> switch_call_pattern_unknown_variant_failure_argv {
-        "orisonc",
-        "--parse",
-        switch_call_pattern_unknown_variant_failure_path_text.c_str()
-    };
-    auto switch_call_pattern_unknown_variant_failure_result = app.run(
-        std::span<char const* const>(
-            switch_call_pattern_unknown_variant_failure_argv.data(),
-            switch_call_pattern_unknown_variant_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        switch_call_pattern_unknown_variant_failure_path,
+        "demo.patterns",
+        {
+            "async function read(value: Int64) -> Int64",
+            "    switch value",
+            "        Missing(head) => 0",
+            "        default => 0",
+        }
     );
-
-    assert(switch_call_pattern_unknown_variant_failure_result.exit_code == 1);
-    assert(switch_call_pattern_unknown_variant_failure_result.stdout_text.empty());
-    assert(switch_call_pattern_unknown_variant_failure_result.stderr_text.find(
-               "switch constructor pattern 'Missing' does not match any declared choice variant"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, switch_call_pattern_unknown_variant_failure_path),
+        "switch constructor pattern 'Missing' does not match any declared choice variant"
+    );
 
     auto switch_unknown_constructor_without_default_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
