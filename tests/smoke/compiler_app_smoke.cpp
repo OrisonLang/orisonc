@@ -2804,10 +2804,7 @@ int main() {
         switch_nested_payload_overlap_failure_path,
         {"Wrap(Some(value)) => 1", "Wrap(Some(other)) => 2"}
     );
-    auto switch_nested_payload_overlap_failure_result =
-        run_parse(app, switch_nested_payload_overlap_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_nested_payload_overlap_failure_result);
+    assert_wrap_duplicate_parse_failure(run_parse(app, switch_nested_payload_overlap_failure_path));
 
     auto switch_nested_literal_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2816,10 +2813,7 @@ int main() {
         switch_nested_literal_payload_overlap_failure_path,
         {"Wrap(Some(1)) => 1", "Wrap(Some(1)) => 2"}
     );
-    auto switch_nested_literal_payload_overlap_failure_result =
-        run_parse(app, switch_nested_literal_payload_overlap_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_nested_literal_payload_overlap_failure_result);
+    assert_wrap_duplicate_parse_failure(run_parse(app, switch_nested_literal_payload_overlap_failure_path));
 
     auto switch_disjoint_nested_literal_payload_success_path =
         std::filesystem::temp_directory_path() /
@@ -2828,10 +2822,7 @@ int main() {
         switch_disjoint_nested_literal_payload_success_path,
         {"Wrap(Some(1)) => 1", "Wrap(Some(2)) => 2"}
     );
-    auto switch_disjoint_nested_literal_payload_success_result =
-        run_parse(app, switch_disjoint_nested_literal_payload_success_path);
-
-    assert_parse_success(switch_disjoint_nested_literal_payload_success_result);
+    assert_parse_success(run_parse(app, switch_disjoint_nested_literal_payload_success_path));
 
     auto switch_nested_wildcard_literal_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2840,10 +2831,9 @@ int main() {
         switch_nested_wildcard_literal_payload_overlap_failure_path,
         {"Wrap(Some(value)) => 1", "Wrap(Some(1)) => 2"}
     );
-    auto switch_nested_wildcard_literal_payload_overlap_failure_result =
-        run_parse(app, switch_nested_wildcard_literal_payload_overlap_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_nested_wildcard_literal_payload_overlap_failure_result);
+    assert_wrap_duplicate_parse_failure(
+        run_parse(app, switch_nested_wildcard_literal_payload_overlap_failure_path)
+    );
 
     auto switch_nested_literal_wildcard_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2852,10 +2842,9 @@ int main() {
         switch_nested_literal_wildcard_payload_overlap_failure_path,
         {"Wrap(Some(1)) => 1", "Wrap(Some(value)) => 2"}
     );
-    auto switch_nested_literal_wildcard_payload_overlap_failure_result =
-        run_parse(app, switch_nested_literal_wildcard_payload_overlap_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_nested_literal_wildcard_payload_overlap_failure_result);
+    assert_wrap_duplicate_parse_failure(
+        run_parse(app, switch_nested_literal_wildcard_payload_overlap_failure_path)
+    );
 
     auto switch_nested_multi_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2864,10 +2853,7 @@ int main() {
         switch_nested_multi_payload_overlap_failure_path,
         {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 1)) => 2"}
     );
-    auto switch_nested_multi_payload_overlap_failure_result =
-        run_parse(app, switch_nested_multi_payload_overlap_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_nested_multi_payload_overlap_failure_result);
+    assert_wrap_duplicate_parse_failure(run_parse(app, switch_nested_multi_payload_overlap_failure_path));
 
     auto switch_disjoint_nested_multi_payload_success_path =
         std::filesystem::temp_directory_path() /
@@ -2876,10 +2862,7 @@ int main() {
         switch_disjoint_nested_multi_payload_success_path,
         {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 2)) => 2"}
     );
-    auto switch_disjoint_nested_multi_payload_success_result =
-        run_parse(app, switch_disjoint_nested_multi_payload_success_path);
-
-    assert_parse_success(switch_disjoint_nested_multi_payload_success_result);
+    assert_parse_success(run_parse(app, switch_disjoint_nested_multi_payload_success_path));
 
     auto switch_mismatched_nested_constructor_success_path =
         std::filesystem::temp_directory_path() /
@@ -2888,10 +2871,7 @@ int main() {
         switch_mismatched_nested_constructor_success_path,
         {"Wrap(Some(value)) => 1", "Wrap(Empty) => 2"}
     );
-    auto switch_mismatched_nested_constructor_success_result =
-        run_parse(app, switch_mismatched_nested_constructor_success_path);
-
-    assert_parse_success(switch_mismatched_nested_constructor_success_result);
+    assert_parse_success(run_parse(app, switch_mismatched_nested_constructor_success_path));
 
     auto switch_duplicate_nested_zero_payload_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2900,10 +2880,7 @@ int main() {
         switch_duplicate_nested_zero_payload_failure_path,
         {"Wrap(Empty) => 1", "Wrap(Empty) => 2"}
     );
-    auto switch_duplicate_nested_zero_payload_failure_result =
-        run_parse(app, switch_duplicate_nested_zero_payload_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_duplicate_nested_zero_payload_failure_result);
+    assert_wrap_duplicate_parse_failure(run_parse(app, switch_duplicate_nested_zero_payload_failure_path));
 
     auto switch_duplicate_nested_zero_payload_no_cascade_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2913,10 +2890,9 @@ int main() {
         {"Wrap(Empty) => 1", "Wrap(Empty) => 2"},
         false
     );
-    auto switch_duplicate_nested_zero_payload_no_cascade_failure_result =
-        run_parse(app, switch_duplicate_nested_zero_payload_no_cascade_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_duplicate_nested_zero_payload_no_cascade_failure_result);
+    assert_wrap_duplicate_parse_failure(
+        run_parse(app, switch_duplicate_nested_zero_payload_no_cascade_failure_path)
+    );
 
     auto switch_deep_nested_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2925,10 +2901,7 @@ int main() {
         switch_deep_nested_payload_overlap_failure_path,
         {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Some(other))) => 2"}
     );
-    auto switch_deep_nested_payload_overlap_failure_result =
-        run_parse(app, switch_deep_nested_payload_overlap_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_deep_nested_payload_overlap_failure_result);
+    assert_wrap_duplicate_parse_failure(run_parse(app, switch_deep_nested_payload_overlap_failure_path));
 
     auto switch_disjoint_deep_nested_literal_payload_success_path =
         std::filesystem::temp_directory_path() /
@@ -2937,10 +2910,7 @@ int main() {
         switch_disjoint_deep_nested_literal_payload_success_path,
         {"Wrap(Hold(Some(1))) => 1", "Wrap(Hold(Some(2))) => 2"}
     );
-    auto switch_disjoint_deep_nested_literal_payload_success_result =
-        run_parse(app, switch_disjoint_deep_nested_literal_payload_success_path);
-
-    assert_parse_success(switch_disjoint_deep_nested_literal_payload_success_result);
+    assert_parse_success(run_parse(app, switch_disjoint_deep_nested_literal_payload_success_path));
 
     auto switch_deep_nested_wildcard_literal_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2949,10 +2919,9 @@ int main() {
         switch_deep_nested_wildcard_literal_payload_overlap_failure_path,
         {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Some(1))) => 2"}
     );
-    auto switch_deep_nested_wildcard_literal_payload_overlap_failure_result =
-        run_parse(app, switch_deep_nested_wildcard_literal_payload_overlap_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_deep_nested_wildcard_literal_payload_overlap_failure_result);
+    assert_wrap_duplicate_parse_failure(
+        run_parse(app, switch_deep_nested_wildcard_literal_payload_overlap_failure_path)
+    );
 
     auto switch_deep_nested_literal_wildcard_payload_overlap_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2961,10 +2930,9 @@ int main() {
         switch_deep_nested_literal_wildcard_payload_overlap_failure_path,
         {"Wrap(Hold(Some(1))) => 1", "Wrap(Hold(Some(value))) => 2"}
     );
-    auto switch_deep_nested_literal_wildcard_payload_overlap_failure_result =
-        run_parse(app, switch_deep_nested_literal_wildcard_payload_overlap_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_deep_nested_literal_wildcard_payload_overlap_failure_result);
+    assert_wrap_duplicate_parse_failure(
+        run_parse(app, switch_deep_nested_literal_wildcard_payload_overlap_failure_path)
+    );
 
     auto switch_mismatched_deep_nested_zero_payload_success_path =
         std::filesystem::temp_directory_path() /
@@ -2973,10 +2941,7 @@ int main() {
         switch_mismatched_deep_nested_zero_payload_success_path,
         {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Empty)) => 2"}
     );
-    auto switch_mismatched_deep_nested_zero_payload_success_result =
-        run_parse(app, switch_mismatched_deep_nested_zero_payload_success_path);
-
-    assert_parse_success(switch_mismatched_deep_nested_zero_payload_success_result);
+    assert_parse_success(run_parse(app, switch_mismatched_deep_nested_zero_payload_success_path));
 
     auto switch_duplicate_deep_nested_zero_payload_failure_path =
         std::filesystem::temp_directory_path() /
@@ -2985,10 +2950,7 @@ int main() {
         switch_duplicate_deep_nested_zero_payload_failure_path,
         {"Wrap(Hold(Empty)) => 1", "Wrap(Hold(Empty)) => 2"}
     );
-    auto switch_duplicate_deep_nested_zero_payload_failure_result =
-        run_parse(app, switch_duplicate_deep_nested_zero_payload_failure_path);
-
-    assert_wrap_duplicate_parse_failure(switch_duplicate_deep_nested_zero_payload_failure_result);
+    assert_wrap_duplicate_parse_failure(run_parse(app, switch_duplicate_deep_nested_zero_payload_failure_path));
 
     auto switch_nested_wrapped_payload_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_nested_wrapped_payload_success.or";
