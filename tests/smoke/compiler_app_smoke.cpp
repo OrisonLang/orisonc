@@ -1381,137 +1381,72 @@ int main() {
 
     auto raw_read_typed_binding_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_typed_binding_failure.or";
-    {
-        std::ofstream output(raw_read_typed_binding_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Byte>) -> UInt32\n";
-        output << "    let value: UInt32 = raw_read(p)\n";
-        output << "    return value\n";
-    }
-
-    auto raw_read_typed_binding_failure_path_text = raw_read_typed_binding_failure_path.string();
-    std::array<char const*, 3> raw_read_typed_binding_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_read_typed_binding_failure_path_text.c_str()
-    };
-    auto raw_read_typed_binding_failure_result = app.run(
-        std::span<char const* const>(
-            raw_read_typed_binding_failure_argv.data(),
-            raw_read_typed_binding_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_read_typed_binding_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> UInt32",
+            "    let value: UInt32 = raw_read(p)",
+            "    return value",
+        }
     );
-
-    assert(raw_read_typed_binding_failure_result.exit_code == 1);
-    assert(raw_read_typed_binding_failure_result.stdout_text.empty());
-    assert(raw_read_typed_binding_failure_result.stderr_text.find(
-               "raw_read result type 'Byte' does not match binding type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_read_typed_binding_failure_path),
+        "raw_read result type 'Byte' does not match binding type 'UInt32'"
+    );
 
     auto raw_read_typed_binding_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_typed_binding_success.or";
-    {
-        std::ofstream output(raw_read_typed_binding_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte(p: Pointer<Byte>) -> Byte\n";
-        output << "    let value: Byte = raw_read(p)\n";
-        output << "    return value\n";
-    }
-
-    auto raw_read_typed_binding_success_path_text = raw_read_typed_binding_success_path.string();
-    std::array<char const*, 3> raw_read_typed_binding_success_argv {
-        "orisonc",
-        "--parse",
-        raw_read_typed_binding_success_path_text.c_str()
-    };
-    auto raw_read_typed_binding_success_result = app.run(
-        std::span<char const* const>(
-            raw_read_typed_binding_success_argv.data(),
-            raw_read_typed_binding_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_read_typed_binding_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    let value: Byte = raw_read(p)",
+            "    return value",
+        }
     );
-
-    assert(raw_read_typed_binding_success_result.exit_code == 0);
-    assert(raw_read_typed_binding_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_read_typed_binding_success_path));
 
     auto raw_read_same_width_binding_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_same_width_binding_success.or";
-    {
-        std::ofstream output(raw_read_same_width_binding_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Int32>) -> Int32\n";
-        output << "    let value: UInt32 = raw_read(p)\n";
-        output << "    return value as Int32\n";
-    }
-
-    auto raw_read_same_width_binding_success_path_text = raw_read_same_width_binding_success_path.string();
-    std::array<char const*, 3> raw_read_same_width_binding_success_argv {
-        "orisonc",
-        "--parse",
-        raw_read_same_width_binding_success_path_text.c_str()
-    };
-    auto raw_read_same_width_binding_success_result = app.run(
-        std::span<char const* const>(
-            raw_read_same_width_binding_success_argv.data(),
-            raw_read_same_width_binding_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_read_same_width_binding_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Int32>) -> Int32",
+            "    let value: UInt32 = raw_read(p)",
+            "    return value as Int32",
+        }
     );
-
-    assert(raw_read_same_width_binding_success_result.exit_code == 0);
-    assert(raw_read_same_width_binding_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_read_same_width_binding_success_path));
 
     auto raw_read_return_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_return_type_failure.or";
-    {
-        std::ofstream output(raw_read_return_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "    return raw_read(p)\n";
-    }
-
-    auto raw_read_return_type_failure_path_text = raw_read_return_type_failure_path.string();
-    std::array<char const*, 3> raw_read_return_type_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_read_return_type_failure_path_text.c_str()
-    };
-    auto raw_read_return_type_failure_result = app.run(
-        std::span<char const* const>(
-            raw_read_return_type_failure_argv.data(),
-            raw_read_return_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_read_return_type_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+            "    return raw_read(p)",
+        }
     );
-
-    assert(raw_read_return_type_failure_result.exit_code == 1);
-    assert(raw_read_return_type_failure_result.stdout_text.empty());
-    assert(raw_read_return_type_failure_result.stderr_text.find(
-               "raw_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_read_return_type_failure_path),
+        "raw_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
+    );
 
     auto raw_read_same_width_return_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_read_same_width_return_success.or";
-    {
-        std::ofstream output(raw_read_same_width_return_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Int32>) -> UInt32\n";
-        output << "    return raw_read(p)\n";
-    }
-
-    auto raw_read_same_width_return_success_path_text = raw_read_same_width_return_success_path.string();
-    std::array<char const*, 3> raw_read_same_width_return_success_argv {
-        "orisonc",
-        "--parse",
-        raw_read_same_width_return_success_path_text.c_str()
-    };
-    auto raw_read_same_width_return_success_result = app.run(
-        std::span<char const* const>(
-            raw_read_same_width_return_success_argv.data(),
-            raw_read_same_width_return_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_read_same_width_return_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Int32>) -> UInt32",
+            "    return raw_read(p)",
+        }
     );
-
-    assert(raw_read_same_width_return_success_result.exit_code == 0);
-    assert(raw_read_same_width_return_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_read_same_width_return_success_path));
 
     auto raw_write_value_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_value_type_failure.or";

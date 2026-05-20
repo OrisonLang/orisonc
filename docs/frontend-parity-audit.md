@@ -130,3 +130,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-05-19: generic helper-returned and receiver-method pointer CLI smoke fixtures now reuse the shared source writer plus parse helpers for raw-write same-width success and pointee mismatch diagnostics.
 - 2026-05-19: pointer raw-offset and address binding/return CLI smoke fixtures now reuse the shared source writer plus parse helpers for typed pointer offsets, address-shape diagnostics, and field/index/helper address success coverage.
 - 2026-05-19: generic record pointer/scalar field CLI smoke fixtures now reuse the shared source writer plus parse helpers for raw-write pointee checks and address-return field recovery coverage.
+- 2026-05-19: raw-read typed binding and return CLI smoke fixtures now reuse the shared source writer plus parse helpers for exact, same-width, and mismatch result-type coverage.
