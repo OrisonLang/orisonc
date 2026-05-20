@@ -572,49 +572,35 @@ void assert_fixture_single_capture_kind(
 
 void test_await_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let request_task = task\n";
-        output << "        request(url)\n";
-        output << "    return await request_task\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let request_task = task",
+            "        request(url)",
+            "    return await request_task",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_await_async_call_value_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_call_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let pending = request(url)\n";
-        output << "    return await pending\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let pending = request(url)",
+            "    return await pending",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_await_outside_async_function_failure() {
