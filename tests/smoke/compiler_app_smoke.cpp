@@ -2186,322 +2186,169 @@ int main() {
 
     auto volatile_write_value_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_write_value_type_failure.or";
-    {
-        std::ofstream output(volatile_write_value_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    volatile_write(p, value)\n";
-    }
-
-    auto volatile_write_value_type_failure_path_text = volatile_write_value_type_failure_path.string();
-    std::array<char const*, 3> volatile_write_value_type_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_value_type_failure_path_text.c_str()
-    };
-    auto volatile_write_value_type_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_value_type_failure_argv.data(),
-            volatile_write_value_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_value_type_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    volatile_write(p, value)",
+        }
     );
-
-    assert(volatile_write_value_type_failure_result.exit_code == 1);
-    assert(volatile_write_value_type_failure_result.stdout_text.empty());
-    assert(volatile_write_value_type_failure_result.stderr_text.find(
-               "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_value_type_failure_path),
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_same_width_integer_value_success_path = std::filesystem::temp_directory_path() /
                                                                 "orison_compiler_app_volatile_write_same_width_integer_value_success.or";
-    {
-        std::ofstream output(volatile_write_same_width_integer_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Int32) -> Unit\n";
-        output << "    volatile_write(p, value)\n";
-    }
-
-    auto volatile_write_same_width_integer_value_success_path_text =
-        volatile_write_same_width_integer_value_success_path.string();
-    std::array<char const*, 3> volatile_write_same_width_integer_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_same_width_integer_value_success_path_text.c_str()
-    };
-    auto volatile_write_same_width_integer_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_same_width_integer_value_success_argv.data(),
-            volatile_write_same_width_integer_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_same_width_integer_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Int32) -> Unit",
+            "    volatile_write(p, value)",
+        }
     );
-
-    assert(volatile_write_same_width_integer_value_success_result.exit_code == 0);
-    assert(volatile_write_same_width_integer_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_same_width_integer_value_success_path));
 
     auto volatile_write_pointer_sized_integer_value_failure_path = std::filesystem::temp_directory_path() /
                                                                    "orison_compiler_app_volatile_write_pointer_sized_integer_value_failure.or";
-    {
-        std::ofstream output(volatile_write_pointer_sized_integer_value_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: IntSize) -> Unit\n";
-        output << "    volatile_write(p, value)\n";
-    }
-
-    auto volatile_write_pointer_sized_integer_value_failure_path_text =
-        volatile_write_pointer_sized_integer_value_failure_path.string();
-    std::array<char const*, 3> volatile_write_pointer_sized_integer_value_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_pointer_sized_integer_value_failure_path_text.c_str()
-    };
-    auto volatile_write_pointer_sized_integer_value_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_pointer_sized_integer_value_failure_argv.data(),
-            volatile_write_pointer_sized_integer_value_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_pointer_sized_integer_value_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: IntSize) -> Unit",
+            "    volatile_write(p, value)",
+        }
     );
-
-    assert(volatile_write_pointer_sized_integer_value_failure_result.exit_code == 1);
-    assert(volatile_write_pointer_sized_integer_value_failure_result.stdout_text.empty());
-    assert(volatile_write_pointer_sized_integer_value_failure_result.stderr_text.find(
-               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_pointer_sized_integer_value_failure_path),
+        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_computed_integer_sum_success_path = std::filesystem::temp_directory_path() /
                                                             "orison_compiler_app_volatile_write_computed_integer_sum_success.or";
-    {
-        std::ofstream output(volatile_write_computed_integer_sum_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(input: Pointer<Int32>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, volatile_read(input) + 1)\n";
-    }
-
-    auto volatile_write_computed_integer_sum_success_path_text =
-        volatile_write_computed_integer_sum_success_path.string();
-    std::array<char const*, 3> volatile_write_computed_integer_sum_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_computed_integer_sum_success_path_text.c_str()
-    };
-    auto volatile_write_computed_integer_sum_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_computed_integer_sum_success_argv.data(),
-            volatile_write_computed_integer_sum_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_computed_integer_sum_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(input: Pointer<Int32>, out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, volatile_read(input) + 1)",
+        }
     );
-
-    assert(volatile_write_computed_integer_sum_success_result.exit_code == 0);
-    assert(volatile_write_computed_integer_sum_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_computed_integer_sum_success_path));
 
     auto volatile_write_computed_bitwise_value_success_path = std::filesystem::temp_directory_path() /
                                                               "orison_compiler_app_volatile_write_computed_bitwise_value_success.or";
-    {
-        std::ofstream output(volatile_write_computed_bitwise_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit\n";
-        output << "    volatile_write(out, value bit_or 1)\n";
-    }
-
-    auto volatile_write_computed_bitwise_value_success_path_text =
-        volatile_write_computed_bitwise_value_success_path.string();
-    std::array<char const*, 3> volatile_write_computed_bitwise_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_computed_bitwise_value_success_path_text.c_str()
-    };
-    auto volatile_write_computed_bitwise_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_computed_bitwise_value_success_argv.data(),
-            volatile_write_computed_bitwise_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_computed_bitwise_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit",
+            "    volatile_write(out, value bit_or 1)",
+        }
     );
-
-    assert(volatile_write_computed_bitwise_value_success_result.exit_code == 0);
-    assert(volatile_write_computed_bitwise_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_computed_bitwise_value_success_path));
 
     auto volatile_write_computed_ternary_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
                                                                       "orison_compiler_app_volatile_write_computed_ternary_pointer_sized_failure.or";
-    {
-        std::ofstream output(volatile_write_computed_ternary_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit\n";
-        output << "    volatile_write(out, flag ? left : right)\n";
-    }
-
-    auto volatile_write_computed_ternary_pointer_sized_failure_path_text =
-        volatile_write_computed_ternary_pointer_sized_failure_path.string();
-    std::array<char const*, 3> volatile_write_computed_ternary_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_computed_ternary_pointer_sized_failure_path_text.c_str()
-    };
-    auto volatile_write_computed_ternary_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_computed_ternary_pointer_sized_failure_argv.data(),
-            volatile_write_computed_ternary_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_computed_ternary_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit",
+            "    volatile_write(out, flag ? left : right)",
+        }
     );
-
-    assert(volatile_write_computed_ternary_pointer_sized_failure_result.exit_code == 1);
-    assert(volatile_write_computed_ternary_pointer_sized_failure_result.stdout_text.empty());
-    assert(volatile_write_computed_ternary_pointer_sized_failure_result.stderr_text.find(
-               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_computed_ternary_pointer_sized_failure_path),
+        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_rebound_computed_value_success_path = std::filesystem::temp_directory_path() /
                                                               "orison_compiler_app_volatile_write_rebound_computed_value_success.or";
-    {
-        std::ofstream output(volatile_write_rebound_computed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit\n";
-        output << "    let masked = value bit_or 1\n";
-        output << "    volatile_write(out, masked)\n";
-    }
-
-    auto volatile_write_rebound_computed_value_success_path_text =
-        volatile_write_rebound_computed_value_success_path.string();
-    std::array<char const*, 3> volatile_write_rebound_computed_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_rebound_computed_value_success_path_text.c_str()
-    };
-    auto volatile_write_rebound_computed_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_rebound_computed_value_success_argv.data(),
-            volatile_write_rebound_computed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_rebound_computed_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, value: Int32) -> Unit",
+            "    let masked = value bit_or 1",
+            "    volatile_write(out, masked)",
+        }
     );
-
-    assert(volatile_write_rebound_computed_value_success_result.exit_code == 0);
-    assert(volatile_write_rebound_computed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_rebound_computed_value_success_path));
 
     auto volatile_write_branch_merged_computed_value_success_path = std::filesystem::temp_directory_path() /
                                                                     "orison_compiler_app_volatile_write_branch_merged_computed_value_success.or";
-    {
-        std::ofstream output(volatile_write_branch_merged_computed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: Int32, right: Int32) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    if flag\n";
-        output << "        selected = left bit_or 1\n";
-        output << "    else\n";
-        output << "        selected = right + 1\n";
-        output << "    volatile_write(out, selected)\n";
-    }
-
-    auto volatile_write_branch_merged_computed_value_success_path_text =
-        volatile_write_branch_merged_computed_value_success_path.string();
-    std::array<char const*, 3> volatile_write_branch_merged_computed_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_branch_merged_computed_value_success_path_text.c_str()
-    };
-    auto volatile_write_branch_merged_computed_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_branch_merged_computed_value_success_argv.data(),
-            volatile_write_branch_merged_computed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_branch_merged_computed_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: Int32, right: Int32) -> Unit",
+            "    var selected = left",
+            "    if flag",
+            "        selected = left bit_or 1",
+            "    else",
+            "        selected = right + 1",
+            "    volatile_write(out, selected)",
+        }
     );
-
-    assert(volatile_write_branch_merged_computed_value_success_result.exit_code == 0);
-    assert(volatile_write_branch_merged_computed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_branch_merged_computed_value_success_path));
 
     auto volatile_write_branch_merged_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
                                                                    "orison_compiler_app_volatile_write_branch_merged_pointer_sized_failure.or";
-    {
-        std::ofstream output(volatile_write_branch_merged_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    if flag\n";
-        output << "        selected = left + 1\n";
-        output << "    else\n";
-        output << "        selected = right shift_left 1\n";
-        output << "    volatile_write(out, selected)\n";
-    }
-
-    auto volatile_write_branch_merged_pointer_sized_failure_path_text =
-        volatile_write_branch_merged_pointer_sized_failure_path.string();
-    std::array<char const*, 3> volatile_write_branch_merged_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_branch_merged_pointer_sized_failure_path_text.c_str()
-    };
-    auto volatile_write_branch_merged_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_branch_merged_pointer_sized_failure_argv.data(),
-            volatile_write_branch_merged_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_branch_merged_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, flag: Bool, left: IntSize, right: IntSize) -> Unit",
+            "    var selected = left",
+            "    if flag",
+            "        selected = left + 1",
+            "    else",
+            "        selected = right shift_left 1",
+            "    volatile_write(out, selected)",
+        }
     );
-
-    assert(volatile_write_branch_merged_pointer_sized_failure_result.exit_code == 1);
-    assert(volatile_write_branch_merged_pointer_sized_failure_result.stdout_text.empty());
-    assert(volatile_write_branch_merged_pointer_sized_failure_result.stderr_text.find(
-               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_branch_merged_pointer_sized_failure_path),
+        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_switch_merged_computed_value_success_path = std::filesystem::temp_directory_path() /
                                                                     "orison_compiler_app_volatile_write_switch_merged_computed_value_success.or";
-    {
-        std::ofstream output(volatile_write_switch_merged_computed_value_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: Int32, right: Int32) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    switch selector\n";
-        output << "        0 => selected = left bit_or 1\n";
-        output << "        default => selected = right + 1\n";
-        output << "    volatile_write(out, selected)\n";
-    }
-
-    auto volatile_write_switch_merged_computed_value_success_path_text =
-        volatile_write_switch_merged_computed_value_success_path.string();
-    std::array<char const*, 3> volatile_write_switch_merged_computed_value_success_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_switch_merged_computed_value_success_path_text.c_str()
-    };
-    auto volatile_write_switch_merged_computed_value_success_result = app.run(
-        std::span<char const* const>(
-            volatile_write_switch_merged_computed_value_success_argv.data(),
-            volatile_write_switch_merged_computed_value_success_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_switch_merged_computed_value_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: Int32, right: Int32) -> Unit",
+            "    var selected = left",
+            "    switch selector",
+            "        0 => selected = left bit_or 1",
+            "        default => selected = right + 1",
+            "    volatile_write(out, selected)",
+        }
     );
-
-    assert(volatile_write_switch_merged_computed_value_success_result.exit_code == 0);
-    assert(volatile_write_switch_merged_computed_value_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, volatile_write_switch_merged_computed_value_success_path));
 
     auto volatile_write_switch_merged_pointer_sized_failure_path = std::filesystem::temp_directory_path() /
                                                                    "orison_compiler_app_volatile_write_switch_merged_pointer_sized_failure.or";
-    {
-        std::ofstream output(volatile_write_switch_merged_pointer_sized_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: IntSize, right: IntSize) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    switch selector\n";
-        output << "        0 => selected = left + 1\n";
-        output << "        default => selected = right shift_left 1\n";
-        output << "    volatile_write(out, selected)\n";
-    }
-
-    auto volatile_write_switch_merged_pointer_sized_failure_path_text =
-        volatile_write_switch_merged_pointer_sized_failure_path.string();
-    std::array<char const*, 3> volatile_write_switch_merged_pointer_sized_failure_argv {
-        "orisonc",
-        "--parse",
-        volatile_write_switch_merged_pointer_sized_failure_path_text.c_str()
-    };
-    auto volatile_write_switch_merged_pointer_sized_failure_result = app.run(
-        std::span<char const* const>(
-            volatile_write_switch_merged_pointer_sized_failure_argv.data(),
-            volatile_write_switch_merged_pointer_sized_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        volatile_write_switch_merged_pointer_sized_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: IntSize, right: IntSize) -> Unit",
+            "    var selected = left",
+            "    switch selector",
+            "        0 => selected = left + 1",
+            "        default => selected = right shift_left 1",
+            "    volatile_write(out, selected)",
+        }
     );
-
-    assert(volatile_write_switch_merged_pointer_sized_failure_result.exit_code == 1);
-    assert(volatile_write_switch_merged_pointer_sized_failure_result.stdout_text.empty());
-    assert(volatile_write_switch_merged_pointer_sized_failure_result.stderr_text.find(
-               "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, volatile_write_switch_merged_pointer_sized_failure_path),
+        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto volatile_write_array_indexed_value_success_path = std::filesystem::temp_directory_path() /
                                                            "orison_compiler_app_volatile_write_array_indexed_value_success.or";
