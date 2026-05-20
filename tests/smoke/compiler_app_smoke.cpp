@@ -1820,197 +1820,117 @@ int main() {
 
     auto raw_write_recovered_raw_read_failure_path = std::filesystem::temp_directory_path() /
                                                      "orison_compiler_app_raw_write_recovered_raw_read_failure.or";
-    {
-        std::ofstream output(raw_write_recovered_raw_read_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: Pointer<Byte>\n";
-        output << "unsafe function write_word(buf: Buffer, out: Pointer<UInt32>) -> Unit\n";
-        output << "    raw_write(out, raw_read(raw_offset(Pointer(address_of(buf.data[0])), 1)))\n";
-    }
-
-    auto raw_write_recovered_raw_read_failure_path_text = raw_write_recovered_raw_read_failure_path.string();
-    std::array<char const*, 3> raw_write_recovered_raw_read_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_recovered_raw_read_failure_path_text.c_str()
-    };
-    auto raw_write_recovered_raw_read_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_recovered_raw_read_failure_argv.data(),
-            raw_write_recovered_raw_read_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_recovered_raw_read_failure_path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function write_word(buf: Buffer, out: Pointer<UInt32>) -> Unit",
+            "    raw_write(out, raw_read(raw_offset(Pointer(address_of(buf.data[0])), 1)))",
+        }
     );
-
-    assert(raw_write_recovered_raw_read_failure_result.exit_code == 1);
-    assert(raw_write_recovered_raw_read_failure_result.stdout_text.empty());
-    assert(raw_write_recovered_raw_read_failure_result.stderr_text.find(
-               "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_recovered_raw_read_failure_path),
+        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 
     auto raw_write_member_returned_raw_read_failure_path = std::filesystem::temp_directory_path() /
                                                            "orison_compiler_app_raw_write_member_returned_raw_read_failure.or";
-    {
-        std::ofstream output(raw_write_member_returned_raw_read_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function byte_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return raw_offset(base, 1)\n";
-        output << "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    raw_write(out, raw_read(raw_offset(device.byte_ptr(base), 1)))\n";
-    }
-
-    auto raw_write_member_returned_raw_read_failure_path_text =
-        raw_write_member_returned_raw_read_failure_path.string();
-    std::array<char const*, 3> raw_write_member_returned_raw_read_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_member_returned_raw_read_failure_path_text.c_str()
-    };
-    auto raw_write_member_returned_raw_read_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_member_returned_raw_read_failure_argv.data(),
-            raw_write_member_returned_raw_read_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_member_returned_raw_read_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function byte_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>",
+            "        unsafe",
+            "            return raw_offset(base, 1)",
+            "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit",
+            "    raw_write(out, raw_read(raw_offset(device.byte_ptr(base), 1)))",
+        }
     );
-
-    assert(raw_write_member_returned_raw_read_failure_result.exit_code == 1);
-    assert(raw_write_member_returned_raw_read_failure_result.stdout_text.empty());
-    assert(raw_write_member_returned_raw_read_failure_result.stderr_text.find(
-               "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_member_returned_raw_read_failure_path),
+        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 
     auto raw_write_helper_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_helper_type_failure.or";
-    {
-        std::ofstream output(raw_write_helper_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function byte_ptr(addr: Address) -> Pointer<Byte>\n";
-        output << "    return Pointer(addr)\n";
-        output << "unsafe function write_word(addr: Address, value: UInt32) -> Unit\n";
-        output << "    raw_write(byte_ptr(addr), value)\n";
-    }
-
-    auto raw_write_helper_type_failure_path_text = raw_write_helper_type_failure_path.string();
-    std::array<char const*, 3> raw_write_helper_type_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_helper_type_failure_path_text.c_str()
-    };
-    auto raw_write_helper_type_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_helper_type_failure_argv.data(),
-            raw_write_helper_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_helper_type_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function byte_ptr(addr: Address) -> Pointer<Byte>",
+            "    return Pointer(addr)",
+            "unsafe function write_word(addr: Address, value: UInt32) -> Unit",
+            "    raw_write(byte_ptr(addr), value)",
+        }
     );
-
-    assert(raw_write_helper_type_failure_result.exit_code == 1);
-    assert(raw_write_helper_type_failure_result.stdout_text.empty());
-    assert(raw_write_helper_type_failure_result.stderr_text.find(
-               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_helper_type_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 
     auto raw_write_member_helper_type_failure_path = std::filesystem::temp_directory_path() /
                                                      "orison_compiler_app_raw_write_member_helper_type_failure.or";
-    {
-        std::ofstream output(raw_write_member_helper_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function byte_ptr(this: shared This, addr: Address) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return Pointer(addr)\n";
-        output << "unsafe function write_word(device: Device, addr: Address, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.byte_ptr(addr), value)\n";
-    }
-
-    auto raw_write_member_helper_type_failure_path_text = raw_write_member_helper_type_failure_path.string();
-    std::array<char const*, 3> raw_write_member_helper_type_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_member_helper_type_failure_path_text.c_str()
-    };
-    auto raw_write_member_helper_type_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_member_helper_type_failure_argv.data(),
-            raw_write_member_helper_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_member_helper_type_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function byte_ptr(this: shared This, addr: Address) -> Pointer<Byte>",
+            "        unsafe",
+            "            return Pointer(addr)",
+            "unsafe function write_word(device: Device, addr: Address, value: UInt32) -> Unit",
+            "    raw_write(device.byte_ptr(addr), value)",
+        }
     );
-
-    assert(raw_write_member_helper_type_failure_result.exit_code == 1);
-    assert(raw_write_member_helper_type_failure_result.stdout_text.empty());
-    assert(raw_write_member_helper_type_failure_result.stderr_text.find(
-               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_member_helper_type_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 
     auto raw_write_raw_offset_helper_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_raw_offset_helper_type_failure.or";
-    {
-        std::ofstream output(raw_write_raw_offset_helper_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "    return raw_offset(base, 1)\n";
-        output << "unsafe function write_word(base: Pointer<Byte>, value: UInt32) -> Unit\n";
-        output << "    raw_write(next_byte_ptr(base), value)\n";
-    }
-
-    auto raw_write_raw_offset_helper_type_failure_path_text = raw_write_raw_offset_helper_type_failure_path.string();
-    std::array<char const*, 3> raw_write_raw_offset_helper_type_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_raw_offset_helper_type_failure_path_text.c_str()
-    };
-    auto raw_write_raw_offset_helper_type_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_raw_offset_helper_type_failure_argv.data(),
-            raw_write_raw_offset_helper_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_raw_offset_helper_type_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
+            "    return raw_offset(base, 1)",
+            "unsafe function write_word(base: Pointer<Byte>, value: UInt32) -> Unit",
+            "    raw_write(next_byte_ptr(base), value)",
+        }
     );
-
-    assert(raw_write_raw_offset_helper_type_failure_result.exit_code == 1);
-    assert(raw_write_raw_offset_helper_type_failure_result.stdout_text.empty());
-    assert(raw_write_raw_offset_helper_type_failure_result.stderr_text.find(
-               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_raw_offset_helper_type_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 
     auto raw_write_member_raw_offset_helper_type_failure_path = std::filesystem::temp_directory_path() /
                                                                 "orison_compiler_app_raw_write_member_raw_offset_helper_type_failure.or";
-    {
-        std::ofstream output(raw_write_member_raw_offset_helper_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function next_byte_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return raw_offset(base, 1)\n";
-        output << "unsafe function write_word(device: Device, base: Pointer<Byte>, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.next_byte_ptr(base), value)\n";
-    }
-
-    auto raw_write_member_raw_offset_helper_type_failure_path_text =
-        raw_write_member_raw_offset_helper_type_failure_path.string();
-    std::array<char const*, 3> raw_write_member_raw_offset_helper_type_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_member_raw_offset_helper_type_failure_path_text.c_str()
-    };
-    auto raw_write_member_raw_offset_helper_type_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_member_raw_offset_helper_type_failure_argv.data(),
-            raw_write_member_raw_offset_helper_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_member_raw_offset_helper_type_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function next_byte_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>",
+            "        unsafe",
+            "            return raw_offset(base, 1)",
+            "unsafe function write_word(device: Device, base: Pointer<Byte>, value: UInt32) -> Unit",
+            "    raw_write(device.next_byte_ptr(base), value)",
+        }
     );
-
-    assert(raw_write_member_raw_offset_helper_type_failure_result.exit_code == 1);
-    assert(raw_write_member_raw_offset_helper_type_failure_result.stdout_text.empty());
-    assert(raw_write_member_raw_offset_helper_type_failure_result.stderr_text.find(
-               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_member_raw_offset_helper_type_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 
     auto raw_write_record_pointer_field_type_failure_path = std::filesystem::temp_directory_path() /
                                                             "orison_compiler_app_raw_write_record_pointer_field_type_failure.or";
