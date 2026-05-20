@@ -1754,136 +1754,69 @@ int main() {
 
     auto raw_write_integer_literal_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_integer_literal_success.or";
-    {
-        std::ofstream output(raw_write_integer_literal_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>) -> Unit\n";
-        output << "    raw_write(p, 0)\n";
-    }
-
-    auto raw_write_integer_literal_success_path_text = raw_write_integer_literal_success_path.string();
-    std::array<char const*, 3> raw_write_integer_literal_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_integer_literal_success_path_text.c_str()
-    };
-    auto raw_write_integer_literal_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_integer_literal_success_argv.data(),
-            raw_write_integer_literal_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_integer_literal_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>) -> Unit",
+            "    raw_write(p, 0)",
+        }
     );
-
-    assert(raw_write_integer_literal_success_result.exit_code == 0);
-    assert(raw_write_integer_literal_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_integer_literal_success_path));
 
     auto raw_write_integer_cast_success_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_raw_write_integer_cast_success.or";
-    {
-        std::ofstream output(raw_write_integer_cast_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    raw_write(p, value as UInt32)\n";
-    }
-
-    auto raw_write_integer_cast_success_path_text = raw_write_integer_cast_success_path.string();
-    std::array<char const*, 3> raw_write_integer_cast_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_integer_cast_success_path_text.c_str()
-    };
-    auto raw_write_integer_cast_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_integer_cast_success_argv.data(),
-            raw_write_integer_cast_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_integer_cast_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    raw_write(p, value as UInt32)",
+        }
     );
-
-    assert(raw_write_integer_cast_success_result.exit_code == 0);
-    assert(raw_write_integer_cast_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_integer_cast_success_path));
 
     auto raw_write_same_width_integer_cast_success_path = std::filesystem::temp_directory_path() /
                                                           "orison_compiler_app_raw_write_same_width_integer_cast_success.or";
-    {
-        std::ofstream output(raw_write_same_width_integer_cast_success_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    raw_write(p, value as Int32)\n";
-    }
-
-    auto raw_write_same_width_integer_cast_success_path_text =
-        raw_write_same_width_integer_cast_success_path.string();
-    std::array<char const*, 3> raw_write_same_width_integer_cast_success_argv {
-        "orisonc",
-        "--parse",
-        raw_write_same_width_integer_cast_success_path_text.c_str()
-    };
-    auto raw_write_same_width_integer_cast_success_result = app.run(
-        std::span<char const* const>(
-            raw_write_same_width_integer_cast_success_argv.data(),
-            raw_write_same_width_integer_cast_success_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_same_width_integer_cast_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    raw_write(p, value as Int32)",
+        }
     );
-
-    assert(raw_write_same_width_integer_cast_success_result.exit_code == 0);
-    assert(raw_write_same_width_integer_cast_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, raw_write_same_width_integer_cast_success_path));
 
     auto raw_write_integer_cast_target_failure_path = std::filesystem::temp_directory_path() /
                                                       "orison_compiler_app_raw_write_integer_cast_target_failure.or";
-    {
-        std::ofstream output(raw_write_integer_cast_target_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    raw_write(p, value as Int64)\n";
-    }
-
-    auto raw_write_integer_cast_target_failure_path_text = raw_write_integer_cast_target_failure_path.string();
-    std::array<char const*, 3> raw_write_integer_cast_target_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_integer_cast_target_failure_path_text.c_str()
-    };
-    auto raw_write_integer_cast_target_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_integer_cast_target_failure_argv.data(),
-            raw_write_integer_cast_target_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_integer_cast_target_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    raw_write(p, value as Int64)",
+        }
     );
-
-    assert(raw_write_integer_cast_target_failure_result.exit_code == 1);
-    assert(raw_write_integer_cast_target_failure_result.stdout_text.empty());
-    assert(raw_write_integer_cast_target_failure_result.stderr_text.find(
-               "raw_write value type 'Int64' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_integer_cast_target_failure_path),
+        "raw_write value type 'Int64' does not match pointer element type 'UInt32'"
+    );
 
     auto raw_write_pointer_sized_integer_cast_failure_path = std::filesystem::temp_directory_path() /
                                                              "orison_compiler_app_raw_write_pointer_sized_integer_cast_failure.or";
-    {
-        std::ofstream output(raw_write_pointer_sized_integer_cast_failure_path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit\n";
-        output << "    raw_write(p, value as IntSize)\n";
-    }
-
-    auto raw_write_pointer_sized_integer_cast_failure_path_text =
-        raw_write_pointer_sized_integer_cast_failure_path.string();
-    std::array<char const*, 3> raw_write_pointer_sized_integer_cast_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_pointer_sized_integer_cast_failure_path_text.c_str()
-    };
-    auto raw_write_pointer_sized_integer_cast_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_pointer_sized_integer_cast_failure_argv.data(),
-            raw_write_pointer_sized_integer_cast_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_pointer_sized_integer_cast_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Byte) -> Unit",
+            "    raw_write(p, value as IntSize)",
+        }
     );
-
-    assert(raw_write_pointer_sized_integer_cast_failure_result.exit_code == 1);
-    assert(raw_write_pointer_sized_integer_cast_failure_result.stdout_text.empty());
-    assert(raw_write_pointer_sized_integer_cast_failure_result.stderr_text.find(
-               "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_pointer_sized_integer_cast_failure_path),
+        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 
     auto raw_write_recovered_raw_read_failure_path = std::filesystem::temp_directory_path() /
                                                      "orison_compiler_app_raw_write_recovered_raw_read_failure.or";
