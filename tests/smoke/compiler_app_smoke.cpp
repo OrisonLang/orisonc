@@ -1934,326 +1934,186 @@ int main() {
 
     auto raw_write_record_pointer_field_type_failure_path = std::filesystem::temp_directory_path() /
                                                             "orison_compiler_app_raw_write_record_pointer_field_type_failure.or";
-    {
-        std::ofstream output(raw_write_record_pointer_field_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptr: Pointer<Byte>\n";
-        output << "unsafe function write_word(device: Device, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.ptr, value)\n";
-    }
-
-    auto raw_write_record_pointer_field_type_failure_path_text =
-        raw_write_record_pointer_field_type_failure_path.string();
-    std::array<char const*, 3> raw_write_record_pointer_field_type_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_record_pointer_field_type_failure_path_text.c_str()
-    };
-    auto raw_write_record_pointer_field_type_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_record_pointer_field_type_failure_argv.data(),
-            raw_write_record_pointer_field_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_record_pointer_field_type_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptr: Pointer<Byte>",
+            "unsafe function write_word(device: Device, value: UInt32) -> Unit",
+            "    raw_write(device.ptr, value)",
+        }
     );
-
-    assert(raw_write_record_pointer_field_type_failure_result.exit_code == 1);
-    assert(raw_write_record_pointer_field_type_failure_result.stdout_text.empty());
-    assert(raw_write_record_pointer_field_type_failure_result.stderr_text.find(
-               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_record_pointer_field_type_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 
     auto member_field_address_pointer_constructor_success_path = std::filesystem::temp_directory_path() /
                                                                  "orison_compiler_app_member_field_address_pointer_constructor_success.or";
-    {
-        std::ofstream output(member_field_address_pointer_constructor_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    base: Address\n";
-        output << "extend Device\n";
-        output << "    function byte_ptr(this: shared This) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return Pointer(this.base)\n";
-        output << "unsafe function write_byte(device: Device, value: Byte) -> Unit\n";
-        output << "    raw_write(device.byte_ptr(), value)\n";
-    }
-
-    auto member_field_address_pointer_constructor_success_path_text =
-        member_field_address_pointer_constructor_success_path.string();
-    std::array<char const*, 3> member_field_address_pointer_constructor_success_argv {
-        "orisonc",
-        "--parse",
-        member_field_address_pointer_constructor_success_path_text.c_str()
-    };
-    auto member_field_address_pointer_constructor_success_result = app.run(
-        std::span<char const* const>(
-            member_field_address_pointer_constructor_success_argv.data(),
-            member_field_address_pointer_constructor_success_argv.size()
-        )
+    write_concurrency_fixture(
+        member_field_address_pointer_constructor_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    base: Address",
+            "extend Device",
+            "    function byte_ptr(this: shared This) -> Pointer<Byte>",
+            "        unsafe",
+            "            return Pointer(this.base)",
+            "unsafe function write_byte(device: Device, value: Byte) -> Unit",
+            "    raw_write(device.byte_ptr(), value)",
+        }
     );
-
-    assert(member_field_address_pointer_constructor_success_result.exit_code == 0);
-    assert(member_field_address_pointer_constructor_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, member_field_address_pointer_constructor_success_path));
 
     auto raw_write_indexed_record_pointer_field_type_failure_path = std::filesystem::temp_directory_path() /
                                                                     "orison_compiler_app_raw_write_indexed_record_pointer_field_type_failure.or";
-    {
-        std::ofstream output(raw_write_indexed_record_pointer_field_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptrs: Pointer<Pointer<Byte>>\n";
-        output << "unsafe function write_word(device: Device, index: Int64, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.ptrs[index], value)\n";
-    }
-
-    auto raw_write_indexed_record_pointer_field_type_failure_path_text =
-        raw_write_indexed_record_pointer_field_type_failure_path.string();
-    std::array<char const*, 3> raw_write_indexed_record_pointer_field_type_failure_argv {
-        "orisonc",
-        "--parse",
-        raw_write_indexed_record_pointer_field_type_failure_path_text.c_str()
-    };
-    auto raw_write_indexed_record_pointer_field_type_failure_result = app.run(
-        std::span<char const* const>(
-            raw_write_indexed_record_pointer_field_type_failure_argv.data(),
-            raw_write_indexed_record_pointer_field_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        raw_write_indexed_record_pointer_field_type_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptrs: Pointer<Pointer<Byte>>",
+            "unsafe function write_word(device: Device, index: Int64, value: UInt32) -> Unit",
+            "    raw_write(device.ptrs[index], value)",
+        }
     );
-
-    assert(raw_write_indexed_record_pointer_field_type_failure_result.exit_code == 1);
-    assert(raw_write_indexed_record_pointer_field_type_failure_result.stdout_text.empty());
-    assert(raw_write_indexed_record_pointer_field_type_failure_result.stderr_text.find(
-               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_indexed_record_pointer_field_type_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 
     auto indexed_member_field_address_pointer_constructor_success_path = std::filesystem::temp_directory_path() /
                                                                          "orison_compiler_app_indexed_member_field_address_pointer_constructor_success.or";
-    {
-        std::ofstream output(indexed_member_field_address_pointer_constructor_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    bases: Pointer<Address>\n";
-        output << "extend Device\n";
-        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return Pointer(this.bases[index])\n";
-        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
-        output << "    raw_write(device.byte_ptr(index), value)\n";
-    }
-
-    auto indexed_member_field_address_pointer_constructor_success_path_text =
-        indexed_member_field_address_pointer_constructor_success_path.string();
-    std::array<char const*, 3> indexed_member_field_address_pointer_constructor_success_argv {
-        "orisonc",
-        "--parse",
-        indexed_member_field_address_pointer_constructor_success_path_text.c_str()
-    };
-    auto indexed_member_field_address_pointer_constructor_success_result = app.run(
-        std::span<char const* const>(
-            indexed_member_field_address_pointer_constructor_success_argv.data(),
-            indexed_member_field_address_pointer_constructor_success_argv.size()
-        )
+    write_concurrency_fixture(
+        indexed_member_field_address_pointer_constructor_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    bases: Pointer<Address>",
+            "extend Device",
+            "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>",
+            "        unsafe",
+            "            return Pointer(this.bases[index])",
+            "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit",
+            "    raw_write(device.byte_ptr(index), value)",
+        }
     );
-
-    assert(indexed_member_field_address_pointer_constructor_success_result.exit_code == 0);
-    assert(indexed_member_field_address_pointer_constructor_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, indexed_member_field_address_pointer_constructor_success_path));
 
     auto rebound_indexed_record_pointer_field_type_failure_path = std::filesystem::temp_directory_path() /
                                                                   "orison_compiler_app_rebound_indexed_record_pointer_field_type_failure.or";
-    {
-        std::ofstream output(rebound_indexed_record_pointer_field_type_failure_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptrs: Pointer<Pointer<Byte>>\n";
-        output << "unsafe function write_word(device: Device, index: Int64, value: UInt32) -> Unit\n";
-        output << "    let p = device.ptrs[index]\n";
-        output << "    raw_write(p, value)\n";
-    }
-
-    auto rebound_indexed_record_pointer_field_type_failure_path_text =
-        rebound_indexed_record_pointer_field_type_failure_path.string();
-    std::array<char const*, 3> rebound_indexed_record_pointer_field_type_failure_argv {
-        "orisonc",
-        "--parse",
-        rebound_indexed_record_pointer_field_type_failure_path_text.c_str()
-    };
-    auto rebound_indexed_record_pointer_field_type_failure_result = app.run(
-        std::span<char const* const>(
-            rebound_indexed_record_pointer_field_type_failure_argv.data(),
-            rebound_indexed_record_pointer_field_type_failure_argv.size()
-        )
+    write_concurrency_fixture(
+        rebound_indexed_record_pointer_field_type_failure_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptrs: Pointer<Pointer<Byte>>",
+            "unsafe function write_word(device: Device, index: Int64, value: UInt32) -> Unit",
+            "    let p = device.ptrs[index]",
+            "    raw_write(p, value)",
+        }
     );
-
-    assert(rebound_indexed_record_pointer_field_type_failure_result.exit_code == 1);
-    assert(rebound_indexed_record_pointer_field_type_failure_result.stdout_text.empty());
-    assert(rebound_indexed_record_pointer_field_type_failure_result.stderr_text.find(
-               "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
-           ) != std::string::npos);
+    assert_parse_failure_contains(
+        run_parse(app, rebound_indexed_record_pointer_field_type_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 
     auto rebound_indexed_member_field_address_pointer_constructor_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_rebound_indexed_member_field_address_pointer_constructor_success.or";
-    {
-        std::ofstream output(rebound_indexed_member_field_address_pointer_constructor_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    bases: Pointer<Address>\n";
-        output << "extend Device\n";
-        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            let base = this.bases[index]\n";
-        output << "            return Pointer(base)\n";
-        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
-        output << "    raw_write(device.byte_ptr(index), value)\n";
-    }
-
-    auto rebound_indexed_member_field_address_pointer_constructor_success_path_text =
-        rebound_indexed_member_field_address_pointer_constructor_success_path.string();
-    std::array<char const*, 3> rebound_indexed_member_field_address_pointer_constructor_success_argv {
-        "orisonc",
-        "--parse",
-        rebound_indexed_member_field_address_pointer_constructor_success_path_text.c_str()
-    };
-    auto rebound_indexed_member_field_address_pointer_constructor_success_result = app.run(
-        std::span<char const* const>(
-            rebound_indexed_member_field_address_pointer_constructor_success_argv.data(),
-            rebound_indexed_member_field_address_pointer_constructor_success_argv.size()
-        )
+    write_concurrency_fixture(
+        rebound_indexed_member_field_address_pointer_constructor_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    bases: Pointer<Address>",
+            "extend Device",
+            "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>",
+            "        unsafe",
+            "            let base = this.bases[index]",
+            "            return Pointer(base)",
+            "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit",
+            "    raw_write(device.byte_ptr(index), value)",
+        }
     );
-
-    assert(rebound_indexed_member_field_address_pointer_constructor_success_result.exit_code == 0);
-    assert(rebound_indexed_member_field_address_pointer_constructor_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, rebound_indexed_member_field_address_pointer_constructor_success_path));
 
     auto return_rebound_indexed_record_pointer_field_success_path = std::filesystem::temp_directory_path() /
                                                                     "orison_compiler_app_return_rebound_indexed_record_pointer_field_success.or";
-    {
-        std::ofstream output(return_rebound_indexed_record_pointer_field_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptrs: Pointer<Pointer<Byte>>\n";
-        output << "unsafe function byte_ptr(device: Device, index: Int64) -> Pointer<Byte>\n";
-        output << "    let p = device.ptrs[index]\n";
-        output << "    return p\n";
-    }
-
-    auto return_rebound_indexed_record_pointer_field_success_path_text =
-        return_rebound_indexed_record_pointer_field_success_path.string();
-    std::array<char const*, 3> return_rebound_indexed_record_pointer_field_success_argv {
-        "orisonc",
-        "--parse",
-        return_rebound_indexed_record_pointer_field_success_path_text.c_str()
-    };
-    auto return_rebound_indexed_record_pointer_field_success_result = app.run(
-        std::span<char const* const>(
-            return_rebound_indexed_record_pointer_field_success_argv.data(),
-            return_rebound_indexed_record_pointer_field_success_argv.size()
-        )
+    write_concurrency_fixture(
+        return_rebound_indexed_record_pointer_field_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptrs: Pointer<Pointer<Byte>>",
+            "unsafe function byte_ptr(device: Device, index: Int64) -> Pointer<Byte>",
+            "    let p = device.ptrs[index]",
+            "    return p",
+        }
     );
-
-    assert(return_rebound_indexed_record_pointer_field_success_result.exit_code == 0);
-    assert(return_rebound_indexed_record_pointer_field_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, return_rebound_indexed_record_pointer_field_success_path));
 
     auto return_rebound_indexed_member_field_address_success_path = std::filesystem::temp_directory_path() /
                                                                     "orison_compiler_app_return_rebound_indexed_member_field_address_success.or";
-    {
-        std::ofstream output(return_rebound_indexed_member_field_address_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    bases: Pointer<Address>\n";
-        output << "extend Device\n";
-        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
-        output << "        let base = this.bases[index]\n";
-        output << "        return base\n";
-        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return Pointer(this.base_at(index))\n";
-        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
-        output << "    raw_write(device.byte_ptr(index), value)\n";
-    }
-
-    auto return_rebound_indexed_member_field_address_success_path_text =
-        return_rebound_indexed_member_field_address_success_path.string();
-    std::array<char const*, 3> return_rebound_indexed_member_field_address_success_argv {
-        "orisonc",
-        "--parse",
-        return_rebound_indexed_member_field_address_success_path_text.c_str()
-    };
-    auto return_rebound_indexed_member_field_address_success_result = app.run(
-        std::span<char const* const>(
-            return_rebound_indexed_member_field_address_success_argv.data(),
-            return_rebound_indexed_member_field_address_success_argv.size()
-        )
+    write_concurrency_fixture(
+        return_rebound_indexed_member_field_address_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    bases: Pointer<Address>",
+            "extend Device",
+            "    function base_at(this: shared This, index: Int64) -> Address",
+            "        let base = this.bases[index]",
+            "        return base",
+            "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>",
+            "        unsafe",
+            "            return Pointer(this.base_at(index))",
+            "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit",
+            "    raw_write(device.byte_ptr(index), value)",
+        }
     );
-
-    assert(return_rebound_indexed_member_field_address_success_result.exit_code == 0);
-    assert(return_rebound_indexed_member_field_address_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, return_rebound_indexed_member_field_address_success_path));
 
     auto return_rebound_indexed_pointer_used_by_helper_success_path = std::filesystem::temp_directory_path() /
                                                                       "orison_compiler_app_return_rebound_indexed_pointer_used_by_helper_success.or";
-    {
-        std::ofstream output(return_rebound_indexed_pointer_used_by_helper_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptrs: Pointer<Pointer<Byte>>\n";
-        output << "unsafe function byte_ptr(device: Device, index: Int64) -> Pointer<Byte>\n";
-        output << "    let p = device.ptrs[index]\n";
-        output << "    return p\n";
-        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
-        output << "    raw_write(byte_ptr(device, index), value)\n";
-    }
-
-    auto return_rebound_indexed_pointer_used_by_helper_success_path_text =
-        return_rebound_indexed_pointer_used_by_helper_success_path.string();
-    std::array<char const*, 3> return_rebound_indexed_pointer_used_by_helper_success_argv {
-        "orisonc",
-        "--parse",
-        return_rebound_indexed_pointer_used_by_helper_success_path_text.c_str()
-    };
-    auto return_rebound_indexed_pointer_used_by_helper_success_result = app.run(
-        std::span<char const* const>(
-            return_rebound_indexed_pointer_used_by_helper_success_argv.data(),
-            return_rebound_indexed_pointer_used_by_helper_success_argv.size()
-        )
+    write_concurrency_fixture(
+        return_rebound_indexed_pointer_used_by_helper_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptrs: Pointer<Pointer<Byte>>",
+            "unsafe function byte_ptr(device: Device, index: Int64) -> Pointer<Byte>",
+            "    let p = device.ptrs[index]",
+            "    return p",
+            "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit",
+            "    raw_write(byte_ptr(device, index), value)",
+        }
     );
-
-    assert(return_rebound_indexed_pointer_used_by_helper_success_result.exit_code == 0);
-    assert(return_rebound_indexed_pointer_used_by_helper_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, return_rebound_indexed_pointer_used_by_helper_success_path));
 
     auto return_rebound_indexed_address_pointer_constructor_success_path =
         std::filesystem::temp_directory_path() /
         "orison_compiler_app_return_rebound_indexed_address_pointer_constructor_success.or";
-    {
-        std::ofstream output(return_rebound_indexed_address_pointer_constructor_success_path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    bases: Pointer<Address>\n";
-        output << "extend Device\n";
-        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
-        output << "        let base = this.bases[index]\n";
-        output << "        return base\n";
-        output << "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return Pointer(this.base_at(index))\n";
-        output << "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit\n";
-        output << "    raw_write(device.byte_ptr(index), value)\n";
-    }
-
-    auto return_rebound_indexed_address_pointer_constructor_success_path_text =
-        return_rebound_indexed_address_pointer_constructor_success_path.string();
-    std::array<char const*, 3> return_rebound_indexed_address_pointer_constructor_success_argv {
-        "orisonc",
-        "--parse",
-        return_rebound_indexed_address_pointer_constructor_success_path_text.c_str()
-    };
-    auto return_rebound_indexed_address_pointer_constructor_success_result = app.run(
-        std::span<char const* const>(
-            return_rebound_indexed_address_pointer_constructor_success_argv.data(),
-            return_rebound_indexed_address_pointer_constructor_success_argv.size()
-        )
+    write_concurrency_fixture(
+        return_rebound_indexed_address_pointer_constructor_success_path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    bases: Pointer<Address>",
+            "extend Device",
+            "    function base_at(this: shared This, index: Int64) -> Address",
+            "        let base = this.bases[index]",
+            "        return base",
+            "    function byte_ptr(this: shared This, index: Int64) -> Pointer<Byte>",
+            "        unsafe",
+            "            return Pointer(this.base_at(index))",
+            "unsafe function write_byte(device: Device, index: Int64, value: Byte) -> Unit",
+            "    raw_write(device.byte_ptr(index), value)",
+        }
     );
-
-    assert(return_rebound_indexed_address_pointer_constructor_success_result.exit_code == 0);
-    assert(return_rebound_indexed_address_pointer_constructor_success_result.stderr_text.empty());
+    assert_parse_success(run_parse(app, return_rebound_indexed_address_pointer_constructor_success_path));
 
     auto volatile_read_return_type_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_volatile_read_return_type_failure.or";
