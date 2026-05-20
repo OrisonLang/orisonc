@@ -2648,217 +2648,142 @@ int main() {
     );
 
     auto task_path = std::filesystem::temp_directory_path() / "orison_compiler_app_task_failure.or";
-    {
-        std::ofstream output(task_path);
-        output << "package demo.task\n";
-        output << "function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let request_task = task\n";
-        output << "        request(url)\n";
-        output << "    return request(url)\n";
-    }
-
-    auto task_path_text = task_path.string();
-    std::array<char const*, 3> task_argv {"orisonc", "--parse", task_path_text.c_str()};
-    auto task_result = app.run(std::span<char const* const>(task_argv.data(), task_argv.size()));
-
-    assert(task_result.exit_code == 1);
-    assert(task_result.stdout_text.empty());
-    assert(task_result.stderr_text.find("task expression is only valid inside async functions") != std::string::npos);
+    write_concurrency_fixture(
+        task_path,
+        "demo.task",
+        {
+            "function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let request_task = task",
+            "        request(url)",
+            "    return request(url)",
+        }
+    );
+    assert_parse_failure_contains(run_parse(app, task_path), "task expression is only valid inside async functions");
 
     auto assignment_async_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_assignment_async_origin_success.or";
-    {
-        std::ofstream output(assignment_async_origin_path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var pending = request(url)\n";
-        output << "    pending = request(url)\n";
-        output << "    return await pending\n";
-    }
-
-    auto assignment_async_origin_path_text = assignment_async_origin_path.string();
-    std::array<char const*, 3> assignment_async_origin_argv {
-        "orisonc",
-        "--parse",
-        assignment_async_origin_path_text.c_str()
-    };
-    auto assignment_async_origin_result = app.run(
-        std::span<char const* const>(assignment_async_origin_argv.data(), assignment_async_origin_argv.size())
+    write_concurrency_fixture(
+        assignment_async_origin_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    var pending = request(url)",
+            "    pending = request(url)",
+            "    return await pending",
+        }
     );
-
-    assert(assignment_async_origin_result.exit_code == 0);
-    assert(assignment_async_origin_result.stderr_text.empty());
-    assert(assignment_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+    assert_parse_success(run_parse(app, assignment_async_origin_path));
 
     auto ternary_async_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_ternary_async_origin_success.or";
-    {
-        std::ofstream output(ternary_async_origin_path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let left = request(url)\n";
-        output << "    let right = request(url)\n";
-        output << "    let pending = flag ? left : right\n";
-        output << "    return await pending\n";
-    }
-
-    auto ternary_async_origin_path_text = ternary_async_origin_path.string();
-    std::array<char const*, 3> ternary_async_origin_argv {
-        "orisonc",
-        "--parse",
-        ternary_async_origin_path_text.c_str()
-    };
-    auto ternary_async_origin_result =
-        app.run(std::span<char const* const>(ternary_async_origin_argv.data(), ternary_async_origin_argv.size()));
-
-    assert(ternary_async_origin_result.exit_code == 0);
-    assert(ternary_async_origin_result.stderr_text.empty());
-    assert(ternary_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+    write_concurrency_fixture(
+        ternary_async_origin_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "    let left = request(url)",
+            "    let right = request(url)",
+            "    let pending = flag ? left : right",
+            "    return await pending",
+        }
+    );
+    assert_parse_success(run_parse(app, ternary_async_origin_path));
 
     auto ternary_thread_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_ternary_thread_origin_failure.or";
-    {
-        std::ofstream output(ternary_thread_origin_path);
-        output << "package demo.await\n";
-        output << "async function fetch(flag: Bool) -> Int64\n";
-        output << "    let left = thread\n";
-        output << "        1\n";
-        output << "    let right = thread\n";
-        output << "        2\n";
-        output << "    let worker = flag ? left : right\n";
-        output << "    return await worker\n";
-    }
-
-    auto ternary_thread_origin_path_text = ternary_thread_origin_path.string();
-    std::array<char const*, 3> ternary_thread_origin_argv {
-        "orisonc",
-        "--parse",
-        ternary_thread_origin_path_text.c_str()
-    };
-    auto ternary_thread_origin_result =
-        app.run(std::span<char const* const>(ternary_thread_origin_argv.data(), ternary_thread_origin_argv.size()));
-
-    assert(ternary_thread_origin_result.exit_code == 1);
-    assert(ternary_thread_origin_result.stdout_text.empty());
-    assert(ternary_thread_origin_result.stderr_text.find(
-               "await cannot be used with thread values; use .join() instead"
-           ) != std::string::npos);
+    write_concurrency_fixture(
+        ternary_thread_origin_path,
+        "demo.await",
+        {
+            "async function fetch(flag: Bool) -> Int64",
+            "    let left = thread",
+            "        1",
+            "    let right = thread",
+            "        2",
+            "    let worker = flag ? left : right",
+            "    return await worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, ternary_thread_origin_path),
+        "await cannot be used with thread values; use .join() instead"
+    );
 
     auto if_async_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_if_async_origin_success.or";
-    {
-        std::ofstream output(if_async_origin_path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var pending = request(url)\n";
-        output << "    if flag\n";
-        output << "        pending = request(url)\n";
-        output << "    else\n";
-        output << "        pending = request(url)\n";
-        output << "    return await pending\n";
-    }
-
-    auto if_async_origin_path_text = if_async_origin_path.string();
-    std::array<char const*, 3> if_async_origin_argv {
-        "orisonc",
-        "--parse",
-        if_async_origin_path_text.c_str()
-    };
-    auto if_async_origin_result =
-        app.run(std::span<char const* const>(if_async_origin_argv.data(), if_async_origin_argv.size()));
-
-    assert(if_async_origin_result.exit_code == 0);
-    assert(if_async_origin_result.stderr_text.empty());
-    assert(if_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+    write_concurrency_fixture(
+        if_async_origin_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "    var pending = request(url)",
+            "    if flag",
+            "        pending = request(url)",
+            "    else",
+            "        pending = request(url)",
+            "    return await pending",
+        }
+    );
+    assert_parse_success(run_parse(app, if_async_origin_path));
 
     auto while_async_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_while_async_origin_success.or";
-    {
-        std::ofstream output(while_async_origin_path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var pending = request(url)\n";
-        output << "    while flag\n";
-        output << "        pending = request(url)\n";
-        output << "    return await pending\n";
-    }
-
-    auto while_async_origin_path_text = while_async_origin_path.string();
-    std::array<char const*, 3> while_async_origin_argv {
-        "orisonc",
-        "--parse",
-        while_async_origin_path_text.c_str()
-    };
-    auto while_async_origin_result =
-        app.run(std::span<char const* const>(while_async_origin_argv.data(), while_async_origin_argv.size()));
-
-    assert(while_async_origin_result.exit_code == 0);
-    assert(while_async_origin_result.stderr_text.empty());
-    assert(while_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+    write_concurrency_fixture(
+        while_async_origin_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "    var pending = request(url)",
+            "    while flag",
+            "        pending = request(url)",
+            "    return await pending",
+        }
+    );
+    assert_parse_success(run_parse(app, while_async_origin_path));
 
     auto for_async_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_for_async_origin_success.or";
-    {
-        std::ofstream output(for_async_origin_path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(items: shared View<Int64>, url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var pending = request(url)\n";
-        output << "    for item in items\n";
-        output << "        pending = request(url)\n";
-        output << "    return await pending\n";
-    }
-
-    auto for_async_origin_path_text = for_async_origin_path.string();
-    std::array<char const*, 3> for_async_origin_argv {
-        "orisonc",
-        "--parse",
-        for_async_origin_path_text.c_str()
-    };
-    auto for_async_origin_result =
-        app.run(std::span<char const* const>(for_async_origin_argv.data(), for_async_origin_argv.size()));
-
-    assert(for_async_origin_result.exit_code == 0);
-    assert(for_async_origin_result.stderr_text.empty());
-    assert(for_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+    write_concurrency_fixture(
+        for_async_origin_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(items: shared View<Int64>, url: Text) -> Outcome<Text, IOError>",
+            "    var pending = request(url)",
+            "    for item in items",
+            "        pending = request(url)",
+            "    return await pending",
+        }
+    );
+    assert_parse_success(run_parse(app, for_async_origin_path));
 
     auto guard_async_origin_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_guard_async_origin_success.or";
-    {
-        std::ofstream output(guard_async_origin_path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var pending = request(url)\n";
-        output << "    guard flag else\n";
-        output << "        pending = thread\n";
-        output << "            2\n";
-        output << "        return await request(url)\n";
-        output << "    return await pending\n";
-    }
-
-    auto guard_async_origin_path_text = guard_async_origin_path.string();
-    std::array<char const*, 3> guard_async_origin_argv {
-        "orisonc",
-        "--parse",
-        guard_async_origin_path_text.c_str()
-    };
-    auto guard_async_origin_result =
-        app.run(std::span<char const* const>(guard_async_origin_argv.data(), guard_async_origin_argv.size()));
-
-    assert(guard_async_origin_result.exit_code == 0);
-    assert(guard_async_origin_result.stderr_text.empty());
-    assert(guard_async_origin_result.stdout_text.find("parsed ") != std::string::npos);
+    write_concurrency_fixture(
+        guard_async_origin_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "    var pending = request(url)",
+            "    guard flag else",
+            "        pending = thread",
+            "            2",
+            "        return await request(url)",
+            "    return await pending",
+        }
+    );
+    assert_parse_success(run_parse(app, guard_async_origin_path));
 
     auto switch_constructor_pattern_binding_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_switch_constructor_pattern_binding_success.or";
