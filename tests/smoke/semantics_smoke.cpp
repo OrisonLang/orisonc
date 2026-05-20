@@ -2326,70 +2326,49 @@ void test_receiver_parameter_with_nonself_type_inside_method_failure() {
 
 void test_unsafe_intrinsic_outside_unsafe_context_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_unsafe_intrinsic_outside_unsafe_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function read_byte(p: Address) -> Byte\n";
-        output << "    return raw_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function read_byte(p: Address) -> Byte",
+            "    return raw_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks"
+    );
 }
 
 void test_unsafe_intrinsic_inside_unsafe_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_unsafe_intrinsic_inside_unsafe_function.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte(p: Address) -> Byte\n";
-        output << "    return raw_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(p: Address) -> Byte",
+            "    return raw_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_unsafe_intrinsic_inside_unsafe_block_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_unsafe_intrinsic_inside_unsafe_block.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function zero_byte(p: Address) -> Unit\n";
-        output << "    unsafe\n";
-        output << "        raw_write(p, 0)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function zero_byte(p: Address) -> Unit",
+            "    unsafe",
+            "        raw_write(p, 0)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_address_of_nonstorage_operand_failure() {
