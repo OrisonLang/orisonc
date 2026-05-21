@@ -2373,149 +2373,87 @@ void test_unsafe_intrinsic_inside_unsafe_block_success() {
 
 void test_address_of_nonstorage_operand_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_of_nonstorage_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function pointer() -> Address\n";
-        output << "    return address_of(1)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function pointer() -> Address",
+            "    return address_of(1)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "address_of currently requires an addressable storage operand");
+    assert_fixture_single_diagnostic(path, 3, "address_of currently requires an addressable storage operand");
 }
 
 void test_raw_read_nonaddress_operand_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_raw_read_nonaddress_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word() -> UInt32\n";
-        output << "    return raw_read(1)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word() -> UInt32",
+            "    return raw_read(1)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "raw_read currently requires an address-like first argument");
+    assert_fixture_single_diagnostic(path, 3, "raw_read currently requires an address-like first argument");
 }
 
 void test_raw_offset_nonaddress_base_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_raw_offset_nonaddress_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function advance() -> Address\n";
-        output << "    return raw_offset(1, 2)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function advance() -> Address",
+            "    return raw_offset(1, 2)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "raw_offset currently requires an address-like first argument");
+    assert_fixture_single_diagnostic(path, 3, "raw_offset currently requires an address-like first argument");
 }
 
 void test_raw_offset_noninteger_offset_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_raw_offset_noninteger_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function advance(base: Address) -> Address\n";
-        output << "    return raw_offset(base, \"one\")\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function advance(base: Address) -> Address",
+            "    return raw_offset(base, \"one\")",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "raw_offset currently requires an integer offset argument");
+    assert_fixture_single_diagnostic(path, 3, "raw_offset currently requires an integer offset argument");
 }
 
 void test_volatile_read_nonaddress_operand_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_nonaddress_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function uart_ready() -> UInt32\n";
-        output << "    return volatile_read(1)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function uart_ready() -> UInt32",
+            "    return volatile_read(1)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "volatile_read currently requires an address-like first argument");
+    assert_fixture_single_diagnostic(path, 3, "volatile_read currently requires an address-like first argument");
 }
 
 void test_nested_address_of_and_raw_offset_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_address_of_raw_offset_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function poke(buf: exclusive Buffer, value: Byte) -> Unit\n";
-        output << "    let p = address_of(buf.data[0])\n";
-        output << "    raw_write(raw_offset(p, 1), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function poke(buf: exclusive Buffer, value: Byte) -> Unit",
+            "    let p = address_of(buf.data[0])",
+            "    raw_write(raw_offset(p, 1), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_index_access_noninteger_index_failure() {
