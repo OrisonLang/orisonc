@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-20: direct raw_write value-type semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for exact mismatch, exact match, same-width integer, and pointer-sized mismatch coverage.
 - 2026-05-20: raw_read return-type semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for mismatch, exact match, same-width integer, and pointer-sized mismatch coverage.
 - 2026-05-20: raw_read typed-binding semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for mismatch, exact match, same-width integer, and pointer-sized mismatch coverage.
 - 2026-05-20: pointer typed-binding and pointer-return semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for address_of, nonpointer initializer, and raw_offset source coverage.
