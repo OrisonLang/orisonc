@@ -2779,101 +2779,65 @@ void test_pointer_return_with_same_width_raw_offset_source_success() {
 void test_raw_read_typed_binding_result_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_read_typed_binding_mismatch.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Byte>) -> UInt32\n";
-        output << "    let value: UInt32 = raw_read(p)\n";
-        output << "    return value\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> UInt32",
+            "    let value: UInt32 = raw_read(p)",
+            "    return value",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "raw_read result type 'Byte' does not match binding type 'UInt32'");
+    assert_fixture_single_diagnostic(path, 3, "raw_read result type 'Byte' does not match binding type 'UInt32'");
 }
 
 void test_raw_read_typed_binding_result_match_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_read_typed_binding_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte(p: Pointer<Byte>) -> Byte\n";
-        output << "    let value: Byte = raw_read(p)\n";
-        output << "    return value\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    let value: Byte = raw_read(p)",
+            "    return value",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_read_typed_binding_same_width_integer_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_read_typed_binding_same_width_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Int32>) -> Int32\n";
-        output << "    let value: UInt32 = raw_read(p)\n";
-        output << "    return value as Int32\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Int32>) -> Int32",
+            "    let value: UInt32 = raw_read(p)",
+            "    return value as Int32",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_read_typed_binding_pointer_sized_integer_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_read_typed_binding_pointer_sized_mismatch.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Byte>) -> IntSize\n";
-        output << "    let value: IntSize = raw_read(p)\n";
-        output << "    return value\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> IntSize",
+            "    let value: IntSize = raw_read(p)",
+            "    return value",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "raw_read result type 'Byte' does not match binding type 'IntSize'");
+    assert_fixture_single_diagnostic(path, 3, "raw_read result type 'Byte' does not match binding type 'IntSize'");
 }
 
 void test_pointer_typed_binding_with_wrong_typed_name_failure() {
