@@ -2458,52 +2458,34 @@ void test_nested_address_of_and_raw_offset_success() {
 
 void test_index_access_noninteger_index_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_index_access_noninteger_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptrs: Pointer<Pointer<Byte>>\n";
-        output << "unsafe function write_byte(device: Device, value: Byte) -> Unit\n";
-        output << "    raw_write(device.ptrs[\"one\"], value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptrs: Pointer<Pointer<Byte>>",
+            "unsafe function write_byte(device: Device, value: Byte) -> Unit",
+            "    raw_write(device.ptrs[\"one\"], value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "index access currently requires an integer index expression");
+    assert_fixture_single_diagnostic(path, 5, "index access currently requires an integer index expression");
 }
 
 void test_index_access_integer_index_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_index_access_integer_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptrs: Pointer<Pointer<Byte>>\n";
-        output << "unsafe function write_byte(device: Device, index: UInt32, value: Byte) -> Unit\n";
-        output << "    raw_write(device.ptrs[index], value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptrs: Pointer<Pointer<Byte>>",
+            "unsafe function write_byte(device: Device, index: UInt32, value: Byte) -> Unit",
+            "    raw_write(device.ptrs[index], value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_call_unsafe_function_outside_unsafe_context_failure() {
