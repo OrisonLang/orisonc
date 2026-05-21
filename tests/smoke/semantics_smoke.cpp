@@ -2527,23 +2527,17 @@ void test_call_unsafe_function_inside_unsafe_block_success() {
 
 void test_pointer_construction_outside_unsafe_context_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function read_byte(addr: Address) -> Byte\n";
-        output << "    let p = Pointer(addr)\n";
-        output << "    return raw_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function read_byte(addr: Address) -> Byte",
+            "    let p = Pointer(addr)",
+            "    return raw_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
+    auto diagnostics = analyze_orison_fixture(path);
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 2);
     assert(diagnostics.entries().front().line == 3);
@@ -2556,127 +2550,84 @@ void test_pointer_construction_outside_unsafe_context_failure() {
 
 void test_pointer_construction_inside_unsafe_block_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_block_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function scribble(addr: Address) -> Unit\n";
-        output << "    unsafe\n";
-        output << "        let p = Pointer(addr)\n";
-        output << "        raw_write(p, 0)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function scribble(addr: Address) -> Unit",
+            "    unsafe",
+            "        let p = Pointer(addr)",
+            "        raw_write(p, 0)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_pointer_construction_without_argument_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_noarg_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte() -> Byte\n";
-        output << "    let p = Pointer()\n";
-        output << "    return raw_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte() -> Byte",
+            "    let p = Pointer()",
+            "    return raw_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "Pointer construction currently requires exactly one source argument");
+    assert_fixture_single_diagnostic(path, 3, "Pointer construction currently requires exactly one source argument");
 }
 
 void test_pointer_construction_with_multiple_arguments_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_multiarg_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte(addr: Address) -> Byte\n";
-        output << "    let p = Pointer(addr, addr)\n";
-        output << "    return raw_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(addr: Address) -> Byte",
+            "    let p = Pointer(addr, addr)",
+            "    return raw_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "Pointer construction currently requires exactly one source argument");
+    assert_fixture_single_diagnostic(path, 3, "Pointer construction currently requires exactly one source argument");
 }
 
 void test_pointer_construction_with_nonaddress_argument_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_nonaddress_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte() -> Byte\n";
-        output << "    let p = Pointer(\"text\")\n";
-        output << "    return raw_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte() -> Byte",
+            "    let p = Pointer(\"text\")",
+            "    return raw_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "Pointer construction currently requires an address-like source argument");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "Pointer construction currently requires an address-like source argument"
+    );
 }
 
 void test_pointer_construction_with_address_of_argument_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_construction_addressof_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function first_ptr(buf: exclusive Buffer) -> Pointer<Byte>\n";
-        output << "    let p = Pointer(address_of(buf.data[0]))\n";
-        output << "    return p\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function first_ptr(buf: exclusive Buffer) -> Pointer<Byte>",
+            "    let p = Pointer(address_of(buf.data[0]))",
+            "    return p",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_pointer_typed_binding_with_mismatched_address_of_source_failure() {

@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-20: pointer-construction semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for unsafe-boundary, arity, source-shape, and address_of success coverage.
 - 2026-05-20: unsafe-call boundary semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for outside-unsafe rejection and unsafe-block success coverage.
 - 2026-05-20: index-access semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for non-integer and integer index coverage.
 - 2026-05-20: raw/address operand-shape semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for address_of, raw_read, raw_offset, volatile_read, and nested raw_offset coverage.
