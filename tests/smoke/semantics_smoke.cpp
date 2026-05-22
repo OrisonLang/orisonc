@@ -4041,139 +4041,104 @@ void test_raw_write_member_returned_raw_read_integer_cast_success() {
 void test_raw_write_non_integer_cast_value_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_write_non_integer_cast_value_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(p: Pointer<UInt32>, value: Bool) -> Unit\n";
-        output << "    raw_write(p, value as Bool)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(p: Pointer<UInt32>, value: Bool) -> Unit",
+            "    raw_write(p, value as Bool)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'Bool' does not match pointer element type 'UInt32'");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "raw_write value type 'Bool' does not match pointer element type 'UInt32'"
+    );
 }
 
 void test_raw_write_helper_pointer_constructor_type_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_write_helper_pointer_type_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function byte_ptr(addr: Address) -> Pointer<Byte>\n";
-        output << "    return Pointer(addr)\n";
-        output << "unsafe function write_word(addr: Address, value: UInt32) -> Unit\n";
-        output << "    raw_write(byte_ptr(addr), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function byte_ptr(addr: Address) -> Pointer<Byte>",
+            "    return Pointer(addr)",
+            "unsafe function write_word(addr: Address, value: UInt32) -> Unit",
+            "    raw_write(byte_ptr(addr), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 }
 
 void test_raw_write_helper_pointer_constructor_type_match_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_write_helper_pointer_type_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function byte_ptr(addr: Address) -> Pointer<Byte>\n";
-        output << "    return Pointer(addr)\n";
-        output << "unsafe function write_byte(addr: Address, value: Byte) -> Unit\n";
-        output << "    raw_write(byte_ptr(addr), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function byte_ptr(addr: Address) -> Pointer<Byte>",
+            "    return Pointer(addr)",
+            "unsafe function write_byte(addr: Address, value: Byte) -> Unit",
+            "    raw_write(byte_ptr(addr), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_member_helper_pointer_constructor_type_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_member_helper_pointer_type_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function byte_ptr(this: shared This, addr: Address) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return Pointer(addr)\n";
-        output << "unsafe function write_word(device: Device, addr: Address, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.byte_ptr(addr), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function byte_ptr(this: shared This, addr: Address) -> Pointer<Byte>",
+            "        unsafe",
+            "            return Pointer(addr)",
+            "unsafe function write_word(device: Device, addr: Address, value: UInt32) -> Unit",
+            "    raw_write(device.byte_ptr(addr), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 9);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
+    assert_fixture_single_diagnostic(
+        path,
+        9,
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
 }
 
 void test_raw_write_member_helper_pointer_constructor_type_match_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_member_helper_pointer_type_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function byte_ptr(this: shared This, addr: Address) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return Pointer(addr)\n";
-        output << "unsafe function write_byte(device: Device, addr: Address, value: Byte) -> Unit\n";
-        output << "    raw_write(device.byte_ptr(addr), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function byte_ptr(this: shared This, addr: Address) -> Pointer<Byte>",
+            "        unsafe",
+            "            return Pointer(addr)",
+            "unsafe function write_byte(device: Device, addr: Address, value: Byte) -> Unit",
+            "    raw_write(device.byte_ptr(addr), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_raw_offset_helper_pointer_type_mismatch_failure() {
