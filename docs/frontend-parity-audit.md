@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-21: switch-merged raw_write computed-value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-21: rebound and branch-merged raw_write computed-value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-20: computed raw_write expression semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for integer-sum, bitwise, and ternary pointer-sized value coverage.
 - 2026-05-20: direct raw_write value-type semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers for exact mismatch, exact match, same-width integer, and pointer-sized mismatch coverage.

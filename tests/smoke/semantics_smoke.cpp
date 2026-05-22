@@ -3625,57 +3625,43 @@ void test_raw_write_branch_merged_pointer_sized_value_mismatch_failure() {
 void test_raw_write_switch_merged_computed_value_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_switch_merged_computed_value_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: Int32, right: Int32) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    switch selector\n";
-        output << "        0 => selected = left bit_or 1\n";
-        output << "        default => selected = right + 1\n";
-        output << "    raw_write(out, selected)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: Int32, right: Int32) -> Unit",
+            "    var selected = left",
+            "    switch selector",
+            "        0 => selected = left bit_or 1",
+            "        default => selected = right + 1",
+            "    raw_write(out, selected)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_switch_merged_pointer_sized_value_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_switch_merged_pointer_sized_value_mismatch_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: IntSize, right: IntSize) -> Unit\n";
-        output << "    var selected = left\n";
-        output << "    switch selector\n";
-        output << "        0 => selected = left + 1\n";
-        output << "        default => selected = right shift_left 1\n";
-        output << "    raw_write(out, selected)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function write_word(out: Pointer<UInt32>, selector: UInt32, left: IntSize, right: IntSize) -> Unit",
+            "    var selected = left",
+            "    switch selector",
+            "        0 => selected = left + 1",
+            "        default => selected = right shift_left 1",
+            "    raw_write(out, selected)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 7);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'IntSize' does not match pointer element type 'UInt32'");
+    assert_fixture_single_diagnostic(
+        path,
+        7,
+        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
+    );
 }
 
 void test_raw_write_array_indexed_value_success() {
