@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-21: nested scalar-field raw_write value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-21: helper-returned and member-container indexed raw_write value semantics smoke fixtures now reuse the shared source writer plus semantic success helpers.
 - 2026-05-21: array-indexed raw_write value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-21: switch-merged raw_write computed-value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
