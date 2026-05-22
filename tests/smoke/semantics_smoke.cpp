@@ -3717,49 +3717,35 @@ void test_raw_write_array_indexed_pointer_sized_value_mismatch_failure() {
 void test_raw_write_helper_returned_container_indexed_value_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_helper_returned_container_indexed_value_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function words() -> DynamicArray<Int32>\n";
-        output << "    return []\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>) -> Unit\n";
-        output << "    raw_write(out, words()[0])\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function words() -> DynamicArray<Int32>",
+            "    return []",
+            "unsafe function write_word(out: Pointer<UInt32>) -> Unit",
+            "    raw_write(out, words()[0])",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_member_container_field_indexed_value_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_member_container_field_indexed_value_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    words: DynamicArray<Int32>\n";
-        output << "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit\n";
-        output << "    raw_write(out, device.words[0])\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    words: DynamicArray<Int32>",
+            "unsafe function write_word(out: Pointer<UInt32>, device: Device) -> Unit",
+            "    raw_write(out, device.words[0])",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_nested_scalar_field_value_success() {
