@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-22: raw_offset helper raw_write pointer-type semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-22: non-integer cast and helper pointer-constructor raw_write semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-22: recovered raw_read value/cast raw_write semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-21: integer literal and direct integer-cast raw_write value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
