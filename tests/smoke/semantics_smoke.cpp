@@ -5333,104 +5333,76 @@ void test_address_typed_binding_with_wrong_typed_name_failure() {
 void test_address_return_with_nonaddress_expression_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_return_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function base() -> Address\n";
-        output << "    return \"text\"\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function base() -> Address",
+            "    return \"text\"",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "address-returning function currently requires a structurally address-like expression");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "address-returning function currently requires a structurally address-like expression"
+    );
 }
 
 void test_address_return_with_address_expression_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_return_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function base(buf: exclusive Buffer) -> Address\n";
-        output << "    return address_of(buf.data[0])\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function base(buf: exclusive Buffer) -> Address",
+            "    return address_of(buf.data[0])",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_address_return_with_helper_returned_address_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_address_return_helper_returned_address_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    bases: Pointer<Address>\n";
-        output << "extend Device\n";
-        output << "    function base_at(this: shared This, index: Int64) -> Address\n";
-        output << "        let base = this.bases[index]\n";
-        output << "        return base\n";
-        output << "function read_base(device: Device, index: Int64) -> Address\n";
-        output << "    return device.base_at(index)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    bases: Pointer<Address>",
+            "extend Device",
+            "    function base_at(this: shared This, index: Int64) -> Address",
+            "        let base = this.bases[index]",
+            "        return base",
+            "function read_base(device: Device, index: Int64) -> Address",
+            "    return device.base_at(index)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_address_return_with_wrong_typed_name_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_return_name_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function base() -> Address\n";
-        output << "    let source = \"text\"\n";
-        output << "    return source\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function base() -> Address",
+            "    let source = \"text\"",
+            "    return source",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message ==
-           "address-returning function currently requires a structurally address-like expression");
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "address-returning function currently requires a structurally address-like expression"
+    );
 }
 
 void test_task_outside_async_function_failure() {
