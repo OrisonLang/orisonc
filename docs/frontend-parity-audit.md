@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-23: task/thread consume-site semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-23: address-returning function semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-23: address-typed binding semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-23: non-integer cast and pointer-constructor volatile_write semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic helpers.

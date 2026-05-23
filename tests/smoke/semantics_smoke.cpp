@@ -5407,154 +5407,103 @@ void test_address_return_with_wrong_typed_name_failure() {
 
 void test_task_outside_async_function_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_sync_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let request_task = task\n";
-        output << "        request(url)\n";
-        output << "    return request(url)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let request_task = task",
+            "        request(url)",
+            "    return request(url)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message == "task expression is only valid inside async functions");
+    assert_fixture_single_diagnostic(path, 3, "task expression is only valid inside async functions");
 }
 
 void test_thread_outside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_sync_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum(data: shared View<Int64>) -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        sum(data)\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function parallel_sum(data: shared View<Int64>) -> Int64",
+            "    let worker = thread",
+            "        sum(data)",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_thread_join_receiver_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_join_receiver_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        1\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function parallel_sum() -> Int64",
+            "    let worker = thread",
+            "        1",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_join_non_thread_receiver_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_join_non_thread_receiver_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "async function fetch() -> Int64\n";
-        output << "    let request_task = task\n";
-        output << "        1\n";
-        output << "    return request_task.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "async function fetch() -> Int64",
+            "    let request_task = task",
+            "        1",
+            "    return request_task.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message == "join() cannot be used with task values; use await instead");
+    assert_fixture_single_diagnostic(path, 5, "join() cannot be used with task values; use await instead");
 }
 
 void test_join_async_call_receiver_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_join_async_call_receiver_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let pending = request(url)\n";
-        output << "    return pending.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let pending = request(url)",
+            "    return pending.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 6);
-    assert(diagnostics.entries().front().message ==
-           "join() cannot be used with declared async call results; use await instead");
+    assert_fixture_single_diagnostic(
+        path,
+        6,
+        "join() cannot be used with declared async call results; use await instead"
+    );
 }
 
 void test_thread_value_without_join_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_thread_value_without_join_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.thread\n";
-        output << "function parallel_sum() -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        1\n";
-        output << "    return worker\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.thread",
+        {
+            "function parallel_sum() -> Int64",
+            "    let worker = thread",
+            "        1",
+            "    return worker",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message == "return cannot forward thread values; use .join() instead");
+    assert_fixture_single_diagnostic(path, 5, "return cannot forward thread values; use .join() instead");
 }
 
 void test_concurrency_capture_classification_success() {
