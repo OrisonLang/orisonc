@@ -5508,29 +5508,23 @@ void test_thread_value_without_join_failure() {
 
 void test_concurrency_capture_classification_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_capture_classification_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.capture\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let cached = url\n";
-        output << "    let request_task = task\n";
-        output << "        cached\n";
-        output << "    return await request_task\n";
-        output << "function parallel_sum(data: shared View<Int64>) -> Int64\n";
-        output << "    let worker = thread\n";
-        output << "        sum(data)\n";
-        output << "    return worker.join()\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.capture",
+        {
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let cached = url",
+            "    let request_task = task",
+            "        cached",
+            "    return await request_task",
+            "function parallel_sum(data: shared View<Int64>) -> Int64",
+            "    let worker = thread",
+            "        sum(data)",
+            "    return worker.join()",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto analysis = analyzer.analyze(parse_result.module);
+    auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.concurrency_captures.size() == 2);
     assert(analysis.concurrency_captures[0].line == 5);
