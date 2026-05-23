@@ -5240,129 +5240,94 @@ void test_volatile_write_raw_offset_helper_pointer_type_mismatch_failure() {
 void test_address_typed_binding_with_nonaddress_initializer_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_typed_binding_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function read_base() -> Address\n";
-        output << "    let base: Address = \"text\"\n";
-        output << "    return 0x4000_1000\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function read_base() -> Address",
+            "    let base: Address = \"text\"",
+            "    return 0x4000_1000",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "address-typed binding initializer currently requires a structurally address-like expression");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "address-typed binding initializer currently requires a structurally address-like expression"
+    );
 }
 
 void test_address_typed_binding_with_address_initializer_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_typed_binding_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function first_addr(buf: exclusive Buffer) -> Address\n";
-        output << "    let base: Address = address_of(buf.data[0])\n";
-        output << "    return base\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function first_addr(buf: exclusive Buffer) -> Address",
+            "    let base: Address = address_of(buf.data[0])",
+            "    return base",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_address_typed_binding_with_field_address_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_address_typed_binding_field_address_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    base: Address\n";
-        output << "function read_base(device: Device) -> Address\n";
-        output << "    let base: Address = device.base\n";
-        output << "    return base\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    base: Address",
+            "function read_base(device: Device) -> Address",
+            "    let base: Address = device.base",
+            "    return base",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_address_typed_binding_with_indexed_address_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_address_typed_binding_indexed_address_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    bases: Pointer<Address>\n";
-        output << "function read_base(device: Device, index: Int64) -> Address\n";
-        output << "    let base: Address = device.bases[index]\n";
-        output << "    return base\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    bases: Pointer<Address>",
+            "function read_base(device: Device, index: Int64) -> Address",
+            "    let base: Address = device.bases[index]",
+            "    return base",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_address_typed_binding_with_wrong_typed_name_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_typed_binding_name_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function read_base() -> Address\n";
-        output << "    let source = \"text\"\n";
-        output << "    let base: Address = source\n";
-        output << "    return 0x4000_1000\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function read_base() -> Address",
+            "    let source = \"text\"",
+            "    let base: Address = source",
+            "    return 0x4000_1000",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message ==
-           "address-typed binding initializer currently requires a structurally address-like expression");
+    assert_fixture_single_diagnostic(
+        path,
+        4,
+        "address-typed binding initializer currently requires a structurally address-like expression"
+    );
 }
 
 void test_address_return_with_nonaddress_expression_failure() {
