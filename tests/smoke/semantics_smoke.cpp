@@ -5049,141 +5049,106 @@ void test_volatile_write_pointer_sized_integer_cast_mismatch_failure() {
 void test_volatile_write_recovered_volatile_read_value_type_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_write_recovered_volatile_read_value_type_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: Pointer<Byte>\n";
-        output << "unsafe function write_word(buf: Buffer, out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, volatile_read(raw_offset(Pointer(address_of(buf.data[0])), 1)))\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function write_word(buf: Buffer, out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, volatile_read(raw_offset(Pointer(address_of(buf.data[0])), 1)))",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "volatile_write value type 'Byte' does not match pointer element type 'UInt32'");
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 }
 
 void test_volatile_write_recovered_volatile_read_integer_cast_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_write_recovered_volatile_read_integer_cast_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: Pointer<Byte>\n";
-        output << "unsafe function write_word(buf: Buffer, out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, volatile_read(raw_offset(Pointer(address_of(buf.data[0])), 1)) as Int32)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function write_word(buf: Buffer, out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, volatile_read(raw_offset(Pointer(address_of(buf.data[0])), 1)) as Int32)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_volatile_write_helper_returned_volatile_read_value_type_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_write_helper_returned_volatile_read_value_type_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function word_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "    return raw_offset(base, 1)\n";
-        output << "unsafe function write_word(base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, volatile_read(raw_offset(word_ptr(base), 1)))\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function word_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
+            "    return raw_offset(base, 1)",
+            "unsafe function write_word(base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, volatile_read(raw_offset(word_ptr(base), 1)))",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "volatile_write value type 'Byte' does not match pointer element type 'UInt32'");
+    assert_fixture_single_diagnostic(
+        path,
+        5,
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 }
 
 void test_volatile_write_member_returned_volatile_read_value_type_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_write_member_returned_volatile_read_value_type_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function word_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return raw_offset(base, 1)\n";
-        output << "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, volatile_read(raw_offset(device.word_ptr(base), 1)))\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function word_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>",
+            "        unsafe",
+            "            return raw_offset(base, 1)",
+            "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, volatile_read(raw_offset(device.word_ptr(base), 1)))",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 9);
-    assert(diagnostics.entries().front().message ==
-           "volatile_write value type 'Byte' does not match pointer element type 'UInt32'");
+    assert_fixture_single_diagnostic(
+        path,
+        9,
+        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
+    );
 }
 
 void test_volatile_write_member_returned_volatile_read_integer_cast_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_write_member_returned_volatile_read_integer_cast_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    id: Int64\n";
-        output << "extend Device\n";
-        output << "    function word_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "        unsafe\n";
-        output << "            return raw_offset(base, 1)\n";
-        output << "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    volatile_write(out, volatile_read(raw_offset(device.word_ptr(base), 1)) as UInt32)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    id: Int64",
+            "extend Device",
+            "    function word_ptr(this: shared This, base: Pointer<Byte>) -> Pointer<Byte>",
+            "        unsafe",
+            "            return raw_offset(base, 1)",
+            "unsafe function write_word(device: Device, base: Pointer<Byte>, out: Pointer<UInt32>) -> Unit",
+            "    volatile_write(out, volatile_read(raw_offset(device.word_ptr(base), 1)) as UInt32)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_volatile_write_non_integer_cast_value_mismatch_failure() {
