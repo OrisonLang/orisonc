@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-23: receiver-capture concurrency semantics smoke fixture now uses the focused receiver capture diagnostic helper.
 - 2026-05-23: task/thread value-boundary and mutable-capture semantics smoke fixtures now share focused diagnostic helpers.
 - 2026-05-23: thread/task result marker semantics smoke fixtures now share a thread-result Transferable diagnostic helper.
 - 2026-05-23: thread/task capture marker semantics smoke fixtures now share a richer capture metadata assertion helper.

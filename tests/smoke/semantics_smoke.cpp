@@ -600,6 +600,10 @@ void assert_mutable_capture_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_receiver_capture_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "concurrency expression cannot capture receiver 'this'");
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -6020,7 +6024,7 @@ void test_thread_capture_receiver_this_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 5, "concurrency expression cannot capture receiver 'this'");
+    assert_receiver_capture_diagnostic(path, 5);
 }
 
 }  // namespace
