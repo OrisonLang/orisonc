@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-22: direct volatile_write value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-22: volatile_read return and typed-binding semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-22: record and indexed field raw_write pointer semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-22: raw_offset helper raw_write pointer-type semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
