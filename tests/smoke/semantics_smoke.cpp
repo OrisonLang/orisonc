@@ -580,6 +580,26 @@ void assert_thread_result_transferable_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_concurrency_value_boundary_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view expression_kind
+) {
+    std::string const message =
+        std::string(expression_kind) + " expression body must end with an expression statement or value return";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_mutable_capture_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view local_name
+) {
+    std::string const message =
+        "concurrency expression cannot capture mutable outer local '" + std::string(local_name) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -5901,11 +5921,7 @@ void test_task_expression_value_boundary_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        4,
-        "task expression body must end with an expression statement or value return"
-    );
+    assert_concurrency_value_boundary_diagnostic(path, 4, "task");
 }
 
 void test_task_expression_value_return_success() {
@@ -5937,11 +5953,7 @@ void test_thread_expression_value_boundary_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        4,
-        "thread expression body must end with an expression statement or value return"
-    );
+    assert_concurrency_value_boundary_diagnostic(path, 4, "thread");
 }
 
 void test_thread_expression_value_return_success() {
@@ -5974,11 +5986,7 @@ void test_task_capture_mutable_outer_local_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "concurrency expression cannot capture mutable outer local 'attempts'"
-    );
+    assert_mutable_capture_diagnostic(path, 5, "attempts");
 }
 
 void test_thread_capture_mutable_outer_local_failure() {
@@ -5995,11 +6003,7 @@ void test_thread_capture_mutable_outer_local_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "concurrency expression cannot capture mutable outer local 'total'"
-    );
+    assert_mutable_capture_diagnostic(path, 5, "total");
 }
 
 void test_thread_capture_receiver_this_failure() {
