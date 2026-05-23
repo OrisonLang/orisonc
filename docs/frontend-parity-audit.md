@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-22: nested scalar-field and member-container volatile_write value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-22: array and container-indexed volatile_write value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-22: computed volatile_write value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-22: direct volatile_write value semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
