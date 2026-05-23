@@ -570,6 +570,22 @@ void assert_fixture_single_capture_kind(
     assert(diagnostics.concurrency_captures.front().capture_kind == expected_kind);
 }
 
+void assert_concurrency_capture(
+    orison::semantics::SemanticAnalysisResult const& analysis,
+    std::size_t index,
+    std::string_view expected_name,
+    std::string_view expected_type_name,
+    orison::semantics::ConcurrencyExpressionKind expected_expression_kind,
+    orison::semantics::ConcurrencyCaptureKind expected_capture_kind
+) {
+    assert(analysis.concurrency_captures.size() > index);
+    auto const& capture = analysis.concurrency_captures[index];
+    assert(capture.name == expected_name);
+    assert(capture.type_name == expected_type_name);
+    assert(capture.expression_kind == expected_expression_kind);
+    assert(capture.capture_kind == expected_capture_kind);
+}
+
 void test_await_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_success.or";
     write_concurrency_fixture(
@@ -5563,10 +5579,14 @@ void test_thread_capture_owned_parameter_type_failure() {
     assert(analysis.entries().front().message ==
            "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis");
     assert(analysis.concurrency_captures.size() == 1);
-    assert(analysis.concurrency_captures[0].name == "buffer");
-    assert(analysis.concurrency_captures[0].type_name == "Buffer");
-    assert(analysis.concurrency_captures[0].capture_kind ==
-           orison::semantics::ConcurrencyCaptureKind::parameter);
+    assert_concurrency_capture(
+        analysis,
+        0,
+        "buffer",
+        "Buffer",
+        orison::semantics::ConcurrencyExpressionKind::thread,
+        orison::semantics::ConcurrencyCaptureKind::parameter
+    );
 }
 
 void test_thread_capture_transferable_generic_success() {
@@ -5586,10 +5606,14 @@ void test_thread_capture_transferable_generic_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.concurrency_captures.size() == 1);
-    assert(analysis.concurrency_captures[0].name == "item");
-    assert(analysis.concurrency_captures[0].type_name == "T");
-    assert(analysis.concurrency_captures[0].capture_kind ==
-           orison::semantics::ConcurrencyCaptureKind::parameter);
+    assert_concurrency_capture(
+        analysis,
+        0,
+        "item",
+        "T",
+        orison::semantics::ConcurrencyExpressionKind::thread,
+        orison::semantics::ConcurrencyCaptureKind::parameter
+    );
 }
 
 void test_thread_capture_unconstrained_generic_failure() {
@@ -5631,8 +5655,14 @@ void test_thread_capture_transferable_concrete_type_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.concurrency_captures.size() == 1);
-    assert(analysis.concurrency_captures[0].name == "buffer");
-    assert(analysis.concurrency_captures[0].type_name == "Buffer");
+    assert_concurrency_capture(
+        analysis,
+        0,
+        "buffer",
+        "Buffer",
+        orison::semantics::ConcurrencyExpressionKind::thread,
+        orison::semantics::ConcurrencyCaptureKind::parameter
+    );
 }
 
 void test_thread_capture_shareable_generic_failure() {
@@ -5673,10 +5703,14 @@ void test_task_capture_shareable_generic_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.concurrency_captures.size() == 1);
-    assert(analysis.concurrency_captures[0].name == "item");
-    assert(analysis.concurrency_captures[0].type_name == "T");
-    assert(analysis.concurrency_captures[0].expression_kind ==
-           orison::semantics::ConcurrencyExpressionKind::task);
+    assert_concurrency_capture(
+        analysis,
+        0,
+        "item",
+        "T",
+        orison::semantics::ConcurrencyExpressionKind::task,
+        orison::semantics::ConcurrencyCaptureKind::parameter
+    );
 }
 
 void test_task_capture_shareable_concrete_type_success() {
@@ -5698,10 +5732,14 @@ void test_task_capture_shareable_concrete_type_success() {
     auto analysis = analyze_orison_fixture(path);
     assert(!analysis.has_errors());
     assert(analysis.concurrency_captures.size() == 1);
-    assert(analysis.concurrency_captures[0].name == "buffer");
-    assert(analysis.concurrency_captures[0].type_name == "Buffer");
-    assert(analysis.concurrency_captures[0].expression_kind ==
-           orison::semantics::ConcurrencyExpressionKind::task);
+    assert_concurrency_capture(
+        analysis,
+        0,
+        "buffer",
+        "Buffer",
+        orison::semantics::ConcurrencyExpressionKind::task,
+        orison::semantics::ConcurrencyCaptureKind::parameter
+    );
 }
 
 void test_thread_capture_shareable_concrete_type_failure() {
