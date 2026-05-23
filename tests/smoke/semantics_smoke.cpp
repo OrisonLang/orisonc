@@ -4421,197 +4421,141 @@ void test_return_rebound_indexed_address_used_by_pointer_constructor_success() {
 void test_volatile_read_return_type_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_return_type_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "    return volatile_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+            "    return volatile_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "volatile_read result type 'Byte' does not match function return type 'Pointer<Byte>'");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "volatile_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
+    );
 }
 
 void test_volatile_read_return_type_match_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_return_type_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte(p: Pointer<Byte>) -> Byte\n";
-        output << "    return volatile_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    return volatile_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_volatile_read_return_same_width_integer_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_read_return_same_width_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Int32>) -> UInt32\n";
-        output << "    return volatile_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Int32>) -> UInt32",
+            "    return volatile_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_volatile_read_return_pointer_sized_integer_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_read_return_pointer_sized_mismatch.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Byte>) -> IntSize\n";
-        output << "    return volatile_read(p)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> IntSize",
+            "    return volatile_read(p)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "volatile_read result type 'Byte' does not match function return type 'IntSize'");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "volatile_read result type 'Byte' does not match function return type 'IntSize'"
+    );
 }
 
 void test_volatile_read_typed_binding_result_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_typed_binding_mismatch.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Byte>) -> UInt32\n";
-        output << "    let value: UInt32 = volatile_read(p)\n";
-        output << "    return value\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> UInt32",
+            "    let value: UInt32 = volatile_read(p)",
+            "    return value",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "volatile_read result type 'Byte' does not match binding type 'UInt32'");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "volatile_read result type 'Byte' does not match binding type 'UInt32'"
+    );
 }
 
 void test_volatile_read_typed_binding_result_match_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_typed_binding_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte(p: Pointer<Byte>) -> Byte\n";
-        output << "    let value: Byte = volatile_read(p)\n";
-        output << "    return value\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    let value: Byte = volatile_read(p)",
+            "    return value",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_volatile_read_typed_binding_same_width_integer_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_read_typed_binding_same_width_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Int32>) -> Int32\n";
-        output << "    let value: UInt32 = volatile_read(p)\n";
-        output << "    return value as Int32\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Int32>) -> Int32",
+            "    let value: UInt32 = volatile_read(p)",
+            "    return value as Int32",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_volatile_read_typed_binding_pointer_sized_integer_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_read_typed_binding_pointer_sized_mismatch.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_word(p: Pointer<Byte>) -> IntSize\n";
-        output << "    let value: IntSize = volatile_read(p)\n";
-        output << "    return value\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> IntSize",
+            "    let value: IntSize = volatile_read(p)",
+            "    return value",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "volatile_read result type 'Byte' does not match binding type 'IntSize'");
+    assert_fixture_single_diagnostic(
+        path,
+        3,
+        "volatile_read result type 'Byte' does not match binding type 'IntSize'"
+    );
 }
 
 void test_volatile_write_value_type_mismatch_failure() {
