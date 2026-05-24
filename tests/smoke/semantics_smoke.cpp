@@ -1138,62 +1138,48 @@ void test_for_loop_preserves_thread_origin_failure() {
 void test_guard_failure_path_does_not_override_async_origin_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_guard_failure_path_async_origin_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var pending = request(url)\n";
-        output << "    guard flag else\n";
-        output << "        pending = thread\n";
-        output << "            2\n";
-        output << "        return await request(url)\n";
-        output << "    return await pending\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "    var pending = request(url)",
+            "    guard flag else",
+            "        pending = thread",
+            "            2",
+            "        return await request(url)",
+            "    return await pending",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_guard_failure_path_does_not_create_async_origin_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_guard_failure_path_async_origin_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.await\n";
-        output << "async function request(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    return fetch_remote(url)\n";
-        output << "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>\n";
-        output << "    var pending = 0\n";
-        output << "    guard flag else\n";
-        output << "        pending = request(url)\n";
-        output << "        return await request(url)\n";
-        output << "    return await pending\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "    var pending = 0",
+            "    guard flag else",
+            "        pending = request(url)",
+            "        return await request(url)",
+            "    return await pending",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 9);
-    assert(diagnostics.entries().front().message ==
-           "await expression currently requires a task value or declared async call result");
+    assert_fixture_single_diagnostic(
+        path,
+        9,
+        "await expression currently requires a task value or declared async call result"
+    );
 }
 
 void test_switch_constructor_pattern_binds_case_local_names_success() {
