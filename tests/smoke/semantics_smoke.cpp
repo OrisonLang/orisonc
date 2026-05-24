@@ -1784,8 +1784,7 @@ void test_switch_accepts_exhaustive_payload_choice_without_default_success() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_exhaustive_payload_choice_success.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Empty => 0"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_accepts_reversed_exhaustive_payload_choice_without_default_success() {
@@ -1794,8 +1793,7 @@ void test_switch_accepts_reversed_exhaustive_payload_choice_without_default_succ
         "orison_semantics_switch_reversed_exhaustive_payload_choice_success.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Empty => 0", "Some(value) => value"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_accepts_literal_payload_choice_arm_with_default_success() {
@@ -1803,8 +1801,7 @@ void test_switch_accepts_literal_payload_choice_arm_with_default_success() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_default_success.or";
     write_maybe_int_exhaustiveness_fixture(path, {"Some(1) => 1", "Empty => 0"}, true);
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_literal_payload_choice_arm_without_default_failure() {
@@ -1829,8 +1826,7 @@ void test_switch_accepts_nested_payload_choice_arm_with_default_success() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_choice_default_success.or";
     write_boxed_maybe_exhaustiveness_fixture(path, {"Wrap(Some(value)) => value", "Blank => 0"}, true);
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_nested_payload_choice_arm_without_default_failure() {
@@ -1847,8 +1843,7 @@ void test_switch_accepts_partial_multi_payload_choice_arm_with_default_success()
         "orison_semantics_switch_partial_multi_payload_choice_default_success.or";
     write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => left", "Empty => 0"}, true);
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_partial_multi_payload_choice_arm_without_default_failure() {
@@ -1877,8 +1872,7 @@ void test_switch_accepts_exhaustive_multi_payload_choice_without_default_success
         {"First(value) => value", "Second(value) => value", "Empty => 0"}
     );
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_redundant_multi_payload_choice_default_failure() {
