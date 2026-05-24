@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-23: assignment and ternary async/thread origin semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-23: task-inside-async semantics smoke fixture now reuses the shared source writer plus semantic success helper.
 - 2026-05-23: receiver-capture concurrency semantics smoke fixture now uses the focused receiver capture diagnostic helper.
 - 2026-05-23: task/thread value-boundary and mutable-capture semantics smoke fixtures now share focused diagnostic helpers.
