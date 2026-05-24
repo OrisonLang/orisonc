@@ -769,25 +769,18 @@ void test_await_member_call_not_marked_async_from_top_level_name_collision_failu
 
 void test_task_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_task_async_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.task\n";
-        output << "async function fetch(url: Text) -> Outcome<Text, IOError>\n";
-        output << "    let request_task = task\n";
-        output << "        request(url)\n";
-        output << "    return await request_task\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.task",
+        {
+            "async function fetch(url: Text) -> Outcome<Text, IOError>",
+            "    let request_task = task",
+            "        request(url)",
+            "    return await request_task",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_return_task_value_failure() {
