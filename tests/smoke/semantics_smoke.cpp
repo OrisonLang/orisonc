@@ -1290,8 +1290,7 @@ void test_switch_accepts_disjoint_nested_literal_payload_constructor_patterns_su
         std::filesystem::temp_directory_path() / "orison_semantics_switch_disjoint_nested_literal_payload_success.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(1)) => 1", "Wrap(Some(2)) => 2"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_nested_wildcard_literal_payload_constructor_overlap_failure() {
@@ -1329,8 +1328,7 @@ void test_switch_accepts_disjoint_nested_multi_payload_constructor_patterns_succ
         {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 2)) => 2"}
     );
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_accepts_mismatched_nested_constructor_patterns_success() {
@@ -1338,8 +1336,7 @@ void test_switch_accepts_mismatched_nested_constructor_patterns_success() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_mismatched_nested_constructor_success.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(value)) => 1", "Wrap(Empty) => 2"});
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_duplicate_nested_zero_payload_constructor_failure() {
@@ -1377,8 +1374,7 @@ void test_switch_accepts_disjoint_deep_nested_literal_payload_constructor_patter
         {"Wrap(Hold(Some(1))) => 1", "Wrap(Hold(Some(2))) => 2"}
     );
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_deep_nested_wildcard_literal_payload_constructor_overlap_failure() {
@@ -1411,8 +1407,7 @@ void test_switch_accepts_mismatched_deep_nested_zero_payload_constructor_pattern
         {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Empty)) => 2"}
     );
 
-    auto diagnostics = analyze_orison_fixture(path);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_switch_rejects_duplicate_deep_nested_zero_payload_constructor_failure() {
