@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-23: switch unknown-constructor/name-pattern semantics smoke fixtures now reuse shared fixture writers plus semantic diagnostic helpers.
 - 2026-05-23: guard failure-path async-origin semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-23: while/repeat/for async/thread origin semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
 - 2026-05-23: if/switch branch async/thread origin semantics smoke fixtures now reuse the shared source writer plus semantic diagnostic/success helpers.
