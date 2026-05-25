@@ -702,6 +702,17 @@ void assert_receiver_capture_diagnostic(std::filesystem::path const& path, std::
     assert_fixture_single_diagnostic(path, expected_line, "concurrency expression cannot capture receiver 'this'");
 }
 
+void assert_switch_unknown_constructor_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view constructor_name
+) {
+    std::string const message = "switch constructor pattern '" +
+                                std::string(constructor_name) +
+                                "' does not match any declared choice variant";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
@@ -1479,11 +1490,7 @@ void test_switch_top_level_name_pattern_rejects_unknown_variant_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_name_pattern_binding_failure.or";
     write_switch_name_pattern_async_capture_fixture(path);
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "switch constructor pattern 'head' does not match any declared choice variant"
-    );
+    assert_switch_unknown_constructor_diagnostic(path, 5, "head");
 }
 
 void test_switch_call_pattern_rejects_unknown_variant_failure() {
@@ -1491,11 +1498,7 @@ void test_switch_call_pattern_rejects_unknown_variant_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_call_pattern_unknown_variant_failure.or";
     write_switch_unknown_call_pattern_fixture(path);
 
-    assert_fixture_single_diagnostic(
-        path,
-        4,
-        "switch constructor pattern 'Missing' does not match any declared choice variant"
-    );
+    assert_switch_unknown_constructor_diagnostic(path, 4, "Missing");
 }
 
 void test_switch_unknown_constructor_without_default_does_not_cascade_to_missing_variant_failure() {
@@ -1504,11 +1507,7 @@ void test_switch_unknown_constructor_without_default_does_not_cascade_to_missing
         "orison_semantics_switch_unknown_constructor_without_default_no_cascade_failure.or";
     write_maybe_unknown_constructor_fixture(path);
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "switch constructor pattern 'Missing' does not match any declared choice variant"
-    );
+    assert_switch_unknown_constructor_diagnostic(path, 7, "Missing");
 }
 
 void test_switch_nested_constructor_pattern_binds_nested_names_success() {
