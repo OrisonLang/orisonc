@@ -690,6 +690,40 @@ void assert_pointer_typed_binding_pointee_mismatch_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_pointer_return_structural_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "pointer-returning function currently requires a structurally pointer-like expression"
+    );
+}
+
+void assert_raw_offset_source_pointee_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    std::string const message = "raw_offset source pointer element type '" +
+                                std::string(actual_type) +
+                                "' does not match expected pointer element type '" +
+                                std::string(expected_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_pointer_return_pointee_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    std::string const message = "pointer-returning function pointer element type '" +
+                                std::string(actual_type) +
+                                "' does not match expected pointer element type '" +
+                                std::string(expected_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -2807,176 +2841,111 @@ void test_pointer_typed_binding_with_same_width_field_pointer_success() {
 void test_pointer_return_with_nonpointer_expression_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_ptr() -> Pointer<Byte>\n";
-        output << "    return \"text\"\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr() -> Pointer<Byte>",
+            "    return \"text\"",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "pointer-returning function currently requires a structurally pointer-like expression");
+    assert_pointer_return_structural_diagnostic(path, 3);
 }
 
 void test_pointer_return_with_pointer_expression_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "    return raw_offset(base, 1)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
+            "    return raw_offset(base, 1)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_pointer_return_with_mismatched_raw_offset_source_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_rawoffset_source_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>\n";
-        output << "    return raw_offset(base, 1)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>",
+            "    return raw_offset(base, 1)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'");
+    assert_raw_offset_source_pointee_mismatch_diagnostic(path, 3, "Byte", "UInt32");
 }
 
 void test_pointer_return_with_matching_raw_offset_source_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_rawoffset_source_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "    return raw_offset(base, 1)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function next_byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
+            "    return raw_offset(base, 1)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_pointer_return_with_wrong_typed_name_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_name_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function next_ptr() -> Pointer<Byte>\n";
-        output << "    let source = \"text\"\n";
-        output << "    return source\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr() -> Pointer<Byte>",
+            "    let source = \"text\"",
+            "    return source",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message ==
-           "pointer-returning function currently requires a structurally pointer-like expression");
+    assert_pointer_return_structural_diagnostic(path, 4);
 }
 
 void test_pointer_return_with_mismatched_helper_pointer_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_pointer_return_helper_pointer_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>\n";
-        output << "    return base\n";
-        output << "unsafe function word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>\n";
-        output << "    return byte_ptr(base)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function byte_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
+            "    return base",
+            "unsafe function word_ptr(base: Pointer<Byte>) -> Pointer<UInt32>",
+            "    return byte_ptr(base)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "pointer-returning function pointer element type 'Byte' does not match expected pointer element type 'UInt32'");
+    assert_pointer_return_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_pointer_return_with_same_width_helper_pointer_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_pointer_return_same_width_helper_pointer_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function wordish_ptr(base: Pointer<Int32>) -> Pointer<Int32>\n";
-        output << "    return base\n";
-        output << "unsafe function word_ptr(base: Pointer<Int32>) -> Pointer<UInt32>\n";
-        output << "    return wordish_ptr(base)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function wordish_ptr(base: Pointer<Int32>) -> Pointer<Int32>",
+            "    return base",
+            "unsafe function word_ptr(base: Pointer<Int32>) -> Pointer<UInt32>",
+            "    return wordish_ptr(base)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_generic_helper_returned_pointer_same_width_success() {
