@@ -733,6 +733,39 @@ void assert_switch_wrong_choice_constructor_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_switch_payload_shape_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
+    );
+}
+
+void assert_switch_duplicate_binding_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view binding_name
+) {
+    std::string const message = "switch constructor pattern cannot bind '" +
+                                std::string(binding_name) + "' more than once";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_switch_constructor_arity_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view constructor_name,
+    std::size_t expected_count,
+    std::size_t actual_count
+) {
+    std::string const message = "switch constructor pattern '" +
+                                std::string(constructor_name) + "' expects " +
+                                std::to_string(expected_count) +
+                                " payload values but received " +
+                                std::to_string(actual_count);
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
@@ -1768,11 +1801,7 @@ void test_switch_nested_constructor_pattern_rejects_invalid_payload_shape_failur
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_constructor_pattern_shape_failure.or";
     write_list_switch_fixture(path, {"Node(head + 1, tail) => 0"}, true);
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
-    );
+    assert_switch_payload_shape_diagnostic(path, 7);
 }
 
 void test_switch_constructor_payload_shape_without_default_does_not_cascade_failure() {
@@ -1781,11 +1810,7 @@ void test_switch_constructor_payload_shape_without_default_does_not_cascade_fail
         "orison_semantics_switch_constructor_payload_shape_without_default_no_cascade_failure.or";
     write_list_switch_fixture(path, {"Node(head + 1, tail) => 0"}, false, false);
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "switch constructor pattern payload currently requires a binding name, literal, or nested constructor pattern"
-    );
+    assert_switch_payload_shape_diagnostic(path, 7);
 }
 
 void test_switch_constructor_pattern_rejects_duplicate_binding_names_failure() {
@@ -1793,7 +1818,7 @@ void test_switch_constructor_pattern_rejects_duplicate_binding_names_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_duplicate_binding_failure.or";
     write_list_switch_fixture(path, {"Node(head, head) => 0"}, true);
 
-    assert_fixture_single_diagnostic(path, 7, "switch constructor pattern cannot bind 'head' more than once");
+    assert_switch_duplicate_binding_diagnostic(path, 7, "head");
 }
 
 void test_switch_constructor_duplicate_binding_without_default_does_not_cascade_failure() {
@@ -1802,7 +1827,7 @@ void test_switch_constructor_duplicate_binding_without_default_does_not_cascade_
         "orison_semantics_switch_constructor_duplicate_binding_without_default_no_cascade_failure.or";
     write_list_switch_fixture(path, {"Node(head, head) => 0"}, false, false);
 
-    assert_fixture_single_diagnostic(path, 7, "switch constructor pattern cannot bind 'head' more than once");
+    assert_switch_duplicate_binding_diagnostic(path, 7, "head");
 }
 
 void test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_failure() {
@@ -1810,7 +1835,7 @@ void test_switch_nested_constructor_pattern_rejects_duplicate_binding_names_fail
                 "orison_semantics_switch_nested_constructor_pattern_duplicate_binding_failure.or";
     write_list_switch_fixture(path, {"Node(head, Node(head, tail)) => 0"}, true);
 
-    assert_fixture_single_diagnostic(path, 7, "switch constructor pattern cannot bind 'head' more than once");
+    assert_switch_duplicate_binding_diagnostic(path, 7, "head");
 }
 
 void test_switch_nested_constructor_duplicate_binding_without_default_does_not_cascade_failure() {
@@ -1819,7 +1844,7 @@ void test_switch_nested_constructor_duplicate_binding_without_default_does_not_c
         "orison_semantics_switch_nested_constructor_duplicate_binding_without_default_no_cascade_failure.or";
     write_list_switch_fixture(path, {"Node(head, Node(head, tail)) => 0"}, false, false);
 
-    assert_fixture_single_diagnostic(path, 7, "switch constructor pattern cannot bind 'head' more than once");
+    assert_switch_duplicate_binding_diagnostic(path, 7, "head");
 }
 
 void test_switch_constructor_pattern_rejects_missing_payload_values_failure() {
@@ -1827,11 +1852,7 @@ void test_switch_constructor_pattern_rejects_missing_payload_values_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_arity_missing_failure.or";
     write_list_switch_fixture(path, {"Node(head) => 0"}, true);
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "switch constructor pattern 'Node' expects 2 payload values but received 1"
-    );
+    assert_switch_constructor_arity_diagnostic(path, 7, "Node", 2, 1);
 }
 
 void test_switch_constructor_pattern_rejects_extra_payload_values_failure() {
@@ -1839,11 +1860,7 @@ void test_switch_constructor_pattern_rejects_extra_payload_values_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_constructor_pattern_arity_extra_failure.or";
     write_list_switch_fixture(path, {"Empty(value) => 0"}, true);
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "switch constructor pattern 'Empty' expects 0 payload values but received 1"
-    );
+    assert_switch_constructor_arity_diagnostic(path, 7, "Empty", 0, 1);
 }
 
 void test_switch_constructor_pattern_arity_without_default_does_not_cascade_to_missing_variant_failure() {
@@ -1852,11 +1869,7 @@ void test_switch_constructor_pattern_arity_without_default_does_not_cascade_to_m
         "orison_semantics_switch_constructor_pattern_arity_without_default_no_cascade_failure.or";
     write_list_switch_fixture(path, {"Node(head) => 0"}, false, false);
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "switch constructor pattern 'Node' expects 2 payload values but received 1"
-    );
+    assert_switch_constructor_arity_diagnostic(path, 7, "Node", 2, 1);
 }
 
 void test_switch_zero_payload_constructor_arity_without_default_does_not_cascade_failure() {
@@ -1865,11 +1878,7 @@ void test_switch_zero_payload_constructor_arity_without_default_does_not_cascade
         "orison_semantics_switch_zero_payload_constructor_arity_without_default_no_cascade_failure.or";
     write_list_switch_fixture(path, {"Empty(value) => 0"}, false, false);
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "switch constructor pattern 'Empty' expects 0 payload values but received 1"
-    );
+    assert_switch_constructor_arity_diagnostic(path, 7, "Empty", 0, 1);
 }
 
 void test_switch_rejects_constructor_then_value_pattern_mix_failure() {

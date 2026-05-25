@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: switch constructor payload-shape, duplicate-binding, and arity diagnostics now share focused assertion helpers.
 - 2026-05-25: switch low-level payload mismatch and wrong-choice variant semantics smoke fixtures now reuse focused diagnostic helpers.
 - 2026-05-25: nested switch duplicate Wrap-pattern semantics smoke fixtures now share a path-based duplicate diagnostic helper.
 - 2026-05-25: switch unknown-constructor semantics smoke fixtures now share a focused choice-variant diagnostic helper.
