@@ -574,6 +574,19 @@ void assert_multiple_switch_default_diagnostics(orison::semantics::SemanticAnaly
     assert(diagnostics.entries().back().message == "switch statement may only contain one default case");
 }
 
+void assert_this_type_context_diagnostics(
+    orison::semantics::SemanticAnalysisResult const& diagnostics,
+    std::size_t expected_line,
+    std::size_t expected_count
+) {
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == expected_count);
+    for (auto const& diagnostic : diagnostics.entries()) {
+        assert(diagnostic.line == expected_line);
+        assert(diagnostic.message == "This type is only valid inside interface, implements, or extend methods");
+    }
+}
+
 void assert_fixture_single_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -637,6 +650,10 @@ void assert_mutable_capture_diagnostic(
 
 void assert_receiver_capture_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_fixture_single_diagnostic(path, expected_line, "concurrency expression cannot capture receiver 'this'");
+}
+
+void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
 
 void assert_concurrency_capture(
@@ -2162,25 +2179,14 @@ void test_qualified_this_type_in_ordinary_function_signature_failure() {
     write_receiver_fixture(path, {"function project(value: shared This) -> shared This", "    return value"});
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 2);
-    assert(diagnostics.entries().front().line == 2);
-    assert(diagnostics.entries().front().message ==
-           "This type is only valid inside interface, implements, or extend methods");
-    assert(diagnostics.entries().back().line == 2);
-    assert(diagnostics.entries().back().message ==
-           "This type is only valid inside interface, implements, or extend methods");
+    assert_this_type_context_diagnostics(diagnostics, 2, 2);
 }
 
 void test_qualified_this_type_in_local_annotation_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_this_type_local_failure.or";
     write_receiver_fixture(path, {"function cache() -> Unit", "    let current: exclusive This = unit"});
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "This type is only valid inside interface, implements, or extend methods"
-    );
+    assert_fixture_this_type_context_diagnostic(path, 3);
 }
 
 void test_receiver_parameter_with_nonself_type_inside_method_failure() {
