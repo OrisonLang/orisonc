@@ -724,6 +724,19 @@ void assert_pointer_return_pointee_mismatch_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_raw_write_value_pointee_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view value_type,
+    std::string_view pointer_element_type
+) {
+    std::string const message = "raw_write value type '" +
+                                std::string(value_type) +
+                                "' does not match pointer element type '" +
+                                std::string(pointer_element_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -2951,53 +2964,35 @@ void test_pointer_return_with_same_width_helper_pointer_success() {
 void test_raw_write_generic_helper_returned_pointer_same_width_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_generic_helper_returned_pointer_same_width_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>\n";
-        output << "    return base\n";
-        output << "unsafe function write_word(base: Pointer<Int32>, value: UInt32) -> Unit\n";
-        output << "    raw_write(id_ptr(base), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>",
+            "    return base",
+            "unsafe function write_word(base: Pointer<Int32>, value: UInt32) -> Unit",
+            "    raw_write(id_ptr(base), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_generic_helper_returned_pointer_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_generic_helper_returned_pointer_mismatch_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>\n";
-        output << "    return base\n";
-        output << "unsafe function write_word(base: Pointer<Byte>, value: UInt32) -> Unit\n";
-        output << "    raw_write(id_ptr(base), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>",
+            "    return base",
+            "unsafe function write_word(base: Pointer<Byte>, value: UInt32) -> Unit",
+            "    raw_write(id_ptr(base), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 5, "UInt32", "Byte");
 }
 
 void test_address_return_with_generic_helper_success() {
@@ -3029,135 +3024,92 @@ void test_address_return_with_generic_helper_success() {
 void test_raw_write_generic_receiver_method_pointer_same_width_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_generic_receiver_method_pointer_same_width_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device<T>\n";
-        output << "    id: Int64\n";
-        output << "extend Device<T>\n";
-        output << "    function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>\n";
-        output << "        return base\n";
-        output << "unsafe function write_word(device: Device<Int32>, base: Pointer<Int32>, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.ptr(base), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    id: Int64",
+            "extend Device<T>",
+            "    function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>",
+            "        return base",
+            "unsafe function write_word(device: Device<Int32>, base: Pointer<Int32>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr(base), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_generic_receiver_method_pointer_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_generic_receiver_method_pointer_mismatch_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device<T>\n";
-        output << "    id: Int64\n";
-        output << "extend Device<T>\n";
-        output << "    function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>\n";
-        output << "        return base\n";
-        output << "unsafe function write_word(device: Device<Byte>, base: Pointer<Byte>, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.ptr(base), value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    id: Int64",
+            "extend Device<T>",
+            "    function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>",
+            "        return base",
+            "unsafe function write_word(device: Device<Byte>, base: Pointer<Byte>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr(base), value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 8);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 8, "UInt32", "Byte");
 }
 
 void test_raw_write_generic_record_pointer_field_same_width_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_generic_record_pointer_field_same_width_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device<T>\n";
-        output << "    ptr: Pointer<T>\n";
-        output << "unsafe function write_word(device: Device<Int32>, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.ptr, value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    ptr: Pointer<T>",
+            "unsafe function write_word(device: Device<Int32>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr, value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_generic_record_pointer_field_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_generic_record_pointer_field_mismatch_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device<T>\n";
-        output << "    ptr: Pointer<T>\n";
-        output << "unsafe function write_word(device: Device<Byte>, value: UInt32) -> Unit\n";
-        output << "    raw_write(device.ptr, value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    ptr: Pointer<T>",
+            "unsafe function write_word(device: Device<Byte>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr, value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "raw_write value type 'UInt32' does not match pointer element type 'Byte'");
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 5, "UInt32", "Byte");
 }
 
 void test_raw_write_generic_record_scalar_field_same_width_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_write_generic_record_scalar_field_same_width_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Box<T>\n";
-        output << "    value: T\n";
-        output << "unsafe function write_word(box: Box<Int32>, out: Pointer<UInt32>) -> Unit\n";
-        output << "    raw_write(out, box.value)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Box<T>",
+            "    value: T",
+            "unsafe function write_word(box: Box<Int32>, out: Pointer<UInt32>) -> Unit",
+            "    raw_write(out, box.value)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_address_return_with_generic_record_field_success() {

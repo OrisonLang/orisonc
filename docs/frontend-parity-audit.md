@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-24: generic raw_write pointer semantics smoke fixtures now share focused value/pointee diagnostic helpers.
 - 2026-05-24: pointer-return and raw_offset pointer mismatch semantics smoke fixtures now share focused diagnostic helpers.
 - 2026-05-24: pointer construction and pointer-typed binding semantics smoke fixtures now share focused diagnostic helpers.
 - 2026-05-24: receiver `This` type semantics smoke fixtures now share focused context diagnostic assertion helpers.
