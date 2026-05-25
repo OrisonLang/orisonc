@@ -4627,11 +4627,7 @@ void test_volatile_write_nested_scalar_field_pointer_sized_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 7, "IntSize", "UInt32");
 }
 
 void test_volatile_write_method_returned_container_indexed_value_success() {
@@ -4668,11 +4664,7 @@ void test_volatile_write_member_container_field_indexed_pointer_sized_mismatch_f
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 5, "IntSize", "UInt32");
 }
 
 void test_volatile_write_integer_literal_value_success() {
@@ -4717,11 +4709,7 @@ void test_volatile_write_integer_cast_target_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_write value type 'Int64' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 3, "Int64", "UInt32");
 }
 
 void test_volatile_write_same_width_integer_cast_success() {
@@ -4751,11 +4739,7 @@ void test_volatile_write_pointer_sized_integer_cast_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 3, "IntSize", "UInt32");
 }
 
 void test_volatile_write_recovered_volatile_read_value_type_mismatch_failure() {
@@ -4772,11 +4756,7 @@ void test_volatile_write_recovered_volatile_read_value_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_volatile_write_recovered_volatile_read_integer_cast_success() {
@@ -4810,11 +4790,7 @@ void test_volatile_write_helper_returned_volatile_read_value_type_mismatch_failu
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_volatile_write_member_returned_volatile_read_value_type_mismatch_failure() {
@@ -4835,11 +4811,7 @@ void test_volatile_write_member_returned_volatile_read_value_type_mismatch_failu
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        9,
-        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 9, "Byte", "UInt32");
 }
 
 void test_volatile_write_member_returned_volatile_read_integer_cast_success() {
@@ -4875,11 +4847,7 @@ void test_volatile_write_non_integer_cast_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_write value type 'Bool' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 3, "Bool", "UInt32");
 }
 
 void test_volatile_write_helper_pointer_constructor_type_mismatch_failure() {

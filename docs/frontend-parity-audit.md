@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: nested, cast, and recovered volatile_write mismatch semantics smoke fixtures now reuse the shared value/pointee diagnostic helper.
 - 2026-05-25: computed and indexed volatile_write mismatch semantics smoke fixtures now reuse the shared value/pointee diagnostic helper.
 - 2026-05-25: volatile_read result and direct volatile_write value mismatch semantics smoke fixtures now share focused diagnostic helpers.
 - 2026-05-25: pointer-constructor and raw_offset helper raw_write mismatch semantics smoke fixtures now reuse the shared value/pointee diagnostic helper.
