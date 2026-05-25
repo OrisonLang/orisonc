@@ -4396,11 +4396,7 @@ void test_volatile_write_computed_ternary_pointer_sized_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 3, "IntSize", "UInt32");
 }
 
 void test_volatile_write_rebound_computed_value_success() {
@@ -4456,11 +4452,7 @@ void test_volatile_write_branch_merged_pointer_sized_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        8,
-        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 8, "IntSize", "UInt32");
 }
 
 void test_volatile_write_switch_merged_computed_value_success() {
@@ -4498,11 +4490,7 @@ void test_volatile_write_switch_merged_pointer_sized_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 7, "IntSize", "UInt32");
 }
 
 void test_volatile_write_array_indexed_value_success() {
@@ -4548,11 +4536,7 @@ void test_volatile_write_array_indexed_pointer_sized_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 3, "IntSize", "UInt32");
 }
 
 void test_volatile_write_helper_returned_container_indexed_value_success() {
