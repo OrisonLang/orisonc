@@ -720,6 +720,19 @@ void assert_switch_unknown_constructor_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_switch_wrong_choice_constructor_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view constructor_name,
+    std::string_view choice_type
+) {
+    std::string const message = "switch constructor pattern '" +
+                                std::string(constructor_name) +
+                                "' does not belong to switched choice type '" +
+                                std::string(choice_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
@@ -1690,11 +1703,7 @@ void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_l
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrapped_payload_failure.or";
     write_nested_list_raw_write_fixture(path, "Byte");
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 7, "Byte", "UInt32");
 }
 
 void test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_success() {
@@ -1710,11 +1719,7 @@ void test_switch_generic_constructor_pattern_binds_payload_type_for_low_level_fa
         std::filesystem::temp_directory_path() / "orison_semantics_switch_generic_constructor_payload_failure.or";
     write_maybe_raw_write_fixture(path, "Byte");
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 7, "Byte", "UInt32");
 }
 
 void test_switch_constructor_pattern_rejects_variant_from_different_choice_failure() {
@@ -1722,11 +1727,7 @@ void test_switch_constructor_pattern_rejects_variant_from_different_choice_failu
         std::filesystem::temp_directory_path() / "orison_semantics_switch_wrong_choice_variant_failure.or";
     write_result_switch_with_maybe_variant_fixture(path);
 
-    assert_fixture_single_diagnostic(
-        path,
-        10,
-        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
-    );
+    assert_switch_wrong_choice_constructor_diagnostic(path, 10, "Some", "Result<Int64>");
 }
 
 void test_switch_wrong_choice_constructor_without_default_does_not_cascade_failure() {
@@ -1735,11 +1736,7 @@ void test_switch_wrong_choice_constructor_without_default_does_not_cascade_failu
         "orison_semantics_switch_wrong_choice_constructor_without_default_no_cascade_failure.or";
     write_result_switch_with_maybe_variant_fixture(path, false);
 
-    assert_fixture_single_diagnostic(
-        path,
-        10,
-        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
-    );
+    assert_switch_wrong_choice_constructor_diagnostic(path, 10, "Some", "Result<Int64>");
 }
 
 void test_switch_constructor_pattern_uses_subject_specific_arity_success() {
@@ -1755,11 +1752,7 @@ void test_switch_nested_constructor_pattern_rejects_variant_from_different_paylo
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wrong_payload_choice_failure.or";
     write_envelope_result_switch_with_maybe_variant_fixture(path);
 
-    assert_fixture_single_diagnostic(
-        path,
-        12,
-        "switch constructor pattern 'Some' does not belong to switched choice type 'Result<Int64>'"
-    );
+    assert_switch_wrong_choice_constructor_diagnostic(path, 12, "Some", "Result<Int64>");
 }
 
 void test_switch_nested_constructor_pattern_uses_payload_specific_arity_success() {
