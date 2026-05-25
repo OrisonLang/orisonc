@@ -802,6 +802,22 @@ void assert_volatile_write_value_pointee_mismatch_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_address_binding_initializer_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "address-typed binding initializer currently requires a structurally address-like expression"
+    );
+}
+
+void assert_address_return_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "address-returning function currently requires a structurally address-like expression"
+    );
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -4918,11 +4934,7 @@ void test_address_typed_binding_with_nonaddress_initializer_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "address-typed binding initializer currently requires a structurally address-like expression"
-    );
+    assert_address_binding_initializer_diagnostic(path, 3);
 }
 
 void test_address_typed_binding_with_address_initializer_success() {
@@ -4991,11 +5003,7 @@ void test_address_typed_binding_with_wrong_typed_name_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        4,
-        "address-typed binding initializer currently requires a structurally address-like expression"
-    );
+    assert_address_binding_initializer_diagnostic(path, 4);
 }
 
 void test_address_return_with_nonaddress_expression_failure() {
@@ -5010,11 +5018,7 @@ void test_address_return_with_nonaddress_expression_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "address-returning function currently requires a structurally address-like expression"
-    );
+    assert_address_return_diagnostic(path, 3);
 }
 
 void test_address_return_with_address_expression_success() {
@@ -5066,11 +5070,7 @@ void test_address_return_with_wrong_typed_name_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        4,
-        "address-returning function currently requires a structurally address-like expression"
-    );
+    assert_address_return_diagnostic(path, 4);
 }
 
 void test_task_outside_async_function_failure() {
