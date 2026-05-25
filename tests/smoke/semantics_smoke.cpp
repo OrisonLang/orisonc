@@ -737,6 +737,19 @@ void assert_raw_write_value_pointee_mismatch_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_pointer_construction_source_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view source_type,
+    std::string_view expected_type
+) {
+    std::string const message = "Pointer construction source type '" +
+                                std::string(source_type) +
+                                "' does not match expected pointer element type '" +
+                                std::string(expected_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -2998,27 +3011,20 @@ void test_raw_write_generic_helper_returned_pointer_mismatch_failure() {
 void test_address_return_with_generic_helper_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_address_return_with_generic_helper_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "function id<T>(value: T) -> T\n";
-        output << "    return value\n";
-        output << "record Device\n";
-        output << "    base: Address\n";
-        output << "function read_base(device: Device) -> Address\n";
-        output << "    return id(device.base)\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function id<T>(value: T) -> T",
+            "    return value",
+            "record Device",
+            "    base: Address",
+            "function read_base(device: Device) -> Address",
+            "    return id(device.base)",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_write_generic_receiver_method_pointer_same_width_success() {
@@ -3115,77 +3121,52 @@ void test_raw_write_generic_record_scalar_field_same_width_success() {
 void test_address_return_with_generic_record_field_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_address_return_with_generic_record_field_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Box<T>\n";
-        output << "    value: T\n";
-        output << "function read_base(box: Box<Address>) -> Address\n";
-        output << "    return box.value\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Box<T>",
+            "    value: T",
+            "function read_base(box: Box<Address>) -> Address",
+            "    return box.value",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_pointer_return_with_mismatched_address_of_source_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_addressof_source_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: Pointer<Byte>\n";
-        output << "unsafe function first_word_ptr(buf: Buffer) -> Pointer<UInt32>\n";
-        output << "    return Pointer(address_of(buf.data[0]))\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function first_word_ptr(buf: Buffer) -> Pointer<UInt32>",
+            "    return Pointer(address_of(buf.data[0]))",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "Pointer construction source type 'Byte' does not match expected pointer element type 'UInt32'");
+    assert_pointer_construction_source_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_pointer_return_with_matching_address_of_source_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_addressof_source_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Buffer\n";
-        output << "    data: Pointer<Byte>\n";
-        output << "unsafe function first_byte_ptr(buf: Buffer) -> Pointer<Byte>\n";
-        output << "    return Pointer(address_of(buf.data[0]))\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function first_byte_ptr(buf: Buffer) -> Pointer<Byte>",
+            "    return Pointer(address_of(buf.data[0]))",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_raw_read_return_type_mismatch_failure() {
