@@ -3299,11 +3299,7 @@ void test_raw_write_pointer_sized_integer_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 3, "IntSize", "UInt32");
 }
 
 void test_raw_write_computed_integer_sum_success() {
@@ -3348,11 +3344,7 @@ void test_raw_write_computed_ternary_pointer_sized_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 3, "IntSize", "UInt32");
 }
 
 void test_raw_write_rebound_computed_value_success() {
@@ -3408,11 +3400,7 @@ void test_raw_write_branch_merged_pointer_sized_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        8,
-        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 8, "IntSize", "UInt32");
 }
 
 void test_raw_write_switch_merged_computed_value_success() {
@@ -3450,11 +3438,7 @@ void test_raw_write_switch_merged_pointer_sized_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 7, "IntSize", "UInt32");
 }
 
 void test_raw_write_array_indexed_value_success() {
