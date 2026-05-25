@@ -3657,11 +3657,7 @@ void test_raw_write_integer_cast_target_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "raw_write value type 'Int64' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 3, "Int64", "UInt32");
 }
 
 void test_raw_write_same_width_integer_cast_success() {
@@ -3691,11 +3687,7 @@ void test_raw_write_pointer_sized_integer_cast_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "raw_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 3, "IntSize", "UInt32");
 }
 
 void test_raw_write_recovered_raw_read_value_type_mismatch_failure() {
@@ -3712,11 +3704,7 @@ void test_raw_write_recovered_raw_read_value_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_raw_write_recovered_raw_read_integer_cast_success() {
@@ -3750,11 +3738,7 @@ void test_raw_write_helper_returned_raw_read_value_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_raw_write_member_returned_raw_read_value_type_mismatch_failure() {
@@ -3775,11 +3759,7 @@ void test_raw_write_member_returned_raw_read_value_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        9,
-        "raw_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 9, "Byte", "UInt32");
 }
 
 void test_raw_write_member_returned_raw_read_integer_cast_success() {
@@ -3815,11 +3795,7 @@ void test_raw_write_non_integer_cast_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "raw_write value type 'Bool' does not match pointer element type 'UInt32'"
-    );
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 3, "Bool", "UInt32");
 }
 
 void test_raw_write_helper_pointer_constructor_type_mismatch_failure() {
