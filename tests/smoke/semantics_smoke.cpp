@@ -872,6 +872,30 @@ void assert_task_inside_async_diagnostic(std::filesystem::path const& path, std:
     assert_fixture_single_diagnostic(path, expected_line, "task expression is only valid inside async functions");
 }
 
+void assert_await_inside_async_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "await expression is only valid inside async functions");
+}
+
+void assert_await_requires_async_value_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "await expression currently requires a task value or declared async call result"
+    );
+}
+
+void assert_await_thread_value_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "await cannot be used with thread values; use .join() instead");
+}
+
+void assert_async_return_forward_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "return cannot forward task or async-call values; use await instead"
+    );
+}
+
 void assert_join_task_receiver_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_fixture_single_diagnostic(path, expected_line, "join() cannot be used with task values; use await instead");
 }
@@ -950,7 +974,7 @@ void test_await_outside_async_function_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 5, "await expression is only valid inside async functions");
+    assert_await_inside_async_diagnostic(path, 5);
 }
 
 void test_await_outside_async_method_failure() {
@@ -967,7 +991,7 @@ void test_await_outside_async_method_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 6, "await expression is only valid inside async functions");
+    assert_await_inside_async_diagnostic(path, 6);
 }
 
 void test_await_plain_value_failure() {
@@ -982,11 +1006,7 @@ void test_await_plain_value_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        4,
-        "await expression currently requires a task value or declared async call result"
-    );
+    assert_await_requires_async_value_diagnostic(path, 4);
 }
 
 void test_await_thread_value_failure() {
@@ -1002,7 +1022,7 @@ void test_await_thread_value_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 5, "await cannot be used with thread values; use .join() instead");
+    assert_await_thread_value_diagnostic(path, 5);
 }
 
 void test_await_non_async_call_value_failure() {
@@ -1019,11 +1039,7 @@ void test_await_non_async_call_value_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        6,
-        "await expression currently requires a task value or declared async call result"
-    );
+    assert_await_requires_async_value_diagnostic(path, 6);
 }
 
 void test_await_member_call_not_marked_async_from_top_level_name_collision_failure() {
@@ -1044,11 +1060,7 @@ void test_await_member_call_not_marked_async_from_top_level_name_collision_failu
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        9,
-        "await expression currently requires a task value or declared async call result"
-    );
+    assert_await_requires_async_value_diagnostic(path, 9);
 }
 
 void test_task_inside_async_function_success() {
@@ -1080,11 +1092,7 @@ void test_return_task_value_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "return cannot forward task or async-call values; use await instead"
-    );
+    assert_async_return_forward_diagnostic(path, 5);
 }
 
 void test_return_async_call_value_failure() {
@@ -1101,11 +1109,7 @@ void test_return_async_call_value_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        6,
-        "return cannot forward task or async-call values; use await instead"
-    );
+    assert_async_return_forward_diagnostic(path, 6);
 }
 
 void test_return_thread_value_failure() {
@@ -1121,7 +1125,7 @@ void test_return_thread_value_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 5, "return cannot forward thread values; use .join() instead");
+    assert_thread_return_forward_diagnostic(path, 5);
 }
 
 void test_assignment_preserves_async_call_origin_success() {
@@ -1157,7 +1161,7 @@ void test_assignment_preserves_thread_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 7, "await cannot be used with thread values; use .join() instead");
+    assert_await_thread_value_diagnostic(path, 7);
 }
 
 void test_ternary_preserves_async_call_origin_success() {
