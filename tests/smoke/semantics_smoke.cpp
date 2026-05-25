@@ -628,6 +628,14 @@ void assert_thread_result_transferable_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_thread_result_transferable_success(std::filesystem::path const& path) {
+    assert_fixture_success(path);
+}
+
+void assert_task_result_shareable_success(std::filesystem::path const& path) {
+    assert_fixture_success(path);
+}
+
 std::string thread_capture_transferable_message(
     std::string_view capture_name,
     std::string_view capture_type_name
@@ -5485,7 +5493,7 @@ void test_thread_result_transferable_concrete_type_success() {
         }
     );
 
-    assert_fixture_success(path);
+    assert_thread_result_transferable_success(path);
 }
 
 void test_thread_result_shareable_generic_failure() {
@@ -5521,7 +5529,7 @@ void test_task_result_shareable_generic_success() {
         }
     );
 
-    assert_fixture_success(path);
+    assert_task_result_shareable_success(path);
 }
 
 void test_task_result_shareable_concrete_type_success() {
@@ -5541,7 +5549,7 @@ void test_task_result_shareable_concrete_type_success() {
         }
     );
 
-    assert_fixture_success(path);
+    assert_task_result_shareable_success(path);
 }
 
 void test_thread_result_shareable_concrete_type_failure() {
