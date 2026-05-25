@@ -4864,11 +4864,7 @@ void test_volatile_write_helper_pointer_constructor_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_volatile_write_member_helper_pointer_constructor_type_mismatch_failure() {
@@ -4889,11 +4885,7 @@ void test_volatile_write_member_helper_pointer_constructor_type_mismatch_failure
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        9,
-        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 9, "Byte", "UInt32");
 }
 
 void test_volatile_write_raw_offset_helper_pointer_type_mismatch_failure() {
@@ -4910,11 +4902,7 @@ void test_volatile_write_raw_offset_helper_pointer_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_address_typed_binding_with_nonaddress_initializer_failure() {
