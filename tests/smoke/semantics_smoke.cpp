@@ -750,6 +750,19 @@ void assert_pointer_construction_source_mismatch_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_raw_read_result_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view result_type,
+    std::string_view expected_type
+) {
+    std::string const message = "raw_read result type '" +
+                                std::string(result_type) +
+                                "' does not match function return type '" +
+                                std::string(expected_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -3181,11 +3194,7 @@ void test_raw_read_return_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "raw_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
-    );
+    assert_raw_read_result_mismatch_diagnostic(path, 3, "Byte", "Pointer<Byte>");
 }
 
 void test_raw_read_return_type_match_success() {
@@ -3230,7 +3239,7 @@ void test_raw_read_return_pointer_sized_integer_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "raw_read result type 'Byte' does not match function return type 'IntSize'");
+    assert_raw_read_result_mismatch_diagnostic(path, 3, "Byte", "IntSize");
 }
 
 void test_raw_write_value_type_mismatch_failure() {
@@ -3245,7 +3254,7 @@ void test_raw_write_value_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "raw_write value type 'Byte' does not match pointer element type 'UInt32'");
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 3, "Byte", "UInt32");
 }
 
 void test_raw_write_value_type_match_success() {
