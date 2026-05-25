@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-24: pointer construction and pointer-typed binding semantics smoke fixtures now share focused diagnostic helpers.
 - 2026-05-24: receiver `This` type semantics smoke fixtures now share focused context diagnostic assertion helpers.
 - 2026-05-24: switch default mutation semantics smoke fixtures now share focused default diagnostic assertion helpers.
 - 2026-05-24: payload choice switch exhaustiveness success semantics smoke fixtures now reuse the shared semantic success helper.

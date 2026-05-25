@@ -656,6 +656,40 @@ void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& pa
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
 
+void assert_pointer_construction_unsafe_boundary_diagnostics(
+    orison::semantics::SemanticAnalysisResult const& diagnostics
+) {
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 2);
+    assert(diagnostics.entries().front().line == 3);
+    assert(diagnostics.entries().front().message ==
+           "Pointer construction is only valid inside unsafe functions or unsafe blocks");
+    assert(diagnostics.entries().back().line == 4);
+    assert(diagnostics.entries().back().message ==
+           "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks");
+}
+
+void assert_pointer_typed_binding_initializer_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "pointer-typed binding initializer currently requires a structurally pointer-like expression"
+    );
+}
+
+void assert_pointer_typed_binding_pointee_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    std::string const message = "pointer-typed binding initializer pointer element type '" +
+                                std::string(actual_type) +
+                                "' does not match expected pointer element type '" +
+                                std::string(expected_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -2415,14 +2449,7 @@ void test_pointer_construction_outside_unsafe_context_failure() {
     );
 
     auto diagnostics = analyze_orison_fixture(path);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 2);
-    assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "Pointer construction is only valid inside unsafe functions or unsafe blocks");
-    assert(diagnostics.entries().back().line == 4);
-    assert(diagnostics.entries().back().message ==
-           "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks");
+    assert_pointer_construction_unsafe_boundary_diagnostics(diagnostics);
 }
 
 void test_pointer_construction_inside_unsafe_block_success() {
@@ -2720,58 +2747,36 @@ void test_raw_read_typed_binding_pointer_sized_integer_mismatch_failure() {
 void test_pointer_typed_binding_with_wrong_typed_name_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_typed_binding_name_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "unsafe function read_byte() -> Byte\n";
-        output << "    let source = \"text\"\n";
-        output << "    let p: Pointer<Byte> = source\n";
-        output << "    return 0\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte() -> Byte",
+            "    let source = \"text\"",
+            "    let p: Pointer<Byte> = source",
+            "    return 0",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message ==
-           "pointer-typed binding initializer currently requires a structurally pointer-like expression");
+    assert_pointer_typed_binding_initializer_diagnostic(path, 4);
 }
 
 void test_pointer_typed_binding_with_mismatched_field_pointer_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_pointer_typed_binding_field_pointer_failure.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptr: Pointer<Byte>\n";
-        output << "unsafe function next_ptr(device: Device) -> Pointer<UInt32>\n";
-        output << "    let p: Pointer<UInt32> = device.ptr\n";
-        output << "    return p\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptr: Pointer<Byte>",
+            "unsafe function next_ptr(device: Device) -> Pointer<UInt32>",
+            "    let p: Pointer<UInt32> = device.ptr",
+            "    return p",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 5);
-    assert(diagnostics.entries().front().message ==
-           "pointer-typed binding initializer pointer element type 'Byte' does not match expected pointer element type 'UInt32'");
+    assert_pointer_typed_binding_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_pointer_typed_binding_with_same_width_field_pointer_success() {
