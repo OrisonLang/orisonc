@@ -766,6 +766,38 @@ void assert_switch_constructor_arity_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_switch_pattern_mix_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "switch cannot mix value patterns with constructor patterns"
+    );
+}
+
+void assert_switch_value_pattern_type_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view pattern_type,
+    std::string_view subject_type
+) {
+    std::string const message = "switch value pattern type '" +
+                                std::string(pattern_type) +
+                                "' does not match switched expression type '" +
+                                std::string(subject_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_switch_duplicate_value_pattern_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view pattern_text
+) {
+    std::string const message = "switch value pattern '" +
+                                std::string(pattern_text) +
+                                "' is duplicated";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
@@ -1886,7 +1918,7 @@ void test_switch_rejects_constructor_then_value_pattern_mix_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_pattern_mix_constructor_value_failure.or";
     write_list_switch_fixture(path, {"Empty => 0", "1 => 1"});
 
-    assert_fixture_single_diagnostic(path, 8, "switch cannot mix value patterns with constructor patterns");
+    assert_switch_pattern_mix_diagnostic(path, 8);
 }
 
 void test_switch_rejects_value_then_constructor_pattern_mix_failure() {
@@ -1894,7 +1926,7 @@ void test_switch_rejects_value_then_constructor_pattern_mix_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_pattern_mix_value_constructor_failure.or";
     write_value_then_constructor_pattern_mix_fixture(path);
 
-    assert_fixture_single_diagnostic(path, 8, "switch cannot mix value patterns with constructor patterns");
+    assert_switch_pattern_mix_diagnostic(path, 8);
 }
 
 void test_switch_pattern_mix_without_default_does_not_cascade_to_missing_variant_failure() {
@@ -1903,7 +1935,7 @@ void test_switch_pattern_mix_without_default_does_not_cascade_to_missing_variant
         "orison_semantics_switch_pattern_mix_without_default_no_cascade_failure.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "1 => 1"});
 
-    assert_fixture_single_diagnostic(path, 8, "switch cannot mix value patterns with constructor patterns");
+    assert_switch_pattern_mix_diagnostic(path, 8);
 }
 
 void test_switch_rejects_mismatched_value_pattern_type_failure() {
@@ -1911,11 +1943,7 @@ void test_switch_rejects_mismatched_value_pattern_type_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_value_pattern_type_failure.or";
     write_bool_switch_text_value_pattern_fixture(path);
 
-    assert_fixture_single_diagnostic(
-        path,
-        4,
-        "switch value pattern type 'Text' does not match switched expression type 'Bool'"
-    );
+    assert_switch_value_pattern_type_diagnostic(path, 4, "Text", "Bool");
 }
 
 void test_switch_accepts_same_width_integer_cast_value_pattern_success() {
@@ -1931,7 +1959,7 @@ void test_switch_rejects_duplicate_boolean_value_pattern_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_boolean_value_failure.or";
     write_duplicate_bool_value_pattern_fixture(path);
 
-    assert_fixture_single_diagnostic(path, 5, "switch value pattern 'true' is duplicated");
+    assert_switch_duplicate_value_pattern_diagnostic(path, 5, "true");
 }
 
 void test_switch_duplicate_bool_without_default_does_not_cascade_to_missing_pattern_failure() {
@@ -1940,7 +1968,7 @@ void test_switch_duplicate_bool_without_default_does_not_cascade_to_missing_patt
         "orison_semantics_switch_duplicate_bool_without_default_no_cascade_failure.or";
     write_duplicate_bool_value_pattern_fixture(path, false);
 
-    assert_fixture_single_diagnostic(path, 5, "switch value pattern 'true' is duplicated");
+    assert_switch_duplicate_value_pattern_diagnostic(path, 5, "true");
 }
 
 void test_switch_rejects_duplicate_string_value_pattern_failure() {
@@ -1948,7 +1976,7 @@ void test_switch_rejects_duplicate_string_value_pattern_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_string_value_failure.or";
     write_duplicate_text_value_pattern_fixture(path);
 
-    assert_fixture_single_diagnostic(path, 5, "switch value pattern '\"ready\"' is duplicated");
+    assert_switch_duplicate_value_pattern_diagnostic(path, 5, "\"ready\"");
 }
 
 void test_switch_rejects_duplicate_integer_cast_value_pattern_failure() {
@@ -1956,7 +1984,7 @@ void test_switch_rejects_duplicate_integer_cast_value_pattern_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_integer_cast_value_failure.or";
     write_duplicate_integer_cast_value_pattern_fixture(path);
 
-    assert_fixture_single_diagnostic(path, 5, "switch value pattern '1 as Int32' is duplicated");
+    assert_switch_duplicate_value_pattern_diagnostic(path, 5, "1 as Int32");
 }
 
 void test_switch_rejects_redundant_bool_default_failure() {
