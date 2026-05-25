@@ -680,6 +680,14 @@ void assert_concurrency_value_boundary_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_task_value_return_success(std::filesystem::path const& path) {
+    assert_fixture_success(path);
+}
+
+void assert_thread_value_return_success(std::filesystem::path const& path) {
+    assert_fixture_success(path);
+}
+
 void assert_mutable_capture_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -5601,7 +5609,7 @@ void test_task_expression_value_return_success() {
         }
     );
 
-    assert_fixture_success(path);
+    assert_task_value_return_success(path);
 }
 
 void test_thread_expression_value_boundary_failure() {
@@ -5633,7 +5641,7 @@ void test_thread_expression_value_return_success() {
         }
     );
 
-    assert_fixture_success(path);
+    assert_thread_value_return_success(path);
 }
 
 void test_task_capture_mutable_outer_local_failure() {

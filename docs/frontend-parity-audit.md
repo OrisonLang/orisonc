@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: task/thread value-return success semantics smoke fixtures now use focused assertion helpers alongside the shared value-boundary diagnostic helper.
 - 2026-05-25: thread/task result safety success semantics smoke fixtures now use focused Transferable/Shareable assertion helpers.
 - 2026-05-25: thread capture Transferable failure semantics smoke fixtures now share a focused diagnostic helper.
 - 2026-05-25: task placement, invalid join receiver, and thread-return forwarding semantics smoke fixtures now share focused diagnostic helpers.
