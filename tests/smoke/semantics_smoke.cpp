@@ -1199,7 +1199,7 @@ void test_ternary_preserves_thread_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 8, "await cannot be used with thread values; use .join() instead");
+    assert_await_thread_value_diagnostic(path, 8);
 }
 
 void test_return_ternary_async_origin_failure() {
@@ -1217,11 +1217,7 @@ void test_return_ternary_async_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "return cannot forward task or async-call values; use await instead"
-    );
+    assert_async_return_forward_diagnostic(path, 7);
 }
 
 void test_if_branch_preserves_async_call_origin_success() {
@@ -1264,7 +1260,7 @@ void test_if_branch_preserves_thread_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 11, "await cannot be used with thread values; use .join() instead");
+    assert_await_thread_value_diagnostic(path, 11);
 }
 
 void test_switch_branch_preserves_async_call_origin_success() {
@@ -1305,7 +1301,7 @@ void test_switch_branch_preserves_thread_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 10, "await cannot be used with thread values; use .join() instead");
+    assert_await_thread_value_diagnostic(path, 10);
 }
 
 void test_while_loop_preserves_async_call_origin_success() {
@@ -1343,7 +1339,7 @@ void test_while_loop_preserves_thread_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 8, "await cannot be used with thread values; use .join() instead");
+    assert_await_thread_value_diagnostic(path, 8);
 }
 
 void test_repeat_loop_preserves_async_call_origin_success() {
@@ -1382,7 +1378,7 @@ void test_repeat_loop_preserves_thread_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 8, "await cannot be used with thread values; use .join() instead");
+    assert_await_thread_value_diagnostic(path, 8);
 }
 
 void test_for_loop_preserves_async_call_origin_success() {
@@ -1420,7 +1416,7 @@ void test_for_loop_preserves_thread_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 8, "await cannot be used with thread values; use .join() instead");
+    assert_await_thread_value_diagnostic(path, 8);
 }
 
 void test_guard_failure_path_does_not_override_async_origin_success() {
@@ -1463,11 +1459,7 @@ void test_guard_failure_path_does_not_create_async_origin_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        9,
-        "await expression currently requires a task value or declared async call result"
-    );
+    assert_await_requires_async_value_diagnostic(path, 9);
 }
 
 void test_switch_constructor_pattern_binds_case_local_names_success() {

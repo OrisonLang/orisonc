@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: ternary, branch, loop, and guard async/thread origin diagnostics now reuse focused await/return helpers.
 - 2026-05-25: early await and async/thread return forwarding semantics smoke fixtures now share focused diagnostic helpers.
 - 2026-05-25: task/thread value-return success semantics smoke fixtures now use focused assertion helpers alongside the shared value-boundary diagnostic helper.
 - 2026-05-25: thread/task result safety success semantics smoke fixtures now use focused Transferable/Shareable assertion helpers.
