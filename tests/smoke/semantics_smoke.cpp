@@ -763,6 +763,45 @@ void assert_raw_read_result_mismatch_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_volatile_read_result_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view result_type,
+    std::string_view expected_type
+) {
+    std::string const message = "volatile_read result type '" +
+                                std::string(result_type) +
+                                "' does not match function return type '" +
+                                std::string(expected_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_volatile_read_binding_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view result_type,
+    std::string_view expected_type
+) {
+    std::string const message = "volatile_read result type '" +
+                                std::string(result_type) +
+                                "' does not match binding type '" +
+                                std::string(expected_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_volatile_write_value_pointee_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view value_type,
+    std::string_view pointer_element_type
+) {
+    std::string const message = "volatile_write value type '" +
+                                std::string(value_type) +
+                                "' does not match pointer element type '" +
+                                std::string(pointer_element_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -4143,11 +4182,7 @@ void test_volatile_read_return_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
-    );
+    assert_volatile_read_result_mismatch_diagnostic(path, 3, "Byte", "Pointer<Byte>");
 }
 
 void test_volatile_read_return_type_match_success() {
@@ -4192,11 +4227,7 @@ void test_volatile_read_return_pointer_sized_integer_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_read result type 'Byte' does not match function return type 'IntSize'"
-    );
+    assert_volatile_read_result_mismatch_diagnostic(path, 3, "Byte", "IntSize");
 }
 
 void test_volatile_read_typed_binding_result_mismatch_failure() {
@@ -4212,11 +4243,7 @@ void test_volatile_read_typed_binding_result_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_read result type 'Byte' does not match binding type 'UInt32'"
-    );
+    assert_volatile_read_binding_mismatch_diagnostic(path, 3, "Byte", "UInt32");
 }
 
 void test_volatile_read_typed_binding_result_match_success() {
@@ -4264,11 +4291,7 @@ void test_volatile_read_typed_binding_pointer_sized_integer_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_read result type 'Byte' does not match binding type 'IntSize'"
-    );
+    assert_volatile_read_binding_mismatch_diagnostic(path, 3, "Byte", "IntSize");
 }
 
 void test_volatile_write_value_type_mismatch_failure() {
@@ -4283,11 +4306,7 @@ void test_volatile_write_value_type_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_write value type 'Byte' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 3, "Byte", "UInt32");
 }
 
 void test_volatile_write_value_type_match_success() {
@@ -4332,11 +4351,7 @@ void test_volatile_write_pointer_sized_integer_value_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "volatile_write value type 'IntSize' does not match pointer element type 'UInt32'"
-    );
+    assert_volatile_write_value_pointee_mismatch_diagnostic(path, 3, "IntSize", "UInt32");
 }
 
 void test_volatile_write_computed_integer_sum_success() {
