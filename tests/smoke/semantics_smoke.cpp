@@ -561,6 +561,19 @@ void assert_single_diagnostic(
     assert(diagnostics.entries().front().message == expected_message);
 }
 
+void assert_nonfinal_switch_default_diagnostic(orison::semantics::SemanticAnalysisResult const& diagnostics) {
+    assert_single_diagnostic(diagnostics, 4, "switch default case must be the final case");
+}
+
+void assert_multiple_switch_default_diagnostics(orison::semantics::SemanticAnalysisResult const& diagnostics) {
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 2);
+    assert(diagnostics.entries().front().line == 4);
+    assert(diagnostics.entries().front().message == "switch default case must be the final case");
+    assert(diagnostics.entries().back().line == 5);
+    assert(diagnostics.entries().back().message == "switch statement may only contain one default case");
+}
+
 void assert_fixture_single_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -2055,12 +2068,7 @@ void test_switch_rejects_multiple_default_cases_semantically() {
         switch_statement.switch_cases.front().is_default = true;
         switch_statement.switch_cases.back().is_default = true;
     });
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 2);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message == "switch default case must be the final case");
-    assert(diagnostics.entries().back().line == 5);
-    assert(diagnostics.entries().back().message == "switch statement may only contain one default case");
+    assert_multiple_switch_default_diagnostics(diagnostics);
 }
 
 void test_switch_rejects_nonfinal_default_case_semantically() {
@@ -2070,10 +2078,7 @@ void test_switch_rejects_nonfinal_default_case_semantically() {
     auto diagnostics = analyze_mutated_first_switch_fixture(path, [](auto& switch_statement) {
         switch_statement.switch_cases.front().is_default = true;
     });
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 1);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message == "switch default case must be the final case");
+    assert_nonfinal_switch_default_diagnostic(diagnostics);
 }
 
 void test_switch_nonfinal_default_suppresses_branch_analysis_failure() {
@@ -2093,12 +2098,7 @@ void test_switch_multiple_default_suppresses_branch_analysis_failure() {
         switch_statement.switch_cases.front().is_default = true;
         switch_statement.switch_cases.back().is_default = true;
     });
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().size() == 2);
-    assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message == "switch default case must be the final case");
-    assert(diagnostics.entries().back().line == 5);
-    assert(diagnostics.entries().back().message == "switch statement may only contain one default case");
+    assert_multiple_switch_default_diagnostics(diagnostics);
 }
 
 void test_break_outside_loop_failure() {
