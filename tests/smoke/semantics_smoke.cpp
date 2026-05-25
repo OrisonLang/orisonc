@@ -550,6 +550,13 @@ void assert_wrap_duplicate_diagnostic(
     assert(diagnostics.entries().front().message == "switch constructor pattern 'Wrap(...)' is duplicated");
 }
 
+void assert_fixture_wrap_duplicate_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line = 10
+) {
+    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path), expected_line);
+}
+
 void assert_single_diagnostic(
     orison::semantics::SemanticAnalysisResult const& diagnostics,
     std::size_t expected_line,
@@ -1531,7 +1538,7 @@ void test_switch_rejects_nested_payload_constructor_overlap_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_overlap_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(value)) => 1", "Wrap(Some(other)) => 2"});
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
+    assert_fixture_wrap_duplicate_diagnostic(path);
 }
 
 void test_switch_rejects_nested_literal_payload_constructor_overlap_failure() {
@@ -1539,7 +1546,7 @@ void test_switch_rejects_nested_literal_payload_constructor_overlap_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_literal_payload_overlap_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(1)) => 1", "Wrap(Some(1)) => 2"});
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
+    assert_fixture_wrap_duplicate_diagnostic(path);
 }
 
 void test_switch_accepts_disjoint_nested_literal_payload_constructor_patterns_success() {
@@ -1555,7 +1562,7 @@ void test_switch_rejects_nested_wildcard_literal_payload_constructor_overlap_fai
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_wildcard_literal_payload_overlap_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(value)) => 1", "Wrap(Some(1)) => 2"});
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
+    assert_fixture_wrap_duplicate_diagnostic(path);
 }
 
 void test_switch_rejects_nested_literal_wildcard_payload_constructor_overlap_failure() {
@@ -1563,7 +1570,7 @@ void test_switch_rejects_nested_literal_wildcard_payload_constructor_overlap_fai
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_literal_wildcard_payload_overlap_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Some(1)) => 1", "Wrap(Some(value)) => 2"});
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
+    assert_fixture_wrap_duplicate_diagnostic(path);
 }
 
 void test_switch_rejects_nested_multi_payload_constructor_overlap_failure() {
@@ -1574,7 +1581,7 @@ void test_switch_rejects_nested_multi_payload_constructor_overlap_failure() {
         {"Wrap(PairSome(left, 1)) => 1", "Wrap(PairSome(other, 1)) => 2"}
     );
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
+    assert_fixture_wrap_duplicate_diagnostic(path);
 }
 
 void test_switch_accepts_disjoint_nested_multi_payload_constructor_patterns_success() {
@@ -1601,7 +1608,7 @@ void test_switch_rejects_duplicate_nested_zero_payload_constructor_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_nested_zero_payload_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Empty) => 1", "Wrap(Empty) => 2"});
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
+    assert_fixture_wrap_duplicate_diagnostic(path);
 }
 
 void test_switch_rejects_duplicate_nested_zero_payload_constructor_no_cascade_failure() {
@@ -1609,7 +1616,7 @@ void test_switch_rejects_duplicate_nested_zero_payload_constructor_no_cascade_fa
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_nested_zero_payload_no_cascade_failure.or";
     write_boxed_maybe_switch_fixture(path, {"Wrap(Empty) => 1", "Wrap(Empty) => 2"}, false);
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path));
+    assert_fixture_wrap_duplicate_diagnostic(path);
 }
 
 void test_switch_rejects_deep_nested_payload_constructor_overlap_failure() {
@@ -1620,7 +1627,7 @@ void test_switch_rejects_deep_nested_payload_constructor_overlap_failure() {
         {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Some(other))) => 2"}
     );
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path), 12);
+    assert_fixture_wrap_duplicate_diagnostic(path, 12);
 }
 
 void test_switch_accepts_disjoint_deep_nested_literal_payload_constructor_patterns_success() {
@@ -1642,7 +1649,7 @@ void test_switch_rejects_deep_nested_wildcard_literal_payload_constructor_overla
         {"Wrap(Hold(Some(value))) => 1", "Wrap(Hold(Some(1))) => 2"}
     );
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path), 12);
+    assert_fixture_wrap_duplicate_diagnostic(path, 12);
 }
 
 void test_switch_rejects_deep_nested_literal_wildcard_payload_constructor_overlap_failure() {
@@ -1653,7 +1660,7 @@ void test_switch_rejects_deep_nested_literal_wildcard_payload_constructor_overla
         {"Wrap(Hold(Some(1))) => 1", "Wrap(Hold(Some(value))) => 2"}
     );
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path), 12);
+    assert_fixture_wrap_duplicate_diagnostic(path, 12);
 }
 
 void test_switch_accepts_mismatched_deep_nested_zero_payload_constructor_patterns_success() {
@@ -1675,7 +1682,7 @@ void test_switch_rejects_duplicate_deep_nested_zero_payload_constructor_failure(
         {"Wrap(Hold(Empty)) => 1", "Wrap(Hold(Empty)) => 2"}
     );
 
-    assert_wrap_duplicate_diagnostic(analyze_orison_fixture(path), 12);
+    assert_fixture_wrap_duplicate_diagnostic(path, 12);
 }
 
 void test_switch_nested_constructor_pattern_binds_wrapped_payload_type_for_low_level_failure() {
