@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: thread capture Transferable failure semantics smoke fixtures now share a focused diagnostic helper.
 - 2026-05-25: task placement, invalid join receiver, and thread-return forwarding semantics smoke fixtures now share focused diagnostic helpers.
 - 2026-05-25: address binding and address return semantics smoke fixtures now share focused structural address diagnostic helpers.
 - 2026-05-25: pointer-constructor and raw_offset helper volatile_write mismatch semantics smoke fixtures now reuse the shared value/pointee diagnostic helper.

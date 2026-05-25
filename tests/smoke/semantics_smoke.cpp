@@ -628,6 +628,40 @@ void assert_thread_result_transferable_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+std::string thread_capture_transferable_message(
+    std::string_view capture_name,
+    std::string_view capture_type_name
+) {
+    return "thread capture '" + std::string(capture_name) + "' of type '" +
+           std::string(capture_type_name) + "' requires future Transferable analysis";
+}
+
+void assert_thread_capture_transferable_diagnostic(
+    orison::semantics::SemanticAnalysisResult const& analysis,
+    std::size_t expected_line,
+    std::string_view capture_name,
+    std::string_view capture_type_name
+) {
+    assert(analysis.has_errors());
+    assert(analysis.entries().size() == 1);
+    assert(analysis.entries().front().line == expected_line);
+    assert(analysis.entries().front().message ==
+           thread_capture_transferable_message(capture_name, capture_type_name));
+}
+
+void assert_thread_capture_transferable_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view capture_name,
+    std::string_view capture_type_name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        thread_capture_transferable_message(capture_name, capture_type_name)
+    );
+}
+
 void assert_concurrency_value_boundary_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -5241,11 +5275,7 @@ void test_thread_capture_owned_parameter_type_failure() {
     );
 
     auto analysis = analyze_orison_fixture(path);
-    assert(analysis.has_errors());
-    assert(analysis.entries().size() == 1);
-    assert(analysis.entries().front().line == 4);
-    assert(analysis.entries().front().message ==
-           "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis");
+    assert_thread_capture_transferable_diagnostic(analysis, 4, "buffer", "Buffer");
     assert(analysis.concurrency_captures.size() == 1);
     assert_concurrency_capture(
         analysis,
@@ -5297,11 +5327,7 @@ void test_thread_capture_unconstrained_generic_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        4,
-        "thread capture 'item' of type 'T' requires future Transferable analysis"
-    );
+    assert_thread_capture_transferable_diagnostic(path, 4, "item", "T");
 }
 
 void test_thread_capture_transferable_concrete_type_success() {
@@ -5347,11 +5373,7 @@ void test_thread_capture_shareable_generic_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "thread capture 'item' of type 'T' requires future Transferable analysis"
-    );
+    assert_thread_capture_transferable_diagnostic(path, 5, "item", "T");
 }
 
 void test_task_capture_shareable_generic_success() {
@@ -5426,11 +5448,7 @@ void test_thread_capture_shareable_concrete_type_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        7,
-        "thread capture 'buffer' of type 'Buffer' requires future Transferable analysis"
-    );
+    assert_thread_capture_transferable_diagnostic(path, 7, "buffer", "Buffer");
 }
 
 void test_thread_result_owned_concrete_type_failure() {
