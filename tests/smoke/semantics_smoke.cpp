@@ -818,6 +818,26 @@ void assert_address_return_diagnostic(std::filesystem::path const& path, std::si
     );
 }
 
+void assert_task_inside_async_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "task expression is only valid inside async functions");
+}
+
+void assert_join_task_receiver_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "join() cannot be used with task values; use await instead");
+}
+
+void assert_join_async_call_receiver_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "join() cannot be used with declared async call results; use await instead"
+    );
+}
+
+void assert_thread_return_forward_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "return cannot forward thread values; use .join() instead");
+}
+
 void assert_concurrency_capture(
     orison::semantics::SemanticAnalysisResult const& analysis,
     std::size_t index,
@@ -5086,7 +5106,7 @@ void test_task_outside_async_function_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "task expression is only valid inside async functions");
+    assert_task_inside_async_diagnostic(path, 3);
 }
 
 void test_thread_outside_async_function_success() {
@@ -5134,7 +5154,7 @@ void test_join_non_thread_receiver_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 5, "join() cannot be used with task values; use await instead");
+    assert_join_task_receiver_diagnostic(path, 5);
 }
 
 void test_join_async_call_receiver_failure() {
@@ -5151,11 +5171,7 @@ void test_join_async_call_receiver_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        6,
-        "join() cannot be used with declared async call results; use await instead"
-    );
+    assert_join_async_call_receiver_diagnostic(path, 6);
 }
 
 void test_thread_value_without_join_failure() {
@@ -5171,7 +5187,7 @@ void test_thread_value_without_join_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 5, "return cannot forward thread values; use .join() instead");
+    assert_thread_return_forward_diagnostic(path, 5);
 }
 
 void test_concurrency_capture_classification_success() {
