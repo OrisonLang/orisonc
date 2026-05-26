@@ -986,19 +986,30 @@ void assert_nonfinal_switch_default_diagnostic(std::filesystem::path const& path
     assert_fixture_single_diagnostic(path, expected_line, "switch default case must be the final case");
 }
 
+std::string loop_control_outside_loop_message(std::string_view statement_name) {
+    return std::string(statement_name) + " statement is only valid inside loops";
+}
+
 void assert_break_outside_loop_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "break statement is only valid inside loops");
+    assert_fixture_single_diagnostic(path, expected_line, loop_control_outside_loop_message("break"));
 }
 
 void assert_continue_outside_loop_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "continue statement is only valid inside loops");
+    assert_fixture_single_diagnostic(path, expected_line, loop_control_outside_loop_message("continue"));
+}
+
+std::string receiver_context_message(std::string_view receiver_subject, std::string_view location_preposition) {
+    return std::string(receiver_subject) +
+           " is only valid " +
+           std::string(location_preposition) +
+           " implements or extend methods";
 }
 
 void assert_receiver_this_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "receiver 'this' is only valid inside implements or extend methods"
+        receiver_context_message("receiver 'this'", "inside")
     );
 }
 
@@ -1006,7 +1017,7 @@ void assert_receiver_parameter_context_diagnostic(std::filesystem::path const& p
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "receiver parameter 'this' is only valid in implements or extend methods"
+        receiver_context_message("receiver parameter 'this'", "in")
     );
 }
 
