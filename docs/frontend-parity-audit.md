@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: receiver placement and receiver-parameter diagnostics now use focused assertion helpers.
 - 2026-05-25: loop-control placement diagnostics now use focused assertion helpers.
 - 2026-05-25: final switch missing zero-payload choice and nonfinal default diagnostics now use focused assertion helpers.
 - 2026-05-25: switch multi-payload missing choice and duplicate constructor diagnostics now reuse focused assertion helpers.

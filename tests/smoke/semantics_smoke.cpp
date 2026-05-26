@@ -881,6 +881,30 @@ void assert_continue_outside_loop_diagnostic(std::filesystem::path const& path, 
     assert_fixture_single_diagnostic(path, expected_line, "continue statement is only valid inside loops");
 }
 
+void assert_receiver_this_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "receiver 'this' is only valid inside implements or extend methods"
+    );
+}
+
+void assert_receiver_parameter_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "receiver parameter 'this' is only valid in implements or extend methods"
+    );
+}
+
+void assert_receiver_parameter_self_type_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "receiver parameter 'this' must use This, shared This, or exclusive This"
+    );
+}
+
 void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
@@ -2485,11 +2509,7 @@ void test_this_outside_method_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_this_outside_method_failure.or";
     write_receiver_fixture(path, {"function current() -> Int64", "    return this"});
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "receiver 'this' is only valid inside implements or extend methods"
-    );
+    assert_receiver_this_context_diagnostic(path, 3);
 }
 
 void test_receiver_parameter_outside_method_failure() {
@@ -2497,11 +2517,7 @@ void test_receiver_parameter_outside_method_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_receiver_parameter_outside_method_failure.or";
     write_receiver_fixture(path, {"function current(this: Int64) -> Int64", "    return 0"});
 
-    assert_fixture_single_diagnostic(
-        path,
-        2,
-        "receiver parameter 'this' is only valid in implements or extend methods"
-    );
+    assert_receiver_parameter_context_diagnostic(path, 2);
 }
 
 void test_qualified_this_type_in_ordinary_function_signature_failure() {
@@ -2525,11 +2541,7 @@ void test_receiver_parameter_with_nonself_type_inside_method_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_receiver_parameter_nonself_type_failure.or";
     write_receiver_fixture(path, {"extend Buffer", "    function reset(this: Int64) -> Unit", "        return"});
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "receiver parameter 'this' must use This, shared This, or exclusive This"
-    );
+    assert_receiver_parameter_self_type_diagnostic(path, 3);
 }
 
 void test_unsafe_intrinsic_outside_unsafe_context_failure() {
