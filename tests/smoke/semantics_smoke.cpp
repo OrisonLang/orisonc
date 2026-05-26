@@ -656,30 +656,55 @@ void assert_fixture_single_capture_kind(
     );
 }
 
+std::string future_marker_type_requirement(
+    std::string_view type_name,
+    std::string_view marker_name
+) {
+    return "type '" + std::string(type_name) +
+           "' requires future " +
+           std::string(marker_name) +
+           " analysis";
+}
+
+std::string future_marker_analysis_message(
+    std::string_view subject,
+    std::string_view type_name,
+    std::string_view marker_name
+) {
+    return std::string(subject) + " " +
+           future_marker_type_requirement(type_name, marker_name);
+}
+
+void assert_concurrency_result_success(std::filesystem::path const& path) {
+    assert_fixture_success(path);
+}
+
 void assert_thread_result_transferable_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
     std::string_view result_type_name
 ) {
-    std::string const message =
-        "thread result type '" + std::string(result_type_name) + "' requires future Transferable analysis";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        future_marker_analysis_message("thread result", result_type_name, "Transferable")
+    );
 }
 
 void assert_thread_result_transferable_success(std::filesystem::path const& path) {
-    assert_fixture_success(path);
+    assert_concurrency_result_success(path);
 }
 
 void assert_task_result_shareable_success(std::filesystem::path const& path) {
-    assert_fixture_success(path);
+    assert_concurrency_result_success(path);
 }
 
 std::string thread_capture_transferable_message(
     std::string_view capture_name,
     std::string_view capture_type_name
 ) {
-    return "thread capture '" + std::string(capture_name) + "' of type '" +
-           std::string(capture_type_name) + "' requires future Transferable analysis";
+    return "thread capture '" + std::string(capture_name) + "' of " +
+           future_marker_type_requirement(capture_type_name, "Transferable");
 }
 
 void assert_thread_capture_transferable_diagnostic(
