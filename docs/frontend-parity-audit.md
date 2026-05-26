@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: raw_offset source and raw_read binding mismatch diagnostics now use focused assertion helpers.
 - 2026-05-25: Pointer construction source mismatch and pointer binding initializer diagnostics now reuse focused assertion helpers.
 - 2026-05-25: Pointer construction arity and address-source diagnostics now use focused assertion helpers.
 - 2026-05-25: index-access and unsafe-function call diagnostics now use focused assertion helpers.

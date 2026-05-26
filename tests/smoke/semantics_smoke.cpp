@@ -1084,6 +1084,19 @@ void assert_raw_read_result_mismatch_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_raw_read_binding_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view result_type,
+    std::string_view expected_type
+) {
+    std::string const message = "raw_read result type '" +
+                                std::string(result_type) +
+                                "' does not match binding type '" +
+                                std::string(expected_type) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_volatile_read_result_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -2999,11 +3012,7 @@ void test_pointer_typed_binding_with_mismatched_raw_offset_source_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
-    );
+    assert_raw_offset_source_pointee_mismatch_diagnostic(path, 3, "Byte", "UInt32");
 }
 
 void test_pointer_typed_binding_with_matching_raw_offset_source_success() {
@@ -3050,7 +3059,7 @@ void test_raw_read_typed_binding_result_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "raw_read result type 'Byte' does not match binding type 'UInt32'");
+    assert_raw_read_binding_mismatch_diagnostic(path, 3, "Byte", "UInt32");
 }
 
 void test_raw_read_typed_binding_result_match_success() {
@@ -3098,7 +3107,7 @@ void test_raw_read_typed_binding_pointer_sized_integer_mismatch_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "raw_read result type 'Byte' does not match binding type 'IntSize'");
+    assert_raw_read_binding_mismatch_diagnostic(path, 3, "Byte", "IntSize");
 }
 
 void test_pointer_typed_binding_with_wrong_typed_name_failure() {
