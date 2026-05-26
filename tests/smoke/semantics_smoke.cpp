@@ -2914,11 +2914,7 @@ void test_pointer_typed_binding_with_mismatched_address_of_source_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "Pointer construction source type 'Byte' does not match expected pointer element type 'UInt32'"
-    );
+    assert_pointer_construction_source_mismatch_diagnostic(path, 5, "Byte", "UInt32");
 }
 
 void test_pointer_typed_binding_with_matching_address_of_source_success() {
@@ -2971,11 +2967,7 @@ void test_pointer_typed_binding_with_nonpointer_initializer_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "pointer-typed binding initializer currently requires a structurally pointer-like expression"
-    );
+    assert_pointer_typed_binding_initializer_diagnostic(path, 3);
 }
 
 void test_pointer_typed_binding_with_pointer_initializer_success() {
