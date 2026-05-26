@@ -755,18 +755,24 @@ void assert_thread_value_return_success(std::filesystem::path const& path) {
     assert_concurrency_expression_success(path);
 }
 
+std::string concurrency_cannot_capture_message(std::string_view captured_subject) {
+    return "concurrency expression cannot capture " + std::string(captured_subject);
+}
+
 void assert_mutable_capture_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
     std::string_view local_name
 ) {
-    std::string const message =
-        "concurrency expression cannot capture mutable outer local '" + std::string(local_name) + "'";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        concurrency_cannot_capture_message("mutable outer local '" + std::string(local_name) + "'")
+    );
 }
 
 void assert_receiver_capture_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "concurrency expression cannot capture receiver 'this'");
+    assert_fixture_single_diagnostic(path, expected_line, concurrency_cannot_capture_message("receiver 'this'"));
 }
 
 void assert_switch_unknown_constructor_diagnostic(
