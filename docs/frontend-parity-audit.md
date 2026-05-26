@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: Pointer construction arity and address-source diagnostics now use focused assertion helpers.
 - 2026-05-25: index-access and unsafe-function call diagnostics now use focused assertion helpers.
 - 2026-05-25: unsafe intrinsic and address-like operand diagnostics now use focused assertion helpers.
 - 2026-05-25: receiver placement and receiver-parameter diagnostics now use focused assertion helpers.

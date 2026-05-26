@@ -968,6 +968,28 @@ void assert_pointer_construction_unsafe_boundary_diagnostics(
            "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks");
 }
 
+void assert_pointer_construction_single_source_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "Pointer construction currently requires exactly one source argument"
+    );
+}
+
+void assert_pointer_construction_address_source_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "Pointer construction currently requires an address-like source argument"
+    );
+}
+
 void assert_pointer_typed_binding_initializer_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_fixture_single_diagnostic(
         path,
@@ -2827,7 +2849,7 @@ void test_pointer_construction_without_argument_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "Pointer construction currently requires exactly one source argument");
+    assert_pointer_construction_single_source_diagnostic(path, 3);
 }
 
 void test_pointer_construction_with_multiple_arguments_failure() {
@@ -2842,7 +2864,7 @@ void test_pointer_construction_with_multiple_arguments_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "Pointer construction currently requires exactly one source argument");
+    assert_pointer_construction_single_source_diagnostic(path, 3);
 }
 
 void test_pointer_construction_with_nonaddress_argument_failure() {
@@ -2858,11 +2880,7 @@ void test_pointer_construction_with_nonaddress_argument_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "Pointer construction currently requires an address-like source argument"
-    );
+    assert_pointer_construction_address_source_diagnostic(path, 3);
 }
 
 void test_pointer_construction_with_address_of_argument_success() {
