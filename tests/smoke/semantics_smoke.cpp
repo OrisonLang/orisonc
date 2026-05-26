@@ -909,6 +909,37 @@ void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& pa
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
 
+void assert_unsafe_intrinsic_context_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view intrinsic_name
+) {
+    std::string const message = "unsafe intrinsic '" +
+                                std::string(intrinsic_name) +
+                                "' is only valid inside unsafe functions or unsafe blocks";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_address_of_storage_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "address_of currently requires an addressable storage operand");
+}
+
+void assert_raw_read_address_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "raw_read currently requires an address-like first argument");
+}
+
+void assert_raw_offset_address_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "raw_offset currently requires an address-like first argument");
+}
+
+void assert_raw_offset_integer_offset_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "raw_offset currently requires an integer offset argument");
+}
+
+void assert_volatile_read_address_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "volatile_read currently requires an address-like first argument");
+}
+
 void assert_pointer_construction_unsafe_boundary_diagnostics(
     orison::semantics::SemanticAnalysisResult const& diagnostics
 ) {
@@ -2555,11 +2586,7 @@ void test_unsafe_intrinsic_outside_unsafe_context_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        3,
-        "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks"
-    );
+    assert_unsafe_intrinsic_context_diagnostic(path, 3, "raw_read");
 }
 
 void test_unsafe_intrinsic_inside_unsafe_function_success() {
@@ -2602,7 +2629,7 @@ void test_address_of_nonstorage_operand_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "address_of currently requires an addressable storage operand");
+    assert_address_of_storage_operand_diagnostic(path, 3);
 }
 
 void test_raw_read_nonaddress_operand_failure() {
@@ -2616,7 +2643,7 @@ void test_raw_read_nonaddress_operand_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "raw_read currently requires an address-like first argument");
+    assert_raw_read_address_operand_diagnostic(path, 3);
 }
 
 void test_raw_offset_nonaddress_base_failure() {
@@ -2630,7 +2657,7 @@ void test_raw_offset_nonaddress_base_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "raw_offset currently requires an address-like first argument");
+    assert_raw_offset_address_operand_diagnostic(path, 3);
 }
 
 void test_raw_offset_noninteger_offset_failure() {
@@ -2644,7 +2671,7 @@ void test_raw_offset_noninteger_offset_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "raw_offset currently requires an integer offset argument");
+    assert_raw_offset_integer_offset_diagnostic(path, 3);
 }
 
 void test_volatile_read_nonaddress_operand_failure() {
@@ -2658,7 +2685,7 @@ void test_volatile_read_nonaddress_operand_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 3, "volatile_read currently requires an address-like first argument");
+    assert_volatile_read_address_operand_diagnostic(path, 3);
 }
 
 void test_nested_address_of_and_raw_offset_success() {
