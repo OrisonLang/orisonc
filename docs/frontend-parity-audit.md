@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: switch multi-payload missing choice and duplicate constructor diagnostics now reuse focused assertion helpers.
 - 2026-05-25: switch choice exhaustiveness and redundant default diagnostics now share focused assertion helpers.
 - 2026-05-25: switch boolean default and missing value-pattern diagnostics now share focused assertion helpers.
 - 2026-05-25: switch value-pattern mix, type mismatch, and duplicate diagnostics now share focused assertion helpers.

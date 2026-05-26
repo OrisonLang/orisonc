@@ -2241,7 +2241,7 @@ void test_switch_duplicate_payload_choice_suppresses_redundant_default_failure()
         true
     );
 
-    assert_fixture_single_diagnostic(path, 11, "switch constructor pattern 'First(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 11, "First(...)");
 }
 
 void test_switch_rejects_first_missing_multi_payload_choice_variant_failure() {
@@ -2250,7 +2250,7 @@ void test_switch_rejects_first_missing_multi_payload_choice_variant_failure() {
         "orison_semantics_switch_first_missing_multi_payload_choice_variant_failure.or";
     write_multi_payload_choice_exhaustiveness_fixture(path, {"Second(value) => value", "Empty => 0"});
 
-    assert_fixture_single_diagnostic(path, 7, "switch is missing choice variant 'First'");
+    assert_switch_missing_choice_variant_diagnostic(path, 7, "First");
 }
 
 void test_switch_rejects_second_missing_multi_payload_choice_variant_failure() {
@@ -2259,7 +2259,7 @@ void test_switch_rejects_second_missing_multi_payload_choice_variant_failure() {
         "orison_semantics_switch_second_missing_multi_payload_choice_variant_failure.or";
     write_multi_payload_choice_exhaustiveness_fixture(path, {"First(value) => value", "Empty => 0"});
 
-    assert_fixture_single_diagnostic(path, 7, "switch is missing choice variant 'Second'");
+    assert_switch_missing_choice_variant_diagnostic(path, 7, "Second");
 }
 
 void test_switch_duplicate_multi_payload_choice_without_default_does_not_cascade_failure() {
@@ -2268,7 +2268,7 @@ void test_switch_duplicate_multi_payload_choice_without_default_does_not_cascade
         "orison_semantics_switch_duplicate_multi_payload_choice_no_cascade_failure.or";
     write_multi_payload_choice_exhaustiveness_fixture(path, {"First(value) => value", "First(other) => other"});
 
-    assert_fixture_single_diagnostic(path, 9, "switch constructor pattern 'First(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 9, "First(...)");
 }
 
 void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_missing_variant_failure() {
@@ -2277,7 +2277,7 @@ void test_switch_duplicate_payload_choice_without_default_does_not_cascade_to_mi
         "orison_semantics_switch_duplicate_payload_choice_without_default_no_cascade_failure.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Some(other) => other"});
 
-    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Some(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 8, "Some(...)");
 }
 
 void test_switch_rejects_duplicate_zero_payload_choice_constructor_failure() {
@@ -2285,7 +2285,7 @@ void test_switch_rejects_duplicate_zero_payload_choice_constructor_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_choice_constructor_failure.or";
     write_zero_payload_choice_switch_fixture(path, {"Closed => 1", "EndOfInput => 2", "Closed => 3"});
 
-    assert_fixture_single_diagnostic(path, 10, "switch constructor pattern 'Closed' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 10, "Closed");
 }
 
 void test_switch_duplicate_choice_without_default_does_not_cascade_to_missing_variant_failure() {
@@ -2294,7 +2294,7 @@ void test_switch_duplicate_choice_without_default_does_not_cascade_to_missing_va
         "orison_semantics_switch_duplicate_choice_without_default_no_cascade_failure.or";
     write_zero_payload_choice_switch_fixture(path, {"Closed => 1", "EndOfInput => 2", "Closed => 3"});
 
-    assert_fixture_single_diagnostic(path, 10, "switch constructor pattern 'Closed' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 10, "Closed");
 }
 
 void test_switch_rejects_duplicate_name_only_payload_choice_constructor_failure() {
@@ -2303,7 +2303,7 @@ void test_switch_rejects_duplicate_name_only_payload_choice_constructor_failure(
         "orison_semantics_switch_duplicate_name_only_payload_choice_constructor_failure.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => 1", "Some(other) => 2"}, true);
 
-    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Some(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 8, "Some(...)");
 }
 
 void test_switch_duplicate_payload_choice_constructor_does_not_cascade_to_binding_failure() {
@@ -2312,7 +2312,7 @@ void test_switch_duplicate_payload_choice_constructor_does_not_cascade_to_bindin
         "orison_semantics_switch_duplicate_payload_choice_constructor_no_cascade_failure.or";
     write_pair_choice_exhaustiveness_fixture(path, {"Both(left, right) => 1", "Both(value, value) => 2"}, true);
 
-    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Both(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 8, "Both(...)");
 }
 
 void test_switch_rejects_duplicate_literal_payload_choice_constructor_failure() {
@@ -2321,7 +2321,7 @@ void test_switch_rejects_duplicate_literal_payload_choice_constructor_failure() 
         "orison_semantics_switch_duplicate_literal_payload_choice_constructor_failure.or";
     write_number_choice_switch_fixture(path, {"Int(1) => 1", "Int(1) => 2"});
 
-    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Int(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 8, "Int(...)");
 }
 
 void test_switch_rejects_equivalent_integer_literal_payload_choice_constructor_failure() {
@@ -2330,7 +2330,7 @@ void test_switch_rejects_equivalent_integer_literal_payload_choice_constructor_f
         "orison_semantics_switch_equivalent_integer_literal_payload_choice_constructor_failure.or";
     write_number_choice_switch_fixture(path, {"Int(1) => 1", "Int(1 as Int64) => 2"});
 
-    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Int(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 8, "Int(...)");
 }
 
 void test_switch_rejects_wildcard_then_literal_payload_choice_constructor_failure() {
@@ -2339,7 +2339,7 @@ void test_switch_rejects_wildcard_then_literal_payload_choice_constructor_failur
         "orison_semantics_switch_wildcard_then_literal_payload_choice_constructor_failure.or";
     write_number_choice_switch_fixture(path, {"Int(value) => 1", "Int(1) => 2"});
 
-    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Int(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 8, "Int(...)");
 }
 
 void test_switch_rejects_literal_then_wildcard_payload_choice_constructor_failure() {
@@ -2348,7 +2348,7 @@ void test_switch_rejects_literal_then_wildcard_payload_choice_constructor_failur
         "orison_semantics_switch_literal_then_wildcard_payload_choice_constructor_failure.or";
     write_number_choice_switch_fixture(path, {"Int(1) => 1", "Int(value) => 2"});
 
-    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Int(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 8, "Int(...)");
 }
 
 void test_switch_rejects_multi_payload_partial_overlap_choice_constructor_failure() {
@@ -2357,7 +2357,7 @@ void test_switch_rejects_multi_payload_partial_overlap_choice_constructor_failur
         "orison_semantics_switch_multi_payload_partial_overlap_choice_constructor_failure.or";
     write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => 1", "Both(other, 1) => 2"}, true);
 
-    assert_fixture_single_diagnostic(path, 8, "switch constructor pattern 'Both(...)' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 8, "Both(...)");
 }
 
 void test_switch_accepts_multi_payload_disjoint_literal_choice_constructor_success() {
