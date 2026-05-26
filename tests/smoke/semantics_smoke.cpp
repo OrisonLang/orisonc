@@ -775,15 +775,26 @@ void assert_receiver_capture_diagnostic(std::filesystem::path const& path, std::
     assert_fixture_single_diagnostic(path, expected_line, concurrency_cannot_capture_message("receiver 'this'"));
 }
 
+std::string switch_constructor_pattern_message(
+    std::string_view constructor_pattern,
+    std::string_view suffix
+) {
+    return "switch constructor pattern '" +
+           std::string(constructor_pattern) +
+           "' " +
+           std::string(suffix);
+}
+
 void assert_switch_unknown_constructor_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
     std::string_view constructor_name
 ) {
-    std::string const message = "switch constructor pattern '" +
-                                std::string(constructor_name) +
-                                "' does not match any declared choice variant";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        switch_constructor_pattern_message(constructor_name, "does not match any declared choice variant")
+    );
 }
 
 void assert_switch_wrong_choice_constructor_diagnostic(
@@ -792,11 +803,14 @@ void assert_switch_wrong_choice_constructor_diagnostic(
     std::string_view constructor_name,
     std::string_view choice_type
 ) {
-    std::string const message = "switch constructor pattern '" +
-                                std::string(constructor_name) +
-                                "' does not belong to switched choice type '" +
-                                std::string(choice_type) + "'";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        switch_constructor_pattern_message(
+            constructor_name,
+            "does not belong to switched choice type '" + std::string(choice_type) + "'"
+        )
+    );
 }
 
 void assert_switch_duplicate_constructor_diagnostic(
@@ -804,10 +818,11 @@ void assert_switch_duplicate_constructor_diagnostic(
     std::size_t expected_line,
     std::string_view constructor_pattern
 ) {
-    std::string const message = "switch constructor pattern '" +
-                                std::string(constructor_pattern) +
-                                "' is duplicated";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        switch_constructor_pattern_message(constructor_pattern, "is duplicated")
+    );
 }
 
 void assert_switch_payload_shape_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
@@ -835,12 +850,16 @@ void assert_switch_constructor_arity_diagnostic(
     std::size_t expected_count,
     std::size_t actual_count
 ) {
-    std::string const message = "switch constructor pattern '" +
-                                std::string(constructor_name) + "' expects " +
-                                std::to_string(expected_count) +
-                                " payload values but received " +
-                                std::to_string(actual_count);
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        switch_constructor_pattern_message(
+            constructor_name,
+            "expects " + std::to_string(expected_count) +
+                " payload values but received " +
+                std::to_string(actual_count)
+        )
+    );
 }
 
 void assert_switch_pattern_mix_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
