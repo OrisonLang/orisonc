@@ -870,17 +870,31 @@ void assert_switch_pattern_mix_diagnostic(std::filesystem::path const& path, std
     );
 }
 
+std::string switch_value_pattern_message(std::string_view pattern_text, std::string_view suffix) {
+    return "switch value pattern '" +
+           std::string(pattern_text) +
+           "' " +
+           std::string(suffix);
+}
+
+std::string switch_value_pattern_type_message(std::string_view pattern_type, std::string_view subject_type) {
+    return "switch value pattern type '" +
+           std::string(pattern_type) +
+           "' does not match switched expression type '" +
+           std::string(subject_type) + "'";
+}
+
 void assert_switch_value_pattern_type_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
     std::string_view pattern_type,
     std::string_view subject_type
 ) {
-    std::string const message = "switch value pattern type '" +
-                                std::string(pattern_type) +
-                                "' does not match switched expression type '" +
-                                std::string(subject_type) + "'";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        switch_value_pattern_type_message(pattern_type, subject_type)
+    );
 }
 
 void assert_switch_duplicate_value_pattern_diagnostic(
@@ -888,10 +902,11 @@ void assert_switch_duplicate_value_pattern_diagnostic(
     std::size_t expected_line,
     std::string_view pattern_text
 ) {
-    std::string const message = "switch value pattern '" +
-                                std::string(pattern_text) +
-                                "' is duplicated";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        switch_value_pattern_message(pattern_text, "is duplicated")
+    );
 }
 
 void assert_switch_redundant_bool_default_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
