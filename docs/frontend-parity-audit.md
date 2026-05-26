@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-25: concurrency capture smoke assertions now share capture-field checking.
 - 2026-05-25: await/join/return concurrency misuse diagnostics now share use-await/use-join assertion helpers.
 - 2026-05-25: task and await placement diagnostics now share a concurrency-expression assertion helper.
 - 2026-05-25: pointer field binding success coverage now uses shared fixture generation and success helpers.

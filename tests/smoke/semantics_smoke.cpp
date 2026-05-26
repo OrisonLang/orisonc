@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fstream>
 #include <initializer_list>
+#include <optional>
 #include <string_view>
 
 namespace {
@@ -606,11 +607,36 @@ void assert_fixture_success(std::filesystem::path const& path) {
     assert(!analyze_orison_fixture(path).has_errors());
 }
 
+void assert_capture_fields(
+    orison::semantics::ConcurrencyCapture const& capture,
+    std::string_view expected_name,
+    std::optional<std::string_view> expected_type_name,
+    std::optional<orison::semantics::ConcurrencyExpressionKind> expected_expression_kind,
+    std::optional<orison::semantics::ConcurrencyCaptureKind> expected_capture_kind
+) {
+    assert(capture.name == expected_name);
+    if (expected_type_name.has_value()) {
+        assert(capture.type_name == *expected_type_name);
+    }
+    if (expected_expression_kind.has_value()) {
+        assert(capture.expression_kind == *expected_expression_kind);
+    }
+    if (expected_capture_kind.has_value()) {
+        assert(capture.capture_kind == *expected_capture_kind);
+    }
+}
+
 void assert_fixture_single_capture(std::filesystem::path const& path, std::string_view expected_name) {
     auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
     assert(diagnostics.concurrency_captures.size() == 1);
-    assert(diagnostics.concurrency_captures.front().name == expected_name);
+    assert_capture_fields(
+        diagnostics.concurrency_captures.front(),
+        expected_name,
+        std::nullopt,
+        std::nullopt,
+        std::nullopt
+    );
 }
 
 void assert_fixture_single_capture_kind(
@@ -621,8 +647,13 @@ void assert_fixture_single_capture_kind(
     auto diagnostics = analyze_orison_fixture(path);
     assert(!diagnostics.has_errors());
     assert(diagnostics.concurrency_captures.size() == 1);
-    assert(diagnostics.concurrency_captures.front().name == expected_name);
-    assert(diagnostics.concurrency_captures.front().capture_kind == expected_kind);
+    assert_capture_fields(
+        diagnostics.concurrency_captures.front(),
+        expected_name,
+        std::nullopt,
+        std::nullopt,
+        expected_kind
+    );
 }
 
 void assert_thread_result_transferable_diagnostic(
@@ -1233,11 +1264,13 @@ void assert_concurrency_capture(
     orison::semantics::ConcurrencyCaptureKind expected_capture_kind
 ) {
     assert(analysis.concurrency_captures.size() > index);
-    auto const& capture = analysis.concurrency_captures[index];
-    assert(capture.name == expected_name);
-    assert(capture.type_name == expected_type_name);
-    assert(capture.expression_kind == expected_expression_kind);
-    assert(capture.capture_kind == expected_capture_kind);
+    assert_capture_fields(
+        analysis.concurrency_captures[index],
+        expected_name,
+        std::optional<std::string_view>{expected_type_name},
+        std::optional<orison::semantics::ConcurrencyExpressionKind>{expected_expression_kind},
+        std::optional<orison::semantics::ConcurrencyCaptureKind>{expected_capture_kind}
+    );
 }
 
 void test_await_inside_async_function_success() {
