@@ -873,6 +873,14 @@ void assert_nonfinal_switch_default_diagnostic(std::filesystem::path const& path
     assert_fixture_single_diagnostic(path, expected_line, "switch default case must be the final case");
 }
 
+void assert_break_outside_loop_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "break statement is only valid inside loops");
+}
+
+void assert_continue_outside_loop_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "continue statement is only valid inside loops");
+}
+
 void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
@@ -2445,14 +2453,14 @@ void test_break_outside_loop_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_break_outside_loop_failure.or";
     write_loop_control_fixture(path, "stop() -> Unit", {"break"});
 
-    assert_fixture_single_diagnostic(path, 3, "break statement is only valid inside loops");
+    assert_break_outside_loop_diagnostic(path, 3);
 }
 
 void test_continue_outside_loop_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_continue_outside_loop_failure.or";
     write_loop_control_fixture(path, "keep_going() -> Unit", {"continue"});
 
-    assert_fixture_single_diagnostic(path, 3, "continue statement is only valid inside loops");
+    assert_continue_outside_loop_diagnostic(path, 3);
 }
 
 void test_break_inside_loop_success() {
