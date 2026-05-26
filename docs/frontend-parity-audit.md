@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-26: switch missing-coverage and redundant-default diagnostics now share message construction helpers.
 - 2026-05-26: switch value-pattern diagnostics now share value-pattern message construction.
 - 2026-05-26: switch-constructor diagnostics now share constructor-pattern message construction.
 - 2026-05-26: mutable-local and receiver capture diagnostics now share a cannot-capture assertion helper.

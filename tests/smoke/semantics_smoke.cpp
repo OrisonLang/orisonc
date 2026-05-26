@@ -909,11 +909,22 @@ void assert_switch_duplicate_value_pattern_diagnostic(
     );
 }
 
+std::string switch_redundant_default_message(std::string_view covered_subject) {
+    return "switch default case is redundant after " + std::string(covered_subject);
+}
+
+std::string switch_missing_message(std::string_view missing_subject, std::string_view missing_name) {
+    return "switch is missing " +
+           std::string(missing_subject) +
+           " '" +
+           std::string(missing_name) + "'";
+}
+
 void assert_switch_redundant_bool_default_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "switch default case is redundant after true and false value patterns"
+        switch_redundant_default_message("true and false value patterns")
     );
 }
 
@@ -922,9 +933,11 @@ void assert_switch_missing_bool_value_pattern_diagnostic(
     std::size_t expected_line,
     std::string_view missing_pattern
 ) {
-    std::string const message = "switch is missing boolean value pattern '" +
-                                std::string(missing_pattern) + "'";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        switch_missing_message("boolean value pattern", missing_pattern)
+    );
 }
 
 void assert_switch_redundant_zero_payload_choice_default_diagnostic(
@@ -934,7 +947,7 @@ void assert_switch_redundant_zero_payload_choice_default_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "switch default case is redundant after all zero-payload choice variants are covered"
+        switch_redundant_default_message("all zero-payload choice variants are covered")
     );
 }
 
@@ -945,7 +958,7 @@ void assert_switch_redundant_choice_default_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "switch default case is redundant after all choice variants are covered"
+        switch_redundant_default_message("all choice variants are covered")
     );
 }
 
@@ -954,9 +967,7 @@ void assert_switch_missing_choice_variant_diagnostic(
     std::size_t expected_line,
     std::string_view variant_name
 ) {
-    std::string const message = "switch is missing choice variant '" +
-                                std::string(variant_name) + "'";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(path, expected_line, switch_missing_message("choice variant", variant_name));
 }
 
 void assert_switch_missing_zero_payload_choice_variant_diagnostic(
@@ -964,9 +975,11 @@ void assert_switch_missing_zero_payload_choice_variant_diagnostic(
     std::size_t expected_line,
     std::string_view variant_name
 ) {
-    std::string const message = "switch is missing zero-payload choice variant '" +
-                                std::string(variant_name) + "'";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        switch_missing_message("zero-payload choice variant", variant_name)
+    );
 }
 
 void assert_nonfinal_switch_default_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
