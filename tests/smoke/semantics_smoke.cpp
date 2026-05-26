@@ -859,6 +859,20 @@ void assert_switch_missing_choice_variant_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_switch_missing_zero_payload_choice_variant_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view variant_name
+) {
+    std::string const message = "switch is missing zero-payload choice variant '" +
+                                std::string(variant_name) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_nonfinal_switch_default_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "switch default case must be the final case");
+}
+
 void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
@@ -2383,7 +2397,7 @@ void test_switch_rejects_missing_zero_payload_choice_variant_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_choice_variant_failure.or";
     write_zero_payload_choice_switch_fixture(path, {"Closed => 1", "EndOfInput => 2"});
 
-    assert_fixture_single_diagnostic(path, 7, "switch is missing zero-payload choice variant 'PermissionDenied'");
+    assert_switch_missing_zero_payload_choice_variant_diagnostic(path, 7, "PermissionDenied");
 }
 
 void test_switch_rejects_multiple_default_cases_semantically() {
@@ -2412,7 +2426,7 @@ void test_switch_nonfinal_default_suppresses_branch_analysis_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nonfinal_default_branch_no_cascade.or";
     write_bool_value_pattern_switch_fixture(path, {"default => await flag", "true => 1"});
 
-    assert_fixture_single_diagnostic(path, 4, "switch default case must be the final case");
+    assert_nonfinal_switch_default_diagnostic(path, 4);
 }
 
 void test_switch_multiple_default_suppresses_branch_analysis_failure() {
