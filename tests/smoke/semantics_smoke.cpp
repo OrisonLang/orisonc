@@ -798,6 +798,24 @@ void assert_switch_duplicate_value_pattern_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_switch_redundant_bool_default_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "switch default case is redundant after true and false value patterns"
+    );
+}
+
+void assert_switch_missing_bool_value_pattern_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view missing_pattern
+) {
+    std::string const message = "switch is missing boolean value pattern '" +
+                                std::string(missing_pattern) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
@@ -1991,11 +2009,7 @@ void test_switch_rejects_redundant_bool_default_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_redundant_bool_default_failure.or";
     write_bool_value_pattern_switch_fixture(path, {"true => 1", "false => 0"}, true);
 
-    assert_fixture_single_diagnostic(
-        path,
-        6,
-        "switch default case is redundant after true and false value patterns"
-    );
+    assert_switch_redundant_bool_default_diagnostic(path, 6);
 }
 
 void test_switch_duplicate_bool_suppresses_redundant_default_failure() {
@@ -2003,7 +2017,7 @@ void test_switch_duplicate_bool_suppresses_redundant_default_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_duplicate_bool_redundant_default_no_cascade.or";
     write_bool_value_pattern_switch_fixture(path, {"true => 1", "false => 0", "false => 2"}, true);
 
-    assert_fixture_single_diagnostic(path, 6, "switch value pattern 'false' is duplicated");
+    assert_switch_duplicate_value_pattern_diagnostic(path, 6, "false");
 }
 
 void test_switch_accepts_exhaustive_bool_without_default_success() {
@@ -2018,7 +2032,7 @@ void test_switch_rejects_missing_bool_value_pattern_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_bool_pattern_failure.or";
     write_bool_value_pattern_switch_fixture(path, {"true => 1"});
 
-    assert_fixture_single_diagnostic(path, 3, "switch is missing boolean value pattern 'false'");
+    assert_switch_missing_bool_value_pattern_diagnostic(path, 3, "false");
 }
 
 void test_switch_rejects_redundant_zero_payload_choice_default_failure() {
