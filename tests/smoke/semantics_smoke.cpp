@@ -940,6 +940,21 @@ void assert_volatile_read_address_operand_diagnostic(std::filesystem::path const
     assert_fixture_single_diagnostic(path, expected_line, "volatile_read currently requires an address-like first argument");
 }
 
+void assert_index_access_integer_index_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(path, expected_line, "index access currently requires an integer index expression");
+}
+
+void assert_unsafe_function_call_context_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view function_name
+) {
+    std::string const message = "call to unsafe function '" +
+                                std::string(function_name) +
+                                "' is only valid inside unsafe functions or unsafe blocks";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_pointer_construction_unsafe_boundary_diagnostics(
     orison::semantics::SemanticAnalysisResult const& diagnostics
 ) {
@@ -2716,7 +2731,7 @@ void test_index_access_noninteger_index_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(path, 5, "index access currently requires an integer index expression");
+    assert_index_access_integer_index_diagnostic(path, 5);
 }
 
 void test_index_access_integer_index_success() {
@@ -2748,11 +2763,7 @@ void test_call_unsafe_function_outside_unsafe_context_failure() {
         }
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        5,
-        "call to unsafe function 'read_word' is only valid inside unsafe functions or unsafe blocks"
-    );
+    assert_unsafe_function_call_context_diagnostic(path, 5, "read_word");
 }
 
 void test_call_unsafe_function_inside_unsafe_block_success() {
