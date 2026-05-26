@@ -3148,26 +3148,19 @@ void test_pointer_typed_binding_with_mismatched_field_pointer_failure() {
 void test_pointer_typed_binding_with_same_width_field_pointer_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_pointer_typed_binding_same_width_field_pointer_success.or";
-    {
-        std::ofstream output(path);
-        output << "package demo.unsafe\n";
-        output << "record Device\n";
-        output << "    ptr: Pointer<Int32>\n";
-        output << "unsafe function next_ptr(device: Device) -> Pointer<UInt32>\n";
-        output << "    let p: Pointer<UInt32> = device.ptr\n";
-        output << "    return p\n";
-    }
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "record Device",
+            "    ptr: Pointer<Int32>",
+            "unsafe function next_ptr(device: Device) -> Pointer<UInt32>",
+            "    let p: Pointer<UInt32> = device.ptr",
+            "    return p",
+        }
+    );
 
-    auto source_file = orison::source::SourceFile::read(path);
-    assert(source_file.has_value());
-
-    orison::syntax::ModuleParser parser;
-    auto parse_result = parser.parse(*source_file);
-    assert(!parse_result.diagnostics.has_errors());
-
-    orison::semantics::ModuleSemanticAnalyzer analyzer;
-    auto diagnostics = analyzer.analyze(parse_result.module);
-    assert(!diagnostics.has_errors());
+    assert_fixture_success(path);
 }
 
 void test_pointer_return_with_nonpointer_expression_failure() {
