@@ -733,6 +733,17 @@ void assert_switch_wrong_choice_constructor_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+void assert_switch_duplicate_constructor_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view constructor_pattern
+) {
+    std::string const message = "switch constructor pattern '" +
+                                std::string(constructor_pattern) +
+                                "' is duplicated";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
 void assert_switch_payload_shape_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_fixture_single_diagnostic(
         path,
@@ -813,6 +824,38 @@ void assert_switch_missing_bool_value_pattern_diagnostic(
 ) {
     std::string const message = "switch is missing boolean value pattern '" +
                                 std::string(missing_pattern) + "'";
+    assert_fixture_single_diagnostic(path, expected_line, message);
+}
+
+void assert_switch_redundant_zero_payload_choice_default_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "switch default case is redundant after all zero-payload choice variants are covered"
+    );
+}
+
+void assert_switch_redundant_choice_default_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "switch default case is redundant after all choice variants are covered"
+    );
+}
+
+void assert_switch_missing_choice_variant_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view variant_name
+) {
+    std::string const message = "switch is missing choice variant '" +
+                                std::string(variant_name) + "'";
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
@@ -2044,11 +2087,7 @@ void test_switch_rejects_redundant_zero_payload_choice_default_failure() {
         true
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        11,
-        "switch default case is redundant after all zero-payload choice variants are covered"
-    );
+    assert_switch_redundant_zero_payload_choice_default_diagnostic(path, 11);
 }
 
 void test_switch_duplicate_zero_payload_choice_suppresses_redundant_default_failure() {
@@ -2061,7 +2100,7 @@ void test_switch_duplicate_zero_payload_choice_suppresses_redundant_default_fail
         true
     );
 
-    assert_fixture_single_diagnostic(path, 11, "switch constructor pattern 'Closed' is duplicated");
+    assert_switch_duplicate_constructor_diagnostic(path, 11, "Closed");
 }
 
 void test_switch_accepts_exhaustive_zero_payload_choice_without_default_success() {
@@ -2080,11 +2119,7 @@ void test_switch_rejects_redundant_payload_choice_default_after_full_cover_failu
         std::filesystem::temp_directory_path() / "orison_semantics_switch_redundant_payload_choice_default_failure.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value", "Empty => 0"}, true);
 
-    assert_fixture_single_diagnostic(
-        path,
-        9,
-        "switch default case is redundant after all choice variants are covered"
-    );
+    assert_switch_redundant_choice_default_diagnostic(path, 9);
 }
 
 void test_switch_accepts_exhaustive_payload_choice_without_default_success() {
@@ -2117,7 +2152,7 @@ void test_switch_rejects_literal_payload_choice_arm_without_default_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_literal_payload_choice_missing_failure.or";
     write_maybe_int_exhaustiveness_fixture(path, {"Some(1) => 1", "Empty => 0"});
 
-    assert_fixture_single_diagnostic(path, 6, "switch is missing choice variant 'Some'");
+    assert_switch_missing_choice_variant_diagnostic(path, 6, "Some");
 }
 
 void test_switch_rejects_reversed_literal_payload_choice_arm_without_default_failure() {
@@ -2126,7 +2161,7 @@ void test_switch_rejects_reversed_literal_payload_choice_arm_without_default_fai
         "orison_semantics_switch_reversed_literal_payload_choice_missing_failure.or";
     write_maybe_int_exhaustiveness_fixture(path, {"Empty => 0", "Some(1) => 1"});
 
-    assert_fixture_single_diagnostic(path, 6, "switch is missing choice variant 'Some'");
+    assert_switch_missing_choice_variant_diagnostic(path, 6, "Some");
 }
 
 void test_switch_accepts_nested_payload_choice_arm_with_default_success() {
@@ -2142,7 +2177,7 @@ void test_switch_rejects_nested_payload_choice_arm_without_default_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_switch_nested_payload_choice_missing_failure.or";
     write_boxed_maybe_exhaustiveness_fixture(path, {"Wrap(Some(value)) => value", "Blank => 0"});
 
-    assert_fixture_single_diagnostic(path, 9, "switch is missing choice variant 'Wrap'");
+    assert_switch_missing_choice_variant_diagnostic(path, 9, "Wrap");
 }
 
 void test_switch_accepts_partial_multi_payload_choice_arm_with_default_success() {
@@ -2160,7 +2195,7 @@ void test_switch_rejects_partial_multi_payload_choice_arm_without_default_failur
         "orison_semantics_switch_partial_multi_payload_choice_missing_failure.or";
     write_pair_choice_exhaustiveness_fixture(path, {"Both(left, 1) => left", "Empty => 0"});
 
-    assert_fixture_single_diagnostic(path, 6, "switch is missing choice variant 'Both'");
+    assert_switch_missing_choice_variant_diagnostic(path, 6, "Both");
 }
 
 void test_switch_rejects_missing_payload_choice_variant_without_default_failure() {
@@ -2168,7 +2203,7 @@ void test_switch_rejects_missing_payload_choice_variant_without_default_failure(
         std::filesystem::temp_directory_path() / "orison_semantics_switch_missing_payload_choice_variant_failure.or";
     write_maybe_choice_exhaustiveness_fixture(path, {"Some(value) => value"});
 
-    assert_fixture_single_diagnostic(path, 6, "switch is missing choice variant 'Empty'");
+    assert_switch_missing_choice_variant_diagnostic(path, 6, "Empty");
 }
 
 void test_switch_accepts_exhaustive_multi_payload_choice_without_default_success() {
@@ -2193,11 +2228,7 @@ void test_switch_rejects_redundant_multi_payload_choice_default_failure() {
         true
     );
 
-    assert_fixture_single_diagnostic(
-        path,
-        11,
-        "switch default case is redundant after all choice variants are covered"
-    );
+    assert_switch_redundant_choice_default_diagnostic(path, 11);
 }
 
 void test_switch_duplicate_payload_choice_suppresses_redundant_default_failure() {
