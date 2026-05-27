@@ -83,6 +83,7 @@ public:
         collect_concurrency_marker_implementations();
         collect_choice_variant_metadata();
         collect_constant_bindings();
+        analyze_constants();
 
         for (auto const& function : module_.functions) {
             analyze_function(function);
@@ -2580,6 +2581,41 @@ private:
                 .type_name = render_type_name(constant.type),
                 .module_constant = true,
             });
+        }
+    }
+
+    auto is_constant_initializer_type_compatible(
+        syntax::ExpressionSyntax const& initializer,
+        std::string const& initializer_type_name,
+        std::string const& declared_type_name
+    ) const -> bool {
+        if (initializer_type_name.empty() || declared_type_name.empty()) {
+            return true;
+        }
+
+        if (initializer.kind == syntax::ExpressionKind::integer_literal &&
+            (is_integer_type_name(declared_type_name) || is_address_type_name(declared_type_name))) {
+            return true;
+        }
+
+        return are_low_level_read_types_compatible(initializer_type_name, declared_type_name);
+    }
+
+    void analyze_constants() {
+        for (auto const& constant : module_.constants) {
+            auto declared_type_name = render_type_name(constant.type);
+            auto initializer_type_name = infer_expression_type_name(constant.initializer);
+            if (!is_constant_initializer_type_compatible(
+                    constant.initializer,
+                    initializer_type_name,
+                    declared_type_name
+                )) {
+                diagnostics_.error(
+                    constant.initializer.line,
+                    "constant initializer type '" + initializer_type_name +
+                        "' does not match declared constant type '" + declared_type_name + "'"
+                );
+            }
         }
     }
 

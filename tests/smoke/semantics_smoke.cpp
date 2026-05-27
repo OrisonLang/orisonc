@@ -1371,6 +1371,20 @@ void assert_raw_write_value_pointee_mismatch_diagnostic(
     );
 }
 
+void assert_constant_initializer_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view initializer_type,
+    std::string_view declared_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "constant initializer type '" + std::string(initializer_type) +
+            "' does not match declared constant type '" + std::string(declared_type) + "'"
+    );
+}
+
 void assert_pointer_construction_source_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3148,6 +3162,34 @@ void test_address_constant_enables_volatile_read_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_integer_literal_constant_initializer_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_integer_literal_constant_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const STATUS_MASK: UInt32 = 0xFF",
+            "function mask() -> UInt32",
+            "    return STATUS_MASK",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_constant_initializer_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_initializer_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const STATUS_MASK: UInt32 = true",
+        }
+    );
+
+    assert_constant_initializer_mismatch_diagnostic(path, 2, "Bool", "UInt32");
 }
 
 void test_nested_address_of_and_raw_offset_success() {
@@ -6408,6 +6450,8 @@ int main() {
     test_raw_offset_noninteger_offset_failure();
     test_volatile_read_nonaddress_operand_failure();
     test_address_constant_enables_volatile_read_success();
+    test_integer_literal_constant_initializer_success();
+    test_constant_initializer_type_mismatch_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();
