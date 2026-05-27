@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-26: top-level constants now participate in semantic expression type inference, including address operands and raw-write value checks.
 - 2026-05-26: single-capture smoke helpers now share fixture analysis and capture-field assertion setup.
 - 2026-05-26: await/join guidance wrappers now use named guidance and value-kind builders.
 - 2026-05-26: async-placement and await-value diagnostics now use named message and requirement builders.

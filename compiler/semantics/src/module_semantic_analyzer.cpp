@@ -82,6 +82,7 @@ public:
         collect_record_field_types();
         collect_concurrency_marker_implementations();
         collect_choice_variant_metadata();
+        collect_constant_bindings();
 
         for (auto const& function : module_.functions) {
             analyze_function(function);
@@ -119,6 +120,7 @@ private:
         bool mutable_binding = false;
         bool receiver_binding = false;
         bool parameter_binding = false;
+        bool module_constant = false;
         std::size_t scope_depth = 0;
     };
 
@@ -2569,6 +2571,18 @@ private:
         }
     }
 
+    void collect_constant_bindings() {
+        module_constant_bindings_.clear();
+
+        for (auto const& constant : module_.constants) {
+            module_constant_bindings_.push_back(Binding {
+                .name = constant.name,
+                .type_name = render_type_name(constant.type),
+                .module_constant = true,
+            });
+        }
+    }
+
     void analyze_function(
         syntax::FunctionSyntax const& function,
         std::string receiver_type_name = {}
@@ -3253,6 +3267,11 @@ private:
                 }
             }
         }
+        for (auto const& binding : module_constant_bindings_) {
+            if (binding.name == name) {
+                return &binding;
+            }
+        }
         return nullptr;
     }
 
@@ -3281,6 +3300,9 @@ private:
 
         auto const* binding = find_binding(expression.text);
         if (binding == nullptr || binding->scope_depth >= capture_scope_depth_) {
+            return;
+        }
+        if (binding->module_constant) {
             return;
         }
 
@@ -3357,6 +3379,7 @@ private:
     std::vector<std::string> shareable_constraint_types_;
     std::vector<std::string> transferable_impl_types_;
     std::vector<std::string> shareable_impl_types_;
+    std::vector<Binding> module_constant_bindings_;
     std::vector<std::vector<Binding>> scope_stack_;
     std::size_t loop_depth_ = 0;
     bool receiver_context_active_ = false;

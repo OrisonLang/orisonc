@@ -3135,6 +3135,21 @@ void test_volatile_read_nonaddress_operand_failure() {
     assert_volatile_read_address_operand_diagnostic(path, 3);
 }
 
+void test_address_constant_enables_volatile_read_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_volatile_read_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const UART_STATUS: Address = 0x4000_1000",
+            "unsafe function read_status() -> UInt32",
+            "    return volatile_read(UART_STATUS)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_nested_address_of_and_raw_offset_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_address_of_raw_offset_success.or";
     write_concurrency_fixture(
@@ -3938,6 +3953,22 @@ void test_raw_write_value_type_mismatch_failure() {
     );
 
     assert_raw_write_value_pointee_mismatch_diagnostic(path, 3, "Byte", "UInt32");
+}
+
+void test_raw_write_constant_value_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_raw_write_constant_value_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "const STATUS_BYTE: Byte = 1",
+            "unsafe function write_word(p: Pointer<UInt32>) -> Unit",
+            "    raw_write(p, STATUS_BYTE)",
+        }
+    );
+
+    assert_raw_write_value_pointee_mismatch_diagnostic(path, 4, "Byte", "UInt32");
 }
 
 void test_raw_write_value_type_match_success() {
@@ -6376,6 +6407,7 @@ int main() {
     test_raw_offset_nonaddress_base_failure();
     test_raw_offset_noninteger_offset_failure();
     test_volatile_read_nonaddress_operand_failure();
+    test_address_constant_enables_volatile_read_success();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();
@@ -6420,6 +6452,7 @@ int main() {
     test_raw_read_return_same_width_integer_success();
     test_raw_read_return_pointer_sized_integer_mismatch_failure();
     test_raw_write_value_type_mismatch_failure();
+    test_raw_write_constant_value_type_mismatch_failure();
     test_raw_write_value_type_match_success();
     test_raw_write_same_width_integer_value_success();
     test_raw_write_pointer_sized_integer_value_mismatch_failure();
