@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-26: marker capture success smoke fixtures now share a single-capture success assertion helper.
 - 2026-05-26: await/join guidance diagnostics now share current-requirement and cannot-action message construction.
 - 2026-05-26: pointer/raw/volatile mismatch diagnostics now share pointer-element, value-element, and result-type message construction.
 - 2026-05-26: pointer and address structural diagnostics now reuse current-requirement message construction.

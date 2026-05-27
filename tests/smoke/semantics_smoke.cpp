@@ -1454,6 +1454,26 @@ void assert_concurrency_capture(
     );
 }
 
+void assert_single_concurrency_capture_success(
+    std::filesystem::path const& path,
+    std::string_view expected_name,
+    std::string_view expected_type_name,
+    orison::semantics::ConcurrencyExpressionKind expected_expression_kind,
+    orison::semantics::ConcurrencyCaptureKind expected_capture_kind
+) {
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.concurrency_captures.size() == 1);
+    assert_concurrency_capture(
+        analysis,
+        0,
+        expected_name,
+        expected_type_name,
+        expected_expression_kind,
+        expected_capture_kind
+    );
+}
+
 void test_await_inside_async_function_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_await_async_success.or";
     write_concurrency_fixture(
@@ -5720,12 +5740,8 @@ void test_thread_capture_transferable_generic_success() {
         }
     );
 
-    auto analysis = analyze_orison_fixture(path);
-    assert(!analysis.has_errors());
-    assert(analysis.concurrency_captures.size() == 1);
-    assert_concurrency_capture(
-        analysis,
-        0,
+    assert_single_concurrency_capture_success(
+        path,
         "item",
         "T",
         orison::semantics::ConcurrencyExpressionKind::thread,
@@ -5765,12 +5781,8 @@ void test_thread_capture_transferable_concrete_type_success() {
         }
     );
 
-    auto analysis = analyze_orison_fixture(path);
-    assert(!analysis.has_errors());
-    assert(analysis.concurrency_captures.size() == 1);
-    assert_concurrency_capture(
-        analysis,
-        0,
+    assert_single_concurrency_capture_success(
+        path,
         "buffer",
         "Buffer",
         orison::semantics::ConcurrencyExpressionKind::thread,
@@ -5809,12 +5821,8 @@ void test_task_capture_shareable_generic_success() {
         }
     );
 
-    auto analysis = analyze_orison_fixture(path);
-    assert(!analysis.has_errors());
-    assert(analysis.concurrency_captures.size() == 1);
-    assert_concurrency_capture(
-        analysis,
-        0,
+    assert_single_concurrency_capture_success(
+        path,
         "item",
         "T",
         orison::semantics::ConcurrencyExpressionKind::task,
@@ -5838,12 +5846,8 @@ void test_task_capture_shareable_concrete_type_success() {
         }
     );
 
-    auto analysis = analyze_orison_fixture(path);
-    assert(!analysis.has_errors());
-    assert(analysis.concurrency_captures.size() == 1);
-    assert_concurrency_capture(
-        analysis,
-        0,
+    assert_single_concurrency_capture_success(
+        path,
         "buffer",
         "Buffer",
         orison::semantics::ConcurrencyExpressionKind::task,
