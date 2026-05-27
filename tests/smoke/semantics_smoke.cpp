@@ -1147,6 +1147,18 @@ std::string current_requirement_message(std::string_view operation_name, std::st
            std::string(requirement);
 }
 
+std::string address_like_first_argument_requirement() {
+    return "an address-like first argument";
+}
+
+std::string structurally_pointer_like_expression_requirement() {
+    return "a structurally pointer-like expression";
+}
+
+std::string structurally_address_like_expression_requirement() {
+    return "a structurally address-like expression";
+}
+
 std::string pointer_element_mismatch_message(
     std::string_view operation_name,
     std::string_view actual_type,
@@ -1210,7 +1222,7 @@ void assert_raw_read_address_operand_diagnostic(std::filesystem::path const& pat
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        current_requirement_message("raw_read", "an address-like first argument")
+        current_requirement_message("raw_read", address_like_first_argument_requirement())
     );
 }
 
@@ -1218,7 +1230,7 @@ void assert_raw_offset_address_operand_diagnostic(std::filesystem::path const& p
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        current_requirement_message("raw_offset", "an address-like first argument")
+        current_requirement_message("raw_offset", address_like_first_argument_requirement())
     );
 }
 
@@ -1234,7 +1246,7 @@ void assert_volatile_read_address_operand_diagnostic(std::filesystem::path const
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        current_requirement_message("volatile_read", "an address-like first argument")
+        current_requirement_message("volatile_read", address_like_first_argument_requirement())
     );
 }
 
@@ -1293,7 +1305,7 @@ void assert_pointer_typed_binding_initializer_diagnostic(std::filesystem::path c
         expected_line,
         current_requirement_message(
             "pointer-typed binding initializer",
-            "a structurally pointer-like expression"
+            structurally_pointer_like_expression_requirement()
         )
     );
 }
@@ -1315,7 +1327,7 @@ void assert_pointer_return_structural_diagnostic(std::filesystem::path const& pa
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        current_requirement_message("pointer-returning function", "a structurally pointer-like expression")
+        current_requirement_message("pointer-returning function", structurally_pointer_like_expression_requirement())
     );
 }
 
@@ -1443,7 +1455,7 @@ void assert_address_binding_initializer_diagnostic(std::filesystem::path const& 
         expected_line,
         current_requirement_message(
             "address-typed binding initializer",
-            "a structurally address-like expression"
+            structurally_address_like_expression_requirement()
         )
     );
 }
@@ -1452,7 +1464,7 @@ void assert_address_return_diagnostic(std::filesystem::path const& path, std::si
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        current_requirement_message("address-returning function", "a structurally address-like expression")
+        current_requirement_message("address-returning function", structurally_address_like_expression_requirement())
     );
 }
 

@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-26: current-requirement operand diagnostics now reuse named address-like and structural-expression requirement builders.
 - 2026-05-26: unsafe intrinsic, unsafe call, and pointer construction boundary diagnostics now share unsafe-boundary message builders.
 - 2026-05-26: receiver and `This` context diagnostics now use named subject and message builders.
 - 2026-05-26: switch default and redundant-coverage diagnostics now share named message and coverage-subject builders.
