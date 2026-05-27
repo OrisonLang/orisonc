@@ -1311,6 +1311,20 @@ void assert_pointer_typed_binding_initializer_diagnostic(std::filesystem::path c
     );
 }
 
+void assert_pointer_typed_constant_initializer_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        current_requirement_message(
+            "pointer-typed constant initializer",
+            structurally_pointer_like_expression_requirement()
+        )
+    );
+}
+
 void assert_pointer_typed_binding_pointee_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -1470,6 +1484,17 @@ void assert_address_binding_initializer_diagnostic(std::filesystem::path const& 
         expected_line,
         current_requirement_message(
             "address-typed binding initializer",
+            structurally_address_like_expression_requirement()
+        )
+    );
+}
+
+void assert_address_constant_initializer_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        current_requirement_message(
+            "address-typed constant initializer",
             structurally_address_like_expression_requirement()
         )
     );
@@ -3190,6 +3215,32 @@ void test_constant_initializer_type_mismatch_failure() {
     );
 
     assert_constant_initializer_mismatch_diagnostic(path, 2, "Bool", "UInt32");
+}
+
+void test_address_constant_initializer_structural_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_structural_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const UART_STATUS: Address = \"uart\"",
+        }
+    );
+
+    assert_address_constant_initializer_diagnostic(path, 2);
+}
+
+void test_pointer_constant_initializer_structural_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_constant_structural_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const UART_STATUS: Pointer<UInt32> = 1",
+        }
+    );
+
+    assert_pointer_typed_constant_initializer_diagnostic(path, 2);
 }
 
 void test_nested_address_of_and_raw_offset_success() {
@@ -6452,6 +6503,8 @@ int main() {
     test_address_constant_enables_volatile_read_success();
     test_integer_literal_constant_initializer_success();
     test_constant_initializer_type_mismatch_failure();
+    test_address_constant_initializer_structural_failure();
+    test_pointer_constant_initializer_structural_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();

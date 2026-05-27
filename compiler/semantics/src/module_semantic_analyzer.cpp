@@ -2604,6 +2604,37 @@ private:
     void analyze_constants() {
         for (auto const& constant : module_.constants) {
             auto declared_type_name = render_type_name(constant.type);
+            auto saved_expected_pointer_type_name = expected_pointer_type_name_;
+            if (is_pointer_type(constant.type)) {
+                expected_pointer_type_name_ = declared_type_name;
+            }
+
+            analyze_expression(constant.initializer, false);
+            auto read_result_type_mismatch = validate_read_result_type(
+                constant.initializer,
+                declared_type_name,
+                constant.initializer.line,
+                "constant"
+            );
+            if (is_pointer_type(constant.type) && !read_result_type_mismatch) {
+                validate_pointer_typed_expression(
+                    constant.initializer,
+                    constant.initializer.line,
+                    "pointer-typed constant initializer"
+                );
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                continue;
+            }
+            if (is_address_type(constant.type) && !read_result_type_mismatch) {
+                validate_address_typed_expression(
+                    constant.initializer,
+                    constant.initializer.line,
+                    "address-typed constant initializer"
+                );
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                continue;
+            }
+
             auto initializer_type_name = infer_expression_type_name(constant.initializer);
             if (!is_constant_initializer_type_compatible(
                     constant.initializer,
@@ -2616,6 +2647,7 @@ private:
                         "' does not match declared constant type '" + declared_type_name + "'"
                 );
             }
+            expected_pointer_type_name_ = saved_expected_pointer_type_name;
         }
     }
 

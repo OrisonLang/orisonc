@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-27: pointer- and address-typed constants now validate initializer operand structure with constant-specific diagnostics.
 - 2026-05-27: constant declarations now validate initializer type compatibility at the declaration site.
 - 2026-05-26: top-level constants now participate in semantic expression type inference, including address operands and raw-write value checks.
 - 2026-05-26: single-capture smoke helpers now share fixture analysis and capture-field assertion setup.
