@@ -2601,6 +2601,34 @@ private:
         return are_low_level_read_types_compatible(initializer_type_name, declared_type_name);
     }
 
+    void validate_constant_initializer_references(syntax::ExpressionSyntax const& expression) {
+        if (expression.kind == syntax::ExpressionKind::name && find_binding(expression.text) == nullptr) {
+            diagnostics_.error(
+                expression.line,
+                "constant initializer references unknown name '" + expression.text + "'"
+            );
+            return;
+        }
+
+        for (auto const& argument : expression.arguments) {
+            validate_constant_initializer_references(argument);
+        }
+
+        if (expression.left &&
+            !(expression.kind == syntax::ExpressionKind::call &&
+              expression.left->kind == syntax::ExpressionKind::name)) {
+            validate_constant_initializer_references(*expression.left);
+        }
+
+        if (expression.right) {
+            validate_constant_initializer_references(*expression.right);
+        }
+
+        if (expression.alternate) {
+            validate_constant_initializer_references(*expression.alternate);
+        }
+    }
+
     void analyze_constants() {
         for (auto const& constant : module_.constants) {
             auto declared_type_name = render_type_name(constant.type);
@@ -2610,6 +2638,7 @@ private:
             }
 
             analyze_expression(constant.initializer, false);
+            validate_constant_initializer_references(constant.initializer);
             auto read_result_type_mismatch = validate_read_result_type(
                 constant.initializer,
                 declared_type_name,

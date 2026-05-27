@@ -1399,6 +1399,18 @@ void assert_constant_initializer_mismatch_diagnostic(
     );
 }
 
+void assert_constant_initializer_unknown_name_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "constant initializer references unknown name '" + std::string(name) + "'"
+    );
+}
+
 void assert_pointer_construction_source_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3241,6 +3253,35 @@ void test_pointer_constant_initializer_structural_failure() {
     );
 
     assert_pointer_typed_constant_initializer_diagnostic(path, 2);
+}
+
+void test_forward_constant_initializer_reference_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_forward_constant_reference_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MASKED: UInt32 = STATUS_MASK",
+            "const STATUS_MASK: UInt32 = 0xFF",
+            "function mask() -> UInt32",
+            "    return MASKED",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_unknown_constant_initializer_reference_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unknown_constant_reference_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MASKED: UInt32 = STATUS_MASK",
+        }
+    );
+
+    assert_constant_initializer_unknown_name_diagnostic(path, 2, "STATUS_MASK");
 }
 
 void test_nested_address_of_and_raw_offset_success() {
@@ -6505,6 +6546,8 @@ int main() {
     test_constant_initializer_type_mismatch_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
+    test_forward_constant_initializer_reference_success();
+    test_unknown_constant_initializer_reference_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();
