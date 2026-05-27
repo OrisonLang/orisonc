@@ -785,6 +785,14 @@ std::string concurrency_cannot_capture_message(std::string_view captured_subject
     return "concurrency expression cannot capture " + std::string(captured_subject);
 }
 
+std::string mutable_outer_local_capture_subject(std::string_view local_name) {
+    return "mutable outer local '" + std::string(local_name) + "'";
+}
+
+std::string receiver_capture_subject() {
+    return "receiver 'this'";
+}
+
 void assert_mutable_capture_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -793,12 +801,12 @@ void assert_mutable_capture_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        concurrency_cannot_capture_message("mutable outer local '" + std::string(local_name) + "'")
+        concurrency_cannot_capture_message(mutable_outer_local_capture_subject(local_name))
     );
 }
 
 void assert_receiver_capture_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, concurrency_cannot_capture_message("receiver 'this'"));
+    assert_fixture_single_diagnostic(path, expected_line, concurrency_cannot_capture_message(receiver_capture_subject()));
 }
 
 std::string switch_constructor_pattern_message(
