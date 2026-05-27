@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-26: pointer and address structural diagnostics now reuse current-requirement message construction.
 - 2026-05-26: unsafe operand and index diagnostics now share current-requirement message construction.
 - 2026-05-26: loop-control and receiver context diagnostics now share placement message helpers.
 - 2026-05-26: switch missing-coverage and redundant-default diagnostics now share message construction helpers.

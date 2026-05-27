@@ -1129,7 +1129,7 @@ void assert_pointer_construction_single_source_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "Pointer construction currently requires exactly one source argument"
+        current_requirement_message("Pointer construction", "exactly one source argument")
     );
 }
 
@@ -1140,7 +1140,7 @@ void assert_pointer_construction_address_source_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "Pointer construction currently requires an address-like source argument"
+        current_requirement_message("Pointer construction", "an address-like source argument")
     );
 }
 
@@ -1148,7 +1148,10 @@ void assert_pointer_typed_binding_initializer_diagnostic(std::filesystem::path c
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "pointer-typed binding initializer currently requires a structurally pointer-like expression"
+        current_requirement_message(
+            "pointer-typed binding initializer",
+            "a structurally pointer-like expression"
+        )
     );
 }
 
@@ -1169,7 +1172,7 @@ void assert_pointer_return_structural_diagnostic(std::filesystem::path const& pa
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "pointer-returning function currently requires a structurally pointer-like expression"
+        current_requirement_message("pointer-returning function", "a structurally pointer-like expression")
     );
 }
 
@@ -1294,7 +1297,10 @@ void assert_address_binding_initializer_diagnostic(std::filesystem::path const& 
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "address-typed binding initializer currently requires a structurally address-like expression"
+        current_requirement_message(
+            "address-typed binding initializer",
+            "a structurally address-like expression"
+        )
     );
 }
 
@@ -1302,7 +1308,7 @@ void assert_address_return_diagnostic(std::filesystem::path const& path, std::si
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "address-returning function currently requires a structurally address-like expression"
+        current_requirement_message("address-returning function", "a structurally address-like expression")
     );
 }
 
