@@ -675,8 +675,22 @@ std::string future_marker_analysis_message(
            future_marker_type_requirement(type_name, marker_name);
 }
 
-void assert_concurrency_result_success(std::filesystem::path const& path) {
+void assert_future_marker_result_success(std::filesystem::path const& path) {
     assert_fixture_success(path);
+}
+
+void assert_future_marker_result_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view subject,
+    std::string_view result_type_name,
+    std::string_view marker_name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        future_marker_analysis_message(subject, result_type_name, marker_name)
+    );
 }
 
 void assert_thread_result_transferable_diagnostic(
@@ -684,19 +698,21 @@ void assert_thread_result_transferable_diagnostic(
     std::size_t expected_line,
     std::string_view result_type_name
 ) {
-    assert_fixture_single_diagnostic(
+    assert_future_marker_result_diagnostic(
         path,
         expected_line,
-        future_marker_analysis_message("thread result", result_type_name, "Transferable")
+        "thread result",
+        result_type_name,
+        "Transferable"
     );
 }
 
 void assert_thread_result_transferable_success(std::filesystem::path const& path) {
-    assert_concurrency_result_success(path);
+    assert_future_marker_result_success(path);
 }
 
 void assert_task_result_shareable_success(std::filesystem::path const& path) {
-    assert_concurrency_result_success(path);
+    assert_future_marker_result_success(path);
 }
 
 std::string thread_capture_transferable_message(
