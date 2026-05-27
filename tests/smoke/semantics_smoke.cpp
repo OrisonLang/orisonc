@@ -749,14 +749,24 @@ void assert_thread_capture_transferable_diagnostic(
     );
 }
 
+std::string concurrency_value_boundary_message(std::string_view expression_kind) {
+    return std::string(expression_kind) + " expression body must end with an expression statement or value return";
+}
+
 void assert_concurrency_value_boundary_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
     std::string_view expression_kind
 ) {
-    std::string const message =
-        std::string(expression_kind) + " expression body must end with an expression statement or value return";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(path, expected_line, concurrency_value_boundary_message(expression_kind));
+}
+
+void assert_task_value_boundary_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_concurrency_value_boundary_diagnostic(path, expected_line, "task");
+}
+
+void assert_thread_value_boundary_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_concurrency_value_boundary_diagnostic(path, expected_line, "thread");
 }
 
 void assert_concurrency_expression_success(std::filesystem::path const& path) {
@@ -6016,7 +6026,7 @@ void test_task_expression_value_boundary_failure() {
         }
     );
 
-    assert_concurrency_value_boundary_diagnostic(path, 4, "task");
+    assert_task_value_boundary_diagnostic(path, 4);
 }
 
 void test_task_expression_value_return_success() {
@@ -6048,7 +6058,7 @@ void test_thread_expression_value_boundary_failure() {
         }
     );
 
-    assert_concurrency_value_boundary_diagnostic(path, 4, "thread");
+    assert_thread_value_boundary_diagnostic(path, 4);
 }
 
 void test_thread_expression_value_return_success() {
