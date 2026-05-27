@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-26: await/join guidance wrappers now use named guidance and value-kind builders.
 - 2026-05-26: async-placement and await-value diagnostics now use named message and requirement builders.
 - 2026-05-26: current-requirement operand diagnostics now reuse named address-like and structural-expression requirement builders.
 - 2026-05-26: unsafe intrinsic, unsafe call, and pointer construction boundary diagnostics now share unsafe-boundary message builders.

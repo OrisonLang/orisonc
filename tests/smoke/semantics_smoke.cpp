@@ -1500,6 +1500,34 @@ void assert_await_requires_async_value_diagnostic(std::filesystem::path const& p
     );
 }
 
+std::string use_join_instead_guidance() {
+    return "use .join() instead";
+}
+
+std::string use_await_instead_guidance() {
+    return "use await instead";
+}
+
+std::string thread_value_kind() {
+    return "be used with thread values";
+}
+
+std::string task_value_kind() {
+    return "be used with task values";
+}
+
+std::string async_call_value_kind() {
+    return "be used with declared async call results";
+}
+
+std::string forward_task_or_async_call_value_kind() {
+    return "forward task or async-call values";
+}
+
+std::string forward_thread_value_kind() {
+    return "forward thread values";
+}
+
 void assert_use_join_instead_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -1509,7 +1537,7 @@ void assert_use_join_instead_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        cannot_action_value_guidance_message(action, value_kind, "use .join() instead")
+        cannot_action_value_guidance_message(action, value_kind, use_join_instead_guidance())
     );
 }
 
@@ -1522,28 +1550,28 @@ void assert_use_await_instead_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        cannot_action_value_guidance_message(action, value_kind, "use await instead")
+        cannot_action_value_guidance_message(action, value_kind, use_await_instead_guidance())
     );
 }
 
 void assert_await_thread_value_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_use_join_instead_diagnostic(path, expected_line, "await", "be used with thread values");
+    assert_use_join_instead_diagnostic(path, expected_line, "await", thread_value_kind());
 }
 
 void assert_async_return_forward_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_use_await_instead_diagnostic(path, expected_line, "return", "forward task or async-call values");
+    assert_use_await_instead_diagnostic(path, expected_line, "return", forward_task_or_async_call_value_kind());
 }
 
 void assert_join_task_receiver_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_use_await_instead_diagnostic(path, expected_line, "join()", "be used with task values");
+    assert_use_await_instead_diagnostic(path, expected_line, "join()", task_value_kind());
 }
 
 void assert_join_async_call_receiver_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_use_await_instead_diagnostic(path, expected_line, "join()", "be used with declared async call results");
+    assert_use_await_instead_diagnostic(path, expected_line, "join()", async_call_value_kind());
 }
 
 void assert_thread_return_forward_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_use_join_instead_diagnostic(path, expected_line, "return", "forward thread values");
+    assert_use_join_instead_diagnostic(path, expected_line, "return", forward_thread_value_kind());
 }
 
 void assert_concurrency_capture(
