@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-27: constant initializers now reject runtime-only task, await, unsafe-call, intrinsic, and Pointer construction expressions.
 - 2026-05-27: direct and indirect constant initializer cycles now produce semantic diagnostics before lowering.
 - 2026-05-27: duplicate top-level constant names now produce a semantic diagnostic and keep references deterministic.
 - 2026-05-27: constant initializers now cover forward constant references and diagnose unresolved constant names.

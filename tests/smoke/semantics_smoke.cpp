@@ -1435,6 +1435,30 @@ void assert_constant_initializer_cycle_diagnostic(
     );
 }
 
+void assert_constant_initializer_runtime_construct_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view construct
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "constant initializer cannot use " + std::string(construct)
+    );
+}
+
+void assert_constant_initializer_unsafe_call_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view function_name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "constant initializer cannot call unsafe function '" + std::string(function_name) + "'"
+    );
+}
+
 void assert_pointer_construction_source_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3347,6 +3371,92 @@ void test_indirect_constant_initializer_cycle_failure() {
     );
 
     assert_constant_initializer_cycle_diagnostic(path, 3, "STATUS_MASK");
+}
+
+void test_constant_initializer_await_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_await_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MASKED: UInt32 = await STATUS_MASK",
+            "const STATUS_MASK: UInt32 = 0xFF",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 2, "await expression");
+}
+
+void test_constant_initializer_task_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_task_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MASKED: UInt32 = task",
+            "    1",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 2, "task expression");
+}
+
+void test_constant_initializer_thread_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_thread_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MASKED: UInt32 = thread",
+            "    1",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 2, "thread expression");
+}
+
+void test_constant_initializer_unsafe_intrinsic_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_unsafe_intrinsic_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const UART_STATUS: Address = 0x4000_1000",
+            "const STATUS: UInt32 = raw_read(UART_STATUS)",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 3, "unsafe intrinsic 'raw_read'");
+}
+
+void test_constant_initializer_unsafe_function_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_unsafe_function_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "unsafe function read_word(p: Address) -> UInt32",
+            "    return raw_read(p)",
+            "const UART_STATUS: Address = 0x4000_1000",
+            "const STATUS: UInt32 = read_word(UART_STATUS)",
+        }
+    );
+
+    assert_constant_initializer_unsafe_call_diagnostic(path, 5, "read_word");
+}
+
+void test_constant_initializer_pointer_construction_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_pointer_construction_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const UART_STATUS: Address = 0x4000_1000",
+            "const STATUS: Pointer<UInt32> = Pointer(UART_STATUS)",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 3, "Pointer construction");
 }
 
 void test_nested_address_of_and_raw_offset_success() {
@@ -6616,6 +6726,12 @@ int main() {
     test_duplicate_top_level_constant_name_failure();
     test_direct_constant_initializer_cycle_failure();
     test_indirect_constant_initializer_cycle_failure();
+    test_constant_initializer_await_failure();
+    test_constant_initializer_task_failure();
+    test_constant_initializer_thread_failure();
+    test_constant_initializer_unsafe_intrinsic_failure();
+    test_constant_initializer_unsafe_function_failure();
+    test_constant_initializer_pointer_construction_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();

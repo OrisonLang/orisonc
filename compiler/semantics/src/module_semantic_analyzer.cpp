@@ -2721,12 +2721,85 @@ private:
         }
     }
 
+    auto validate_constant_initializer_runtime_restrictions(syntax::ExpressionSyntax const& expression) -> bool {
+        if (expression.kind == syntax::ExpressionKind::task || expression.kind == syntax::ExpressionKind::thread) {
+            diagnostics_.error(
+                expression.line,
+                "constant initializer cannot use " + expression.text + " expression"
+            );
+            return true;
+        }
+
+        if (expression.kind == syntax::ExpressionKind::unary && expression.text == "await") {
+            diagnostics_.error(expression.line, "constant initializer cannot use await expression");
+            return true;
+        }
+
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name &&
+            is_unsafe_intrinsic_name(expression.left->text)) {
+            diagnostics_.error(
+                expression.line,
+                "constant initializer cannot use unsafe intrinsic '" + expression.left->text + "'"
+            );
+            return true;
+        }
+
+        if (is_pointer_constructor_call(expression)) {
+            diagnostics_.error(expression.line, "constant initializer cannot use Pointer construction");
+            return true;
+        }
+
+        if (is_declared_unsafe_call(expression)) {
+            auto diagnostic_subject = std::string {"unsafe function"};
+            if (expression.left->kind == syntax::ExpressionKind::member_access ||
+                expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+                diagnostic_subject = "unsafe method";
+            }
+
+            diagnostics_.error(
+                expression.line,
+                "constant initializer cannot call " + diagnostic_subject + " '" + expression.left->text + "'"
+            );
+            return true;
+        }
+
+        for (auto const& argument : expression.arguments) {
+            if (validate_constant_initializer_runtime_restrictions(argument)) {
+                return true;
+            }
+        }
+
+        if (expression.left &&
+            !(expression.kind == syntax::ExpressionKind::call &&
+              expression.left->kind == syntax::ExpressionKind::name)) {
+            if (validate_constant_initializer_runtime_restrictions(*expression.left)) {
+                return true;
+            }
+        }
+
+        if (expression.right && validate_constant_initializer_runtime_restrictions(*expression.right)) {
+            return true;
+        }
+
+        if (expression.alternate && validate_constant_initializer_runtime_restrictions(*expression.alternate)) {
+            return true;
+        }
+
+        return false;
+    }
+
     void analyze_constants() {
         for (auto const& constant : module_.constants) {
             auto declared_type_name = render_type_name(constant.type);
             auto saved_expected_pointer_type_name = expected_pointer_type_name_;
             if (is_pointer_type(constant.type)) {
                 expected_pointer_type_name_ = declared_type_name;
+            }
+
+            if (validate_constant_initializer_runtime_restrictions(constant.initializer)) {
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                continue;
             }
 
             analyze_expression(constant.initializer, false);
