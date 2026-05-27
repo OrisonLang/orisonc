@@ -569,17 +569,25 @@ void assert_single_diagnostic(
     assert(diagnostics.entries().front().message == expected_message);
 }
 
+std::string switch_nonfinal_default_message() {
+    return "switch default case must be the final case";
+}
+
+std::string switch_multiple_default_message() {
+    return "switch statement may only contain one default case";
+}
+
 void assert_nonfinal_switch_default_diagnostic(orison::semantics::SemanticAnalysisResult const& diagnostics) {
-    assert_single_diagnostic(diagnostics, 4, "switch default case must be the final case");
+    assert_single_diagnostic(diagnostics, 4, switch_nonfinal_default_message());
 }
 
 void assert_multiple_switch_default_diagnostics(orison::semantics::SemanticAnalysisResult const& diagnostics) {
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 2);
     assert(diagnostics.entries().front().line == 4);
-    assert(diagnostics.entries().front().message == "switch default case must be the final case");
+    assert(diagnostics.entries().front().message == switch_nonfinal_default_message());
     assert(diagnostics.entries().back().line == 5);
-    assert(diagnostics.entries().back().message == "switch statement may only contain one default case");
+    assert(diagnostics.entries().back().message == switch_multiple_default_message());
 }
 
 void assert_this_type_context_diagnostics(
@@ -955,6 +963,18 @@ std::string switch_redundant_default_message(std::string_view covered_subject) {
     return "switch default case is redundant after " + std::string(covered_subject);
 }
 
+std::string switch_bool_coverage_subject() {
+    return "true and false value patterns";
+}
+
+std::string switch_zero_payload_choice_coverage_subject() {
+    return "all zero-payload choice variants are covered";
+}
+
+std::string switch_choice_coverage_subject() {
+    return "all choice variants are covered";
+}
+
 std::string switch_missing_message(std::string_view missing_subject, std::string_view missing_name) {
     return "switch is missing " +
            std::string(missing_subject) +
@@ -966,7 +986,7 @@ void assert_switch_redundant_bool_default_diagnostic(std::filesystem::path const
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        switch_redundant_default_message("true and false value patterns")
+        switch_redundant_default_message(switch_bool_coverage_subject())
     );
 }
 
@@ -989,7 +1009,7 @@ void assert_switch_redundant_zero_payload_choice_default_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        switch_redundant_default_message("all zero-payload choice variants are covered")
+        switch_redundant_default_message(switch_zero_payload_choice_coverage_subject())
     );
 }
 
@@ -1000,7 +1020,7 @@ void assert_switch_redundant_choice_default_diagnostic(
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        switch_redundant_default_message("all choice variants are covered")
+        switch_redundant_default_message(switch_choice_coverage_subject())
     );
 }
 
@@ -1025,7 +1045,7 @@ void assert_switch_missing_zero_payload_choice_variant_diagnostic(
 }
 
 void assert_nonfinal_switch_default_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "switch default case must be the final case");
+    assert_fixture_single_diagnostic(path, expected_line, switch_nonfinal_default_message());
 }
 
 std::string loop_control_outside_loop_message(std::string_view statement_name) {
