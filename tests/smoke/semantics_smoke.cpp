@@ -3563,6 +3563,39 @@ void test_payload_choice_constant_initializer_success() {
     assert_fixture_success(path);
 }
 
+void test_generic_choice_constant_initializer_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_generic_choice_constant_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "const DEFAULT_VALUE: Maybe<UInt32> = Some(0xFF)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_generic_choice_constant_initializer_payload_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_choice_constant_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "const DEFAULT_VALUE: Maybe<UInt32> = Some(true)",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 5, "Bool", "UInt32");
+}
+
 void test_choice_constant_initializer_arity_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_arity_failure.or";
     write_concurrency_fixture(
@@ -6885,6 +6918,8 @@ int main() {
     test_constant_initializer_method_call_failure();
     test_zero_payload_choice_constant_initializer_success();
     test_payload_choice_constant_initializer_success();
+    test_generic_choice_constant_initializer_success();
+    test_generic_choice_constant_initializer_payload_type_failure();
     test_choice_constant_initializer_arity_failure();
     test_choice_constant_initializer_payload_type_failure();
     test_constant_initializer_pointer_construction_failure();
