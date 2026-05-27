@@ -1111,15 +1111,34 @@ void assert_fixture_this_type_context_diagnostic(std::filesystem::path const& pa
     assert_this_type_context_diagnostics(analyze_orison_fixture(path), expected_line, 1);
 }
 
+std::string unsafe_boundary_context() {
+    return "inside unsafe functions or unsafe blocks";
+}
+
+std::string unsafe_intrinsic_context_message(std::string_view intrinsic_name) {
+    return "unsafe intrinsic '" +
+           std::string(intrinsic_name) +
+           "' is only valid " +
+           unsafe_boundary_context();
+}
+
+std::string unsafe_function_call_context_message(std::string_view function_name) {
+    return "call to unsafe function '" +
+           std::string(function_name) +
+           "' is only valid " +
+           unsafe_boundary_context();
+}
+
+std::string pointer_construction_unsafe_boundary_message() {
+    return "Pointer construction is only valid " + unsafe_boundary_context();
+}
+
 void assert_unsafe_intrinsic_context_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
     std::string_view intrinsic_name
 ) {
-    std::string const message = "unsafe intrinsic '" +
-                                std::string(intrinsic_name) +
-                                "' is only valid inside unsafe functions or unsafe blocks";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(path, expected_line, unsafe_intrinsic_context_message(intrinsic_name));
 }
 
 std::string current_requirement_message(std::string_view operation_name, std::string_view requirement) {
@@ -1232,10 +1251,7 @@ void assert_unsafe_function_call_context_diagnostic(
     std::size_t expected_line,
     std::string_view function_name
 ) {
-    std::string const message = "call to unsafe function '" +
-                                std::string(function_name) +
-                                "' is only valid inside unsafe functions or unsafe blocks";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(path, expected_line, unsafe_function_call_context_message(function_name));
 }
 
 void assert_pointer_construction_unsafe_boundary_diagnostics(
@@ -1244,11 +1260,9 @@ void assert_pointer_construction_unsafe_boundary_diagnostics(
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().size() == 2);
     assert(diagnostics.entries().front().line == 3);
-    assert(diagnostics.entries().front().message ==
-           "Pointer construction is only valid inside unsafe functions or unsafe blocks");
+    assert(diagnostics.entries().front().message == pointer_construction_unsafe_boundary_message());
     assert(diagnostics.entries().back().line == 4);
-    assert(diagnostics.entries().back().message ==
-           "unsafe intrinsic 'raw_read' is only valid inside unsafe functions or unsafe blocks");
+    assert(diagnostics.entries().back().message == unsafe_intrinsic_context_message("raw_read"));
 }
 
 void assert_pointer_construction_single_source_diagnostic(
