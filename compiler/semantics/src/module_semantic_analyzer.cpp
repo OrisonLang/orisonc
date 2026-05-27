@@ -2771,6 +2771,16 @@ private:
                 return true;
             }
 
+            if (current.kind == syntax::ExpressionKind::call && current.left &&
+                current.left->kind == syntax::ExpressionKind::name &&
+                !find_callable_return_type_name(current.left->text, current.arguments).empty()) {
+                diagnostics_.error(
+                    current.line,
+                    "constant initializer cannot call function '" + current.left->text + "'"
+                );
+                return true;
+            }
+
             return false;
         };
         return visit_constant_initializer_expression(expression, validator);

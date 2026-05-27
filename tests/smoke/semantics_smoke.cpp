@@ -1459,6 +1459,18 @@ void assert_constant_initializer_unsafe_call_diagnostic(
     );
 }
 
+void assert_constant_initializer_function_call_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view function_name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "constant initializer cannot call function '" + std::string(function_name) + "'"
+    );
+}
+
 void assert_pointer_construction_source_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3443,6 +3455,21 @@ void test_constant_initializer_unsafe_function_failure() {
     );
 
     assert_constant_initializer_unsafe_call_diagnostic(path, 5, "read_word");
+}
+
+void test_constant_initializer_function_call_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_constant_function_call_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "function mask(value: UInt32) -> UInt32",
+            "    return value bit_and 0xFF",
+            "const STATUS: UInt32 = mask(0xFFFF)",
+        }
+    );
+
+    assert_constant_initializer_function_call_diagnostic(path, 4, "mask");
 }
 
 void test_constant_initializer_pointer_construction_failure() {
@@ -6731,6 +6758,7 @@ int main() {
     test_constant_initializer_thread_failure();
     test_constant_initializer_unsafe_intrinsic_failure();
     test_constant_initializer_unsafe_function_failure();
+    test_constant_initializer_function_call_failure();
     test_constant_initializer_pointer_construction_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
