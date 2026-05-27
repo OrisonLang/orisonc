@@ -2781,6 +2781,20 @@ private:
                 return true;
             }
 
+            if (current.kind == syntax::ExpressionKind::call && current.left &&
+                (current.left->kind == syntax::ExpressionKind::member_access ||
+                 current.left->kind == syntax::ExpressionKind::null_safe_member_access)) {
+                auto receiver_type_name = infer_receiver_type_name_for_member_call(*current.left);
+                if (!receiver_type_name.empty() &&
+                    !find_method_return_type_name(receiver_type_name, current.left->text, current.arguments).empty()) {
+                    diagnostics_.error(
+                        current.line,
+                        "constant initializer cannot call method '" + current.left->text + "'"
+                    );
+                    return true;
+                }
+            }
+
             return false;
         };
         return visit_constant_initializer_expression(expression, validator);
