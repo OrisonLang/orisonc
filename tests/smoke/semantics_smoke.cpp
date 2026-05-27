@@ -569,6 +569,10 @@ void assert_single_diagnostic(
     assert(diagnostics.entries().front().message == expected_message);
 }
 
+std::string this_type_context_message() {
+    return "This type is only valid inside interface, implements, or extend methods";
+}
+
 std::string switch_nonfinal_default_message() {
     return "switch default case must be the final case";
 }
@@ -599,7 +603,7 @@ void assert_this_type_context_diagnostics(
     assert(diagnostics.entries().size() == expected_count);
     for (auto const& diagnostic : diagnostics.entries()) {
         assert(diagnostic.line == expected_line);
-        assert(diagnostic.message == "This type is only valid inside interface, implements, or extend methods");
+        assert(diagnostic.message == this_type_context_message());
     }
 }
 
@@ -1067,11 +1071,23 @@ std::string receiver_context_message(std::string_view receiver_subject, std::str
            " implements or extend methods";
 }
 
+std::string receiver_this_subject() {
+    return "receiver 'this'";
+}
+
+std::string receiver_parameter_subject() {
+    return "receiver parameter 'this'";
+}
+
+std::string receiver_parameter_self_type_message() {
+    return "receiver parameter 'this' must use This, shared This, or exclusive This";
+}
+
 void assert_receiver_this_context_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        receiver_context_message("receiver 'this'", "inside")
+        receiver_context_message(receiver_this_subject(), "inside")
     );
 }
 
@@ -1079,7 +1095,7 @@ void assert_receiver_parameter_context_diagnostic(std::filesystem::path const& p
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        receiver_context_message("receiver parameter 'this'", "in")
+        receiver_context_message(receiver_parameter_subject(), "in")
     );
 }
 
@@ -1087,7 +1103,7 @@ void assert_receiver_parameter_self_type_diagnostic(std::filesystem::path const&
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "receiver parameter 'this' must use This, shared This, or exclusive This"
+        receiver_parameter_self_type_message()
     );
 }
 

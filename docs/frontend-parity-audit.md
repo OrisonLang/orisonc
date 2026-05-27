@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-26: receiver and `This` context diagnostics now use named subject and message builders.
 - 2026-05-26: switch default and redundant-coverage diagnostics now share named message and coverage-subject builders.
 - 2026-05-26: switch constructor duplicate-binding and arity diagnostics now use named message builders.
 - 2026-05-26: mutable-local and receiver capture diagnostics now share named cannot-capture subject builders.
