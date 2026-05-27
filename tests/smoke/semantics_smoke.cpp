@@ -1468,14 +1468,20 @@ void assert_address_return_diagnostic(std::filesystem::path const& path, std::si
     );
 }
 
+std::string concurrency_expression_inside_async_message(std::string_view expression_name) {
+    return std::string(expression_name) + " expression is only valid inside async functions";
+}
+
+std::string await_async_value_requirement() {
+    return "a task value or declared async call result";
+}
+
 void assert_concurrency_expression_inside_async_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
     std::string_view expression_name
 ) {
-    std::string const message = std::string(expression_name) +
-                                " expression is only valid inside async functions";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(path, expected_line, concurrency_expression_inside_async_message(expression_name));
 }
 
 void assert_task_inside_async_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
@@ -1490,7 +1496,7 @@ void assert_await_requires_async_value_diagnostic(std::filesystem::path const& p
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        current_requirement_message("await expression", "a task value or declared async call result")
+        current_requirement_message("await expression", await_async_value_requirement())
     );
 }
 
