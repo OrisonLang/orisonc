@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-27: constant initializers now support declared choice constructors and validate constructor arity and payload types.
 - 2026-05-27: constant initializers now reject declared ordinary method calls with a constant-specific diagnostic.
 - 2026-05-27: constant initializers now reject declared ordinary function calls with a constant-specific diagnostic.
 - 2026-05-27: constant initializer semantic checks now share one expression traversal helper.

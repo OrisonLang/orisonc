@@ -2800,6 +2800,68 @@ private:
         return visit_constant_initializer_expression(expression, validator);
     }
 
+    auto validate_constant_choice_constructor_initializer(
+        syntax::ExpressionSyntax const& initializer,
+        syntax::TypeSyntax const& declared_type
+    ) -> bool {
+        auto constructor_name = std::string {};
+        auto actual_arity = std::size_t {0};
+        if (initializer.kind == syntax::ExpressionKind::name) {
+            constructor_name = initializer.text;
+        } else if (initializer.kind == syntax::ExpressionKind::call && initializer.left &&
+                   initializer.left->kind == syntax::ExpressionKind::name) {
+            constructor_name = initializer.left->text;
+            actual_arity = initializer.arguments.size();
+        } else {
+            return false;
+        }
+
+        auto const* variant_signature = find_choice_variant_signature(constructor_name, declared_type);
+        if (variant_signature == nullptr) {
+            return false;
+        }
+
+        if (variant_signature->payloads.size() != actual_arity) {
+            diagnostics_.error(
+                initializer.line,
+                "choice constructor '" + constructor_name + "' expects " +
+                    std::to_string(variant_signature->payloads.size()) + " payload value" +
+                    (variant_signature->payloads.size() == 1 ? "" : "s") + " but received " +
+                    std::to_string(actual_arity)
+            );
+            return true;
+        }
+
+        std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        if (!match_generic_type_pattern(
+                variant_signature->choice_type,
+                declared_type,
+                variant_signature->generic_parameters,
+                bindings
+            )) {
+            return true;
+        }
+
+        for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
+            auto payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
+            auto payload_type_name = render_type_name(payload_type);
+            auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
+            if (!is_constant_initializer_type_compatible(
+                    initializer.arguments[index],
+                    argument_type_name,
+                    payload_type_name
+                )) {
+                diagnostics_.error(
+                    initializer.arguments[index].line,
+                    "choice constructor payload type '" + argument_type_name +
+                        "' does not match expected payload type '" + payload_type_name + "'"
+                );
+            }
+        }
+
+        return true;
+    }
+
     void analyze_constants() {
         for (auto const& constant : module_.constants) {
             auto declared_type_name = render_type_name(constant.type);
@@ -2809,6 +2871,15 @@ private:
             }
 
             if (validate_constant_initializer_runtime_restrictions(constant.initializer)) {
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                continue;
+            }
+
+            if (validate_constant_choice_constructor_initializer(constant.initializer, constant.type)) {
+                analyze_expression(constant.initializer, false);
+                if (constant.initializer.kind != syntax::ExpressionKind::name) {
+                    validate_constant_initializer_references(constant.initializer);
+                }
                 expected_pointer_type_name_ = saved_expected_pointer_type_name;
                 continue;
             }

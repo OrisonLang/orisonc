@@ -1483,6 +1483,36 @@ void assert_constant_initializer_method_call_diagnostic(
     );
 }
 
+void assert_choice_constructor_arity_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view constructor_name,
+    std::size_t expected_count,
+    std::size_t actual_count
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "choice constructor '" + std::string(constructor_name) + "' expects " +
+            std::to_string(expected_count) + " payload value" + (expected_count == 1 ? "" : "s") +
+            " but received " + std::to_string(actual_count)
+    );
+}
+
+void assert_choice_constructor_payload_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "choice constructor payload type '" + std::string(actual_type) +
+            "' does not match expected payload type '" + std::string(expected_type) + "'"
+    );
+}
+
 void assert_pointer_construction_source_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3499,6 +3529,70 @@ void test_constant_initializer_method_call_failure() {
     );
 
     assert_constant_initializer_method_call_diagnostic(path, 6, "low_byte");
+}
+
+void test_zero_payload_choice_constant_initializer_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_zero_payload_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Mode",
+            "    Off",
+            "    On",
+            "const DEFAULT_MODE: Mode = Off",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_payload_choice_constant_initializer_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_payload_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Status",
+            "    Ready(code: UInt32)",
+            "    Error",
+            "const DEFAULT_STATUS: Status = Ready(0xFF)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_constant_initializer_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_arity_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Status",
+            "    Ready(code: UInt32)",
+            "    Error",
+            "const DEFAULT_STATUS: Status = Ready()",
+        }
+    );
+
+    assert_choice_constructor_arity_diagnostic(path, 5, "Ready", 1, 0);
+}
+
+void test_choice_constant_initializer_payload_type_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Status",
+            "    Ready(code: UInt32)",
+            "    Error",
+            "const DEFAULT_STATUS: Status = Ready(true)",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 5, "Bool", "UInt32");
 }
 
 void test_constant_initializer_pointer_construction_failure() {
@@ -6789,6 +6883,10 @@ int main() {
     test_constant_initializer_unsafe_function_failure();
     test_constant_initializer_function_call_failure();
     test_constant_initializer_method_call_failure();
+    test_zero_payload_choice_constant_initializer_success();
+    test_payload_choice_constant_initializer_success();
+    test_choice_constant_initializer_arity_failure();
+    test_choice_constant_initializer_payload_type_failure();
     test_constant_initializer_pointer_construction_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
