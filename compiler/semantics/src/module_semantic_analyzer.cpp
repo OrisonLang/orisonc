@@ -83,6 +83,7 @@ public:
         collect_concurrency_marker_implementations();
         collect_choice_variant_metadata();
         collect_constant_bindings();
+        validate_constant_initializer_cycles();
         analyze_constants();
 
         for (auto const& function : module_.functions) {
@@ -126,6 +127,11 @@ private:
     };
 
     using ScopeSnapshot = std::vector<std::vector<Binding>>;
+
+    struct ConstantReference {
+        std::string name;
+        std::size_t line = 0;
+    };
 
     struct SwitchChoiceCoverage {
         std::optional<std::vector<std::string>> zero_payload_variants;
@@ -2635,6 +2641,83 @@ private:
 
         if (expression.alternate) {
             validate_constant_initializer_references(*expression.alternate);
+        }
+    }
+
+    void collect_constant_initializer_references(
+        syntax::ExpressionSyntax const& expression,
+        std::vector<ConstantReference>& references
+    ) const {
+        if (expression.kind == syntax::ExpressionKind::name) {
+            references.push_back(ConstantReference {
+                .name = expression.text,
+                .line = expression.line,
+            });
+            return;
+        }
+
+        for (auto const& argument : expression.arguments) {
+            collect_constant_initializer_references(argument, references);
+        }
+
+        if (expression.left &&
+            !(expression.kind == syntax::ExpressionKind::call &&
+              expression.left->kind == syntax::ExpressionKind::name)) {
+            collect_constant_initializer_references(*expression.left, references);
+        }
+
+        if (expression.right) {
+            collect_constant_initializer_references(*expression.right, references);
+        }
+
+        if (expression.alternate) {
+            collect_constant_initializer_references(*expression.alternate, references);
+        }
+    }
+
+    void validate_constant_initializer_cycles() {
+        std::unordered_map<std::string, syntax::ConstantSyntax const*> constants_by_name;
+        for (auto const& constant : module_.constants) {
+            constants_by_name.emplace(constant.name, &constant);
+        }
+
+        std::unordered_map<std::string, int> visit_state;
+        auto visit = [&](auto&& self, std::string const& name) -> void {
+            visit_state[name] = 1;
+
+            auto constant = constants_by_name.find(name);
+            if (constant == constants_by_name.end()) {
+                visit_state[name] = 2;
+                return;
+            }
+
+            std::vector<ConstantReference> references;
+            collect_constant_initializer_references(constant->second->initializer, references);
+            for (auto const& reference : references) {
+                if (!constants_by_name.contains(reference.name)) {
+                    continue;
+                }
+
+                auto state = visit_state.find(reference.name);
+                if (state != visit_state.end() && state->second == 1) {
+                    diagnostics_.error(
+                        reference.line,
+                        "constant initializer cycle includes '" + reference.name + "'"
+                    );
+                    continue;
+                }
+                if (state == visit_state.end()) {
+                    self(self, reference.name);
+                }
+            }
+
+            visit_state[name] = 2;
+        };
+
+        for (auto const& constant : module_.constants) {
+            if (!visit_state.contains(constant.name)) {
+                visit(visit, constant.name);
+            }
         }
     }
 

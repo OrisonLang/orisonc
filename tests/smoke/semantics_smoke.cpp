@@ -1423,6 +1423,18 @@ void assert_duplicate_top_level_constant_diagnostic(
     );
 }
 
+void assert_constant_initializer_cycle_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "constant initializer cycle includes '" + std::string(name) + "'"
+    );
+}
+
 void assert_pointer_construction_source_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3308,6 +3320,33 @@ void test_duplicate_top_level_constant_name_failure() {
     );
 
     assert_duplicate_top_level_constant_diagnostic(path, 3, "STATUS_MASK");
+}
+
+void test_direct_constant_initializer_cycle_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_direct_constant_cycle_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const STATUS_MASK: UInt32 = STATUS_MASK",
+        }
+    );
+
+    assert_constant_initializer_cycle_diagnostic(path, 2, "STATUS_MASK");
+}
+
+void test_indirect_constant_initializer_cycle_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_indirect_constant_cycle_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const STATUS_MASK: UInt32 = MASKED",
+            "const MASKED: UInt32 = STATUS_MASK",
+        }
+    );
+
+    assert_constant_initializer_cycle_diagnostic(path, 3, "STATUS_MASK");
 }
 
 void test_nested_address_of_and_raw_offset_success() {
@@ -6575,6 +6614,8 @@ int main() {
     test_forward_constant_initializer_reference_success();
     test_unknown_constant_initializer_reference_failure();
     test_duplicate_top_level_constant_name_failure();
+    test_direct_constant_initializer_cycle_failure();
+    test_indirect_constant_initializer_cycle_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();
