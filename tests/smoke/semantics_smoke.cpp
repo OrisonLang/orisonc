@@ -819,6 +819,18 @@ std::string switch_constructor_pattern_message(
            std::string(suffix);
 }
 
+std::string switch_constructor_duplicate_binding_message(std::string_view binding_name) {
+    return "switch constructor pattern cannot bind '" +
+           std::string(binding_name) +
+           "' more than once";
+}
+
+std::string switch_constructor_arity_suffix(std::size_t expected_count, std::size_t actual_count) {
+    return "expects " + std::to_string(expected_count) +
+           " payload values but received " +
+           std::to_string(actual_count);
+}
+
 void assert_switch_unknown_constructor_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -872,9 +884,7 @@ void assert_switch_duplicate_binding_diagnostic(
     std::size_t expected_line,
     std::string_view binding_name
 ) {
-    std::string const message = "switch constructor pattern cannot bind '" +
-                                std::string(binding_name) + "' more than once";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(path, expected_line, switch_constructor_duplicate_binding_message(binding_name));
 }
 
 void assert_switch_constructor_arity_diagnostic(
@@ -889,9 +899,7 @@ void assert_switch_constructor_arity_diagnostic(
         expected_line,
         switch_constructor_pattern_message(
             constructor_name,
-            "expects " + std::to_string(expected_count) +
-                " payload values but received " +
-                std::to_string(actual_count)
+            switch_constructor_arity_suffix(expected_count, actual_count)
         )
     );
 }
