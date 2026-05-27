@@ -1411,6 +1411,18 @@ void assert_constant_initializer_unknown_name_diagnostic(
     );
 }
 
+void assert_duplicate_top_level_constant_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "top-level constant '" + std::string(name) + "' is duplicated"
+    );
+}
+
 void assert_pointer_construction_source_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3282,6 +3294,20 @@ void test_unknown_constant_initializer_reference_failure() {
     );
 
     assert_constant_initializer_unknown_name_diagnostic(path, 2, "STATUS_MASK");
+}
+
+void test_duplicate_top_level_constant_name_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_duplicate_constant_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const STATUS_MASK: UInt32 = 0xFF",
+            "const STATUS_MASK: UInt32 = 0x0F",
+        }
+    );
+
+    assert_duplicate_top_level_constant_diagnostic(path, 3, "STATUS_MASK");
 }
 
 void test_nested_address_of_and_raw_offset_success() {
@@ -6548,6 +6574,7 @@ int main() {
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();
     test_unknown_constant_initializer_reference_failure();
+    test_duplicate_top_level_constant_name_failure();
     test_nested_address_of_and_raw_offset_success();
     test_index_access_noninteger_index_failure();
     test_index_access_integer_index_success();

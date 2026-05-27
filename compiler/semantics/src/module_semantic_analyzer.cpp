@@ -2574,8 +2574,17 @@ private:
 
     void collect_constant_bindings() {
         module_constant_bindings_.clear();
+        std::unordered_set<std::string> seen_constant_names;
 
         for (auto const& constant : module_.constants) {
+            if (!seen_constant_names.insert(constant.name).second) {
+                diagnostics_.error(
+                    constant.initializer.line,
+                    "top-level constant '" + constant.name + "' is duplicated"
+                );
+                continue;
+            }
+
             module_constant_bindings_.push_back(Binding {
                 .name = constant.name,
                 .type_name = render_type_name(constant.type),
