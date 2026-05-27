@@ -2616,63 +2616,69 @@ private:
         return are_low_level_read_types_compatible(initializer_type_name, declared_type_name);
     }
 
-    void validate_constant_initializer_references(syntax::ExpressionSyntax const& expression) {
-        if (expression.kind == syntax::ExpressionKind::name && find_binding(expression.text) == nullptr) {
-            diagnostics_.error(
-                expression.line,
-                "constant initializer references unknown name '" + expression.text + "'"
-            );
-            return;
+    template <typename Visitor>
+    auto visit_constant_initializer_expression(
+        syntax::ExpressionSyntax const& expression,
+        Visitor& visitor
+    ) const -> bool {
+        if (visitor(expression)) {
+            return true;
         }
 
         for (auto const& argument : expression.arguments) {
-            validate_constant_initializer_references(argument);
+            if (visit_constant_initializer_expression(argument, visitor)) {
+                return true;
+            }
         }
 
         if (expression.left &&
             !(expression.kind == syntax::ExpressionKind::call &&
               expression.left->kind == syntax::ExpressionKind::name)) {
-            validate_constant_initializer_references(*expression.left);
+            if (visit_constant_initializer_expression(*expression.left, visitor)) {
+                return true;
+            }
         }
 
-        if (expression.right) {
-            validate_constant_initializer_references(*expression.right);
+        if (expression.right && visit_constant_initializer_expression(*expression.right, visitor)) {
+            return true;
         }
 
-        if (expression.alternate) {
-            validate_constant_initializer_references(*expression.alternate);
+        if (expression.alternate && visit_constant_initializer_expression(*expression.alternate, visitor)) {
+            return true;
         }
+
+        return false;
+    }
+
+    void validate_constant_initializer_references(syntax::ExpressionSyntax const& expression) {
+        auto validator = [&](syntax::ExpressionSyntax const& current) {
+            if (current.kind != syntax::ExpressionKind::name || find_binding(current.text) != nullptr) {
+                return false;
+            }
+
+            diagnostics_.error(
+                current.line,
+                "constant initializer references unknown name '" + current.text + "'"
+            );
+            return true;
+        };
+        visit_constant_initializer_expression(expression, validator);
     }
 
     void collect_constant_initializer_references(
         syntax::ExpressionSyntax const& expression,
         std::vector<ConstantReference>& references
     ) const {
-        if (expression.kind == syntax::ExpressionKind::name) {
-            references.push_back(ConstantReference {
-                .name = expression.text,
-                .line = expression.line,
-            });
-            return;
-        }
-
-        for (auto const& argument : expression.arguments) {
-            collect_constant_initializer_references(argument, references);
-        }
-
-        if (expression.left &&
-            !(expression.kind == syntax::ExpressionKind::call &&
-              expression.left->kind == syntax::ExpressionKind::name)) {
-            collect_constant_initializer_references(*expression.left, references);
-        }
-
-        if (expression.right) {
-            collect_constant_initializer_references(*expression.right, references);
-        }
-
-        if (expression.alternate) {
-            collect_constant_initializer_references(*expression.alternate, references);
-        }
+        auto collector = [&](syntax::ExpressionSyntax const& current) {
+            if (current.kind == syntax::ExpressionKind::name) {
+                references.push_back(ConstantReference {
+                    .name = current.text,
+                    .line = current.line,
+                });
+            }
+            return false;
+        };
+        visit_constant_initializer_expression(expression, collector);
     }
 
     void validate_constant_initializer_cycles() {
@@ -2722,71 +2728,52 @@ private:
     }
 
     auto validate_constant_initializer_runtime_restrictions(syntax::ExpressionSyntax const& expression) -> bool {
-        if (expression.kind == syntax::ExpressionKind::task || expression.kind == syntax::ExpressionKind::thread) {
-            diagnostics_.error(
-                expression.line,
-                "constant initializer cannot use " + expression.text + " expression"
-            );
-            return true;
-        }
-
-        if (expression.kind == syntax::ExpressionKind::unary && expression.text == "await") {
-            diagnostics_.error(expression.line, "constant initializer cannot use await expression");
-            return true;
-        }
-
-        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
-            expression.left->kind == syntax::ExpressionKind::name &&
-            is_unsafe_intrinsic_name(expression.left->text)) {
-            diagnostics_.error(
-                expression.line,
-                "constant initializer cannot use unsafe intrinsic '" + expression.left->text + "'"
-            );
-            return true;
-        }
-
-        if (is_pointer_constructor_call(expression)) {
-            diagnostics_.error(expression.line, "constant initializer cannot use Pointer construction");
-            return true;
-        }
-
-        if (is_declared_unsafe_call(expression)) {
-            auto diagnostic_subject = std::string {"unsafe function"};
-            if (expression.left->kind == syntax::ExpressionKind::member_access ||
-                expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
-                diagnostic_subject = "unsafe method";
-            }
-
-            diagnostics_.error(
-                expression.line,
-                "constant initializer cannot call " + diagnostic_subject + " '" + expression.left->text + "'"
-            );
-            return true;
-        }
-
-        for (auto const& argument : expression.arguments) {
-            if (validate_constant_initializer_runtime_restrictions(argument)) {
+        auto validator = [&](syntax::ExpressionSyntax const& current) {
+            if (current.kind == syntax::ExpressionKind::task || current.kind == syntax::ExpressionKind::thread) {
+                diagnostics_.error(
+                    current.line,
+                    "constant initializer cannot use " + current.text + " expression"
+                );
                 return true;
             }
-        }
 
-        if (expression.left &&
-            !(expression.kind == syntax::ExpressionKind::call &&
-              expression.left->kind == syntax::ExpressionKind::name)) {
-            if (validate_constant_initializer_runtime_restrictions(*expression.left)) {
+            if (current.kind == syntax::ExpressionKind::unary && current.text == "await") {
+                diagnostics_.error(current.line, "constant initializer cannot use await expression");
                 return true;
             }
-        }
 
-        if (expression.right && validate_constant_initializer_runtime_restrictions(*expression.right)) {
-            return true;
-        }
+            if (current.kind == syntax::ExpressionKind::call && current.left &&
+                current.left->kind == syntax::ExpressionKind::name &&
+                is_unsafe_intrinsic_name(current.left->text)) {
+                diagnostics_.error(
+                    current.line,
+                    "constant initializer cannot use unsafe intrinsic '" + current.left->text + "'"
+                );
+                return true;
+            }
 
-        if (expression.alternate && validate_constant_initializer_runtime_restrictions(*expression.alternate)) {
-            return true;
-        }
+            if (is_pointer_constructor_call(current)) {
+                diagnostics_.error(current.line, "constant initializer cannot use Pointer construction");
+                return true;
+            }
 
-        return false;
+            if (is_declared_unsafe_call(current)) {
+                auto diagnostic_subject = std::string {"unsafe function"};
+                if (current.left->kind == syntax::ExpressionKind::member_access ||
+                    current.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+                    diagnostic_subject = "unsafe method";
+                }
+
+                diagnostics_.error(
+                    current.line,
+                    "constant initializer cannot call " + diagnostic_subject + " '" + current.left->text + "'"
+                );
+                return true;
+            }
+
+            return false;
+        };
+        return visit_constant_initializer_expression(expression, validator);
     }
 
     void analyze_constants() {
