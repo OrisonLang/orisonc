@@ -1044,28 +1044,58 @@ void assert_unsafe_intrinsic_context_diagnostic(
     assert_fixture_single_diagnostic(path, expected_line, message);
 }
 
+std::string current_requirement_message(std::string_view operation_name, std::string_view requirement) {
+    return std::string(operation_name) +
+           " currently requires " +
+           std::string(requirement);
+}
+
 void assert_address_of_storage_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "address_of currently requires an addressable storage operand");
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        current_requirement_message("address_of", "an addressable storage operand")
+    );
 }
 
 void assert_raw_read_address_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "raw_read currently requires an address-like first argument");
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        current_requirement_message("raw_read", "an address-like first argument")
+    );
 }
 
 void assert_raw_offset_address_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "raw_offset currently requires an address-like first argument");
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        current_requirement_message("raw_offset", "an address-like first argument")
+    );
 }
 
 void assert_raw_offset_integer_offset_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "raw_offset currently requires an integer offset argument");
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        current_requirement_message("raw_offset", "an integer offset argument")
+    );
 }
 
 void assert_volatile_read_address_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "volatile_read currently requires an address-like first argument");
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        current_requirement_message("volatile_read", "an address-like first argument")
+    );
 }
 
 void assert_index_access_integer_index_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
-    assert_fixture_single_diagnostic(path, expected_line, "index access currently requires an integer index expression");
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        current_requirement_message("index access", "an integer index expression")
+    );
 }
 
 void assert_unsafe_function_call_context_diagnostic(
