@@ -1089,6 +1089,18 @@ std::string result_type_mismatch_message(
            std::string(expected_type) + "'";
 }
 
+std::string cannot_action_value_guidance_message(
+    std::string_view action,
+    std::string_view value_kind,
+    std::string_view guidance
+) {
+    return std::string(action) +
+           " cannot " +
+           std::string(value_kind) +
+           "; " +
+           std::string(guidance);
+}
+
 void assert_address_of_storage_operand_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
     assert_fixture_single_diagnostic(
         path,
@@ -1374,7 +1386,7 @@ void assert_await_requires_async_value_diagnostic(std::filesystem::path const& p
     assert_fixture_single_diagnostic(
         path,
         expected_line,
-        "await expression currently requires a task value or declared async call result"
+        current_requirement_message("await expression", "a task value or declared async call result")
     );
 }
 
@@ -1384,11 +1396,11 @@ void assert_use_join_instead_diagnostic(
     std::string_view action,
     std::string_view value_kind
 ) {
-    std::string const message = std::string(action) +
-                                " cannot " +
-                                std::string(value_kind) +
-                                "; use .join() instead";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        cannot_action_value_guidance_message(action, value_kind, "use .join() instead")
+    );
 }
 
 void assert_use_await_instead_diagnostic(
@@ -1397,11 +1409,11 @@ void assert_use_await_instead_diagnostic(
     std::string_view action,
     std::string_view value_kind
 ) {
-    std::string const message = std::string(action) +
-                                " cannot " +
-                                std::string(value_kind) +
-                                "; use await instead";
-    assert_fixture_single_diagnostic(path, expected_line, message);
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        cannot_action_value_guidance_message(action, value_kind, "use await instead")
+    );
 }
 
 void assert_await_thread_value_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
