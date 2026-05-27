@@ -2844,6 +2844,10 @@ private:
 
         for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
             auto payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
+            if (validate_constant_choice_constructor_initializer(initializer.arguments[index], payload_type)) {
+                continue;
+            }
+
             auto payload_type_name = render_type_name(payload_type);
             auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
             if (!is_constant_initializer_type_compatible(

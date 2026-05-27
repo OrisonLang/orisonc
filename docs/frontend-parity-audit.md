@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-27: nested generic choice constructor constants now recursively validate substituted payload constructors.
 - 2026-05-27: generic choice constructor constants now have coverage for substituted payload success and mismatch diagnostics.
 - 2026-05-27: constant initializers now support declared choice constructors and validate constructor arity and payload types.
 - 2026-05-27: constant initializers now reject declared ordinary method calls with a constant-specific diagnostic.
