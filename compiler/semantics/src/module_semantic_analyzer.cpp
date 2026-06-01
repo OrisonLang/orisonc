@@ -2818,6 +2818,14 @@ private:
 
         auto const* variant_signature = find_choice_variant_signature(constructor_name, declared_type);
         if (variant_signature == nullptr) {
+            if (choice_variant_arities_.contains(constructor_name)) {
+                diagnostics_.error(
+                    initializer.line,
+                    "choice constructor '" + constructor_name +
+                        "' does not belong to declared constant type '" + render_type_name(declared_type) + "'"
+                );
+                return true;
+            }
             return false;
         }
 
