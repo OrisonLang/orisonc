@@ -3660,6 +3660,25 @@ void test_nested_choice_constant_initializer_payload_type_failure() {
     assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
 }
 
+void test_nested_zero_payload_choice_constant_initializer_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_nested_zero_payload_choice_constant_arity_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Boxed<T>",
+            "    Wrap(inner: T)",
+            "const DEFAULT_VALUE: Boxed<Maybe<UInt32>> = Wrap(Empty(1))",
+        }
+    );
+
+    assert_choice_constructor_arity_diagnostic(path, 7, "Empty", 0, 1);
+}
+
 void test_choice_constant_initializer_wrong_choice_type_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_wrong_choice_failure.or";
     write_concurrency_fixture(
@@ -7038,6 +7057,7 @@ int main() {
     test_generic_choice_constant_initializer_payload_type_failure();
     test_nested_choice_constant_initializer_success();
     test_nested_choice_constant_initializer_payload_type_failure();
+    test_nested_zero_payload_choice_constant_initializer_arity_failure();
     test_choice_constant_initializer_wrong_choice_type_failure();
     test_choice_constant_initializer_unknown_constructor_failure();
     test_choice_constant_initializer_arity_failure();

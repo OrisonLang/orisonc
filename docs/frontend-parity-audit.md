@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-31: semantic and CLI smoke coverage now pin recursive zero-payload arity diagnostics inside nested generic constant choice constructors.
 - 2026-05-31: semantic and CLI smoke coverage now pin zero-payload constant choice constructors that are called with unexpected payload values.
 - 2026-05-31: CLI smoke coverage now spans wrong-type, arity, and payload mismatch diagnostics for constant choice constructors.
 - 2026-05-31: CLI smoke coverage now checks the unknown choice-constructor diagnostic for choice-typed constant initializers.

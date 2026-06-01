@@ -207,6 +207,20 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_zero_payload_choice_constant_arity.or",
+        {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Boxed<T>",
+            "    Wrap(inner: T)",
+            "const DEFAULT_VALUE: Boxed<Maybe<UInt32>> = Wrap(Empty(1))",
+        },
+        "choice constructor 'Empty' expects 0 payload values but received 1"
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_constant_payload.or",
         {
             "package demo.cli",
