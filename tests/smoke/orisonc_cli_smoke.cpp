@@ -3,7 +3,9 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <initializer_list>
 #include <string>
+#include <string_view>
 
 namespace {
 
@@ -37,6 +39,24 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     auto status = pclose(pipe);
     assert(status != 0);
     return output;
+}
+
+void assert_cli_parse_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> lines,
+    std::string_view expected_message
+) {
+    {
+        std::ofstream output(path);
+        for (auto line : lines) {
+            output << line << '\n';
+        }
+    }
+
+    auto command = executable.string() + " --parse " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
 }
 
 }  // namespace
@@ -134,22 +154,56 @@ int main() {
     assert(output.find("first statement alternate count: 0") != std::string::npos);
     assert(output.find("first statement switch cases: 0") != std::string::npos);
 
-    auto failure_path = std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or";
-    {
-        std::ofstream failure_output(failure_path);
-        failure_output << "package demo.cli\n";
-        failure_output << "choice Maybe<T>\n";
-        failure_output << "    Some(value: T)\n";
-        failure_output << "    Empty\n";
-        failure_output << "const DEFAULT_VALUE: Maybe<UInt32> = Missing(1)\n";
-    }
-
-    auto failure_command = executable.string() + " --parse " + failure_path.string();
-    auto failure_output = read_failing_command_output(failure_command);
-    assert(
-        failure_output.find(
-            "choice constructor 'Missing' does not match any declared choice variant for constant type 'Maybe<UInt32>'"
-        ) != std::string::npos
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",
+        {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "const DEFAULT_VALUE: Maybe<UInt32> = Missing(1)",
+        },
+        "choice constructor 'Missing' does not match any declared choice variant for constant type 'Maybe<UInt32>'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_wrong_choice_constant.or",
+        {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Result<T>",
+            "    Ok(value: T)",
+            "    Error(message: Text)",
+            "const DEFAULT_VALUE: Maybe<UInt32> = Error(\"missing\")",
+        },
+        "choice constructor 'Error' does not belong to declared constant type 'Maybe<UInt32>'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_constant_arity.or",
+        {
+            "package demo.cli",
+            "choice Status",
+            "    Ready(code: UInt32)",
+            "    Error",
+            "const DEFAULT_STATUS: Status = Ready()",
+        },
+        "choice constructor 'Ready' expects 1 payload value but received 0"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_constant_payload.or",
+        {
+            "package demo.cli",
+            "choice Status",
+            "    Ready(code: UInt32)",
+            "    Error",
+            "const DEFAULT_STATUS: Status = Ready(true)",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
     );
     return 0;
 }
