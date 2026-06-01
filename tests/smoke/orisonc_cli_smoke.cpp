@@ -221,6 +221,23 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_wrong_choice_constant.or",
+        {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Boxed<T>",
+            "    Wrap(inner: T)",
+            "choice Result<T>",
+            "    Ok(value: T)",
+            "    Error(message: Text)",
+            "const DEFAULT_VALUE: Boxed<Maybe<UInt32>> = Wrap(Error(\"missing\"))",
+        },
+        "choice constructor 'Error' does not belong to declared constant type 'Maybe<UInt32>'"
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_constant_payload.or",
         {
             "package demo.cli",
