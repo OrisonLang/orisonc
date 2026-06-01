@@ -23,6 +23,22 @@ auto read_command_output(std::string const& command) -> std::string {
     return output;
 }
 
+auto read_failing_command_output(std::string const& command) -> std::string {
+    std::array<char, 256> buffer {};
+    std::string output;
+
+    FILE* pipe = popen((command + " 2>&1").c_str(), "r");
+    assert(pipe != nullptr);
+
+    while (std::fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+        output += buffer.data();
+    }
+
+    auto status = pclose(pipe);
+    assert(status != 0);
+    return output;
+}
+
 }  // namespace
 
 int main() {
@@ -117,5 +133,23 @@ int main() {
     assert(output.find("first statement nested count: 0") != std::string::npos);
     assert(output.find("first statement alternate count: 0") != std::string::npos);
     assert(output.find("first statement switch cases: 0") != std::string::npos);
+
+    auto failure_path = std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or";
+    {
+        std::ofstream failure_output(failure_path);
+        failure_output << "package demo.cli\n";
+        failure_output << "choice Maybe<T>\n";
+        failure_output << "    Some(value: T)\n";
+        failure_output << "    Empty\n";
+        failure_output << "const DEFAULT_VALUE: Maybe<UInt32> = Missing(1)\n";
+    }
+
+    auto failure_command = executable.string() + " --parse " + failure_path.string();
+    auto failure_output = read_failing_command_output(failure_command);
+    assert(
+        failure_output.find(
+            "choice constructor 'Missing' does not match any declared choice variant for constant type 'Maybe<UInt32>'"
+        ) != std::string::npos
+    );
     return 0;
 }

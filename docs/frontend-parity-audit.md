@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-31: CLI smoke coverage now checks the unknown choice-constructor diagnostic for choice-typed constant initializers.
 - 2026-05-31: choice-typed constant initializers now diagnose unknown constructor calls with constant-type context.
 - 2026-05-31: constant choice-constructor initializers now diagnose constructors that belong to a different declared choice type.
 - 2026-05-27: nested generic choice constructor constants now recursively validate substituted payload constructors.
