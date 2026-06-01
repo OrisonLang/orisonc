@@ -3711,6 +3711,23 @@ void test_choice_constant_initializer_arity_failure() {
     assert_choice_constructor_arity_diagnostic(path, 5, "Ready", 1, 0);
 }
 
+void test_zero_payload_choice_constant_initializer_arity_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_zero_payload_choice_constant_arity_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Status",
+            "    Ready(code: UInt32)",
+            "    Empty",
+            "const DEFAULT_STATUS: Status = Empty(1)",
+        }
+    );
+
+    assert_choice_constructor_arity_diagnostic(path, 5, "Empty", 0, 1);
+}
+
 void test_choice_constant_initializer_payload_type_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_payload_failure.or";
     write_concurrency_fixture(
@@ -7024,6 +7041,7 @@ int main() {
     test_choice_constant_initializer_wrong_choice_type_failure();
     test_choice_constant_initializer_unknown_constructor_failure();
     test_choice_constant_initializer_arity_failure();
+    test_zero_payload_choice_constant_initializer_arity_failure();
     test_choice_constant_initializer_payload_type_failure();
     test_constant_initializer_pointer_construction_failure();
     test_nested_address_of_and_raw_offset_success();
