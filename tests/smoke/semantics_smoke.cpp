@@ -1527,6 +1527,20 @@ void assert_choice_constructor_declared_type_mismatch_diagnostic(
     );
 }
 
+void assert_choice_constructor_unknown_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view constructor_name,
+    std::string_view declared_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "choice constructor '" + std::string(constructor_name) +
+            "' does not match any declared choice variant for constant type '" + std::string(declared_type) + "'"
+    );
+}
+
 void assert_pointer_construction_source_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3663,6 +3677,22 @@ void test_choice_constant_initializer_wrong_choice_type_failure() {
     );
 
     assert_choice_constructor_declared_type_mismatch_diagnostic(path, 8, "Error", "Maybe<UInt32>");
+}
+
+void test_choice_constant_initializer_unknown_constructor_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_unknown_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "const DEFAULT_VALUE: Maybe<UInt32> = Missing(1)",
+        }
+    );
+
+    assert_choice_constructor_unknown_diagnostic(path, 5, "Missing", "Maybe<UInt32>");
 }
 
 void test_choice_constant_initializer_arity_failure() {
@@ -6992,6 +7022,7 @@ int main() {
     test_nested_choice_constant_initializer_success();
     test_nested_choice_constant_initializer_payload_type_failure();
     test_choice_constant_initializer_wrong_choice_type_failure();
+    test_choice_constant_initializer_unknown_constructor_failure();
     test_choice_constant_initializer_arity_failure();
     test_choice_constant_initializer_payload_type_failure();
     test_constant_initializer_pointer_construction_failure();

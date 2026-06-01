@@ -869,6 +869,22 @@ private:
         return nullptr;
     }
 
+    auto is_choice_type(syntax::TypeSyntax const& choice_type) const -> bool {
+        for (auto const& signature : choice_variant_signatures_) {
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (match_generic_type_pattern(
+                    signature.choice_type,
+                    choice_type,
+                    signature.generic_parameters,
+                    bindings
+                )) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     auto find_choice_variant_payload_arity(
         std::string const& variant_name,
         syntax::TypeSyntax const& choice_type
@@ -2823,6 +2839,15 @@ private:
                     initializer.line,
                     "choice constructor '" + constructor_name +
                         "' does not belong to declared constant type '" + render_type_name(declared_type) + "'"
+                );
+                return true;
+            }
+            if (initializer.kind == syntax::ExpressionKind::call && is_choice_type(declared_type)) {
+                diagnostics_.error(
+                    initializer.line,
+                    "choice constructor '" + constructor_name +
+                        "' does not match any declared choice variant for constant type '" +
+                        render_type_name(declared_type) + "'"
                 );
                 return true;
             }

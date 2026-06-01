@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-05-31: choice-typed constant initializers now diagnose unknown constructor calls with constant-type context.
 - 2026-05-31: constant choice-constructor initializers now diagnose constructors that belong to a different declared choice type.
 - 2026-05-27: nested generic choice constructor constants now recursively validate substituted payload constructors.
 - 2026-05-27: generic choice constructor constants now have coverage for substituted payload success and mismatch diagnostics.
