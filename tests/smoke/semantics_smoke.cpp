@@ -539,33 +539,45 @@ void write_maybe_choice_constant_fixture(
     }
 }
 
+void write_maybe_choice_constant_fixture_with_declarations(
+    std::filesystem::path const& path,
+    std::string_view initializer,
+    std::initializer_list<std::string_view> declarations,
+    std::initializer_list<std::string_view> body_lines = {}
+) {
+    std::ofstream output(path);
+    output << "package demo.consts\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    for (auto line : declarations) {
+        output << line << "\n";
+    }
+    output << initializer << "\n";
+    for (auto line : body_lines) {
+        output << line << "\n";
+    }
+}
+
 void write_boxed_maybe_choice_constant_fixture(std::filesystem::path const& path, std::string_view initializer) {
-    write_concurrency_fixture(
+    write_maybe_choice_constant_fixture_with_declarations(
         path,
-        "demo.consts",
+        initializer,
         {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
             "choice Boxed<T>",
             "    Wrap(inner: T)",
-            initializer,
         }
     );
 }
 
 void write_maybe_result_choice_constant_fixture(std::filesystem::path const& path, std::string_view initializer) {
-    write_concurrency_fixture(
+    write_maybe_choice_constant_fixture_with_declarations(
         path,
-        "demo.consts",
+        initializer,
         {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
             "choice Result<T>",
             "    Ok(value: T)",
             "    Error(message: Text)",
-            initializer,
         }
     );
 }
@@ -574,50 +586,33 @@ void write_boxed_maybe_result_choice_constant_fixture(
     std::filesystem::path const& path,
     std::string_view initializer
 ) {
-    write_concurrency_fixture(
+    write_maybe_choice_constant_fixture_with_declarations(
         path,
-        "demo.consts",
+        initializer,
         {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
             "choice Boxed<T>",
             "    Wrap(inner: T)",
             "choice Result<T>",
             "    Ok(value: T)",
             "    Error(message: Text)",
-            initializer,
         }
     );
 }
 
 void write_maybe_array_choice_constant_fixture(std::filesystem::path const& path, std::string_view initializer) {
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            initializer,
-        }
-    );
+    write_maybe_choice_constant_fixture(path, initializer);
 }
 
 void write_boxed_maybe_array_choice_constant_fixture(
     std::filesystem::path const& path,
     std::string_view initializer
 ) {
-    write_concurrency_fixture(
+    write_maybe_choice_constant_fixture_with_declarations(
         path,
-        "demo.consts",
+        initializer,
         {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
             "choice Boxed<T>",
             "    Wrap(inner: T)",
-            initializer,
         }
     );
 }

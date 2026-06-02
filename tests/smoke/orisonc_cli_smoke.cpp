@@ -71,8 +71,9 @@ auto status_choice_constant_lines(std::string_view initializer) -> std::vector<s
     };
 }
 
-auto maybe_choice_constant_lines(
+auto maybe_choice_constant_lines_with_declarations(
     std::string_view initializer,
+    std::initializer_list<std::string_view> declarations,
     std::initializer_list<std::string_view> trailing_lines = {}
 ) -> std::vector<std::string_view> {
     std::vector<std::string_view> lines {
@@ -80,62 +81,49 @@ auto maybe_choice_constant_lines(
         "choice Maybe<T>",
         "    Some(value: T)",
         "    Empty",
-        initializer,
     };
+    lines.insert(lines.end(), declarations.begin(), declarations.end());
+    lines.push_back(initializer);
     lines.insert(lines.end(), trailing_lines.begin(), trailing_lines.end());
     return lines;
 }
 
+auto maybe_choice_constant_lines(
+    std::string_view initializer,
+    std::initializer_list<std::string_view> trailing_lines = {}
+) -> std::vector<std::string_view> {
+    return maybe_choice_constant_lines_with_declarations(initializer, {}, trailing_lines);
+}
+
 auto boxed_maybe_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        "choice Boxed<T>",
-        "    Wrap(inner: T)",
+    return maybe_choice_constant_lines_with_declarations(
         initializer,
-    };
+        {"choice Boxed<T>", "    Wrap(inner: T)"}
+    );
 }
 
 auto maybe_result_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        "choice Result<T>",
-        "    Ok(value: T)",
-        "    Error(message: Text)",
+    return maybe_choice_constant_lines_with_declarations(
         initializer,
-    };
+        {"choice Result<T>", "    Ok(value: T)", "    Error(message: Text)"}
+    );
 }
 
 auto boxed_maybe_result_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        "choice Boxed<T>",
-        "    Wrap(inner: T)",
-        "choice Result<T>",
-        "    Ok(value: T)",
-        "    Error(message: Text)",
+    return maybe_choice_constant_lines_with_declarations(
         initializer,
-    };
+        {
+            "choice Boxed<T>",
+            "    Wrap(inner: T)",
+            "choice Result<T>",
+            "    Ok(value: T)",
+            "    Error(message: Text)",
+        }
+    );
 }
 
 auto boxed_maybe_array_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        "choice Boxed<T>",
-        "    Wrap(inner: T)",
-        initializer,
-    };
+    return boxed_maybe_choice_constant_lines(initializer);
 }
 
 auto scalar_array_constant_lines(
