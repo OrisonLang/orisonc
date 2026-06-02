@@ -302,6 +302,27 @@ auto generic_pair_consumer_lines(
     return lines;
 }
 
+auto generic_same_consumer_lines(
+    std::initializer_list<std::string_view> body_lines
+) -> std::vector<std::string> {
+    std::vector<std::string> lines {
+        "package demo.cli",
+        "record Header",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        "record OtherHeader",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        "function same<T>(left: T, right: T) -> UInt16",
+        "    return 1",
+        "function demo() -> UInt16",
+    };
+    for (auto line : body_lines) {
+        lines.emplace_back(line);
+    }
+    return lines;
+}
+
 auto low_level_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -533,6 +554,12 @@ int main() {
             {"    return consume_pair(Header([1, 2], 1), Pair(OtherHeader([1, 2], 1), 1 as UInt16))"}
         ),
         "function argument 'pair' type 'Pair<OtherHeader, UInt16>' does not match declared type 'Pair<Header, UInt16>'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_generic_repeated_binding_argument_type.or",
+        generic_same_consumer_lines({"    return same(Header([1, 2], 1), OtherHeader([1, 2], 1))"}),
+        "function argument 'right' type 'OtherHeader' does not match declared type 'Header'"
     );
     assert_cli_parse_success(
         executable,

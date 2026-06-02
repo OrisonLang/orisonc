@@ -674,7 +674,7 @@ private:
                         return true;
                     }
 
-                    return render_type_name(found->second) == render_type_name(actual);
+                    return are_type_syntaxes_compatible(actual, found->second);
                 }
             }
         }
@@ -765,6 +765,7 @@ private:
         std::vector<syntax::ExpressionSyntax> const& arguments,
         std::vector<std::string> const& generic_parameters,
         std::unordered_map<std::string, syntax::TypeSyntax>& bindings,
+        std::vector<std::size_t>& conflicting_argument_indices,
         std::size_t parameter_offset = 0
     ) const {
         for (std::size_t index = 0; index < arguments.size(); ++index) {
@@ -778,13 +779,45 @@ private:
                 continue;
             }
 
-            match_generic_type_pattern(
-                parameters[index + parameter_offset].type,
-                *parsed_argument_type,
-                generic_parameters,
-                bindings
-            );
+            if (!match_generic_type_pattern(
+                    parameters[index + parameter_offset].type,
+                    *parsed_argument_type,
+                    generic_parameters,
+                    bindings
+                )) {
+                conflicting_argument_indices.push_back(index);
+            }
         }
+    }
+
+    auto validate_generic_binding_conflicts(
+        std::vector<syntax::ParameterSyntax> const& parameters,
+        std::vector<syntax::ExpressionSyntax> const& arguments,
+        std::vector<std::string> const& generic_parameters,
+        std::unordered_map<std::string, syntax::TypeSyntax> const& bindings,
+        std::vector<std::size_t> const& conflicting_argument_indices,
+        std::string_view call_context,
+        std::size_t parameter_offset = 0
+    ) -> std::unordered_set<std::size_t> {
+        std::unordered_set<std::size_t> diagnosed_indices;
+        for (auto index : conflicting_argument_indices) {
+            auto const& parameter = parameters[index + parameter_offset];
+            auto parameter_type = substitute_generic_type_bindings(parameter.type, bindings);
+            if (type_references_any_generic_parameter(parameter_type, generic_parameters)) {
+                continue;
+            }
+
+            if (validate_typed_expression_compatibility(
+                    arguments[index],
+                    render_type_name(parameter_type),
+                    arguments[index].line,
+                    std::string(call_context) + " argument '" + parameter.name + "'"
+                )) {
+                diagnosed_indices.insert(index);
+            }
+        }
+
+        return diagnosed_indices;
     }
 
     void validate_bound_argument_types(
@@ -792,10 +825,15 @@ private:
         std::vector<syntax::ExpressionSyntax> const& arguments,
         std::vector<std::string> const& generic_parameters,
         std::unordered_map<std::string, syntax::TypeSyntax> const& bindings,
+        std::unordered_set<std::size_t> const& diagnosed_indices,
         std::string_view call_context,
         std::size_t parameter_offset = 0
     ) {
         for (std::size_t index = 0; index < arguments.size(); ++index) {
+            if (diagnosed_indices.contains(index)) {
+                continue;
+            }
+
             auto const& parameter = parameters[index + parameter_offset];
             auto parameter_type = substitute_generic_type_bindings(parameter.type, bindings);
             if (type_references_any_generic_parameter(parameter_type, generic_parameters)) {
@@ -1721,17 +1759,28 @@ private:
                 }
 
                 std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+                std::vector<std::size_t> conflicting_argument_indices;
                 bind_argument_generic_types(
                     signature.parameters,
                     expression.arguments,
                     signature.generic_parameters,
-                    bindings
+                    bindings,
+                    conflicting_argument_indices
+                );
+                auto diagnosed_indices = validate_generic_binding_conflicts(
+                    signature.parameters,
+                    expression.arguments,
+                    signature.generic_parameters,
+                    bindings,
+                    conflicting_argument_indices,
+                    "function"
                 );
                 validate_bound_argument_types(
                     signature.parameters,
                     expression.arguments,
                     signature.generic_parameters,
                     bindings,
+                    diagnosed_indices,
                     "function"
                 );
                 return;
@@ -1782,11 +1831,22 @@ private:
                 receiver_placeholders.begin(),
                 receiver_placeholders.end()
             );
+            std::vector<std::size_t> conflicting_argument_indices;
             bind_argument_generic_types(
                 signature.parameters,
                 expression.arguments,
                 generic_parameters,
                 bindings,
+                conflicting_argument_indices,
+                argument_offset
+            );
+            auto diagnosed_indices = validate_generic_binding_conflicts(
+                signature.parameters,
+                expression.arguments,
+                generic_parameters,
+                bindings,
+                conflicting_argument_indices,
+                "method",
                 argument_offset
             );
             validate_bound_argument_types(
@@ -1794,6 +1854,7 @@ private:
                 expression.arguments,
                 generic_parameters,
                 bindings,
+                diagnosed_indices,
                 "method",
                 argument_offset
             );

@@ -4110,6 +4110,29 @@ void test_generic_function_dependent_argument_type_mismatch_failure() {
     );
 }
 
+void test_generic_function_repeated_binding_conflict_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_function_repeated_binding_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "function same<T>(left: T, right: T) -> UInt16",
+            "    return 1",
+            "function demo() -> UInt16",
+            "    return same(Header([1, 2], 1), OtherHeader([1, 2], 1))",
+        }
+    );
+
+    assert_function_argument_type_mismatch_diagnostic(path, 11, "right", "OtherHeader", "Header");
+}
+
 void test_generic_method_dependent_same_width_integer_argument_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_generic_method_dependent_same_width_integer_argument_success.or";
@@ -4134,6 +4157,32 @@ void test_generic_method_dependent_same_width_integer_argument_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_generic_method_repeated_binding_conflict_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_method_repeated_binding_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record Processor",
+            "    id: UInt32",
+            "extend Processor",
+            "    function same<T>(this: shared This, left: T, right: T) -> UInt16",
+            "        return 1",
+            "function demo(processor: Processor) -> UInt16",
+            "    return processor.same(Header([1, 2], 1), OtherHeader([1, 2], 1))",
+        }
+    );
+
+    assert_method_argument_type_mismatch_diagnostic(path, 14, "right", "OtherHeader", "Header");
 }
 
 void test_generic_method_dependent_argument_type_mismatch_failure() {
@@ -8140,7 +8189,9 @@ int main() {
     test_generic_function_dependent_argument_success();
     test_generic_function_dependent_same_width_integer_argument_success();
     test_generic_function_dependent_argument_type_mismatch_failure();
+    test_generic_function_repeated_binding_conflict_failure();
     test_generic_method_dependent_same_width_integer_argument_success();
+    test_generic_method_repeated_binding_conflict_failure();
     test_generic_method_dependent_argument_type_mismatch_failure();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();

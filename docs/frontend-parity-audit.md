@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-02: generic call argument binding now records repeated generic binding conflicts and diagnoses the argument that introduced an incompatible nominal binding, while still accepting same-width fixed integer bindings.
 - 2026-06-02: ordinary typed-expression compatibility now compares parsed generic type structure, allowing same-width fixed integer compatibility in nested generic arguments while preserving nominal generic container names.
 - 2026-06-02: generic function and receiver-method argument checks now bind available generic parameters from earlier arguments or receiver context before validating dependent argument positions, with generic record constructor calls preserving inferred argument types.
 - 2026-06-02: declared function and method calls now diagnose ordinary argument type mismatches, including nominal record constructor arguments.
