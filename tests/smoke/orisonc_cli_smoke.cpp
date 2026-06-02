@@ -155,6 +155,32 @@ auto scalar_array_intrinsic_constant_lines(std::string_view initializer) -> std:
     };
 }
 
+auto scalar_array_await_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        initializer,
+        "const STATUS_MASK: UInt32 = 0xFF",
+    };
+}
+
+auto scalar_array_block_runtime_constant_lines(std::string_view construct) -> std::vector<std::string_view> {
+    if (construct == "task") {
+        return {
+            "package demo.cli",
+            "const MAGIC: Array<UInt32, 1> = [task",
+            "    1",
+            "]",
+        };
+    }
+
+    return {
+        "package demo.cli",
+        "const MAGIC: Array<UInt32, 1> = [thread",
+        "    1",
+        "]",
+    };
+}
+
 auto maybe_array_payload_function_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -175,6 +201,41 @@ auto maybe_array_payload_intrinsic_constant_lines(std::string_view initializer) 
         "    Empty",
         initializer,
         "const UART_STATUS: Address = 0x4000_1000",
+    };
+}
+
+auto maybe_array_payload_await_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        initializer,
+        "const STATUS_MASK: UInt32 = 0xFF",
+    };
+}
+
+auto maybe_array_payload_block_runtime_constant_lines(std::string_view construct) -> std::vector<std::string_view> {
+    if (construct == "task") {
+        return {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([task",
+            "    1",
+            "])",
+        };
+    }
+
+    return {
+        "package demo.cli",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([thread",
+        "    1",
+        "])",
     };
 }
 
@@ -427,6 +488,44 @@ int main() {
             "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([raw_read(UART_STATUS)])"
         ),
         "constant initializer cannot use unsafe intrinsic 'raw_read'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_await.or",
+        scalar_array_await_constant_lines("const MAGIC: Array<UInt32, 1> = [await STATUS_MASK]"),
+        "constant initializer cannot use await expression"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_array_payload_await.or",
+        maybe_array_payload_await_constant_lines(
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([await STATUS_MASK])"
+        ),
+        "constant initializer cannot use await expression"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_task.or",
+        scalar_array_block_runtime_constant_lines("task"),
+        "constant initializer cannot use task expression"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_array_payload_task.or",
+        maybe_array_payload_block_runtime_constant_lines("task"),
+        "constant initializer cannot use task expression"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_thread.or",
+        scalar_array_block_runtime_constant_lines("thread"),
+        "constant initializer cannot use thread expression"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_array_payload_thread.or",
+        maybe_array_payload_block_runtime_constant_lines("thread"),
+        "constant initializer cannot use thread expression"
     );
     return 0;
 }

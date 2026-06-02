@@ -3847,6 +3847,107 @@ void test_array_payload_choice_constant_initializer_unsafe_intrinsic_failure() {
     assert_constant_initializer_runtime_construct_diagnostic(path, 5, "unsafe intrinsic 'raw_read'");
 }
 
+void test_array_literal_constant_initializer_await_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_await_failure.or";
+    write_array_constant_fixture(
+        path,
+        "const MAGIC: Array<UInt32, 1> = [await STATUS_MASK]",
+        {
+            "const STATUS_MASK: UInt32 = 0xFF",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 2, "await expression");
+}
+
+void test_array_payload_choice_constant_initializer_await_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_constant_array_payload_await_failure.or";
+    write_maybe_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([await STATUS_MASK])",
+        {
+            "const STATUS_MASK: UInt32 = 0xFF",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 5, "await expression");
+}
+
+void test_array_literal_constant_initializer_task_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_task_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MAGIC: Array<UInt32, 1> = [task",
+            "    1",
+            "]",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 2, "task expression");
+}
+
+void test_array_payload_choice_constant_initializer_task_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_constant_array_payload_task_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([task",
+            "    1",
+            "])",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 5, "task expression");
+}
+
+void test_array_literal_constant_initializer_thread_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_thread_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MAGIC: Array<UInt32, 1> = [thread",
+            "    1",
+            "]",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 2, "thread expression");
+}
+
+void test_array_payload_choice_constant_initializer_thread_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_constant_array_payload_thread_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([thread",
+            "    1",
+            "])",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 5, "thread expression");
+}
+
 void test_address_constant_initializer_structural_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_structural_failure.or";
     write_concurrency_fixture(
@@ -7474,6 +7575,12 @@ int main() {
     test_array_payload_choice_constant_initializer_method_call_failure();
     test_array_literal_constant_initializer_unsafe_intrinsic_failure();
     test_array_payload_choice_constant_initializer_unsafe_intrinsic_failure();
+    test_array_literal_constant_initializer_await_failure();
+    test_array_payload_choice_constant_initializer_await_failure();
+    test_array_literal_constant_initializer_task_failure();
+    test_array_payload_choice_constant_initializer_task_failure();
+    test_array_literal_constant_initializer_thread_failure();
+    test_array_payload_choice_constant_initializer_thread_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();

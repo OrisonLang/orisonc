@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-01: constant initializer smoke coverage now pins `await`, `task`, and `thread` rejection inside array literal elements and choice-constructor array payloads.
 - 2026-06-01: constant initializer smoke coverage now pins unsafe intrinsic rejection inside array literal elements and choice-constructor array payloads.
 - 2026-06-01: constant initializer smoke coverage now pins ordinary function and method call rejection inside array literal elements and choice-constructor array payloads.
 - 2026-06-01: constant choice-constructor validation now delegates array-typed payloads through constant array literal checks, with semantic and CLI smoke coverage for nested array payload diagnostics.
