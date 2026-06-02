@@ -239,6 +239,27 @@ auto two_header_record_function_lines(
     return lines;
 }
 
+auto two_header_record_consumer_lines(
+    std::initializer_list<std::string_view> body_lines
+) -> std::vector<std::string> {
+    std::vector<std::string> lines {
+        "package demo.cli",
+        "record Header",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        "record OtherHeader",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        "function consume_header(header: Header) -> UInt16",
+        "    return header.version",
+        "function demo() -> UInt16",
+    };
+    for (auto line : body_lines) {
+        lines.emplace_back(line);
+    }
+    return lines;
+}
+
 auto low_level_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -456,6 +477,12 @@ int main() {
             }
         ),
         "assignment value type 'OtherHeader' does not match declared type 'Header'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_function_argument_type.or",
+        two_header_record_consumer_lines({"    return consume_header(OtherHeader([1, 2], 1))"}),
+        "function argument 'header' type 'OtherHeader' does not match declared type 'Header'"
     );
     assert_cli_parse_failure(
         executable,

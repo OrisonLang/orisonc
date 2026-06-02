@@ -699,6 +699,25 @@ private:
         return match_generic_type_pattern(receiver_pattern, actual_receiver_type, receiver_placeholders, bindings);
     }
 
+    auto type_references_any_generic_parameter(
+        syntax::TypeSyntax const& type,
+        std::vector<std::string> const& generic_parameters
+    ) const -> bool {
+        for (auto const& generic_parameter : generic_parameters) {
+            if (type.name == generic_parameter) {
+                return true;
+            }
+        }
+
+        for (auto const& argument : type.generic_arguments) {
+            if (type_references_any_generic_parameter(argument, generic_parameters)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     auto infer_specialized_return_type_name(
         std::vector<std::string> const& generic_parameters,
         std::vector<syntax::ParameterSyntax> const& parameters,
@@ -1565,6 +1584,95 @@ private:
                 "' does not match declared type '" + expected_type_name + "'"
         );
         return true;
+    }
+
+    void validate_call_argument_types(syntax::ExpressionSyntax const& expression) {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left) {
+            return;
+        }
+
+        if (expression.left->kind == syntax::ExpressionKind::name) {
+            for (auto const& signature : callable_signatures_) {
+                if (signature.name != expression.left->text || signature.parameters.size() != expression.arguments.size()) {
+                    continue;
+                }
+
+                for (std::size_t index = 0; index < signature.parameters.size(); ++index) {
+                    if (type_references_any_generic_parameter(signature.parameters[index].type, signature.generic_parameters)) {
+                        continue;
+                    }
+
+                    validate_typed_expression_compatibility(
+                        expression.arguments[index],
+                        render_type_name(signature.parameters[index].type),
+                        expression.arguments[index].line,
+                        "function argument '" + signature.parameters[index].name + "'"
+                    );
+                }
+                return;
+            }
+            return;
+        }
+
+        if (expression.left->kind != syntax::ExpressionKind::member_access &&
+            expression.left->kind != syntax::ExpressionKind::null_safe_member_access) {
+            return;
+        }
+
+        auto receiver_type_name = infer_receiver_type_name_for_member_call(*expression.left);
+        auto parsed_receiver_type = parse_rendered_type_name(receiver_type_name);
+        if (!parsed_receiver_type.has_value()) {
+            return;
+        }
+
+        for (auto const& signature : method_return_signatures_) {
+            auto argument_offset =
+                !signature.parameters.empty() && signature.parameters.front().name == "this" ? std::size_t {1}
+                                                                                              : std::size_t {0};
+            if (signature.method_name != expression.left->text ||
+                signature.parameters.size() != expression.arguments.size() + argument_offset) {
+                continue;
+            }
+
+            std::unordered_set<std::string> receiver_placeholder_set;
+            collect_receiver_generic_placeholder_names(signature.receiver_type, receiver_placeholder_set);
+            std::vector<std::string> receiver_placeholders(
+                receiver_placeholder_set.begin(),
+                receiver_placeholder_set.end()
+            );
+
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (!match_generic_type_pattern(
+                    signature.receiver_type,
+                    *parsed_receiver_type,
+                    receiver_placeholders,
+                    bindings
+                )) {
+                continue;
+            }
+
+            auto generic_parameters = signature.generic_parameters;
+            generic_parameters.insert(
+                generic_parameters.end(),
+                receiver_placeholders.begin(),
+                receiver_placeholders.end()
+            );
+            for (std::size_t index = 0; index < expression.arguments.size(); ++index) {
+                auto const& parameter = signature.parameters[index + argument_offset];
+                auto parameter_type = substitute_generic_type_bindings(parameter.type, bindings);
+                if (type_references_any_generic_parameter(parameter_type, generic_parameters)) {
+                    continue;
+                }
+
+                validate_typed_expression_compatibility(
+                    expression.arguments[index],
+                    render_type_name(parameter_type),
+                    expression.arguments[index].line,
+                    "method argument '" + parameter.name + "'"
+                );
+            }
+            return;
+        }
     }
 
     void validate_pointer_constructor_operands(syntax::ExpressionSyntax const& expression) {
@@ -3801,6 +3909,7 @@ private:
         validate_pointer_constructor_operands(expression);
         validate_index_access_operands(expression);
         validate_record_constructor_expression(expression);
+        validate_call_argument_types(expression);
 
         if (is_declared_unsafe_call(expression) && !unsafe_context_active_) {
             auto diagnostic_subject = std::string {"unsafe function"};

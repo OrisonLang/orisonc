@@ -1716,6 +1716,36 @@ void assert_assignment_value_type_mismatch_diagnostic(
     );
 }
 
+void assert_function_argument_type_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view argument_name,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "function argument '" + std::string(argument_name) + "' type '" + std::string(actual_type) +
+            "' does not match declared type '" + std::string(expected_type) + "'"
+    );
+}
+
+void assert_method_argument_type_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view argument_name,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "method argument '" + std::string(argument_name) + "' type '" + std::string(actual_type) +
+            "' does not match declared type '" + std::string(expected_type) + "'"
+    );
+}
+
 void assert_constant_initializer_unknown_name_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3953,6 +3983,53 @@ void test_record_field_assignment_constructor_type_mismatch_failure() {
     );
 
     assert_assignment_value_type_mismatch_diagnostic(path, 11, "OtherHeader", "Header");
+}
+
+void test_function_call_record_argument_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_function_call_record_argument_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "function consume_header(header: Header) -> UInt16",
+            "    return header.version",
+            "function demo() -> UInt16",
+            "    return consume_header(OtherHeader([1, 2], 1))",
+        }
+    );
+
+    assert_function_argument_type_mismatch_diagnostic(path, 11, "header", "OtherHeader", "Header");
+}
+
+void test_method_call_record_argument_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_method_call_record_argument_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record Processor",
+            "    id: UInt32",
+            "extend Processor",
+            "    function consume(this: shared This, header: Header) -> UInt16",
+            "        return header.version",
+            "function demo(processor: Processor) -> UInt16",
+            "    return processor.consume(OtherHeader([1, 2], 1))",
+        }
+    );
+
+    assert_method_argument_type_mismatch_diagnostic(path, 14, "header", "OtherHeader", "Header");
 }
 
 void test_nested_array_literal_constant_initializer_element_type_failure() {
@@ -7919,6 +7996,8 @@ int main() {
     test_annotated_integer_binding_same_width_success();
     test_record_assignment_constructor_type_mismatch_failure();
     test_record_field_assignment_constructor_type_mismatch_failure();
+    test_function_call_record_argument_type_mismatch_failure();
+    test_method_call_record_argument_type_mismatch_failure();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();
     test_array_literal_constant_initializer_forward_reference_success();
