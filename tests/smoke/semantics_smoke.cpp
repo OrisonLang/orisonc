@@ -1702,6 +1702,20 @@ void assert_return_expression_type_mismatch_diagnostic(
     );
 }
 
+void assert_assignment_value_type_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "assignment value type '" + std::string(actual_type) +
+            "' does not match declared type '" + std::string(expected_type) + "'"
+    );
+}
+
 void assert_constant_initializer_unknown_name_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3894,6 +3908,51 @@ void test_annotated_integer_binding_same_width_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_record_assignment_constructor_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_assignment_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "function default_header() -> Header",
+            "    var header = Header([1, 2], 1)",
+            "    header = OtherHeader([1, 2], 1)",
+            "    return header",
+        }
+    );
+
+    assert_assignment_value_type_mismatch_diagnostic(path, 10, "OtherHeader", "Header");
+}
+
+void test_record_field_assignment_constructor_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_field_assignment_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record Wrapper",
+            "    header: Header",
+            "function default_header(wrapper: Wrapper) -> Header",
+            "    wrapper.header = OtherHeader([1, 2], 1)",
+            "    return wrapper.header",
+        }
+    );
+
+    assert_assignment_value_type_mismatch_diagnostic(path, 11, "OtherHeader", "Header");
 }
 
 void test_nested_array_literal_constant_initializer_element_type_failure() {
@@ -7858,6 +7917,8 @@ int main() {
     test_annotated_record_binding_constructor_type_mismatch_failure();
     test_record_return_constructor_type_mismatch_failure();
     test_annotated_integer_binding_same_width_success();
+    test_record_assignment_constructor_type_mismatch_failure();
+    test_record_field_assignment_constructor_type_mismatch_failure();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();
     test_array_literal_constant_initializer_forward_reference_success();

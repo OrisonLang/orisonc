@@ -3367,12 +3367,25 @@ private:
             analyze_expression(statement.assignment_target, in_async_function, true);
             analyze_expression(statement.expression, in_async_function);
 
-            if (statement.assignment_target.kind == syntax::ExpressionKind::name) {
-                update_binding(
-                    statement.assignment_target.text,
-                    infer_expression_type_name(statement.expression),
-                    infer_expression_value_origin(statement.expression)
+            auto target_type_name = infer_expression_type_name(statement.assignment_target);
+            auto expression_value_origin = infer_expression_value_origin(statement.expression);
+            auto assignment_type_mismatch =
+                expression_value_origin == ValueOriginKind::none &&
+                validate_typed_expression_compatibility(
+                    statement.expression,
+                    target_type_name,
+                    statement.line,
+                    "assignment value"
                 );
+
+            if (statement.assignment_target.kind == syntax::ExpressionKind::name) {
+                if (!assignment_type_mismatch) {
+                    update_binding(
+                        statement.assignment_target.text,
+                        infer_expression_type_name(statement.expression),
+                        expression_value_origin
+                    );
+                }
             }
         }
 

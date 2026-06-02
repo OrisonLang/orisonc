@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-02: assignment statements now diagnose ordinary target/value type mismatches, including nominal record rebinding and field assignment coverage.
 - 2026-06-02: annotated binding and return expressions now diagnose ordinary type mismatches, including nominal record constructor mismatches.
 - 2026-06-02: record constructor arity and field value diagnostics now run for ordinary expressions, including let-binding and return-expression smoke coverage.
 - 2026-06-02: record constructor calls now validate constant initializer arity and field value types, enabling field-shaped constant initializer smoke coverage.

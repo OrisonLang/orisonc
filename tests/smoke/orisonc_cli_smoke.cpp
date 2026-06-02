@@ -446,6 +446,19 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_assignment_type.or",
+        two_header_record_function_lines(
+            "Header",
+            {
+                "    var header = Header([1, 2], 1)",
+                "    header = OtherHeader([1, 2], 1)",
+                "    return header",
+            }
+        ),
+        "assignment value type 'OtherHeader' does not match declared type 'Header'"
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_unknown_reference.or",
         scalar_array_constant_lines(scalar_array_constant_initializer("STATUS_LOW")),
         "constant initializer references unknown name 'STATUS_LOW'"
