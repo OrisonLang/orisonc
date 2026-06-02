@@ -3626,6 +3626,36 @@ void test_nested_array_literal_constant_initializer_success() {
     assert_fixture_success(path);
 }
 
+void test_indexed_array_constant_initializer_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_indexed_array_constant_success.or";
+    write_array_constant_fixture(
+        path,
+        scalar_array_constant_initializer("1, 2", 2),
+        {
+            "const FIRST_MAGIC: UInt32 = MAGIC[0]",
+            "function first_magic() -> UInt32",
+            "    return FIRST_MAGIC",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_indexed_array_constant_initializer_element_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_indexed_array_constant_element_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const FLAGS: Array<Bool, 1> = [true]",
+            "const FIRST_FLAG: UInt32 = FLAGS[0]",
+        }
+    );
+
+    assert_constant_initializer_mismatch_diagnostic(path, 3, "Bool", "UInt32");
+}
+
 void test_nested_array_literal_constant_initializer_element_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_element_failure.or";
@@ -7575,6 +7605,8 @@ int main() {
     test_array_literal_constant_initializer_element_type_failure();
     test_array_literal_constant_initializer_length_failure();
     test_nested_array_literal_constant_initializer_success();
+    test_indexed_array_constant_initializer_success();
+    test_indexed_array_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();
     test_array_literal_constant_initializer_forward_reference_success();

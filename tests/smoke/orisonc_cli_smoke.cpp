@@ -376,6 +376,16 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_indexed_array_constant_element_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "const FLAGS: Array<Bool, 1> = [true]",
+            "const FIRST_FLAG: UInt32 = FLAGS[0]",
+        },
+        "constant initializer type 'Bool' does not match declared constant type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_unknown_reference.or",
         scalar_array_constant_lines(scalar_array_constant_initializer("STATUS_LOW")),
         "constant initializer references unknown name 'STATUS_LOW'"
