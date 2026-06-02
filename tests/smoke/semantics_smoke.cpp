@@ -3548,6 +3548,31 @@ void test_nested_array_literal_constant_initializer_length_failure() {
     assert_constant_array_initializer_length_diagnostic(path, 2, 3, 2);
 }
 
+void test_array_literal_constant_initializer_forward_reference_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_forward_reference_success.or";
+    write_array_constant_fixture(
+        path,
+        "const MAGIC: Array<UInt32, 2> = [STATUS_LOW, STATUS_HIGH]",
+        {
+            "const STATUS_LOW: UInt32 = 1",
+            "const STATUS_HIGH: UInt32 = 2",
+            "function first_magic() -> UInt32",
+            "    return MAGIC[0]",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_array_literal_constant_initializer_unknown_reference_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_unknown_reference_failure.or";
+    write_array_constant_fixture(path, "const MAGIC: Array<UInt32, 1> = [STATUS_LOW]");
+
+    assert_constant_initializer_unknown_name_diagnostic(path, 2, "STATUS_LOW");
+}
+
 void test_address_constant_initializer_structural_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_structural_failure.or";
     write_concurrency_fixture(
@@ -7155,6 +7180,8 @@ int main() {
     test_nested_array_literal_constant_initializer_success();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();
+    test_array_literal_constant_initializer_forward_reference_success();
+    test_array_literal_constant_initializer_unknown_reference_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();

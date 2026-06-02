@@ -302,5 +302,11 @@ int main() {
         nested_array_constant_lines("const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, 2, 3]]"),
         "constant array initializer length 3 does not match declared length 2"
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_unknown_reference.or",
+        scalar_array_constant_lines("const MAGIC: Array<UInt32, 1> = [STATUS_LOW]"),
+        "constant initializer references unknown name 'STATUS_LOW'"
+    );
     return 0;
 }
