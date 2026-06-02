@@ -3882,6 +3882,50 @@ void test_record_constructor_return_expression_arity_failure() {
     assert_record_constructor_arity_diagnostic(path, 6, "Header", 2, 1);
 }
 
+void test_generic_record_constructor_repeated_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_record_repeated_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Same<T>",
+            "    first: T",
+            "    second: T",
+            "function demo() -> UInt16",
+            "    let same = Same(1 as UInt16, 2 as Int16)",
+            "    return same.first",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_generic_record_constructor_repeated_field_conflict_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_record_repeated_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record Same<T>",
+            "    first: T",
+            "    second: T",
+            "function demo() -> UInt16",
+            "    let same = Same(Header([1, 2], 1), OtherHeader([1, 2], 1))",
+            "    return same.first.version",
+        }
+    );
+
+    assert_record_constructor_field_type_diagnostic(path, 12, "second", "OtherHeader", "Header");
+}
+
 void test_annotated_record_binding_constructor_type_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_annotated_record_binding_type_failure.or";
@@ -8179,6 +8223,8 @@ int main() {
     test_record_constructor_let_binding_field_type_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();
+    test_generic_record_constructor_repeated_field_success();
+    test_generic_record_constructor_repeated_field_conflict_failure();
     test_annotated_record_binding_constructor_type_mismatch_failure();
     test_record_return_constructor_type_mismatch_failure();
     test_annotated_integer_binding_same_width_success();

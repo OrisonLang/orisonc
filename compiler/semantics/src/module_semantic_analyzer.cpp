@@ -1,5 +1,6 @@
 #include "orison/semantics/module_semantic_analyzer.hpp"
 
+#include <algorithm>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -3348,6 +3349,7 @@ private:
         }
 
         std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        std::vector<std::size_t> conflicting_field_indices;
         if (!match_generic_type_pattern(
                 record_type_for_declaration(*record),
                 declared_type,
@@ -3357,8 +3359,47 @@ private:
             return true;
         }
 
+        if (!record->generic_parameters.empty()) {
+            for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
+                auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
+                if (argument_type_name.empty()) {
+                    continue;
+                }
+
+                auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
+                if (!parsed_argument_type.has_value()) {
+                    continue;
+                }
+
+                if (!match_generic_type_pattern(
+                        record->fields[index].type,
+                        *parsed_argument_type,
+                        record->generic_parameters,
+                        bindings
+                    )) {
+                    conflicting_field_indices.push_back(index);
+                }
+            }
+        }
+
         for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
             auto field_type = substitute_generic_type_bindings(record->fields[index].type, bindings);
+            auto field_type_name = render_type_name(field_type);
+            auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
+            auto has_binding_conflict = std::find(
+                                            conflicting_field_indices.begin(),
+                                            conflicting_field_indices.end(),
+                                            index
+                                        ) != conflicting_field_indices.end();
+            if (has_binding_conflict) {
+                diagnostics_.error(
+                    initializer.arguments[index].line,
+                    "record constructor field '" + record->fields[index].name + "' type '" +
+                        argument_type_name + "' does not match expected field type '" + field_type_name + "'"
+                );
+                return true;
+            }
+
             if (validate_record_constructor_initializer(initializer.arguments[index], field_type, declared_context)) {
                 continue;
             }
@@ -3374,8 +3415,6 @@ private:
                 continue;
             }
 
-            auto field_type_name = render_type_name(field_type);
-            auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
             if (!is_constant_initializer_type_compatible(
                     initializer.arguments[index],
                     argument_type_name,
