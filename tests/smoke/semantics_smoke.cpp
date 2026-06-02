@@ -588,6 +588,37 @@ void write_boxed_maybe_result_choice_constant_fixture(
     );
 }
 
+void write_maybe_array_choice_constant_fixture(std::filesystem::path const& path, std::string_view initializer) {
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            initializer,
+        }
+    );
+}
+
+void write_boxed_maybe_array_choice_constant_fixture(
+    std::filesystem::path const& path,
+    std::string_view initializer
+) {
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Boxed<T>",
+            "    Wrap(inner: T)",
+            initializer,
+        }
+    );
+}
+
 void write_array_constant_fixture(
     std::filesystem::path const& path,
     std::string_view initializer,
@@ -3633,6 +3664,51 @@ void test_pointer_array_literal_constant_initializer_pointer_construction_failur
     );
 
     assert_constant_initializer_runtime_construct_diagnostic(path, 2, "Pointer construction");
+}
+
+void test_choice_array_literal_constant_initializer_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_array_literal_constant_success.or";
+    write_maybe_array_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUES: Array<Maybe<UInt32>, 2> = [Some(0xFF), Empty]"
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_array_literal_constant_initializer_payload_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_array_literal_constant_payload_failure.or";
+    write_maybe_array_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUES: Array<Maybe<UInt32>, 1> = [Some(true)]"
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 5, "Bool", "UInt32");
+}
+
+void test_nested_choice_array_literal_constant_initializer_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_nested_choice_array_literal_constant_success.or";
+    write_boxed_maybe_array_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUES: Array<Boxed<Maybe<UInt32>>, 1> = [Wrap(Some(0xFF))]"
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_nested_choice_array_literal_constant_initializer_payload_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_nested_choice_array_literal_constant_payload_failure.or";
+    write_boxed_maybe_array_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUES: Array<Boxed<Maybe<UInt32>>, 1> = [Wrap(Some(true))]"
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
 }
 
 void test_address_constant_initializer_structural_failure() {
@@ -7249,6 +7325,10 @@ int main() {
     test_address_array_literal_constant_initializer_success();
     test_address_array_literal_constant_initializer_element_failure();
     test_pointer_array_literal_constant_initializer_pointer_construction_failure();
+    test_choice_array_literal_constant_initializer_success();
+    test_choice_array_literal_constant_initializer_payload_type_failure();
+    test_nested_choice_array_literal_constant_initializer_success();
+    test_nested_choice_array_literal_constant_initializer_payload_type_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();

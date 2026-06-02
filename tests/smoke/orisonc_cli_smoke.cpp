@@ -119,6 +119,18 @@ auto boxed_maybe_result_choice_constant_lines(std::string_view initializer) -> s
     };
 }
 
+auto boxed_maybe_array_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "choice Boxed<T>",
+        "    Wrap(inner: T)",
+        initializer,
+    };
+}
+
 auto scalar_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -333,6 +345,14 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_pointer_array_constant_construction.or",
         low_level_array_constant_lines("const UART_POINTERS: Array<Pointer<UInt32>, 1> = [Pointer(UART0_DATA)]"),
         "constant initializer cannot use Pointer construction"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_choice_array_constant_payload.or",
+        boxed_maybe_array_choice_constant_lines(
+            "const DEFAULT_VALUES: Array<Boxed<Maybe<UInt32>>, 1> = [Wrap(Some(true))]"
+        ),
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
     );
     return 0;
 }

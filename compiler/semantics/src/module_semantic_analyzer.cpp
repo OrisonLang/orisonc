@@ -2694,7 +2694,8 @@ private:
 
     void validate_constant_initializer_references(syntax::ExpressionSyntax const& expression) {
         auto validator = [&](syntax::ExpressionSyntax const& current) {
-            if (current.kind != syntax::ExpressionKind::name || find_binding(current.text) != nullptr) {
+            if (current.kind != syntax::ExpressionKind::name || find_binding(current.text) != nullptr ||
+                choice_variant_arities_.contains(current.text)) {
                 return false;
             }
 
@@ -2951,6 +2952,14 @@ private:
             auto diagnostic_count_before_nested_array = diagnostics_.entries().size();
             if (validate_constant_array_literal_initializer(element, declared_element_type)) {
                 if (diagnostics_.entries().size() != diagnostic_count_before_nested_array) {
+                    return true;
+                }
+                continue;
+            }
+
+            auto diagnostic_count_before_choice = diagnostics_.entries().size();
+            if (validate_constant_choice_constructor_initializer(element, declared_element_type)) {
+                if (diagnostics_.entries().size() != diagnostic_count_before_choice) {
                     return true;
                 }
                 continue;
