@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-01: non-runtime constant array smoke fixtures now share scalar and nested array declaration builders across semantic and CLI coverage.
 - 2026-06-01: constant array runtime-rejection smoke fixtures now share scalar-array and choice-array-payload builders across semantic and CLI coverage.
 - 2026-06-01: constant initializer smoke coverage now pins `await`, `task`, and `thread` rejection inside array literal elements and choice-constructor array payloads.
 - 2026-06-01: constant initializer smoke coverage now pins unsafe intrinsic rejection inside array literal elements and choice-constructor array payloads.

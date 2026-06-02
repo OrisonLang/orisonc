@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -41,10 +42,11 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     return output;
 }
 
+template <typename SourceLines>
 void assert_cli_parse_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
-    std::vector<std::string_view> const& lines,
+    SourceLines const& lines,
     std::string_view expected_message
 ) {
     {
@@ -137,15 +139,25 @@ auto boxed_maybe_array_choice_constant_lines(std::string_view initializer) -> st
 }
 
 auto scalar_array_constant_lines(
-    std::string_view initializer,
+    std::string initializer,
     std::initializer_list<std::string_view> trailing_lines = {}
-) -> std::vector<std::string_view> {
-    std::vector<std::string_view> lines {
+) -> std::vector<std::string> {
+    std::vector<std::string> lines {
         "package demo.cli",
-        initializer,
+        std::move(initializer),
     };
-    lines.insert(lines.end(), trailing_lines.begin(), trailing_lines.end());
+    for (auto line : trailing_lines) {
+        lines.emplace_back(line);
+    }
     return lines;
+}
+
+auto scalar_array_constant_initializer(std::string_view elements, std::size_t length = 1) -> std::string {
+    return "const MAGIC: Array<UInt32, " + std::to_string(length) + "> = [" + std::string(elements) + "]";
+}
+
+auto nested_array_constant_initializer(std::string_view elements, std::size_t length = 1) -> std::string {
+    return "const MATRIX: Array<Array<UInt32, 2>, " + std::to_string(length) + "> = [" + std::string(elements) + "]";
 }
 
 auto scalar_array_block_runtime_constant_lines(std::string_view construct) -> std::vector<std::string_view> {
@@ -190,10 +202,10 @@ auto maybe_array_payload_block_runtime_constant_lines(std::string_view construct
     };
 }
 
-auto nested_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+auto nested_array_constant_lines(std::string initializer) -> std::vector<std::string> {
     return {
         "package demo.cli",
-        initializer,
+        std::move(initializer),
     };
 }
 
@@ -353,37 +365,37 @@ int main() {
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_element.or",
-        scalar_array_constant_lines("const MAGIC: Array<UInt32, 1> = [true]"),
+        scalar_array_constant_lines(scalar_array_constant_initializer("true")),
         "constant array initializer element type 'Bool' does not match declared element type 'UInt32'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_length.or",
-        scalar_array_constant_lines("const MAGIC: Array<UInt32, 2> = [1, 2, 3]"),
+        scalar_array_constant_lines(scalar_array_constant_initializer("1, 2, 3", 2)),
         "constant array initializer length 3 does not match declared length 2"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_array_constant_element.or",
-        nested_array_constant_lines("const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, true]]"),
+        nested_array_constant_lines(nested_array_constant_initializer("[1, true]")),
         "constant array initializer element type 'Bool' does not match declared element type 'UInt32'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_array_constant_length.or",
-        nested_array_constant_lines("const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, 2, 3]]"),
+        nested_array_constant_lines(nested_array_constant_initializer("[1, 2, 3]")),
         "constant array initializer length 3 does not match declared length 2"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_unknown_reference.or",
-        scalar_array_constant_lines("const MAGIC: Array<UInt32, 1> = [STATUS_LOW]"),
+        scalar_array_constant_lines(scalar_array_constant_initializer("STATUS_LOW")),
         "constant initializer references unknown name 'STATUS_LOW'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_direct_cycle.or",
-        scalar_array_constant_lines("const MAGIC: Array<UInt32, 1> = [MAGIC[0]]"),
+        scalar_array_constant_lines(scalar_array_constant_initializer("MAGIC[0]")),
         "constant initializer cycle includes 'MAGIC'"
     );
     assert_cli_parse_failure(
@@ -416,7 +428,7 @@ int main() {
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_function_call.or",
         scalar_array_constant_lines(
-            "const MAGIC: Array<UInt32, 1> = [mask(0xFFFF)]",
+            scalar_array_constant_initializer("mask(0xFFFF)"),
             {"function mask(value: UInt32) -> UInt32", "    return value bit_and 0xFF"}
         ),
         "constant initializer cannot call function 'mask'"
@@ -434,7 +446,7 @@ int main() {
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_unsafe_intrinsic.or",
         scalar_array_constant_lines(
-            "const MAGIC: Array<UInt32, 1> = [raw_read(UART_STATUS)]",
+            scalar_array_constant_initializer("raw_read(UART_STATUS)"),
             {"const UART_STATUS: Address = 0x4000_1000"}
         ),
         "constant initializer cannot use unsafe intrinsic 'raw_read'"
@@ -452,7 +464,7 @@ int main() {
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_await.or",
         scalar_array_constant_lines(
-            "const MAGIC: Array<UInt32, 1> = [await STATUS_MASK]",
+            scalar_array_constant_initializer("await STATUS_MASK"),
             {"const STATUS_MASK: UInt32 = 0xFF"}
         ),
         "constant initializer cannot use await expression"

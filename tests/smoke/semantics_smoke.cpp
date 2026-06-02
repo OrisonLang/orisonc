@@ -636,6 +636,14 @@ void write_array_constant_fixture(
     }
 }
 
+auto scalar_array_constant_initializer(std::string_view elements, std::size_t length = 1) -> std::string {
+    return "const MAGIC: Array<UInt32, " + std::to_string(length) + "> = [" + std::string(elements) + "]";
+}
+
+auto nested_array_constant_initializer(std::string_view elements, std::size_t length = 1) -> std::string {
+    return "const MATRIX: Array<Array<UInt32, 2>, " + std::to_string(length) + "> = [" + std::string(elements) + "]";
+}
+
 void write_nested_array_constant_fixture(
     std::filesystem::path const& path,
     std::string_view initializer,
@@ -651,7 +659,7 @@ void write_scalar_array_runtime_constant_fixture(
 ) {
     write_array_constant_fixture(
         path,
-        "const MAGIC: Array<UInt32, 1> = [" + std::string(element) + "]",
+        scalar_array_constant_initializer(element),
         body_lines
     );
 }
@@ -3583,7 +3591,7 @@ void test_array_literal_constant_initializer_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_success.or";
     write_array_constant_fixture(
         path,
-        "const MAGIC: Array<UInt32, 2> = [1, 2]",
+        scalar_array_constant_initializer("1, 2", 2),
         {
             "function first_magic() -> UInt32",
             "    return MAGIC[0]",
@@ -3596,7 +3604,7 @@ void test_array_literal_constant_initializer_success() {
 void test_array_literal_constant_initializer_element_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_element_failure.or";
-    write_array_constant_fixture(path, "const MAGIC: Array<UInt32, 1> = [true]");
+    write_array_constant_fixture(path, scalar_array_constant_initializer("true"));
 
     assert_constant_array_initializer_element_type_diagnostic(path, 2, "Bool", "UInt32");
 }
@@ -3604,7 +3612,7 @@ void test_array_literal_constant_initializer_element_type_failure() {
 void test_array_literal_constant_initializer_length_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_length_failure.or";
-    write_array_constant_fixture(path, "const MAGIC: Array<UInt32, 2> = [1, 2, 3]");
+    write_array_constant_fixture(path, scalar_array_constant_initializer("1, 2, 3", 2));
 
     assert_constant_array_initializer_length_diagnostic(path, 2, 3, 2);
 }
@@ -3613,7 +3621,7 @@ void test_nested_array_literal_constant_initializer_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_success.or";
     write_nested_array_constant_fixture(
         path,
-        "const MATRIX: Array<Array<UInt32, 2>, 2> = [[1, 2], [3, 4]]",
+        nested_array_constant_initializer("[1, 2], [3, 4]", 2),
         {
             "function first_value() -> UInt32",
             "    return MATRIX[0][0]",
@@ -3626,7 +3634,7 @@ void test_nested_array_literal_constant_initializer_success() {
 void test_nested_array_literal_constant_initializer_element_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_element_failure.or";
-    write_nested_array_constant_fixture(path, "const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, true]]");
+    write_nested_array_constant_fixture(path, nested_array_constant_initializer("[1, true]"));
 
     assert_constant_array_initializer_element_type_diagnostic(path, 2, "Bool", "UInt32");
 }
@@ -3634,7 +3642,7 @@ void test_nested_array_literal_constant_initializer_element_type_failure() {
 void test_nested_array_literal_constant_initializer_length_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_length_failure.or";
-    write_nested_array_constant_fixture(path, "const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, 2, 3]]");
+    write_nested_array_constant_fixture(path, nested_array_constant_initializer("[1, 2, 3]"));
 
     assert_constant_array_initializer_length_diagnostic(path, 2, 3, 2);
 }
@@ -3644,7 +3652,7 @@ void test_array_literal_constant_initializer_forward_reference_success() {
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_forward_reference_success.or";
     write_array_constant_fixture(
         path,
-        "const MAGIC: Array<UInt32, 2> = [STATUS_LOW, STATUS_HIGH]",
+        scalar_array_constant_initializer("STATUS_LOW, STATUS_HIGH", 2),
         {
             "const STATUS_LOW: UInt32 = 1",
             "const STATUS_HIGH: UInt32 = 2",
@@ -3659,7 +3667,7 @@ void test_array_literal_constant_initializer_forward_reference_success() {
 void test_array_literal_constant_initializer_unknown_reference_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_unknown_reference_failure.or";
-    write_array_constant_fixture(path, "const MAGIC: Array<UInt32, 1> = [STATUS_LOW]");
+    write_array_constant_fixture(path, scalar_array_constant_initializer("STATUS_LOW"));
 
     assert_constant_initializer_unknown_name_diagnostic(path, 2, "STATUS_LOW");
 }
@@ -3667,7 +3675,7 @@ void test_array_literal_constant_initializer_unknown_reference_failure() {
 void test_array_literal_constant_initializer_direct_cycle_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_direct_cycle_failure.or";
-    write_array_constant_fixture(path, "const MAGIC: Array<UInt32, 1> = [MAGIC[0]]");
+    write_array_constant_fixture(path, scalar_array_constant_initializer("MAGIC[0]"));
 
     assert_constant_initializer_cycle_diagnostic(path, 2, "MAGIC");
 }
@@ -3677,7 +3685,7 @@ void test_array_literal_constant_initializer_indirect_cycle_failure() {
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_indirect_cycle_failure.or";
     write_array_constant_fixture(
         path,
-        "const MAGIC: Array<UInt32, 1> = [STATUS_LOW]",
+        scalar_array_constant_initializer("STATUS_LOW"),
         {
             "const STATUS_LOW: UInt32 = MAGIC[0]",
         }
