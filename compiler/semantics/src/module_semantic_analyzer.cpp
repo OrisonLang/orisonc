@@ -874,19 +874,23 @@ private:
         return nullptr;
     }
 
+    auto find_record_declaration_by_name(std::string const& record_name) const -> syntax::RecordSyntax const* {
+        for (auto const& record : module_.records) {
+            if (record.name == record_name) {
+                return &record;
+            }
+        }
+
+        return nullptr;
+    }
+
     auto find_record_constructor_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
         if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
             expression.left->kind != syntax::ExpressionKind::name) {
             return {};
         }
 
-        for (auto const& record : module_.records) {
-            if (record.name == expression.left->text) {
-                return record.name;
-            }
-        }
-
-        return {};
+        return find_record_declaration_by_name(expression.left->text) == nullptr ? std::string {} : expression.left->text;
     }
 
     auto find_choice_variant_signature(
@@ -2983,9 +2987,10 @@ private:
         return true;
     }
 
-    auto validate_constant_record_constructor_initializer(
+    auto validate_record_constructor_initializer(
         syntax::ExpressionSyntax const& initializer,
-        syntax::TypeSyntax const& declared_type
+        syntax::TypeSyntax const& declared_type,
+        std::string_view declared_context
     ) -> bool {
         auto const* record = find_record_declaration(declared_type);
         if (record == nullptr) {
@@ -3002,7 +3007,8 @@ private:
             diagnostics_.error(
                 initializer.line,
                 "record constructor '" + constructor_name +
-                    "' does not match declared constant type '" + render_type_name(declared_type) + "'"
+                    "' does not match declared " + std::string(declared_context) +
+                    " type '" + render_type_name(declared_type) + "'"
             );
             return true;
         }
@@ -3030,7 +3036,7 @@ private:
 
         for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
             auto field_type = substitute_generic_type_bindings(record->fields[index].type, bindings);
-            if (validate_constant_record_constructor_initializer(initializer.arguments[index], field_type)) {
+            if (validate_record_constructor_initializer(initializer.arguments[index], field_type, declared_context)) {
                 continue;
             }
             if (validate_constant_choice_constructor_initializer(initializer.arguments[index], field_type)) {
@@ -3062,6 +3068,24 @@ private:
         }
 
         return true;
+    }
+
+    auto validate_record_constructor_expression(syntax::ExpressionSyntax const& expression) -> bool {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
+            expression.left->kind != syntax::ExpressionKind::name) {
+            return false;
+        }
+
+        auto const* record = find_record_declaration_by_name(expression.left->text);
+        if (record == nullptr) {
+            return false;
+        }
+
+        return validate_record_constructor_initializer(
+            expression,
+            record_type_for_declaration(*record),
+            "expression"
+        );
     }
 
     auto validate_constant_array_literal_initializer(
@@ -3139,8 +3163,7 @@ private:
                 continue;
             }
 
-            if (validate_constant_record_constructor_initializer(constant.initializer, constant.type)) {
-                analyze_expression(constant.initializer, false);
+            if (validate_record_constructor_initializer(constant.initializer, constant.type, "constant")) {
                 validate_constant_initializer_references(constant.initializer);
                 expected_pointer_type_name_ = saved_expected_pointer_type_name;
                 continue;
@@ -3720,6 +3743,7 @@ private:
 
         validate_pointer_constructor_operands(expression);
         validate_index_access_operands(expression);
+        validate_record_constructor_expression(expression);
 
         if (is_declared_unsafe_call(expression) && !unsafe_context_active_) {
             auto diagnostic_subject = std::string {"unsafe function"};

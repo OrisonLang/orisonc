@@ -18,7 +18,7 @@ Header([0x7F, 0x45, 0x4C, 0x46], 1)
 ## Consequences
 
 - The syntax reuses the existing call expression shape and avoids a parser AST change for named arguments.
-- Semantics can validate constructor arity and field value types against the declared record type.
+- Semantics validate constructor arity and field value types in constant initializers and ordinary expressions.
 - Declaration-order construction is compact but less self-documenting than named fields.
 
 ## Follow-up work

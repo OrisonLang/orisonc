@@ -3755,6 +3755,61 @@ void test_record_constructor_constant_initializer_field_type_failure() {
     assert_record_constructor_field_type_diagnostic(path, 5, "version", "Bool", "UInt16");
 }
 
+void test_record_constructor_let_binding_field_access_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_let_field_success.or";
+    write_header_record_constant_fixture(
+        path,
+        {
+            "function default_version() -> UInt16",
+            "    let header = Header([1, 2], 1)",
+            "    return header.version",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_record_constructor_let_binding_field_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_let_field_type_failure.or";
+    write_header_record_constant_fixture(
+        path,
+        {
+            "function default_version() -> UInt16",
+            "    let header = Header([1, 2], true)",
+            "    return 0",
+        }
+    );
+
+    assert_record_constructor_field_type_diagnostic(path, 6, "version", "Bool", "UInt16");
+}
+
+void test_record_constructor_return_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_return_success.or";
+    write_header_record_constant_fixture(
+        path,
+        {
+            "function default_header() -> Header",
+            "    return Header([1, 2], 1)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_record_constructor_return_expression_arity_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_return_arity_failure.or";
+    write_header_record_constant_fixture(
+        path,
+        {
+            "function default_header() -> Header",
+            "    return Header([1, 2])",
+        }
+    );
+
+    assert_record_constructor_arity_diagnostic(path, 6, "Header", 2, 1);
+}
+
 void test_nested_array_literal_constant_initializer_element_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_element_failure.or";
@@ -7710,6 +7765,10 @@ int main() {
     test_record_constructor_constant_initializer_indexed_field_success();
     test_record_constructor_constant_initializer_arity_failure();
     test_record_constructor_constant_initializer_field_type_failure();
+    test_record_constructor_let_binding_field_access_success();
+    test_record_constructor_let_binding_field_type_failure();
+    test_record_constructor_return_expression_success();
+    test_record_constructor_return_expression_arity_failure();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();
     test_array_literal_constant_initializer_forward_reference_success();

@@ -207,6 +207,18 @@ auto header_record_constant_lines(std::string_view initializer) -> std::vector<s
     };
 }
 
+auto header_record_function_lines(std::initializer_list<std::string_view> body_lines) -> std::vector<std::string_view> {
+    std::vector<std::string_view> lines {
+        "package demo.cli",
+        "record Header",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        "function default_header() -> Header",
+    };
+    lines.insert(lines.end(), body_lines.begin(), body_lines.end());
+    return lines;
+}
+
 auto low_level_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -399,6 +411,12 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_record_constructor_constant_field_type.or",
         header_record_constant_lines("const DEFAULT_HEADER: Header = Header([1, 2], true)"),
         "record constructor field 'version' type 'Bool' does not match expected field type 'UInt16'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_return_arity.or",
+        header_record_function_lines({"    return Header([1, 2])"}),
+        "record constructor 'Header' expects 2 field values but received 1"
     );
     assert_cli_parse_failure(
         executable,
