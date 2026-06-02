@@ -3818,6 +3818,35 @@ void test_array_payload_choice_constant_initializer_method_call_failure() {
     assert_constant_initializer_method_call_diagnostic(path, 9, "low_byte");
 }
 
+void test_array_literal_constant_initializer_unsafe_intrinsic_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_unsafe_intrinsic_failure.or";
+    write_array_constant_fixture(
+        path,
+        "const MAGIC: Array<UInt32, 1> = [raw_read(UART_STATUS)]",
+        {
+            "const UART_STATUS: Address = 0x4000_1000",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 2, "unsafe intrinsic 'raw_read'");
+}
+
+void test_array_payload_choice_constant_initializer_unsafe_intrinsic_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_constant_array_payload_unsafe_intrinsic_failure.or";
+    write_maybe_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([raw_read(UART_STATUS)])",
+        {
+            "const UART_STATUS: Address = 0x4000_1000",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 5, "unsafe intrinsic 'raw_read'");
+}
+
 void test_address_constant_initializer_structural_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_structural_failure.or";
     write_concurrency_fixture(
@@ -7443,6 +7472,8 @@ int main() {
     test_array_literal_constant_initializer_method_call_failure();
     test_array_payload_choice_constant_initializer_function_call_failure();
     test_array_payload_choice_constant_initializer_method_call_failure();
+    test_array_literal_constant_initializer_unsafe_intrinsic_failure();
+    test_array_payload_choice_constant_initializer_unsafe_intrinsic_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();

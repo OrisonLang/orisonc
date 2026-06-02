@@ -147,6 +147,14 @@ auto scalar_array_function_constant_lines(std::string_view initializer) -> std::
     };
 }
 
+auto scalar_array_intrinsic_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        initializer,
+        "const UART_STATUS: Address = 0x4000_1000",
+    };
+}
+
 auto maybe_array_payload_function_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -156,6 +164,17 @@ auto maybe_array_payload_function_constant_lines(std::string_view initializer) -
         initializer,
         "function mask(value: UInt32) -> UInt32",
         "    return value bit_and 0xFF",
+    };
+}
+
+auto maybe_array_payload_intrinsic_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        initializer,
+        "const UART_STATUS: Address = 0x4000_1000",
     };
 }
 
@@ -394,6 +413,20 @@ int main() {
             "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([mask(0xFFFF)])"
         ),
         "constant initializer cannot call function 'mask'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_unsafe_intrinsic.or",
+        scalar_array_intrinsic_constant_lines("const MAGIC: Array<UInt32, 1> = [raw_read(UART_STATUS)]"),
+        "constant initializer cannot use unsafe intrinsic 'raw_read'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_array_payload_unsafe_intrinsic.or",
+        maybe_array_payload_intrinsic_constant_lines(
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([raw_read(UART_STATUS)])"
+        ),
+        "constant initializer cannot use unsafe intrinsic 'raw_read'"
     );
     return 0;
 }
