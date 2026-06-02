@@ -3711,6 +3711,39 @@ void test_nested_choice_array_literal_constant_initializer_payload_type_failure(
     assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
 }
 
+void test_array_payload_choice_constant_initializer_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_array_payload_success.or";
+    write_maybe_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUE: Maybe<Array<UInt32, 2>> = Some([1, 2])"
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_array_payload_choice_constant_initializer_length_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_array_payload_length_failure.or";
+    write_maybe_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUE: Maybe<Array<UInt32, 2>> = Some([1, 2, 3])"
+    );
+
+    assert_constant_array_initializer_length_diagnostic(path, 5, 3, 2);
+}
+
+void test_array_payload_choice_constant_initializer_element_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_constant_array_payload_element_failure.or";
+    write_maybe_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([true])"
+    );
+
+    assert_constant_array_initializer_element_type_diagnostic(path, 5, "Bool", "UInt32");
+}
+
 void test_address_constant_initializer_structural_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_structural_failure.or";
     write_concurrency_fixture(
@@ -7329,6 +7362,9 @@ int main() {
     test_choice_array_literal_constant_initializer_payload_type_failure();
     test_nested_choice_array_literal_constant_initializer_success();
     test_nested_choice_array_literal_constant_initializer_payload_type_failure();
+    test_array_payload_choice_constant_initializer_success();
+    test_array_payload_choice_constant_initializer_length_failure();
+    test_array_payload_choice_constant_initializer_element_type_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();

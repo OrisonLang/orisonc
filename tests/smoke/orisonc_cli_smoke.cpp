@@ -354,5 +354,11 @@ int main() {
         ),
         "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_constant_array_payload_length.or",
+        maybe_choice_constant_lines("const DEFAULT_VALUE: Maybe<Array<UInt32, 2>> = Some([1, 2, 3])"),
+        "constant array initializer length 3 does not match declared length 2"
+    );
     return 0;
 }

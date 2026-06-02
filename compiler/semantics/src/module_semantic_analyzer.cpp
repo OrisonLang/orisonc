@@ -2908,6 +2908,14 @@ private:
                 continue;
             }
 
+            auto diagnostic_count_before_array = diagnostics_.entries().size();
+            if (validate_constant_array_literal_initializer(initializer.arguments[index], payload_type)) {
+                if (diagnostics_.entries().size() != diagnostic_count_before_array) {
+                    return true;
+                }
+                continue;
+            }
+
             auto payload_type_name = render_type_name(payload_type);
             auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
             if (!is_constant_initializer_type_compatible(
