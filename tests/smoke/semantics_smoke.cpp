@@ -1477,6 +1477,34 @@ void assert_constant_initializer_mismatch_diagnostic(
     );
 }
 
+void assert_constant_array_initializer_length_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::size_t actual_length,
+    std::size_t declared_length
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "constant array initializer length " + std::to_string(actual_length) +
+            " does not match declared length " + std::to_string(declared_length)
+    );
+}
+
+void assert_constant_array_initializer_element_type_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view declared_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "constant array initializer element type '" + std::string(actual_type) +
+            "' does not match declared element type '" + std::string(declared_type) + "'"
+    );
+}
+
 void assert_constant_initializer_unknown_name_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3463,7 +3491,7 @@ void test_array_literal_constant_initializer_element_type_failure() {
         }
     );
 
-    assert_constant_initializer_mismatch_diagnostic(path, 2, "Array<Bool, 1>", "Array<UInt32, 1>");
+    assert_constant_array_initializer_element_type_diagnostic(path, 2, "Bool", "UInt32");
 }
 
 void test_array_literal_constant_initializer_length_failure() {
@@ -3477,7 +3505,7 @@ void test_array_literal_constant_initializer_length_failure() {
         }
     );
 
-    assert_constant_initializer_mismatch_diagnostic(path, 2, "Array<Int64, 3>", "Array<UInt32, 2>");
+    assert_constant_array_initializer_length_diagnostic(path, 2, 3, 2);
 }
 
 void test_address_constant_initializer_structural_failure() {

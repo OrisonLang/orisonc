@@ -2925,6 +2925,43 @@ private:
         return true;
     }
 
+    auto validate_constant_array_literal_initializer(
+        syntax::ExpressionSyntax const& initializer,
+        syntax::TypeSyntax const& declared_type
+    ) -> bool {
+        if (initializer.kind != syntax::ExpressionKind::array_literal || declared_type.name != "Array" ||
+            declared_type.generic_arguments.size() != 2) {
+            return false;
+        }
+
+        auto const& declared_element_type = declared_type.generic_arguments.front();
+        auto const& declared_length_type = declared_type.generic_arguments[1];
+        auto actual_length = initializer.arguments.size();
+        if (declared_length_type.name != std::to_string(actual_length)) {
+            diagnostics_.error(
+                initializer.line,
+                "constant array initializer length " + std::to_string(actual_length) +
+                    " does not match declared length " + declared_length_type.name
+            );
+            return true;
+        }
+
+        auto declared_element_type_name = render_type_name(declared_element_type);
+        for (auto const& element : initializer.arguments) {
+            auto element_type_name = infer_expression_type_name(element);
+            if (!is_constant_initializer_type_compatible(element, element_type_name, declared_element_type_name)) {
+                diagnostics_.error(
+                    element.line,
+                    "constant array initializer element type '" + element_type_name +
+                        "' does not match declared element type '" + declared_element_type_name + "'"
+                );
+                return true;
+            }
+        }
+
+        return true;
+    }
+
     void analyze_constants() {
         for (auto const& constant : module_.constants) {
             auto declared_type_name = render_type_name(constant.type);
@@ -2970,6 +3007,11 @@ private:
                     constant.initializer.line,
                     "address-typed constant initializer"
                 );
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                continue;
+            }
+
+            if (validate_constant_array_literal_initializer(constant.initializer, constant.type)) {
                 expected_pointer_type_name_ = saved_expected_pointer_type_name;
                 continue;
             }

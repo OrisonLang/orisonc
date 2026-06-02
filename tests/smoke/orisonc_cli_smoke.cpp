@@ -275,13 +275,13 @@ int main() {
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_element.or",
         array_constant_lines("const MAGIC: Array<UInt32, 1> = [true]"),
-        "constant initializer type 'Array<Bool, 1>' does not match declared constant type 'Array<UInt32, 1>'"
+        "constant array initializer element type 'Bool' does not match declared element type 'UInt32'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_length.or",
         array_constant_lines("const MAGIC: Array<UInt32, 2> = [1, 2, 3]"),
-        "constant initializer type 'Array<Int64, 3>' does not match declared constant type 'Array<UInt32, 2>'"
+        "constant array initializer length 3 does not match declared length 2"
     );
     return 0;
 }
