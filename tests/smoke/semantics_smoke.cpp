@@ -3437,6 +3437,49 @@ void test_constant_initializer_type_mismatch_failure() {
     assert_constant_initializer_mismatch_diagnostic(path, 2, "Bool", "UInt32");
 }
 
+void test_array_literal_constant_initializer_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MAGIC: Array<UInt32, 2> = [1, 2]",
+            "function first_magic() -> UInt32",
+            "    return MAGIC[0]",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_array_literal_constant_initializer_element_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_element_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MAGIC: Array<UInt32, 1> = [true]",
+        }
+    );
+
+    assert_constant_initializer_mismatch_diagnostic(path, 2, "Array<Bool, 1>", "Array<UInt32, 1>");
+}
+
+void test_array_literal_constant_initializer_length_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_length_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MAGIC: Array<UInt32, 2> = [1, 2, 3]",
+        }
+    );
+
+    assert_constant_initializer_mismatch_diagnostic(path, 2, "Array<Int64, 3>", "Array<UInt32, 2>");
+}
+
 void test_address_constant_initializer_structural_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_structural_failure.or";
     write_concurrency_fixture(
@@ -7038,6 +7081,9 @@ int main() {
     test_address_constant_enables_volatile_read_success();
     test_integer_literal_constant_initializer_success();
     test_constant_initializer_type_mismatch_failure();
+    test_array_literal_constant_initializer_success();
+    test_array_literal_constant_initializer_element_type_failure();
+    test_array_literal_constant_initializer_length_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();

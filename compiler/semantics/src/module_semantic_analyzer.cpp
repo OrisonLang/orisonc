@@ -2620,6 +2620,32 @@ private:
         std::string const& initializer_type_name,
         std::string const& declared_type_name
     ) const -> bool {
+        if (initializer.kind == syntax::ExpressionKind::array_literal) {
+            auto declared_type = parse_rendered_type_name(declared_type_name);
+            if (!declared_type.has_value() || declared_type->name != "Array" ||
+                declared_type->generic_arguments.size() != 2) {
+                return false;
+            }
+
+            auto const& declared_element_type = declared_type->generic_arguments.front();
+            auto const& declared_length_type = declared_type->generic_arguments[1];
+            if (declared_length_type.name != std::to_string(initializer.arguments.size())) {
+                return false;
+            }
+
+            auto declared_element_type_name = render_type_name(declared_element_type);
+            for (auto const& element : initializer.arguments) {
+                if (!is_constant_initializer_type_compatible(
+                        element,
+                        infer_expression_type_name(element),
+                        declared_element_type_name
+                    )) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         if (initializer_type_name.empty() || declared_type_name.empty()) {
             return true;
         }

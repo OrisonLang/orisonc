@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-01: fixed-size `Array<T, N>` type syntax now parses numeric generic arguments, and constant array literals validate declared element compatibility plus length in semantic and CLI smoke coverage.
 - 2026-06-01: CLI smoke coverage for constant choice constructors now reuses local source builders for repeated Status, Maybe, Boxed Maybe, and Result failure fixtures.
 - 2026-06-01: semantic smoke coverage for constant choice constructors now reuses local fixture writers for repeated Status, Maybe, Boxed Maybe, and Result source shapes.
 - 2026-05-31: semantic and CLI smoke coverage now pin recursive unknown-constructor diagnostics inside nested generic constant choice constructors.

@@ -329,7 +329,13 @@ private:
             }
         }
 
-        TypeSyntax type {.name = parse_qualified_name(result, message)};
+        TypeSyntax type;
+        if (is(TokenKind::integer_literal)) {
+            type.name = current().lexeme;
+            advance();
+        } else {
+            type.name = parse_qualified_name(result, message);
+        }
         if (type.name.empty()) {
             return type;
         }

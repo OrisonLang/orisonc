@@ -23,6 +23,8 @@ void test_parse_success() {
         output << "public record User\n";
         output << "    public name: Text\n";
         output << "    private values: DynamicArray<Maybe<Int32>>\n\n";
+        output << "public record Header\n";
+        output << "    public magic: Array<Byte, 4>\n\n";
         output << "public choice ParseError\n";
         output << "    EmptyInput\n";
         output << "    InvalidDigit(value: UInt16)\n\n";
@@ -93,8 +95,8 @@ void test_parse_success() {
     assert(result.module.type_aliases.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.type_aliases.front().name == "UserId");
     assert(result.module.type_aliases.front().aliased_type.name == "UInt64");
-    assert(result.module.top_level_declaration_count == 12);
-    assert(result.module.records.size() == 1);
+    assert(result.module.top_level_declaration_count == 13);
+    assert(result.module.records.size() == 2);
     assert(result.module.records.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.records.front().name == "User");
     assert(result.module.records.front().fields.size() == 2);
@@ -108,6 +110,12 @@ void test_parse_success() {
     assert(result.module.records.front().fields[1].type.generic_arguments.front().name == "Maybe");
     assert(result.module.records.front().fields[1].type.generic_arguments.front().generic_arguments.size() == 1);
     assert(result.module.records.front().fields[1].type.generic_arguments.front().generic_arguments.front().name == "Int32");
+    assert(result.module.records[1].name == "Header");
+    assert(result.module.records[1].fields.size() == 1);
+    assert(result.module.records[1].fields.front().type.name == "Array");
+    assert(result.module.records[1].fields.front().type.generic_arguments.size() == 2);
+    assert(result.module.records[1].fields.front().type.generic_arguments.front().name == "Byte");
+    assert(result.module.records[1].fields.front().type.generic_arguments[1].name == "4");
     assert(result.module.choices.size() == 1);
     assert(result.module.choices.front().visibility == orison::syntax::Visibility::public_visibility);
     assert(result.module.choices.front().name == "ParseError");

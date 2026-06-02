@@ -119,6 +119,13 @@ auto boxed_maybe_result_choice_constant_lines(std::string_view initializer) -> s
     };
 }
 
+auto array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        initializer,
+    };
+}
+
 }  // namespace
 
 int main() {
@@ -263,6 +270,18 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_choice_constant_payload.or",
         status_choice_constant_lines("const DEFAULT_STATUS: Status = Ready(true)"),
         "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_element.or",
+        array_constant_lines("const MAGIC: Array<UInt32, 1> = [true]"),
+        "constant initializer type 'Array<Bool, 1>' does not match declared constant type 'Array<UInt32, 1>'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_length.or",
+        array_constant_lines("const MAGIC: Array<UInt32, 2> = [1, 2, 3]"),
+        "constant initializer type 'Array<Int64, 3>' does not match declared constant type 'Array<UInt32, 2>'"
     );
     return 0;
 }
