@@ -846,6 +846,49 @@ private:
         return {};
     }
 
+    auto record_type_for_declaration(syntax::RecordSyntax const& record) const -> syntax::TypeSyntax {
+        syntax::TypeSyntax record_type {.name = record.name};
+        for (auto const& generic_parameter : record.generic_parameters) {
+            record_type.generic_arguments.push_back(syntax::TypeSyntax {.name = generic_parameter});
+        }
+        return record_type;
+    }
+
+    auto find_record_declaration(syntax::TypeSyntax const& record_type) const -> syntax::RecordSyntax const* {
+        for (auto const& record : module_.records) {
+            if (record.name != record_type.name) {
+                continue;
+            }
+
+            std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+            if (match_generic_type_pattern(
+                    record_type_for_declaration(record),
+                    record_type,
+                    record.generic_parameters,
+                    bindings
+                )) {
+                return &record;
+            }
+        }
+
+        return nullptr;
+    }
+
+    auto find_record_constructor_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+        if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
+            expression.left->kind != syntax::ExpressionKind::name) {
+            return {};
+        }
+
+        for (auto const& record : module_.records) {
+            if (record.name == expression.left->text) {
+                return record.name;
+            }
+        }
+
+        return {};
+    }
+
     auto find_choice_variant_signature(
         std::string const& variant_name,
         syntax::TypeSyntax const& choice_type
@@ -1154,6 +1197,12 @@ private:
                     return pointee_type_name;
                 }
                 return explicit_pointer_source_pointee_type_name(expression.arguments.front());
+            }
+            {
+                auto record_constructor_type_name = find_record_constructor_type_name(expression);
+                if (!record_constructor_type_name.empty()) {
+                    return record_constructor_type_name;
+                }
             }
             return find_callable_return_type_name(expression.left->text, expression.arguments);
         case syntax::ExpressionKind::binary:
@@ -2934,6 +2983,87 @@ private:
         return true;
     }
 
+    auto validate_constant_record_constructor_initializer(
+        syntax::ExpressionSyntax const& initializer,
+        syntax::TypeSyntax const& declared_type
+    ) -> bool {
+        auto const* record = find_record_declaration(declared_type);
+        if (record == nullptr) {
+            return false;
+        }
+
+        if (initializer.kind != syntax::ExpressionKind::call || !initializer.left ||
+            initializer.left->kind != syntax::ExpressionKind::name) {
+            return false;
+        }
+
+        auto const& constructor_name = initializer.left->text;
+        if (constructor_name != record->name) {
+            diagnostics_.error(
+                initializer.line,
+                "record constructor '" + constructor_name +
+                    "' does not match declared constant type '" + render_type_name(declared_type) + "'"
+            );
+            return true;
+        }
+
+        if (record->fields.size() != initializer.arguments.size()) {
+            diagnostics_.error(
+                initializer.line,
+                "record constructor '" + constructor_name + "' expects " +
+                    std::to_string(record->fields.size()) + " field value" +
+                    (record->fields.size() == 1 ? "" : "s") + " but received " +
+                    std::to_string(initializer.arguments.size())
+            );
+            return true;
+        }
+
+        std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        if (!match_generic_type_pattern(
+                record_type_for_declaration(*record),
+                declared_type,
+                record->generic_parameters,
+                bindings
+            )) {
+            return true;
+        }
+
+        for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
+            auto field_type = substitute_generic_type_bindings(record->fields[index].type, bindings);
+            if (validate_constant_record_constructor_initializer(initializer.arguments[index], field_type)) {
+                continue;
+            }
+            if (validate_constant_choice_constructor_initializer(initializer.arguments[index], field_type)) {
+                continue;
+            }
+
+            auto diagnostic_count_before_array = diagnostics_.entries().size();
+            if (validate_constant_array_literal_initializer(initializer.arguments[index], field_type)) {
+                if (diagnostics_.entries().size() != diagnostic_count_before_array) {
+                    return true;
+                }
+                continue;
+            }
+
+            auto field_type_name = render_type_name(field_type);
+            auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
+            if (!is_constant_initializer_type_compatible(
+                    initializer.arguments[index],
+                    argument_type_name,
+                    field_type_name
+                )) {
+                diagnostics_.error(
+                    initializer.arguments[index].line,
+                    "record constructor field '" + record->fields[index].name + "' type '" +
+                        argument_type_name + "' does not match expected field type '" + field_type_name + "'"
+                );
+                return true;
+            }
+        }
+
+        return true;
+    }
+
     auto validate_constant_array_literal_initializer(
         syntax::ExpressionSyntax const& initializer,
         syntax::TypeSyntax const& declared_type
@@ -3005,6 +3135,13 @@ private:
                 if (constant.initializer.kind != syntax::ExpressionKind::name) {
                     validate_constant_initializer_references(constant.initializer);
                 }
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                continue;
+            }
+
+            if (validate_constant_record_constructor_initializer(constant.initializer, constant.type)) {
+                analyze_expression(constant.initializer, false);
+                validate_constant_initializer_references(constant.initializer);
                 expected_pointer_type_name_ = saved_expected_pointer_type_name;
                 continue;
             }

@@ -63,6 +63,10 @@ public record UartRegisters
     public status: UInt32
     public control: UInt32
 
+# record constructors use field declaration order
+public function make_header() -> Header
+    Header([0x7F, 0x45, 0x4C, 0x46], 1)
+
 # ------------------------------------------------------------
 # sum types / tagged unions
 # ------------------------------------------------------------

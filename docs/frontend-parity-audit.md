@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-02: record constructor calls now validate constant initializer arity and field value types, enabling field-shaped constant initializer smoke coverage.
 - 2026-06-02: constant initializer smoke coverage now pins indexed fixed-array constant reads for success and element-type mismatch diagnostics.
 - 2026-06-01: constant choice-constructor smoke fixtures now share Maybe-with-extra-declarations builders across semantic and CLI coverage.
 - 2026-06-01: non-runtime constant array smoke fixtures now share scalar and nested array declaration builders across semantic and CLI coverage.

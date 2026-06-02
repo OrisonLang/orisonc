@@ -127,6 +127,13 @@ record Pair<A, B>
     public second: B
 ```
 
+Record values are constructed with a call whose head is the record type name. Constructor arguments are positional and follow the field declaration order.
+
+```text
+let user = User(id, name, Empty, 42)
+let pair = Pair(1, true)
+```
+
 ### `choice`
 
 Defines a tagged sum type.

@@ -17,6 +17,7 @@ Orison currently aims for:
 - static, explicit, mostly nominal typing
 - ownership-aware access modes: owned, `shared`, `exclusive`, raw pointers
 - algebraic data types via `record` and `choice`
+- record construction with explicit field-order constructor calls
 - generics and constrained polymorphism
 - interface-based abstraction via `interface` and `implements`
 - three-level access control: `public`, `package`, `private`

@@ -197,6 +197,16 @@ auto nested_array_constant_lines(std::string initializer) -> std::vector<std::st
     };
 }
 
+auto header_record_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        "record Header",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        initializer,
+    };
+}
+
 auto low_level_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -383,6 +393,12 @@ int main() {
             "const FIRST_FLAG: UInt32 = FLAGS[0]",
         },
         "constant initializer type 'Bool' does not match declared constant type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_constant_field_type.or",
+        header_record_constant_lines("const DEFAULT_HEADER: Header = Header([1, 2], true)"),
+        "record constructor field 'version' type 'Bool' does not match expected field type 'UInt16'"
     );
     assert_cli_parse_failure(
         executable,

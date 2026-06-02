@@ -631,6 +631,26 @@ void write_array_constant_fixture(
     }
 }
 
+void write_header_record_constant_fixture(
+    std::filesystem::path const& path,
+    std::initializer_list<std::string_view> body_lines
+) {
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+        }
+    );
+
+    std::ofstream output(path, std::ios::app);
+    for (auto line : body_lines) {
+        output << line << "\n";
+    }
+}
+
 auto scalar_array_constant_initializer(std::string_view elements, std::size_t length = 1) -> std::string {
     return "const MAGIC: Array<UInt32, " + std::to_string(length) + "> = [" + std::string(elements) + "]";
 }
@@ -1619,6 +1639,38 @@ void assert_constant_array_initializer_element_type_diagnostic(
         expected_line,
         "constant array initializer element type '" + std::string(actual_type) +
             "' does not match declared element type '" + std::string(declared_type) + "'"
+    );
+}
+
+void assert_record_constructor_arity_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view record_name,
+    std::size_t expected_fields,
+    std::size_t actual_fields
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "record constructor '" + std::string(record_name) + "' expects " +
+            std::to_string(expected_fields) + " field value" + (expected_fields == 1 ? "" : "s") +
+            " but received " + std::to_string(actual_fields)
+    );
+}
+
+void assert_record_constructor_field_type_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view field_name,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "record constructor field '" + std::string(field_name) + "' type '" +
+            std::string(actual_type) + "' does not match expected field type '" +
+            std::string(expected_type) + "'"
     );
 }
 
@@ -3654,6 +3706,53 @@ void test_indexed_array_constant_initializer_element_type_failure() {
     );
 
     assert_constant_initializer_mismatch_diagnostic(path, 3, "Bool", "UInt32");
+}
+
+void test_record_constructor_constant_initializer_field_access_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_constant_field_success.or";
+    write_header_record_constant_fixture(
+        path,
+        {
+            "const DEFAULT_HEADER: Header = Header([1, 2], 1)",
+            "const DEFAULT_VERSION: UInt16 = DEFAULT_HEADER.version",
+            "function default_version() -> UInt16",
+            "    return DEFAULT_VERSION",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_record_constructor_constant_initializer_indexed_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_constant_indexed_field_success.or";
+    write_header_record_constant_fixture(
+        path,
+        {
+            "const DEFAULT_MAGIC: UInt32 = Header([1, 2], 1).magic[0]",
+            "function default_magic() -> UInt32",
+            "    return DEFAULT_MAGIC",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_record_constructor_constant_initializer_arity_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_constant_arity_failure.or";
+    write_header_record_constant_fixture(path, {"const DEFAULT_HEADER: Header = Header([1, 2])"});
+
+    assert_record_constructor_arity_diagnostic(path, 5, "Header", 2, 1);
+}
+
+void test_record_constructor_constant_initializer_field_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_constant_field_type_failure.or";
+    write_header_record_constant_fixture(path, {"const DEFAULT_HEADER: Header = Header([1, 2], true)"});
+
+    assert_record_constructor_field_type_diagnostic(path, 5, "version", "Bool", "UInt16");
 }
 
 void test_nested_array_literal_constant_initializer_element_type_failure() {
@@ -7607,6 +7706,10 @@ int main() {
     test_nested_array_literal_constant_initializer_success();
     test_indexed_array_constant_initializer_success();
     test_indexed_array_constant_initializer_element_type_failure();
+    test_record_constructor_constant_initializer_field_access_success();
+    test_record_constructor_constant_initializer_indexed_field_success();
+    test_record_constructor_constant_initializer_arity_failure();
+    test_record_constructor_constant_initializer_field_type_failure();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();
     test_array_literal_constant_initializer_forward_reference_success();
