@@ -61,6 +61,24 @@ void assert_cli_parse_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
+template <typename SourceLines>
+void assert_cli_parse_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    SourceLines const& lines
+) {
+    {
+        std::ofstream output(path);
+        for (auto line : lines) {
+            output << line << '\n';
+        }
+    }
+
+    auto command = executable.string() + " --parse " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("parsed ") != std::string::npos);
+}
+
 auto status_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -515,6 +533,13 @@ int main() {
             {"    return consume_pair(Header([1, 2], 1), Pair(OtherHeader([1, 2], 1), 1 as UInt16))"}
         ),
         "function argument 'pair' type 'Pair<OtherHeader, UInt16>' does not match declared type 'Pair<Header, UInt16>'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_generic_function_dependent_same_width_integer.or",
+        generic_pair_consumer_lines(
+            {"    return consume_pair(Header([1, 2], 1), Pair(Header([1, 2], 1), 1 as Int16))"}
+        )
     );
     assert_cli_parse_failure(
         executable,

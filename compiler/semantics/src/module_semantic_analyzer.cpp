@@ -617,6 +617,48 @@ private:
         return index == type_name.size() ? parsed_type : std::nullopt;
     }
 
+    auto are_type_syntaxes_compatible(
+        syntax::TypeSyntax const& inferred_type,
+        syntax::TypeSyntax const& expected_type
+    ) const -> bool {
+        if (inferred_type.generic_arguments.empty() && expected_type.generic_arguments.empty()) {
+            return are_low_level_read_types_compatible(inferred_type.name, expected_type.name);
+        }
+
+        if (inferred_type.name != expected_type.name ||
+            inferred_type.generic_arguments.size() != expected_type.generic_arguments.size()) {
+            return false;
+        }
+
+        for (std::size_t index = 0; index < inferred_type.generic_arguments.size(); ++index) {
+            if (!are_type_syntaxes_compatible(
+                    inferred_type.generic_arguments[index],
+                    expected_type.generic_arguments[index]
+                )) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    auto are_type_names_compatible(
+        std::string const& inferred_type_name,
+        std::string const& expected_type_name
+    ) const -> bool {
+        if (are_low_level_read_types_compatible(inferred_type_name, expected_type_name)) {
+            return true;
+        }
+
+        auto inferred_type = parse_rendered_type_name(inferred_type_name);
+        auto expected_type = parse_rendered_type_name(expected_type_name);
+        if (!inferred_type.has_value() || !expected_type.has_value()) {
+            return false;
+        }
+
+        return are_type_syntaxes_compatible(*inferred_type, *expected_type);
+    }
+
     auto match_generic_type_pattern(
         syntax::TypeSyntax const& pattern,
         syntax::TypeSyntax const& actual,
@@ -1651,7 +1693,7 @@ private:
         }
 
         auto inferred_type_name = infer_expression_type_name(expression);
-        if (inferred_type_name.empty() || are_low_level_read_types_compatible(inferred_type_name, expected_type_name)) {
+        if (inferred_type_name.empty() || are_type_names_compatible(inferred_type_name, expected_type_name)) {
             return false;
         }
 
