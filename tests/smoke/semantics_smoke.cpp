@@ -3508,6 +3508,49 @@ void test_array_literal_constant_initializer_length_failure() {
     assert_constant_array_initializer_length_diagnostic(path, 2, 3, 2);
 }
 
+void test_nested_array_literal_constant_initializer_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MATRIX: Array<Array<UInt32, 2>, 2> = [[1, 2], [3, 4]]",
+            "function first_value() -> UInt32",
+            "    return MATRIX[0][0]",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_nested_array_literal_constant_initializer_element_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_element_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, true]]",
+        }
+    );
+
+    assert_constant_array_initializer_element_type_diagnostic(path, 2, "Bool", "UInt32");
+}
+
+void test_nested_array_literal_constant_initializer_length_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_length_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, 2, 3]]",
+        }
+    );
+
+    assert_constant_array_initializer_length_diagnostic(path, 2, 3, 2);
+}
+
 void test_address_constant_initializer_structural_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_structural_failure.or";
     write_concurrency_fixture(
@@ -7112,6 +7155,9 @@ int main() {
     test_array_literal_constant_initializer_success();
     test_array_literal_constant_initializer_element_type_failure();
     test_array_literal_constant_initializer_length_failure();
+    test_nested_array_literal_constant_initializer_success();
+    test_nested_array_literal_constant_initializer_element_type_failure();
+    test_nested_array_literal_constant_initializer_length_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();

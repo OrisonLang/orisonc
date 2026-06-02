@@ -2948,6 +2948,14 @@ private:
 
         auto declared_element_type_name = render_type_name(declared_element_type);
         for (auto const& element : initializer.arguments) {
+            auto diagnostic_count_before_nested_array = diagnostics_.entries().size();
+            if (validate_constant_array_literal_initializer(element, declared_element_type)) {
+                if (diagnostics_.entries().size() != diagnostic_count_before_nested_array) {
+                    return true;
+                }
+                continue;
+            }
+
             auto element_type_name = infer_expression_type_name(element);
             if (!is_constant_initializer_type_compatible(element, element_type_name, declared_element_type_name)) {
                 diagnostics_.error(
