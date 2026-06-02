@@ -138,6 +138,27 @@ auto scalar_array_constant_lines(std::string_view initializer) -> std::vector<st
     };
 }
 
+auto scalar_array_function_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        initializer,
+        "function mask(value: UInt32) -> UInt32",
+        "    return value bit_and 0xFF",
+    };
+}
+
+auto maybe_array_payload_function_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        initializer,
+        "function mask(value: UInt32) -> UInt32",
+        "    return value bit_and 0xFF",
+    };
+}
+
 auto nested_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -359,6 +380,20 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_choice_constant_array_payload_length.or",
         maybe_choice_constant_lines("const DEFAULT_VALUE: Maybe<Array<UInt32, 2>> = Some([1, 2, 3])"),
         "constant array initializer length 3 does not match declared length 2"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_function_call.or",
+        scalar_array_function_constant_lines("const MAGIC: Array<UInt32, 1> = [mask(0xFFFF)]"),
+        "constant initializer cannot call function 'mask'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_array_payload_function_call.or",
+        maybe_array_payload_function_constant_lines(
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([mask(0xFFFF)])"
+        ),
+        "constant initializer cannot call function 'mask'"
     );
     return 0;
 }

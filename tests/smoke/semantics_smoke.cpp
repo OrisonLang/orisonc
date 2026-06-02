@@ -523,17 +523,20 @@ void write_status_choice_constant_fixture(std::filesystem::path const& path, std
     );
 }
 
-void write_maybe_choice_constant_fixture(std::filesystem::path const& path, std::string_view initializer) {
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            initializer,
-        }
-    );
+void write_maybe_choice_constant_fixture(
+    std::filesystem::path const& path,
+    std::string_view initializer,
+    std::initializer_list<std::string_view> body_lines = {}
+) {
+    std::ofstream output(path);
+    output << "package demo.consts\n";
+    output << "choice Maybe<T>\n";
+    output << "    Some(value: T)\n";
+    output << "    Empty\n";
+    output << initializer << "\n";
+    for (auto line : body_lines) {
+        output << line << "\n";
+    }
 }
 
 void write_boxed_maybe_choice_constant_fixture(std::filesystem::path const& path, std::string_view initializer) {
@@ -3742,6 +3745,77 @@ void test_array_payload_choice_constant_initializer_element_type_failure() {
     );
 
     assert_constant_array_initializer_element_type_diagnostic(path, 5, "Bool", "UInt32");
+}
+
+void test_array_literal_constant_initializer_function_call_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_function_call_failure.or";
+    write_array_constant_fixture(
+        path,
+        "const MAGIC: Array<UInt32, 1> = [mask(0xFFFF)]",
+        {
+            "function mask(value: UInt32) -> UInt32",
+            "    return value bit_and 0xFF",
+        }
+    );
+
+    assert_constant_initializer_function_call_diagnostic(path, 2, "mask");
+}
+
+void test_array_literal_constant_initializer_method_call_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_method_call_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "extend Int64",
+            "    function low_byte(this: shared This) -> UInt32",
+            "        return this bit_and 0xFF",
+            "const STATUS_WORD: Int64 = 0xFFFF",
+            "const MAGIC: Array<UInt32, 1> = [STATUS_WORD.low_byte()]",
+        }
+    );
+
+    assert_constant_initializer_method_call_diagnostic(path, 6, "low_byte");
+}
+
+void test_array_payload_choice_constant_initializer_function_call_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_constant_array_payload_function_call_failure.or";
+    write_maybe_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([mask(0xFFFF)])",
+        {
+            "function mask(value: UInt32) -> UInt32",
+            "    return value bit_and 0xFF",
+        }
+    );
+
+    assert_constant_initializer_function_call_diagnostic(path, 5, "mask");
+}
+
+void test_array_payload_choice_constant_initializer_method_call_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_constant_array_payload_method_call_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "extend Int64",
+            "    function low_byte(this: shared This) -> UInt32",
+            "        return this bit_and 0xFF",
+            "const STATUS_WORD: Int64 = 0xFFFF",
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([STATUS_WORD.low_byte()])",
+        }
+    );
+
+    assert_constant_initializer_method_call_diagnostic(path, 9, "low_byte");
 }
 
 void test_address_constant_initializer_structural_failure() {
@@ -7365,6 +7439,10 @@ int main() {
     test_array_payload_choice_constant_initializer_success();
     test_array_payload_choice_constant_initializer_length_failure();
     test_array_payload_choice_constant_initializer_element_type_failure();
+    test_array_literal_constant_initializer_function_call_failure();
+    test_array_literal_constant_initializer_method_call_failure();
+    test_array_payload_choice_constant_initializer_function_call_failure();
+    test_array_payload_choice_constant_initializer_method_call_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();
