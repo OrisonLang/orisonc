@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-01: semantic and CLI smoke coverage for constant array literals now reuses local scalar and nested array fixture helpers.
 - 2026-06-01: nested constant array literals now recursively validate inner fixed-array lengths and element types in semantic and CLI smoke coverage.
 - 2026-06-01: constant array literal diagnostics now distinguish declared length mismatches from element type mismatches in semantic and CLI smoke coverage.
 - 2026-06-01: fixed-size `Array<T, N>` type syntax now parses numeric generic arguments, and constant array literals validate declared element compatibility plus length in semantic and CLI smoke coverage.

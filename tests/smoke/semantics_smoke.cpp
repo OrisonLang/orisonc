@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 namespace {
 
@@ -585,6 +586,28 @@ void write_boxed_maybe_result_choice_constant_fixture(
             initializer,
         }
     );
+}
+
+void write_array_constant_fixture(
+    std::filesystem::path const& path,
+    std::string_view initializer,
+    std::initializer_list<std::string_view> body_lines = {}
+) {
+    std::vector<std::string_view> lines {initializer};
+    lines.insert(lines.end(), body_lines.begin(), body_lines.end());
+    std::ofstream output(path);
+    output << "package demo.consts\n";
+    for (auto line : lines) {
+        output << line << "\n";
+    }
+}
+
+void write_nested_array_constant_fixture(
+    std::filesystem::path const& path,
+    std::string_view initializer,
+    std::initializer_list<std::string_view> body_lines = {}
+) {
+    write_array_constant_fixture(path, initializer, body_lines);
 }
 
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
@@ -3467,11 +3490,10 @@ void test_constant_initializer_type_mismatch_failure() {
 
 void test_array_literal_constant_initializer_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_success.or";
-    write_concurrency_fixture(
+    write_array_constant_fixture(
         path,
-        "demo.consts",
+        "const MAGIC: Array<UInt32, 2> = [1, 2]",
         {
-            "const MAGIC: Array<UInt32, 2> = [1, 2]",
             "function first_magic() -> UInt32",
             "    return MAGIC[0]",
         }
@@ -3483,13 +3505,7 @@ void test_array_literal_constant_initializer_success() {
 void test_array_literal_constant_initializer_element_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_element_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "const MAGIC: Array<UInt32, 1> = [true]",
-        }
-    );
+    write_array_constant_fixture(path, "const MAGIC: Array<UInt32, 1> = [true]");
 
     assert_constant_array_initializer_element_type_diagnostic(path, 2, "Bool", "UInt32");
 }
@@ -3497,24 +3513,17 @@ void test_array_literal_constant_initializer_element_type_failure() {
 void test_array_literal_constant_initializer_length_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_length_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "const MAGIC: Array<UInt32, 2> = [1, 2, 3]",
-        }
-    );
+    write_array_constant_fixture(path, "const MAGIC: Array<UInt32, 2> = [1, 2, 3]");
 
     assert_constant_array_initializer_length_diagnostic(path, 2, 3, 2);
 }
 
 void test_nested_array_literal_constant_initializer_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_success.or";
-    write_concurrency_fixture(
+    write_nested_array_constant_fixture(
         path,
-        "demo.consts",
+        "const MATRIX: Array<Array<UInt32, 2>, 2> = [[1, 2], [3, 4]]",
         {
-            "const MATRIX: Array<Array<UInt32, 2>, 2> = [[1, 2], [3, 4]]",
             "function first_value() -> UInt32",
             "    return MATRIX[0][0]",
         }
@@ -3526,13 +3535,7 @@ void test_nested_array_literal_constant_initializer_success() {
 void test_nested_array_literal_constant_initializer_element_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_element_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, true]]",
-        }
-    );
+    write_nested_array_constant_fixture(path, "const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, true]]");
 
     assert_constant_array_initializer_element_type_diagnostic(path, 2, "Bool", "UInt32");
 }
@@ -3540,13 +3543,7 @@ void test_nested_array_literal_constant_initializer_element_type_failure() {
 void test_nested_array_literal_constant_initializer_length_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_length_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, 2, 3]]",
-        }
-    );
+    write_nested_array_constant_fixture(path, "const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, 2, 3]]");
 
     assert_constant_array_initializer_length_diagnostic(path, 2, 3, 2);
 }

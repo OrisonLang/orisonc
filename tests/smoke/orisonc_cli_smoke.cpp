@@ -119,7 +119,14 @@ auto boxed_maybe_result_choice_constant_lines(std::string_view initializer) -> s
     };
 }
 
-auto array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+auto scalar_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        initializer,
+    };
+}
+
+auto nested_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
         initializer,
@@ -274,25 +281,25 @@ int main() {
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_element.or",
-        array_constant_lines("const MAGIC: Array<UInt32, 1> = [true]"),
+        scalar_array_constant_lines("const MAGIC: Array<UInt32, 1> = [true]"),
         "constant array initializer element type 'Bool' does not match declared element type 'UInt32'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_length.or",
-        array_constant_lines("const MAGIC: Array<UInt32, 2> = [1, 2, 3]"),
+        scalar_array_constant_lines("const MAGIC: Array<UInt32, 2> = [1, 2, 3]"),
         "constant array initializer length 3 does not match declared length 2"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_array_constant_element.or",
-        array_constant_lines("const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, true]]"),
+        nested_array_constant_lines("const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, true]]"),
         "constant array initializer element type 'Bool' does not match declared element type 'UInt32'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_array_constant_length.or",
-        array_constant_lines("const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, 2, 3]]"),
+        nested_array_constant_lines("const MATRIX: Array<Array<UInt32, 2>, 1> = [[1, 2, 3]]"),
         "constant array initializer length 3 does not match declared length 2"
     );
     return 0;
