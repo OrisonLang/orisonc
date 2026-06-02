@@ -308,5 +308,11 @@ int main() {
         scalar_array_constant_lines("const MAGIC: Array<UInt32, 1> = [STATUS_LOW]"),
         "constant initializer references unknown name 'STATUS_LOW'"
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_array_constant_direct_cycle.or",
+        scalar_array_constant_lines("const MAGIC: Array<UInt32, 1> = [MAGIC[0]]"),
+        "constant initializer cycle includes 'MAGIC'"
+    );
     return 0;
 }
