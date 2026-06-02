@@ -3595,6 +3595,46 @@ void test_array_literal_constant_initializer_indirect_cycle_failure() {
     assert_constant_initializer_cycle_diagnostic(path, 3, "MAGIC");
 }
 
+void test_address_array_literal_constant_initializer_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_array_literal_constant_success.or";
+    write_array_constant_fixture(
+        path,
+        "const UART_REGISTERS: Array<Address, 2> = [UART0_DATA, UART0_STATUS]",
+        {
+            "const UART0_DATA: Address = 0x4000_1000",
+            "const UART0_STATUS: Address = 0x4000_1004",
+            "function first_register() -> Address",
+            "    return UART_REGISTERS[0]",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_address_array_literal_constant_initializer_element_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_array_literal_constant_element_failure.or";
+    write_array_constant_fixture(path, "const UART_REGISTERS: Array<Address, 1> = [\"uart\"]");
+
+    assert_constant_array_initializer_element_type_diagnostic(path, 2, "Text", "Address");
+}
+
+void test_pointer_array_literal_constant_initializer_pointer_construction_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_pointer_array_literal_constant_pointer_construction_failure.or";
+    write_array_constant_fixture(
+        path,
+        "const UART_POINTERS: Array<Pointer<UInt32>, 1> = [Pointer(UART0_DATA)]",
+        {
+            "const UART0_DATA: Address = 0x4000_1000",
+        }
+    );
+
+    assert_constant_initializer_runtime_construct_diagnostic(path, 2, "Pointer construction");
+}
+
 void test_address_constant_initializer_structural_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_address_constant_structural_failure.or";
     write_concurrency_fixture(
@@ -7206,6 +7246,9 @@ int main() {
     test_array_literal_constant_initializer_unknown_reference_failure();
     test_array_literal_constant_initializer_direct_cycle_failure();
     test_array_literal_constant_initializer_indirect_cycle_failure();
+    test_address_array_literal_constant_initializer_success();
+    test_address_array_literal_constant_initializer_element_failure();
+    test_pointer_array_literal_constant_initializer_pointer_construction_failure();
     test_address_constant_initializer_structural_failure();
     test_pointer_constant_initializer_structural_failure();
     test_forward_constant_initializer_reference_success();

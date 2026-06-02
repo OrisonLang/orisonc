@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-01: constant array literal smoke coverage now includes `Address` element success and low-level element diagnostics, including rejected `Pointer(...)` construction inside array initializers.
 - 2026-06-01: constant array literal smoke coverage now pins direct and indirect initializer-cycle diagnostics through array elements.
 - 2026-06-01: constant array literal smoke coverage now includes forward constant element references and unknown element-name diagnostics.
 - 2026-06-01: semantic and CLI smoke coverage for constant array literals now reuses local scalar and nested array fixture helpers.

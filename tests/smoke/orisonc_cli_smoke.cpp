@@ -133,6 +133,14 @@ auto nested_array_constant_lines(std::string_view initializer) -> std::vector<st
     };
 }
 
+auto low_level_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        initializer,
+        "const UART0_DATA: Address = 0x4000_1000",
+    };
+}
+
 }  // namespace
 
 int main() {
@@ -313,6 +321,18 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_direct_cycle.or",
         scalar_array_constant_lines("const MAGIC: Array<UInt32, 1> = [MAGIC[0]]"),
         "constant initializer cycle includes 'MAGIC'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_address_array_constant_element.or",
+        scalar_array_constant_lines("const UART_REGISTERS: Array<Address, 1> = [\"uart\"]"),
+        "constant array initializer element type 'Text' does not match declared element type 'Address'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_array_constant_construction.or",
+        low_level_array_constant_lines("const UART_POINTERS: Array<Pointer<UInt32>, 1> = [Pointer(UART0_DATA)]"),
+        "constant initializer cannot use Pointer construction"
     );
     return 0;
 }
