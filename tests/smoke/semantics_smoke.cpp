@@ -1674,6 +1674,34 @@ void assert_record_constructor_field_type_diagnostic(
     );
 }
 
+void assert_binding_initializer_type_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "binding initializer type '" + std::string(actual_type) +
+            "' does not match declared type '" + std::string(expected_type) + "'"
+    );
+}
+
+void assert_return_expression_type_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "return expression type '" + std::string(actual_type) +
+            "' does not match declared type '" + std::string(expected_type) + "'"
+    );
+}
+
 void assert_constant_initializer_unknown_name_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -3810,6 +3838,64 @@ void test_record_constructor_return_expression_arity_failure() {
     assert_record_constructor_arity_diagnostic(path, 6, "Header", 2, 1);
 }
 
+void test_annotated_record_binding_constructor_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_annotated_record_binding_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "function default_header() -> Header",
+            "    let header: OtherHeader = Header([1, 2], 1)",
+            "    return Header([1, 2], 1)",
+        }
+    );
+
+    assert_binding_initializer_type_mismatch_diagnostic(path, 9, "Header", "OtherHeader");
+}
+
+void test_record_return_constructor_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_return_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "function default_header() -> OtherHeader",
+            "    return Header([1, 2], 1)",
+        }
+    );
+
+    assert_return_expression_type_mismatch_diagnostic(path, 9, "Header", "OtherHeader");
+}
+
+void test_annotated_integer_binding_same_width_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_annotated_integer_binding_same_width_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "function status() -> UInt32",
+            "    let value: UInt32 = 1 as Int32",
+            "    return value",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_nested_array_literal_constant_initializer_element_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_element_failure.or";
@@ -4015,7 +4101,7 @@ void test_array_literal_constant_initializer_method_call_failure() {
         {
             "extend Int64",
             "    function low_byte(this: shared This) -> UInt32",
-            "        return this bit_and 0xFF",
+            "        return 0xFF as UInt32",
             "const STATUS_WORD: Int64 = 0xFFFF",
             "const MAGIC: Array<UInt32, 1> = [STATUS_WORD.low_byte()]",
         }
@@ -4053,7 +4139,7 @@ void test_array_payload_choice_constant_initializer_method_call_failure() {
             "    Empty",
             "extend Int64",
             "    function low_byte(this: shared This) -> UInt32",
-            "        return this bit_and 0xFF",
+            "        return 0xFF as UInt32",
             "const STATUS_WORD: Int64 = 0xFFFF",
             "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([STATUS_WORD.low_byte()])",
         }
@@ -4345,7 +4431,7 @@ void test_constant_initializer_method_call_failure() {
         {
             "extend Int64",
             "    function low_byte(this: shared This) -> UInt32",
-            "        return this bit_and 0xFF",
+            "        return 0xFF as UInt32",
             "const STATUS_WORD: Int64 = 0xFFFF",
             "const STATUS: UInt32 = STATUS_WORD.low_byte()",
         }
@@ -7769,6 +7855,9 @@ int main() {
     test_record_constructor_let_binding_field_type_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();
+    test_annotated_record_binding_constructor_type_mismatch_failure();
+    test_record_return_constructor_type_mismatch_failure();
+    test_annotated_integer_binding_same_width_success();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();
     test_array_literal_constant_initializer_forward_reference_success();

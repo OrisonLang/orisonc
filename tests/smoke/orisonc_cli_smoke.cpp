@@ -219,6 +219,26 @@ auto header_record_function_lines(std::initializer_list<std::string_view> body_l
     return lines;
 }
 
+auto two_header_record_function_lines(
+    std::string_view return_type,
+    std::initializer_list<std::string_view> body_lines
+) -> std::vector<std::string> {
+    std::vector<std::string> lines {
+        "package demo.cli",
+        "record Header",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        "record OtherHeader",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+    };
+    lines.push_back("function default_header() -> " + std::string(return_type));
+    for (auto line : body_lines) {
+        lines.emplace_back(line);
+    }
+    return lines;
+}
+
 auto low_level_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -417,6 +437,12 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_record_constructor_return_arity.or",
         header_record_function_lines({"    return Header([1, 2])"}),
         "record constructor 'Header' expects 2 field values but received 1"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_return_type.or",
+        two_header_record_function_lines("OtherHeader", {"    return Header([1, 2], 1)"}),
+        "return expression type 'Header' does not match declared type 'OtherHeader'"
     );
     assert_cli_parse_failure(
         executable,

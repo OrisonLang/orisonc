@@ -1539,6 +1539,34 @@ private:
         return false;
     }
 
+    auto validate_typed_expression_compatibility(
+        syntax::ExpressionSyntax const& expression,
+        std::string const& expected_type_name,
+        std::size_t line,
+        std::string_view context_description
+    ) -> bool {
+        if (expected_type_name.empty() || is_pointer_type_name(expected_type_name) ||
+            is_address_type_name(expected_type_name)) {
+            return false;
+        }
+
+        auto inferred_type_name = infer_expression_type_name(expression);
+        if (inferred_type_name.empty() || are_low_level_read_types_compatible(inferred_type_name, expected_type_name)) {
+            return false;
+        }
+
+        if (expression.kind == syntax::ExpressionKind::integer_literal && is_integer_type_name(expected_type_name)) {
+            return false;
+        }
+
+        diagnostics_.error(
+            line,
+            std::string(context_description) + " type '" + inferred_type_name +
+                "' does not match declared type '" + expected_type_name + "'"
+        );
+        return true;
+    }
+
     void validate_pointer_constructor_operands(syntax::ExpressionSyntax const& expression) {
         if (!is_pointer_constructor_call(expression)) {
             return;
@@ -3314,6 +3342,14 @@ private:
                         "address-typed binding initializer"
                     );
                 }
+                if (!read_result_type_mismatch) {
+                    validate_typed_expression_compatibility(
+                        statement.expression,
+                        render_type_name(statement.annotated_type),
+                        statement.line,
+                        "binding initializer"
+                    );
+                }
             }
             declare_binding(
                 statement.name,
@@ -3365,6 +3401,14 @@ private:
                     statement.expression,
                     statement.line,
                     "address-returning function"
+                );
+            }
+            if (!read_result_type_mismatch) {
+                validate_typed_expression_compatibility(
+                    statement.expression,
+                    current_function_return_type_name_,
+                    statement.line,
+                    "return expression"
                 );
             }
             expected_pointer_type_name_ = saved_expected_pointer_type_name;
