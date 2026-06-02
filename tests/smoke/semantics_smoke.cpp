@@ -644,6 +644,63 @@ void write_nested_array_constant_fixture(
     write_array_constant_fixture(path, initializer, body_lines);
 }
 
+void write_scalar_array_runtime_constant_fixture(
+    std::filesystem::path const& path,
+    std::string_view element,
+    std::initializer_list<std::string_view> body_lines = {}
+) {
+    write_array_constant_fixture(
+        path,
+        "const MAGIC: Array<UInt32, 1> = [" + std::string(element) + "]",
+        body_lines
+    );
+}
+
+void write_maybe_array_payload_runtime_constant_fixture(
+    std::filesystem::path const& path,
+    std::string_view element,
+    std::initializer_list<std::string_view> body_lines = {}
+) {
+    write_maybe_choice_constant_fixture(
+        path,
+        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([" + std::string(element) + "])",
+        body_lines
+    );
+}
+
+void write_scalar_array_block_runtime_constant_fixture(
+    std::filesystem::path const& path,
+    std::string_view construct
+) {
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "const MAGIC: Array<UInt32, 1> = [" + std::string(construct),
+            "    1",
+            "]",
+        }
+    );
+}
+
+void write_maybe_array_payload_block_runtime_constant_fixture(
+    std::filesystem::path const& path,
+    std::string_view construct
+) {
+    write_concurrency_fixture(
+        path,
+        "demo.consts",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([" + std::string(construct),
+            "    1",
+            "])",
+        }
+    );
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -3750,9 +3807,9 @@ void test_array_payload_choice_constant_initializer_element_type_failure() {
 void test_array_literal_constant_initializer_function_call_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_function_call_failure.or";
-    write_array_constant_fixture(
+    write_scalar_array_runtime_constant_fixture(
         path,
-        "const MAGIC: Array<UInt32, 1> = [mask(0xFFFF)]",
+        "mask(0xFFFF)",
         {
             "function mask(value: UInt32) -> UInt32",
             "    return value bit_and 0xFF",
@@ -3784,9 +3841,9 @@ void test_array_payload_choice_constant_initializer_function_call_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_choice_constant_array_payload_function_call_failure.or";
-    write_maybe_choice_constant_fixture(
+    write_maybe_array_payload_runtime_constant_fixture(
         path,
-        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([mask(0xFFFF)])",
+        "mask(0xFFFF)",
         {
             "function mask(value: UInt32) -> UInt32",
             "    return value bit_and 0xFF",
@@ -3821,9 +3878,9 @@ void test_array_payload_choice_constant_initializer_method_call_failure() {
 void test_array_literal_constant_initializer_unsafe_intrinsic_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_unsafe_intrinsic_failure.or";
-    write_array_constant_fixture(
+    write_scalar_array_runtime_constant_fixture(
         path,
-        "const MAGIC: Array<UInt32, 1> = [raw_read(UART_STATUS)]",
+        "raw_read(UART_STATUS)",
         {
             "const UART_STATUS: Address = 0x4000_1000",
         }
@@ -3836,9 +3893,9 @@ void test_array_payload_choice_constant_initializer_unsafe_intrinsic_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_choice_constant_array_payload_unsafe_intrinsic_failure.or";
-    write_maybe_choice_constant_fixture(
+    write_maybe_array_payload_runtime_constant_fixture(
         path,
-        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([raw_read(UART_STATUS)])",
+        "raw_read(UART_STATUS)",
         {
             "const UART_STATUS: Address = 0x4000_1000",
         }
@@ -3850,9 +3907,9 @@ void test_array_payload_choice_constant_initializer_unsafe_intrinsic_failure() {
 void test_array_literal_constant_initializer_await_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_await_failure.or";
-    write_array_constant_fixture(
+    write_scalar_array_runtime_constant_fixture(
         path,
-        "const MAGIC: Array<UInt32, 1> = [await STATUS_MASK]",
+        "await STATUS_MASK",
         {
             "const STATUS_MASK: UInt32 = 0xFF",
         }
@@ -3865,9 +3922,9 @@ void test_array_payload_choice_constant_initializer_await_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_choice_constant_array_payload_await_failure.or";
-    write_maybe_choice_constant_fixture(
+    write_maybe_array_payload_runtime_constant_fixture(
         path,
-        "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([await STATUS_MASK])",
+        "await STATUS_MASK",
         {
             "const STATUS_MASK: UInt32 = 0xFF",
         }
@@ -3879,15 +3936,7 @@ void test_array_payload_choice_constant_initializer_await_failure() {
 void test_array_literal_constant_initializer_task_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_task_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "const MAGIC: Array<UInt32, 1> = [task",
-            "    1",
-            "]",
-        }
-    );
+    write_scalar_array_block_runtime_constant_fixture(path, "task");
 
     assert_constant_initializer_runtime_construct_diagnostic(path, 2, "task expression");
 }
@@ -3896,18 +3945,7 @@ void test_array_payload_choice_constant_initializer_task_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_choice_constant_array_payload_task_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([task",
-            "    1",
-            "])",
-        }
-    );
+    write_maybe_array_payload_block_runtime_constant_fixture(path, "task");
 
     assert_constant_initializer_runtime_construct_diagnostic(path, 5, "task expression");
 }
@@ -3915,15 +3953,7 @@ void test_array_payload_choice_constant_initializer_task_failure() {
 void test_array_literal_constant_initializer_thread_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_array_literal_constant_thread_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "const MAGIC: Array<UInt32, 1> = [thread",
-            "    1",
-            "]",
-        }
-    );
+    write_scalar_array_block_runtime_constant_fixture(path, "thread");
 
     assert_constant_initializer_runtime_construct_diagnostic(path, 2, "thread expression");
 }
@@ -3932,18 +3962,7 @@ void test_array_payload_choice_constant_initializer_thread_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
         "orison_semantics_choice_constant_array_payload_thread_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.consts",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([thread",
-            "    1",
-            "])",
-        }
-    );
+    write_maybe_array_payload_block_runtime_constant_fixture(path, "thread");
 
     assert_constant_initializer_runtime_construct_diagnostic(path, 5, "thread expression");
 }

@@ -69,14 +69,19 @@ auto status_choice_constant_lines(std::string_view initializer) -> std::vector<s
     };
 }
 
-auto maybe_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
+auto maybe_choice_constant_lines(
+    std::string_view initializer,
+    std::initializer_list<std::string_view> trailing_lines = {}
+) -> std::vector<std::string_view> {
+    std::vector<std::string_view> lines {
         "package demo.cli",
         "choice Maybe<T>",
         "    Some(value: T)",
         "    Empty",
         initializer,
     };
+    lines.insert(lines.end(), trailing_lines.begin(), trailing_lines.end());
+    return lines;
 }
 
 auto boxed_maybe_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
@@ -131,36 +136,16 @@ auto boxed_maybe_array_choice_constant_lines(std::string_view initializer) -> st
     };
 }
 
-auto scalar_array_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
+auto scalar_array_constant_lines(
+    std::string_view initializer,
+    std::initializer_list<std::string_view> trailing_lines = {}
+) -> std::vector<std::string_view> {
+    std::vector<std::string_view> lines {
         "package demo.cli",
         initializer,
     };
-}
-
-auto scalar_array_function_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        initializer,
-        "function mask(value: UInt32) -> UInt32",
-        "    return value bit_and 0xFF",
-    };
-}
-
-auto scalar_array_intrinsic_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        initializer,
-        "const UART_STATUS: Address = 0x4000_1000",
-    };
-}
-
-auto scalar_array_await_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        initializer,
-        "const STATUS_MASK: UInt32 = 0xFF",
-    };
+    lines.insert(lines.end(), trailing_lines.begin(), trailing_lines.end());
+    return lines;
 }
 
 auto scalar_array_block_runtime_constant_lines(std::string_view construct) -> std::vector<std::string_view> {
@@ -178,40 +163,6 @@ auto scalar_array_block_runtime_constant_lines(std::string_view construct) -> st
         "const MAGIC: Array<UInt32, 1> = [thread",
         "    1",
         "]",
-    };
-}
-
-auto maybe_array_payload_function_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        initializer,
-        "function mask(value: UInt32) -> UInt32",
-        "    return value bit_and 0xFF",
-    };
-}
-
-auto maybe_array_payload_intrinsic_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        initializer,
-        "const UART_STATUS: Address = 0x4000_1000",
-    };
-}
-
-auto maybe_array_payload_await_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
-    return {
-        "package demo.cli",
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        initializer,
-        "const STATUS_MASK: UInt32 = 0xFF",
     };
 }
 
@@ -464,42 +415,54 @@ int main() {
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_function_call.or",
-        scalar_array_function_constant_lines("const MAGIC: Array<UInt32, 1> = [mask(0xFFFF)]"),
+        scalar_array_constant_lines(
+            "const MAGIC: Array<UInt32, 1> = [mask(0xFFFF)]",
+            {"function mask(value: UInt32) -> UInt32", "    return value bit_and 0xFF"}
+        ),
         "constant initializer cannot call function 'mask'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_array_payload_function_call.or",
-        maybe_array_payload_function_constant_lines(
-            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([mask(0xFFFF)])"
+        maybe_choice_constant_lines(
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([mask(0xFFFF)])",
+            {"function mask(value: UInt32) -> UInt32", "    return value bit_and 0xFF"}
         ),
         "constant initializer cannot call function 'mask'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_unsafe_intrinsic.or",
-        scalar_array_intrinsic_constant_lines("const MAGIC: Array<UInt32, 1> = [raw_read(UART_STATUS)]"),
+        scalar_array_constant_lines(
+            "const MAGIC: Array<UInt32, 1> = [raw_read(UART_STATUS)]",
+            {"const UART_STATUS: Address = 0x4000_1000"}
+        ),
         "constant initializer cannot use unsafe intrinsic 'raw_read'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_array_payload_unsafe_intrinsic.or",
-        maybe_array_payload_intrinsic_constant_lines(
-            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([raw_read(UART_STATUS)])"
+        maybe_choice_constant_lines(
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([raw_read(UART_STATUS)])",
+            {"const UART_STATUS: Address = 0x4000_1000"}
         ),
         "constant initializer cannot use unsafe intrinsic 'raw_read'"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_await.or",
-        scalar_array_await_constant_lines("const MAGIC: Array<UInt32, 1> = [await STATUS_MASK]"),
+        scalar_array_constant_lines(
+            "const MAGIC: Array<UInt32, 1> = [await STATUS_MASK]",
+            {"const STATUS_MASK: UInt32 = 0xFF"}
+        ),
         "constant initializer cannot use await expression"
     );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_array_payload_await.or",
-        maybe_array_payload_await_constant_lines(
-            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([await STATUS_MASK])"
+        maybe_choice_constant_lines(
+            "const DEFAULT_VALUE: Maybe<Array<UInt32, 1>> = Some([await STATUS_MASK])",
+            {"const STATUS_MASK: UInt32 = 0xFF"}
         ),
         "constant initializer cannot use await expression"
     );
