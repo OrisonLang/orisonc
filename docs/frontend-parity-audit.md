@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-02: generic function and receiver-method argument checks now bind available generic parameters from earlier arguments or receiver context before validating dependent argument positions, with generic record constructor calls preserving inferred argument types.
 - 2026-06-02: declared function and method calls now diagnose ordinary argument type mismatches, including nominal record constructor arguments.
 - 2026-06-02: assignment statements now diagnose ordinary target/value type mismatches, including nominal record rebinding and field assignment coverage.
 - 2026-06-02: annotated binding and return expressions now diagnose ordinary type mismatches, including nominal record constructor mismatches.

@@ -718,6 +718,57 @@ private:
         return false;
     }
 
+    void bind_argument_generic_types(
+        std::vector<syntax::ParameterSyntax> const& parameters,
+        std::vector<syntax::ExpressionSyntax> const& arguments,
+        std::vector<std::string> const& generic_parameters,
+        std::unordered_map<std::string, syntax::TypeSyntax>& bindings,
+        std::size_t parameter_offset = 0
+    ) const {
+        for (std::size_t index = 0; index < arguments.size(); ++index) {
+            auto argument_type_name = infer_expression_type_name(arguments[index]);
+            if (argument_type_name.empty()) {
+                continue;
+            }
+
+            auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
+            if (!parsed_argument_type.has_value()) {
+                continue;
+            }
+
+            match_generic_type_pattern(
+                parameters[index + parameter_offset].type,
+                *parsed_argument_type,
+                generic_parameters,
+                bindings
+            );
+        }
+    }
+
+    void validate_bound_argument_types(
+        std::vector<syntax::ParameterSyntax> const& parameters,
+        std::vector<syntax::ExpressionSyntax> const& arguments,
+        std::vector<std::string> const& generic_parameters,
+        std::unordered_map<std::string, syntax::TypeSyntax> const& bindings,
+        std::string_view call_context,
+        std::size_t parameter_offset = 0
+    ) {
+        for (std::size_t index = 0; index < arguments.size(); ++index) {
+            auto const& parameter = parameters[index + parameter_offset];
+            auto parameter_type = substitute_generic_type_bindings(parameter.type, bindings);
+            if (type_references_any_generic_parameter(parameter_type, generic_parameters)) {
+                continue;
+            }
+
+            validate_typed_expression_compatibility(
+                arguments[index],
+                render_type_name(parameter_type),
+                arguments[index].line,
+                std::string(call_context) + " argument '" + parameter.name + "'"
+            );
+        }
+    }
+
     auto infer_specialized_return_type_name(
         std::vector<std::string> const& generic_parameters,
         std::vector<syntax::ParameterSyntax> const& parameters,
@@ -909,7 +960,37 @@ private:
             return {};
         }
 
-        return find_record_declaration_by_name(expression.left->text) == nullptr ? std::string {} : expression.left->text;
+        auto const* record = find_record_declaration_by_name(expression.left->text);
+        if (record == nullptr) {
+            return {};
+        }
+
+        auto record_type = record_type_for_declaration(*record);
+        if (record->generic_parameters.empty() || record->fields.size() != expression.arguments.size()) {
+            return render_type_name(record_type);
+        }
+
+        std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        for (std::size_t index = 0; index < record->fields.size(); ++index) {
+            auto argument_type_name = infer_expression_type_name(expression.arguments[index]);
+            if (argument_type_name.empty()) {
+                continue;
+            }
+
+            auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
+            if (!parsed_argument_type.has_value()) {
+                continue;
+            }
+
+            match_generic_type_pattern(
+                record->fields[index].type,
+                *parsed_argument_type,
+                record->generic_parameters,
+                bindings
+            );
+        }
+
+        return render_type_name(substitute_generic_type_bindings(record_type, bindings));
     }
 
     auto find_choice_variant_signature(
@@ -1597,18 +1678,20 @@ private:
                     continue;
                 }
 
-                for (std::size_t index = 0; index < signature.parameters.size(); ++index) {
-                    if (type_references_any_generic_parameter(signature.parameters[index].type, signature.generic_parameters)) {
-                        continue;
-                    }
-
-                    validate_typed_expression_compatibility(
-                        expression.arguments[index],
-                        render_type_name(signature.parameters[index].type),
-                        expression.arguments[index].line,
-                        "function argument '" + signature.parameters[index].name + "'"
-                    );
-                }
+                std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+                bind_argument_generic_types(
+                    signature.parameters,
+                    expression.arguments,
+                    signature.generic_parameters,
+                    bindings
+                );
+                validate_bound_argument_types(
+                    signature.parameters,
+                    expression.arguments,
+                    signature.generic_parameters,
+                    bindings,
+                    "function"
+                );
                 return;
             }
             return;
@@ -1657,20 +1740,21 @@ private:
                 receiver_placeholders.begin(),
                 receiver_placeholders.end()
             );
-            for (std::size_t index = 0; index < expression.arguments.size(); ++index) {
-                auto const& parameter = signature.parameters[index + argument_offset];
-                auto parameter_type = substitute_generic_type_bindings(parameter.type, bindings);
-                if (type_references_any_generic_parameter(parameter_type, generic_parameters)) {
-                    continue;
-                }
-
-                validate_typed_expression_compatibility(
-                    expression.arguments[index],
-                    render_type_name(parameter_type),
-                    expression.arguments[index].line,
-                    "method argument '" + parameter.name + "'"
-                );
-            }
+            bind_argument_generic_types(
+                signature.parameters,
+                expression.arguments,
+                generic_parameters,
+                bindings,
+                argument_offset
+            );
+            validate_bound_argument_types(
+                signature.parameters,
+                expression.arguments,
+                generic_parameters,
+                bindings,
+                "method",
+                argument_offset
+            );
             return;
         }
     }
@@ -3217,9 +3301,11 @@ private:
             return false;
         }
 
+        auto record_type_name = find_record_constructor_type_name(expression);
+        auto record_type = parse_rendered_type_name(record_type_name);
         return validate_record_constructor_initializer(
             expression,
-            record_type_for_declaration(*record),
+            record_type.value_or(record_type_for_declaration(*record)),
             "expression"
         );
     }

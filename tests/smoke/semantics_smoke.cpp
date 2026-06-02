@@ -4032,6 +4032,96 @@ void test_method_call_record_argument_type_mismatch_failure() {
     assert_method_argument_type_mismatch_diagnostic(path, 14, "header", "OtherHeader", "Header");
 }
 
+void test_generic_function_dependent_argument_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_function_dependent_argument_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record Pair<A, B>",
+            "    first: A",
+            "    second: B",
+            "function consume_pair<T>(left: T, pair: Pair<T, UInt16>) -> UInt16",
+            "    return pair.second",
+            "function demo() -> UInt16",
+            "    return consume_pair(Header([1, 2], 1), Pair(Header([1, 2], 1), 1 as UInt16))",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_generic_function_dependent_argument_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_function_dependent_argument_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record Pair<A, B>",
+            "    first: A",
+            "    second: B",
+            "function consume_pair<T>(left: T, pair: Pair<T, UInt16>) -> UInt16",
+            "    return pair.second",
+            "function demo() -> UInt16",
+            "    return consume_pair(Header([1, 2], 1), Pair(OtherHeader([1, 2], 1), 1 as UInt16))",
+        }
+    );
+
+    assert_function_argument_type_mismatch_diagnostic(
+        path,
+        14,
+        "pair",
+        "Pair<OtherHeader, UInt16>",
+        "Pair<Header, UInt16>"
+    );
+}
+
+void test_generic_method_dependent_argument_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_method_dependent_argument_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record Pair<A, B>",
+            "    first: A",
+            "    second: B",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<T>",
+            "    function consume_pair(this: shared This, pair: Pair<T, UInt16>) -> UInt16",
+            "        return pair.second",
+            "function demo(box: Box<Header>) -> UInt16",
+            "    return box.consume_pair(Pair(OtherHeader([1, 2], 1), 1 as UInt16))",
+        }
+    );
+
+    assert_method_argument_type_mismatch_diagnostic(
+        path,
+        17,
+        "pair",
+        "Pair<OtherHeader, UInt16>",
+        "Pair<Header, UInt16>"
+    );
+}
+
 void test_nested_array_literal_constant_initializer_element_type_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_nested_array_literal_constant_element_failure.or";
@@ -7998,6 +8088,9 @@ int main() {
     test_record_field_assignment_constructor_type_mismatch_failure();
     test_function_call_record_argument_type_mismatch_failure();
     test_method_call_record_argument_type_mismatch_failure();
+    test_generic_function_dependent_argument_success();
+    test_generic_function_dependent_argument_type_mismatch_failure();
+    test_generic_method_dependent_argument_type_mismatch_failure();
     test_nested_array_literal_constant_initializer_element_type_failure();
     test_nested_array_literal_constant_initializer_length_failure();
     test_array_literal_constant_initializer_forward_reference_success();
