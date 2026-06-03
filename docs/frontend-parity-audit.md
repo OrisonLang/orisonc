@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-02: ordinary typed contexts now validate choice constructor expressions outside constants, so annotated bindings, returns, assignments, and call arguments reuse constructor arity and payload diagnostics.
 - 2026-06-02: repeated generic binding conflict detection is now centralized across function/method calls, record constructors, and choice constructors so future generic checks can reuse one compatibility policy.
 - 2026-06-02: generic choice constructor validation now records repeated payload generic binding conflicts and diagnoses the payload that introduced an incompatible nominal binding, while preserving same-width fixed integer payload compatibility.
 - 2026-06-02: generic record constructor validation now records repeated field generic binding conflicts and diagnoses the field that introduced an incompatible nominal binding, while preserving same-width fixed integer field compatibility.

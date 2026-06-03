@@ -1790,6 +1790,11 @@ private:
         }
 
         auto inferred_type_name = infer_expression_type_name(expression);
+        auto diagnostic_count_before_choice = diagnostics_.entries().size();
+        if (validate_choice_constructor_expression(expression, expected_type_name)) {
+            return diagnostics_.entries().size() != diagnostic_count_before_choice;
+        }
+
         if (inferred_type_name.empty() || are_type_names_compatible(inferred_type_name, expected_type_name)) {
             return false;
         }
@@ -3525,6 +3530,18 @@ private:
             record_type.value_or(record_type_for_declaration(*record)),
             "expression"
         );
+    }
+
+    auto validate_choice_constructor_expression(
+        syntax::ExpressionSyntax const& expression,
+        std::string const& expected_type_name
+    ) -> bool {
+        auto expected_type = parse_rendered_type_name(expected_type_name);
+        if (!expected_type.has_value() || !is_choice_type(*expected_type)) {
+            return false;
+        }
+
+        return validate_constant_choice_constructor_initializer(expression, *expected_type);
     }
 
     auto validate_constant_array_literal_initializer(

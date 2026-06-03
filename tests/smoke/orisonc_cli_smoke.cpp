@@ -518,6 +518,19 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_return_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> Maybe<UInt32>",
+            "    return Some(true)",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_element.or",
         scalar_array_constant_lines(scalar_array_constant_initializer("true")),
         "constant array initializer element type 'Bool' does not match declared element type 'UInt32'"
