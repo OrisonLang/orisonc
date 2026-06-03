@@ -761,14 +761,41 @@ private:
         return false;
     }
 
-    void bind_argument_generic_types(
-        std::vector<syntax::ParameterSyntax> const& parameters,
+    auto expression_constructor_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+        if (expression.kind == syntax::ExpressionKind::name) {
+            return expression.text;
+        }
+
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name) {
+            return expression.left->text;
+        }
+
+        return {};
+    }
+
+    auto should_defer_constant_payload_conflict(
+        syntax::ExpressionSyntax const& expression,
+        syntax::TypeSyntax const& expected_type
+    ) const -> bool {
+        auto constructor_name = expression_constructor_name(expression);
+        if (!constructor_name.empty() &&
+            (is_choice_type(expected_type) || find_choice_variant_signature(constructor_name, expected_type) != nullptr)) {
+            return true;
+        }
+
+        return expression.kind == syntax::ExpressionKind::array_literal && expected_type.name == "Array";
+    }
+
+    auto collect_generic_binding_conflicts(
+        std::vector<syntax::TypeSyntax> const& patterns,
         std::vector<syntax::ExpressionSyntax> const& arguments,
         std::vector<std::string> const& generic_parameters,
         std::unordered_map<std::string, syntax::TypeSyntax>& bindings,
-        std::vector<std::size_t>& conflicting_argument_indices,
-        std::size_t parameter_offset = 0
-    ) const {
+        bool allow_constant_initializer_compatibility = false,
+        bool defer_nested_constant_payloads = false
+    ) const -> std::vector<std::size_t> {
+        std::vector<std::size_t> conflicting_indices;
         for (std::size_t index = 0; index < arguments.size(); ++index) {
             auto argument_type_name = infer_expression_type_name(arguments[index]);
             if (argument_type_name.empty()) {
@@ -781,14 +808,45 @@ private:
             }
 
             if (!match_generic_type_pattern(
-                    parameters[index + parameter_offset].type,
+                    patterns[index],
                     *parsed_argument_type,
                     generic_parameters,
                     bindings
                 )) {
-                conflicting_argument_indices.push_back(index);
+                auto expected_type = substitute_generic_type_bindings(patterns[index], bindings);
+                if (defer_nested_constant_payloads && should_defer_constant_payload_conflict(arguments[index], expected_type)) {
+                    continue;
+                }
+
+                if (allow_constant_initializer_compatibility &&
+                    is_constant_initializer_type_compatible(
+                        arguments[index],
+                        argument_type_name,
+                        render_type_name(expected_type)
+                    )) {
+                    continue;
+                }
+
+                conflicting_indices.push_back(index);
             }
         }
+
+        return conflicting_indices;
+    }
+
+    auto bind_argument_generic_types(
+        std::vector<syntax::ParameterSyntax> const& parameters,
+        std::vector<syntax::ExpressionSyntax> const& arguments,
+        std::vector<std::string> const& generic_parameters,
+        std::unordered_map<std::string, syntax::TypeSyntax>& bindings,
+        std::size_t parameter_offset = 0
+    ) const -> std::vector<std::size_t> {
+        std::vector<syntax::TypeSyntax> patterns;
+        for (std::size_t index = 0; index < arguments.size(); ++index) {
+            patterns.push_back(parameters[index + parameter_offset].type);
+        }
+
+        return collect_generic_binding_conflicts(patterns, arguments, generic_parameters, bindings);
     }
 
     auto validate_generic_binding_conflicts(
@@ -1760,13 +1818,11 @@ private:
                 }
 
                 std::unordered_map<std::string, syntax::TypeSyntax> bindings;
-                std::vector<std::size_t> conflicting_argument_indices;
-                bind_argument_generic_types(
+                auto conflicting_argument_indices = bind_argument_generic_types(
                     signature.parameters,
                     expression.arguments,
                     signature.generic_parameters,
-                    bindings,
-                    conflicting_argument_indices
+                    bindings
                 );
                 auto diagnosed_indices = validate_generic_binding_conflicts(
                     signature.parameters,
@@ -1832,13 +1888,11 @@ private:
                 receiver_placeholders.begin(),
                 receiver_placeholders.end()
             );
-            std::vector<std::size_t> conflicting_argument_indices;
-            bind_argument_generic_types(
+            auto conflicting_argument_indices = bind_argument_generic_types(
                 signature.parameters,
                 expression.arguments,
                 generic_parameters,
                 bindings,
-                conflicting_argument_indices,
                 argument_offset
             );
             auto diagnosed_indices = validate_generic_binding_conflicts(
@@ -3281,51 +3335,18 @@ private:
         }
 
         if (!variant_signature->generic_parameters.empty()) {
-            for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
-                auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
-                if (argument_type_name.empty()) {
-                    continue;
-                }
-
-                auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
-                if (!parsed_argument_type.has_value()) {
-                    continue;
-                }
-
-                if (!match_generic_type_pattern(
-                        variant_signature->payloads[index].type,
-                        *parsed_argument_type,
-                        variant_signature->generic_parameters,
-                        bindings
-                    )) {
-                    auto payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
-                    auto payload_constructor_name = std::string {};
-                    if (initializer.arguments[index].kind == syntax::ExpressionKind::name) {
-                        payload_constructor_name = initializer.arguments[index].text;
-                    } else if (initializer.arguments[index].kind == syntax::ExpressionKind::call &&
-                               initializer.arguments[index].left &&
-                               initializer.arguments[index].left->kind == syntax::ExpressionKind::name) {
-                        payload_constructor_name = initializer.arguments[index].left->text;
-                    }
-                    if (!payload_constructor_name.empty() &&
-                        (is_choice_type(payload_type) ||
-                         find_choice_variant_signature(payload_constructor_name, payload_type) != nullptr)) {
-                        continue;
-                    }
-                    if (initializer.arguments[index].kind == syntax::ExpressionKind::array_literal &&
-                        payload_type.name == "Array") {
-                        continue;
-                    }
-                    if (is_constant_initializer_type_compatible(
-                            initializer.arguments[index],
-                            argument_type_name,
-                            render_type_name(payload_type)
-                        )) {
-                        continue;
-                    }
-                    conflicting_payload_indices.push_back(index);
-                }
+            std::vector<syntax::TypeSyntax> payload_patterns;
+            for (auto const& payload : variant_signature->payloads) {
+                payload_patterns.push_back(payload.type);
             }
+            conflicting_payload_indices = collect_generic_binding_conflicts(
+                payload_patterns,
+                initializer.arguments,
+                variant_signature->generic_parameters,
+                bindings,
+                true,
+                true
+            );
         }
 
         for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
@@ -3423,34 +3444,17 @@ private:
         }
 
         if (!record->generic_parameters.empty()) {
-            for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
-                auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
-                if (argument_type_name.empty()) {
-                    continue;
-                }
-
-                auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
-                if (!parsed_argument_type.has_value()) {
-                    continue;
-                }
-
-                if (!match_generic_type_pattern(
-                        record->fields[index].type,
-                        *parsed_argument_type,
-                        record->generic_parameters,
-                        bindings
-                    )) {
-                    auto field_type = substitute_generic_type_bindings(record->fields[index].type, bindings);
-                    if (is_constant_initializer_type_compatible(
-                            initializer.arguments[index],
-                            argument_type_name,
-                            render_type_name(field_type)
-                        )) {
-                        continue;
-                    }
-                    conflicting_field_indices.push_back(index);
-                }
+            std::vector<syntax::TypeSyntax> field_patterns;
+            for (auto const& field : record->fields) {
+                field_patterns.push_back(field.type);
             }
+            conflicting_field_indices = collect_generic_binding_conflicts(
+                field_patterns,
+                initializer.arguments,
+                record->generic_parameters,
+                bindings,
+                true
+            );
         }
 
         for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
