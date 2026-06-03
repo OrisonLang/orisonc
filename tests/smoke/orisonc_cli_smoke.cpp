@@ -843,6 +843,31 @@ int main() {
         },
         "final expression type 'Byte' does not match declared type 'UInt32'"
     );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_for_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(items: shared View<Int64>, left: Pointer<UInt32>) -> UInt32",
+            "    var value = 1 as UInt32",
+            "    for item in items",
+            "        value = raw_read(left)",
+            "    value",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_for_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(items: shared View<Int64>, left: Pointer<Byte>) -> UInt32",
+            "    var value = raw_read(left)",
+            "    for item in items",
+            "        value = raw_read(left)",
+            "    value",
+        },
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_volatile_read_final_expression_type.or",
@@ -961,6 +986,31 @@ int main() {
             "    repeat",
             "        value = volatile_read(left)",
             "    while flag",
+            "    value",
+        },
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_for_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(items: shared View<Int64>, left: Pointer<UInt32>) -> UInt32",
+            "    var value = 1 as UInt32",
+            "    for item in items",
+            "        value = volatile_read(left)",
+            "    value",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_for_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(items: shared View<Int64>, left: Pointer<Byte>) -> UInt32",
+            "    var value = volatile_read(left)",
+            "    for item in items",
+            "        value = volatile_read(left)",
             "    value",
         },
         "final expression type 'Byte' does not match declared type 'UInt32'"

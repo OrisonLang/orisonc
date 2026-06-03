@@ -6145,6 +6145,42 @@ void test_raw_read_while_zero_iteration_final_expression_type_success() {
     assert_fixture_success(path);
 }
 
+void test_raw_read_for_zero_iteration_final_expression_type_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_for_zero_iteration_final_expression_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(items: shared View<Int64>, left: Pointer<UInt32>) -> UInt32",
+            "    var value = 1 as UInt32",
+            "    for item in items",
+            "        value = raw_read(left)",
+            "    value",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_raw_read_for_final_expression_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_raw_read_for_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(items: shared View<Int64>, left: Pointer<Byte>) -> UInt32",
+            "    var value = raw_read(left)",
+            "    for item in items",
+            "        value = raw_read(left)",
+            "    value",
+        }
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 6, "Byte", "UInt32");
+}
+
 void test_raw_read_repeat_final_expression_type_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_read_repeat_final_expression_type_failure.or";
@@ -7285,6 +7321,42 @@ void test_volatile_read_while_zero_iteration_final_expression_type_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_volatile_read_for_zero_iteration_final_expression_type_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_for_zero_iteration_final_expression_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(items: shared View<Int64>, left: Pointer<UInt32>) -> UInt32",
+            "    var value = 1 as UInt32",
+            "    for item in items",
+            "        value = volatile_read(left)",
+            "    value",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_volatile_read_for_final_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_for_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(items: shared View<Int64>, left: Pointer<Byte>) -> UInt32",
+            "    var value = volatile_read(left)",
+            "    for item in items",
+            "        value = volatile_read(left)",
+            "    value",
+        }
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 6, "Byte", "UInt32");
 }
 
 void test_volatile_read_repeat_final_expression_type_mismatch_failure() {
@@ -9106,6 +9178,8 @@ int main() {
     test_raw_read_branch_merged_final_expression_type_mismatch_failure();
     test_raw_read_switch_merged_final_expression_type_mismatch_failure();
     test_raw_read_while_zero_iteration_final_expression_type_success();
+    test_raw_read_for_zero_iteration_final_expression_type_success();
+    test_raw_read_for_final_expression_type_mismatch_failure();
     test_raw_read_repeat_final_expression_type_mismatch_failure();
     test_raw_read_return_type_match_success();
     test_raw_read_final_expression_type_match_success();
@@ -9170,6 +9244,8 @@ int main() {
     test_volatile_read_branch_merged_final_expression_type_mismatch_failure();
     test_volatile_read_switch_merged_final_expression_type_mismatch_failure();
     test_volatile_read_while_zero_iteration_final_expression_type_success();
+    test_volatile_read_for_zero_iteration_final_expression_type_success();
+    test_volatile_read_for_final_expression_type_mismatch_failure();
     test_volatile_read_repeat_final_expression_type_mismatch_failure();
     test_volatile_read_return_type_match_success();
     test_volatile_read_final_expression_type_match_success();
