@@ -723,6 +723,44 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+            "    raw_read(p)",
+        },
+        "raw_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    raw_read(p)",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+            "    volatile_read(p)",
+        },
+        "volatile_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    volatile_read(p)",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_generic_function_dependent_argument_type.or",
         generic_pair_consumer_lines(
             {"    return consume_pair(Header([1, 2], 1), Pair(OtherHeader([1, 2], 1), 1 as UInt16))"}

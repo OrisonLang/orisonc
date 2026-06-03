@@ -6043,6 +6043,21 @@ void test_raw_read_return_type_mismatch_failure() {
     assert_raw_read_result_mismatch_diagnostic(path, 3, "Byte", "Pointer<Byte>");
 }
 
+void test_raw_read_final_expression_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_raw_read_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+            "    raw_read(p)",
+        }
+    );
+
+    assert_raw_read_result_mismatch_diagnostic(path, 3, "Byte", "Pointer<Byte>");
+}
+
 void test_raw_read_return_type_match_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_read_return_type_success.or";
@@ -6052,6 +6067,21 @@ void test_raw_read_return_type_match_success() {
         {
             "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
             "    return raw_read(p)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_raw_read_final_expression_type_match_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_raw_read_final_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    raw_read(p)",
         }
     );
 
@@ -7008,6 +7038,21 @@ void test_volatile_read_return_type_mismatch_failure() {
     assert_volatile_read_result_mismatch_diagnostic(path, 3, "Byte", "Pointer<Byte>");
 }
 
+void test_volatile_read_final_expression_type_mismatch_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+            "    volatile_read(p)",
+        }
+    );
+
+    assert_volatile_read_result_mismatch_diagnostic(path, 3, "Byte", "Pointer<Byte>");
+}
+
 void test_volatile_read_return_type_match_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_return_type_success.or";
@@ -7017,6 +7062,21 @@ void test_volatile_read_return_type_match_success() {
         {
             "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
             "    return volatile_read(p)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_volatile_read_final_expression_type_match_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_final_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    volatile_read(p)",
         }
     );
 
@@ -8733,7 +8793,9 @@ int main() {
     test_raw_write_generic_receiver_method_pointer_same_width_success();
     test_raw_write_generic_receiver_method_pointer_mismatch_failure();
     test_raw_read_return_type_mismatch_failure();
+    test_raw_read_final_expression_type_mismatch_failure();
     test_raw_read_return_type_match_success();
+    test_raw_read_final_expression_type_match_success();
     test_raw_read_return_same_width_integer_success();
     test_raw_read_return_pointer_sized_integer_mismatch_failure();
     test_raw_write_value_type_mismatch_failure();
@@ -8787,7 +8849,9 @@ int main() {
     test_return_rebound_indexed_pointer_used_by_helper_success();
     test_return_rebound_indexed_address_used_by_pointer_constructor_success();
     test_volatile_read_return_type_mismatch_failure();
+    test_volatile_read_final_expression_type_mismatch_failure();
     test_volatile_read_return_type_match_success();
+    test_volatile_read_final_expression_type_match_success();
     test_volatile_read_return_same_width_integer_success();
     test_volatile_read_return_pointer_sized_integer_mismatch_failure();
     test_volatile_read_typed_binding_result_mismatch_failure();
