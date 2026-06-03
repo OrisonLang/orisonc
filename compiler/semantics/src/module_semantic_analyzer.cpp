@@ -1202,6 +1202,18 @@ private:
         return matched_signature;
     }
 
+    auto count_choice_variant_signatures(std::string const& variant_name, std::size_t payload_count) const
+        -> std::size_t {
+        auto count = std::size_t {0};
+        for (auto const& signature : choice_variant_signatures_) {
+            if (signature.variant_name == variant_name && signature.payloads.size() == payload_count) {
+                ++count;
+            }
+        }
+
+        return count;
+    }
+
     auto find_choice_constructor_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
         auto constructor_name = std::string {};
         auto payload_count = std::size_t {0};
@@ -1258,7 +1270,7 @@ private:
             payload_count = expression.arguments.size();
         }
 
-        if (find_unique_choice_variant_signature(constructor_name, payload_count) == nullptr ||
+        if (count_choice_variant_signatures(constructor_name, payload_count) == 0 ||
             !find_choice_constructor_type_name(expression).empty()) {
             return {};
         }

@@ -4974,6 +4974,26 @@ void test_choice_constructor_unannotated_zero_payload_requires_expected_type_fai
     assert_choice_constructor_expected_type_required_diagnostic(path, 6, "Empty");
 }
 
+void test_choice_constructor_unannotated_ambiguous_name_requires_expected_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_unannotated_ambiguous_name_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice LocalStatus",
+            "    Ready(value: UInt32)",
+            "choice RemoteStatus",
+            "    Ready(value: UInt32)",
+            "function demo() -> UInt32",
+            "    let value = Ready(1 as UInt32)",
+            "    return 1",
+        }
+    );
+
+    assert_choice_constructor_expected_type_required_diagnostic(path, 7, "Ready");
+}
+
 void test_ordinary_choice_constructor_return_payload_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_choice_return_payload_failure.or";
@@ -8554,6 +8574,7 @@ int main() {
     test_choice_constructor_unannotated_binding_infers_type_success();
     test_choice_constructor_unannotated_binding_infers_type_failure();
     test_choice_constructor_unannotated_zero_payload_requires_expected_type_failure();
+    test_choice_constructor_unannotated_ambiguous_name_requires_expected_type_failure();
     test_ordinary_choice_constructor_return_payload_failure();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();

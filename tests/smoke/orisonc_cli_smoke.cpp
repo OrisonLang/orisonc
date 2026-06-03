@@ -558,6 +558,21 @@ int main() {
         },
         "choice constructor 'Empty' requires an expected choice type"
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_unannotated_ambiguous_name.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice LocalStatus",
+            "    Ready(value: UInt32)",
+            "choice RemoteStatus",
+            "    Ready(value: UInt32)",
+            "function demo() -> UInt32",
+            "    let value = Ready(1 as UInt32)",
+            "    return 1",
+        },
+        "choice constructor 'Ready' requires an expected choice type"
+    );
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_zero_payload_call_argument.or",

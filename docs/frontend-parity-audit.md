@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-02: unannotated choice constructor bindings now also diagnose ambiguous same-name constructor expressions that match multiple choice types by payload shape.
 - 2026-06-02: unannotated choice constructor bindings now diagnose constructor expressions that require an expected choice type, including generic zero-payload constructors such as `let value = Empty`.
 - 2026-06-02: zero-payload choice constructors now have ordinary typed-context coverage for expected generic choice types, including annotated bindings, returns, assignments, and direct call arguments.
 - 2026-06-02: unique choice constructor expressions now infer concrete choice types when payloads resolve generic parameters, so unannotated bindings like `let value = Some(1 as UInt32)` can flow into later typed contexts.
