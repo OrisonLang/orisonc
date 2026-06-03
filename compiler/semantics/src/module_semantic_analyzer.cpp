@@ -3834,6 +3834,18 @@ private:
             analyze_statement(statement, function.is_async);
         }
 
+        if (!function.body_statements.empty()) {
+            auto const& final_statement = function.body_statements.back();
+            if (final_statement.kind == syntax::StatementKind::expression_statement) {
+                validate_typed_expression_compatibility(
+                    final_statement.expression,
+                    current_function_return_type_name_,
+                    final_statement.line,
+                    "final expression"
+                );
+            }
+        }
+
         pop_scope();
         receiver_context_active_ = saved_receiver_context_active;
         unsafe_context_active_ = saved_unsafe_context_active;

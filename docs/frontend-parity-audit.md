@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-03: implicit final-expression returns now validate against declared function return types, including choice constructor payload checks and zero-payload expected choice contexts.
 - 2026-06-02: unannotated choice constructor bindings now also diagnose ambiguous same-name constructor expressions that match multiple choice types by payload shape.
 - 2026-06-02: unannotated choice constructor bindings now diagnose constructor expressions that require an expected choice type, including generic zero-payload constructors such as `let value = Empty`.
 - 2026-06-02: zero-payload choice constructors now have ordinary typed-context coverage for expected generic choice types, including annotated bindings, returns, assignments, and direct call arguments.

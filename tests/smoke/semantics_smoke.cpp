@@ -5012,6 +5012,24 @@ void test_ordinary_choice_constructor_return_payload_failure() {
     assert_choice_constructor_payload_mismatch_diagnostic(path, 6, "Bool", "UInt32");
 }
 
+void test_ordinary_choice_constructor_final_expression_payload_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_expression_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> Maybe<UInt32>",
+            "    Some(true)",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 6, "Bool", "UInt32");
+}
+
 void test_ordinary_choice_constructor_assignment_payload_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_choice_assignment_payload_failure.or";
@@ -5083,6 +5101,24 @@ void test_zero_payload_choice_constructor_return_success() {
             "    Empty",
             "function demo() -> Maybe<UInt32>",
             "    return Empty",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_zero_payload_choice_constructor_final_expression_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_zero_payload_final_expression_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> Maybe<UInt32>",
+            "    Empty",
         }
     );
 
@@ -8576,10 +8612,12 @@ int main() {
     test_choice_constructor_unannotated_zero_payload_requires_expected_type_failure();
     test_choice_constructor_unannotated_ambiguous_name_requires_expected_type_failure();
     test_ordinary_choice_constructor_return_payload_failure();
+    test_ordinary_choice_constructor_final_expression_payload_failure();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();
     test_zero_payload_choice_constructor_annotated_binding_success();
     test_zero_payload_choice_constructor_return_success();
+    test_zero_payload_choice_constructor_final_expression_success();
     test_zero_payload_choice_constructor_assignment_success();
     test_zero_payload_choice_constructor_call_argument_success();
     test_nested_choice_constant_initializer_success();
