@@ -544,6 +544,20 @@ int main() {
             "    return consume(value)",
         }
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_unannotated_zero_payload.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> UInt32",
+            "    let value = Empty",
+            "    return 1",
+        },
+        "choice constructor 'Empty' requires an expected choice type"
+    );
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_zero_payload_call_argument.or",

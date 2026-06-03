@@ -1247,6 +1247,25 @@ private:
         return render_type_name(choice_type);
     }
 
+    auto unresolved_choice_constructor_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+        auto constructor_name = expression_constructor_name(expression);
+        if (constructor_name.empty()) {
+            return {};
+        }
+
+        auto payload_count = std::size_t {0};
+        if (expression.kind == syntax::ExpressionKind::call) {
+            payload_count = expression.arguments.size();
+        }
+
+        if (find_unique_choice_variant_signature(constructor_name, payload_count) == nullptr ||
+            !find_choice_constructor_type_name(expression).empty()) {
+            return {};
+        }
+
+        return constructor_name;
+    }
+
     auto zero_payload_choice_variant_names_if_enum_like(
         syntax::TypeSyntax const& choice_type
     ) const -> std::optional<std::vector<std::string>> {
@@ -3821,6 +3840,15 @@ private:
             auto type_name = !statement.annotated_type.name.empty()
                                  ? render_type_name(statement.annotated_type)
                                  : infer_expression_type_name(statement.expression);
+            if (statement.annotated_type.name.empty() && type_name.empty()) {
+                auto constructor_name = unresolved_choice_constructor_name(statement.expression);
+                if (!constructor_name.empty()) {
+                    diagnostics_.error(
+                        statement.expression.line,
+                        "choice constructor '" + constructor_name + "' requires an expected choice type"
+                    );
+                }
+            }
             if (!statement.annotated_type.name.empty()) {
                 validate_receiver_type_usage(statement.annotated_type, statement.line);
                 auto read_result_type_mismatch = validate_read_result_type(
