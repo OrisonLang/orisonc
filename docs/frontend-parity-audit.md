@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-03: implicit final-expression returns now have loop-shaped `raw_read` and `volatile_read` result-type regression coverage for `while` zero-iteration preservation and `repeat` body-result preservation.
 - 2026-06-03: implicit final-expression returns now have switch-merged `raw_read` and `volatile_read` result-type regression coverage.
 - 2026-06-03: implicit final-expression returns now have branch-merged `raw_read` and `volatile_read` result-type regression coverage.
 - 2026-06-03: implicit final-expression returns now have rebound-local `raw_read` and `volatile_read` result-type regression coverage.
