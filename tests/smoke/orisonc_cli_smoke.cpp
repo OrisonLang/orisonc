@@ -500,6 +500,24 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_constant_repeated_payload_type.or",
+        maybe_choice_constant_lines_with_declarations(
+            "const DEFAULT_VALUE: Both<Header> = Pair(Header([1, 2], 1), OtherHeader([1, 2], 1))",
+            {
+                "record Header",
+                "    magic: Array<UInt32, 2>",
+                "    version: UInt16",
+                "record OtherHeader",
+                "    magic: Array<UInt32, 2>",
+                "    version: UInt16",
+                "choice Both<T>",
+                "    Pair(left: T, right: T)",
+            }
+        ),
+        "choice constructor payload type 'OtherHeader' does not match expected payload type 'Header'"
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_element.or",
         scalar_array_constant_lines(scalar_array_constant_initializer("true")),
         "constant array initializer element type 'Bool' does not match declared element type 'UInt32'"

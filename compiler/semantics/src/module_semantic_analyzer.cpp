@@ -3270,6 +3270,7 @@ private:
         }
 
         std::unordered_map<std::string, syntax::TypeSyntax> bindings;
+        std::vector<std::size_t> conflicting_payload_indices;
         if (!match_generic_type_pattern(
                 variant_signature->choice_type,
                 declared_type,
@@ -3279,8 +3280,72 @@ private:
             return true;
         }
 
+        if (!variant_signature->generic_parameters.empty()) {
+            for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
+                auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
+                if (argument_type_name.empty()) {
+                    continue;
+                }
+
+                auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
+                if (!parsed_argument_type.has_value()) {
+                    continue;
+                }
+
+                if (!match_generic_type_pattern(
+                        variant_signature->payloads[index].type,
+                        *parsed_argument_type,
+                        variant_signature->generic_parameters,
+                        bindings
+                    )) {
+                    auto payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
+                    auto payload_constructor_name = std::string {};
+                    if (initializer.arguments[index].kind == syntax::ExpressionKind::name) {
+                        payload_constructor_name = initializer.arguments[index].text;
+                    } else if (initializer.arguments[index].kind == syntax::ExpressionKind::call &&
+                               initializer.arguments[index].left &&
+                               initializer.arguments[index].left->kind == syntax::ExpressionKind::name) {
+                        payload_constructor_name = initializer.arguments[index].left->text;
+                    }
+                    if (!payload_constructor_name.empty() &&
+                        (is_choice_type(payload_type) ||
+                         find_choice_variant_signature(payload_constructor_name, payload_type) != nullptr)) {
+                        continue;
+                    }
+                    if (initializer.arguments[index].kind == syntax::ExpressionKind::array_literal &&
+                        payload_type.name == "Array") {
+                        continue;
+                    }
+                    if (is_constant_initializer_type_compatible(
+                            initializer.arguments[index],
+                            argument_type_name,
+                            render_type_name(payload_type)
+                        )) {
+                        continue;
+                    }
+                    conflicting_payload_indices.push_back(index);
+                }
+            }
+        }
+
         for (std::size_t index = 0; index < initializer.arguments.size(); ++index) {
             auto payload_type = substitute_generic_type_bindings(variant_signature->payloads[index].type, bindings);
+            auto payload_type_name = render_type_name(payload_type);
+            auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
+            auto has_binding_conflict = std::find(
+                                            conflicting_payload_indices.begin(),
+                                            conflicting_payload_indices.end(),
+                                            index
+                                        ) != conflicting_payload_indices.end();
+            if (has_binding_conflict) {
+                diagnostics_.error(
+                    initializer.arguments[index].line,
+                    "choice constructor payload type '" + argument_type_name +
+                        "' does not match expected payload type '" + payload_type_name + "'"
+                );
+                return true;
+            }
+
             if (validate_constant_choice_constructor_initializer(initializer.arguments[index], payload_type)) {
                 continue;
             }
@@ -3293,8 +3358,6 @@ private:
                 continue;
             }
 
-            auto payload_type_name = render_type_name(payload_type);
-            auto argument_type_name = infer_expression_type_name(initializer.arguments[index]);
             if (!is_constant_initializer_type_compatible(
                     initializer.arguments[index],
                     argument_type_name,
@@ -3377,6 +3440,14 @@ private:
                         record->generic_parameters,
                         bindings
                     )) {
+                    auto field_type = substitute_generic_type_bindings(record->fields[index].type, bindings);
+                    if (is_constant_initializer_type_compatible(
+                            initializer.arguments[index],
+                            argument_type_name,
+                            render_type_name(field_type)
+                        )) {
+                        continue;
+                    }
                     conflicting_field_indices.push_back(index);
                 }
             }

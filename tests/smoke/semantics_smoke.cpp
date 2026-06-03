@@ -4846,6 +4846,42 @@ void test_generic_choice_constant_initializer_payload_type_failure() {
     assert_choice_constructor_payload_mismatch_diagnostic(path, 5, "Bool", "UInt32");
 }
 
+void test_generic_choice_constant_repeated_payload_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_choice_repeated_payload_success.or";
+    write_maybe_choice_constant_fixture_with_declarations(
+        path,
+        "const DEFAULT_VALUE: Both<UInt16> = Pair(1 as UInt16, 2 as Int16)",
+        {
+            "choice Both<T>",
+            "    Pair(left: T, right: T)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_generic_choice_constant_repeated_payload_conflict_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_generic_choice_repeated_payload_failure.or";
+    write_maybe_choice_constant_fixture_with_declarations(
+        path,
+        "const DEFAULT_VALUE: Both<Header> = Pair(Header([1, 2], 1), OtherHeader([1, 2], 1))",
+        {
+            "record Header",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "record OtherHeader",
+            "    magic: Array<UInt32, 2>",
+            "    version: UInt16",
+            "choice Both<T>",
+            "    Pair(left: T, right: T)",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 13, "OtherHeader", "Header");
+}
+
 void test_nested_choice_constant_initializer_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_choice_constant_success.or";
     write_boxed_maybe_choice_constant_fixture(
@@ -8285,6 +8321,8 @@ int main() {
     test_payload_choice_constant_initializer_success();
     test_generic_choice_constant_initializer_success();
     test_generic_choice_constant_initializer_payload_type_failure();
+    test_generic_choice_constant_repeated_payload_success();
+    test_generic_choice_constant_repeated_payload_conflict_failure();
     test_nested_choice_constant_initializer_success();
     test_nested_choice_constant_initializer_payload_type_failure();
     test_nested_zero_payload_choice_constant_initializer_arity_failure();
