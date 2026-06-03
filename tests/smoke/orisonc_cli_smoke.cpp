@@ -763,6 +763,35 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_branch_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
+            "    var value = raw_read(left)",
+            "    if flag",
+            "        value = raw_read(left)",
+            "    else",
+            "        value = raw_read(right)",
+            "    value",
+        },
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_branch_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    var value = raw_read(left)",
+            "    if flag",
+            "        value = raw_read(left)",
+            "    else",
+            "        value = raw_read(right)",
+            "    value",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_volatile_read_final_expression_type.or",
         std::vector<std::string_view> {
             "package demo.cli",
@@ -798,6 +827,35 @@ int main() {
             "package demo.cli",
             "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
             "    let value = volatile_read(p)",
+            "    value",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_branch_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
+            "    var value = volatile_read(left)",
+            "    if flag",
+            "        value = volatile_read(left)",
+            "    else",
+            "        value = volatile_read(right)",
+            "    value",
+        },
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_branch_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    var value = volatile_read(left)",
+            "    if flag",
+            "        value = volatile_read(left)",
+            "    else",
+            "        value = volatile_read(right)",
             "    value",
         }
     );

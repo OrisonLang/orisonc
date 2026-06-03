@@ -6088,6 +6088,26 @@ void test_raw_read_rebound_final_expression_type_mismatch_failure() {
     assert_final_expression_type_mismatch_diagnostic(path, 4, "Byte", "UInt32");
 }
 
+void test_raw_read_branch_merged_final_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_branch_merged_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
+            "    var value = raw_read(left)",
+            "    if flag",
+            "        value = raw_read(left)",
+            "    else",
+            "        value = raw_read(right)",
+            "    value",
+        }
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 8, "Byte", "UInt32");
+}
+
 void test_raw_read_return_type_match_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_raw_read_return_type_success.or";
@@ -6127,6 +6147,26 @@ void test_raw_read_rebound_final_expression_type_match_success() {
         {
             "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
             "    let value = raw_read(p)",
+            "    value",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_raw_read_branch_merged_final_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_branch_merged_final_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    var value = raw_read(left)",
+            "    if flag",
+            "        value = raw_read(left)",
+            "    else",
+            "        value = raw_read(right)",
             "    value",
         }
     );
@@ -7115,6 +7155,26 @@ void test_volatile_read_rebound_final_expression_type_mismatch_failure() {
     assert_final_expression_type_mismatch_diagnostic(path, 4, "Byte", "UInt32");
 }
 
+void test_volatile_read_branch_merged_final_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_branch_merged_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
+            "    var value = volatile_read(left)",
+            "    if flag",
+            "        value = volatile_read(left)",
+            "    else",
+            "        value = volatile_read(right)",
+            "    value",
+        }
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 8, "Byte", "UInt32");
+}
+
 void test_volatile_read_return_type_match_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_volatile_read_return_type_success.or";
@@ -7154,6 +7214,26 @@ void test_volatile_read_rebound_final_expression_type_match_success() {
         {
             "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
             "    let value = volatile_read(p)",
+            "    value",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_volatile_read_branch_merged_final_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_branch_merged_final_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    var value = volatile_read(left)",
+            "    if flag",
+            "        value = volatile_read(left)",
+            "    else",
+            "        value = volatile_read(right)",
             "    value",
         }
     );
@@ -8873,9 +8953,11 @@ int main() {
     test_raw_read_return_type_mismatch_failure();
     test_raw_read_final_expression_type_mismatch_failure();
     test_raw_read_rebound_final_expression_type_mismatch_failure();
+    test_raw_read_branch_merged_final_expression_type_mismatch_failure();
     test_raw_read_return_type_match_success();
     test_raw_read_final_expression_type_match_success();
     test_raw_read_rebound_final_expression_type_match_success();
+    test_raw_read_branch_merged_final_expression_type_match_success();
     test_raw_read_return_same_width_integer_success();
     test_raw_read_return_pointer_sized_integer_mismatch_failure();
     test_raw_write_value_type_mismatch_failure();
@@ -8931,9 +9013,11 @@ int main() {
     test_volatile_read_return_type_mismatch_failure();
     test_volatile_read_final_expression_type_mismatch_failure();
     test_volatile_read_rebound_final_expression_type_mismatch_failure();
+    test_volatile_read_branch_merged_final_expression_type_mismatch_failure();
     test_volatile_read_return_type_match_success();
     test_volatile_read_final_expression_type_match_success();
     test_volatile_read_rebound_final_expression_type_match_success();
+    test_volatile_read_branch_merged_final_expression_type_match_success();
     test_volatile_read_return_same_width_integer_success();
     test_volatile_read_return_pointer_sized_integer_mismatch_failure();
     test_volatile_read_typed_binding_result_mismatch_failure();
