@@ -4901,6 +4901,48 @@ void test_ordinary_choice_constructor_annotated_binding_success() {
     assert_fixture_success(path);
 }
 
+void test_choice_constructor_unannotated_binding_infers_type_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_unannotated_binding_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function consume(value: Maybe<UInt32>) -> UInt32",
+            "    return 1",
+            "function demo() -> UInt32",
+            "    let value = Some(1 as UInt32)",
+            "    return consume(value)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_constructor_unannotated_binding_infers_type_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_unannotated_binding_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function consume(value: Maybe<UInt32>) -> UInt32",
+            "    return 1",
+            "function demo() -> UInt32",
+            "    let value = Some(true)",
+            "    return consume(value)",
+        }
+    );
+
+    assert_function_argument_type_mismatch_diagnostic(path, 9, "value", "Maybe<Bool>", "Maybe<UInt32>");
+}
+
 void test_ordinary_choice_constructor_return_payload_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_choice_return_payload_failure.or";
@@ -8401,6 +8443,8 @@ int main() {
     test_generic_choice_constant_repeated_payload_success();
     test_generic_choice_constant_repeated_payload_conflict_failure();
     test_ordinary_choice_constructor_annotated_binding_success();
+    test_choice_constructor_unannotated_binding_infers_type_success();
+    test_choice_constructor_unannotated_binding_infers_type_failure();
     test_ordinary_choice_constructor_return_payload_failure();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();

@@ -1183,6 +1183,70 @@ private:
         return signature->payloads.size();
     }
 
+    auto find_unique_choice_variant_signature(
+        std::string const& variant_name,
+        std::size_t payload_count
+    ) const -> ChoiceVariantSignature const* {
+        auto const* matched_signature = static_cast<ChoiceVariantSignature const*>(nullptr);
+        for (auto const& signature : choice_variant_signatures_) {
+            if (signature.variant_name != variant_name || signature.payloads.size() != payload_count) {
+                continue;
+            }
+
+            if (matched_signature != nullptr) {
+                return nullptr;
+            }
+            matched_signature = &signature;
+        }
+
+        return matched_signature;
+    }
+
+    auto find_choice_constructor_type_name(syntax::ExpressionSyntax const& expression) const -> std::string {
+        auto constructor_name = std::string {};
+        auto payload_count = std::size_t {0};
+        if (expression.kind == syntax::ExpressionKind::name) {
+            constructor_name = expression.text;
+        } else if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+                   expression.left->kind == syntax::ExpressionKind::name) {
+            constructor_name = expression.left->text;
+            payload_count = expression.arguments.size();
+        } else {
+            return {};
+        }
+
+        auto const* signature = find_unique_choice_variant_signature(constructor_name, payload_count);
+        if (signature == nullptr) {
+            return {};
+        }
+
+        auto bindings = std::unordered_map<std::string, syntax::TypeSyntax> {};
+        if (!signature->generic_parameters.empty()) {
+            std::vector<syntax::TypeSyntax> payload_patterns;
+            for (auto const& payload : signature->payloads) {
+                payload_patterns.push_back(payload.type);
+            }
+            auto conflicts = collect_generic_binding_conflicts(
+                payload_patterns,
+                expression.arguments,
+                signature->generic_parameters,
+                bindings,
+                true,
+                true
+            );
+            if (!conflicts.empty()) {
+                return {};
+            }
+        }
+
+        auto choice_type = substitute_generic_type_bindings(signature->choice_type, bindings);
+        if (type_references_any_generic_parameter(choice_type, signature->generic_parameters)) {
+            return {};
+        }
+
+        return render_type_name(choice_type);
+    }
+
     auto zero_payload_choice_variant_names_if_enum_like(
         syntax::TypeSyntax const& choice_type
     ) const -> std::optional<std::vector<std::string>> {
@@ -1331,7 +1395,10 @@ private:
         switch (expression.kind) {
         case syntax::ExpressionKind::name: {
             auto const* binding = find_binding(expression.text);
-            return binding == nullptr ? std::string {} : binding->type_name;
+            if (binding != nullptr) {
+                return binding->type_name;
+            }
+            return find_choice_constructor_type_name(expression);
         }
         case syntax::ExpressionKind::unary:
             if (!expression.left) {
@@ -1445,6 +1512,12 @@ private:
                 auto record_constructor_type_name = find_record_constructor_type_name(expression);
                 if (!record_constructor_type_name.empty()) {
                     return record_constructor_type_name;
+                }
+            }
+            {
+                auto choice_constructor_type_name = find_choice_constructor_type_name(expression);
+                if (!choice_constructor_type_name.empty()) {
+                    return choice_constructor_type_name;
                 }
             }
             return find_callable_return_type_name(expression.left->text, expression.arguments);

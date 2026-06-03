@@ -529,6 +529,21 @@ int main() {
         },
         "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
     );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_unannotated_binding_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function consume(value: Maybe<UInt32>) -> UInt32",
+            "    return 1",
+            "function demo() -> UInt32",
+            "    let value = Some(1 as UInt32)",
+            "    return consume(value)",
+        }
+    );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_element.or",
