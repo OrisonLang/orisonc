@@ -3830,20 +3830,25 @@ private:
 
         validate_receiver_type_usage(function.return_type, function.line);
 
-        for (auto const& statement : function.body_statements) {
-            analyze_statement(statement, function.is_async);
-        }
-
-        if (!function.body_statements.empty()) {
-            auto const& final_statement = function.body_statements.back();
-            if (final_statement.kind == syntax::StatementKind::expression_statement) {
-                validate_typed_expression_compatibility(
-                    final_statement.expression,
-                    current_function_return_type_name_,
-                    final_statement.line,
-                    "final expression"
-                );
+        auto final_statement_index =
+            function.body_statements.empty() ? std::optional<std::size_t> {} : function.body_statements.size() - 1;
+        for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
+            auto const& statement = function.body_statements[index];
+            auto analyze_as_final_expression =
+                final_statement_index.has_value() && index == *final_statement_index &&
+                statement.kind == syntax::StatementKind::expression_statement;
+            if (analyze_as_final_expression) {
+                auto saved_expected_pointer_type_name = expected_pointer_type_name_;
+                if (current_function_returns_pointer_) {
+                    expected_pointer_type_name_ = current_function_return_type_name_;
+                }
+                analyze_expression(statement.expression, function.is_async);
+                validate_return_position_expression(statement.expression, statement.line, "final expression");
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                continue;
             }
+
+            analyze_statement(statement, function.is_async);
         }
 
         pop_scope();
@@ -3852,6 +3857,42 @@ private:
         current_function_returns_pointer_ = saved_current_function_returns_pointer;
         current_function_returns_address_ = saved_current_function_returns_address;
         current_function_return_type_name_ = saved_current_function_return_type_name;
+    }
+
+    void validate_return_position_expression(
+        syntax::ExpressionSyntax const& expression,
+        std::size_t line,
+        std::string_view ordinary_context_description
+    ) {
+        validate_return_expression(expression, line);
+        auto read_result_type_mismatch = validate_read_result_type(
+            expression,
+            current_function_return_type_name_,
+            line,
+            "function return"
+        );
+        if (current_function_returns_pointer_ && !read_result_type_mismatch) {
+            validate_pointer_typed_expression(
+                expression,
+                line,
+                "pointer-returning function"
+            );
+        }
+        if (current_function_returns_address_ && !read_result_type_mismatch) {
+            validate_address_typed_expression(
+                expression,
+                line,
+                "address-returning function"
+            );
+        }
+        if (!read_result_type_mismatch) {
+            validate_typed_expression_compatibility(
+                expression,
+                current_function_return_type_name_,
+                line,
+                ordinary_context_description
+            );
+        }
     }
 
     void analyze_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
@@ -3948,35 +3989,7 @@ private:
                 expected_pointer_type_name_ = current_function_return_type_name_;
             }
             analyze_expression(statement.expression, in_async_function, true);
-            validate_return_expression(statement.expression, statement.line);
-            auto read_result_type_mismatch = validate_read_result_type(
-                statement.expression,
-                current_function_return_type_name_,
-                statement.line,
-                "function return"
-            );
-            if (current_function_returns_pointer_ && !read_result_type_mismatch) {
-                validate_pointer_typed_expression(
-                    statement.expression,
-                    statement.line,
-                    "pointer-returning function"
-                );
-            }
-            if (current_function_returns_address_ && !read_result_type_mismatch) {
-                validate_address_typed_expression(
-                    statement.expression,
-                    statement.line,
-                    "address-returning function"
-                );
-            }
-            if (!read_result_type_mismatch) {
-                validate_typed_expression_compatibility(
-                    statement.expression,
-                    current_function_return_type_name_,
-                    statement.line,
-                    "return expression"
-                );
-            }
+            validate_return_position_expression(statement.expression, statement.line, "return expression");
             expected_pointer_type_name_ = saved_expected_pointer_type_name;
         }
 

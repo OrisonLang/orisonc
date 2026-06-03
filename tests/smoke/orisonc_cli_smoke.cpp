@@ -685,6 +685,44 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_ptr() -> Pointer<Byte>",
+            "    \"text\"",
+        },
+        "pointer-returning function currently requires a structurally pointer-like expression"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
+            "    raw_offset(base, 1)",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_address_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function base() -> Address",
+            "    \"text\"",
+        },
+        "address-returning function currently requires a structurally address-like expression"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_address_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function base(buf: exclusive Buffer) -> Address",
+            "    address_of(buf.data[0])",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_generic_function_dependent_argument_type.or",
         generic_pair_consumer_lines(
             {"    return consume_pair(Header([1, 2], 1), Pair(OtherHeader([1, 2], 1), 1 as UInt16))"}

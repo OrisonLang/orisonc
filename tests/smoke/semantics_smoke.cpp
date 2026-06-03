@@ -5708,6 +5708,21 @@ void test_pointer_return_with_nonpointer_expression_failure() {
     assert_pointer_return_structural_diagnostic(path, 3);
 }
 
+void test_pointer_final_expression_with_nonpointer_expression_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_final_expression_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr() -> Pointer<Byte>",
+            "    \"text\"",
+        }
+    );
+
+    assert_pointer_return_structural_diagnostic(path, 3);
+}
+
 void test_pointer_return_with_pointer_expression_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_success.or";
@@ -5717,6 +5732,21 @@ void test_pointer_return_with_pointer_expression_success() {
         {
             "unsafe function next_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
             "    return raw_offset(base, 1)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_pointer_final_expression_with_pointer_expression_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_final_expression_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr(base: Pointer<Byte>) -> Pointer<Byte>",
+            "    raw_offset(base, 1)",
         }
     );
 
@@ -7798,6 +7828,21 @@ void test_address_return_with_nonaddress_expression_failure() {
     assert_address_return_diagnostic(path, 3);
 }
 
+void test_address_final_expression_with_nonaddress_expression_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_final_expression_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "function base() -> Address",
+            "    \"text\"",
+        }
+    );
+
+    assert_address_return_diagnostic(path, 3);
+}
+
 void test_address_return_with_address_expression_success() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_address_return_success.or";
@@ -7807,6 +7852,21 @@ void test_address_return_with_address_expression_success() {
         {
             "unsafe function base(buf: exclusive Buffer) -> Address",
             "    return address_of(buf.data[0])",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_address_final_expression_with_address_expression_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_final_expression_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        {
+            "unsafe function base(buf: exclusive Buffer) -> Address",
+            "    address_of(buf.data[0])",
         }
     );
 
@@ -8658,7 +8718,9 @@ int main() {
     test_pointer_typed_binding_with_mismatched_field_pointer_failure();
     test_pointer_typed_binding_with_same_width_field_pointer_success();
     test_pointer_return_with_nonpointer_expression_failure();
+    test_pointer_final_expression_with_nonpointer_expression_failure();
     test_pointer_return_with_pointer_expression_success();
+    test_pointer_final_expression_with_pointer_expression_success();
     test_pointer_return_with_mismatched_raw_offset_source_failure();
     test_pointer_return_with_matching_raw_offset_source_success();
     test_pointer_return_with_wrong_typed_name_failure();
@@ -8771,7 +8833,9 @@ int main() {
     test_address_typed_binding_with_address_initializer_success();
     test_address_typed_binding_with_wrong_typed_name_failure();
     test_address_return_with_nonaddress_expression_failure();
+    test_address_final_expression_with_nonaddress_expression_failure();
     test_address_return_with_address_expression_success();
+    test_address_final_expression_with_address_expression_success();
     test_address_return_with_wrong_typed_name_failure();
     test_address_typed_binding_with_field_address_success();
     test_address_typed_binding_with_indexed_address_success();
