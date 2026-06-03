@@ -742,6 +742,27 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_rebound_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(p: Pointer<Byte>) -> UInt32",
+            "    let value = raw_read(p)",
+            "    value",
+        },
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_rebound_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    let value = raw_read(p)",
+            "    value",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_volatile_read_final_expression_type.or",
         std::vector<std::string_view> {
             "package demo.cli",
@@ -757,6 +778,27 @@ int main() {
             "package demo.cli",
             "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
             "    volatile_read(p)",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_rebound_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(p: Pointer<Byte>) -> UInt32",
+            "    let value = volatile_read(p)",
+            "    value",
+        },
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_rebound_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+            "    let value = volatile_read(p)",
+            "    value",
         }
     );
     assert_cli_parse_failure(

@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-03: implicit final-expression returns now have rebound-local `raw_read` and `volatile_read` result-type regression coverage.
 - 2026-06-03: implicit final-expression returns now have explicit `raw_read` and `volatile_read` result-type regression coverage.
 - 2026-06-03: implicit final-expression returns now reuse explicit return-position low-level checks for pointer/address return types.
 - 2026-06-03: implicit final-expression returns now validate against declared function return types, including choice constructor payload checks and zero-payload expected choice contexts.
