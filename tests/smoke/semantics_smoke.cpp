@@ -5001,6 +5001,83 @@ void test_ordinary_choice_constructor_call_argument_arity_failure() {
     assert_choice_constructor_arity_diagnostic(path, 8, "Some", 1, 0);
 }
 
+void test_zero_payload_choice_constructor_annotated_binding_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_zero_payload_binding_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> UInt32",
+            "    let value: Maybe<UInt32> = Empty",
+            "    return 1",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_zero_payload_choice_constructor_return_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_zero_payload_return_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> Maybe<UInt32>",
+            "    return Empty",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_zero_payload_choice_constructor_assignment_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_zero_payload_assignment_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> UInt32",
+            "    var value: Maybe<UInt32> = Some(1 as UInt32)",
+            "    value = Empty",
+            "    return 1",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_zero_payload_choice_constructor_call_argument_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_zero_payload_call_argument_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function consume(value: Maybe<UInt32>) -> UInt32",
+            "    return 1",
+            "function demo() -> UInt32",
+            "    return consume(Empty)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_nested_choice_constant_initializer_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_choice_constant_success.or";
     write_boxed_maybe_choice_constant_fixture(
@@ -8448,6 +8525,10 @@ int main() {
     test_ordinary_choice_constructor_return_payload_failure();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();
+    test_zero_payload_choice_constructor_annotated_binding_success();
+    test_zero_payload_choice_constructor_return_success();
+    test_zero_payload_choice_constructor_assignment_success();
+    test_zero_payload_choice_constructor_call_argument_success();
     test_nested_choice_constant_initializer_success();
     test_nested_choice_constant_initializer_payload_type_failure();
     test_nested_zero_payload_choice_constant_initializer_arity_failure();

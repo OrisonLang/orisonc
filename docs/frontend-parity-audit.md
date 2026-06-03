@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-02: zero-payload choice constructors now have ordinary typed-context coverage for expected generic choice types, including annotated bindings, returns, assignments, and direct call arguments.
 - 2026-06-02: unique choice constructor expressions now infer concrete choice types when payloads resolve generic parameters, so unannotated bindings like `let value = Some(1 as UInt32)` can flow into later typed contexts.
 - 2026-06-02: ordinary typed contexts now validate choice constructor expressions outside constants, so annotated bindings, returns, assignments, and call arguments reuse constructor arity and payload diagnostics.
 - 2026-06-02: repeated generic binding conflict detection is now centralized across function/method calls, record constructors, and choice constructors so future generic checks can reuse one compatibility policy.

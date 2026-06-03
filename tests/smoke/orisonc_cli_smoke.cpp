@@ -544,6 +544,20 @@ int main() {
             "    return consume(value)",
         }
     );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_zero_payload_call_argument.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function consume(value: Maybe<UInt32>) -> UInt32",
+            "    return 1",
+            "function demo() -> UInt32",
+            "    return consume(Empty)",
+        }
+    );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_array_constant_element.or",
