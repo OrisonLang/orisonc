@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-03: trailing `if ... else` and `switch` blocks now participate in implicit final-expression return validation, with semantic and CLI coverage for value-shaped `raw_read`/`volatile_read` arms.
 - 2026-06-03: trailing `unsafe` blocks now participate in implicit final-expression return validation, with semantic and CLI coverage for direct and rebound `raw_read`/`volatile_read` result types inside unsafe blocks.
 - 2026-06-03: semantic and CLI smoke coverage for implicit final-expression `raw_read`/`volatile_read` shapes now share low-level read source builders across direct, rebound, branch, switch, guard, while, repeat, and for fixtures.
 - 2026-06-03: implicit final-expression returns now have `guard ... else` failure-path `raw_read` and `volatile_read` result-type regression coverage, including compatible continuing-path success and final `Byte` versus `UInt32` mismatch diagnostics.

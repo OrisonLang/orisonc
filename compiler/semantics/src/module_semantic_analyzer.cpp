@@ -3856,6 +3856,16 @@ private:
             return;
         }
 
+        if (statement.kind == syntax::StatementKind::if_statement && !statement.alternate_statements.empty()) {
+            analyze_final_if_statement(statement, in_async_function);
+            return;
+        }
+
+        if (statement.kind == syntax::StatementKind::switch_statement) {
+            analyze_switch_statement(statement, in_async_function, true);
+            return;
+        }
+
         if (statement.kind == syntax::StatementKind::unsafe_statement) {
             analyze_unsafe_statement(statement, in_async_function, true);
             return;
@@ -3874,6 +3884,63 @@ private:
         expected_pointer_type_name_ = saved_expected_pointer_type_name;
     }
 
+    void analyze_statement_block(
+        std::vector<syntax::StatementSyntax> const& statements,
+        bool in_async_function,
+        bool allow_final_expression
+    ) {
+        auto final_statement_index =
+            allow_final_expression && !statements.empty() ? std::optional<std::size_t> {statements.size() - 1}
+                                                          : std::optional<std::size_t> {};
+        for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+            auto const& nested_statement = statements[index];
+            if (final_statement_index.has_value() && index == *final_statement_index) {
+                analyze_final_statement(nested_statement, in_async_function);
+                continue;
+            }
+            analyze_statement(nested_statement, in_async_function);
+        }
+    }
+
+    void analyze_switch_case_statement_block(
+        std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+        bool in_async_function,
+        bool allow_final_expression
+    ) {
+        auto final_statement_index =
+            allow_final_expression && !statements.empty() ? std::optional<std::size_t> {statements.size() - 1}
+                                                          : std::optional<std::size_t> {};
+        for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+            auto const& nested_statement = *statements[index];
+            if (final_statement_index.has_value() && index == *final_statement_index) {
+                analyze_final_statement(nested_statement, in_async_function);
+                continue;
+            }
+            analyze_statement(nested_statement, in_async_function);
+        }
+    }
+
+    void analyze_final_if_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
+        analyze_expression(statement.expression, in_async_function);
+
+        auto baseline_scope = snapshot_scope_stack();
+        std::vector<ScopeSnapshot> branch_results;
+
+        restore_scope_stack(baseline_scope);
+        push_scope();
+        analyze_statement_block(statement.nested_statements, in_async_function, true);
+        pop_scope();
+        branch_results.push_back(snapshot_scope_stack());
+
+        restore_scope_stack(baseline_scope);
+        push_scope();
+        analyze_statement_block(statement.alternate_statements, in_async_function, true);
+        pop_scope();
+        branch_results.push_back(snapshot_scope_stack());
+
+        restore_scope_stack(merge_scope_snapshots(branch_results));
+    }
+
     void analyze_unsafe_statement(
         syntax::StatementSyntax const& statement,
         bool in_async_function,
@@ -3882,20 +3949,203 @@ private:
         auto saved_unsafe_context_active = unsafe_context_active_;
         unsafe_context_active_ = true;
         push_scope();
-        auto final_statement_index =
-            allow_final_expression && !statement.nested_statements.empty()
-                ? std::optional<std::size_t> {statement.nested_statements.size() - 1}
-                : std::optional<std::size_t> {};
-        for (auto index = std::size_t {0}; index < statement.nested_statements.size(); ++index) {
-            auto const& nested_statement = statement.nested_statements[index];
-            if (final_statement_index.has_value() && index == *final_statement_index) {
-                analyze_final_statement(nested_statement, in_async_function);
-                continue;
-            }
-            analyze_statement(nested_statement, in_async_function);
-        }
+        analyze_statement_block(statement.nested_statements, in_async_function, allow_final_expression);
         pop_scope();
         unsafe_context_active_ = saved_unsafe_context_active;
+    }
+
+    void analyze_switch_statement(
+        syntax::StatementSyntax const& statement,
+        bool in_async_function,
+        bool allow_final_expression
+    ) {
+        auto baseline_scope = snapshot_scope_stack();
+        std::vector<ScopeSnapshot> case_results;
+        auto has_default_case = false;
+        auto saw_value_pattern = false;
+        auto saw_constructor_pattern = false;
+        auto saw_semantic_default = false;
+        auto switch_patterns_valid = true;
+        auto saw_true_value_pattern = false;
+        auto saw_false_value_pattern = false;
+        std::unordered_set<std::string> seen_literal_value_patterns;
+        std::unordered_set<std::string> seen_zero_payload_choice_variants;
+        std::vector<PayloadConstructorPatternKey> seen_simple_payload_choice_patterns;
+        SwitchChoiceCoverage choice_coverage;
+        std::optional<syntax::TypeSyntax> switch_subject_type;
+        auto switch_subject_type_name = infer_expression_type_name(statement.expression);
+        if (!switch_subject_type_name.empty()) {
+            switch_subject_type = parse_rendered_type_name(switch_subject_type_name);
+            if (switch_subject_type.has_value()) {
+                auto zero_payload_choice_variants = zero_payload_choice_variant_names_if_enum_like(*switch_subject_type);
+                if (zero_payload_choice_variants.has_value()) {
+                    choice_coverage.set_zero_payload_variants(*zero_payload_choice_variants);
+                }
+                auto payload_bearing_choice_variants = choice_variant_names_if_payload_bearing(*switch_subject_type);
+                if (payload_bearing_choice_variants.has_value()) {
+                    choice_coverage.set_payload_bearing_variants(*payload_bearing_choice_variants);
+                }
+            }
+        }
+
+        for (std::size_t case_index = 0; case_index < statement.switch_cases.size(); ++case_index) {
+            auto const& switch_case = statement.switch_cases[case_index];
+            auto valid_pattern = true;
+
+            if (switch_case.is_default) {
+                if (saw_semantic_default) {
+                    diagnostics_.error(switch_case_line(switch_case), "switch statement may only contain one default case");
+                    valid_pattern = false;
+                }
+
+                if (case_index + 1 != statement.switch_cases.size()) {
+                    diagnostics_.error(switch_case_line(switch_case), "switch default case must be the final case");
+                    valid_pattern = false;
+                }
+
+                if (switch_patterns_valid && switch_subject_type_name == "Bool" && saw_true_value_pattern &&
+                    saw_false_value_pattern) {
+                    diagnostics_.error(
+                        switch_case_line(switch_case),
+                        "switch default case is redundant after true and false value patterns"
+                    );
+                    valid_pattern = false;
+                }
+
+                if (switch_patterns_valid && choice_coverage.all_zero_payload_variants_covered()) {
+                    diagnostics_.error(
+                        switch_case_line(switch_case),
+                        "switch default case is redundant after all zero-payload choice variants are covered"
+                    );
+                    valid_pattern = false;
+                }
+
+                if (switch_patterns_valid && choice_coverage.all_payload_bearing_variants_covered()) {
+                    diagnostics_.error(
+                        switch_case_line(switch_case),
+                        "switch default case is redundant after all choice variants are covered"
+                    );
+                    valid_pattern = false;
+                }
+
+                saw_semantic_default = true;
+            }
+
+            if (!switch_case.is_default) {
+                auto pattern_kind = classify_switch_pattern_kind(switch_case.pattern);
+                if (pattern_kind == SwitchPatternKind::value) {
+                    saw_value_pattern = true;
+                    if (switch_case.pattern.kind == syntax::ExpressionKind::boolean_literal) {
+                        saw_true_value_pattern = saw_true_value_pattern || switch_case.pattern.text == "true";
+                        saw_false_value_pattern = saw_false_value_pattern || switch_case.pattern.text == "false";
+                    }
+                    auto literal_key = switch_literal_pattern_key(switch_case.pattern);
+                    if (literal_key.has_value() && !seen_literal_value_patterns.insert(*literal_key).second) {
+                        diagnostics_.error(
+                            switch_case.pattern.line,
+                            "switch value pattern '" + render_switch_literal_pattern(switch_case.pattern) +
+                                "' is duplicated"
+                        );
+                        valid_pattern = false;
+                    }
+                } else if (pattern_kind == SwitchPatternKind::constructor) {
+                    saw_constructor_pattern = true;
+                    if (switch_case.pattern.kind == syntax::ExpressionKind::name &&
+                        choice_coverage.is_zero_payload_variant(switch_case.pattern.text)) {
+                        if (!seen_zero_payload_choice_variants.insert(switch_case.pattern.text).second) {
+                            diagnostics_.error(
+                                switch_case.pattern.line,
+                                "switch constructor pattern '" + switch_case.pattern.text + "' is duplicated"
+                            );
+                            valid_pattern = false;
+                        }
+                        choice_coverage.cover_zero_payload_variant(switch_case.pattern.text);
+                    }
+                    if (switch_case.pattern.kind == syntax::ExpressionKind::name && switch_subject_type.has_value() &&
+                        choice_coverage.tracks_payload_bearing_variant(switch_case.pattern.text) &&
+                        is_zero_payload_constructor_pattern(switch_case.pattern.text, *switch_subject_type)) {
+                        choice_coverage.cover_payload_bearing_variant(switch_case.pattern.text);
+                    }
+
+                    auto constructor_key = simple_payload_constructor_pattern_key(switch_case.pattern, switch_subject_type);
+                    if (constructor_key.has_value()) {
+                        for (auto const& seen_constructor_key : seen_simple_payload_choice_patterns) {
+                            if (payload_constructor_patterns_overlap(seen_constructor_key, *constructor_key)) {
+                                diagnostics_.error(
+                                    switch_case.pattern.line,
+                                    "switch constructor pattern '" + switch_case.pattern.left->text +
+                                        "(...)' is duplicated"
+                                );
+                                valid_pattern = false;
+                                break;
+                            }
+                        }
+                        seen_simple_payload_choice_patterns.push_back(*constructor_key);
+                    }
+
+                    auto fully_covered_variant =
+                        fully_covering_choice_constructor_pattern_variant_name(switch_case.pattern, switch_subject_type);
+                    if (fully_covered_variant.has_value() &&
+                        choice_coverage.tracks_payload_bearing_variant(*fully_covered_variant)) {
+                        choice_coverage.cover_payload_bearing_variant(*fully_covered_variant);
+                    }
+                }
+            }
+
+            if (!switch_case.is_default && saw_value_pattern && saw_constructor_pattern) {
+                diagnostics_.error(switch_case.pattern.line, "switch cannot mix value patterns with constructor patterns");
+                case_results.push_back(baseline_scope);
+                has_default_case = has_default_case || switch_case.is_default;
+                continue;
+            }
+
+            valid_pattern =
+                analyze_switch_pattern(switch_case.pattern, in_async_function, switch_subject_type) && valid_pattern;
+            restore_scope_stack(baseline_scope);
+            push_scope();
+            if (!switch_case.is_default && valid_pattern) {
+                std::unordered_set<std::string> bound_names;
+                valid_pattern =
+                    declare_switch_pattern_bindings(switch_case.pattern, switch_subject_type, false, bound_names) &&
+                    valid_pattern;
+            }
+            switch_patterns_valid = switch_patterns_valid && valid_pattern;
+            if (valid_pattern) {
+                analyze_switch_case_statement_block(switch_case.statements, in_async_function, allow_final_expression);
+            }
+            pop_scope();
+            case_results.push_back(snapshot_scope_stack());
+            has_default_case = has_default_case || switch_case.is_default;
+        }
+
+        if (switch_patterns_valid && !has_default_case && !saw_value_pattern) {
+            auto missing_variant = choice_coverage.first_missing_zero_payload_variant();
+            if (missing_variant.has_value()) {
+                diagnostics_.error(statement.line, "switch is missing zero-payload choice variant '" + *missing_variant + "'");
+            }
+        }
+
+        if (switch_patterns_valid && !has_default_case && !saw_value_pattern) {
+            auto missing_variant = choice_coverage.first_missing_payload_bearing_variant();
+            if (missing_variant.has_value()) {
+                diagnostics_.error(statement.line, "switch is missing choice variant '" + *missing_variant + "'");
+            }
+        }
+
+        if (switch_patterns_valid && !has_default_case && !saw_constructor_pattern &&
+            switch_subject_type_name == "Bool" && saw_true_value_pattern != saw_false_value_pattern) {
+            diagnostics_.error(
+                statement.line,
+                std::string("switch is missing boolean value pattern '") + (saw_true_value_pattern ? "false" : "true") +
+                    "'"
+            );
+        }
+
+        if (!has_default_case) {
+            case_results.push_back(baseline_scope);
+        }
+
+        restore_scope_stack(merge_scope_snapshots(case_results));
     }
 
     void validate_return_position_expression(
@@ -4118,212 +4368,7 @@ private:
         }
 
         if (statement.kind == syntax::StatementKind::switch_statement) {
-            auto baseline_scope = snapshot_scope_stack();
-            std::vector<ScopeSnapshot> case_results;
-            auto has_default_case = false;
-            auto saw_value_pattern = false;
-            auto saw_constructor_pattern = false;
-            auto saw_semantic_default = false;
-            auto switch_patterns_valid = true;
-            auto saw_true_value_pattern = false;
-            auto saw_false_value_pattern = false;
-            std::unordered_set<std::string> seen_literal_value_patterns;
-            std::unordered_set<std::string> seen_zero_payload_choice_variants;
-            std::vector<PayloadConstructorPatternKey> seen_simple_payload_choice_patterns;
-            SwitchChoiceCoverage choice_coverage;
-            std::optional<syntax::TypeSyntax> switch_subject_type;
-            auto switch_subject_type_name = infer_expression_type_name(statement.expression);
-            if (!switch_subject_type_name.empty()) {
-                switch_subject_type = parse_rendered_type_name(switch_subject_type_name);
-                if (switch_subject_type.has_value()) {
-                    auto zero_payload_choice_variants =
-                        zero_payload_choice_variant_names_if_enum_like(*switch_subject_type);
-                    if (zero_payload_choice_variants.has_value()) {
-                        choice_coverage.set_zero_payload_variants(*zero_payload_choice_variants);
-                    }
-                    auto payload_bearing_choice_variants = choice_variant_names_if_payload_bearing(*switch_subject_type);
-                    if (payload_bearing_choice_variants.has_value()) {
-                        choice_coverage.set_payload_bearing_variants(*payload_bearing_choice_variants);
-                    }
-                }
-            }
-
-            for (std::size_t case_index = 0; case_index < statement.switch_cases.size(); ++case_index) {
-                auto const& switch_case = statement.switch_cases[case_index];
-                auto valid_pattern = true;
-
-                if (switch_case.is_default) {
-                    if (saw_semantic_default) {
-                        diagnostics_.error(
-                            switch_case_line(switch_case),
-                            "switch statement may only contain one default case"
-                        );
-                        valid_pattern = false;
-                    }
-
-                    if (case_index + 1 != statement.switch_cases.size()) {
-                        diagnostics_.error(
-                            switch_case_line(switch_case),
-                            "switch default case must be the final case"
-                        );
-                        valid_pattern = false;
-                    }
-
-                    if (switch_patterns_valid && switch_subject_type_name == "Bool" && saw_true_value_pattern &&
-                        saw_false_value_pattern) {
-                        diagnostics_.error(
-                            switch_case_line(switch_case),
-                            "switch default case is redundant after true and false value patterns"
-                        );
-                        valid_pattern = false;
-                    }
-
-                    if (switch_patterns_valid && choice_coverage.all_zero_payload_variants_covered()) {
-                        diagnostics_.error(
-                            switch_case_line(switch_case),
-                            "switch default case is redundant after all zero-payload choice variants are covered"
-                        );
-                        valid_pattern = false;
-                    }
-
-                    if (switch_patterns_valid && choice_coverage.all_payload_bearing_variants_covered()) {
-                        diagnostics_.error(
-                            switch_case_line(switch_case),
-                            "switch default case is redundant after all choice variants are covered"
-                        );
-                        valid_pattern = false;
-                    }
-
-                    saw_semantic_default = true;
-                }
-
-                if (!switch_case.is_default) {
-                    auto pattern_kind = classify_switch_pattern_kind(switch_case.pattern);
-                    if (pattern_kind == SwitchPatternKind::value) {
-                        saw_value_pattern = true;
-                        if (switch_case.pattern.kind == syntax::ExpressionKind::boolean_literal) {
-                            saw_true_value_pattern = saw_true_value_pattern || switch_case.pattern.text == "true";
-                            saw_false_value_pattern = saw_false_value_pattern || switch_case.pattern.text == "false";
-                        }
-                        auto literal_key = switch_literal_pattern_key(switch_case.pattern);
-                        if (literal_key.has_value() && !seen_literal_value_patterns.insert(*literal_key).second) {
-                            diagnostics_.error(
-                                switch_case.pattern.line,
-                                "switch value pattern '" + render_switch_literal_pattern(switch_case.pattern) +
-                                    "' is duplicated"
-                            );
-                            valid_pattern = false;
-                        }
-                    } else if (pattern_kind == SwitchPatternKind::constructor) {
-                        saw_constructor_pattern = true;
-                        if (switch_case.pattern.kind == syntax::ExpressionKind::name &&
-                            choice_coverage.is_zero_payload_variant(switch_case.pattern.text)) {
-                            if (!seen_zero_payload_choice_variants.insert(switch_case.pattern.text).second) {
-                                diagnostics_.error(
-                                    switch_case.pattern.line,
-                                    "switch constructor pattern '" + switch_case.pattern.text + "' is duplicated"
-                                );
-                                valid_pattern = false;
-                            }
-                            choice_coverage.cover_zero_payload_variant(switch_case.pattern.text);
-                        }
-                        if (switch_case.pattern.kind == syntax::ExpressionKind::name &&
-                            switch_subject_type.has_value() &&
-                            choice_coverage.tracks_payload_bearing_variant(switch_case.pattern.text) &&
-                            is_zero_payload_constructor_pattern(switch_case.pattern.text, *switch_subject_type)) {
-                            choice_coverage.cover_payload_bearing_variant(switch_case.pattern.text);
-                        }
-
-                        auto constructor_key =
-                            simple_payload_constructor_pattern_key(switch_case.pattern, switch_subject_type);
-                        if (constructor_key.has_value()) {
-                            for (auto const& seen_constructor_key : seen_simple_payload_choice_patterns) {
-                                if (payload_constructor_patterns_overlap(seen_constructor_key, *constructor_key)) {
-                                    diagnostics_.error(
-                                        switch_case.pattern.line,
-                                        "switch constructor pattern '" + switch_case.pattern.left->text +
-                                            "(...)' is duplicated"
-                                    );
-                                    valid_pattern = false;
-                                    break;
-                                }
-                            }
-                            seen_simple_payload_choice_patterns.push_back(*constructor_key);
-                        }
-
-                        auto fully_covered_variant = fully_covering_choice_constructor_pattern_variant_name(
-                            switch_case.pattern,
-                            switch_subject_type
-                        );
-                        if (fully_covered_variant.has_value() &&
-                            choice_coverage.tracks_payload_bearing_variant(*fully_covered_variant)) {
-                            choice_coverage.cover_payload_bearing_variant(*fully_covered_variant);
-                        }
-                    }
-                }
-
-                if (!switch_case.is_default && saw_value_pattern && saw_constructor_pattern) {
-                    diagnostics_.error(
-                        switch_case.pattern.line,
-                        "switch cannot mix value patterns with constructor patterns"
-                    );
-                    case_results.push_back(baseline_scope);
-                    has_default_case = has_default_case || switch_case.is_default;
-                    continue;
-                }
-
-                valid_pattern =
-                    analyze_switch_pattern(switch_case.pattern, in_async_function, switch_subject_type) && valid_pattern;
-                restore_scope_stack(baseline_scope);
-                push_scope();
-                if (!switch_case.is_default && valid_pattern) {
-                    std::unordered_set<std::string> bound_names;
-                    valid_pattern =
-                        declare_switch_pattern_bindings(switch_case.pattern, switch_subject_type, false, bound_names) &&
-                        valid_pattern;
-                }
-                switch_patterns_valid = switch_patterns_valid && valid_pattern;
-                if (valid_pattern) {
-                    for (auto const& consequence : switch_case.statements) {
-                        analyze_statement(*consequence, in_async_function);
-                    }
-                }
-                pop_scope();
-                case_results.push_back(snapshot_scope_stack());
-                has_default_case = has_default_case || switch_case.is_default;
-            }
-
-            if (switch_patterns_valid && !has_default_case && !saw_value_pattern) {
-                auto missing_variant = choice_coverage.first_missing_zero_payload_variant();
-                if (missing_variant.has_value()) {
-                    diagnostics_.error(
-                        statement.line,
-                        "switch is missing zero-payload choice variant '" + *missing_variant + "'"
-                    );
-                }
-            }
-
-            if (switch_patterns_valid && !has_default_case && !saw_value_pattern) {
-                auto missing_variant = choice_coverage.first_missing_payload_bearing_variant();
-                if (missing_variant.has_value()) {
-                    diagnostics_.error(statement.line, "switch is missing choice variant '" + *missing_variant + "'");
-                }
-            }
-
-            if (switch_patterns_valid && !has_default_case && !saw_constructor_pattern &&
-                switch_subject_type_name == "Bool" && saw_true_value_pattern != saw_false_value_pattern) {
-                diagnostics_.error(
-                    statement.line,
-                    std::string("switch is missing boolean value pattern '") +
-                        (saw_true_value_pattern ? "false" : "true") + "'"
-                );
-            }
-
-            if (!has_default_case) {
-                case_results.push_back(baseline_scope);
-            }
-
-            restore_scope_stack(merge_scope_snapshots(case_results));
+            analyze_switch_statement(statement, in_async_function, false);
             return;
         }
 
