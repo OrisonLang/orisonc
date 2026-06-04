@@ -819,6 +819,31 @@ int main() {
     );
     assert_cli_parse_success(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_guard_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
+            "    var value = 1 as UInt32",
+            "    guard flag else",
+            "        value = raw_read(left)",
+            "    value",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_guard_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+            "    var value = raw_read(left)",
+            "    guard flag else",
+            "        value = raw_read(left)",
+            "    value",
+        },
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_raw_read_while_final_expression_success.or",
         std::vector<std::string_view> {
             "package demo.cli",
@@ -963,6 +988,31 @@ int main() {
             "        default => value = volatile_read(right)",
             "    value",
         }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_guard_final_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
+            "    var value = 1 as UInt32",
+            "    guard flag else",
+            "        value = volatile_read(left)",
+            "    value",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_guard_final_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+            "    var value = volatile_read(left)",
+            "    guard flag else",
+            "        value = volatile_read(left)",
+            "    value",
+        },
+        "final expression type 'Byte' does not match declared type 'UInt32'"
     );
     assert_cli_parse_success(
         executable,
