@@ -7,6 +7,7 @@
 #include <fstream>
 #include <initializer_list>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -508,6 +509,159 @@ void write_concurrency_fixture(
     for (auto line : lines) {
         output << line << "\n";
     }
+}
+
+void write_concurrency_fixture(
+    std::filesystem::path const& path,
+    std::string_view package_name,
+    std::vector<std::string> const& lines
+) {
+    std::ofstream output(path);
+    output << "package " << package_name << "\n";
+    for (auto const& line : lines) {
+        output << line << "\n";
+    }
+}
+
+auto low_level_read_call(std::string_view intrinsic, std::string_view operand) -> std::string {
+    return std::string(intrinsic) + "(" + std::string(operand) + ")";
+}
+
+auto low_level_final_read_direct_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+        "    " + low_level_read_call(intrinsic, "p"),
+    };
+}
+
+auto low_level_final_read_direct_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+        "    " + low_level_read_call(intrinsic, "p"),
+    };
+}
+
+auto low_level_final_read_rebound_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(p: Pointer<Byte>) -> UInt32",
+        "    let value = " + low_level_read_call(intrinsic, "p"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_rebound_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
+        "    let value = " + low_level_read_call(intrinsic, "p"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_branch_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
+        "    var value = " + low_level_read_call(intrinsic, "left"),
+        "    if flag",
+        "        value = " + low_level_read_call(intrinsic, "left"),
+        "    else",
+        "        value = " + low_level_read_call(intrinsic, "right"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_branch_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+        "    var value = " + low_level_read_call(intrinsic, "left"),
+        "    if flag",
+        "        value = " + low_level_read_call(intrinsic, "left"),
+        "    else",
+        "        value = " + low_level_read_call(intrinsic, "right"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_switch_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(selector: UInt32, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
+        "    var value = " + low_level_read_call(intrinsic, "left"),
+        "    switch selector",
+        "        0 => value = " + low_level_read_call(intrinsic, "left"),
+        "        default => value = " + low_level_read_call(intrinsic, "right"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_switch_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_byte(selector: UInt32, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+        "    var value = " + low_level_read_call(intrinsic, "left"),
+        "    switch selector",
+        "        0 => value = " + low_level_read_call(intrinsic, "left"),
+        "        default => value = " + low_level_read_call(intrinsic, "right"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_guard_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
+        "    var value = 1 as UInt32",
+        "    guard flag else",
+        "        value = " + low_level_read_call(intrinsic, "left"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_guard_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+        "    var value = " + low_level_read_call(intrinsic, "left"),
+        "    guard flag else",
+        "        value = " + low_level_read_call(intrinsic, "left"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_while_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
+        "    var value = 1 as UInt32",
+        "    while flag",
+        "        value = " + low_level_read_call(intrinsic, "left"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_for_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(items: shared View<Int64>, left: Pointer<UInt32>) -> UInt32",
+        "    var value = 1 as UInt32",
+        "    for item in items",
+        "        value = " + low_level_read_call(intrinsic, "left"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_for_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(items: shared View<Int64>, left: Pointer<Byte>) -> UInt32",
+        "    var value = " + low_level_read_call(intrinsic, "left"),
+        "    for item in items",
+        "        value = " + low_level_read_call(intrinsic, "left"),
+        "    value",
+    };
+}
+
+auto low_level_final_read_repeat_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+        "    var value = " + low_level_read_call(intrinsic, "left"),
+        "    repeat",
+        "        value = " + low_level_read_call(intrinsic, "left"),
+        "    while flag",
+        "    value",
+    };
 }
 
 void write_status_choice_constant_fixture(std::filesystem::path const& path, std::string_view initializer) {
@@ -6063,10 +6217,7 @@ void test_raw_read_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
-            "    raw_read(p)",
-        }
+        low_level_final_read_direct_mismatch_lines("raw_read")
     );
 
     assert_raw_read_result_mismatch_diagnostic(path, 3, "Byte", "Pointer<Byte>");
@@ -6078,11 +6229,7 @@ void test_raw_read_rebound_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(p: Pointer<Byte>) -> UInt32",
-            "    let value = raw_read(p)",
-            "    value",
-        }
+        low_level_final_read_rebound_mismatch_lines("raw_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 4, "Byte", "UInt32");
@@ -6094,15 +6241,7 @@ void test_raw_read_branch_merged_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
-            "    var value = raw_read(left)",
-            "    if flag",
-            "        value = raw_read(left)",
-            "    else",
-            "        value = raw_read(right)",
-            "    value",
-        }
+        low_level_final_read_branch_mismatch_lines("raw_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 8, "Byte", "UInt32");
@@ -6114,14 +6253,7 @@ void test_raw_read_switch_merged_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(selector: UInt32, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
-            "    var value = raw_read(left)",
-            "    switch selector",
-            "        0 => value = raw_read(left)",
-            "        default => value = raw_read(right)",
-            "    value",
-        }
+        low_level_final_read_switch_mismatch_lines("raw_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 7, "Byte", "UInt32");
@@ -6133,13 +6265,7 @@ void test_raw_read_guard_failure_final_expression_type_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
-            "    var value = 1 as UInt32",
-            "    guard flag else",
-            "        value = raw_read(left)",
-            "    value",
-        }
+        low_level_final_read_guard_success_lines("raw_read")
     );
 
     assert_fixture_success(path);
@@ -6151,13 +6277,7 @@ void test_raw_read_guard_failure_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-            "    var value = raw_read(left)",
-            "    guard flag else",
-            "        value = raw_read(left)",
-            "    value",
-        }
+        low_level_final_read_guard_mismatch_lines("raw_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 6, "Byte", "UInt32");
@@ -6169,13 +6289,7 @@ void test_raw_read_while_zero_iteration_final_expression_type_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
-            "    var value = 1 as UInt32",
-            "    while flag",
-            "        value = raw_read(left)",
-            "    value",
-        }
+        low_level_final_read_while_success_lines("raw_read")
     );
 
     assert_fixture_success(path);
@@ -6187,13 +6301,7 @@ void test_raw_read_for_zero_iteration_final_expression_type_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(items: shared View<Int64>, left: Pointer<UInt32>) -> UInt32",
-            "    var value = 1 as UInt32",
-            "    for item in items",
-            "        value = raw_read(left)",
-            "    value",
-        }
+        low_level_final_read_for_success_lines("raw_read")
     );
 
     assert_fixture_success(path);
@@ -6205,13 +6313,7 @@ void test_raw_read_for_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(items: shared View<Int64>, left: Pointer<Byte>) -> UInt32",
-            "    var value = raw_read(left)",
-            "    for item in items",
-            "        value = raw_read(left)",
-            "    value",
-        }
+        low_level_final_read_for_mismatch_lines("raw_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 6, "Byte", "UInt32");
@@ -6223,14 +6325,7 @@ void test_raw_read_repeat_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-            "    var value = raw_read(left)",
-            "    repeat",
-            "        value = raw_read(left)",
-            "    while flag",
-            "    value",
-        }
+        low_level_final_read_repeat_mismatch_lines("raw_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 7, "Byte", "UInt32");
@@ -6257,10 +6352,7 @@ void test_raw_read_final_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
-            "    raw_read(p)",
-        }
+        low_level_final_read_direct_success_lines("raw_read")
     );
 
     assert_fixture_success(path);
@@ -6272,11 +6364,7 @@ void test_raw_read_rebound_final_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
-            "    let value = raw_read(p)",
-            "    value",
-        }
+        low_level_final_read_rebound_success_lines("raw_read")
     );
 
     assert_fixture_success(path);
@@ -6288,15 +6376,7 @@ void test_raw_read_branch_merged_final_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-            "    var value = raw_read(left)",
-            "    if flag",
-            "        value = raw_read(left)",
-            "    else",
-            "        value = raw_read(right)",
-            "    value",
-        }
+        low_level_final_read_branch_success_lines("raw_read")
     );
 
     assert_fixture_success(path);
@@ -6308,14 +6388,7 @@ void test_raw_read_switch_merged_final_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_byte(selector: UInt32, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-            "    var value = raw_read(left)",
-            "    switch selector",
-            "        0 => value = raw_read(left)",
-            "        default => value = raw_read(right)",
-            "    value",
-        }
+        low_level_final_read_switch_success_lines("raw_read")
     );
 
     assert_fixture_success(path);
@@ -7277,10 +7350,7 @@ void test_volatile_read_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
-            "    volatile_read(p)",
-        }
+        low_level_final_read_direct_mismatch_lines("volatile_read")
     );
 
     assert_volatile_read_result_mismatch_diagnostic(path, 3, "Byte", "Pointer<Byte>");
@@ -7292,11 +7362,7 @@ void test_volatile_read_rebound_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(p: Pointer<Byte>) -> UInt32",
-            "    let value = volatile_read(p)",
-            "    value",
-        }
+        low_level_final_read_rebound_mismatch_lines("volatile_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 4, "Byte", "UInt32");
@@ -7308,15 +7374,7 @@ void test_volatile_read_branch_merged_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
-            "    var value = volatile_read(left)",
-            "    if flag",
-            "        value = volatile_read(left)",
-            "    else",
-            "        value = volatile_read(right)",
-            "    value",
-        }
+        low_level_final_read_branch_mismatch_lines("volatile_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 8, "Byte", "UInt32");
@@ -7328,14 +7386,7 @@ void test_volatile_read_switch_merged_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(selector: UInt32, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
-            "    var value = volatile_read(left)",
-            "    switch selector",
-            "        0 => value = volatile_read(left)",
-            "        default => value = volatile_read(right)",
-            "    value",
-        }
+        low_level_final_read_switch_mismatch_lines("volatile_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 7, "Byte", "UInt32");
@@ -7347,13 +7398,7 @@ void test_volatile_read_guard_failure_final_expression_type_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
-            "    var value = 1 as UInt32",
-            "    guard flag else",
-            "        value = volatile_read(left)",
-            "    value",
-        }
+        low_level_final_read_guard_success_lines("volatile_read")
     );
 
     assert_fixture_success(path);
@@ -7365,13 +7410,7 @@ void test_volatile_read_guard_failure_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-            "    var value = volatile_read(left)",
-            "    guard flag else",
-            "        value = volatile_read(left)",
-            "    value",
-        }
+        low_level_final_read_guard_mismatch_lines("volatile_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 6, "Byte", "UInt32");
@@ -7383,13 +7422,7 @@ void test_volatile_read_while_zero_iteration_final_expression_type_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
-            "    var value = 1 as UInt32",
-            "    while flag",
-            "        value = volatile_read(left)",
-            "    value",
-        }
+        low_level_final_read_while_success_lines("volatile_read")
     );
 
     assert_fixture_success(path);
@@ -7401,13 +7434,7 @@ void test_volatile_read_for_zero_iteration_final_expression_type_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(items: shared View<Int64>, left: Pointer<UInt32>) -> UInt32",
-            "    var value = 1 as UInt32",
-            "    for item in items",
-            "        value = volatile_read(left)",
-            "    value",
-        }
+        low_level_final_read_for_success_lines("volatile_read")
     );
 
     assert_fixture_success(path);
@@ -7419,13 +7446,7 @@ void test_volatile_read_for_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(items: shared View<Int64>, left: Pointer<Byte>) -> UInt32",
-            "    var value = volatile_read(left)",
-            "    for item in items",
-            "        value = volatile_read(left)",
-            "    value",
-        }
+        low_level_final_read_for_mismatch_lines("volatile_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 6, "Byte", "UInt32");
@@ -7437,14 +7458,7 @@ void test_volatile_read_repeat_final_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-            "    var value = volatile_read(left)",
-            "    repeat",
-            "        value = volatile_read(left)",
-            "    while flag",
-            "    value",
-        }
+        low_level_final_read_repeat_mismatch_lines("volatile_read")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 7, "Byte", "UInt32");
@@ -7471,10 +7485,7 @@ void test_volatile_read_final_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
-            "    volatile_read(p)",
-        }
+        low_level_final_read_direct_success_lines("volatile_read")
     );
 
     assert_fixture_success(path);
@@ -7486,11 +7497,7 @@ void test_volatile_read_rebound_final_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_byte(p: Pointer<Byte>) -> Byte",
-            "    let value = volatile_read(p)",
-            "    value",
-        }
+        low_level_final_read_rebound_success_lines("volatile_read")
     );
 
     assert_fixture_success(path);
@@ -7502,15 +7509,7 @@ void test_volatile_read_branch_merged_final_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-            "    var value = volatile_read(left)",
-            "    if flag",
-            "        value = volatile_read(left)",
-            "    else",
-            "        value = volatile_read(right)",
-            "    value",
-        }
+        low_level_final_read_branch_success_lines("volatile_read")
     );
 
     assert_fixture_success(path);
@@ -7522,14 +7521,7 @@ void test_volatile_read_switch_merged_final_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.unsafe",
-        {
-            "unsafe function read_byte(selector: UInt32, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-            "    var value = volatile_read(left)",
-            "    switch selector",
-            "        0 => value = volatile_read(left)",
-            "        default => value = volatile_read(right)",
-            "    value",
-        }
+        low_level_final_read_switch_success_lines("volatile_read")
     );
 
     assert_fixture_success(path);

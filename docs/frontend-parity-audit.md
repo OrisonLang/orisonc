@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-03: semantic and CLI smoke coverage for implicit final-expression `raw_read`/`volatile_read` shapes now share low-level read source builders across direct, rebound, branch, switch, guard, while, repeat, and for fixtures.
 - 2026-06-03: implicit final-expression returns now have `guard ... else` failure-path `raw_read` and `volatile_read` result-type regression coverage, including compatible continuing-path success and final `Byte` versus `UInt32` mismatch diagnostics.
 - 2026-06-03: implicit final-expression returns now have `for` loop-shaped `raw_read` and `volatile_read` result-type regression coverage for zero-iteration preservation.
 - 2026-06-03: implicit final-expression returns now have loop-shaped `raw_read` and `volatile_read` result-type regression coverage for `while` zero-iteration preservation and `repeat` body-result preservation.
