@@ -557,6 +557,40 @@ auto low_level_final_read_rebound_success_lines(std::string_view intrinsic) -> s
     };
 }
 
+auto low_level_final_read_unsafe_block_direct_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+        "    unsafe",
+        "        " + low_level_read_call(intrinsic, "p"),
+    };
+}
+
+auto low_level_final_read_unsafe_block_direct_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "function read_byte(p: Pointer<Byte>) -> Byte",
+        "    unsafe",
+        "        " + low_level_read_call(intrinsic, "p"),
+    };
+}
+
+auto low_level_final_read_unsafe_block_rebound_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "function read_word(p: Pointer<Byte>) -> UInt32",
+        "    unsafe",
+        "        let value = " + low_level_read_call(intrinsic, "p"),
+        "        value",
+    };
+}
+
+auto low_level_final_read_unsafe_block_rebound_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return {
+        "function read_byte(p: Pointer<Byte>) -> Byte",
+        "    unsafe",
+        "        let value = " + low_level_read_call(intrinsic, "p"),
+        "        value",
+    };
+}
+
 auto low_level_final_read_branch_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
     return {
         "unsafe function read_word(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> UInt32",
@@ -6235,6 +6269,30 @@ void test_raw_read_rebound_final_expression_type_mismatch_failure() {
     assert_final_expression_type_mismatch_diagnostic(path, 4, "Byte", "UInt32");
 }
 
+void test_raw_read_unsafe_block_final_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_unsafe_block_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        low_level_final_read_unsafe_block_direct_mismatch_lines("raw_read")
+    );
+
+    assert_raw_read_result_mismatch_diagnostic(path, 4, "Byte", "Pointer<Byte>");
+}
+
+void test_raw_read_unsafe_block_rebound_final_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_unsafe_block_rebound_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        low_level_final_read_unsafe_block_rebound_mismatch_lines("raw_read")
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 5, "Byte", "UInt32");
+}
+
 void test_raw_read_branch_merged_final_expression_type_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_read_branch_merged_final_expression_type_failure.or";
@@ -6365,6 +6423,30 @@ void test_raw_read_rebound_final_expression_type_match_success() {
         path,
         "demo.unsafe",
         low_level_final_read_rebound_success_lines("raw_read")
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_raw_read_unsafe_block_final_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_unsafe_block_final_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        low_level_final_read_unsafe_block_direct_success_lines("raw_read")
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_raw_read_unsafe_block_rebound_final_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_raw_read_unsafe_block_rebound_final_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        low_level_final_read_unsafe_block_rebound_success_lines("raw_read")
     );
 
     assert_fixture_success(path);
@@ -7368,6 +7450,30 @@ void test_volatile_read_rebound_final_expression_type_mismatch_failure() {
     assert_final_expression_type_mismatch_diagnostic(path, 4, "Byte", "UInt32");
 }
 
+void test_volatile_read_unsafe_block_final_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_unsafe_block_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        low_level_final_read_unsafe_block_direct_mismatch_lines("volatile_read")
+    );
+
+    assert_volatile_read_result_mismatch_diagnostic(path, 4, "Byte", "Pointer<Byte>");
+}
+
+void test_volatile_read_unsafe_block_rebound_final_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_unsafe_block_rebound_final_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        low_level_final_read_unsafe_block_rebound_mismatch_lines("volatile_read")
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 5, "Byte", "UInt32");
+}
+
 void test_volatile_read_branch_merged_final_expression_type_mismatch_failure() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_volatile_read_branch_merged_final_expression_type_failure.or";
@@ -7498,6 +7604,30 @@ void test_volatile_read_rebound_final_expression_type_match_success() {
         path,
         "demo.unsafe",
         low_level_final_read_rebound_success_lines("volatile_read")
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_volatile_read_unsafe_block_final_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_unsafe_block_final_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        low_level_final_read_unsafe_block_direct_success_lines("volatile_read")
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_volatile_read_unsafe_block_rebound_final_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() /
+                "orison_semantics_volatile_read_unsafe_block_rebound_final_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.unsafe",
+        low_level_final_read_unsafe_block_rebound_success_lines("volatile_read")
     );
 
     assert_fixture_success(path);
@@ -9239,6 +9369,8 @@ int main() {
     test_raw_read_return_type_mismatch_failure();
     test_raw_read_final_expression_type_mismatch_failure();
     test_raw_read_rebound_final_expression_type_mismatch_failure();
+    test_raw_read_unsafe_block_final_expression_type_mismatch_failure();
+    test_raw_read_unsafe_block_rebound_final_expression_type_mismatch_failure();
     test_raw_read_branch_merged_final_expression_type_mismatch_failure();
     test_raw_read_switch_merged_final_expression_type_mismatch_failure();
     test_raw_read_guard_failure_final_expression_type_success();
@@ -9250,6 +9382,8 @@ int main() {
     test_raw_read_return_type_match_success();
     test_raw_read_final_expression_type_match_success();
     test_raw_read_rebound_final_expression_type_match_success();
+    test_raw_read_unsafe_block_final_expression_type_match_success();
+    test_raw_read_unsafe_block_rebound_final_expression_type_match_success();
     test_raw_read_branch_merged_final_expression_type_match_success();
     test_raw_read_switch_merged_final_expression_type_match_success();
     test_raw_read_return_same_width_integer_success();
@@ -9307,6 +9441,8 @@ int main() {
     test_volatile_read_return_type_mismatch_failure();
     test_volatile_read_final_expression_type_mismatch_failure();
     test_volatile_read_rebound_final_expression_type_mismatch_failure();
+    test_volatile_read_unsafe_block_final_expression_type_mismatch_failure();
+    test_volatile_read_unsafe_block_rebound_final_expression_type_mismatch_failure();
     test_volatile_read_branch_merged_final_expression_type_mismatch_failure();
     test_volatile_read_switch_merged_final_expression_type_mismatch_failure();
     test_volatile_read_guard_failure_final_expression_type_success();
@@ -9318,6 +9454,8 @@ int main() {
     test_volatile_read_return_type_match_success();
     test_volatile_read_final_expression_type_match_success();
     test_volatile_read_rebound_final_expression_type_match_success();
+    test_volatile_read_unsafe_block_final_expression_type_match_success();
+    test_volatile_read_unsafe_block_rebound_final_expression_type_match_success();
     test_volatile_read_branch_merged_final_expression_type_match_success();
     test_volatile_read_switch_merged_final_expression_type_match_success();
     test_volatile_read_return_same_width_integer_success();

@@ -3834,17 +3834,8 @@ private:
             function.body_statements.empty() ? std::optional<std::size_t> {} : function.body_statements.size() - 1;
         for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
             auto const& statement = function.body_statements[index];
-            auto analyze_as_final_expression =
-                final_statement_index.has_value() && index == *final_statement_index &&
-                statement.kind == syntax::StatementKind::expression_statement;
-            if (analyze_as_final_expression) {
-                auto saved_expected_pointer_type_name = expected_pointer_type_name_;
-                if (current_function_returns_pointer_) {
-                    expected_pointer_type_name_ = current_function_return_type_name_;
-                }
-                analyze_expression(statement.expression, function.is_async);
-                validate_return_position_expression(statement.expression, statement.line, "final expression");
-                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+            if (final_statement_index.has_value() && index == *final_statement_index) {
+                analyze_final_statement(statement, function.is_async);
                 continue;
             }
 
@@ -3857,6 +3848,54 @@ private:
         current_function_returns_pointer_ = saved_current_function_returns_pointer;
         current_function_returns_address_ = saved_current_function_returns_address;
         current_function_return_type_name_ = saved_current_function_return_type_name;
+    }
+
+    void analyze_final_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
+        if (statement.kind == syntax::StatementKind::expression_statement) {
+            analyze_final_expression_statement(statement, in_async_function);
+            return;
+        }
+
+        if (statement.kind == syntax::StatementKind::unsafe_statement) {
+            analyze_unsafe_statement(statement, in_async_function, true);
+            return;
+        }
+
+        analyze_statement(statement, in_async_function);
+    }
+
+    void analyze_final_expression_statement(syntax::StatementSyntax const& statement, bool in_async_function) {
+        auto saved_expected_pointer_type_name = expected_pointer_type_name_;
+        if (current_function_returns_pointer_) {
+            expected_pointer_type_name_ = current_function_return_type_name_;
+        }
+        analyze_expression(statement.expression, in_async_function);
+        validate_return_position_expression(statement.expression, statement.line, "final expression");
+        expected_pointer_type_name_ = saved_expected_pointer_type_name;
+    }
+
+    void analyze_unsafe_statement(
+        syntax::StatementSyntax const& statement,
+        bool in_async_function,
+        bool allow_final_expression
+    ) {
+        auto saved_unsafe_context_active = unsafe_context_active_;
+        unsafe_context_active_ = true;
+        push_scope();
+        auto final_statement_index =
+            allow_final_expression && !statement.nested_statements.empty()
+                ? std::optional<std::size_t> {statement.nested_statements.size() - 1}
+                : std::optional<std::size_t> {};
+        for (auto index = std::size_t {0}; index < statement.nested_statements.size(); ++index) {
+            auto const& nested_statement = statement.nested_statements[index];
+            if (final_statement_index.has_value() && index == *final_statement_index) {
+                analyze_final_statement(nested_statement, in_async_function);
+                continue;
+            }
+            analyze_statement(nested_statement, in_async_function);
+        }
+        pop_scope();
+        unsafe_context_active_ = saved_unsafe_context_active;
     }
 
     void validate_return_position_expression(
@@ -4074,14 +4113,7 @@ private:
         }
 
         if (statement.kind == syntax::StatementKind::unsafe_statement) {
-            auto saved_unsafe_context_active = unsafe_context_active_;
-            unsafe_context_active_ = true;
-            push_scope();
-            for (auto const& nested_statement : statement.nested_statements) {
-                analyze_statement(nested_statement, in_async_function);
-            }
-            pop_scope();
-            unsafe_context_active_ = saved_unsafe_context_active;
+            analyze_unsafe_statement(statement, in_async_function, false);
             return;
         }
 

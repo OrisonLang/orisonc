@@ -137,6 +137,48 @@ auto low_level_final_read_rebound_success_lines(std::string_view intrinsic) -> s
     );
 }
 
+auto low_level_final_read_unsafe_block_direct_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
+            "    unsafe",
+            "        " + low_level_read_call(intrinsic, "p"),
+        }
+    );
+}
+
+auto low_level_final_read_unsafe_block_direct_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_byte(p: Pointer<Byte>) -> Byte",
+            "    unsafe",
+            "        " + low_level_read_call(intrinsic, "p"),
+        }
+    );
+}
+
+auto low_level_final_read_unsafe_block_rebound_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_word(p: Pointer<Byte>) -> UInt32",
+            "    unsafe",
+            "        let value = " + low_level_read_call(intrinsic, "p"),
+            "        value",
+        }
+    );
+}
+
+auto low_level_final_read_unsafe_block_rebound_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_byte(p: Pointer<Byte>) -> Byte",
+            "    unsafe",
+            "        let value = " + low_level_read_call(intrinsic, "p"),
+            "        value",
+        }
+    );
+}
+
 auto low_level_final_read_branch_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
     return cli_module_lines(
         {
@@ -920,6 +962,28 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_unsafe_block_final_expression_type.or",
+        low_level_final_read_unsafe_block_direct_mismatch_lines("raw_read"),
+        "raw_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_unsafe_block_final_expression_success.or",
+        low_level_final_read_unsafe_block_direct_success_lines("raw_read")
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_unsafe_block_rebound_final_expression_type.or",
+        low_level_final_read_unsafe_block_rebound_mismatch_lines("raw_read"),
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_raw_read_unsafe_block_rebound_final_expression_success.or",
+        low_level_final_read_unsafe_block_rebound_success_lines("raw_read")
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_raw_read_branch_final_expression_type.or",
         low_level_final_read_branch_mismatch_lines("raw_read"),
         "final expression type 'Byte' does not match declared type 'UInt32'"
@@ -994,6 +1058,30 @@ int main() {
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_volatile_read_rebound_final_expression_success.or",
         low_level_final_read_rebound_success_lines("volatile_read")
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_unsafe_block_final_expression_type.or",
+        low_level_final_read_unsafe_block_direct_mismatch_lines("volatile_read"),
+        "volatile_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_volatile_read_unsafe_block_final_expression_success.or",
+        low_level_final_read_unsafe_block_direct_success_lines("volatile_read")
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_volatile_read_unsafe_block_rebound_final_expression_type.or",
+        low_level_final_read_unsafe_block_rebound_mismatch_lines("volatile_read"),
+        "final expression type 'Byte' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_volatile_read_unsafe_block_rebound_final_expression_success.or",
+        low_level_final_read_unsafe_block_rebound_success_lines("volatile_read")
     );
     assert_cli_parse_failure(
         executable,
