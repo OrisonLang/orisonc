@@ -1863,6 +1863,18 @@ private:
         std::size_t line,
         std::string_view context_description
     ) -> bool {
+        if (expression.kind == syntax::ExpressionKind::ternary) {
+            if (expression.right &&
+                validate_read_result_type(*expression.right, expected_type_name, line, context_description)) {
+                return true;
+            }
+            if (expression.alternate &&
+                validate_read_result_type(*expression.alternate, expected_type_name, line, context_description)) {
+                return true;
+            }
+            return false;
+        }
+
         auto intrinsic_name = read_intrinsic_name(expression);
         if (intrinsic_name.empty() || expected_type_name.empty()) {
             return false;
@@ -1890,6 +1902,23 @@ private:
     ) -> bool {
         if (expected_type_name.empty() || is_pointer_type_name(expected_type_name) ||
             is_address_type_name(expected_type_name)) {
+            return false;
+        }
+
+        if (expression.kind == syntax::ExpressionKind::ternary) {
+            if (expression.right &&
+                validate_typed_expression_compatibility(*expression.right, expected_type_name, line, context_description)) {
+                return true;
+            }
+            if (expression.alternate &&
+                validate_typed_expression_compatibility(
+                    *expression.alternate,
+                    expected_type_name,
+                    line,
+                    context_description
+                )) {
+                return true;
+            }
             return false;
         }
 

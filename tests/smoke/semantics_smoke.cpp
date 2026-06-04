@@ -5592,6 +5592,62 @@ void test_final_switch_return_expression_type_match_success() {
     assert_fixture_success(path);
 }
 
+void test_final_ternary_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_ternary_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    flag ? true : 1 as UInt32",
+        }
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 3, "Bool", "UInt32");
+}
+
+void test_final_ternary_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_ternary_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    flag ? 1 as UInt32 : 2 as UInt32",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_final_ternary_return_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_ternary_return_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    return flag ? true : 1 as UInt32",
+        }
+    );
+
+    assert_return_expression_type_mismatch_diagnostic(path, 3, "Bool", "UInt32");
+}
+
+void test_final_ternary_return_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_ternary_return_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    return flag ? 1 as UInt32 : 2 as UInt32",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_final_if_without_else_requires_function_value_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_if_without_else_value_failure.or";
     write_concurrency_fixture(
@@ -5802,6 +5858,76 @@ void test_choice_constructor_final_switch_return_success() {
         path,
         "demo.choices",
         choice_final_switch_lines("return Some(1 as UInt32)", "return Empty")
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_constructor_final_ternary_payload_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_ternary_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    flag ? Some(true) : Empty",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 6, "Bool", "UInt32");
+}
+
+void test_choice_constructor_final_ternary_return_payload_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_ternary_return_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    return flag ? Some(true) : Empty",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 6, "Bool", "UInt32");
+}
+
+void test_choice_constructor_final_ternary_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_final_ternary_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    flag ? Some(1 as UInt32) : Empty",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_constructor_final_ternary_return_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_final_ternary_return_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    return flag ? Some(1 as UInt32) : Empty",
+        }
     );
 
     assert_fixture_success(path);
@@ -7046,6 +7172,62 @@ void test_low_level_read_final_container_return_types(std::string_view intrinsic
         )
     );
     assert_fixture_success(switch_success_path);
+}
+
+void test_low_level_read_final_ternary_expression_types(std::string_view intrinsic) {
+    auto expression_failure_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_final_ternary_expression_type_failure.or");
+    write_concurrency_fixture(
+        expression_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+            "    flag ? " + low_level_read_call(intrinsic, "left") + " : 1 as UInt32",
+        }
+    );
+    assert_low_level_read_result_mismatch_diagnostic(expression_failure_path, 3, intrinsic, "Byte", "UInt32");
+
+    auto expression_success_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_final_ternary_expression_type_success.or");
+    write_concurrency_fixture(
+        expression_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    flag ? " + low_level_read_call(intrinsic, "left") + " : " +
+                low_level_read_call(intrinsic, "right"),
+        }
+    );
+    assert_fixture_success(expression_success_path);
+
+    auto return_failure_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_final_ternary_return_type_failure.or");
+    write_concurrency_fixture(
+        return_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+            "    return flag ? " + low_level_read_call(intrinsic, "left") + " : 1 as UInt32",
+        }
+    );
+    assert_low_level_read_result_mismatch_diagnostic(return_failure_path, 3, intrinsic, "Byte", "UInt32");
+
+    auto return_success_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_final_ternary_return_type_success.or");
+    write_concurrency_fixture(
+        return_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    return flag ? " + low_level_read_call(intrinsic, "left") + " : " +
+                low_level_read_call(intrinsic, "right"),
+        }
+    );
+    assert_fixture_success(return_success_path);
 }
 
 void test_raw_read_guard_failure_final_expression_type_success() {
@@ -10094,6 +10276,10 @@ int main() {
     test_final_switch_return_expression_type_mismatch_failure();
     test_final_if_return_expression_type_match_success();
     test_final_switch_return_expression_type_match_success();
+    test_final_ternary_expression_type_mismatch_failure();
+    test_final_ternary_expression_type_match_success();
+    test_final_ternary_return_expression_type_mismatch_failure();
+    test_final_ternary_return_expression_type_match_success();
     test_final_if_without_else_requires_function_value_failure();
     test_final_unsafe_block_without_value_requires_function_value_failure();
     test_final_switch_non_value_case_requires_function_value_failure();
@@ -10110,6 +10296,10 @@ int main() {
     test_choice_constructor_final_switch_success();
     test_choice_constructor_final_if_return_success();
     test_choice_constructor_final_switch_return_success();
+    test_choice_constructor_final_ternary_payload_failure();
+    test_choice_constructor_final_ternary_return_payload_failure();
+    test_choice_constructor_final_ternary_success();
+    test_choice_constructor_final_ternary_return_success();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();
     test_zero_payload_choice_constructor_annotated_binding_success();
@@ -10180,6 +10370,7 @@ int main() {
     test_raw_read_final_switch_expression_type_mismatch_failure();
     test_low_level_read_nested_final_container_expression_types("raw_read");
     test_low_level_read_final_container_return_types("raw_read");
+    test_low_level_read_final_ternary_expression_types("raw_read");
     test_raw_read_guard_failure_final_expression_type_success();
     test_raw_read_guard_failure_final_expression_type_mismatch_failure();
     test_raw_read_while_zero_iteration_final_expression_type_success();
@@ -10258,6 +10449,7 @@ int main() {
     test_volatile_read_final_switch_expression_type_mismatch_failure();
     test_low_level_read_nested_final_container_expression_types("volatile_read");
     test_low_level_read_final_container_return_types("volatile_read");
+    test_low_level_read_final_ternary_expression_types("volatile_read");
     test_volatile_read_guard_failure_final_expression_type_success();
     test_volatile_read_guard_failure_final_expression_type_mismatch_failure();
     test_volatile_read_while_zero_iteration_final_expression_type_success();
