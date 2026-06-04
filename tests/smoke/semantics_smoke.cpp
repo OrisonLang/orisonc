@@ -874,6 +874,59 @@ auto low_level_final_switch_unsafe_block_read_success_lines(std::string_view int
     };
 }
 
+auto low_level_final_unsafe_block_ternary_read_mismatch_lines(std::string_view intrinsic)
+    -> std::vector<std::string> {
+    return {
+        "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+        "    unsafe",
+        "        flag ? " + low_level_read_call(intrinsic, "left") + " : 1 as UInt32",
+    };
+}
+
+auto low_level_final_unsafe_block_ternary_read_success_lines(std::string_view intrinsic)
+    -> std::vector<std::string> {
+    return {
+        "function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+        "    unsafe",
+        "        flag ? " + low_level_read_call(intrinsic, "left") + " : " +
+            low_level_read_call(intrinsic, "right"),
+    };
+}
+
+auto low_level_final_if_ternary_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return low_level_final_if_lines(
+        "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+        "flag ? " + low_level_read_call(intrinsic, "left") + " : 1 as UInt32",
+        "1 as UInt32"
+    );
+}
+
+auto low_level_final_if_ternary_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return low_level_final_if_lines(
+        "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+        "flag ? " + low_level_read_call(intrinsic, "left") + " : " +
+            low_level_read_call(intrinsic, "right"),
+        low_level_read_call(intrinsic, "right")
+    );
+}
+
+auto low_level_final_switch_ternary_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return low_level_final_switch_lines(
+        "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+        "flag ? " + low_level_read_call(intrinsic, "left") + " : 1 as UInt32",
+        "1 as UInt32"
+    );
+}
+
+auto low_level_final_switch_ternary_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return low_level_final_switch_lines(
+        "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+        "flag ? " + low_level_read_call(intrinsic, "left") + " : " +
+            low_level_read_call(intrinsic, "right"),
+        low_level_read_call(intrinsic, "right")
+    );
+}
+
 auto low_level_final_read_guard_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
     return {
         "unsafe function read_word(flag: Bool, left: Pointer<UInt32>) -> UInt32",
@@ -7230,6 +7283,68 @@ void test_low_level_read_final_ternary_expression_types(std::string_view intrins
     assert_fixture_success(return_success_path);
 }
 
+void test_low_level_read_nested_final_container_ternary_expression_types(std::string_view intrinsic) {
+    auto unsafe_failure_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_unsafe_block_final_ternary_type_failure.or");
+    write_concurrency_fixture(
+        unsafe_failure_path,
+        "demo.unsafe",
+        low_level_final_unsafe_block_ternary_read_mismatch_lines(intrinsic)
+    );
+    assert_low_level_read_result_mismatch_diagnostic(unsafe_failure_path, 4, intrinsic, "Byte", "UInt32");
+
+    auto unsafe_success_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_unsafe_block_final_ternary_success.or");
+    write_concurrency_fixture(
+        unsafe_success_path,
+        "demo.unsafe",
+        low_level_final_unsafe_block_ternary_read_success_lines(intrinsic)
+    );
+    assert_fixture_success(unsafe_success_path);
+
+    auto if_failure_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_final_if_ternary_type_failure.or");
+    write_concurrency_fixture(
+        if_failure_path,
+        "demo.unsafe",
+        low_level_final_if_ternary_read_mismatch_lines(intrinsic)
+    );
+    assert_low_level_read_result_mismatch_diagnostic(if_failure_path, 4, intrinsic, "Byte", "UInt32");
+
+    auto if_success_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_final_if_ternary_success.or");
+    write_concurrency_fixture(
+        if_success_path,
+        "demo.unsafe",
+        low_level_final_if_ternary_read_success_lines(intrinsic)
+    );
+    assert_fixture_success(if_success_path);
+
+    auto switch_failure_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_final_switch_ternary_type_failure.or");
+    write_concurrency_fixture(
+        switch_failure_path,
+        "demo.unsafe",
+        low_level_final_switch_ternary_read_mismatch_lines(intrinsic)
+    );
+    assert_low_level_read_result_mismatch_diagnostic(switch_failure_path, 4, intrinsic, "Byte", "UInt32");
+
+    auto switch_success_path =
+        std::filesystem::temp_directory_path() /
+        ("orison_semantics_" + std::string(intrinsic) + "_final_switch_ternary_success.or");
+    write_concurrency_fixture(
+        switch_success_path,
+        "demo.unsafe",
+        low_level_final_switch_ternary_read_success_lines(intrinsic)
+    );
+    assert_fixture_success(switch_success_path);
+}
+
 void test_raw_read_guard_failure_final_expression_type_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_raw_read_guard_failure_final_expression_type_success.or";
@@ -10371,6 +10486,7 @@ int main() {
     test_low_level_read_nested_final_container_expression_types("raw_read");
     test_low_level_read_final_container_return_types("raw_read");
     test_low_level_read_final_ternary_expression_types("raw_read");
+    test_low_level_read_nested_final_container_ternary_expression_types("raw_read");
     test_raw_read_guard_failure_final_expression_type_success();
     test_raw_read_guard_failure_final_expression_type_mismatch_failure();
     test_raw_read_while_zero_iteration_final_expression_type_success();
@@ -10450,6 +10566,7 @@ int main() {
     test_low_level_read_nested_final_container_expression_types("volatile_read");
     test_low_level_read_final_container_return_types("volatile_read");
     test_low_level_read_final_ternary_expression_types("volatile_read");
+    test_low_level_read_nested_final_container_ternary_expression_types("volatile_read");
     test_volatile_read_guard_failure_final_expression_type_success();
     test_volatile_read_guard_failure_final_expression_type_mismatch_failure();
     test_volatile_read_while_zero_iteration_final_expression_type_success();
