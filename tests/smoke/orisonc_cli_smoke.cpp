@@ -1013,6 +1013,41 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_if_without_else_value.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    if flag",
+            "        1 as UInt32",
+        },
+        "function body must end with an expression statement, value return, or total final-expression container"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_unsafe_without_value.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo() -> UInt32",
+            "    unsafe",
+            "        let value = 1 as UInt32",
+        },
+        "function body must end with an expression statement, value return, or total final-expression container"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_switch_non_value_case.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    switch flag",
+            "        true =>",
+            "            let value = 1 as UInt32",
+            "        false => 2 as UInt32",
+        },
+        "function body must end with an expression statement, value return, or total final-expression container"
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_payload_type.or",
         std::vector<std::string_view> {
             "package demo.cli",

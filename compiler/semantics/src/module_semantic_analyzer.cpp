@@ -3836,6 +3836,7 @@ private:
             auto const& statement = function.body_statements[index];
             if (final_statement_index.has_value() && index == *final_statement_index) {
                 analyze_final_statement(statement, function.is_async);
+                validate_function_final_value(statement);
                 continue;
             }
 
@@ -3848,6 +3849,64 @@ private:
         current_function_returns_pointer_ = saved_current_function_returns_pointer;
         current_function_returns_address_ = saved_current_function_returns_address;
         current_function_return_type_name_ = saved_current_function_return_type_name;
+    }
+
+    auto statement_produces_function_value(syntax::StatementSyntax const& statement) const -> bool {
+        if (statement.kind == syntax::StatementKind::expression_statement) {
+            return true;
+        }
+
+        if (statement.kind == syntax::StatementKind::return_statement) {
+            return true;
+        }
+
+        if (statement.kind == syntax::StatementKind::unsafe_statement) {
+            return statement_block_produces_function_value(statement.nested_statements);
+        }
+
+        if (statement.kind == syntax::StatementKind::if_statement) {
+            return !statement.alternate_statements.empty() &&
+                   statement_block_produces_function_value(statement.nested_statements) &&
+                   statement_block_produces_function_value(statement.alternate_statements);
+        }
+
+        if (statement.kind == syntax::StatementKind::switch_statement) {
+            return !statement.switch_cases.empty() &&
+                   std::all_of(
+                       statement.switch_cases.begin(),
+                       statement.switch_cases.end(),
+                       [this](syntax::SwitchCaseSyntax const& switch_case) {
+                           return switch_case_statement_block_produces_function_value(switch_case.statements);
+                       }
+                   );
+        }
+
+        return false;
+    }
+
+    auto statement_block_produces_function_value(std::vector<syntax::StatementSyntax> const& statements) const -> bool {
+        return !statements.empty() && statement_produces_function_value(statements.back());
+    }
+
+    auto switch_case_statement_block_produces_function_value(
+        std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements
+    ) const -> bool {
+        return !statements.empty() && statement_produces_function_value(*statements.back());
+    }
+
+    void validate_function_final_value(syntax::StatementSyntax const& statement) {
+        if (current_function_return_type_name_ == "Unit") {
+            return;
+        }
+
+        if (statement_produces_function_value(statement)) {
+            return;
+        }
+
+        diagnostics_.error(
+            statement.line,
+            "function body must end with an expression statement, value return, or total final-expression container"
+        );
     }
 
     void analyze_final_statement(syntax::StatementSyntax const& statement, bool in_async_function) {

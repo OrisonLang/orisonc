@@ -2031,6 +2031,14 @@ void assert_final_expression_type_mismatch_diagnostic(
     );
 }
 
+void assert_function_final_value_required_diagnostic(std::filesystem::path const& path, std::size_t expected_line) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "function body must end with an expression statement, value return, or total final-expression container"
+    );
+}
+
 void assert_assignment_value_type_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -5438,6 +5446,53 @@ void test_final_switch_expression_type_match_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_final_if_without_else_requires_function_value_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_if_without_else_value_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    if flag",
+            "        1 as UInt32",
+        }
+    );
+
+    assert_function_final_value_required_diagnostic(path, 3);
+}
+
+void test_final_unsafe_block_without_value_requires_function_value_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_unsafe_without_value_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo() -> UInt32",
+            "    unsafe",
+            "        let value = 1 as UInt32",
+        }
+    );
+
+    assert_function_final_value_required_diagnostic(path, 3);
+}
+
+void test_final_switch_non_value_case_requires_function_value_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_switch_non_value_case_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    switch flag",
+            "        true =>",
+            "            let value = 1 as UInt32",
+            "        false => 2 as UInt32",
+        }
+    );
+
+    assert_function_final_value_required_diagnostic(path, 3);
 }
 
 void test_choice_constructor_final_if_payload_failure() {
@@ -9745,6 +9800,9 @@ int main() {
     test_final_switch_expression_type_mismatch_failure();
     test_final_if_expression_type_match_success();
     test_final_switch_expression_type_match_success();
+    test_final_if_without_else_requires_function_value_failure();
+    test_final_unsafe_block_without_value_requires_function_value_failure();
+    test_final_switch_non_value_case_requires_function_value_failure();
     test_choice_constructor_final_if_payload_failure();
     test_choice_constructor_final_switch_payload_failure();
     test_choice_constructor_final_if_success();
