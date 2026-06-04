@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-04: low-level final-container `raw_read`/`volatile_read` smoke fixtures now share final `if ... else`/`switch` source builders across expression, explicit-return, and nested-`unsafe` mismatch shapes.
 - 2026-06-04: ordinary and choice final-container smoke fixtures now share source builders across expression and explicit-return cases, keeping semantic and CLI final `if ... else`/`switch` shapes aligned.
 - 2026-06-04: final `if ... else` and `switch` containers now have explicit `return` parity coverage across ordinary typed values, generic choice constructors, and low-level `raw_read`/`volatile_read` result checks.
 - 2026-06-04: final-value boundary coverage now pins empty `return` as invalid for non-`Unit` functions while allowing empty `return` and non-value-producing final statements in `Unit` functions.

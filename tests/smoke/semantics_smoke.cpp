@@ -527,6 +527,92 @@ auto low_level_read_call(std::string_view intrinsic, std::string_view operand) -
     return std::string(intrinsic) + "(" + std::string(operand) + ")";
 }
 
+auto low_level_final_if_lines(
+    std::string_view function_line,
+    std::string_view true_branch,
+    std::string_view false_branch
+) -> std::vector<std::string> {
+    return {
+        std::string(function_line),
+        "    if flag",
+        "        " + std::string(true_branch),
+        "    else",
+        "        " + std::string(false_branch),
+    };
+}
+
+auto low_level_final_switch_lines(
+    std::string_view function_line,
+    std::string_view true_branch,
+    std::string_view false_branch
+) -> std::vector<std::string> {
+    return {
+        std::string(function_line),
+        "    switch flag",
+        "        true => " + std::string(true_branch),
+        "        false => " + std::string(false_branch),
+    };
+}
+
+auto low_level_unsafe_final_if_lines(
+    std::string_view function_line,
+    std::string_view true_branch,
+    std::string_view false_branch
+) -> std::vector<std::string> {
+    return {
+        std::string(function_line),
+        "    unsafe",
+        "        if flag",
+        "            " + std::string(true_branch),
+        "        else",
+        "            " + std::string(false_branch),
+    };
+}
+
+auto low_level_unsafe_final_switch_lines(
+    std::string_view function_line,
+    std::string_view true_branch,
+    std::string_view false_branch
+) -> std::vector<std::string> {
+    return {
+        std::string(function_line),
+        "    unsafe",
+        "        switch flag",
+        "            true => " + std::string(true_branch),
+        "            false => " + std::string(false_branch),
+    };
+}
+
+auto low_level_final_if_unsafe_lines(
+    std::string_view function_line,
+    std::string_view true_branch,
+    std::string_view false_branch
+) -> std::vector<std::string> {
+    return {
+        std::string(function_line),
+        "    if flag",
+        "        unsafe",
+        "            " + std::string(true_branch),
+        "    else",
+        "        " + std::string(false_branch),
+    };
+}
+
+auto low_level_final_switch_unsafe_lines(
+    std::string_view function_line,
+    std::string_view true_branch,
+    std::string_view false_branch
+) -> std::vector<std::string> {
+    return {
+        std::string(function_line),
+        "    switch flag",
+        "        true =>",
+        "            unsafe",
+        "                " + std::string(true_branch),
+        "        false => " + std::string(false_branch),
+    };
+}
+
 auto ordinary_final_if_lines(std::string_view true_branch, std::string_view false_branch) -> std::vector<std::string> {
     return {
         "function demo(flag: Bool) -> UInt32",
@@ -684,94 +770,75 @@ auto low_level_final_read_switch_success_lines(std::string_view intrinsic) -> st
 }
 
 auto low_level_final_if_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_final_if_lines(
         "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-        "    if flag",
-        "        " + low_level_read_call(intrinsic, "left"),
-        "    else",
-        "        1 as UInt32",
-    };
+        low_level_read_call(intrinsic, "left"),
+        "1 as UInt32"
+    );
 }
 
 auto low_level_final_if_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_final_if_lines(
         "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-        "    if flag",
-        "        " + low_level_read_call(intrinsic, "left"),
-        "    else",
-        "        " + low_level_read_call(intrinsic, "right"),
-    };
+        low_level_read_call(intrinsic, "left"),
+        low_level_read_call(intrinsic, "right")
+    );
 }
 
 auto low_level_final_switch_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_final_switch_lines(
         "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-        "    switch flag",
-        "        true => " + low_level_read_call(intrinsic, "left"),
-        "        false => 1 as UInt32",
-    };
+        low_level_read_call(intrinsic, "left"),
+        "1 as UInt32"
+    );
 }
 
 auto low_level_final_switch_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_final_switch_lines(
         "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-        "    switch flag",
-        "        true => " + low_level_read_call(intrinsic, "left"),
-        "        false => " + low_level_read_call(intrinsic, "right"),
-    };
+        low_level_read_call(intrinsic, "left"),
+        low_level_read_call(intrinsic, "right")
+    );
 }
 
 auto low_level_final_unsafe_block_if_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_unsafe_final_if_lines(
         "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-        "    unsafe",
-        "        if flag",
-        "            " + low_level_read_call(intrinsic, "left"),
-        "        else",
-        "            1 as UInt32",
-    };
+        low_level_read_call(intrinsic, "left"),
+        "1 as UInt32"
+    );
 }
 
 auto low_level_final_unsafe_block_if_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_unsafe_final_if_lines(
         "function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-        "    unsafe",
-        "        if flag",
-        "            " + low_level_read_call(intrinsic, "left"),
-        "        else",
-        "            " + low_level_read_call(intrinsic, "right"),
-    };
+        low_level_read_call(intrinsic, "left"),
+        low_level_read_call(intrinsic, "right")
+    );
 }
 
 auto low_level_final_unsafe_block_switch_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_unsafe_final_switch_lines(
         "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-        "    unsafe",
-        "        switch flag",
-        "            true => " + low_level_read_call(intrinsic, "left"),
-        "            false => 1 as UInt32",
-    };
+        low_level_read_call(intrinsic, "left"),
+        "1 as UInt32"
+    );
 }
 
 auto low_level_final_unsafe_block_switch_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_unsafe_final_switch_lines(
         "function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-        "    unsafe",
-        "        switch flag",
-        "            true => " + low_level_read_call(intrinsic, "left"),
-        "            false => " + low_level_read_call(intrinsic, "right"),
-    };
+        low_level_read_call(intrinsic, "left"),
+        low_level_read_call(intrinsic, "right")
+    );
 }
 
 auto low_level_final_if_unsafe_block_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_final_if_unsafe_lines(
         "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-        "    if flag",
-        "        unsafe",
-        "            " + low_level_read_call(intrinsic, "left"),
-        "    else",
-        "        1 as UInt32",
-    };
+        low_level_read_call(intrinsic, "left"),
+        "1 as UInt32"
+    );
 }
 
 auto low_level_final_if_unsafe_block_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
@@ -787,14 +854,11 @@ auto low_level_final_if_unsafe_block_read_success_lines(std::string_view intrins
 }
 
 auto low_level_final_switch_unsafe_block_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
-    return {
+    return low_level_final_switch_unsafe_lines(
         "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-        "    switch flag",
-        "        true =>",
-        "            unsafe",
-        "                " + low_level_read_call(intrinsic, "left"),
-        "        false => 1 as UInt32",
-    };
+        low_level_read_call(intrinsic, "left"),
+        "1 as UInt32"
+    );
 }
 
 auto low_level_final_switch_unsafe_block_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
@@ -6933,13 +6997,11 @@ void test_low_level_read_final_container_return_types(std::string_view intrinsic
     write_concurrency_fixture(
         if_failure_path,
         "demo.unsafe",
-        {
+        low_level_final_if_lines(
             "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-            "    if flag",
-            "        return " + low_level_read_call(intrinsic, "left"),
-            "    else",
-            "        return 1 as UInt32",
-        }
+            "return " + low_level_read_call(intrinsic, "left"),
+            "return 1 as UInt32"
+        )
     );
     assert_low_level_read_result_mismatch_diagnostic(if_failure_path, 4, intrinsic, "Byte", "UInt32");
 
@@ -6949,13 +7011,11 @@ void test_low_level_read_final_container_return_types(std::string_view intrinsic
     write_concurrency_fixture(
         if_success_path,
         "demo.unsafe",
-        {
+        low_level_final_if_lines(
             "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-            "    if flag",
-            "        return " + low_level_read_call(intrinsic, "left"),
-            "    else",
-            "        return " + low_level_read_call(intrinsic, "right"),
-        }
+            "return " + low_level_read_call(intrinsic, "left"),
+            "return " + low_level_read_call(intrinsic, "right")
+        )
     );
     assert_fixture_success(if_success_path);
 
@@ -6965,12 +7025,11 @@ void test_low_level_read_final_container_return_types(std::string_view intrinsic
     write_concurrency_fixture(
         switch_failure_path,
         "demo.unsafe",
-        {
+        low_level_final_switch_lines(
             "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
-            "    switch flag",
-            "        true => return " + low_level_read_call(intrinsic, "left"),
-            "        false => return 1 as UInt32",
-        }
+            "return " + low_level_read_call(intrinsic, "left"),
+            "return 1 as UInt32"
+        )
     );
     assert_low_level_read_result_mismatch_diagnostic(switch_failure_path, 4, intrinsic, "Byte", "UInt32");
 
@@ -6980,12 +7039,11 @@ void test_low_level_read_final_container_return_types(std::string_view intrinsic
     write_concurrency_fixture(
         switch_success_path,
         "demo.unsafe",
-        {
+        low_level_final_switch_lines(
             "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
-            "    switch flag",
-            "        true => return " + low_level_read_call(intrinsic, "left"),
-            "        false => return " + low_level_read_call(intrinsic, "right"),
-        }
+            "return " + low_level_read_call(intrinsic, "left"),
+            "return " + low_level_read_call(intrinsic, "right")
+        )
     );
     assert_fixture_success(switch_success_path);
 }
