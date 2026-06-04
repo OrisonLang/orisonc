@@ -2039,6 +2039,18 @@ void assert_function_final_value_required_diagnostic(std::filesystem::path const
     );
 }
 
+void assert_empty_return_value_required_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view expected_type
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "return statement must return a value for declared type '" + std::string(expected_type) + "'"
+    );
+}
+
 void assert_assignment_value_type_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -5493,6 +5505,82 @@ void test_final_switch_non_value_case_requires_function_value_failure() {
     );
 
     assert_function_final_value_required_diagnostic(path, 3);
+}
+
+void test_non_unit_empty_return_requires_value_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_non_unit_empty_return_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo() -> UInt32",
+            "    return",
+        }
+    );
+
+    assert_empty_return_value_required_diagnostic(path, 3, "UInt32");
+}
+
+void test_unit_empty_return_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unit_empty_return_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo() -> Unit",
+            "    return",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_unit_final_if_without_else_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unit_final_if_without_else_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> Unit",
+            "    if flag",
+            "        let value = 1 as UInt32",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_unit_final_unsafe_without_value_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unit_final_unsafe_without_value_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo() -> Unit",
+            "    unsafe",
+            "        let value = 1 as UInt32",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_unit_final_switch_non_value_case_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_unit_final_switch_non_value_case_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> Unit",
+            "    switch flag",
+            "        true =>",
+            "            let value = 1 as UInt32",
+            "        false =>",
+            "            let value = 2 as UInt32",
+        }
+    );
+
+    assert_fixture_success(path);
 }
 
 void test_choice_constructor_final_if_payload_failure() {
@@ -9803,6 +9891,11 @@ int main() {
     test_final_if_without_else_requires_function_value_failure();
     test_final_unsafe_block_without_value_requires_function_value_failure();
     test_final_switch_non_value_case_requires_function_value_failure();
+    test_non_unit_empty_return_requires_value_failure();
+    test_unit_empty_return_success();
+    test_unit_final_if_without_else_success();
+    test_unit_final_unsafe_without_value_success();
+    test_unit_final_switch_non_value_case_success();
     test_choice_constructor_final_if_payload_failure();
     test_choice_constructor_final_switch_payload_failure();
     test_choice_constructor_final_if_success();

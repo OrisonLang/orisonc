@@ -2855,6 +2855,11 @@ private:
                 !statement.expression.nested_statements.empty());
     }
 
+    auto is_empty_expression(syntax::ExpressionSyntax const& expression) const -> bool {
+        return expression.line == 0 && expression.text.empty() && !expression.left && !expression.right &&
+               !expression.alternate && expression.arguments.empty() && expression.nested_statements.empty();
+    }
+
     auto expression_requires_value_boundary(syntax::ExpressionSyntax const& expression) const -> bool {
         return expression.kind == syntax::ExpressionKind::task || expression.kind == syntax::ExpressionKind::thread;
     }
@@ -4212,6 +4217,16 @@ private:
         std::size_t line,
         std::string_view ordinary_context_description
     ) {
+        if (is_empty_expression(expression)) {
+            if (current_function_return_type_name_ != "Unit") {
+                diagnostics_.error(
+                    line,
+                    "return statement must return a value for declared type '" + current_function_return_type_name_ + "'"
+                );
+            }
+            return;
+        }
+
         validate_return_expression(expression, line);
         auto read_result_type_mismatch = validate_read_result_type(
             expression,

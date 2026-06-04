@@ -1048,6 +1048,58 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_non_unit_empty_return.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo() -> UInt32",
+            "    return",
+        },
+        "return statement must return a value for declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_unit_empty_return.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo() -> Unit",
+            "    return",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_unit_final_if_without_else.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> Unit",
+            "    if flag",
+            "        let value = 1 as UInt32",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_unit_final_unsafe_without_value.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo() -> Unit",
+            "    unsafe",
+            "        let value = 1 as UInt32",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_unit_final_switch_non_value_case.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> Unit",
+            "    switch flag",
+            "        true =>",
+            "            let value = 1 as UInt32",
+            "        false =>",
+            "            let value = 2 as UInt32",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_payload_type.or",
         std::vector<std::string_view> {
             "package demo.cli",
