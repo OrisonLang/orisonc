@@ -279,6 +279,111 @@ auto low_level_final_switch_read_success_lines(std::string_view intrinsic) -> st
     );
 }
 
+auto low_level_final_unsafe_block_if_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+            "    unsafe",
+            "        if flag",
+            "            " + low_level_read_call(intrinsic, "left"),
+            "        else",
+            "            1 as UInt32",
+        }
+    );
+}
+
+auto low_level_final_unsafe_block_if_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    unsafe",
+            "        if flag",
+            "            " + low_level_read_call(intrinsic, "left"),
+            "        else",
+            "            " + low_level_read_call(intrinsic, "right"),
+        }
+    );
+}
+
+auto low_level_final_unsafe_block_switch_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+            "    unsafe",
+            "        switch flag",
+            "            true => " + low_level_read_call(intrinsic, "left"),
+            "            false => 1 as UInt32",
+        }
+    );
+}
+
+auto low_level_final_unsafe_block_switch_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    unsafe",
+            "        switch flag",
+            "            true => " + low_level_read_call(intrinsic, "left"),
+            "            false => " + low_level_read_call(intrinsic, "right"),
+        }
+    );
+}
+
+auto low_level_final_if_unsafe_block_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+            "    if flag",
+            "        unsafe",
+            "            " + low_level_read_call(intrinsic, "left"),
+            "    else",
+            "        1 as UInt32",
+        }
+    );
+}
+
+auto low_level_final_if_unsafe_block_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    if flag",
+            "        unsafe",
+            "            " + low_level_read_call(intrinsic, "left"),
+            "    else",
+            "        unsafe",
+            "            " + low_level_read_call(intrinsic, "right"),
+        }
+    );
+}
+
+auto low_level_final_switch_unsafe_block_read_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+            "    switch flag",
+            "        true =>",
+            "            unsafe",
+            "                " + low_level_read_call(intrinsic, "left"),
+            "        false => 1 as UInt32",
+        }
+    );
+}
+
+auto low_level_final_switch_unsafe_block_read_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+            "    switch flag",
+            "        true =>",
+            "            unsafe",
+            "                " + low_level_read_call(intrinsic, "left"),
+            "        false =>",
+            "            unsafe",
+            "                " + low_level_read_call(intrinsic, "right"),
+        }
+    );
+}
+
 auto low_level_final_read_guard_success_lines(std::string_view intrinsic) -> std::vector<std::string> {
     return cli_module_lines(
         {
@@ -614,6 +719,59 @@ auto low_level_array_constant_lines(std::string_view initializer) -> std::vector
         initializer,
         "const UART0_DATA: Address = 0x4000_1000",
     };
+}
+
+void assert_cli_nested_final_container_parse_cases(
+    std::filesystem::path const& executable,
+    std::string_view intrinsic
+) {
+    auto result_mismatch_message = std::string(intrinsic) +
+                                   " result type 'Byte' does not match function return type 'UInt32'";
+    auto prefix = std::string("orison_cli_") + std::string(intrinsic);
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_unsafe_block_final_if_expression_type.or"),
+        low_level_final_unsafe_block_if_read_mismatch_lines(intrinsic),
+        result_mismatch_message
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_unsafe_block_final_if_expression_success.or"),
+        low_level_final_unsafe_block_if_read_success_lines(intrinsic)
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_unsafe_block_final_switch_expression_type.or"),
+        low_level_final_unsafe_block_switch_read_mismatch_lines(intrinsic),
+        result_mismatch_message
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_unsafe_block_final_switch_expression_success.or"),
+        low_level_final_unsafe_block_switch_read_success_lines(intrinsic)
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_final_if_unsafe_block_expression_type.or"),
+        low_level_final_if_unsafe_block_read_mismatch_lines(intrinsic),
+        result_mismatch_message
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_final_if_unsafe_block_expression_success.or"),
+        low_level_final_if_unsafe_block_read_success_lines(intrinsic)
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_final_switch_unsafe_block_expression_type.or"),
+        low_level_final_switch_unsafe_block_read_mismatch_lines(intrinsic),
+        result_mismatch_message
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_final_switch_unsafe_block_expression_success.or"),
+        low_level_final_switch_unsafe_block_read_success_lines(intrinsic)
+    );
 }
 
 }  // namespace
@@ -1180,6 +1338,7 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_raw_read_final_switch_expression_success.or",
         low_level_final_switch_read_success_lines("raw_read")
     );
+    assert_cli_nested_final_container_parse_cases(executable, "raw_read");
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_raw_read_guard_final_expression_success.or",
@@ -1303,6 +1462,7 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_volatile_read_final_switch_expression_success.or",
         low_level_final_switch_read_success_lines("volatile_read")
     );
+    assert_cli_nested_final_container_parse_cases(executable, "volatile_read");
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_volatile_read_guard_final_expression_success.or",
