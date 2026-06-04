@@ -527,6 +527,52 @@ auto low_level_read_call(std::string_view intrinsic, std::string_view operand) -
     return std::string(intrinsic) + "(" + std::string(operand) + ")";
 }
 
+auto ordinary_final_if_lines(std::string_view true_branch, std::string_view false_branch) -> std::vector<std::string> {
+    return {
+        "function demo(flag: Bool) -> UInt32",
+        "    if flag",
+        "        " + std::string(true_branch),
+        "    else",
+        "        " + std::string(false_branch),
+    };
+}
+
+auto ordinary_final_switch_lines(std::string_view true_branch, std::string_view false_branch)
+    -> std::vector<std::string> {
+    return {
+        "function demo(flag: Bool) -> UInt32",
+        "    switch flag",
+        "        true => " + std::string(true_branch),
+        "        false => " + std::string(false_branch),
+    };
+}
+
+auto choice_final_if_lines(std::string_view true_branch, std::string_view false_branch) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function demo(flag: Bool) -> Maybe<UInt32>",
+        "    if flag",
+        "        " + std::string(true_branch),
+        "    else",
+        "        " + std::string(false_branch),
+    };
+}
+
+auto choice_final_switch_lines(std::string_view true_branch, std::string_view false_branch)
+    -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function demo(flag: Bool) -> Maybe<UInt32>",
+        "    switch flag",
+        "        true => " + std::string(true_branch),
+        "        false => " + std::string(false_branch),
+    };
+}
+
 auto low_level_final_read_direct_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
     return {
         "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
@@ -5399,13 +5445,7 @@ void test_final_if_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.branch",
-        {
-            "function demo(flag: Bool) -> UInt32",
-            "    if flag",
-            "        true",
-            "    else",
-            "        1 as UInt32",
-        }
+        ordinary_final_if_lines("true", "1 as UInt32")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 4, "Bool", "UInt32");
@@ -5416,12 +5456,7 @@ void test_final_switch_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.branch",
-        {
-            "function demo(flag: Bool) -> UInt32",
-            "    switch flag",
-            "        true => true",
-            "        false => 1 as UInt32",
-        }
+        ordinary_final_switch_lines("true", "1 as UInt32")
     );
 
     assert_final_expression_type_mismatch_diagnostic(path, 4, "Bool", "UInt32");
@@ -5432,13 +5467,7 @@ void test_final_if_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.branch",
-        {
-            "function demo(flag: Bool) -> UInt32",
-            "    if flag",
-            "        1 as UInt32",
-            "    else",
-            "        2 as UInt32",
-        }
+        ordinary_final_if_lines("1 as UInt32", "2 as UInt32")
     );
 
     assert_fixture_success(path);
@@ -5449,12 +5478,7 @@ void test_final_switch_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.branch",
-        {
-            "function demo(flag: Bool) -> UInt32",
-            "    switch flag",
-            "        true => 1 as UInt32",
-            "        false => 2 as UInt32",
-        }
+        ordinary_final_switch_lines("1 as UInt32", "2 as UInt32")
     );
 
     assert_fixture_success(path);
@@ -5465,13 +5489,7 @@ void test_final_if_return_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.branch",
-        {
-            "function demo(flag: Bool) -> UInt32",
-            "    if flag",
-            "        return true",
-            "    else",
-            "        return 1 as UInt32",
-        }
+        ordinary_final_if_lines("return true", "return 1 as UInt32")
     );
 
     assert_return_expression_type_mismatch_diagnostic(path, 4, "Bool", "UInt32");
@@ -5482,12 +5500,7 @@ void test_final_switch_return_expression_type_mismatch_failure() {
     write_concurrency_fixture(
         path,
         "demo.branch",
-        {
-            "function demo(flag: Bool) -> UInt32",
-            "    switch flag",
-            "        true => return true",
-            "        false => return 1 as UInt32",
-        }
+        ordinary_final_switch_lines("return true", "return 1 as UInt32")
     );
 
     assert_return_expression_type_mismatch_diagnostic(path, 4, "Bool", "UInt32");
@@ -5498,13 +5511,7 @@ void test_final_if_return_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.branch",
-        {
-            "function demo(flag: Bool) -> UInt32",
-            "    if flag",
-            "        return 1 as UInt32",
-            "    else",
-            "        return 2 as UInt32",
-        }
+        ordinary_final_if_lines("return 1 as UInt32", "return 2 as UInt32")
     );
 
     assert_fixture_success(path);
@@ -5515,12 +5522,7 @@ void test_final_switch_return_expression_type_match_success() {
     write_concurrency_fixture(
         path,
         "demo.branch",
-        {
-            "function demo(flag: Bool) -> UInt32",
-            "    switch flag",
-            "        true => return 1 as UInt32",
-            "        false => return 2 as UInt32",
-        }
+        ordinary_final_switch_lines("return 1 as UInt32", "return 2 as UInt32")
     );
 
     assert_fixture_success(path);
@@ -5655,16 +5657,7 @@ void test_choice_constructor_final_if_payload_failure() {
     write_concurrency_fixture(
         path,
         "demo.choices",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function demo(flag: Bool) -> Maybe<UInt32>",
-            "    if flag",
-            "        Some(true)",
-            "    else",
-            "        Empty",
-        }
+        choice_final_if_lines("Some(true)", "Empty")
     );
 
     assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
@@ -5676,15 +5669,7 @@ void test_choice_constructor_final_switch_payload_failure() {
     write_concurrency_fixture(
         path,
         "demo.choices",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function demo(flag: Bool) -> Maybe<UInt32>",
-            "    switch flag",
-            "        true => Some(true)",
-            "        false => Empty",
-        }
+        choice_final_switch_lines("Some(true)", "Empty")
     );
 
     assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
@@ -5696,16 +5681,7 @@ void test_choice_constructor_final_if_return_payload_failure() {
     write_concurrency_fixture(
         path,
         "demo.choices",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function demo(flag: Bool) -> Maybe<UInt32>",
-            "    if flag",
-            "        return Some(true)",
-            "    else",
-            "        return Empty",
-        }
+        choice_final_if_lines("return Some(true)", "return Empty")
     );
 
     assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
@@ -5717,15 +5693,7 @@ void test_choice_constructor_final_switch_return_payload_failure() {
     write_concurrency_fixture(
         path,
         "demo.choices",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function demo(flag: Bool) -> Maybe<UInt32>",
-            "    switch flag",
-            "        true => return Some(true)",
-            "        false => return Empty",
-        }
+        choice_final_switch_lines("return Some(true)", "return Empty")
     );
 
     assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
@@ -5736,16 +5704,7 @@ void test_choice_constructor_final_if_success() {
     write_concurrency_fixture(
         path,
         "demo.choices",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function demo(flag: Bool) -> Maybe<UInt32>",
-            "    if flag",
-            "        Some(1 as UInt32)",
-            "    else",
-            "        Empty",
-        }
+        choice_final_if_lines("Some(1 as UInt32)", "Empty")
     );
 
     assert_fixture_success(path);
@@ -5756,15 +5715,7 @@ void test_choice_constructor_final_switch_success() {
     write_concurrency_fixture(
         path,
         "demo.choices",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function demo(flag: Bool) -> Maybe<UInt32>",
-            "    switch flag",
-            "        true => Some(1 as UInt32)",
-            "        false => Empty",
-        }
+        choice_final_switch_lines("Some(1 as UInt32)", "Empty")
     );
 
     assert_fixture_success(path);
@@ -5775,16 +5726,7 @@ void test_choice_constructor_final_if_return_success() {
     write_concurrency_fixture(
         path,
         "demo.choices",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function demo(flag: Bool) -> Maybe<UInt32>",
-            "    if flag",
-            "        return Some(1 as UInt32)",
-            "    else",
-            "        return Empty",
-        }
+        choice_final_if_lines("return Some(1 as UInt32)", "return Empty")
     );
 
     assert_fixture_success(path);
@@ -5795,15 +5737,7 @@ void test_choice_constructor_final_switch_return_success() {
     write_concurrency_fixture(
         path,
         "demo.choices",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function demo(flag: Bool) -> Maybe<UInt32>",
-            "    switch flag",
-            "        true => return Some(1 as UInt32)",
-            "        false => return Empty",
-        }
+        choice_final_switch_lines("return Some(1 as UInt32)", "return Empty")
     );
 
     assert_fixture_success(path);
