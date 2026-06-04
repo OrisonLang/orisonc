@@ -5270,6 +5270,152 @@ void test_ordinary_choice_constructor_final_expression_payload_failure() {
     assert_choice_constructor_payload_mismatch_diagnostic(path, 6, "Bool", "UInt32");
 }
 
+void test_final_if_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_if_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    if flag",
+            "        true",
+            "    else",
+            "        1 as UInt32",
+        }
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 4, "Bool", "UInt32");
+}
+
+void test_final_switch_expression_type_mismatch_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_switch_expression_type_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    switch flag",
+            "        true => true",
+            "        false => 1 as UInt32",
+        }
+    );
+
+    assert_final_expression_type_mismatch_diagnostic(path, 4, "Bool", "UInt32");
+}
+
+void test_final_if_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_if_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    if flag",
+            "        1 as UInt32",
+            "    else",
+            "        2 as UInt32",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_final_switch_expression_type_match_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_final_switch_expression_type_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.branch",
+        {
+            "function demo(flag: Bool) -> UInt32",
+            "    switch flag",
+            "        true => 1 as UInt32",
+            "        false => 2 as UInt32",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_constructor_final_if_payload_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_if_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    if flag",
+            "        Some(true)",
+            "    else",
+            "        Empty",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
+}
+
+void test_choice_constructor_final_switch_payload_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_switch_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    switch flag",
+            "        true => Some(true)",
+            "        false => Empty",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 7, "Bool", "UInt32");
+}
+
+void test_choice_constructor_final_if_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_final_if_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    if flag",
+            "        Some(1 as UInt32)",
+            "    else",
+            "        Empty",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_constructor_final_switch_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_choice_final_switch_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    switch flag",
+            "        true => Some(1 as UInt32)",
+            "        false => Empty",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_ordinary_choice_constructor_assignment_payload_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_choice_assignment_payload_failure.or";
@@ -9409,6 +9555,14 @@ int main() {
     test_choice_constructor_unannotated_ambiguous_name_requires_expected_type_failure();
     test_ordinary_choice_constructor_return_payload_failure();
     test_ordinary_choice_constructor_final_expression_payload_failure();
+    test_final_if_expression_type_mismatch_failure();
+    test_final_switch_expression_type_mismatch_failure();
+    test_final_if_expression_type_match_success();
+    test_final_switch_expression_type_match_success();
+    test_choice_constructor_final_if_payload_failure();
+    test_choice_constructor_final_switch_payload_failure();
+    test_choice_constructor_final_if_success();
+    test_choice_constructor_final_switch_success();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();
     test_zero_payload_choice_constructor_annotated_binding_success();

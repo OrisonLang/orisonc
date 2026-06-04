@@ -805,6 +805,114 @@ int main() {
         },
         "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_if_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    if flag",
+            "        true",
+            "    else",
+            "        1 as UInt32",
+        },
+        "final expression type 'Bool' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_switch_expression_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    switch flag",
+            "        true => true",
+            "        false => 1 as UInt32",
+        },
+        "final expression type 'Bool' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_if_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    if flag",
+            "        1 as UInt32",
+            "    else",
+            "        2 as UInt32",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_switch_expression_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    switch flag",
+            "        true => 1 as UInt32",
+            "        false => 2 as UInt32",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    if flag",
+            "        Some(true)",
+            "    else",
+            "        Empty",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_switch_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    switch flag",
+            "        true => Some(true)",
+            "        false => Empty",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    if flag",
+            "        Some(1 as UInt32)",
+            "    else",
+            "        Empty",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_switch_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    switch flag",
+            "        true => Some(1 as UInt32)",
+            "        false => Empty",
+        }
+    );
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_zero_payload_final_expression.or",
