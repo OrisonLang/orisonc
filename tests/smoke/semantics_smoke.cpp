@@ -659,6 +659,33 @@ auto choice_final_switch_lines(std::string_view true_branch, std::string_view fa
     };
 }
 
+auto choice_final_unsafe_block_ternary_lines(std::string_view expression) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function demo(flag: Bool) -> Maybe<UInt32>",
+        "    unsafe",
+        "        " + std::string(expression),
+    };
+}
+
+auto choice_final_if_ternary_lines(std::string_view true_branch, std::string_view false_branch)
+    -> std::vector<std::string> {
+    return choice_final_if_lines(
+        "flag ? " + std::string(true_branch) + " : " + std::string(false_branch),
+        false_branch
+    );
+}
+
+auto choice_final_switch_ternary_lines(std::string_view true_branch, std::string_view false_branch)
+    -> std::vector<std::string> {
+    return choice_final_switch_lines(
+        "flag ? " + std::string(true_branch) + " : " + std::string(false_branch),
+        false_branch
+    );
+}
+
 auto low_level_final_read_direct_mismatch_lines(std::string_view intrinsic) -> std::vector<std::string> {
     return {
         "unsafe function read_word(p: Pointer<Byte>) -> Pointer<Byte>",
@@ -5986,6 +6013,62 @@ void test_choice_constructor_final_ternary_return_success() {
     assert_fixture_success(path);
 }
 
+void test_choice_constructor_nested_final_ternary_payload_types() {
+    auto unsafe_failure_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_unsafe_final_ternary_payload_failure.or";
+    write_concurrency_fixture(
+        unsafe_failure_path,
+        "demo.choices",
+        choice_final_unsafe_block_ternary_lines("flag ? Some(true) : Empty")
+    );
+    assert_choice_constructor_payload_mismatch_diagnostic(unsafe_failure_path, 7, "Bool", "UInt32");
+
+    auto unsafe_success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_unsafe_final_ternary_success.or";
+    write_concurrency_fixture(
+        unsafe_success_path,
+        "demo.choices",
+        choice_final_unsafe_block_ternary_lines("flag ? Some(1 as UInt32) : Empty")
+    );
+    assert_fixture_success(unsafe_success_path);
+
+    auto if_failure_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_if_ternary_payload_failure.or";
+    write_concurrency_fixture(
+        if_failure_path,
+        "demo.choices",
+        choice_final_if_ternary_lines("Some(true)", "Empty")
+    );
+    assert_choice_constructor_payload_mismatch_diagnostic(if_failure_path, 7, "Bool", "UInt32");
+
+    auto if_success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_if_ternary_success.or";
+    write_concurrency_fixture(
+        if_success_path,
+        "demo.choices",
+        choice_final_if_ternary_lines("Some(1 as UInt32)", "Empty")
+    );
+    assert_fixture_success(if_success_path);
+
+    auto switch_failure_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_switch_ternary_payload_failure.or";
+    write_concurrency_fixture(
+        switch_failure_path,
+        "demo.choices",
+        choice_final_switch_ternary_lines("Some(true)", "Empty")
+    );
+    assert_choice_constructor_payload_mismatch_diagnostic(switch_failure_path, 7, "Bool", "UInt32");
+
+    auto switch_success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_final_switch_ternary_success.or";
+    write_concurrency_fixture(
+        switch_success_path,
+        "demo.choices",
+        choice_final_switch_ternary_lines("Some(1 as UInt32)", "Empty")
+    );
+    assert_fixture_success(switch_success_path);
+}
+
 void test_ordinary_choice_constructor_assignment_payload_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_choice_assignment_payload_failure.or";
@@ -10415,6 +10498,7 @@ int main() {
     test_choice_constructor_final_ternary_return_payload_failure();
     test_choice_constructor_final_ternary_success();
     test_choice_constructor_final_ternary_return_success();
+    test_choice_constructor_nested_final_ternary_payload_types();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();
     test_zero_payload_choice_constructor_annotated_binding_success();

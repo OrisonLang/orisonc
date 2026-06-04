@@ -170,6 +170,35 @@ auto choice_final_ternary_lines(std::string_view expression) -> std::vector<std:
     );
 }
 
+auto choice_final_unsafe_block_ternary_lines(std::string_view expression) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    unsafe",
+            "        " + std::string(expression),
+        }
+    );
+}
+
+auto choice_final_if_ternary_lines(std::string_view true_branch, std::string_view false_branch)
+    -> std::vector<std::string> {
+    return choice_final_if_lines(
+        "flag ? " + std::string(true_branch) + " : " + std::string(false_branch),
+        false_branch
+    );
+}
+
+auto choice_final_switch_ternary_lines(std::string_view true_branch, std::string_view false_branch)
+    -> std::vector<std::string> {
+    return choice_final_switch_lines(
+        "flag ? " + std::string(true_branch) + " : " + std::string(false_branch),
+        false_branch
+    );
+}
+
 auto low_level_read_call(std::string_view intrinsic, std::string_view operand) -> std::string {
     return std::string(intrinsic) + "(" + std::string(operand) + ")";
 }
@@ -1511,6 +1540,39 @@ int main() {
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_final_ternary_return_success.or",
         choice_final_ternary_lines("return flag ? Some(1 as UInt32) : Empty")
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_unsafe_final_ternary_payload_type.or",
+        choice_final_unsafe_block_ternary_lines("flag ? Some(true) : Empty"),
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_unsafe_final_ternary_success.or",
+        choice_final_unsafe_block_ternary_lines("flag ? Some(1 as UInt32) : Empty")
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_ternary_payload_type.or",
+        choice_final_if_ternary_lines("Some(true)", "Empty"),
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_ternary_success.or",
+        choice_final_if_ternary_lines("Some(1 as UInt32)", "Empty")
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_switch_ternary_payload_type.or",
+        choice_final_switch_ternary_lines("Some(true)", "Empty"),
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_switch_ternary_success.or",
+        choice_final_switch_ternary_lines("Some(1 as UInt32)", "Empty")
     );
     assert_cli_parse_success(
         executable,
