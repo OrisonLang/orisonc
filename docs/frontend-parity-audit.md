@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-04: final `if ... else` and `switch` containers now have explicit `return` parity coverage across ordinary typed values, generic choice constructors, and low-level `raw_read`/`volatile_read` result checks.
 - 2026-06-04: final-value boundary coverage now pins empty `return` as invalid for non-`Unit` functions while allowing empty `return` and non-value-producing final statements in `Unit` functions.
 - 2026-06-03: trailing `if ... else` and `switch` blocks now participate in implicit final-expression return validation, with semantic and CLI coverage for value-shaped `raw_read`/`volatile_read` arms.
 - 2026-06-03: trailing `if ... else` and `switch` final-expression containers now also have semantic and CLI coverage for ordinary typed expression mismatches and generic choice-constructor payload validation, including successful `Maybe<UInt32>` constructor arms.

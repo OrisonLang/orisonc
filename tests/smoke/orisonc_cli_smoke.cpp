@@ -774,6 +774,67 @@ void assert_cli_nested_final_container_parse_cases(
     );
 }
 
+void assert_cli_final_container_return_parse_cases(
+    std::filesystem::path const& executable,
+    std::string_view intrinsic
+) {
+    auto result_mismatch_message = std::string(intrinsic) +
+                                   " result type 'Byte' does not match function return type 'UInt32'";
+    auto prefix = std::string("orison_cli_") + std::string(intrinsic);
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_final_if_return_type.or"),
+        cli_module_lines(
+            {
+                "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+                "    if flag",
+                "        return " + low_level_read_call(intrinsic, "left"),
+                "    else",
+                "        return 1 as UInt32",
+            }
+        ),
+        result_mismatch_message
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_final_if_return_success.or"),
+        cli_module_lines(
+            {
+                "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+                "    if flag",
+                "        return " + low_level_read_call(intrinsic, "left"),
+                "    else",
+                "        return " + low_level_read_call(intrinsic, "right"),
+            }
+        )
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_final_switch_return_type.or"),
+        cli_module_lines(
+            {
+                "unsafe function read_word(flag: Bool, left: Pointer<Byte>) -> UInt32",
+                "    switch flag",
+                "        true => return " + low_level_read_call(intrinsic, "left"),
+                "        false => return 1 as UInt32",
+            }
+        ),
+        result_mismatch_message
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / (prefix + "_final_switch_return_success.or"),
+        cli_module_lines(
+            {
+                "unsafe function read_byte(flag: Bool, left: Pointer<Byte>, right: Pointer<Byte>) -> Byte",
+                "    switch flag",
+                "        true => return " + low_level_read_call(intrinsic, "left"),
+                "        false => return " + low_level_read_call(intrinsic, "right"),
+            }
+        )
+    );
+}
+
 }  // namespace
 
 int main() {
@@ -1013,6 +1074,54 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_if_return_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    if flag",
+            "        return true",
+            "    else",
+            "        return 1 as UInt32",
+        },
+        "return expression type 'Bool' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_switch_return_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    switch flag",
+            "        true => return true",
+            "        false => return 1 as UInt32",
+        },
+        "return expression type 'Bool' does not match declared type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_if_return_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    if flag",
+            "        return 1 as UInt32",
+            "    else",
+            "        return 2 as UInt32",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_final_switch_return_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function demo(flag: Bool) -> UInt32",
+            "    switch flag",
+            "        true => return 1 as UInt32",
+            "        false => return 2 as UInt32",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_final_if_without_else_value.or",
         std::vector<std::string_view> {
             "package demo.cli",
@@ -1129,6 +1238,37 @@ int main() {
         },
         "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_return_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    if flag",
+            "        return Some(true)",
+            "    else",
+            "        return Empty",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_switch_return_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    switch flag",
+            "        true => return Some(true)",
+            "        false => return Empty",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_success.or",
@@ -1156,6 +1296,35 @@ int main() {
             "    switch flag",
             "        true => Some(1 as UInt32)",
             "        false => Empty",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_if_return_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    if flag",
+            "        return Some(1 as UInt32)",
+            "    else",
+            "        return Empty",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_final_switch_return_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> Maybe<UInt32>",
+            "    switch flag",
+            "        true => return Some(1 as UInt32)",
+            "        false => return Empty",
         }
     );
     assert_cli_parse_success(
@@ -1426,6 +1595,7 @@ int main() {
         low_level_final_switch_read_success_lines("raw_read")
     );
     assert_cli_nested_final_container_parse_cases(executable, "raw_read");
+    assert_cli_final_container_return_parse_cases(executable, "raw_read");
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_raw_read_guard_final_expression_success.or",
@@ -1550,6 +1720,7 @@ int main() {
         low_level_final_switch_read_success_lines("volatile_read")
     );
     assert_cli_nested_final_container_parse_cases(executable, "volatile_read");
+    assert_cli_final_container_return_parse_cases(executable, "volatile_read");
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_volatile_read_guard_final_expression_success.or",
