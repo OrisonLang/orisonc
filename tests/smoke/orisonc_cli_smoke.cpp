@@ -1736,6 +1736,50 @@ int main() {
     );
     assert_cli_parse_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_return_ternary_rawoffset_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    return flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+        },
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_final_ternary_rawoffset_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> Pointer<Byte>",
+            "    flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_final_if_ternary_rawoffset_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    if flag",
+            "        flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    else",
+            "        raw_offset(other, 1)",
+        },
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_ternary_pointer_source_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function first_word_ptr(flag: Bool, buf: Buffer, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    return flag ? Pointer(address_of(buf.data[0])) : raw_offset(other, 1)",
+        },
+        "Pointer construction source type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_address_final_expression_type.or",
         std::vector<std::string_view> {
             "package demo.cli",
@@ -1751,6 +1795,26 @@ int main() {
             "package demo.cli",
             "unsafe function base(buf: exclusive Buffer) -> Address",
             "    address_of(buf.data[0])",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_address_return_ternary_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function base(flag: Bool, buf: exclusive Buffer) -> Address",
+            "    return flag ? address_of(buf.data[0]) : \"text\"",
+        },
+        "address-returning function currently requires a structurally address-like expression"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_address_unsafe_final_ternary_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "function base(flag: Bool, buf: exclusive Buffer) -> Address",
+            "    unsafe",
+            "        flag ? address_of(buf.data[0]) : address_of(buf.data[1])",
         }
     );
     assert_cli_parse_failure(

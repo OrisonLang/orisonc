@@ -2187,6 +2187,20 @@ private:
         std::size_t line,
         std::string_view context_description
     ) {
+        if (expression.kind == syntax::ExpressionKind::ternary) {
+            if (expression.right) {
+                auto diagnostic_count_before_right = diagnostics_.entries().size();
+                validate_pointer_typed_expression(*expression.right, line, context_description);
+                if (diagnostics_.entries().size() != diagnostic_count_before_right) {
+                    return;
+                }
+            }
+            if (expression.alternate) {
+                validate_pointer_typed_expression(*expression.alternate, line, context_description);
+            }
+            return;
+        }
+
         auto inferred_type_name = infer_expression_type_name(expression);
         auto expected_pointee_type_name = pointer_pointee_type_name(expected_pointer_type_name_);
         if (!expected_pointee_type_name.empty() && expression.kind == syntax::ExpressionKind::call && expression.left &&
@@ -2239,6 +2253,20 @@ private:
         std::size_t line,
         std::string_view context_description
     ) {
+        if (expression.kind == syntax::ExpressionKind::ternary) {
+            if (expression.right) {
+                auto diagnostic_count_before_right = diagnostics_.entries().size();
+                validate_address_typed_expression(*expression.right, line, context_description);
+                if (diagnostics_.entries().size() != diagnostic_count_before_right) {
+                    return;
+                }
+            }
+            if (expression.alternate) {
+                validate_address_typed_expression(*expression.alternate, line, context_description);
+            }
+            return;
+        }
+
         if (expression.kind == syntax::ExpressionKind::integer_literal) {
             return;
         }

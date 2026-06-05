@@ -6822,6 +6822,102 @@ void test_pointer_return_with_matching_raw_offset_source_success() {
     assert_fixture_success(path);
 }
 
+void test_pointer_return_ternary_raw_offset_source_types() {
+    auto mismatch_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_ternary_rawoffset_failure.or";
+    write_concurrency_fixture(
+        mismatch_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    return flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+        }
+    );
+    assert_raw_offset_source_pointee_mismatch_diagnostic(mismatch_path, 3, "Byte", "UInt32");
+
+    auto success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_ternary_rawoffset_success.or";
+    write_concurrency_fixture(
+        success_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> Pointer<Byte>",
+            "    return flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+        }
+    );
+    assert_fixture_success(success_path);
+}
+
+void test_pointer_final_ternary_raw_offset_source_types() {
+    auto mismatch_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_final_ternary_rawoffset_failure.or";
+    write_concurrency_fixture(
+        mismatch_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+        }
+    );
+    assert_raw_offset_source_pointee_mismatch_diagnostic(mismatch_path, 3, "Byte", "UInt32");
+
+    auto success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_final_ternary_rawoffset_success.or";
+    write_concurrency_fixture(
+        success_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> Pointer<Byte>",
+            "    flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+        }
+    );
+    assert_fixture_success(success_path);
+}
+
+void test_pointer_nested_final_container_ternary_raw_offset_source_types() {
+    auto unsafe_mismatch_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_unsafe_final_ternary_rawoffset_failure.or";
+    write_concurrency_fixture(
+        unsafe_mismatch_path,
+        "demo.unsafe",
+        {
+            "function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    unsafe",
+            "        flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+        }
+    );
+    assert_raw_offset_source_pointee_mismatch_diagnostic(unsafe_mismatch_path, 4, "Byte", "UInt32");
+
+    auto if_mismatch_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_final_if_ternary_rawoffset_failure.or";
+    write_concurrency_fixture(
+        if_mismatch_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    if flag",
+            "        flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    else",
+            "        raw_offset(other, 1)",
+        }
+    );
+    assert_raw_offset_source_pointee_mismatch_diagnostic(if_mismatch_path, 4, "Byte", "UInt32");
+
+    auto switch_success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_final_switch_ternary_rawoffset_success.or";
+    write_concurrency_fixture(
+        switch_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> Pointer<Byte>",
+            "    switch flag",
+            "        true => flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "        false => raw_offset(other, 1)",
+        }
+    );
+    assert_fixture_success(switch_success_path);
+}
+
 void test_pointer_return_with_wrong_typed_name_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_name_failure.or";
@@ -7065,6 +7161,36 @@ void test_pointer_return_with_matching_address_of_source_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_pointer_return_ternary_pointer_construction_source_types() {
+    auto mismatch_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_ternary_pointer_source_failure.or";
+    write_concurrency_fixture(
+        mismatch_path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function first_word_ptr(flag: Bool, buf: Buffer, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    return flag ? Pointer(address_of(buf.data[0])) : raw_offset(other, 1)",
+        }
+    );
+    assert_pointer_construction_source_mismatch_diagnostic(mismatch_path, 5, "Byte", "UInt32");
+
+    auto success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_return_ternary_pointer_source_success.or";
+    write_concurrency_fixture(
+        success_path,
+        "demo.unsafe",
+        {
+            "record Buffer",
+            "    data: Pointer<Byte>",
+            "unsafe function first_byte_ptr(flag: Bool, buf: Buffer) -> Pointer<Byte>",
+            "    return flag ? Pointer(address_of(buf.data[0])) : Pointer(address_of(buf.data[1]))",
+        }
+    );
+    assert_fixture_success(success_path);
 }
 
 void test_raw_read_return_type_mismatch_failure() {
@@ -9666,6 +9792,62 @@ void test_address_final_expression_with_address_expression_success() {
     assert_fixture_success(path);
 }
 
+void test_address_return_ternary_expression_types() {
+    auto mismatch_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_return_ternary_failure.or";
+    write_concurrency_fixture(
+        mismatch_path,
+        "demo.unsafe",
+        {
+            "unsafe function base(flag: Bool, buf: exclusive Buffer) -> Address",
+            "    return flag ? address_of(buf.data[0]) : \"text\"",
+        }
+    );
+    assert_address_return_diagnostic(mismatch_path, 3);
+
+    auto success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_return_ternary_success.or";
+    write_concurrency_fixture(
+        success_path,
+        "demo.unsafe",
+        {
+            "unsafe function base(flag: Bool, buf: exclusive Buffer) -> Address",
+            "    return flag ? address_of(buf.data[0]) : address_of(buf.data[1])",
+        }
+    );
+    assert_fixture_success(success_path);
+}
+
+void test_address_nested_final_container_ternary_expression_types() {
+    auto unsafe_success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_unsafe_final_ternary_success.or";
+    write_concurrency_fixture(
+        unsafe_success_path,
+        "demo.unsafe",
+        {
+            "function base(flag: Bool, buf: exclusive Buffer) -> Address",
+            "    unsafe",
+            "        flag ? address_of(buf.data[0]) : address_of(buf.data[1])",
+        }
+    );
+    assert_fixture_success(unsafe_success_path);
+
+    auto if_mismatch_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_address_final_if_ternary_failure.or";
+    write_concurrency_fixture(
+        if_mismatch_path,
+        "demo.unsafe",
+        {
+            "unsafe function base(flag: Bool, buf: exclusive Buffer) -> Address",
+            "    if flag",
+            "        flag ? address_of(buf.data[0]) : \"text\"",
+            "    else",
+            "        address_of(buf.data[1])",
+        }
+    );
+    assert_address_return_diagnostic(if_mismatch_path, 4);
+}
+
 void test_address_return_with_helper_returned_address_success() {
     auto path = std::filesystem::temp_directory_path() /
                 "orison_semantics_address_return_helper_returned_address_success.or";
@@ -10549,11 +10731,15 @@ int main() {
     test_pointer_final_expression_with_pointer_expression_success();
     test_pointer_return_with_mismatched_raw_offset_source_failure();
     test_pointer_return_with_matching_raw_offset_source_success();
+    test_pointer_return_ternary_raw_offset_source_types();
+    test_pointer_final_ternary_raw_offset_source_types();
+    test_pointer_nested_final_container_ternary_raw_offset_source_types();
     test_pointer_return_with_wrong_typed_name_failure();
     test_pointer_return_with_mismatched_helper_pointer_failure();
     test_pointer_return_with_same_width_helper_pointer_success();
     test_pointer_return_with_mismatched_address_of_source_failure();
     test_pointer_return_with_matching_address_of_source_success();
+    test_pointer_return_ternary_pointer_construction_source_types();
     test_raw_write_generic_helper_returned_pointer_same_width_success();
     test_raw_write_generic_helper_returned_pointer_mismatch_failure();
     test_raw_write_generic_receiver_method_pointer_same_width_success();
@@ -10714,6 +10900,8 @@ int main() {
     test_address_final_expression_with_nonaddress_expression_failure();
     test_address_return_with_address_expression_success();
     test_address_final_expression_with_address_expression_success();
+    test_address_return_ternary_expression_types();
+    test_address_nested_final_container_ternary_expression_types();
     test_address_return_with_wrong_typed_name_failure();
     test_address_typed_binding_with_field_address_success();
     test_address_typed_binding_with_indexed_address_success();
