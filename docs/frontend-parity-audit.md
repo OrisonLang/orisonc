@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: choice-payload aggregate ternary smoke coverage now shares semantic and CLI assertion helpers for `Items(...)` and `Holder(Items(...))` shapes, preserving the explicit direct/nested matrix while reducing duplicated path, fixture, and diagnostic wiring.
 - 2026-06-05: inverse choice payload nested-array smoke coverage now pins record fields containing `Array<Array<Box<T>, 1>, 1>` and `Array<Array<Slot<T>, 1>, 1>` choice payloads, confirming expected context reaches nested record-field ternaries through `Holder(Items([[Box(...)]]))` and `Holder(Items([[Slot(...)]]))` shapes.
 - 2026-06-05: choice payload nested-array smoke coverage now pins record constructors inside `Array<Array<Box<T>, 1>, 1>` and `Array<Array<Slot<T>, 1>, 1>` payloads, confirming expected context reaches `Maybe<T>` and `Pointer<T>` record-field ternaries through `Items([[Box(...)]])` and `Items([[Slot(...)]])` shapes.
 - 2026-06-05: nested array literal smoke coverage now pins record constructors inside `Array<Array<Box<UInt32>, 1>, 1>` and `Array<Array<Slot<UInt32>, 1>, 1>`, confirming expected context reaches `Maybe<T>` and `Pointer<T>` record-field ternaries through `[[Box(...)]]` and `[[Slot(...)]]` shapes.
