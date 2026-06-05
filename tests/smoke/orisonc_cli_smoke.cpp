@@ -2710,6 +2710,48 @@ int main() {
             true
         )
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_record_field_choice_payload_nested_array_record_choice_ternary_field_type.or",
+        box_maybe_items_cli_lines(
+            "    let holder: Holder<UInt32> = Holder(Items([[Box(flag ? Some(true) : Empty)]]))",
+            true,
+            "Array<Array<Box<T>, 1>, 1>"
+        ),
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_record_field_choice_payload_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_items_cli_lines(
+            "    let holder: Holder<UInt32> = Holder(Items([[Box(flag ? Some(1 as UInt32) : Empty)]]))",
+            true,
+            "Array<Array<Box<T>, 1>, 1>"
+        )
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_record_field_choice_payload_nested_array_record_pointer_ternary_field_type.or",
+        slot_pointer_items_cli_lines(
+            "    let holder: Holder<UInt32> = Holder(Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]))",
+            true,
+            "Array<Array<Slot<T>, 1>, 1>"
+        ),
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_record_field_choice_payload_nested_array_record_pointer_ternary_field_success.or",
+        slot_pointer_items_success_cli_lines(
+            "    let holder: Holder<UInt32> = Holder(Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]))",
+            true,
+            "Array<Array<Slot<T>, 1>, 1>"
+        )
+    );
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_generic_function_dependent_same_width_integer.or",
