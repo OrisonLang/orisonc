@@ -1379,6 +1379,52 @@ auto maybe_nested_array_field_fixture_lines(std::string_view binding_line) -> st
     };
 }
 
+void assert_fixture_success(std::filesystem::path const& path);
+void assert_raw_offset_source_pointee_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+);
+void assert_choice_constructor_payload_mismatch_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view actual_type,
+    std::string_view expected_type
+);
+
+template <typename SourceLines>
+void assert_record_field_nested_array_choice_context_failure(
+    std::string_view fixture_name,
+    SourceLines const& lines,
+    int diagnostic_line
+) {
+    auto path = std::filesystem::temp_directory_path() / std::string(fixture_name);
+    write_concurrency_fixture(path, "demo.records", lines);
+    assert_choice_constructor_payload_mismatch_diagnostic(path, diagnostic_line, "Bool", "UInt32");
+}
+
+template <typename SourceLines>
+void assert_record_field_nested_array_pointer_context_failure(
+    std::string_view fixture_name,
+    SourceLines const& lines,
+    int diagnostic_line
+) {
+    auto path = std::filesystem::temp_directory_path() / std::string(fixture_name);
+    write_concurrency_fixture(path, "demo.records", lines);
+    assert_raw_offset_source_pointee_mismatch_diagnostic(path, diagnostic_line, "Byte", "UInt32");
+}
+
+template <typename SourceLines>
+void assert_record_field_nested_array_context_success(
+    std::string_view fixture_name,
+    SourceLines const& lines
+) {
+    auto path = std::filesystem::temp_directory_path() / std::string(fixture_name);
+    write_concurrency_fixture(path, "demo.records", lines);
+    assert_fixture_success(path);
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -4981,93 +5027,60 @@ void test_nested_array_record_constructor_pointer_ternary_field_success() {
 }
 
 void test_record_field_nested_array_record_constructor_choice_ternary_field_failure() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_record_field_nested_array_record_choice_ternary_field_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_record_field_nested_array_record_choice_ternary_field_failure.or",
         box_maybe_nested_array_field_fixture_lines(
             "    let shelf: Shelf<UInt32> = Shelf([[Box(flag ? Some(true) : Empty)]])"
-        )
+        ),
+        10
     );
-
-    assert_choice_constructor_payload_mismatch_diagnostic(path, 10, "Bool", "UInt32");
 }
 
 void test_record_field_nested_array_record_constructor_choice_ternary_field_success() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_record_field_nested_array_record_choice_ternary_field_success.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_record_field_nested_array_record_choice_ternary_field_success.or",
         box_maybe_nested_array_field_fixture_lines(
             "    let shelf: Shelf<UInt32> = Shelf([[Box(flag ? Some(1 as UInt32) : Empty)]])"
         )
     );
-
-    assert_fixture_success(path);
 }
 
 void test_record_field_nested_array_record_constructor_pointer_ternary_field_failure() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_record_field_nested_array_record_pointer_ternary_field_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_pointer_context_failure(
+        "orison_semantics_record_field_nested_array_record_pointer_ternary_field_failure.or",
         slot_pointer_nested_array_field_fixture_lines(
             "    let rack: Rack<UInt32> = Rack([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
-        )
+        ),
+        7
     );
-
-    assert_raw_offset_source_pointee_mismatch_diagnostic(path, 7, "Byte", "UInt32");
 }
 
 void test_record_field_nested_array_record_constructor_pointer_ternary_field_success() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_record_field_nested_array_record_pointer_ternary_field_success.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_record_field_nested_array_record_pointer_ternary_field_success.or",
         slot_pointer_nested_array_field_success_fixture_lines(
             "    let rack: Rack<UInt32> = Rack([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
         )
     );
-
-    assert_fixture_success(path);
 }
 
 void test_record_field_nested_array_choice_constructor_ternary_payload_failure() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_record_field_nested_array_choice_constructor_ternary_payload_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_record_field_nested_array_choice_constructor_ternary_payload_failure.or",
         maybe_nested_array_field_fixture_lines(
             "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(true) : Empty]])"
-        )
+        ),
+        8
     );
-
-    assert_choice_constructor_payload_mismatch_diagnostic(path, 8, "Bool", "UInt32");
 }
 
 void test_record_field_nested_array_choice_constructor_ternary_payload_success() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_record_field_nested_array_choice_constructor_ternary_payload_success.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_record_field_nested_array_choice_constructor_ternary_payload_success.or",
         maybe_nested_array_field_fixture_lines(
             "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(1 as UInt32) : Empty]])"
         )
     );
-
-    assert_fixture_success(path);
 }
 
 void assert_choice_payload_items_choice_ternary_failure(

@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: direct record-field nested-array smoke coverage now shares semantic and CLI assertion helpers across `Shelf`, `Rack`, and `ChoiceShelf` shapes, reducing duplicate temp-path and diagnostic wiring while keeping each aggregate source shape explicit.
 - 2026-06-05: direct record-field nested-array choice-element smoke coverage now pins `ChoiceShelf([[flag ? Some(...) : Empty]])`, confirming expected context flows from record fields into nested array literals and onward to generic choice-constructor ternary arms without record or choice-payload wrappers.
 - 2026-06-05: direct record-field nested-array smoke coverage now pins `Shelf([[Box(...)]])` and `Rack([[Slot(...)]])` shapes, confirming expected context flows from record fields into nested array literals and onward to generic `Maybe<T>` and `Pointer<T>` record-constructor ternaries without a choice payload wrapper.
 - 2026-06-05: choice-payload aggregate ternary smoke coverage now shares semantic and CLI assertion helpers for `Items(...)` and `Holder(Items(...))` shapes, preserving the explicit direct/nested matrix while reducing duplicated path, fixture, and diagnostic wiring.

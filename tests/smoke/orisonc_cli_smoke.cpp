@@ -413,6 +413,47 @@ auto maybe_nested_array_field_cli_lines(std::string_view binding_line) -> std::v
     );
 }
 
+template <typename SourceLines>
+void assert_cli_record_field_nested_array_choice_context_failure(
+    std::filesystem::path const& executable,
+    std::string_view fixture_name,
+    SourceLines const& lines
+) {
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / std::string(fixture_name),
+        lines,
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+}
+
+template <typename SourceLines>
+void assert_cli_record_field_nested_array_pointer_context_failure(
+    std::filesystem::path const& executable,
+    std::string_view fixture_name,
+    SourceLines const& lines
+) {
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / std::string(fixture_name),
+        lines,
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+}
+
+template <typename SourceLines>
+void assert_cli_record_field_nested_array_context_success(
+    std::filesystem::path const& executable,
+    std::string_view fixture_name,
+    SourceLines const& lines
+) {
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / std::string(fixture_name),
+        lines
+    );
+}
+
 auto low_level_read_call(std::string_view intrinsic, std::string_view operand) -> std::string {
     return std::string(intrinsic) + "(" + std::string(operand) + ")";
 }
@@ -2705,53 +2746,44 @@ int main() {
             false
         )
     );
-    assert_cli_parse_failure(
+    assert_cli_record_field_nested_array_choice_context_failure(
         executable,
-        std::filesystem::temp_directory_path() /
-            "orison_cli_record_field_nested_array_record_choice_ternary_field_type.or",
+        "orison_cli_record_field_nested_array_record_choice_ternary_field_type.or",
         box_maybe_nested_array_field_cli_lines(
             "    let shelf: Shelf<UInt32> = Shelf([[Box(flag ? Some(true) : Empty)]])"
-        ),
-        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+        )
     );
-    assert_cli_parse_success(
+    assert_cli_record_field_nested_array_context_success(
         executable,
-        std::filesystem::temp_directory_path() /
-            "orison_cli_record_field_nested_array_record_choice_ternary_field_success.or",
+        "orison_cli_record_field_nested_array_record_choice_ternary_field_success.or",
         box_maybe_nested_array_field_cli_lines(
             "    let shelf: Shelf<UInt32> = Shelf([[Box(flag ? Some(1 as UInt32) : Empty)]])"
         )
     );
-    assert_cli_parse_failure(
+    assert_cli_record_field_nested_array_pointer_context_failure(
         executable,
-        std::filesystem::temp_directory_path() /
-            "orison_cli_record_field_nested_array_record_pointer_ternary_field_type.or",
+        "orison_cli_record_field_nested_array_record_pointer_ternary_field_type.or",
         slot_pointer_nested_array_field_cli_lines(
             "    let rack: Rack<UInt32> = Rack([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
-        ),
-        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+        )
     );
-    assert_cli_parse_success(
+    assert_cli_record_field_nested_array_context_success(
         executable,
-        std::filesystem::temp_directory_path() /
-            "orison_cli_record_field_nested_array_record_pointer_ternary_field_success.or",
+        "orison_cli_record_field_nested_array_record_pointer_ternary_field_success.or",
         slot_pointer_nested_array_field_success_cli_lines(
             "    let rack: Rack<UInt32> = Rack([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
         )
     );
-    assert_cli_parse_failure(
+    assert_cli_record_field_nested_array_choice_context_failure(
         executable,
-        std::filesystem::temp_directory_path() /
-            "orison_cli_record_field_nested_array_choice_constructor_ternary_payload_type.or",
+        "orison_cli_record_field_nested_array_choice_constructor_ternary_payload_type.or",
         maybe_nested_array_field_cli_lines(
             "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(true) : Empty]])"
-        ),
-        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+        )
     );
-    assert_cli_parse_success(
+    assert_cli_record_field_nested_array_context_success(
         executable,
-        std::filesystem::temp_directory_path() /
-            "orison_cli_record_field_nested_array_choice_constructor_ternary_payload_success.or",
+        "orison_cli_record_field_nested_array_choice_constructor_ternary_payload_success.or",
         maybe_nested_array_field_cli_lines(
             "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(1 as UInt32) : Empty]])"
         )
