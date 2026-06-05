@@ -4379,18 +4379,53 @@ private:
 
         if (statement.kind == syntax::StatementKind::assignment_statement) {
             analyze_expression(statement.assignment_target, in_async_function, true);
-            analyze_expression(statement.expression, in_async_function);
 
             auto target_type_name = infer_expression_type_name(statement.assignment_target);
+            auto saved_expected_pointer_type_name = expected_pointer_type_name_;
+            if (is_pointer_type_name(target_type_name)) {
+                expected_pointer_type_name_ = target_type_name;
+            }
+            analyze_expression(statement.expression, in_async_function);
             auto expression_value_origin = infer_expression_value_origin(statement.expression);
-            auto assignment_type_mismatch =
-                expression_value_origin == ValueOriginKind::none &&
-                validate_typed_expression_compatibility(
+            auto assignment_type_mismatch = false;
+            if (expression_value_origin == ValueOriginKind::none) {
+                auto read_result_type_mismatch = validate_read_result_type(
                     statement.expression,
                     target_type_name,
                     statement.line,
                     "assignment value"
                 );
+                if (is_pointer_type_name(target_type_name) && !read_result_type_mismatch) {
+                    auto diagnostic_count_before_pointer = diagnostics_.entries().size();
+                    validate_pointer_typed_expression(
+                        statement.expression,
+                        statement.line,
+                        "pointer assignment value"
+                    );
+                    assignment_type_mismatch =
+                        diagnostics_.entries().size() != diagnostic_count_before_pointer;
+                }
+                if (is_address_type_name(target_type_name) && !read_result_type_mismatch) {
+                    auto diagnostic_count_before_address = diagnostics_.entries().size();
+                    validate_address_typed_expression(
+                        statement.expression,
+                        statement.line,
+                        "address assignment value"
+                    );
+                    assignment_type_mismatch =
+                        assignment_type_mismatch ||
+                        diagnostics_.entries().size() != diagnostic_count_before_address;
+                }
+                if (!read_result_type_mismatch && !assignment_type_mismatch) {
+                    assignment_type_mismatch = validate_typed_expression_compatibility(
+                        statement.expression,
+                        target_type_name,
+                        statement.line,
+                        "assignment value"
+                    );
+                }
+                assignment_type_mismatch = assignment_type_mismatch || read_result_type_mismatch;
+            }
 
             if (statement.assignment_target.kind == syntax::ExpressionKind::name) {
                 if (!assignment_type_mismatch) {
@@ -4401,6 +4436,7 @@ private:
                     );
                 }
             }
+            expected_pointer_type_name_ = saved_expected_pointer_type_name;
         }
 
         if (statement.kind == syntax::StatementKind::return_statement) {

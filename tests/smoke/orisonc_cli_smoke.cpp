@@ -1574,6 +1574,62 @@ int main() {
         std::filesystem::temp_directory_path() / "orison_cli_choice_final_switch_ternary_success.or",
         choice_final_switch_ternary_lines("Some(1 as UInt32)", "Empty")
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_ternary_binding_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    let value: Maybe<UInt32> = flag ? Some(true) : Empty",
+            "    return 1",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_ternary_binding_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    let value: Maybe<UInt32> = flag ? Some(1 as UInt32) : Empty",
+            "    return 1",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_ternary_assignment_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    var value: Maybe<UInt32> = Empty",
+            "    value = flag ? Some(true) : Empty",
+            "    return 1",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_ternary_assignment_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    var value: Maybe<UInt32> = Empty",
+            "    value = flag ? Some(1 as UInt32) : Empty",
+            "    return 1",
+        }
+    );
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_zero_payload_final_expression.or",
@@ -1743,6 +1799,50 @@ int main() {
             "    return flag ? raw_offset(base, 1) : raw_offset(other, 1)",
         },
         "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_binding_ternary_rawoffset_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    let p: Pointer<UInt32> = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    return p",
+        },
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_binding_ternary_rawoffset_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> Pointer<Byte>",
+            "    let p: Pointer<Byte> = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    return p",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_assignment_ternary_rawoffset_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    var p: Pointer<UInt32> = raw_offset(other, 1)",
+            "    p = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    return p",
+        },
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_assignment_ternary_rawoffset_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function next_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> Pointer<Byte>",
+            "    var p: Pointer<Byte> = raw_offset(other, 1)",
+            "    p = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    return p",
+        }
     );
     assert_cli_parse_success(
         executable,

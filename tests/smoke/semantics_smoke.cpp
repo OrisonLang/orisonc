@@ -6069,6 +6069,76 @@ void test_choice_constructor_nested_final_ternary_payload_types() {
     assert_fixture_success(switch_success_path);
 }
 
+void test_choice_constructor_ternary_annotated_binding_payload_types() {
+    auto failure_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_ternary_binding_payload_failure.or";
+    write_concurrency_fixture(
+        failure_path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    let value: Maybe<UInt32> = flag ? Some(true) : Empty",
+            "    return 1",
+        }
+    );
+    assert_choice_constructor_payload_mismatch_diagnostic(failure_path, 6, "Bool", "UInt32");
+
+    auto success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_ternary_binding_success.or";
+    write_concurrency_fixture(
+        success_path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    let value: Maybe<UInt32> = flag ? Some(1 as UInt32) : Empty",
+            "    return 1",
+        }
+    );
+    assert_fixture_success(success_path);
+}
+
+void test_choice_constructor_ternary_assignment_payload_types() {
+    auto failure_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_ternary_assignment_payload_failure.or";
+    write_concurrency_fixture(
+        failure_path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    var value: Maybe<UInt32> = Empty",
+            "    value = flag ? Some(true) : Empty",
+            "    return 1",
+        }
+    );
+    assert_choice_constructor_payload_mismatch_diagnostic(failure_path, 7, "Bool", "UInt32");
+
+    auto success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_ternary_assignment_success.or";
+    write_concurrency_fixture(
+        success_path,
+        "demo.choices",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    var value: Maybe<UInt32> = Empty",
+            "    value = flag ? Some(1 as UInt32) : Empty",
+            "    return 1",
+        }
+    );
+    assert_fixture_success(success_path);
+}
+
 void test_ordinary_choice_constructor_assignment_payload_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_choice_assignment_payload_failure.or";
@@ -6598,6 +6668,64 @@ void test_pointer_typed_binding_with_matching_raw_offset_source_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_pointer_typed_binding_ternary_raw_offset_source_types() {
+    auto failure_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_binding_ternary_rawoffset_failure.or";
+    write_concurrency_fixture(
+        failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    let p: Pointer<UInt32> = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    return p",
+        }
+    );
+    assert_raw_offset_source_pointee_mismatch_diagnostic(failure_path, 3, "Byte", "UInt32");
+
+    auto success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_binding_ternary_rawoffset_success.or";
+    write_concurrency_fixture(
+        success_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> Pointer<Byte>",
+            "    let p: Pointer<Byte> = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    return p",
+        }
+    );
+    assert_fixture_success(success_path);
+}
+
+void test_pointer_assignment_ternary_raw_offset_source_types() {
+    auto failure_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_assignment_ternary_rawoffset_failure.or";
+    write_concurrency_fixture(
+        failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_word_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Pointer<UInt32>",
+            "    var p: Pointer<UInt32> = raw_offset(other, 1)",
+            "    p = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    return p",
+        }
+    );
+    assert_raw_offset_source_pointee_mismatch_diagnostic(failure_path, 4, "Byte", "UInt32");
+
+    auto success_path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_assignment_ternary_rawoffset_success.or";
+    write_concurrency_fixture(
+        success_path,
+        "demo.unsafe",
+        {
+            "unsafe function next_ptr(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> Pointer<Byte>",
+            "    var p: Pointer<Byte> = raw_offset(other, 1)",
+            "    p = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
+            "    return p",
+        }
+    );
+    assert_fixture_success(success_path);
 }
 
 void test_pointer_return_with_same_width_raw_offset_source_success() {
@@ -10681,6 +10809,8 @@ int main() {
     test_choice_constructor_final_ternary_success();
     test_choice_constructor_final_ternary_return_success();
     test_choice_constructor_nested_final_ternary_payload_types();
+    test_choice_constructor_ternary_annotated_binding_payload_types();
+    test_choice_constructor_ternary_assignment_payload_types();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();
     test_zero_payload_choice_constructor_annotated_binding_success();
@@ -10717,6 +10847,8 @@ int main() {
     test_pointer_typed_binding_with_pointer_initializer_success();
     test_pointer_typed_binding_with_mismatched_raw_offset_source_failure();
     test_pointer_typed_binding_with_matching_raw_offset_source_success();
+    test_pointer_typed_binding_ternary_raw_offset_source_types();
+    test_pointer_assignment_ternary_raw_offset_source_types();
     test_pointer_return_with_same_width_raw_offset_source_success();
     test_raw_read_typed_binding_result_mismatch_failure();
     test_raw_read_typed_binding_result_match_success();
