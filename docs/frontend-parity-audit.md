@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-04: choice payload and array literal expected contexts now validate matching record constructor payloads/elements before unresolved generic aggregate fallback, preserving `Maybe<T>` and `Pointer<T>` record-field ternary diagnostics through `Item(Box(...))`, `[Box(...)]`, `Item(Slot(...))`, and `[Slot(...)]` shapes.
 - 2026-06-04: nested generic record constructor fields now validate matching inner constructors against the substituted outer field type before generic binding conflict fallback, so `Outer(Box(flag ? Some(...) : Empty))` and `Wrapper(Slot(flag ? raw_offset(...) : ...))` preserve expected context into the inner ternary arms.
 - 2026-06-04: record constructor field validation now pushes declared field context into ternary initializer arms before inferred initializer fallback, while unresolved generic record constructor expressions defer context-free diagnostics to matching typed record contexts; semantic and CLI smoke coverage pins generic `Maybe<T>` payload diagnostics and generic `Pointer<T>` raw-offset pointee diagnostics without regressing concrete `Pair<T>` argument mismatch diagnostics.
 - 2026-06-04: low-level final-container `raw_read`/`volatile_read` smoke fixtures now share final `if ... else`/`switch` source builders across expression, explicit-return, and nested-`unsafe` mismatch shapes.

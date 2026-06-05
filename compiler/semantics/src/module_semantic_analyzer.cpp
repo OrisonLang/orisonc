@@ -1979,6 +1979,13 @@ private:
         auto inferred_type_name = infer_expression_type_name(expression);
         auto inferred_type = parse_rendered_type_name(inferred_type_name);
         auto expected_type = parse_rendered_type_name(expected_type_name);
+        if (expected_type.has_value() && expression.kind == syntax::ExpressionKind::array_literal) {
+            auto diagnostic_count_before_array = diagnostics_.entries().size();
+            if (validate_constant_array_literal_initializer(expression, *expected_type)) {
+                return diagnostics_.entries().size() != diagnostic_count_before_array;
+            }
+        }
+
         auto const* expected_record =
             expected_type.has_value() ? find_record_declaration_by_name(expected_type->name) : nullptr;
         auto record_inference_needs_expected_context =
@@ -3609,6 +3616,21 @@ private:
                                             conflicting_payload_indices.end(),
                                             index
                                         ) != conflicting_payload_indices.end();
+            auto is_matching_record_payload_constructor =
+                initializer.arguments[index].kind == syntax::ExpressionKind::call &&
+                initializer.arguments[index].left &&
+                initializer.arguments[index].left->kind == syntax::ExpressionKind::name &&
+                initializer.arguments[index].left->text == payload_type.name;
+            if (is_matching_record_payload_constructor) {
+                auto diagnostic_count_before_record = diagnostics_.entries().size();
+                if (validate_record_constructor_initializer(initializer.arguments[index], payload_type, "choice payload")) {
+                    if (diagnostics_.entries().size() != diagnostic_count_before_record) {
+                        return true;
+                    }
+                    continue;
+                }
+            }
+
             if (has_binding_conflict) {
                 diagnostics_.error(
                     initializer.arguments[index].line,
@@ -3888,6 +3910,14 @@ private:
             auto diagnostic_count_before_nested_array = diagnostics_.entries().size();
             if (validate_constant_array_literal_initializer(element, declared_element_type)) {
                 if (diagnostics_.entries().size() != diagnostic_count_before_nested_array) {
+                    return true;
+                }
+                continue;
+            }
+
+            auto diagnostic_count_before_record = diagnostics_.entries().size();
+            if (validate_record_constructor_initializer(element, declared_element_type, "array element")) {
+                if (diagnostics_.entries().size() != diagnostic_count_before_record) {
                     return true;
                 }
                 continue;
