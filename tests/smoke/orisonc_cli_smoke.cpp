@@ -1630,6 +1630,35 @@ int main() {
             "    return 1",
         }
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_ternary_call_argument_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function consume(value: Maybe<UInt32>) -> UInt32",
+            "    return 1",
+            "function demo(flag: Bool) -> UInt32",
+            "    return consume(flag ? Some(true) : Empty)",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_choice_ternary_call_argument_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function consume(value: Maybe<UInt32>) -> UInt32",
+            "    return 1",
+            "function demo(flag: Bool) -> UInt32",
+            "    return consume(flag ? Some(1 as UInt32) : Empty)",
+        }
+    );
     assert_cli_parse_success(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_choice_zero_payload_final_expression.or",
@@ -1842,6 +1871,58 @@ int main() {
             "    var p: Pointer<Byte> = raw_offset(other, 1)",
             "    p = flag ? raw_offset(base, 1) : raw_offset(other, 1)",
             "    return p",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_call_ternary_rawoffset_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function consume(ptr: Pointer<UInt32>) -> UInt32",
+            "    return 1",
+            "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+            "    return consume(flag ? raw_offset(base, 1) : raw_offset(other, 1))",
+        },
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_call_ternary_rawoffset_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "unsafe function consume(ptr: Pointer<Byte>) -> UInt32",
+            "    return 1",
+            "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> UInt32",
+            "    return consume(flag ? raw_offset(base, 1) : raw_offset(other, 1))",
+        }
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_method_ternary_rawoffset_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Device",
+            "    status: UInt32",
+            "extend Device",
+            "    function consume(this: shared This, ptr: Pointer<UInt32>) -> UInt32",
+            "        return 1",
+            "unsafe function demo(device: Device, flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+            "    return device.consume(flag ? raw_offset(base, 1) : raw_offset(other, 1))",
+        },
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_method_ternary_rawoffset_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Device",
+            "    status: UInt32",
+            "extend Device",
+            "    function consume(this: shared This, ptr: Pointer<Byte>) -> UInt32",
+            "        return 1",
+            "unsafe function demo(device: Device, flag: Bool, base: Pointer<Byte>, other: Pointer<Byte>) -> UInt32",
+            "    return device.consume(flag ? raw_offset(base, 1) : raw_offset(other, 1))",
         }
     );
     assert_cli_parse_success(

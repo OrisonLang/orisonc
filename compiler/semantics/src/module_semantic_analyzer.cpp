@@ -899,12 +899,48 @@ private:
                 continue;
             }
 
-            validate_typed_expression_compatibility(
+            auto parameter_type_name = render_type_name(parameter_type);
+            auto saved_expected_pointer_type_name = expected_pointer_type_name_;
+            if (is_pointer_type_name(parameter_type_name)) {
+                expected_pointer_type_name_ = parameter_type_name;
+            }
+            auto read_result_type_mismatch = validate_read_result_type(
                 arguments[index],
-                render_type_name(parameter_type),
+                parameter_type_name,
                 arguments[index].line,
                 std::string(call_context) + " argument '" + parameter.name + "'"
             );
+            auto argument_type_mismatch = false;
+            if (is_pointer_type_name(parameter_type_name) && !read_result_type_mismatch) {
+                auto diagnostic_count_before_pointer = diagnostics_.entries().size();
+                validate_pointer_typed_expression(
+                    arguments[index],
+                    arguments[index].line,
+                    std::string(call_context) + " pointer argument '" + parameter.name + "'"
+                );
+                argument_type_mismatch =
+                    diagnostics_.entries().size() != diagnostic_count_before_pointer;
+            }
+            if (is_address_type_name(parameter_type_name) && !read_result_type_mismatch) {
+                auto diagnostic_count_before_address = diagnostics_.entries().size();
+                validate_address_typed_expression(
+                    arguments[index],
+                    arguments[index].line,
+                    std::string(call_context) + " address argument '" + parameter.name + "'"
+                );
+                argument_type_mismatch =
+                    argument_type_mismatch ||
+                    diagnostics_.entries().size() != diagnostic_count_before_address;
+            }
+            if (!read_result_type_mismatch && !argument_type_mismatch) {
+                validate_typed_expression_compatibility(
+                    arguments[index],
+                    parameter_type_name,
+                    arguments[index].line,
+                    std::string(call_context) + " argument '" + parameter.name + "'"
+                );
+            }
+            expected_pointer_type_name_ = saved_expected_pointer_type_name;
         }
     }
 
