@@ -1366,6 +1366,19 @@ auto slot_pointer_nested_array_field_success_fixture_lines(std::string_view bind
     return lines;
 }
 
+auto maybe_nested_array_field_fixture_lines(std::string_view binding_line) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record ChoiceShelf<T>",
+        "    values: Array<Array<Maybe<T>, 1>, 1>",
+        "function demo(flag: Bool) -> UInt32",
+        std::string(binding_line),
+        "    return 1",
+    };
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -5021,6 +5034,36 @@ void test_record_field_nested_array_record_constructor_pointer_ternary_field_suc
         "demo.records",
         slot_pointer_nested_array_field_success_fixture_lines(
             "    let rack: Rack<UInt32> = Rack([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_record_field_nested_array_choice_constructor_ternary_payload_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_nested_array_choice_constructor_ternary_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        maybe_nested_array_field_fixture_lines(
+            "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(true) : Empty]])"
+        )
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 8, "Bool", "UInt32");
+}
+
+void test_record_field_nested_array_choice_constructor_ternary_payload_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_nested_array_choice_constructor_ternary_payload_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        maybe_nested_array_field_fixture_lines(
+            "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(1 as UInt32) : Empty]])"
         )
     );
 
@@ -11578,6 +11621,8 @@ int main() {
     test_record_field_nested_array_record_constructor_choice_ternary_field_success();
     test_record_field_nested_array_record_constructor_pointer_ternary_field_failure();
     test_record_field_nested_array_record_constructor_pointer_ternary_field_success();
+    test_record_field_nested_array_choice_constructor_ternary_payload_failure();
+    test_record_field_nested_array_choice_constructor_ternary_payload_success();
     test_choice_payload_array_record_constructor_choice_ternary_field_failure();
     test_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_choice_payload_array_record_constructor_pointer_ternary_field_failure();

@@ -398,6 +398,21 @@ auto slot_pointer_nested_array_field_success_cli_lines(std::string_view binding_
     return lines;
 }
 
+auto maybe_nested_array_field_cli_lines(std::string_view binding_line) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record ChoiceShelf<T>",
+            "    values: Array<Array<Maybe<T>, 1>, 1>",
+            "function demo(flag: Bool) -> UInt32",
+            std::string(binding_line),
+            "    return 1",
+        }
+    );
+}
+
 auto low_level_read_call(std::string_view intrinsic, std::string_view operand) -> std::string {
     return std::string(intrinsic) + "(" + std::string(operand) + ")";
 }
@@ -2722,6 +2737,23 @@ int main() {
             "orison_cli_record_field_nested_array_record_pointer_ternary_field_success.or",
         slot_pointer_nested_array_field_success_cli_lines(
             "    let rack: Rack<UInt32> = Rack([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_record_field_nested_array_choice_constructor_ternary_payload_type.or",
+        maybe_nested_array_field_cli_lines(
+            "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(true) : Empty]])"
+        ),
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_record_field_nested_array_choice_constructor_ternary_payload_success.or",
+        maybe_nested_array_field_cli_lines(
+            "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(1 as UInt32) : Empty]])"
         )
     );
     assert_cli_choice_payload_items_choice_ternary_failure(
