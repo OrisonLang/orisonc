@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: nested array literal smoke coverage now pins record constructors inside `Array<Array<Box<UInt32>, 1>, 1>` and `Array<Array<Slot<UInt32>, 1>, 1>`, confirming expected context reaches `Maybe<T>` and `Pointer<T>` record-field ternaries through `[[Box(...)]]` and `[[Slot(...)]]` shapes.
 - 2026-06-05: direct and nested record-constructor ternary smoke fixtures now share local source builders for `Box`/`Maybe`, `Slot`/`Pointer`, `Outer`, and `Wrapper` declaration shapes across semantic and CLI coverage.
 - 2026-06-05: aggregate-context smoke fixtures now share local source builders for the recurring `Box`/`Maybe`, `Slot`/`Pointer`, and `Wrap`/`Holder` shapes, reducing duplicated declarations across semantic and CLI coverage.
 - 2026-06-05: inverse deeper aggregate smoke coverage now pins record fields containing choice payload arrays of record constructors, confirming expected context reaches `Maybe<T>` and `Pointer<T>` ternaries through `Holder(Items([Box(...)]))` and `Holder(Items([Slot(...)]))` shapes.

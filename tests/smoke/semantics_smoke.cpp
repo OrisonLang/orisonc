@@ -4862,6 +4862,66 @@ void test_array_record_constructor_pointer_ternary_field_success() {
     assert_fixture_success(path);
 }
 
+void test_nested_array_record_constructor_choice_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_nested_array_record_choice_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        box_maybe_record_fixture_lines(
+            "    let boxes: Array<Array<Box<UInt32>, 1>, 1> = [[Box(flag ? Some(true) : Empty)]]",
+            false
+        )
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 8, "Bool", "UInt32");
+}
+
+void test_nested_array_record_constructor_choice_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_nested_array_record_choice_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        box_maybe_record_fixture_lines(
+            "    let boxes: Array<Array<Box<UInt32>, 1>, 1> = [[Box(flag ? Some(1 as UInt32) : Empty)]]",
+            false
+        )
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_nested_array_record_constructor_pointer_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_nested_array_record_pointer_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        slot_pointer_record_fixture_lines(
+            "    let slots: Array<Array<Slot<UInt32>, 1>, 1> = [[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]",
+            false
+        )
+    );
+
+    assert_raw_offset_source_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
+}
+
+void test_nested_array_record_constructor_pointer_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_nested_array_record_pointer_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        slot_pointer_record_success_fixture_lines(
+            "    let slots: Array<Array<Slot<UInt32>, 1>, 1> = [[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]",
+            false
+        )
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_choice_payload_array_record_constructor_choice_ternary_field_failure() {
     auto path =
         std::filesystem::temp_directory_path() /
@@ -11320,6 +11380,10 @@ int main() {
     test_choice_payload_record_constructor_pointer_ternary_field_success();
     test_array_record_constructor_pointer_ternary_field_failure();
     test_array_record_constructor_pointer_ternary_field_success();
+    test_nested_array_record_constructor_choice_ternary_field_failure();
+    test_nested_array_record_constructor_choice_ternary_field_success();
+    test_nested_array_record_constructor_pointer_ternary_field_failure();
+    test_nested_array_record_constructor_pointer_ternary_field_success();
     test_choice_payload_array_record_constructor_choice_ternary_field_failure();
     test_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_choice_payload_array_record_constructor_pointer_ternary_field_failure();
