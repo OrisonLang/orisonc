@@ -4910,6 +4910,104 @@ void test_choice_payload_array_record_constructor_pointer_ternary_field_success(
     assert_fixture_success(path);
 }
 
+void test_record_field_choice_payload_array_record_constructor_choice_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_choice_payload_array_record_choice_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Wrap<T>",
+            "    Items(value: Array<Box<T>, 1>)",
+            "record Box<T>",
+            "    value: Maybe<T>",
+            "record Holder<T>",
+            "    wrap: Wrap<T>",
+            "function demo(flag: Bool) -> UInt32",
+            "    let holder: Holder<UInt32> = Holder(Items([Box(flag ? Some(true) : Empty)]))",
+            "    return 1",
+        }
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 12, "Bool", "UInt32");
+}
+
+void test_record_field_choice_payload_array_record_constructor_choice_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_choice_payload_array_record_choice_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Wrap<T>",
+            "    Items(value: Array<Box<T>, 1>)",
+            "record Box<T>",
+            "    value: Maybe<T>",
+            "record Holder<T>",
+            "    wrap: Wrap<T>",
+            "function demo(flag: Bool) -> UInt32",
+            "    let holder: Holder<UInt32> = Holder(Items([Box(flag ? Some(1 as UInt32) : Empty)]))",
+            "    return 1",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_record_field_choice_payload_array_record_constructor_pointer_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_choice_payload_array_record_pointer_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Slot<T>",
+            "    ptr: Pointer<T>",
+            "choice Wrap<T>",
+            "    Items(value: Array<Slot<T>, 1>)",
+            "record Holder<T>",
+            "    wrap: Wrap<T>",
+            "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+            "    let holder: Holder<UInt32> = Holder(Items([Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]))",
+            "    return 1",
+        }
+    );
+
+    assert_raw_offset_source_pointee_mismatch_diagnostic(path, 9, "Byte", "UInt32");
+}
+
+void test_record_field_choice_payload_array_record_constructor_pointer_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_choice_payload_array_record_pointer_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Slot<T>",
+            "    ptr: Pointer<T>",
+            "choice Wrap<T>",
+            "    Items(value: Array<Slot<T>, 1>)",
+            "record Holder<T>",
+            "    wrap: Wrap<T>",
+            "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32",
+            "    let holder: Holder<UInt32> = Holder(Items([Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]))",
+            "    return 1",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_annotated_record_binding_constructor_type_mismatch_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_annotated_record_binding_type_failure.or";
@@ -11247,6 +11345,10 @@ int main() {
     test_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_choice_payload_array_record_constructor_pointer_ternary_field_failure();
     test_choice_payload_array_record_constructor_pointer_ternary_field_success();
+    test_record_field_choice_payload_array_record_constructor_choice_ternary_field_failure();
+    test_record_field_choice_payload_array_record_constructor_choice_ternary_field_success();
+    test_record_field_choice_payload_array_record_constructor_pointer_ternary_field_failure();
+    test_record_field_choice_payload_array_record_constructor_pointer_ternary_field_success();
     test_annotated_record_binding_constructor_type_mismatch_failure();
     test_record_return_constructor_type_mismatch_failure();
     test_annotated_integer_binding_same_width_success();

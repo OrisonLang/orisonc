@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: inverse deeper aggregate smoke coverage now pins record fields containing choice payload arrays of record constructors, confirming expected context reaches `Maybe<T>` and `Pointer<T>` ternaries through `Holder(Items([Box(...)]))` and `Holder(Items([Slot(...)]))` shapes.
 - 2026-06-05: deeper aggregate smoke coverage now pins choice payload arrays containing record constructors, confirming expected context reaches `Maybe<T>` and `Pointer<T>` record-field ternaries through `Items([Box(...)])` and `Items([Slot(...)])` shapes.
 - 2026-06-05: matching record-constructor expected-context validation is now centralized behind a shared semantic helper, keeping typed expressions, choice payloads, nested record fields, and array elements aligned before adding more aggregate coverage.
 - 2026-06-04: choice payload and array literal expected contexts now validate matching record constructor payloads/elements before unresolved generic aggregate fallback, preserving `Maybe<T>` and `Pointer<T>` record-field ternary diagnostics through `Item(Box(...))`, `[Box(...)]`, `Item(Slot(...))`, and `[Slot(...)]` shapes.
