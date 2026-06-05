@@ -1379,6 +1379,32 @@ auto maybe_nested_array_field_fixture_lines(std::string_view binding_line) -> st
     };
 }
 
+auto box_maybe_nested_array_argument_fixture_lines(std::string_view call_line) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record Box<T>",
+        "    value: Maybe<T>",
+        "function consume(values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32",
+        "    return 1",
+        "function demo(flag: Bool) -> UInt32",
+        std::string(call_line),
+    };
+}
+
+auto maybe_nested_array_argument_fixture_lines(std::string_view call_line) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function consume(values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32",
+        "    return 1",
+        "function demo(flag: Bool) -> UInt32",
+        std::string(call_line),
+    };
+}
+
 void assert_fixture_success(std::filesystem::path const& path);
 void assert_raw_offset_source_pointee_mismatch_diagnostic(
     std::filesystem::path const& path,
@@ -5081,6 +5107,66 @@ void test_record_field_nested_array_choice_constructor_ternary_payload_success()
             "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(1 as UInt32) : Empty]])"
         )
     );
+}
+
+void test_call_argument_nested_array_record_constructor_choice_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_call_argument_nested_array_record_choice_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        box_maybe_nested_array_argument_fixture_lines(
+            "    return consume([[Box(flag ? Some(true) : Empty)]])"
+        )
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 10, "Bool", "UInt32");
+}
+
+void test_call_argument_nested_array_record_constructor_choice_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_call_argument_nested_array_record_choice_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        box_maybe_nested_array_argument_fixture_lines(
+            "    return consume([[Box(flag ? Some(1 as UInt32) : Empty)]])"
+        )
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_call_argument_nested_array_choice_constructor_ternary_payload_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_call_argument_nested_array_choice_constructor_ternary_payload_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        maybe_nested_array_argument_fixture_lines(
+            "    return consume([[flag ? Some(true) : Empty]])"
+        )
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 8, "Bool", "UInt32");
+}
+
+void test_call_argument_nested_array_choice_constructor_ternary_payload_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_call_argument_nested_array_choice_constructor_ternary_payload_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        maybe_nested_array_argument_fixture_lines(
+            "    return consume([[flag ? Some(1 as UInt32) : Empty]])"
+        )
+    );
+
+    assert_fixture_success(path);
 }
 
 void assert_choice_payload_items_choice_ternary_failure(
@@ -11636,6 +11722,10 @@ int main() {
     test_record_field_nested_array_record_constructor_pointer_ternary_field_success();
     test_record_field_nested_array_choice_constructor_ternary_payload_failure();
     test_record_field_nested_array_choice_constructor_ternary_payload_success();
+    test_call_argument_nested_array_record_constructor_choice_ternary_field_failure();
+    test_call_argument_nested_array_record_constructor_choice_ternary_field_success();
+    test_call_argument_nested_array_choice_constructor_ternary_payload_failure();
+    test_call_argument_nested_array_choice_constructor_ternary_payload_success();
     test_choice_payload_array_record_constructor_choice_ternary_field_failure();
     test_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_choice_payload_array_record_constructor_pointer_ternary_field_failure();
