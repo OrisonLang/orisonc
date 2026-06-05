@@ -1277,6 +1277,50 @@ auto slot_pointer_items_success_fixture_lines(std::string_view binding_line, boo
     return lines;
 }
 
+auto box_maybe_record_fixture_lines(std::string_view binding_line, bool include_outer) -> std::vector<std::string> {
+    std::vector<std::string> lines {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record Box<T>",
+        "    value: Maybe<T>",
+    };
+    if (include_outer) {
+        lines.push_back("record Outer<T>");
+        lines.push_back("    box: Box<T>");
+    }
+    lines.push_back("function demo(flag: Bool) -> UInt32");
+    lines.push_back(std::string(binding_line));
+    lines.push_back("    return 1");
+    return lines;
+}
+
+auto slot_pointer_record_fixture_lines(std::string_view binding_line, bool include_wrapper) -> std::vector<std::string> {
+    std::vector<std::string> lines {
+        "record Slot<T>",
+        "    ptr: Pointer<T>",
+    };
+    if (include_wrapper) {
+        lines.push_back("record Wrapper<T>");
+        lines.push_back("    slot: Slot<T>");
+    }
+    lines.push_back(
+        "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32"
+    );
+    lines.push_back(std::string(binding_line));
+    lines.push_back("    return 1");
+    return lines;
+}
+
+auto slot_pointer_record_success_fixture_lines(std::string_view binding_line, bool include_wrapper)
+    -> std::vector<std::string> {
+    auto lines = slot_pointer_record_fixture_lines(binding_line, include_wrapper);
+    auto const function_index = include_wrapper ? std::size_t {4} : std::size_t {2};
+    lines[function_index] =
+        "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32";
+    return lines;
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -4546,16 +4590,7 @@ void test_record_constructor_choice_ternary_field_payload_failure() {
     write_concurrency_fixture(
         path,
         "demo.records",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "record Box<T>",
-            "    value: Maybe<T>",
-            "function demo(flag: Bool) -> UInt32",
-            "    let box: Box<UInt32> = Box(flag ? Some(true) : Empty)",
-            "    return 1",
-        }
+        box_maybe_record_fixture_lines("    let box: Box<UInt32> = Box(flag ? Some(true) : Empty)", false)
     );
 
     assert_choice_constructor_payload_mismatch_diagnostic(path, 8, "Bool", "UInt32");
@@ -4567,16 +4602,7 @@ void test_record_constructor_choice_ternary_field_success() {
     write_concurrency_fixture(
         path,
         "demo.records",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "record Box<T>",
-            "    value: Maybe<T>",
-            "function demo(flag: Bool) -> UInt32",
-            "    let box: Box<UInt32> = Box(flag ? Some(1 as UInt32) : Empty)",
-            "    return 1",
-        }
+        box_maybe_record_fixture_lines("    let box: Box<UInt32> = Box(flag ? Some(1 as UInt32) : Empty)", false)
     );
 
     assert_fixture_success(path);
@@ -4588,13 +4614,10 @@ void test_record_constructor_pointer_ternary_field_failure() {
     write_concurrency_fixture(
         path,
         "demo.records",
-        {
-            "record Slot<T>",
-            "    ptr: Pointer<T>",
-            "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+        slot_pointer_record_fixture_lines(
             "    let slot: Slot<UInt32> = Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))",
-            "    return 1",
-        }
+            false
+        )
     );
 
     assert_raw_offset_source_pointee_mismatch_diagnostic(path, 5, "Byte", "UInt32");
@@ -4606,13 +4629,10 @@ void test_record_constructor_pointer_ternary_field_success() {
     write_concurrency_fixture(
         path,
         "demo.records",
-        {
-            "record Slot<T>",
-            "    ptr: Pointer<T>",
-            "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32",
+        slot_pointer_record_success_fixture_lines(
             "    let slot: Slot<UInt32> = Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))",
-            "    return 1",
-        }
+            false
+        )
     );
 
     assert_fixture_success(path);
@@ -4624,18 +4644,10 @@ void test_nested_record_constructor_choice_ternary_field_payload_failure() {
     write_concurrency_fixture(
         path,
         "demo.records",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "record Box<T>",
-            "    value: Maybe<T>",
-            "record Outer<T>",
-            "    box: Box<T>",
-            "function demo(flag: Bool) -> UInt32",
+        box_maybe_record_fixture_lines(
             "    let outer: Outer<UInt32> = Outer(Box(flag ? Some(true) : Empty))",
-            "    return 1",
-        }
+            true
+        )
     );
 
     assert_choice_constructor_payload_mismatch_diagnostic(path, 10, "Bool", "UInt32");
@@ -4647,18 +4659,10 @@ void test_nested_record_constructor_choice_ternary_field_success() {
     write_concurrency_fixture(
         path,
         "demo.records",
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "record Box<T>",
-            "    value: Maybe<T>",
-            "record Outer<T>",
-            "    box: Box<T>",
-            "function demo(flag: Bool) -> UInt32",
+        box_maybe_record_fixture_lines(
             "    let outer: Outer<UInt32> = Outer(Box(flag ? Some(1 as UInt32) : Empty))",
-            "    return 1",
-        }
+            true
+        )
     );
 
     assert_fixture_success(path);
@@ -4670,15 +4674,10 @@ void test_nested_record_constructor_pointer_ternary_field_failure() {
     write_concurrency_fixture(
         path,
         "demo.records",
-        {
-            "record Slot<T>",
-            "    ptr: Pointer<T>",
-            "record Wrapper<T>",
-            "    slot: Slot<T>",
-            "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+        slot_pointer_record_fixture_lines(
             "    let wrapper: Wrapper<UInt32> = Wrapper(Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1)))",
-            "    return 1",
-        }
+            true
+        )
     );
 
     assert_raw_offset_source_pointee_mismatch_diagnostic(path, 7, "Byte", "UInt32");
@@ -4690,15 +4689,10 @@ void test_nested_record_constructor_pointer_ternary_field_success() {
     write_concurrency_fixture(
         path,
         "demo.records",
-        {
-            "record Slot<T>",
-            "    ptr: Pointer<T>",
-            "record Wrapper<T>",
-            "    slot: Slot<T>",
-            "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32",
+        slot_pointer_record_success_fixture_lines(
             "    let wrapper: Wrapper<UInt32> = Wrapper(Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1)))",
-            "    return 1",
-        }
+            true
+        )
     );
 
     assert_fixture_success(path);
