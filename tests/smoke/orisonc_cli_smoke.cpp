@@ -413,70 +413,56 @@ auto maybe_nested_array_field_cli_lines(std::string_view binding_line) -> std::v
     );
 }
 
-auto box_maybe_nested_array_argument_cli_lines(std::string_view call_line) -> std::vector<std::string> {
-    return cli_module_lines(
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "record Box<T>",
-            "    value: Maybe<T>",
-            "function consume(values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32",
-            "    return 1",
-            "function demo(flag: Bool) -> UInt32",
-            std::string(call_line),
-        }
-    );
+auto box_maybe_nested_array_argument_cli_lines(
+    std::string_view call_line,
+    bool method_call = false
+) -> std::vector<std::string> {
+    std::vector<std::string> lines {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record Box<T>",
+        "    value: Maybe<T>",
+    };
+    if (method_call) {
+        lines.push_back("record Consumer");
+        lines.push_back("    id: UInt32");
+        lines.push_back("extend Consumer");
+        lines.push_back("    function consume(this: shared This, values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32");
+        lines.push_back("        return 1");
+        lines.push_back("function demo(consumer: Consumer, flag: Bool) -> UInt32");
+    } else {
+        lines.push_back("function consume(values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32");
+        lines.push_back("    return 1");
+        lines.push_back("function demo(flag: Bool) -> UInt32");
+    }
+    lines.push_back(std::string(call_line));
+    return cli_module_lines(lines);
 }
 
-auto maybe_nested_array_argument_cli_lines(std::string_view call_line) -> std::vector<std::string> {
-    return cli_module_lines(
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "function consume(values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32",
-            "    return 1",
-            "function demo(flag: Bool) -> UInt32",
-            std::string(call_line),
-        }
-    );
-}
-
-auto box_maybe_nested_array_method_argument_cli_lines(std::string_view call_line) -> std::vector<std::string> {
-    return cli_module_lines(
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "record Box<T>",
-            "    value: Maybe<T>",
-            "record Consumer",
-            "    id: UInt32",
-            "extend Consumer",
-            "    function consume(this: shared This, values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32",
-            "        return 1",
-            "function demo(consumer: Consumer, flag: Bool) -> UInt32",
-            std::string(call_line),
-        }
-    );
-}
-
-auto maybe_nested_array_method_argument_cli_lines(std::string_view call_line) -> std::vector<std::string> {
-    return cli_module_lines(
-        {
-            "choice Maybe<T>",
-            "    Some(value: T)",
-            "    Empty",
-            "record Consumer",
-            "    id: UInt32",
-            "extend Consumer",
-            "    function consume(this: shared This, values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32",
-            "        return 1",
-            "function demo(consumer: Consumer, flag: Bool) -> UInt32",
-            std::string(call_line),
-        }
-    );
+auto maybe_nested_array_argument_cli_lines(
+    std::string_view call_line,
+    bool method_call = false
+) -> std::vector<std::string> {
+    std::vector<std::string> lines {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+    };
+    if (method_call) {
+        lines.push_back("record Consumer");
+        lines.push_back("    id: UInt32");
+        lines.push_back("extend Consumer");
+        lines.push_back("    function consume(this: shared This, values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32");
+        lines.push_back("        return 1");
+        lines.push_back("function demo(consumer: Consumer, flag: Bool) -> UInt32");
+    } else {
+        lines.push_back("function consume(values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32");
+        lines.push_back("    return 1");
+        lines.push_back("function demo(flag: Bool) -> UInt32");
+    }
+    lines.push_back(std::string(call_line));
+    return cli_module_lines(lines);
 }
 
 template <typename SourceLines>
@@ -2885,29 +2871,33 @@ int main() {
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_method_argument_nested_array_record_choice_ternary_field_type.or",
-        box_maybe_nested_array_method_argument_cli_lines(
-            "    return consumer.consume([[Box(flag ? Some(true) : Empty)]])"
+        box_maybe_nested_array_argument_cli_lines(
+            "    return consumer.consume([[Box(flag ? Some(true) : Empty)]])",
+            true
         )
     );
     assert_cli_record_field_nested_array_context_success(
         executable,
         "orison_cli_method_argument_nested_array_record_choice_ternary_field_success.or",
-        box_maybe_nested_array_method_argument_cli_lines(
-            "    return consumer.consume([[Box(flag ? Some(1 as UInt32) : Empty)]])"
+        box_maybe_nested_array_argument_cli_lines(
+            "    return consumer.consume([[Box(flag ? Some(1 as UInt32) : Empty)]])",
+            true
         )
     );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_method_argument_nested_array_choice_constructor_ternary_payload_type.or",
-        maybe_nested_array_method_argument_cli_lines(
-            "    return consumer.consume([[flag ? Some(true) : Empty]])"
+        maybe_nested_array_argument_cli_lines(
+            "    return consumer.consume([[flag ? Some(true) : Empty]])",
+            true
         )
     );
     assert_cli_record_field_nested_array_context_success(
         executable,
         "orison_cli_method_argument_nested_array_choice_constructor_ternary_payload_success.or",
-        maybe_nested_array_method_argument_cli_lines(
-            "    return consumer.consume([[flag ? Some(1 as UInt32) : Empty]])"
+        maybe_nested_array_argument_cli_lines(
+            "    return consumer.consume([[flag ? Some(1 as UInt32) : Empty]])",
+            true
         )
     );
     assert_cli_choice_payload_items_choice_ternary_failure(

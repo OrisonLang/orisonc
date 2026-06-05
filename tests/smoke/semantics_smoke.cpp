@@ -1379,62 +1379,52 @@ auto maybe_nested_array_field_fixture_lines(std::string_view binding_line) -> st
     };
 }
 
-auto box_maybe_nested_array_argument_fixture_lines(std::string_view call_line) -> std::vector<std::string> {
-    return {
+auto box_maybe_nested_array_argument_fixture_lines(std::string_view call_line, bool method_call = false)
+    -> std::vector<std::string> {
+    std::vector<std::string> lines {
         "choice Maybe<T>",
         "    Some(value: T)",
         "    Empty",
         "record Box<T>",
         "    value: Maybe<T>",
-        "function consume(values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32",
-        "    return 1",
-        "function demo(flag: Bool) -> UInt32",
-        std::string(call_line),
     };
+    if (method_call) {
+        lines.push_back("record Consumer");
+        lines.push_back("    id: UInt32");
+        lines.push_back("extend Consumer");
+        lines.push_back("    function consume(this: shared This, values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32");
+        lines.push_back("        return 1");
+        lines.push_back("function demo(consumer: Consumer, flag: Bool) -> UInt32");
+    } else {
+        lines.push_back("function consume(values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32");
+        lines.push_back("    return 1");
+        lines.push_back("function demo(flag: Bool) -> UInt32");
+    }
+    lines.push_back(std::string(call_line));
+    return lines;
 }
 
-auto maybe_nested_array_argument_fixture_lines(std::string_view call_line) -> std::vector<std::string> {
-    return {
+auto maybe_nested_array_argument_fixture_lines(std::string_view call_line, bool method_call = false)
+    -> std::vector<std::string> {
+    std::vector<std::string> lines {
         "choice Maybe<T>",
         "    Some(value: T)",
         "    Empty",
-        "function consume(values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32",
-        "    return 1",
-        "function demo(flag: Bool) -> UInt32",
-        std::string(call_line),
     };
-}
-
-auto box_maybe_nested_array_method_argument_fixture_lines(std::string_view call_line) -> std::vector<std::string> {
-    return {
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        "record Box<T>",
-        "    value: Maybe<T>",
-        "record Consumer",
-        "    id: UInt32",
-        "extend Consumer",
-        "    function consume(this: shared This, values: Array<Array<Box<UInt32>, 1>, 1>) -> UInt32",
-        "        return 1",
-        "function demo(consumer: Consumer, flag: Bool) -> UInt32",
-        std::string(call_line),
-    };
-}
-
-auto maybe_nested_array_method_argument_fixture_lines(std::string_view call_line) -> std::vector<std::string> {
-    return {
-        "choice Maybe<T>",
-        "    Some(value: T)",
-        "    Empty",
-        "record Consumer",
-        "    id: UInt32",
-        "extend Consumer",
-        "    function consume(this: shared This, values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32",
-        "        return 1",
-        "function demo(consumer: Consumer, flag: Bool) -> UInt32",
-        std::string(call_line),
-    };
+    if (method_call) {
+        lines.push_back("record Consumer");
+        lines.push_back("    id: UInt32");
+        lines.push_back("extend Consumer");
+        lines.push_back("    function consume(this: shared This, values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32");
+        lines.push_back("        return 1");
+        lines.push_back("function demo(consumer: Consumer, flag: Bool) -> UInt32");
+    } else {
+        lines.push_back("function consume(values: Array<Array<Maybe<UInt32>, 1>, 1>) -> UInt32");
+        lines.push_back("    return 1");
+        lines.push_back("function demo(flag: Bool) -> UInt32");
+    }
+    lines.push_back(std::string(call_line));
+    return lines;
 }
 
 void assert_fixture_success(std::filesystem::path const& path);
@@ -5142,123 +5132,83 @@ void test_record_field_nested_array_choice_constructor_ternary_payload_success()
 }
 
 void test_call_argument_nested_array_record_constructor_choice_ternary_field_failure() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_call_argument_nested_array_record_choice_ternary_field_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_call_argument_nested_array_record_choice_ternary_field_failure.or",
         box_maybe_nested_array_argument_fixture_lines(
             "    return consume([[Box(flag ? Some(true) : Empty)]])"
-        )
+        ),
+        10
     );
-
-    assert_choice_constructor_payload_mismatch_diagnostic(path, 10, "Bool", "UInt32");
 }
 
 void test_call_argument_nested_array_record_constructor_choice_ternary_field_success() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_call_argument_nested_array_record_choice_ternary_field_success.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_call_argument_nested_array_record_choice_ternary_field_success.or",
         box_maybe_nested_array_argument_fixture_lines(
             "    return consume([[Box(flag ? Some(1 as UInt32) : Empty)]])"
         )
     );
-
-    assert_fixture_success(path);
 }
 
 void test_call_argument_nested_array_choice_constructor_ternary_payload_failure() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_call_argument_nested_array_choice_constructor_ternary_payload_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_call_argument_nested_array_choice_constructor_ternary_payload_failure.or",
         maybe_nested_array_argument_fixture_lines(
             "    return consume([[flag ? Some(true) : Empty]])"
-        )
+        ),
+        8
     );
-
-    assert_choice_constructor_payload_mismatch_diagnostic(path, 8, "Bool", "UInt32");
 }
 
 void test_call_argument_nested_array_choice_constructor_ternary_payload_success() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_call_argument_nested_array_choice_constructor_ternary_payload_success.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_call_argument_nested_array_choice_constructor_ternary_payload_success.or",
         maybe_nested_array_argument_fixture_lines(
             "    return consume([[flag ? Some(1 as UInt32) : Empty]])"
         )
     );
-
-    assert_fixture_success(path);
 }
 
 void test_method_argument_nested_array_record_constructor_choice_ternary_field_failure() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_method_argument_nested_array_record_choice_ternary_field_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
-        box_maybe_nested_array_method_argument_fixture_lines(
-            "    return consumer.consume([[Box(flag ? Some(true) : Empty)]])"
-        )
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_method_argument_nested_array_record_choice_ternary_field_failure.or",
+        box_maybe_nested_array_argument_fixture_lines(
+            "    return consumer.consume([[Box(flag ? Some(true) : Empty)]])",
+            true
+        ),
+        13
     );
-
-    assert_choice_constructor_payload_mismatch_diagnostic(path, 13, "Bool", "UInt32");
 }
 
 void test_method_argument_nested_array_record_constructor_choice_ternary_field_success() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_method_argument_nested_array_record_choice_ternary_field_success.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
-        box_maybe_nested_array_method_argument_fixture_lines(
-            "    return consumer.consume([[Box(flag ? Some(1 as UInt32) : Empty)]])"
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_method_argument_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_nested_array_argument_fixture_lines(
+            "    return consumer.consume([[Box(flag ? Some(1 as UInt32) : Empty)]])",
+            true
         )
     );
-
-    assert_fixture_success(path);
 }
 
 void test_method_argument_nested_array_choice_constructor_ternary_payload_failure() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_method_argument_nested_array_choice_constructor_ternary_payload_failure.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
-        maybe_nested_array_method_argument_fixture_lines(
-            "    return consumer.consume([[flag ? Some(true) : Empty]])"
-        )
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_method_argument_nested_array_choice_constructor_ternary_payload_failure.or",
+        maybe_nested_array_argument_fixture_lines(
+            "    return consumer.consume([[flag ? Some(true) : Empty]])",
+            true
+        ),
+        11
     );
-
-    assert_choice_constructor_payload_mismatch_diagnostic(path, 11, "Bool", "UInt32");
 }
 
 void test_method_argument_nested_array_choice_constructor_ternary_payload_success() {
-    auto path =
-        std::filesystem::temp_directory_path() /
-        "orison_semantics_method_argument_nested_array_choice_constructor_ternary_payload_success.or";
-    write_concurrency_fixture(
-        path,
-        "demo.records",
-        maybe_nested_array_method_argument_fixture_lines(
-            "    return consumer.consume([[flag ? Some(1 as UInt32) : Empty]])"
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_method_argument_nested_array_choice_constructor_ternary_payload_success.or",
+        maybe_nested_array_argument_fixture_lines(
+            "    return consumer.consume([[flag ? Some(1 as UInt32) : Empty]])",
+            true
         )
     );
-
-    assert_fixture_success(path);
 }
 
 void assert_choice_payload_items_choice_ternary_failure(
