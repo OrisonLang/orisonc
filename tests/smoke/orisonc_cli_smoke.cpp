@@ -259,6 +259,45 @@ auto slot_pointer_items_success_cli_lines(
     return lines;
 }
 
+auto box_maybe_items_assignment_cli_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Wrap<T>",
+            "    Items(value: Array<Array<Box<T>, 1>, 1>)",
+            "record Box<T>",
+            "    value: Maybe<T>",
+            "function demo(flag: Bool) -> UInt32",
+            "    var item: Wrap<UInt32> = Items([[Box(Some(1 as UInt32))]])",
+            std::string(assignment_line),
+            "    return 1",
+        }
+    );
+}
+
+auto slot_pointer_items_assignment_cli_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "record Slot<T>",
+            "    ptr: Pointer<T>",
+            "choice Wrap<T>",
+            "    Items(value: Array<Array<Slot<T>, 1>, 1>)",
+            "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+            "    var item: Wrap<UInt32> = Items([[Slot(raw_offset(other, 1))]])",
+            std::string(assignment_line),
+            "    return 1",
+        }
+    );
+}
+
+auto slot_pointer_items_assignment_success_cli_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    auto lines = slot_pointer_items_assignment_cli_lines(assignment_line);
+    lines[5] = "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32";
+    return lines;
+}
+
 void assert_cli_choice_payload_items_choice_ternary_failure(
     std::filesystem::path const& executable,
     std::string_view fixture_name,
@@ -3043,6 +3082,34 @@ int main() {
         "    let item: Wrap<UInt32> = Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])",
         false,
         "Array<Array<Slot<T>, 1>, 1>"
+    );
+    assert_cli_record_field_nested_array_choice_context_failure(
+        executable,
+        "orison_cli_assignment_choice_payload_nested_array_record_choice_ternary_field_type.or",
+        box_maybe_items_assignment_cli_lines(
+            "    item = Items([[Box(flag ? Some(true) : Empty)]])"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_assignment_choice_payload_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_items_assignment_cli_lines(
+            "    item = Items([[Box(flag ? Some(1 as UInt32) : Empty)]])"
+        )
+    );
+    assert_cli_record_field_nested_array_pointer_context_failure(
+        executable,
+        "orison_cli_assignment_choice_payload_nested_array_record_pointer_ternary_field_type.or",
+        slot_pointer_items_assignment_cli_lines(
+            "    item = Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_assignment_choice_payload_nested_array_record_pointer_ternary_field_success.or",
+        slot_pointer_items_assignment_success_cli_lines(
+            "    item = Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
     );
     assert_cli_choice_payload_items_choice_ternary_failure(
         executable,
