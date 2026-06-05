@@ -1229,13 +1229,17 @@ void write_maybe_array_payload_block_runtime_constant_fixture(
     );
 }
 
-auto box_maybe_items_fixture_lines(std::string_view binding_line, bool include_holder) -> std::vector<std::string> {
+auto box_maybe_items_fixture_lines(
+    std::string_view binding_line,
+    bool include_holder,
+    std::string_view payload_type = "Array<Box<T>, 1>"
+) -> std::vector<std::string> {
     std::vector<std::string> lines {
         "choice Maybe<T>",
         "    Some(value: T)",
         "    Empty",
         "choice Wrap<T>",
-        "    Items(value: Array<Box<T>, 1>)",
+        "    Items(value: " + std::string(payload_type) + ")",
         "record Box<T>",
         "    value: Maybe<T>",
     };
@@ -1249,12 +1253,16 @@ auto box_maybe_items_fixture_lines(std::string_view binding_line, bool include_h
     return lines;
 }
 
-auto slot_pointer_items_fixture_lines(std::string_view binding_line, bool include_holder) -> std::vector<std::string> {
+auto slot_pointer_items_fixture_lines(
+    std::string_view binding_line,
+    bool include_holder,
+    std::string_view payload_type = "Array<Slot<T>, 1>"
+) -> std::vector<std::string> {
     std::vector<std::string> lines {
         "record Slot<T>",
         "    ptr: Pointer<T>",
         "choice Wrap<T>",
-        "    Items(value: Array<Slot<T>, 1>)",
+        "    Items(value: " + std::string(payload_type) + ")",
     };
     if (include_holder) {
         lines.push_back("record Holder<T>");
@@ -1268,9 +1276,13 @@ auto slot_pointer_items_fixture_lines(std::string_view binding_line, bool includ
     return lines;
 }
 
-auto slot_pointer_items_success_fixture_lines(std::string_view binding_line, bool include_holder)
+auto slot_pointer_items_success_fixture_lines(
+    std::string_view binding_line,
+    bool include_holder,
+    std::string_view payload_type = "Array<Slot<T>, 1>"
+)
     -> std::vector<std::string> {
-    auto lines = slot_pointer_items_fixture_lines(binding_line, include_holder);
+    auto lines = slot_pointer_items_fixture_lines(binding_line, include_holder, payload_type);
     auto const function_index = include_holder ? std::size_t {6} : std::size_t {4};
     lines[function_index] =
         "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32";
@@ -4977,6 +4989,74 @@ void test_choice_payload_array_record_constructor_pointer_ternary_field_success(
         slot_pointer_items_success_fixture_lines(
             "    let item: Wrap<UInt32> = Items([Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))])",
             false
+        )
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_payload_nested_array_record_constructor_choice_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_payload_nested_array_record_choice_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        box_maybe_items_fixture_lines(
+            "    let item: Wrap<UInt32> = Items([[Box(flag ? Some(true) : Empty)]])",
+            false,
+            "Array<Array<Box<T>, 1>, 1>"
+        )
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 10, "Bool", "UInt32");
+}
+
+void test_choice_payload_nested_array_record_constructor_choice_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_payload_nested_array_record_choice_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        box_maybe_items_fixture_lines(
+            "    let item: Wrap<UInt32> = Items([[Box(flag ? Some(1 as UInt32) : Empty)]])",
+            false,
+            "Array<Array<Box<T>, 1>, 1>"
+        )
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_choice_payload_nested_array_record_constructor_pointer_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_payload_nested_array_record_pointer_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        slot_pointer_items_fixture_lines(
+            "    let item: Wrap<UInt32> = Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])",
+            false,
+            "Array<Array<Slot<T>, 1>, 1>"
+        )
+    );
+
+    assert_raw_offset_source_pointee_mismatch_diagnostic(path, 7, "Byte", "UInt32");
+}
+
+void test_choice_payload_nested_array_record_constructor_pointer_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_choice_payload_nested_array_record_pointer_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        slot_pointer_items_success_fixture_lines(
+            "    let item: Wrap<UInt32> = Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])",
+            false,
+            "Array<Array<Slot<T>, 1>, 1>"
         )
     );
 
@@ -11388,6 +11468,10 @@ int main() {
     test_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_choice_payload_array_record_constructor_pointer_ternary_field_failure();
     test_choice_payload_array_record_constructor_pointer_ternary_field_success();
+    test_choice_payload_nested_array_record_constructor_choice_ternary_field_failure();
+    test_choice_payload_nested_array_record_constructor_choice_ternary_field_success();
+    test_choice_payload_nested_array_record_constructor_pointer_ternary_field_failure();
+    test_choice_payload_nested_array_record_constructor_pointer_ternary_field_success();
     test_record_field_choice_payload_array_record_constructor_choice_ternary_field_failure();
     test_record_field_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_record_field_choice_payload_array_record_constructor_pointer_ternary_field_failure();

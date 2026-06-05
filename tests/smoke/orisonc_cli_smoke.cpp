@@ -199,13 +199,17 @@ auto choice_final_switch_ternary_lines(std::string_view true_branch, std::string
     );
 }
 
-auto box_maybe_items_cli_lines(std::string_view binding_line, bool include_holder) -> std::vector<std::string> {
+auto box_maybe_items_cli_lines(
+    std::string_view binding_line,
+    bool include_holder,
+    std::string_view payload_type = "Array<Box<T>, 1>"
+) -> std::vector<std::string> {
     std::vector<std::string> lines {
         "choice Maybe<T>",
         "    Some(value: T)",
         "    Empty",
         "choice Wrap<T>",
-        "    Items(value: Array<Box<T>, 1>)",
+        "    Items(value: " + std::string(payload_type) + ")",
         "record Box<T>",
         "    value: Maybe<T>",
     };
@@ -219,12 +223,16 @@ auto box_maybe_items_cli_lines(std::string_view binding_line, bool include_holde
     return cli_module_lines(lines);
 }
 
-auto slot_pointer_items_cli_lines(std::string_view binding_line, bool include_holder) -> std::vector<std::string> {
+auto slot_pointer_items_cli_lines(
+    std::string_view binding_line,
+    bool include_holder,
+    std::string_view payload_type = "Array<Slot<T>, 1>"
+) -> std::vector<std::string> {
     std::vector<std::string> lines {
         "record Slot<T>",
         "    ptr: Pointer<T>",
         "choice Wrap<T>",
-        "    Items(value: Array<Slot<T>, 1>)",
+        "    Items(value: " + std::string(payload_type) + ")",
     };
     if (include_holder) {
         lines.push_back("record Holder<T>");
@@ -238,9 +246,13 @@ auto slot_pointer_items_cli_lines(std::string_view binding_line, bool include_ho
     return cli_module_lines(lines);
 }
 
-auto slot_pointer_items_success_cli_lines(std::string_view binding_line, bool include_holder)
+auto slot_pointer_items_success_cli_lines(
+    std::string_view binding_line,
+    bool include_holder,
+    std::string_view payload_type = "Array<Slot<T>, 1>"
+)
     -> std::vector<std::string> {
-    auto lines = slot_pointer_items_cli_lines(binding_line, include_holder);
+    auto lines = slot_pointer_items_cli_lines(binding_line, include_holder, payload_type);
     auto const function_index = include_holder ? std::size_t {7} : std::size_t {5};
     lines[function_index] =
         "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32";
@@ -2616,6 +2628,48 @@ int main() {
         slot_pointer_items_success_cli_lines(
             "    let item: Wrap<UInt32> = Items([Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))])",
             false
+        )
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_choice_payload_nested_array_record_choice_ternary_field_type.or",
+        box_maybe_items_cli_lines(
+            "    let item: Wrap<UInt32> = Items([[Box(flag ? Some(true) : Empty)]])",
+            false,
+            "Array<Array<Box<T>, 1>, 1>"
+        ),
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_choice_payload_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_items_cli_lines(
+            "    let item: Wrap<UInt32> = Items([[Box(flag ? Some(1 as UInt32) : Empty)]])",
+            false,
+            "Array<Array<Box<T>, 1>, 1>"
+        )
+    );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_choice_payload_nested_array_record_pointer_ternary_field_type.or",
+        slot_pointer_items_cli_lines(
+            "    let item: Wrap<UInt32> = Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])",
+            false,
+            "Array<Array<Slot<T>, 1>, 1>"
+        ),
+        "raw_offset source pointer element type 'Byte' does not match expected pointer element type 'UInt32'"
+    );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() /
+            "orison_cli_choice_payload_nested_array_record_pointer_ternary_field_success.or",
+        slot_pointer_items_success_cli_lines(
+            "    let item: Wrap<UInt32> = Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])",
+            false,
+            "Array<Array<Slot<T>, 1>, 1>"
         )
     );
     assert_cli_parse_failure(
