@@ -2003,11 +2003,13 @@ private:
                 return diagnostic.line == expression.line;
             }
         );
-        auto diagnostic_count_before_record = diagnostics_.entries().size();
         if (!has_existing_expression_diagnostic && constructor_matches_expected_record &&
-            record_inference_needs_expected_context &&
-            validate_record_constructor_initializer(expression, *expected_type, context_description)) {
-            return diagnostics_.entries().size() != diagnostic_count_before_record;
+            record_inference_needs_expected_context) {
+            auto record_result =
+                validate_matching_record_constructor_initializer(expression, *expected_type, context_description);
+            if (record_result.has_value()) {
+                return *record_result;
+            }
         }
 
         auto diagnostic_count_before_choice = diagnostics_.entries().size();
@@ -3616,19 +3618,16 @@ private:
                                             conflicting_payload_indices.end(),
                                             index
                                         ) != conflicting_payload_indices.end();
-            auto is_matching_record_payload_constructor =
-                initializer.arguments[index].kind == syntax::ExpressionKind::call &&
-                initializer.arguments[index].left &&
-                initializer.arguments[index].left->kind == syntax::ExpressionKind::name &&
-                initializer.arguments[index].left->text == payload_type.name;
-            if (is_matching_record_payload_constructor) {
-                auto diagnostic_count_before_record = diagnostics_.entries().size();
-                if (validate_record_constructor_initializer(initializer.arguments[index], payload_type, "choice payload")) {
-                    if (diagnostics_.entries().size() != diagnostic_count_before_record) {
-                        return true;
-                    }
-                    continue;
+            auto record_result = validate_matching_record_constructor_initializer(
+                initializer.arguments[index],
+                payload_type,
+                "choice payload"
+            );
+            if (record_result.has_value()) {
+                if (*record_result) {
+                    return true;
                 }
+                continue;
             }
 
             if (has_binding_conflict) {
@@ -3739,19 +3738,16 @@ private:
                                             conflicting_field_indices.end(),
                                             index
                                         ) != conflicting_field_indices.end();
-            auto is_matching_nested_record_constructor =
-                initializer.arguments[index].kind == syntax::ExpressionKind::call &&
-                initializer.arguments[index].left &&
-                initializer.arguments[index].left->kind == syntax::ExpressionKind::name &&
-                initializer.arguments[index].left->text == field_type.name;
-            if (is_matching_nested_record_constructor) {
-                auto diagnostic_count_before_record = diagnostics_.entries().size();
-                if (validate_record_constructor_initializer(initializer.arguments[index], field_type, declared_context)) {
-                    if (diagnostics_.entries().size() != diagnostic_count_before_record) {
-                        return true;
-                    }
-                    continue;
+            auto record_result = validate_matching_record_constructor_initializer(
+                initializer.arguments[index],
+                field_type,
+                declared_context
+            );
+            if (record_result.has_value()) {
+                if (*record_result) {
+                    return true;
                 }
+                continue;
             }
 
             if (has_binding_conflict) {
@@ -3847,6 +3843,25 @@ private:
         return true;
     }
 
+    auto validate_matching_record_constructor_initializer(
+        syntax::ExpressionSyntax const& initializer,
+        syntax::TypeSyntax const& declared_type,
+        std::string_view declared_context
+    ) -> std::optional<bool> {
+        if (initializer.kind != syntax::ExpressionKind::call || !initializer.left ||
+            initializer.left->kind != syntax::ExpressionKind::name ||
+            initializer.left->text != declared_type.name) {
+            return std::nullopt;
+        }
+
+        auto diagnostic_count_before_record = diagnostics_.entries().size();
+        if (!validate_record_constructor_initializer(initializer, declared_type, declared_context)) {
+            return std::nullopt;
+        }
+
+        return diagnostics_.entries().size() != diagnostic_count_before_record;
+    }
+
     auto validate_record_constructor_expression(syntax::ExpressionSyntax const& expression) -> bool {
         if (expression.kind != syntax::ExpressionKind::call || !expression.left ||
             expression.left->kind != syntax::ExpressionKind::name) {
@@ -3915,9 +3930,10 @@ private:
                 continue;
             }
 
-            auto diagnostic_count_before_record = diagnostics_.entries().size();
-            if (validate_record_constructor_initializer(element, declared_element_type, "array element")) {
-                if (diagnostics_.entries().size() != diagnostic_count_before_record) {
+            auto record_result =
+                validate_matching_record_constructor_initializer(element, declared_element_type, "array element");
+            if (record_result.has_value()) {
+                if (*record_result) {
                     return true;
                 }
                 continue;
