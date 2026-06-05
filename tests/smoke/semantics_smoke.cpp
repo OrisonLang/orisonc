@@ -1396,6 +1396,43 @@ auto slot_pointer_items_return_success_fixture_lines(std::string_view return_lin
     return lines;
 }
 
+auto box_maybe_items_final_if_fixture_lines(std::string_view true_branch) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "choice Wrap<T>",
+        "    Items(value: Array<Array<Box<T>, 1>, 1>)",
+        "record Box<T>",
+        "    value: Maybe<T>",
+        "function demo(flag: Bool) -> Wrap<UInt32>",
+        "    if flag",
+        std::string(true_branch),
+        "    else",
+        "        Items([[Box(Some(1 as UInt32))]])",
+    };
+}
+
+auto slot_pointer_items_final_if_fixture_lines(std::string_view true_branch) -> std::vector<std::string> {
+    return {
+        "record Slot<T>",
+        "    ptr: Pointer<T>",
+        "choice Wrap<T>",
+        "    Items(value: Array<Array<Slot<T>, 1>, 1>)",
+        "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Wrap<UInt32>",
+        "    if flag",
+        std::string(true_branch),
+        "    else",
+        "        Items([[Slot(raw_offset(other, 1))]])",
+    };
+}
+
+auto slot_pointer_items_final_if_success_fixture_lines(std::string_view true_branch) -> std::vector<std::string> {
+    auto lines = slot_pointer_items_final_if_fixture_lines(true_branch);
+    lines[4] = "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> Wrap<UInt32>";
+    return lines;
+}
+
 auto box_maybe_holder_items_return_fixture_lines(std::string_view return_line) -> std::vector<std::string> {
     return {
         "choice Maybe<T>",
@@ -5702,6 +5739,44 @@ void test_final_choice_payload_nested_array_record_constructor_pointer_ternary_f
         "orison_semantics_final_choice_payload_nested_array_record_pointer_ternary_field_success.or",
         slot_pointer_items_return_success_fixture_lines(
             "    Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+}
+
+void test_final_if_choice_payload_nested_array_record_constructor_choice_ternary_field_failure() {
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_final_if_choice_payload_nested_array_record_choice_ternary_field_failure.or",
+        box_maybe_items_final_if_fixture_lines(
+            "        Items([[Box(flag ? Some(true) : Empty)]])"
+        ),
+        11
+    );
+}
+
+void test_final_if_choice_payload_nested_array_record_constructor_choice_ternary_field_success() {
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_final_if_choice_payload_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_items_final_if_fixture_lines(
+            "        Items([[Box(flag ? Some(1 as UInt32) : Empty)]])"
+        )
+    );
+}
+
+void test_final_if_choice_payload_nested_array_record_constructor_pointer_ternary_field_failure() {
+    assert_record_field_nested_array_pointer_context_failure(
+        "orison_semantics_final_if_choice_payload_nested_array_record_pointer_ternary_field_failure.or",
+        slot_pointer_items_final_if_fixture_lines(
+            "        Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        ),
+        8
+    );
+}
+
+void test_final_if_choice_payload_nested_array_record_constructor_pointer_ternary_field_success() {
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_final_if_choice_payload_nested_array_record_pointer_ternary_field_success.or",
+        slot_pointer_items_final_if_success_fixture_lines(
+            "        Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
         )
     );
 }
@@ -12269,6 +12344,10 @@ int main() {
     test_return_choice_payload_nested_array_record_constructor_pointer_ternary_field_success();
     test_final_choice_payload_nested_array_record_constructor_pointer_ternary_field_failure();
     test_final_choice_payload_nested_array_record_constructor_pointer_ternary_field_success();
+    test_final_if_choice_payload_nested_array_record_constructor_choice_ternary_field_failure();
+    test_final_if_choice_payload_nested_array_record_constructor_choice_ternary_field_success();
+    test_final_if_choice_payload_nested_array_record_constructor_pointer_ternary_field_failure();
+    test_final_if_choice_payload_nested_array_record_constructor_pointer_ternary_field_success();
     test_record_field_choice_payload_array_record_constructor_choice_ternary_field_failure();
     test_record_field_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_record_field_choice_payload_array_record_constructor_pointer_ternary_field_failure();

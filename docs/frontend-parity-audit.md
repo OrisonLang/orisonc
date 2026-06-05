@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: aggregate-context matrix review confirmed the remaining useful frontend gap is final-container propagation; final `if ... else` smoke coverage now pins `Items([[Box(...)]])` and `Items([[Slot(...)]])` arms, confirming return context flows through branch containers into choice-payload nested arrays.
 - 2026-06-05: holder choice-payload nested-array return and final-expression smoke coverage now pins `return Holder(Items([[Box(...)]]))`, final `Holder(Items([[Box(...)]]))`, and matching `Slot` pointer variants, confirming return context flows through record fields, choice constructors, and nested array payloads into generic record-constructor ternary fields.
 - 2026-06-05: choice-payload nested-array return and final-expression smoke coverage now pins `return Items([[Box(...)]])`, final `Items([[Box(...)]])`, and matching `Slot` pointer variants, confirming function return context flows through choice constructors into nested array payloads and generic record-constructor ternary fields.
 - 2026-06-05: holder choice-payload nested-array assignment smoke coverage now pins `holder = Holder(Items([[Box(...)]]))` and `holder = Holder(Items([[Slot(...)]]))`, confirming assignment target context flows through record fields, choice constructors, and nested array payloads into generic record-constructor ternary fields.
