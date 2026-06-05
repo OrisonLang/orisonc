@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: nested-array method-call argument smoke coverage now pins `consumer.consume([[Box(...)]])` and `consumer.consume([[flag ? Some(...) : Empty]])`, confirming receiver method parameter context flows into nested array literals and onward to record-constructor fields plus generic choice-constructor ternary arms.
 - 2026-06-05: nested-array function-call argument smoke coverage now pins `consume([[Box(...)]])` and `consume([[flag ? Some(...) : Empty]])`, confirming expected parameter context flows into nested array literals and onward to record-constructor fields plus generic choice-constructor ternary arms.
 - 2026-06-05: direct record-field nested-array smoke coverage now shares semantic and CLI assertion helpers across `Shelf`, `Rack`, and `ChoiceShelf` shapes, reducing duplicate temp-path and diagnostic wiring while keeping each aggregate source shape explicit.
 - 2026-06-05: direct record-field nested-array choice-element smoke coverage now pins `ChoiceShelf([[flag ? Some(...) : Empty]])`, confirming expected context flows from record fields into nested array literals and onward to generic choice-constructor ternary arms without record or choice-payload wrappers.
