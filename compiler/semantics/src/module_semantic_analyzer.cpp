@@ -3725,6 +3725,7 @@ private:
                 initializer.arguments,
                 record->generic_parameters,
                 bindings,
+                true,
                 true
             );
         }

@@ -1333,6 +1333,39 @@ auto slot_pointer_record_success_fixture_lines(std::string_view binding_line, bo
     return lines;
 }
 
+auto box_maybe_nested_array_field_fixture_lines(std::string_view binding_line) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record Box<T>",
+        "    value: Maybe<T>",
+        "record Shelf<T>",
+        "    boxes: Array<Array<Box<T>, 1>, 1>",
+        "function demo(flag: Bool) -> UInt32",
+        std::string(binding_line),
+        "    return 1",
+    };
+}
+
+auto slot_pointer_nested_array_field_fixture_lines(std::string_view binding_line) -> std::vector<std::string> {
+    return {
+        "record Slot<T>",
+        "    ptr: Pointer<T>",
+        "record Rack<T>",
+        "    slots: Array<Array<Slot<T>, 1>, 1>",
+        "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+        std::string(binding_line),
+        "    return 1",
+    };
+}
+
+auto slot_pointer_nested_array_field_success_fixture_lines(std::string_view binding_line) -> std::vector<std::string> {
+    auto lines = slot_pointer_nested_array_field_fixture_lines(binding_line);
+    lines[4] = "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32";
+    return lines;
+}
+
 auto analyze_orison_fixture(std::filesystem::path const& path) -> orison::semantics::SemanticAnalysisResult {
     auto source_file = orison::source::SourceFile::read(path);
     assert(source_file.has_value());
@@ -4928,6 +4961,66 @@ void test_nested_array_record_constructor_pointer_ternary_field_success() {
         slot_pointer_record_success_fixture_lines(
             "    let slots: Array<Array<Slot<UInt32>, 1>, 1> = [[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]",
             false
+        )
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_record_field_nested_array_record_constructor_choice_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_nested_array_record_choice_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        box_maybe_nested_array_field_fixture_lines(
+            "    let shelf: Shelf<UInt32> = Shelf([[Box(flag ? Some(true) : Empty)]])"
+        )
+    );
+
+    assert_choice_constructor_payload_mismatch_diagnostic(path, 10, "Bool", "UInt32");
+}
+
+void test_record_field_nested_array_record_constructor_choice_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_nested_array_record_choice_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        box_maybe_nested_array_field_fixture_lines(
+            "    let shelf: Shelf<UInt32> = Shelf([[Box(flag ? Some(1 as UInt32) : Empty)]])"
+        )
+    );
+
+    assert_fixture_success(path);
+}
+
+void test_record_field_nested_array_record_constructor_pointer_ternary_field_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_nested_array_record_pointer_ternary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        slot_pointer_nested_array_field_fixture_lines(
+            "    let rack: Rack<UInt32> = Rack([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+
+    assert_raw_offset_source_pointee_mismatch_diagnostic(path, 7, "Byte", "UInt32");
+}
+
+void test_record_field_nested_array_record_constructor_pointer_ternary_field_success() {
+    auto path =
+        std::filesystem::temp_directory_path() /
+        "orison_semantics_record_field_nested_array_record_pointer_ternary_field_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        slot_pointer_nested_array_field_success_fixture_lines(
+            "    let rack: Rack<UInt32> = Rack([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
         )
     );
 
@@ -11481,6 +11574,10 @@ int main() {
     test_nested_array_record_constructor_choice_ternary_field_success();
     test_nested_array_record_constructor_pointer_ternary_field_failure();
     test_nested_array_record_constructor_pointer_ternary_field_success();
+    test_record_field_nested_array_record_constructor_choice_ternary_field_failure();
+    test_record_field_nested_array_record_constructor_choice_ternary_field_success();
+    test_record_field_nested_array_record_constructor_pointer_ternary_field_failure();
+    test_record_field_nested_array_record_constructor_pointer_ternary_field_success();
     test_choice_payload_array_record_constructor_choice_ternary_field_failure();
     test_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_choice_payload_array_record_constructor_pointer_ternary_field_failure();
