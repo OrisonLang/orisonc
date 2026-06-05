@@ -342,6 +342,41 @@ auto slot_pointer_holder_items_assignment_success_cli_lines(std::string_view ass
     return lines;
 }
 
+auto box_maybe_items_return_cli_lines(std::string_view return_line) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "choice Wrap<T>",
+            "    Items(value: Array<Array<Box<T>, 1>, 1>)",
+            "record Box<T>",
+            "    value: Maybe<T>",
+            "function demo(flag: Bool) -> Wrap<UInt32>",
+            std::string(return_line),
+        }
+    );
+}
+
+auto slot_pointer_items_return_cli_lines(std::string_view return_line) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "record Slot<T>",
+            "    ptr: Pointer<T>",
+            "choice Wrap<T>",
+            "    Items(value: Array<Array<Slot<T>, 1>, 1>)",
+            "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> Wrap<UInt32>",
+            std::string(return_line),
+        }
+    );
+}
+
+auto slot_pointer_items_return_success_cli_lines(std::string_view return_line) -> std::vector<std::string> {
+    auto lines = slot_pointer_items_return_cli_lines(return_line);
+    lines[5] = "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> Wrap<UInt32>";
+    return lines;
+}
+
 void assert_cli_choice_payload_items_choice_ternary_failure(
     std::filesystem::path const& executable,
     std::string_view fixture_name,
@@ -3153,6 +3188,62 @@ int main() {
         "orison_cli_assignment_choice_payload_nested_array_record_pointer_ternary_field_success.or",
         slot_pointer_items_assignment_success_cli_lines(
             "    item = Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+    assert_cli_record_field_nested_array_choice_context_failure(
+        executable,
+        "orison_cli_return_choice_payload_nested_array_record_choice_ternary_field_type.or",
+        box_maybe_items_return_cli_lines(
+            "    return Items([[Box(flag ? Some(true) : Empty)]])"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_return_choice_payload_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_items_return_cli_lines(
+            "    return Items([[Box(flag ? Some(1 as UInt32) : Empty)]])"
+        )
+    );
+    assert_cli_record_field_nested_array_choice_context_failure(
+        executable,
+        "orison_cli_final_choice_payload_nested_array_record_choice_ternary_field_type.or",
+        box_maybe_items_return_cli_lines(
+            "    Items([[Box(flag ? Some(true) : Empty)]])"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_final_choice_payload_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_items_return_cli_lines(
+            "    Items([[Box(flag ? Some(1 as UInt32) : Empty)]])"
+        )
+    );
+    assert_cli_record_field_nested_array_pointer_context_failure(
+        executable,
+        "orison_cli_return_choice_payload_nested_array_record_pointer_ternary_field_type.or",
+        slot_pointer_items_return_cli_lines(
+            "    return Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_return_choice_payload_nested_array_record_pointer_ternary_field_success.or",
+        slot_pointer_items_return_success_cli_lines(
+            "    return Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+    assert_cli_record_field_nested_array_pointer_context_failure(
+        executable,
+        "orison_cli_final_choice_payload_nested_array_record_pointer_ternary_field_type.or",
+        slot_pointer_items_return_cli_lines(
+            "    Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_final_choice_payload_nested_array_record_pointer_ternary_field_success.or",
+        slot_pointer_items_return_success_cli_lines(
+            "    Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]])"
         )
     );
     assert_cli_choice_payload_items_choice_ternary_failure(

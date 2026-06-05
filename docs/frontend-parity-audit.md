@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: choice-payload nested-array return and final-expression smoke coverage now pins `return Items([[Box(...)]])`, final `Items([[Box(...)]])`, and matching `Slot` pointer variants, confirming function return context flows through choice constructors into nested array payloads and generic record-constructor ternary fields.
 - 2026-06-05: holder choice-payload nested-array assignment smoke coverage now pins `holder = Holder(Items([[Box(...)]]))` and `holder = Holder(Items([[Slot(...)]]))`, confirming assignment target context flows through record fields, choice constructors, and nested array payloads into generic record-constructor ternary fields.
 - 2026-06-05: choice-payload nested-array assignment smoke coverage now pins `item = Items([[Box(...)]])` and `item = Items([[Slot(...)]])`, confirming assignment target context flows through choice constructors into nested array payloads and onward to generic record-constructor ternary fields.
 - 2026-06-05: nested-array pointer assignment smoke coverage now pins `slots = [[Slot(flag ? raw_offset(...) : raw_offset(...))]]`, confirming assignment target context flows into nested array literals and onward to generic `Pointer<T>` record-constructor ternary fields.
