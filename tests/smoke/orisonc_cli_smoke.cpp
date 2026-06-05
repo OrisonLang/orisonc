@@ -495,6 +495,26 @@ auto maybe_nested_array_assignment_cli_lines(std::string_view assignment_line) -
     );
 }
 
+auto slot_pointer_nested_array_assignment_cli_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "record Slot<T>",
+            "    ptr: Pointer<T>",
+            "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+            "    var slots: Array<Array<Slot<UInt32>, 1>, 1> = [[Slot(raw_offset(other, 1))]]",
+            std::string(assignment_line),
+            "    return 1",
+        }
+    );
+}
+
+auto slot_pointer_nested_array_assignment_success_cli_lines(std::string_view assignment_line)
+    -> std::vector<std::string> {
+    auto lines = slot_pointer_nested_array_assignment_cli_lines(assignment_line);
+    lines[3] = "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32";
+    return lines;
+}
+
 template <typename SourceLines>
 void assert_cli_record_field_nested_array_choice_context_failure(
     std::filesystem::path const& executable,
@@ -2956,6 +2976,20 @@ int main() {
         "orison_cli_assignment_nested_array_choice_constructor_ternary_payload_success.or",
         maybe_nested_array_assignment_cli_lines(
             "    values = [[flag ? Some(1 as UInt32) : Empty]]"
+        )
+    );
+    assert_cli_record_field_nested_array_pointer_context_failure(
+        executable,
+        "orison_cli_assignment_nested_array_record_pointer_ternary_field_type.or",
+        slot_pointer_nested_array_assignment_cli_lines(
+            "    slots = [[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_assignment_nested_array_record_pointer_ternary_field_success.or",
+        slot_pointer_nested_array_assignment_success_cli_lines(
+            "    slots = [[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]"
         )
     );
     assert_cli_choice_payload_items_choice_ternary_failure(

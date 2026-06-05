@@ -1453,6 +1453,24 @@ auto maybe_nested_array_assignment_fixture_lines(std::string_view assignment_lin
     };
 }
 
+auto slot_pointer_nested_array_assignment_fixture_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    return {
+        "record Slot<T>",
+        "    ptr: Pointer<T>",
+        "unsafe function demo(flag: Bool, base: Pointer<Byte>, other: Pointer<UInt32>) -> UInt32",
+        "    var slots: Array<Array<Slot<UInt32>, 1>, 1> = [[Slot(raw_offset(other, 1))]]",
+        std::string(assignment_line),
+        "    return 1",
+    };
+}
+
+auto slot_pointer_nested_array_assignment_success_fixture_lines(std::string_view assignment_line)
+    -> std::vector<std::string> {
+    auto lines = slot_pointer_nested_array_assignment_fixture_lines(assignment_line);
+    lines[2] = "unsafe function demo(flag: Bool, base: Pointer<UInt32>, other: Pointer<UInt32>) -> UInt32";
+    return lines;
+}
+
 void assert_fixture_success(std::filesystem::path const& path);
 void assert_raw_offset_source_pointee_mismatch_diagnostic(
     std::filesystem::path const& path,
@@ -5271,6 +5289,25 @@ void test_assignment_nested_array_choice_constructor_ternary_payload_success() {
         "orison_semantics_assignment_nested_array_choice_constructor_ternary_payload_success.or",
         maybe_nested_array_assignment_fixture_lines(
             "    values = [[flag ? Some(1 as UInt32) : Empty]]"
+        )
+    );
+}
+
+void test_assignment_nested_array_record_constructor_pointer_ternary_field_failure() {
+    assert_record_field_nested_array_pointer_context_failure(
+        "orison_semantics_assignment_nested_array_record_pointer_ternary_field_failure.or",
+        slot_pointer_nested_array_assignment_fixture_lines(
+            "    slots = [[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]"
+        ),
+        6
+    );
+}
+
+void test_assignment_nested_array_record_constructor_pointer_ternary_field_success() {
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_assignment_nested_array_record_pointer_ternary_field_success.or",
+        slot_pointer_nested_array_assignment_success_fixture_lines(
+            "    slots = [[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]"
         )
     );
 }
@@ -11840,6 +11877,8 @@ int main() {
     test_assignment_nested_array_record_constructor_choice_ternary_field_success();
     test_assignment_nested_array_choice_constructor_ternary_payload_failure();
     test_assignment_nested_array_choice_constructor_ternary_payload_success();
+    test_assignment_nested_array_record_constructor_pointer_ternary_field_failure();
+    test_assignment_nested_array_record_constructor_pointer_ternary_field_success();
     test_choice_payload_array_record_constructor_choice_ternary_field_failure();
     test_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_choice_payload_array_record_constructor_pointer_ternary_field_failure();

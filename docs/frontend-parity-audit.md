@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: nested-array pointer assignment smoke coverage now pins `slots = [[Slot(flag ? raw_offset(...) : raw_offset(...))]]`, confirming assignment target context flows into nested array literals and onward to generic `Pointer<T>` record-constructor ternary fields.
 - 2026-06-05: nested-array assignment smoke coverage now pins `values = [[Box(...)]]` record-constructor fields and `values = [[flag ? Some(...) : Empty]]` choice elements, confirming assignment target context flows into nested array literals and onward to generic choice-constructor ternary arms.
 - 2026-06-05: nested-array function and method call argument smoke coverage now shares semantic and CLI source builders plus assertion helpers, preserving the explicit `consume(...)` and `consumer.consume(...)` matrix while reducing duplicate fixture declarations.
 - 2026-06-05: nested-array method-call argument smoke coverage now pins `consumer.consume([[Box(...)]])` and `consumer.consume([[flag ? Some(...) : Empty]])`, confirming receiver method parameter context flows into nested array literals and onward to record-constructor fields plus generic choice-constructor ternary arms.
