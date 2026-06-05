@@ -1427,6 +1427,32 @@ auto maybe_nested_array_argument_fixture_lines(std::string_view call_line, bool 
     return lines;
 }
 
+auto box_maybe_nested_array_assignment_fixture_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record Box<T>",
+        "    value: Maybe<T>",
+        "function demo(flag: Bool) -> UInt32",
+        "    var values: Array<Array<Box<UInt32>, 1>, 1> = [[Box(Some(1 as UInt32))]]",
+        std::string(assignment_line),
+        "    return 1",
+    };
+}
+
+auto maybe_nested_array_assignment_fixture_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    return {
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function demo(flag: Bool) -> UInt32",
+        "    var values: Array<Array<Maybe<UInt32>, 1>, 1> = [[Some(1 as UInt32)]]",
+        std::string(assignment_line),
+        "    return 1",
+    };
+}
+
 void assert_fixture_success(std::filesystem::path const& path);
 void assert_raw_offset_source_pointee_mismatch_diagnostic(
     std::filesystem::path const& path,
@@ -5207,6 +5233,44 @@ void test_method_argument_nested_array_choice_constructor_ternary_payload_succes
         maybe_nested_array_argument_fixture_lines(
             "    return consumer.consume([[flag ? Some(1 as UInt32) : Empty]])",
             true
+        )
+    );
+}
+
+void test_assignment_nested_array_record_constructor_choice_ternary_field_failure() {
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_assignment_nested_array_record_choice_ternary_field_failure.or",
+        box_maybe_nested_array_assignment_fixture_lines(
+            "    values = [[Box(flag ? Some(true) : Empty)]]"
+        ),
+        9
+    );
+}
+
+void test_assignment_nested_array_record_constructor_choice_ternary_field_success() {
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_assignment_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_nested_array_assignment_fixture_lines(
+            "    values = [[Box(flag ? Some(1 as UInt32) : Empty)]]"
+        )
+    );
+}
+
+void test_assignment_nested_array_choice_constructor_ternary_payload_failure() {
+    assert_record_field_nested_array_choice_context_failure(
+        "orison_semantics_assignment_nested_array_choice_constructor_ternary_payload_failure.or",
+        maybe_nested_array_assignment_fixture_lines(
+            "    values = [[flag ? Some(true) : Empty]]"
+        ),
+        7
+    );
+}
+
+void test_assignment_nested_array_choice_constructor_ternary_payload_success() {
+    assert_record_field_nested_array_context_success(
+        "orison_semantics_assignment_nested_array_choice_constructor_ternary_payload_success.or",
+        maybe_nested_array_assignment_fixture_lines(
+            "    values = [[flag ? Some(1 as UInt32) : Empty]]"
         )
     );
 }
@@ -11772,6 +11836,10 @@ int main() {
     test_method_argument_nested_array_record_constructor_choice_ternary_field_success();
     test_method_argument_nested_array_choice_constructor_ternary_payload_failure();
     test_method_argument_nested_array_choice_constructor_ternary_payload_success();
+    test_assignment_nested_array_record_constructor_choice_ternary_field_failure();
+    test_assignment_nested_array_record_constructor_choice_ternary_field_success();
+    test_assignment_nested_array_choice_constructor_ternary_payload_failure();
+    test_assignment_nested_array_choice_constructor_ternary_payload_success();
     test_choice_payload_array_record_constructor_choice_ternary_field_failure();
     test_choice_payload_array_record_constructor_choice_ternary_field_success();
     test_choice_payload_array_record_constructor_pointer_ternary_field_failure();

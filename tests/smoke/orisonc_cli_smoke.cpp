@@ -465,6 +465,36 @@ auto maybe_nested_array_argument_cli_lines(
     return cli_module_lines(lines);
 }
 
+auto box_maybe_nested_array_assignment_cli_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: Maybe<T>",
+            "function demo(flag: Bool) -> UInt32",
+            "    var values: Array<Array<Box<UInt32>, 1>, 1> = [[Box(Some(1 as UInt32))]]",
+            std::string(assignment_line),
+            "    return 1",
+        }
+    );
+}
+
+auto maybe_nested_array_assignment_cli_lines(std::string_view assignment_line) -> std::vector<std::string> {
+    return cli_module_lines(
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo(flag: Bool) -> UInt32",
+            "    var values: Array<Array<Maybe<UInt32>, 1>, 1> = [[Some(1 as UInt32)]]",
+            std::string(assignment_line),
+            "    return 1",
+        }
+    );
+}
+
 template <typename SourceLines>
 void assert_cli_record_field_nested_array_choice_context_failure(
     std::filesystem::path const& executable,
@@ -2898,6 +2928,34 @@ int main() {
         maybe_nested_array_argument_cli_lines(
             "    return consumer.consume([[flag ? Some(1 as UInt32) : Empty]])",
             true
+        )
+    );
+    assert_cli_record_field_nested_array_choice_context_failure(
+        executable,
+        "orison_cli_assignment_nested_array_record_choice_ternary_field_type.or",
+        box_maybe_nested_array_assignment_cli_lines(
+            "    values = [[Box(flag ? Some(true) : Empty)]]"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_assignment_nested_array_record_choice_ternary_field_success.or",
+        box_maybe_nested_array_assignment_cli_lines(
+            "    values = [[Box(flag ? Some(1 as UInt32) : Empty)]]"
+        )
+    );
+    assert_cli_record_field_nested_array_choice_context_failure(
+        executable,
+        "orison_cli_assignment_nested_array_choice_constructor_ternary_payload_type.or",
+        maybe_nested_array_assignment_cli_lines(
+            "    values = [[flag ? Some(true) : Empty]]"
+        )
+    );
+    assert_cli_record_field_nested_array_context_success(
+        executable,
+        "orison_cli_assignment_nested_array_choice_constructor_ternary_payload_success.or",
+        maybe_nested_array_assignment_cli_lines(
+            "    values = [[flag ? Some(1 as UInt32) : Empty]]"
         )
     );
     assert_cli_choice_payload_items_choice_ternary_failure(
