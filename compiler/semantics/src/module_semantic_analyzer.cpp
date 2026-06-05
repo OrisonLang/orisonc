@@ -714,6 +714,24 @@ private:
         return substituted;
     }
 
+    auto contains_generic_parameter(
+        syntax::TypeSyntax const& type,
+        std::vector<std::string> const& generic_parameters
+    ) const -> bool {
+        if (type.generic_arguments.empty() &&
+            std::find(generic_parameters.begin(), generic_parameters.end(), type.name) != generic_parameters.end()) {
+            return true;
+        }
+
+        return std::any_of(
+            type.generic_arguments.begin(),
+            type.generic_arguments.end(),
+            [&](syntax::TypeSyntax const& argument) {
+                return contains_generic_parameter(argument, generic_parameters);
+            }
+        );
+    }
+
     void collect_receiver_generic_placeholder_names(
         syntax::TypeSyntax const& type,
         std::unordered_set<std::string>& placeholders
@@ -1959,6 +1977,32 @@ private:
         }
 
         auto inferred_type_name = infer_expression_type_name(expression);
+        auto inferred_type = parse_rendered_type_name(inferred_type_name);
+        auto expected_type = parse_rendered_type_name(expected_type_name);
+        auto const* expected_record =
+            expected_type.has_value() ? find_record_declaration_by_name(expected_type->name) : nullptr;
+        auto record_inference_needs_expected_context =
+            inferred_type_name.empty() ||
+            (expected_record != nullptr && inferred_type.has_value() &&
+             contains_generic_parameter(*inferred_type, expected_record->generic_parameters));
+        auto constructor_matches_expected_record =
+            expression.kind == syntax::ExpressionKind::call && expression.left &&
+            expression.left->kind == syntax::ExpressionKind::name && expected_type.has_value() &&
+            expression.left->text == expected_type->name;
+        auto has_existing_expression_diagnostic = std::any_of(
+            diagnostics_.entries().begin(),
+            diagnostics_.entries().end(),
+            [&](auto const& diagnostic) {
+                return diagnostic.line == expression.line;
+            }
+        );
+        auto diagnostic_count_before_record = diagnostics_.entries().size();
+        if (!has_existing_expression_diagnostic && constructor_matches_expected_record &&
+            record_inference_needs_expected_context &&
+            validate_record_constructor_initializer(expression, *expected_type, context_description)) {
+            return diagnostics_.entries().size() != diagnostic_count_before_record;
+        }
+
         auto diagnostic_count_before_choice = diagnostics_.entries().size();
         if (validate_choice_constructor_expression(expression, expected_type_name)) {
             return diagnostics_.entries().size() != diagnostic_count_before_choice;
@@ -3697,6 +3741,58 @@ private:
                 continue;
             }
 
+            auto read_result_type_mismatch = validate_read_result_type(
+                initializer.arguments[index],
+                field_type_name,
+                initializer.arguments[index].line,
+                "record constructor field '" + record->fields[index].name + "'"
+            );
+            if (read_result_type_mismatch) {
+                return true;
+            }
+
+            if (is_pointer_type(field_type)) {
+                auto saved_expected_pointer_type_name = expected_pointer_type_name_;
+                expected_pointer_type_name_ = field_type_name;
+                auto diagnostic_count_before_pointer = diagnostics_.entries().size();
+                validate_pointer_typed_expression(
+                    initializer.arguments[index],
+                    initializer.arguments[index].line,
+                    "record constructor pointer field '" + record->fields[index].name + "'"
+                );
+                expected_pointer_type_name_ = saved_expected_pointer_type_name;
+                if (diagnostics_.entries().size() != diagnostic_count_before_pointer) {
+                    return true;
+                }
+            }
+
+            if (is_address_type(field_type)) {
+                auto diagnostic_count_before_address = diagnostics_.entries().size();
+                validate_address_typed_expression(
+                    initializer.arguments[index],
+                    initializer.arguments[index].line,
+                    "record constructor address field '" + record->fields[index].name + "'"
+                );
+                if (diagnostics_.entries().size() != diagnostic_count_before_address) {
+                    return true;
+                }
+            }
+
+            if (initializer.arguments[index].kind == syntax::ExpressionKind::ternary) {
+                auto diagnostic_count_before_typed = diagnostics_.entries().size();
+                if (validate_typed_expression_compatibility(
+                        initializer.arguments[index],
+                        field_type_name,
+                        initializer.arguments[index].line,
+                        "record constructor field '" + record->fields[index].name + "'"
+                    )) {
+                    if (diagnostics_.entries().size() != diagnostic_count_before_typed) {
+                        return true;
+                    }
+                    continue;
+                }
+            }
+
             if (!is_constant_initializer_type_compatible(
                     initializer.arguments[index],
                     argument_type_name,
@@ -3727,6 +3823,11 @@ private:
 
         auto record_type_name = find_record_constructor_type_name(expression);
         auto record_type = parse_rendered_type_name(record_type_name);
+        if (record_type.has_value() && !record->generic_parameters.empty() &&
+            contains_generic_parameter(*record_type, record->generic_parameters)) {
+            return true;
+        }
+
         return validate_record_constructor_initializer(
             expression,
             record_type.value_or(record_type_for_declaration(*record)),
