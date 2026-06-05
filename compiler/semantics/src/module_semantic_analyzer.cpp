@@ -3717,6 +3717,21 @@ private:
                                             conflicting_field_indices.end(),
                                             index
                                         ) != conflicting_field_indices.end();
+            auto is_matching_nested_record_constructor =
+                initializer.arguments[index].kind == syntax::ExpressionKind::call &&
+                initializer.arguments[index].left &&
+                initializer.arguments[index].left->kind == syntax::ExpressionKind::name &&
+                initializer.arguments[index].left->text == field_type.name;
+            if (is_matching_nested_record_constructor) {
+                auto diagnostic_count_before_record = diagnostics_.entries().size();
+                if (validate_record_constructor_initializer(initializer.arguments[index], field_type, declared_context)) {
+                    if (diagnostics_.entries().size() != diagnostic_count_before_record) {
+                        return true;
+                    }
+                    continue;
+                }
+            }
+
             if (has_binding_conflict) {
                 diagnostics_.error(
                     initializer.arguments[index].line,
