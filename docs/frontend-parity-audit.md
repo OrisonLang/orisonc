@@ -28,6 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: aggregate-context closure pass now treats expected-context propagation as broad enough to stop expanding by default; `docs/lowering-prep.md` records the first LLVM IR emission target and the minimal AST plus semantic facts needed before lowering work starts.
 - 2026-06-05: holder final `if ... else` aggregate smoke coverage now pins `Holder(Items([[Box(...)]]))` and `Holder(Items([[Slot(...)]]))` arms, confirming return context flows through branch containers, record fields, choice constructors, and nested array payloads.
 - 2026-06-05: aggregate-context matrix review confirmed the remaining useful frontend gap is final-container propagation; final `if ... else` smoke coverage now pins `Items([[Box(...)]])` and `Items([[Slot(...)]])` arms, confirming return context flows through branch containers into choice-payload nested arrays.
 - 2026-06-05: holder choice-payload nested-array return and final-expression smoke coverage now pins `return Holder(Items([[Box(...)]]))`, final `Holder(Items([[Box(...)]]))`, and matching `Slot` pointer variants, confirming return context flows through record fields, choice constructors, and nested array payloads into generic record-constructor ternary fields.
