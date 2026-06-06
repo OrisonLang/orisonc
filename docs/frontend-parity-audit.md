@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: lowering now supports single fixed-width integer parameters in same-module functions and calls, binding incoming parameters as local SSA values and emitting typed call operands such as `call i32 @increment(i32 41)`.
 - 2026-06-05: lowering now supports zero-argument same-module function calls through a precomputed signature map, emitting call temporaries such as `%tmp0 = call i32 @one()` and allowing call results to feed the existing `+` lowering path.
 - 2026-06-05: lowering now emits simple fixed-width integer `+` expressions as SSA temporaries, reusing the immutable binding value map for operands such as `%tmp0 = add i32 %left, %right` before the final return.
 - 2026-06-05: lowering now supports a leading immutable `let` initialized from the existing constant integer/cast slice and a final name return, emitting a simple SSA local such as `%value = add i32 0, 1` before `ret i32 %value`.

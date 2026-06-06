@@ -3,8 +3,8 @@
 ## Status
 
 Started: the lowering library scaffold now emits text LLVM IR for the initial constant-returning `UInt32`
-function slice, leading immutable `let` bindings, simple fixed-width integer `+`, zero-argument same-module
-function calls, and diagnostics for unsupported shapes.
+function slice, leading immutable `let` bindings, simple fixed-width integer `+`, same-module function calls,
+single-parameter fixed-width integer functions, and diagnostics for unsupported shapes.
 
 ## Aggregate-context closure
 
@@ -59,6 +59,10 @@ Simple binary `+` now lowers through that same value map, emitting a temporary s
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
+Single fixed-width integer parameters now lower into function signatures and the local value map, so
+`function increment(value: UInt32) -> UInt32` emits `define i32 @increment(i32 %value)` and calls emit
+typed operands such as `call i32 @increment(i32 41)`.
+
 ## Required semantic facts
 
 The current semantic pass primarily validates and diagnoses. First lowering should either consume or introduce a compact checked representation with:
@@ -72,6 +76,6 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 ## Suggested implementation order
 
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
-2. Add parameters now that name binding handles locals plus same-module call results.
+2. Add multi-parameter call coverage after single-parameter lowering remains stable.
 3. Add more arithmetic and comparison operators after the temporary/value model is stable.
 4. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.

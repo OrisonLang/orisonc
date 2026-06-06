@@ -7,6 +7,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace orison::lowering {
 namespace {
@@ -18,6 +19,7 @@ struct LoweredExpression {
 
 struct FunctionSignature {
     std::string return_type;
+    std::vector<std::string> parameter_types;
 };
 
 struct LoweringContext {
@@ -131,15 +133,41 @@ auto lowered_expression(
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
-        expression.left->kind == syntax::ExpressionKind::name && expression.arguments.empty()) {
+        expression.left->kind == syntax::ExpressionKind::name) {
         auto function = context.functions.find(expression.left->text);
         if (function == context.functions.end() || function->second.return_type != expected_llvm_type) {
             return std::nullopt;
         }
+        if (function->second.parameter_types.size() != expression.arguments.size()) {
+            return std::nullopt;
+        }
+
+        auto arguments = std::vector<LoweredExpression> {};
+        arguments.reserve(expression.arguments.size());
+        for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+            auto argument = lowered_expression(
+                expression.arguments[index],
+                function->second.parameter_types[index],
+                context,
+                state,
+                output
+            );
+            if (!argument.has_value()) {
+                return std::nullopt;
+            }
+            arguments.push_back(std::move(*argument));
+        }
 
         auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
         output << "  " << temporary_name << " = call " << function->second.return_type;
-        output << " @" << expression.left->text << "()\n";
+        output << " @" << expression.left->text << "(";
+        for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
+            if (index > 0) {
+                output << ", ";
+            }
+            output << arguments[index].type << " " << arguments[index].value;
+        }
+        output << ")\n";
         return LoweredExpression {
             .type = function->second.return_type,
             .value = std::move(temporary_name),
@@ -162,6 +190,21 @@ auto return_expression_for(syntax::StatementSyntax const& statement) -> syntax::
 
 auto local_value_name(std::string_view name) -> std::string {
     return "%" + std::string(name);
+}
+
+auto llvm_parameter_types_for(
+    std::vector<syntax::ParameterSyntax> const& parameters
+) -> std::optional<std::vector<std::string>> {
+    auto parameter_types = std::vector<std::string> {};
+    parameter_types.reserve(parameters.size());
+    for (auto const& parameter : parameters) {
+        auto parameter_type = llvm_type_for(parameter.type);
+        if (!parameter_type.has_value() || *parameter_type == "void") {
+            return std::nullopt;
+        }
+        parameter_types.emplace_back(*parameter_type);
+    }
+    return parameter_types;
 }
 
 auto lower_let_binding(
@@ -205,29 +248,50 @@ void emit_function(
         diagnostics.error(function.line, "lowering does not yet support generic functions");
         return;
     }
-    if (!function.parameters.empty()) {
-        diagnostics.error(function.line, "lowering does not yet support function parameters");
-        return;
-    }
-
     auto llvm_return_type = llvm_type_for(function.return_type);
     if (!llvm_return_type.has_value()) {
         diagnostics.error(function.line, "lowering does not yet support this function return type");
         return;
     }
 
+    auto llvm_parameter_types = llvm_parameter_types_for(function.parameters);
+    if (!llvm_parameter_types.has_value()) {
+        diagnostics.error(function.line, "lowering does not yet support this function parameter type");
+        return;
+    }
+
     if (*llvm_return_type == "void") {
-        output << "define void @" << function.name << "() {\n";
+        output << "define void @" << function.name << "(";
+        for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+            if (index > 0) {
+                output << ", ";
+            }
+            output << (*llvm_parameter_types)[index] << " " << local_value_name(function.parameters[index].name);
+        }
+        output << ") {\n";
         output << "entry:\n";
         output << "  ret void\n";
         output << "}\n";
         return;
     }
 
-    output << "define " << *llvm_return_type << " @" << function.name << "() {\n";
+    output << "define " << *llvm_return_type << " @" << function.name << "(";
+    for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+        if (index > 0) {
+            output << ", ";
+        }
+        output << (*llvm_parameter_types)[index] << " " << local_value_name(function.parameters[index].name);
+    }
+    output << ") {\n";
     output << "entry:\n";
 
     auto state = FunctionLoweringState {};
+    for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+        state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
+            .type = (*llvm_parameter_types)[index],
+            .value = local_value_name(function.parameters[index].name),
+        });
+    }
     auto const* expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
     for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
         auto const& statement = function.body_statements[index];
@@ -270,8 +334,13 @@ auto collect_lowering_context(syntax::ModuleSyntax const& module) -> LoweringCon
         if (!return_type.has_value()) {
             continue;
         }
+        auto parameter_types = llvm_parameter_types_for(function.parameters);
+        if (!parameter_types.has_value()) {
+            continue;
+        }
         context.functions.emplace(function.name, FunctionSignature {
             .return_type = std::string(*return_type),
+            .parameter_types = std::move(*parameter_types),
         });
     }
     return context;
