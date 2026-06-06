@@ -213,6 +213,40 @@ void test_emit_single_uint32_parameter_function_call_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_multi_uint32_parameter_function_call_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_multi_uint32_parameter_call.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function add(left: UInt32, right: UInt32) -> UInt32\n"
+        "    left + right\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    add(40 as UInt32, 2 as UInt32)\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @add(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = add i32 %left, %right\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = call i32 @add(i32 40, i32 2)\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_reject_unsupported_return_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_expression.or";
     auto result = lower_source(
@@ -237,6 +271,7 @@ auto main() -> int {
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
+    test_emit_multi_uint32_parameter_function_call_return();
     test_reject_unsupported_return_expression();
     return 0;
 }

@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: lowering now has golden coverage for multi-parameter fixed-width integer functions and calls, including signatures such as `define i32 @add(i32 %left, i32 %right)` and calls such as `call i32 @add(i32 40, i32 2)`.
 - 2026-06-05: lowering now supports single fixed-width integer parameters in same-module functions and calls, binding incoming parameters as local SSA values and emitting typed call operands such as `call i32 @increment(i32 41)`.
 - 2026-06-05: lowering now supports zero-argument same-module function calls through a precomputed signature map, emitting call temporaries such as `%tmp0 = call i32 @one()` and allowing call results to feed the existing `+` lowering path.
 - 2026-06-05: lowering now emits simple fixed-width integer `+` expressions as SSA temporaries, reusing the immutable binding value map for operands such as `%tmp0 = add i32 %left, %right` before the final return.
