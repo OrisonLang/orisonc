@@ -2,8 +2,8 @@
 
 ## Status
 
-Started: the first lowering library scaffold now emits text LLVM IR for the initial constant-returning `UInt32`
-function slice and reports diagnostics for unsupported shapes.
+Started: the lowering library scaffold now emits text LLVM IR for the initial constant-returning `UInt32`
+function slice, a leading immutable `let` bound to that constant, and diagnostics for unsupported shapes.
 
 ## Aggregate-context closure
 
@@ -42,6 +42,16 @@ The first scaffold covers that slice through `orison_lowering`: it consumes a pa
 successful semantic result, emits `define i32 @main() { ... ret i32 1 }` for `1 as UInt32`, and keeps unsupported
 function shapes or return expressions diagnostic-only rather than silently generating partial IR.
 
+The next slice adds a narrow symbol-to-IR value map for leading immutable bindings, so:
+
+```text
+function main() -> UInt32
+    let value = 1 as UInt32
+    value
+```
+
+emits `%value = add i32 0, 1` followed by `ret i32 %value`.
+
 ## Required semantic facts
 
 The current semantic pass primarily validates and diagnoses. First lowering should either consume or introduce a compact checked representation with:
@@ -55,6 +65,6 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 ## Suggested implementation order
 
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
-2. Add local immutable binding lowering for a single literal binding plus final name return.
-3. Add simple integer arithmetic only after name binding and SSA temporary naming are stable.
+2. Add simple integer arithmetic once SSA temporary naming is stable.
+3. Add parameters only after name binding handles both locals and incoming arguments.
 4. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.

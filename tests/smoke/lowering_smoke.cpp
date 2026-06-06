@@ -57,6 +57,32 @@ void test_emit_constant_uint32_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_let_bound_uint32_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_let_bound_uint32.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let value = 1 as UInt32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %value = add i32 0, 1\n"
+        "  ret i32 %value\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_reject_unsupported_return_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_expression.or";
     auto result = lower_source(
@@ -76,6 +102,7 @@ void test_reject_unsupported_return_expression() {
 
 auto main() -> int {
     test_emit_constant_uint32_return();
+    test_emit_let_bound_uint32_return();
     test_reject_unsupported_return_expression();
     return 0;
 }

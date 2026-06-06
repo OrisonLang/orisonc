@@ -5,6 +5,8 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_map>
+#include <utility>
 
 namespace orison::lowering {
 namespace {
@@ -12,6 +14,10 @@ namespace {
 struct LoweredExpression {
     std::string type;
     std::string value;
+};
+
+struct FunctionLoweringState {
+    std::unordered_map<std::string, LoweredExpression> immutable_bindings;
 };
 
 auto has_generic_arguments(syntax::TypeSyntax const& type) -> bool {
@@ -67,10 +73,22 @@ auto lowered_integer_literal(
 
 auto lowered_expression(
     syntax::ExpressionSyntax const& expression,
-    std::string_view expected_llvm_type
+    std::string_view expected_llvm_type,
+    FunctionLoweringState const& state
 ) -> std::optional<LoweredExpression> {
     if (auto literal = lowered_integer_literal(expression, expected_llvm_type)) {
         return literal;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto binding = state.immutable_bindings.find(expression.text);
+        if (binding == state.immutable_bindings.end()) {
+            return std::nullopt;
+        }
+        if (binding->second.type != expected_llvm_type) {
+            return std::nullopt;
+        }
+        return binding->second;
     }
 
     if (expression.kind == syntax::ExpressionKind::cast && expression.left != nullptr) {
@@ -87,14 +105,7 @@ auto lowered_expression(
     return std::nullopt;
 }
 
-auto return_expression_for(
-    syntax::FunctionSyntax const& function
-) -> syntax::ExpressionSyntax const* {
-    if (function.body_statements.size() != 1) {
-        return nullptr;
-    }
-
-    auto const& statement = function.body_statements.front();
+auto return_expression_for(syntax::StatementSyntax const& statement) -> syntax::ExpressionSyntax const* {
     if (statement.kind == syntax::StatementKind::return_statement) {
         return &statement.expression;
     }
@@ -103,6 +114,32 @@ auto return_expression_for(
     }
 
     return nullptr;
+}
+
+auto local_value_name(std::string_view name) -> std::string {
+    return "%" + std::string(name);
+}
+
+auto lower_let_binding(
+    syntax::StatementSyntax const& statement,
+    std::string_view expected_llvm_type,
+    FunctionLoweringState& state,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    auto lowered = lowered_expression(statement.expression, expected_llvm_type, state);
+    if (!lowered.has_value()) {
+        diagnostics.error(statement.line, "lowering does not yet support this let initializer");
+        return false;
+    }
+
+    auto local_name = local_value_name(statement.name);
+    output << "  " << local_name << " = add " << lowered->type << " 0, " << lowered->value << "\n";
+    state.immutable_bindings.emplace(statement.name, LoweredExpression {
+        .type = lowered->type,
+        .value = std::move(local_name),
+    });
+    return true;
 }
 
 void emit_function(
@@ -141,20 +178,41 @@ void emit_function(
         return;
     }
 
-    auto const* expression = return_expression_for(function);
-    if (expression == nullptr) {
-        diagnostics.error(function.line, "lowering requires a single return or final expression statement");
+    output << "define " << *llvm_return_type << " @" << function.name << "() {\n";
+    output << "entry:\n";
+
+    auto state = FunctionLoweringState {};
+    auto const* expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
+    for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
+        auto const& statement = function.body_statements[index];
+        auto is_last_statement = index + 1 == function.body_statements.size();
+        if (!is_last_statement && statement.kind == syntax::StatementKind::let_binding) {
+            if (!lower_let_binding(statement, *llvm_return_type, state, diagnostics, output)) {
+                return;
+            }
+            continue;
+        }
+
+        if (is_last_statement) {
+            expression = return_expression_for(statement);
+            break;
+        }
+
+        diagnostics.error(statement.line, "lowering does not yet support this statement");
         return;
     }
 
-    auto lowered = lowered_expression(*expression, *llvm_return_type);
+    if (expression == nullptr) {
+        diagnostics.error(function.line, "lowering requires leading let bindings followed by a return or final expression");
+        return;
+    }
+
+    auto lowered = lowered_expression(*expression, *llvm_return_type, state);
     if (!lowered.has_value()) {
         diagnostics.error(expression->line, "lowering does not yet support this return expression");
         return;
     }
 
-    output << "define " << lowered->type << " @" << function.name << "() {\n";
-    output << "entry:\n";
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
     output << "}\n";
 }
