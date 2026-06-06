@@ -143,6 +143,76 @@ void test_emit_uint32_arithmetic_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_uint32_comparison_returns() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_uint32_comparisons.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function is_equal(left: UInt32, right: UInt32) -> Bool\n"
+        "    left == right\n"
+        "\n"
+        "function is_different(left: UInt32, right: UInt32) -> Bool\n"
+        "    left != right\n"
+        "\n"
+        "function is_less(left: UInt32, right: UInt32) -> Bool\n"
+        "    left < right\n"
+        "\n"
+        "function is_at_most(left: UInt32, right: UInt32) -> Bool\n"
+        "    left <= right\n"
+        "\n"
+        "function is_greater(left: UInt32, right: UInt32) -> Bool\n"
+        "    left > right\n"
+        "\n"
+        "function is_at_least(left: UInt32, right: UInt32) -> Bool\n"
+        "    left >= right\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i1 @is_equal(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp eq i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @is_different(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp ne i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @is_less(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp ult i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @is_at_most(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp ule i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @is_greater(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp ugt i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @is_at_least(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp uge i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -300,6 +370,7 @@ auto main() -> int {
     test_emit_let_bound_uint32_return();
     test_emit_uint32_add_return();
     test_emit_uint32_arithmetic_return();
+    test_emit_uint32_comparison_returns();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();

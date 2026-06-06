@@ -98,6 +98,68 @@ auto llvm_binary_instruction_for(std::string_view operator_text) -> std::optiona
     return std::nullopt;
 }
 
+auto llvm_integer_comparison_predicate_for(std::string_view operator_text) -> std::optional<std::string_view> {
+    if (operator_text == "==") {
+        return "eq";
+    }
+    if (operator_text == "!=") {
+        return "ne";
+    }
+    if (operator_text == "<") {
+        return "ult";
+    }
+    if (operator_text == "<=") {
+        return "ule";
+    }
+    if (operator_text == ">") {
+        return "ugt";
+    }
+    if (operator_text == ">=") {
+        return "uge";
+    }
+    return std::nullopt;
+}
+
+auto is_integer_llvm_type(std::string_view type) -> bool {
+    return type == "i8" || type == "i16" || type == "i32" || type == "i64";
+}
+
+auto inferred_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto binding = state.immutable_bindings.find(expression.text);
+        if (binding == state.immutable_bindings.end()) {
+            return std::nullopt;
+        }
+        return binding->second.type;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::cast) {
+        syntax::TypeSyntax target_type {
+            .name = expression.text,
+        };
+        auto cast_type = llvm_type_for(target_type);
+        if (!cast_type.has_value()) {
+            return std::nullopt;
+        }
+        return std::string(*cast_type);
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
+        auto function = context.functions.find(expression.left->text);
+        if (function == context.functions.end()) {
+            return std::nullopt;
+        }
+        return function->second.return_type;
+    }
+
+    return std::nullopt;
+}
+
 auto lowered_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -133,6 +195,33 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&
         expression.right != nullptr) {
+        if (expected_llvm_type == "i1") {
+            auto predicate = llvm_integer_comparison_predicate_for(expression.text);
+            if (predicate.has_value()) {
+                auto operand_type = inferred_expression_type(*expression.left, context, state);
+                if (!operand_type.has_value()) {
+                    operand_type = inferred_expression_type(*expression.right, context, state);
+                }
+                if (!operand_type.has_value() || !is_integer_llvm_type(*operand_type)) {
+                    return std::nullopt;
+                }
+
+                auto left = lowered_expression(*expression.left, *operand_type, context, state, output);
+                auto right = lowered_expression(*expression.right, *operand_type, context, state, output);
+                if (!left.has_value() || !right.has_value() || left->type != right->type) {
+                    return std::nullopt;
+                }
+
+                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+                output << "  " << temporary_name << " = icmp " << *predicate << " " << left->type << " ";
+                output << left->value << ", " << right->value << "\n";
+                return LoweredExpression {
+                    .type = "i1",
+                    .value = std::move(temporary_name),
+                };
+            }
+        }
+
         auto instruction = llvm_binary_instruction_for(expression.text);
         if (!instruction.has_value()) {
             return std::nullopt;
