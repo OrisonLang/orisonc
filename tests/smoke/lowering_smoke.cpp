@@ -143,6 +143,40 @@ void test_emit_uint32_arithmetic_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_int32_division_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_int32_division.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function divide(left: Int32, right: Int32) -> Int32\n"
+        "    left / right\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    divide(8 as Int32, 2 as Int32)\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @divide(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = sdiv i32 %left, %right\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = call i32 @divide(i32 8, i32 2)\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_uint32_comparison_returns() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_uint32_comparisons.or";
     auto result = lower_source(
@@ -206,6 +240,58 @@ void test_emit_uint32_comparison_returns() {
         "define i1 @is_at_least(i32 %left, i32 %right) {\n"
         "entry:\n"
         "  %tmp0 = icmp uge i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_emit_int32_comparison_returns() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_int32_comparisons.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function is_less(left: Int32, right: Int32) -> Bool\n"
+        "    left < right\n"
+        "\n"
+        "function is_at_most(left: Int32, right: Int32) -> Bool\n"
+        "    left <= right\n"
+        "\n"
+        "function is_greater(left: Int32, right: Int32) -> Bool\n"
+        "    left > right\n"
+        "\n"
+        "function is_at_least(left: Int32, right: Int32) -> Bool\n"
+        "    left >= right\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i1 @is_less(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp slt i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @is_at_most(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp sle i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @is_greater(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp sgt i32 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @is_at_least(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp sge i32 %left, %right\n"
         "  ret i1 %tmp0\n"
         "}\n"
         "\n"
@@ -370,7 +456,9 @@ auto main() -> int {
     test_emit_let_bound_uint32_return();
     test_emit_uint32_add_return();
     test_emit_uint32_arithmetic_return();
+    test_emit_int32_division_return();
     test_emit_uint32_comparison_returns();
+    test_emit_int32_comparison_returns();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();

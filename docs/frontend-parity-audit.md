@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: lowering now preserves fixed-width integer signedness in lowered value metadata, so signed `Int*` division emits LLVM `sdiv` and signed comparisons emit `slt`/`sle`/`sgt`/`sge` while unsigned paths keep `udiv` and unsigned predicates.
 - 2026-06-05: lowering now emits fixed-width integer comparisons returning `Bool`/`i1` through LLVM `icmp`, including `eq`, `ne`, and unsigned ordering predicates for the current `UInt32` path.
 - 2026-06-05: lowering now maps fixed-width integer `-`, `*`, and `/` through the existing recursive SSA path, emitting LLVM `sub`, `mul`, and unsigned `udiv` alongside the existing `add` coverage.
 - 2026-06-05: lowering now has golden coverage for multi-parameter fixed-width integer functions and calls, including signatures such as `define i32 @add(i32 %left, i32 %right)` and calls such as `call i32 @add(i32 40, i32 2)`.
