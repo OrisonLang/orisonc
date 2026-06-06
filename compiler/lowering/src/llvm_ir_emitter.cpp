@@ -18,6 +18,7 @@ struct LoweredExpression {
 
 struct FunctionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
+    std::size_t next_temporary_index = 0;
 };
 
 auto has_generic_arguments(syntax::TypeSyntax const& type) -> bool {
@@ -74,7 +75,8 @@ auto lowered_integer_literal(
 auto lowered_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
-    FunctionLoweringState const& state
+    FunctionLoweringState& state,
+    std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (auto literal = lowered_integer_literal(expression, expected_llvm_type)) {
         return literal;
@@ -102,6 +104,23 @@ auto lowered_expression(
         return lowered_integer_literal(*expression.left, expected_llvm_type);
     }
 
+    if (expression.kind == syntax::ExpressionKind::binary && expression.text == "+" &&
+        expression.left != nullptr && expression.right != nullptr) {
+        auto left = lowered_expression(*expression.left, expected_llvm_type, state, output);
+        auto right = lowered_expression(*expression.right, expected_llvm_type, state, output);
+        if (!left.has_value() || !right.has_value() || left->type != right->type) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+        output << "  " << temporary_name << " = add " << left->type << " " << left->value << ", ";
+        output << right->value << "\n";
+        return LoweredExpression {
+            .type = left->type,
+            .value = std::move(temporary_name),
+        };
+    }
+
     return std::nullopt;
 }
 
@@ -127,7 +146,7 @@ auto lower_let_binding(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    auto lowered = lowered_expression(statement.expression, expected_llvm_type, state);
+    auto lowered = lowered_expression(statement.expression, expected_llvm_type, state, output);
     if (!lowered.has_value()) {
         diagnostics.error(statement.line, "lowering does not yet support this let initializer");
         return false;
@@ -207,7 +226,7 @@ void emit_function(
         return;
     }
 
-    auto lowered = lowered_expression(*expression, *llvm_return_type, state);
+    auto lowered = lowered_expression(*expression, *llvm_return_type, state, output);
     if (!lowered.has_value()) {
         diagnostics.error(expression->line, "lowering does not yet support this return expression");
         return;

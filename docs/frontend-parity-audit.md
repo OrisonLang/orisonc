@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-05: lowering now emits simple fixed-width integer `+` expressions as SSA temporaries, reusing the immutable binding value map for operands such as `%tmp0 = add i32 %left, %right` before the final return.
 - 2026-06-05: lowering now supports a leading immutable `let` initialized from the existing constant integer/cast slice and a final name return, emitting a simple SSA local such as `%value = add i32 0, 1` before `ret i32 %value`.
 - 2026-06-05: first LLVM IR lowering scaffold added as `orison_lowering`; it consumes parsed modules plus successful semantic results and emits golden-tested text IR for a constant-returning `UInt32` function while diagnosticing unsupported function and expression shapes.
 - 2026-06-05: aggregate-context closure pass now treats expected-context propagation as broad enough to stop expanding by default; `docs/lowering-prep.md` records the first LLVM IR emission target and the minimal AST plus semantic facts needed before lowering work starts.
