@@ -82,6 +82,22 @@ auto lowered_integer_literal(
     };
 }
 
+auto llvm_binary_instruction_for(std::string_view operator_text) -> std::optional<std::string_view> {
+    if (operator_text == "+") {
+        return "add";
+    }
+    if (operator_text == "-") {
+        return "sub";
+    }
+    if (operator_text == "*") {
+        return "mul";
+    }
+    if (operator_text == "/") {
+        return "udiv";
+    }
+    return std::nullopt;
+}
+
 auto lowered_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -115,8 +131,12 @@ auto lowered_expression(
         return lowered_integer_literal(*expression.left, expected_llvm_type);
     }
 
-    if (expression.kind == syntax::ExpressionKind::binary && expression.text == "+" &&
-        expression.left != nullptr && expression.right != nullptr) {
+    if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&
+        expression.right != nullptr) {
+        auto instruction = llvm_binary_instruction_for(expression.text);
+        if (!instruction.has_value()) {
+            return std::nullopt;
+        }
         auto left = lowered_expression(*expression.left, expected_llvm_type, context, state, output);
         auto right = lowered_expression(*expression.right, expected_llvm_type, context, state, output);
         if (!left.has_value() || !right.has_value() || left->type != right->type) {
@@ -124,7 +144,7 @@ auto lowered_expression(
         }
 
         auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-        output << "  " << temporary_name << " = add " << left->type << " " << left->value << ", ";
+        output << "  " << temporary_name << " = " << *instruction << " " << left->type << " " << left->value << ", ";
         output << right->value << "\n";
         return LoweredExpression {
             .type = left->type,

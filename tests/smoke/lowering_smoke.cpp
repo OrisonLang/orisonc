@@ -112,6 +112,37 @@ void test_emit_uint32_add_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_uint32_arithmetic_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_uint32_arithmetic.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let left = 8 as UInt32\n"
+        "    let right = 2 as UInt32\n"
+        "    left - right * right / right\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %left = add i32 0, 8\n"
+        "  %right = add i32 0, 2\n"
+        "  %tmp0 = mul i32 %right, %right\n"
+        "  %tmp1 = udiv i32 %tmp0, %right\n"
+        "  %tmp2 = sub i32 %left, %tmp1\n"
+        "  ret i32 %tmp2\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -268,6 +299,7 @@ auto main() -> int {
     test_emit_constant_uint32_return();
     test_emit_let_bound_uint32_return();
     test_emit_uint32_add_return();
+    test_emit_uint32_arithmetic_return();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
