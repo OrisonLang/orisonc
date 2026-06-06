@@ -1,0 +1,81 @@
+#include "orison/lowering/llvm_ir_emitter.hpp"
+#include "orison/semantics/module_semantic_analyzer.hpp"
+#include "orison/source/source_file.hpp"
+#include "orison/syntax/module_parser.hpp"
+
+#include <cassert>
+#include <filesystem>
+#include <fstream>
+#include <string>
+#include <string_view>
+
+namespace {
+
+auto lower_source(std::filesystem::path const& path, std::string_view source)
+    -> orison::lowering::LlvmIrEmissionResult {
+    {
+        std::ofstream output(path);
+        output << source;
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto semantic_result = analyzer.analyze(parse_result.module);
+    assert(!semantic_result.has_errors());
+
+    orison::lowering::LlvmIrEmitter emitter;
+    return emitter.emit(parse_result.module, semantic_result);
+}
+
+void test_emit_constant_uint32_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_constant_uint32.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    1 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  ret i32 1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_reject_unsupported_return_expression() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_expression.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function flag() -> Bool\n"
+        "    true\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(result.diagnostics.entries().front().message == "lowering does not yet support this return expression");
+}
+
+}  // namespace
+
+auto main() -> int {
+    test_emit_constant_uint32_return();
+    test_reject_unsupported_return_expression();
+    return 0;
+}

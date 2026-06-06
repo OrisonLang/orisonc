@@ -24,10 +24,12 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
-- semantic analysis, type checking, ownership checking, lowering, and backend code generation
+- semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
+- lowering beyond the first constant-returning fixed-width integer function scaffold and backend code generation
 
 ## Latest update
 
+- 2026-06-05: first LLVM IR lowering scaffold added as `orison_lowering`; it consumes parsed modules plus successful semantic results and emits golden-tested text IR for a constant-returning `UInt32` function while diagnosticing unsupported function and expression shapes.
 - 2026-06-05: aggregate-context closure pass now treats expected-context propagation as broad enough to stop expanding by default; `docs/lowering-prep.md` records the first LLVM IR emission target and the minimal AST plus semantic facts needed before lowering work starts.
 - 2026-06-05: holder final `if ... else` aggregate smoke coverage now pins `Holder(Items([[Box(...)]]))` and `Holder(Items([[Slot(...)]]))` arms, confirming return context flows through branch containers, record fields, choice constructors, and nested array payloads.
 - 2026-06-05: aggregate-context matrix review confirmed the remaining useful frontend gap is final-container propagation; final `if ... else` smoke coverage now pins `Items([[Box(...)]])` and `Items([[Slot(...)]])` arms, confirming return context flows through branch containers into choice-payload nested arrays.

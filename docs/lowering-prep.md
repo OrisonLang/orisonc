@@ -2,7 +2,8 @@
 
 ## Status
 
-Proposed next phase after aggregate-context frontend parity.
+Started: the first lowering library scaffold now emits text LLVM IR for the initial constant-returning `UInt32`
+function slice and reports diagnostics for unsupported shapes.
 
 ## Aggregate-context closure
 
@@ -37,6 +38,10 @@ That milestone needs only:
 - explicit `return` and implicit final-expression return lowering
 - a diagnostic or unsupported-node path for declarations and expressions not included in the milestone
 
+The first scaffold covers that slice through `orison_lowering`: it consumes a parsed `ModuleSyntax` plus a
+successful semantic result, emits `define i32 @main() { ... ret i32 1 }` for `1 as UInt32`, and keeps unsupported
+function shapes or return expressions diagnostic-only rather than silently generating partial IR.
+
 ## Required semantic facts
 
 The current semantic pass primarily validates and diagnoses. First lowering should either consume or introduce a compact checked representation with:
@@ -49,8 +54,7 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 
 ## Suggested implementation order
 
-1. Add an internal lowering library target, separate from parser and semantics.
-2. Define a minimal IR-emission API that accepts a parsed module plus successful semantic result.
-3. Emit a single function returning a constant integer.
-4. Add golden/snapshot tests for the emitted IR text.
-5. Extend from constants to local immutable bindings and simple arithmetic only after the first IR path is stable.
+1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
+2. Add local immutable binding lowering for a single literal binding plus final name return.
+3. Add simple integer arithmetic only after name binding and SSA temporary naming are stable.
+4. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.
