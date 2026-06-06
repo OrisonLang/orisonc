@@ -112,6 +112,73 @@ void test_emit_uint32_add_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_zero_argument_function_call_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function one() -> UInt32\n"
+        "    1 as UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    one()\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @one() {\n"
+        "entry:\n"
+        "  ret i32 1\n"
+        "}\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = call i32 @one()\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_emit_zero_argument_function_call_add_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call_add.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function one() -> UInt32\n"
+        "    1 as UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    one() + 2 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @one() {\n"
+        "entry:\n"
+        "  ret i32 1\n"
+        "}\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = call i32 @one()\n"
+        "  %tmp1 = add i32 %tmp0, 2\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_reject_unsupported_return_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_expression.or";
     auto result = lower_source(
@@ -133,6 +200,8 @@ auto main() -> int {
     test_emit_constant_uint32_return();
     test_emit_let_bound_uint32_return();
     test_emit_uint32_add_return();
+    test_emit_zero_argument_function_call_return();
+    test_emit_zero_argument_function_call_add_return();
     test_reject_unsupported_return_expression();
     return 0;
 }

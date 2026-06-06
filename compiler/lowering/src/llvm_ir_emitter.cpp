@@ -16,6 +16,14 @@ struct LoweredExpression {
     std::string value;
 };
 
+struct FunctionSignature {
+    std::string return_type;
+};
+
+struct LoweringContext {
+    std::unordered_map<std::string, FunctionSignature> functions;
+};
+
 struct FunctionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
     std::size_t next_temporary_index = 0;
@@ -75,6 +83,7 @@ auto lowered_integer_literal(
 auto lowered_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
+    LoweringContext const& context,
     FunctionLoweringState& state,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
@@ -106,8 +115,8 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::binary && expression.text == "+" &&
         expression.left != nullptr && expression.right != nullptr) {
-        auto left = lowered_expression(*expression.left, expected_llvm_type, state, output);
-        auto right = lowered_expression(*expression.right, expected_llvm_type, state, output);
+        auto left = lowered_expression(*expression.left, expected_llvm_type, context, state, output);
+        auto right = lowered_expression(*expression.right, expected_llvm_type, context, state, output);
         if (!left.has_value() || !right.has_value() || left->type != right->type) {
             return std::nullopt;
         }
@@ -117,6 +126,22 @@ auto lowered_expression(
         output << right->value << "\n";
         return LoweredExpression {
             .type = left->type,
+            .value = std::move(temporary_name),
+        };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name && expression.arguments.empty()) {
+        auto function = context.functions.find(expression.left->text);
+        if (function == context.functions.end() || function->second.return_type != expected_llvm_type) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+        output << "  " << temporary_name << " = call " << function->second.return_type;
+        output << " @" << expression.left->text << "()\n";
+        return LoweredExpression {
+            .type = function->second.return_type,
             .value = std::move(temporary_name),
         };
     }
@@ -142,11 +167,12 @@ auto local_value_name(std::string_view name) -> std::string {
 auto lower_let_binding(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
+    LoweringContext const& context,
     FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    auto lowered = lowered_expression(statement.expression, expected_llvm_type, state, output);
+    auto lowered = lowered_expression(statement.expression, expected_llvm_type, context, state, output);
     if (!lowered.has_value()) {
         diagnostics.error(statement.line, "lowering does not yet support this let initializer");
         return false;
@@ -163,6 +189,7 @@ auto lower_let_binding(
 
 void emit_function(
     syntax::FunctionSyntax const& function,
+    LoweringContext const& context,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) {
@@ -206,7 +233,7 @@ void emit_function(
         auto const& statement = function.body_statements[index];
         auto is_last_statement = index + 1 == function.body_statements.size();
         if (!is_last_statement && statement.kind == syntax::StatementKind::let_binding) {
-            if (!lower_let_binding(statement, *llvm_return_type, state, diagnostics, output)) {
+            if (!lower_let_binding(statement, *llvm_return_type, context, state, diagnostics, output)) {
                 return;
             }
             continue;
@@ -226,7 +253,7 @@ void emit_function(
         return;
     }
 
-    auto lowered = lowered_expression(*expression, *llvm_return_type, state, output);
+    auto lowered = lowered_expression(*expression, *llvm_return_type, context, state, output);
     if (!lowered.has_value()) {
         diagnostics.error(expression->line, "lowering does not yet support this return expression");
         return;
@@ -234,6 +261,20 @@ void emit_function(
 
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
     output << "}\n";
+}
+
+auto collect_lowering_context(syntax::ModuleSyntax const& module) -> LoweringContext {
+    auto context = LoweringContext {};
+    for (auto const& function : module.functions) {
+        auto return_type = llvm_type_for(function.return_type);
+        if (!return_type.has_value()) {
+            continue;
+        }
+        context.functions.emplace(function.name, FunctionSignature {
+            .return_type = std::string(*return_type),
+        });
+    }
+    return context;
 }
 
 }  // namespace
@@ -268,8 +309,9 @@ auto LlvmIrEmitter::emit(
     }
     output << "\n";
 
+    auto context = collect_lowering_context(module);
     for (auto const& function : module.functions) {
-        emit_function(function, result.diagnostics, output);
+        emit_function(function, context, result.diagnostics, output);
         output << "\n";
     }
 
