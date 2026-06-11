@@ -45,6 +45,13 @@ int main() {
     assert(foreign.symbol_name == "printf");
     assert(foreign.adapter == orison::lowering::CAbiAdapterKind::variadic);
 
+    module.functions.front().return_type = TypeSyntax {.name = "Text"};
+    diagnostics = {};
+    context = orison::lowering::build_lowering_context(module, diagnostics);
+    assert(!diagnostics.has_errors());
+    assert(context.functions.contains("main"));
+    assert(context.functions.at("main").return_type.empty());
+
     module.foreign_imports.front().functions.front().parameters[1].type = TypeSyntax {.name = "Text"};
     diagnostics = {};
     context = orison::lowering::build_lowering_context(module, diagnostics);

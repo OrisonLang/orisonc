@@ -4,7 +4,6 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
-#include "orison/lowering/type_lowering.hpp"
 
 #include <optional>
 #include <sstream>
@@ -20,6 +19,7 @@ using FunctionLoweringState = ExpressionLoweringState;
 
 void emit_function_body(
     syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
     EmissionContext const& context,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -36,27 +36,29 @@ void emit_function_body(
         diagnostics.error(function.line, "lowering does not yet support generic functions");
         return;
     }
-    auto llvm_return_type = llvm_type_for(function.return_type);
-    if (!llvm_return_type.has_value()) {
+    if (signature.return_type.empty()) {
         diagnostics.error(function.line, "lowering does not yet support this function return type");
         return;
     }
-    auto return_signedness = integer_signedness_for(function.return_type);
-
-    auto llvm_parameter_types = llvm_parameter_types_for(function.parameters);
-    if (!llvm_parameter_types.has_value()) {
+    if (signature.parameter_types.size() != function.parameters.size() ||
+        signature.parameter_signedness.size() != function.parameters.size()) {
         diagnostics.error(function.line, "lowering does not yet support this function parameter type");
         return;
     }
-    auto parameter_signedness = parameter_signedness_for(function.parameters);
+    for (auto const& parameter_type : signature.parameter_types) {
+        if (parameter_type.empty() || parameter_type == "void") {
+            diagnostics.error(function.line, "lowering does not yet support this function parameter type");
+            return;
+        }
+    }
 
-    if (*llvm_return_type == "void") {
+    if (signature.return_type == "void") {
         output << "define void @" << function.name << "(";
         for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
             if (index > 0) {
                 output << ", ";
             }
-            output << (*llvm_parameter_types)[index] << " "
+            output << signature.parameter_types[index] << " "
                    << llvm_local_value_name(function.parameters[index].name);
         }
         output << ") {\n";
@@ -66,12 +68,12 @@ void emit_function_body(
         return;
     }
 
-    output << "define " << *llvm_return_type << " @" << function.name << "(";
+    output << "define " << signature.return_type << " @" << function.name << "(";
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         if (index > 0) {
             output << ", ";
         }
-        output << (*llvm_parameter_types)[index] << " "
+        output << signature.parameter_types[index] << " "
                << llvm_local_value_name(function.parameters[index].name);
     }
     output << ") {\n";
@@ -81,9 +83,9 @@ void emit_function_body(
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         state.local_name_counts[function.parameters[index].name] = 1;
         state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
-            .type = (*llvm_parameter_types)[index],
+            .type = signature.parameter_types[index],
             .value = llvm_local_value_name(function.parameters[index].name),
-            .signedness = parameter_signedness[index],
+            .signedness = signature.parameter_signedness[index],
         });
     }
     auto const* expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
@@ -94,8 +96,8 @@ void emit_function_body(
         if (!is_last_statement && statement.kind == syntax::StatementKind::let_binding) {
             if (!lower_let_statement(
                     statement,
-                    *llvm_return_type,
-                    return_signedness,
+                    signature.return_type,
+                    signature.return_signedness,
                     context,
                     state,
                     diagnostics,
@@ -111,8 +113,8 @@ void emit_function_body(
                 statement.kind == syntax::StatementKind::switch_statement) {
                 lowered_final_statement = lower_final_control_flow_statement(
                     statement,
-                    *llvm_return_type,
-                    return_signedness,
+                    signature.return_type,
+                    signature.return_signedness,
                     context,
                     state,
                     diagnostics,
@@ -135,7 +137,14 @@ void emit_function_body(
 
     auto lowered = std::move(lowered_final_statement);
     if (!lowered.has_value()) {
-        lowered = lower_expression(*expression, *llvm_return_type, return_signedness, context, state, output);
+        lowered = lower_expression(
+            *expression,
+            signature.return_type,
+            signature.return_signedness,
+            context,
+            state,
+            output
+        );
     }
     if (!lowered.has_value()) {
         diagnostics.error(
@@ -153,6 +162,7 @@ void emit_function_body(
 
 auto emit_function(
     syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
     LoweringContext const& lowering_context,
     StringConstantTable const& string_constants,
     diagnostics::DiagnosticBag& diagnostics
@@ -162,7 +172,7 @@ auto emit_function(
         .lowering = lowering_context,
         .string_constants = string_constants,
     };
-    emit_function_body(function, context, diagnostics, output);
+    emit_function_body(function, signature, context, diagnostics, output);
     return output.str();
 }
 

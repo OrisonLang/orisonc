@@ -48,7 +48,18 @@ auto LlvmIrEmitter::emit(
     auto string_constants = collect_string_constants(module);
     output << emit_module_prelude(string_constants, context.foreign_declarations);
     for (auto const& function : module.functions) {
-        output << emit_function(function, context, string_constants, result.diagnostics);
+        auto signature = context.functions.find(function.name);
+        if (signature == context.functions.end()) {
+            result.diagnostics.error(function.line, "lowering context is missing function signature");
+            return result;
+        }
+        output << emit_function(
+            function,
+            signature->second,
+            context,
+            string_constants,
+            result.diagnostics
+        );
         output << "\n";
     }
 

@@ -30,6 +30,7 @@ int main() {
     auto strings = orison::lowering::collect_string_constants(parse_result.module);
     auto function_ir = orison::lowering::emit_function(
         parse_result.module.functions.front(),
+        context.functions.at("add"),
         context,
         strings,
         diagnostics
@@ -49,6 +50,7 @@ int main() {
     assert(
         orison::lowering::emit_function(
             parse_result.module.functions.front(),
+            context.functions.at("add"),
             context,
             strings,
             diagnostics
@@ -56,6 +58,41 @@ int main() {
     );
     assert(diagnostics.has_errors());
     assert(diagnostics.entries().front().message == "lowering does not yet support async functions");
+
+    parse_result.module.functions.front().is_async = false;
+    auto unsupported_return = context.functions.at("add");
+    unsupported_return.return_type.clear();
+    diagnostics = {};
+    assert(
+        orison::lowering::emit_function(
+            parse_result.module.functions.front(),
+            unsupported_return,
+            context,
+            strings,
+            diagnostics
+        ).empty()
+    );
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this function return type"
+    );
+
+    auto unsupported_parameter = context.functions.at("add");
+    unsupported_parameter.parameter_types.front().clear();
+    diagnostics = {};
+    assert(
+        orison::lowering::emit_function(
+            parse_result.module.functions.front(),
+            unsupported_parameter,
+            context,
+            strings,
+            diagnostics
+        ).empty()
+    );
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering does not yet support this function parameter type"
+    );
     std::filesystem::remove(path);
     return 0;
 }

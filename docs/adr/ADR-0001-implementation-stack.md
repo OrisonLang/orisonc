@@ -44,6 +44,8 @@ analysis, and lowering components.
   in a dedicated control-flow component; function emission owns signatures, parameters, and final return assembly.
 - LLVM local-value, temporary, and indexed block naming policy lives in a shared stateless utility; emitters retain
   explicit counters/maps and request deterministic names without duplicating formatting or increment behavior.
+- Ordinary function definitions retain their shared lowered signatures in the module context even when a type is
+  unsupported; function emission consumes that model directly for declarations, bindings, signedness, and diagnostics.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

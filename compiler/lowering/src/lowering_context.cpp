@@ -25,9 +25,7 @@ auto build_lowering_context(
     for (auto const& function : module.functions) {
         auto signature =
             lower_function_signature(function.return_type, function.parameters, function.name);
-        if (has_supported_function_signature_types(signature)) {
-            context.functions.emplace(function.name, std::move(signature));
-        }
+        context.functions.emplace(function.name, std::move(signature));
     }
 
     for (auto const& foreign_import : module.foreign_imports) {
