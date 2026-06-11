@@ -1886,6 +1886,11 @@ int main() {
     );
     assert(ffi_output == "Hello world from Orison!\n");
 
+    auto fixed_ffi_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "ffi_fixed_parameters.or";
+    auto fixed_ffi_status = std::system((executable.string() + " run " + fixed_ffi_path.string()).c_str());
+    assert(WIFEXITED(fixed_ffi_status));
+    assert(WEXITSTATUS(fixed_ffi_status) == 0);
+
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",

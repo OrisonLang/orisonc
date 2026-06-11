@@ -2045,8 +2045,13 @@ private:
         }
 
         if (expression.left->kind == syntax::ExpressionKind::name) {
+            auto const* arity_mismatch = static_cast<CallableSignature const*>(nullptr);
             for (auto const& signature : callable_signatures_) {
-                if (signature.name != expression.left->text || signature.parameters.size() != expression.arguments.size()) {
+                if (signature.name != expression.left->text) {
+                    continue;
+                }
+                if (signature.parameters.size() != expression.arguments.size()) {
+                    arity_mismatch = &signature;
                     continue;
                 }
 
@@ -2076,6 +2081,16 @@ private:
                     signature.foreign
                 );
                 return;
+            }
+            if (arity_mismatch != nullptr) {
+                auto expected_count = arity_mismatch->parameters.size();
+                auto actual_count = expression.arguments.size();
+                diagnostics_.error(
+                    expression.line,
+                    "function '" + expression.left->text + "' expects " +
+                        std::to_string(expected_count) + " argument" + (expected_count == 1 ? "" : "s") +
+                        " but received " + std::to_string(actual_count)
+                );
             }
             return;
         }

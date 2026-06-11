@@ -1,6 +1,7 @@
 # Orison Examples
 
 `minimal.or` is the stable backend demo and must compile, link, and run with exit status `0`.
+`ffi_fixed_parameters.or` demonstrates a finite C FFI contract with two explicit `Pointer<Byte>` parameters.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
@@ -34,3 +35,11 @@ build/tools/orisonc/orisonc run examples/tour_09_ffi_printf.or
 ```
 
 It prints `Hello world from Orison!`. Its exit status is the value returned by `printf`.
+
+Run the fixed-parameter FFI demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/ffi_fixed_parameters.or
+```
+
+It calls `strcmp` with exactly two statically checked arguments and exits with status `0`.

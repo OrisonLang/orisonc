@@ -28,7 +28,8 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 2> {
+    constexpr auto backend_examples = std::array<std::string_view, 3> {
+        "ffi_fixed_parameters.or",
         "minimal.or",
         "tour_09_ffi_printf.or",
     };
@@ -51,6 +52,21 @@ auto main() -> int {
     assert(ordinary_pointer.has_errors());
     assert(
         ordinary_pointer.error_text.find("requires a structurally pointer-like expression") != std::string::npos
+    );
+
+    auto wrong_arity_path = std::filesystem::temp_directory_path() / "orison_fixed_ffi_wrong_arity.or";
+    {
+        std::ofstream source(wrong_arity_path);
+        source << "package examples.boundary\n";
+        source << "package foreign \"c\"\n";
+        source << "    function strcmp(left: Pointer<Byte>, right: Pointer<Byte>) -> Int32\n";
+        source << "function main() -> Int32\n";
+        source << "    strcmp(\"Orison\")\n";
+    }
+    auto wrong_arity = pipeline.analyze(wrong_arity_path);
+    assert(wrong_arity.has_errors());
+    assert(
+        wrong_arity.error_text.find("function 'strcmp' expects 2 arguments but received 1") != std::string::npos
     );
     return 0;
 }

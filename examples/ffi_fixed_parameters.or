@@ -1,0 +1,7 @@
+package examples.ffi.fixed_parameters
+
+package foreign "c"
+    function strcmp(left: Pointer<Byte>, right: Pointer<Byte>) -> Int32
+
+public function main() -> Int32
+    strcmp("Orison", "Orison")
