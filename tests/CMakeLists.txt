@@ -195,6 +195,22 @@ add_test(
     COMMAND orison_expression_emitter_smoke
 )
 
+add_executable(orison_control_flow_emitter_smoke
+    smoke/control_flow_emitter_smoke.cpp
+)
+
+target_link_libraries(orison_control_flow_emitter_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_control_flow_emitter_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_control_flow_emitter_smoke
+    COMMAND orison_control_flow_emitter_smoke
+)
+
 add_executable(orison_pipeline_smoke
     smoke/compile_pipeline_smoke.cpp
 )

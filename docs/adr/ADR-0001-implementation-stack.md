@@ -40,6 +40,8 @@ analysis, and lowering components.
   names, block identities, and current-block tracking so expression and statement CFG lowering use one state.
 - Recursive expression lowering and scalar expression-type/literal utilities compile in their own translation unit;
   function statement/control-flow emission consumes that API instead of owning expression implementation details.
+- Final value-producing `if`/`switch` CFG emission, nested value blocks, and branch-local immutable bindings compile
+  in a dedicated control-flow component; function emission owns signatures, parameters, and final return assembly.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
