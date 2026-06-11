@@ -572,6 +572,16 @@ auto lower_let_binding(
     return true;
 }
 
+auto lower_final_if_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringContext const& context,
+    FunctionLoweringState& state,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression>;
+
 auto lower_value_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
     std::string_view expected_llvm_type,
@@ -601,7 +611,20 @@ auto lower_value_statement_block(
         }
     }
 
-    auto const* expression = return_expression_for(statements.back());
+    auto const& final_statement = statements.back();
+    if (final_statement.kind == syntax::StatementKind::if_statement) {
+        return lower_final_if_statement(
+            final_statement,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            state,
+            diagnostics,
+            output
+        );
+    }
+
+    auto const* expression = return_expression_for(final_statement);
     if (expression == nullptr) {
         return std::nullopt;
     }

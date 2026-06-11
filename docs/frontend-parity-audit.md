@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-10: final branch blocks now lower recursively when their last statement is another value-producing `if ... else`; nested arms inherit outer branch bindings, restore sibling scopes, and feed their inner merge value into the outer `phi`.
 - 2026-06-10: final `if ... else` lowering now supports multi-statement arms with leading immutable bindings; branch scopes restore outer bindings between arms while function-wide SSA name counters uniquify repeated local names.
 - 2026-06-10: lowering now emits final value-producing `if ... else` statements with branch labels and an LLVM `phi`, covering implicit expression arms, explicit value-return arms, and ternaries nested inside an arm.
 - 2026-06-10: lowering now emits integer and boolean ternary expressions as conditional branches with then/else labels and an LLVM `phi` result; current-block tracking preserves correct predecessor labels for nested ternaries.

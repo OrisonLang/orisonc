@@ -546,6 +546,58 @@ void test_emit_final_if_branch_local_bindings() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_nested_final_if_returns() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_nested_final_if.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(first: Bool, second: Bool) -> UInt32\n"
+        "    if first\n"
+        "        let base = 1 as UInt32\n"
+        "        if second\n"
+        "            let value = base + 1 as UInt32\n"
+        "            value\n"
+        "        else\n"
+        "            let value = base + 2 as UInt32\n"
+        "            value\n"
+        "    else\n"
+        "        4 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %first, i1 %second) {\n"
+        "entry:\n"
+        "  br i1 %first, label %if.then.0, label %if.else.0\n"
+        "if.then.0:\n"
+        "  %base = add i32 0, 1\n"
+        "  br i1 %second, label %if.then.1, label %if.else.1\n"
+        "if.then.1:\n"
+        "  %tmp0 = add i32 %base, 1\n"
+        "  %value = add i32 0, %tmp0\n"
+        "  br label %if.merge.1\n"
+        "if.else.1:\n"
+        "  %tmp1 = add i32 %base, 2\n"
+        "  %value.1 = add i32 0, %tmp1\n"
+        "  br label %if.merge.1\n"
+        "if.merge.1:\n"
+        "  %tmp2 = phi i32 [%value, %if.then.1], [%value.1, %if.else.1]\n"
+        "  br label %if.merge.0\n"
+        "if.else.0:\n"
+        "  br label %if.merge.0\n"
+        "if.merge.0:\n"
+        "  %tmp3 = phi i32 [%tmp2, %if.merge.1], [4, %if.else.0]\n"
+        "  ret i32 %tmp3\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -710,6 +762,7 @@ auto main() -> int {
     test_emit_ternary_expression_returns();
     test_emit_final_if_expression_returns();
     test_emit_final_if_branch_local_bindings();
+    test_emit_nested_final_if_returns();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
