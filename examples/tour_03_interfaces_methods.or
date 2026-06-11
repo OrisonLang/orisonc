@@ -1,0 +1,21 @@
+package examples.interfaces
+
+record Counter
+    package value: Int64
+
+public interface Display
+    function display(this: shared This) -> Int64
+
+interface Mutate
+    function increment(this: exclusive This) -> Unit
+
+implements Display for Counter
+    function display(this: shared This) -> Int64
+        this.value
+
+extend Counter
+    public function current(this: shared This) -> Int64
+        this.value
+
+    private function is_zero(this: shared This) -> Bool
+        this.value == 0

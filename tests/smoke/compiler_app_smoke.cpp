@@ -544,6 +544,17 @@ auto run_build(
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_program(orison::driver::CompilerApp const& app, std::filesystem::path const& source_path)
+    -> orison::driver::CompileResult {
+    auto source_path_text = source_path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "run",
+        source_path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 void assert_wrap_duplicate_parse_failure(orison::driver::CompileResult const& result) {
     assert(result.exit_code == 1);
     assert(result.stdout_text.empty());
@@ -649,6 +660,11 @@ int main() {
     auto executable_status = std::system(executable_path.string().c_str());
     assert(WIFEXITED(executable_status));
     assert(WEXITSTATUS(executable_status) == 42);
+
+    auto run_result = run_program(app, emit_path);
+    assert(run_result.exit_code == 42);
+    assert(run_result.stdout_text.empty());
+    assert(run_result.stderr_text.empty());
 
     auto link_failure = run_build(app, emit_path, missing_directory / "output");
     assert(link_failure.exit_code == 1);

@@ -1,6 +1,7 @@
 #include "orison/driver/compiler_app.hpp"
 
 #include "orison/link/host_linker.hpp"
+#include "orison/link/host_runner.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
 
 #include <filesystem>
@@ -15,7 +16,7 @@ namespace {
 auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> std::string;
 
 auto usage_text() -> std::string {
-    return "usage: orisonc --version | --parse <file> | --emit-llvm <file> | "
+    return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
@@ -190,6 +191,27 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
     if (args.size() > 1 && std::string_view(args[1]) == "--version") {
         return CompileResult {.exit_code = 0, .stdout_text = "orisonc 0.1.0-dev\n"};
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "run") {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.emit_object(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = std::move(result.error_text),
+            };
+        }
+
+        link::HostRunner runner;
+        auto run_result = runner.run(result.object_bytes);
+        if (run_result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = run_result.diagnostics.render(result.source_file->path().string()),
+            };
+        }
+        return CompileResult {.exit_code = run_result.exit_code};
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--emit-llvm") {

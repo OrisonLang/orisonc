@@ -30,6 +30,8 @@ analysis, and lowering components.
 - Host object emission uses LLVM target discovery, a host `TargetMachine`, and the target's object-file pass pipeline.
 - Initial executable linking delegates to a CMake-discovered host Clang/C driver through an argument-vector process
   launch; no shell command construction is used.
+- `orisonc run <file>` uses the same host object and link path, executes a uniquely named temporary executable with
+  inherited standard streams, propagates its exit status, and removes the temporary artifact.
 - Shared frontend, LLVM IR, and object compilation stages live behind `orison_pipeline`; CLI modes select an
   artifact or continue into linking without duplicating stage orchestration.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

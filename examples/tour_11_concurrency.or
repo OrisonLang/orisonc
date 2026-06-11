@@ -1,0 +1,19 @@
+package examples.concurrency
+
+interface Transferable
+    function transferable(this: shared This) -> Unit
+
+interface Shareable
+    function shareable(this: shared This) -> Unit
+
+async function compute(value: Int64) -> Int64
+    let pending = task
+        value + 1
+
+    await pending
+
+public function on_thread(value: Int64) -> Int64
+    let worker = thread
+        value + 1
+
+    worker.join()

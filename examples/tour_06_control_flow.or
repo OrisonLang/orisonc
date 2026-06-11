@@ -1,0 +1,31 @@
+package examples.control
+
+public function classify(value: Int64) -> Int64
+    guard value >= 0 else
+        return 0
+
+    if value == 1
+        return 1
+
+    switch value
+        2 => 2
+        default => 3
+
+public function loops(limit: Int64) -> Unit
+    var current = 0
+    while current < limit
+        current = current + 1
+        if current == 2
+            continue
+        if current == 4
+            break
+
+    repeat
+        current = current - 1
+    while current > 0
+
+    for item in [1, 2, 3]
+        current = item
+
+    defer
+        current = 0

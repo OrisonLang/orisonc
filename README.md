@@ -63,12 +63,14 @@ Configure, build, compile, link, and run it with:
 ```sh
 cmake -S . -B build
 cmake --build build
-build/tools/orisonc/orisonc --build examples/minimal.or -o build/minimal
-build/minimal
+build/tools/orisonc/orisonc run examples/minimal.or
 ```
 
-The demo exits successfully with status `0`. The same file can be inspected with `--emit-llvm` or compiled with
-`--emit-object`.
+The demo exits successfully with status `0`. Use `--build examples/minimal.or -o build/minimal` to retain the
+executable. The same file can be inspected with `--emit-llvm` or compiled with `--emit-object`.
+
+Focused examples for the language-tour sections live under `examples/tour_*.or`. See `examples/README.md` for
+the feature and validation matrix, including the frontend-only C `printf` hello-world example.
 
 ## Repository expectations
 

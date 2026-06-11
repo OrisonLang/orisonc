@@ -1857,6 +1857,11 @@ int main() {
     assert(WIFEXITED(executable_status));
     assert(WEXITSTATUS(executable_status) == 0);
 
+    auto run_command = executable.string() + " run " + demo_path.string();
+    auto run_status = std::system(run_command.c_str());
+    assert(WIFEXITED(run_status));
+    assert(WEXITSTATUS(run_status) == 0);
+
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",

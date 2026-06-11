@@ -2,6 +2,7 @@ find_program(ORISON_HOST_LINK_DRIVER NAMES clang cc REQUIRED)
 
 add_library(orison_link STATIC
     src/host_linker.cpp
+    src/host_runner.cpp
 )
 
 target_include_directories(orison_link

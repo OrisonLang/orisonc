@@ -1,0 +1,16 @@
+package examples.memory
+
+const DEVICE_BASE: Address = 0x4000_1000
+
+unsafe function read_word(address: Address) -> UInt32
+    let pointer: Pointer<UInt32> = Pointer(address)
+    raw_read(pointer)
+
+unsafe function write_word(address: Address, value: UInt32) -> Unit
+    let pointer: Pointer<UInt32> = Pointer(address)
+    raw_write(pointer, value)
+
+public function clear(address: Address) -> Unit
+    unsafe
+        let pointer: Pointer<Byte> = Pointer(address)
+        volatile_write(pointer, 0 as Byte)

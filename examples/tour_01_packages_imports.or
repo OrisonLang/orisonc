@@ -1,0 +1,11 @@
+package examples.packages
+
+import
+    console from io
+    Logger as Log from diagnostics.logger
+
+type UserId = UInt64
+type Port = UInt16
+
+function main() -> UInt32
+    0 as UInt32

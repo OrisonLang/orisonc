@@ -1,0 +1,14 @@
+package examples.collections
+
+record Header
+    public magic: Array<Byte, 4>
+    public version: UInt16
+
+record Buffer
+    private data: DynamicArray<Byte>
+
+public function make_magic() -> Array<Byte, 4>
+    [0x7F, 0x45, 0x4C, 0x46]
+
+public function first(items: shared View<Byte>) -> Byte
+    items[0]

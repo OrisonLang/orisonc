@@ -1,0 +1,21 @@
+package examples.data
+
+public record User
+    public id: UInt64
+    public active: Bool
+    private age: UInt8
+
+record Pair<A, B>
+    public first: A
+    public second: B
+
+public choice Status
+    Ready
+    Failed(code: Int32)
+
+choice Maybe<T>
+    Some(value: T)
+    Empty
+
+public function make_user() -> User
+    User(1, true, 42)

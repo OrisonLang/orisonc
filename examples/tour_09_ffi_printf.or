@@ -1,0 +1,7 @@
+package examples.ffi
+
+package foreign "c"
+    function printf(format: Pointer<Byte>) -> Int32
+
+public function main() -> Int32
+    printf("Hello world from Orison!\n")

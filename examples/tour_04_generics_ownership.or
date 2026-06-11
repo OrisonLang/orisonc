@@ -1,0 +1,14 @@
+package examples.generics
+
+interface Ordered
+    function compare(this: shared This, other: shared This) -> Int64
+
+record Box<T>
+    public value: T
+
+public function first<T>(item: shared Box<T>) -> shared T
+    item.value
+
+package function replace<T>(item: exclusive Box<T>, value: T) -> Unit
+where T: Ordered
+    item.value = value

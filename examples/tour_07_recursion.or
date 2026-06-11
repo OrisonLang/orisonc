@@ -1,0 +1,12 @@
+package examples.recursion
+
+public function factorial(value: Int64) -> Int64
+    switch value
+        0 => 1
+        default => value * factorial(value - 1)
+
+public function explicit_return(value: Int64) -> Int64
+    if value < 0
+        return 0
+
+    value

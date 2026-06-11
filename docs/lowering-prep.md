@@ -104,6 +104,11 @@ the reusable `orison_pipeline` library. `--parse`, `--emit-llvm`, `--emit-object
 boundaries rather than maintaining separate copies of the compiler flow. `examples/minimal.or` is the stable
 zero-exit demo input for repeatedly exercising the end-to-end path.
 
+`orisonc run <file>` now extends that shared path through temporary host linking and direct process execution.
+The numbered `examples/tour_*.or` files are frontend-validated tour slices. The C `printf` hello-world example
+remains frontend-only until lowering represents static string storage, `Pointer<Byte>` FFI arguments, and imported
+foreign symbols.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
