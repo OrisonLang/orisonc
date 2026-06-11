@@ -1,6 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -28,20 +29,6 @@ auto return_expression_for(syntax::StatementSyntax const& statement) -> syntax::
     return nullptr;
 }
 
-auto local_value_name(std::string_view name) -> std::string {
-    return "%" + std::string(name);
-}
-
-auto next_local_value_name(std::string_view name, FunctionLoweringState& state) -> std::string {
-    auto& count = state.local_name_counts[std::string(name)];
-    auto value_name = local_value_name(name);
-    if (count > 0) {
-        value_name += "." + std::to_string(count);
-    }
-    ++count;
-    return value_name;
-}
-
 auto lower_let_binding(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -57,7 +44,7 @@ auto lower_let_binding(
         return false;
     }
 
-    auto local_name = next_local_value_name(statement.name, state);
+    auto local_name = next_llvm_local_value_name(statement.name, state.local_name_counts);
     output << "  " << local_name << " = add " << lowered->type << " 0, " << lowered->value << "\n";
     state.immutable_bindings[statement.name] = LoweredExpression {
         .type = lowered->type,
@@ -180,10 +167,10 @@ auto lower_final_if_statement(
         return std::nullopt;
     }
 
-    auto block_index = state.next_block_index++;
-    auto then_block = "if.then." + std::to_string(block_index);
-    auto else_block = "if.else." + std::to_string(block_index);
-    auto merge_block = "if.merge." + std::to_string(block_index);
+    auto block_index = next_llvm_block_index(state.next_block_index);
+    auto then_block = llvm_block_name("if.then", block_index);
+    auto else_block = llvm_block_name("if.else", block_index);
+    auto merge_block = llvm_block_name("if.merge", block_index);
     output << "  br i1 " << condition->value << ", label %" << then_block << ", label %" << else_block << "\n";
 
     output << then_block << ":\n";
@@ -226,7 +213,7 @@ auto lower_final_if_statement(
     output << merge_block << ":\n";
     state.current_block = merge_block;
     state.immutable_bindings = std::move(outer_bindings);
-    auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+    auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
     output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
     output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
     return LoweredExpression {
@@ -366,9 +353,9 @@ auto lower_final_switch_statement(
         std::optional<LoweredExpression> pattern;
     };
 
-    auto block_index = state.next_block_index++;
-    auto merge_block = "switch.merge." + std::to_string(block_index);
-    auto fallback_block = "switch.unreachable." + std::to_string(block_index);
+    auto block_index = next_llvm_block_index(state.next_block_index);
+    auto merge_block = llvm_block_name("switch.merge", block_index);
+    auto fallback_block = llvm_block_name("switch.unreachable", block_index);
     auto lowered_cases = std::vector<LoweredSwitchCase> {};
     lowered_cases.reserve(statement.switch_cases.size());
     auto default_case_index = std::optional<std::size_t> {};
@@ -382,11 +369,10 @@ auto lower_final_switch_statement(
             if (default_case_index.has_value()) {
                 return std::nullopt;
             }
-            lowered_case.block = "switch.default." + std::to_string(block_index);
+            lowered_case.block = llvm_block_name("switch.default", block_index);
             default_case_index = lowered_cases.size();
         } else {
-            lowered_case.block =
-                "switch.case." + std::to_string(block_index) + "." + std::to_string(value_case_index++);
+            lowered_case.block = llvm_block_name("switch.case", block_index, value_case_index++);
             lowered_case.pattern = lowered_switch_pattern(switch_case.pattern, *subject_type);
             if (!lowered_case.pattern.has_value()) {
                 return std::nullopt;
@@ -449,7 +435,7 @@ auto lower_final_switch_statement(
     output << merge_block << ":\n";
     state.current_block = merge_block;
     state.immutable_bindings = std::move(outer_bindings);
-    auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+    auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
     output << "  " << temporary_name << " = phi " << result_type.type << " ";
     for (auto index = std::size_t {0}; index < incoming_values.size(); ++index) {
         if (index > 0) {

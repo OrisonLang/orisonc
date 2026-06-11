@@ -1,5 +1,6 @@
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -231,7 +232,7 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         output << "  " << temporary_name << " = xor i1 " << operand->value << ", true\n";
         return LoweredExpression {
             .type = "i1",
@@ -254,10 +255,10 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto block_index = state.next_block_index++;
-        auto then_block = "ternary.then." + std::to_string(block_index);
-        auto else_block = "ternary.else." + std::to_string(block_index);
-        auto merge_block = "ternary.merge." + std::to_string(block_index);
+        auto block_index = next_llvm_block_index(state.next_block_index);
+        auto then_block = llvm_block_name("ternary.then", block_index);
+        auto else_block = llvm_block_name("ternary.else", block_index);
+        auto merge_block = llvm_block_name("ternary.merge", block_index);
         output << "  br i1 " << condition->value << ", label %" << then_block << ", label %" << else_block << "\n";
 
         output << then_block << ":\n";
@@ -295,7 +296,7 @@ auto lowered_expression(
 
         output << merge_block << ":\n";
         state.current_block = merge_block;
-        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
         output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
         return LoweredExpression {
@@ -329,7 +330,7 @@ auto lowered_expression(
                     return std::nullopt;
                 }
 
-                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+                auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
                 output << "  " << temporary_name << " = " << expression.text << " i1 ";
                 output << left->value << ", " << right->value << "\n";
                 return LoweredExpression {
@@ -371,7 +372,7 @@ auto lowered_expression(
                     return std::nullopt;
                 }
 
-                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+                auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
                 output << "  " << temporary_name << " = icmp " << *predicate << " " << left->type << " ";
                 output << left->value << ", " << right->value << "\n";
                 return LoweredExpression {
@@ -393,7 +394,7 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         output << "  " << temporary_name << " = " << *instruction << " " << left->type << " " << left->value << ", ";
         output << right->value << "\n";
         return LoweredExpression {
@@ -433,7 +434,7 @@ auto lowered_expression(
                 : CAbiPromotion::none;
             if (function->second.adapter == CAbiAdapterKind::variadic &&
                 promotion == CAbiPromotion::integer_to_i32) {
-                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+                auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
                 auto instruction =
                     argument->signedness == IntegerSignedness::signed_integer ? "sext" : "zext";
                 output << "  " << temporary_name << " = " << instruction << " " << argument->type << " ";
@@ -446,7 +447,7 @@ auto lowered_expression(
             }
             if (function->second.adapter == CAbiAdapterKind::variadic &&
                 promotion == CAbiPromotion::float_to_double) {
-                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+                auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
                 output << "  " << temporary_name << " = fpext float " << argument->value << " to double\n";
                 argument = LoweredExpression {
                     .type = "double",
@@ -457,7 +458,7 @@ auto lowered_expression(
             arguments.push_back(std::move(*argument));
         }
 
-        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         output << "  " << temporary_name << " = call " << function->second.return_type;
         if (function->second.adapter == CAbiAdapterKind::variadic) {
             output << " (";

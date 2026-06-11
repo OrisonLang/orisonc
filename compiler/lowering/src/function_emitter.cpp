@@ -2,6 +2,7 @@
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -17,9 +18,6 @@ namespace {
 using EmissionContext = ExpressionEmissionContext;
 using FunctionLoweringState = ExpressionLoweringState;
 
-auto local_value_name(std::string_view name) -> std::string {
-    return "%" + std::string(name);
-}
 void emit_function_body(
     syntax::FunctionSyntax const& function,
     EmissionContext const& context,
@@ -58,7 +56,8 @@ void emit_function_body(
             if (index > 0) {
                 output << ", ";
             }
-            output << (*llvm_parameter_types)[index] << " " << local_value_name(function.parameters[index].name);
+            output << (*llvm_parameter_types)[index] << " "
+                   << llvm_local_value_name(function.parameters[index].name);
         }
         output << ") {\n";
         output << "entry:\n";
@@ -72,7 +71,8 @@ void emit_function_body(
         if (index > 0) {
             output << ", ";
         }
-        output << (*llvm_parameter_types)[index] << " " << local_value_name(function.parameters[index].name);
+        output << (*llvm_parameter_types)[index] << " "
+               << llvm_local_value_name(function.parameters[index].name);
     }
     output << ") {\n";
     output << "entry:\n";
@@ -82,7 +82,7 @@ void emit_function_body(
         state.local_name_counts[function.parameters[index].name] = 1;
         state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
             .type = (*llvm_parameter_types)[index],
-            .value = local_value_name(function.parameters[index].name),
+            .value = llvm_local_value_name(function.parameters[index].name),
             .signedness = parameter_signedness[index],
         });
     }

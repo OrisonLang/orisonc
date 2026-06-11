@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: LLVM local, temporary, and indexed block naming now use a shared stateless utility with direct counter/collision coverage; expression, control-flow, and function output remain unchanged.
 - 2026-06-11: final value-producing `if`/`switch` CFG emission, nested value blocks, and branch-local immutable bindings now compile in a dedicated control-flow component; function assembly and generated IR remain unchanged.
 - 2026-06-11: recursive LLVM expression lowering now compiles in a dedicated translation unit; function statement/control-flow emission consumes shared expression, inference, and literal APIs with direct and full-suite output preserved.
 - 2026-06-11: expression lowering now exposes a dedicated API plus a shared SSA value/state model for bindings, temporary names, block identities, and current-block tracking; direct ternary/arithmetic coverage pins deterministic IR while full module output remains unchanged.

@@ -211,6 +211,22 @@ add_test(
     COMMAND orison_control_flow_emitter_smoke
 )
 
+add_executable(orison_llvm_names_smoke
+    smoke/llvm_names_smoke.cpp
+)
+
+target_link_libraries(orison_llvm_names_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_llvm_names_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_llvm_names_smoke
+    COMMAND orison_llvm_names_smoke
+)
+
 add_executable(orison_pipeline_smoke
     smoke/compile_pipeline_smoke.cpp
 )
