@@ -1,3 +1,4 @@
+#include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/string_constants.hpp"
@@ -7,7 +8,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -19,24 +19,8 @@ struct LoweredType {
     IntegerSignedness signedness = IntegerSignedness::not_integer;
 };
 
-struct LoweredExpression {
-    std::string type;
-    std::string value;
-    IntegerSignedness signedness = IntegerSignedness::not_integer;
-};
-
-struct EmissionContext {
-    LoweringContext const& lowering;
-    StringConstantTable const& string_constants;
-};
-
-struct FunctionLoweringState {
-    std::unordered_map<std::string, LoweredExpression> immutable_bindings;
-    std::unordered_map<std::string, std::size_t> local_name_counts;
-    std::size_t next_temporary_index = 0;
-    std::size_t next_block_index = 0;
-    std::string current_block = "entry";
-};
+using EmissionContext = ExpressionEmissionContext;
+using FunctionLoweringState = ExpressionLoweringState;
 
 auto lowered_integer_literal(
     syntax::ExpressionSyntax const& expression,
@@ -1101,6 +1085,24 @@ void emit_function_body(
 }
 
 }  // namespace
+
+auto lower_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    ExpressionEmissionContext const& context,
+    ExpressionLoweringState& state,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    return lowered_expression(
+        expression,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        state,
+        output
+    );
+}
 
 auto emit_function(
     syntax::FunctionSyntax const& function,

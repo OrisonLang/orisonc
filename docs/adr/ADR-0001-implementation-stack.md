@@ -36,6 +36,8 @@ analysis, and lowering components.
   artifact or continue into linking without duplicating stage orchestration.
 - Per-function LLVM signature, SSA expression, control-flow, and return emission live behind a dedicated lowering
   component; module emission owns only module assembly, shared context construction, and final LLVM verification.
+- Expression lowering exposes a dedicated API and shared function-local state model for bindings, deterministic SSA
+  names, block identities, and current-block tracking so expression and statement CFG lowering use one state.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
