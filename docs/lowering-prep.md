@@ -94,6 +94,11 @@ The first native code-generation boundary is now available through
 assigns the target triple and data layout, runs the target object-emission pipeline, and writes the resulting
 native object bytes only after code generation succeeds.
 
+Host executables can now be produced with `orisonc --build <file> -o <executable>`. The compiler keeps linking
+behind a separate `orison_link` library, writes a unique temporary object, invokes the CMake-discovered Clang/C
+driver with `posix_spawn` argument vectors, and removes temporary or failed output artifacts. This is an initial
+POSIX host-link path, not yet the final cross-platform or cross-target linker design.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
@@ -117,4 +122,4 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
 2. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.
 3. Define choice representation before lowering constructor-pattern `switch` arms.
-4. Add explicit target selection and linker integration after the host-object path is stable.
+4. Replace the provisional host-link driver with explicit target selection and a cross-platform linker strategy.

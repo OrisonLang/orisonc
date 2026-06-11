@@ -1,5 +1,6 @@
 #include "orison/driver/compiler_app.hpp"
 
+#include "orison/link/host_linker.hpp"
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
@@ -19,7 +20,7 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 
 auto usage_text() -> std::string {
     return "usage: orisonc --version | --parse <file> | --emit-llvm <file> | "
-           "--emit-object <file> -o <output>";
+           "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
 auto render_type(orison::syntax::TypeSyntax const& type) -> std::string {
@@ -299,6 +300,63 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             return CompileResult {
                 .exit_code = 1,
                 .stderr_text = "error: unable to write object file\n",
+            };
+        }
+        return CompileResult {.exit_code = 0};
+    }
+
+    if (args.size() == 5 && std::string_view(args[1]) == "--build" &&
+        std::string_view(args[3]) == "-o") {
+        auto maybe_source = source::SourceFile::read(std::filesystem::path(args[2]));
+        if (!maybe_source.has_value()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = "error: unable to read source file\n",
+            };
+        }
+
+        syntax::ModuleParser parser;
+        auto parse_result = parser.parse(*maybe_source);
+        if (parse_result.diagnostics.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = parse_result.diagnostics.render(maybe_source->path().string()),
+            };
+        }
+
+        semantics::ModuleSemanticAnalyzer semantic_analyzer;
+        auto semantic_analysis = semantic_analyzer.analyze(parse_result.module);
+        if (semantic_analysis.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = semantic_analysis.render(maybe_source->path().string()),
+            };
+        }
+
+        lowering::LlvmIrEmitter ir_emitter;
+        auto ir_emission = ir_emitter.emit(parse_result.module, semantic_analysis);
+        if (ir_emission.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = ir_emission.render(maybe_source->path().string()),
+            };
+        }
+
+        lowering::LlvmObjectEmitter object_emitter;
+        auto object_emission = object_emitter.emit(ir_emission.ir_text);
+        if (object_emission.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = object_emission.diagnostics.render(maybe_source->path().string()),
+            };
+        }
+
+        link::HostLinker linker;
+        auto link_result = linker.link(object_emission.object_bytes, std::filesystem::path(args[4]));
+        if (link_result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = link_result.diagnostics.render(maybe_source->path().string()),
             };
         }
         return CompileResult {.exit_code = 0};

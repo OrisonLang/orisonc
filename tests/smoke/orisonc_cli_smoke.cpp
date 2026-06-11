@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <string_view>
+#include <sys/wait.h>
 #include <utility>
 #include <vector>
 
@@ -1846,6 +1847,14 @@ int main() {
         executable.string() + " --emit-object " + emit_path.string() + " -o " + object_path.string();
     assert(read_command_output(object_command).empty());
     assert(std::filesystem::file_size(object_path) > 0);
+
+    auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
+    auto build_command =
+        executable.string() + " --build " + emit_path.string() + " -o " + executable_path.string();
+    assert(read_command_output(build_command).empty());
+    auto executable_status = std::system(executable_path.string().c_str());
+    assert(WIFEXITED(executable_status));
+    assert(WEXITSTATUS(executable_status) == 42);
 
     assert_cli_parse_failure(
         executable,

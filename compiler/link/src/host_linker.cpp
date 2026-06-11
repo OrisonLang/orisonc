@@ -1,0 +1,109 @@
+#include "orison/link/host_linker.hpp"
+
+#include <atomic>
+#include <cerrno>
+#include <cstdint>
+#include <fstream>
+#include <spawn.h>
+#include <string>
+#include <system_error>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <utility>
+
+extern char** environ;
+
+namespace orison::link {
+namespace {
+
+auto temporary_object_path() -> std::filesystem::path {
+    static auto next_id = std::atomic<std::uint64_t> {0};
+    return std::filesystem::temp_directory_path() /
+           ("orison-link-" + std::to_string(getpid()) + "-" + std::to_string(next_id++) + ".o");
+}
+
+class TemporaryObject {
+public:
+    explicit TemporaryObject(std::filesystem::path path) : path_(std::move(path)) {}
+
+    ~TemporaryObject() {
+        auto error = std::error_code {};
+        std::filesystem::remove(path_, error);
+    }
+
+    auto path() const -> std::filesystem::path const& {
+        return path_;
+    }
+
+private:
+    std::filesystem::path path_;
+};
+
+}  // namespace
+
+auto HostLinkResult::has_errors() const -> bool {
+    return diagnostics.has_errors();
+}
+
+auto HostLinker::link(
+    std::string_view object_bytes,
+    std::filesystem::path const& output_path
+) const -> HostLinkResult {
+    auto result = HostLinkResult {};
+    auto temporary_object = TemporaryObject(temporary_object_path());
+    auto object_output = std::ofstream(temporary_object.path(), std::ios::binary);
+    if (!object_output) {
+        result.diagnostics.error(1, "unable to create temporary object file for linking");
+        return result;
+    }
+    object_output.write(object_bytes.data(), static_cast<std::streamsize>(object_bytes.size()));
+    object_output.close();
+    if (!object_output) {
+        result.diagnostics.error(1, "unable to write temporary object file for linking");
+        return result;
+    }
+
+    auto driver = std::string(ORISON_HOST_LINK_DRIVER);
+    auto object_path = temporary_object.path().string();
+    auto output_path_text = output_path.string();
+    auto cleanup_error = std::error_code {};
+    std::filesystem::remove(output_path, cleanup_error);
+    char* arguments[] {
+        driver.data(),
+        object_path.data(),
+        const_cast<char*>("-o"),
+        output_path_text.data(),
+        nullptr,
+    };
+
+    auto process_id = pid_t {};
+    auto spawn_error = posix_spawn(&process_id, driver.c_str(), nullptr, nullptr, arguments, environ);
+    if (spawn_error != 0) {
+        result.diagnostics.error(
+            1,
+            "unable to start host linker '" + driver + "': " + std::error_code(spawn_error, std::generic_category()).message()
+        );
+        return result;
+    }
+
+    auto status = int {};
+    while (waitpid(process_id, &status, 0) == -1) {
+        if (errno == EINTR) {
+            continue;
+        }
+        result.diagnostics.error(
+            1,
+            "unable to wait for host linker: " + std::error_code(errno, std::generic_category()).message()
+        );
+        return result;
+    }
+
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        auto error = std::error_code {};
+        std::filesystem::remove(output_path, error);
+        result.diagnostics.error(1, "host linker failed to produce an executable");
+    }
+    return result;
+}
+
+}  // namespace orison::link

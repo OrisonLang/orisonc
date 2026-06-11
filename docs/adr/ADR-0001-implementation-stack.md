@@ -28,6 +28,8 @@ analysis, and lowering components.
 - The lowering library links LLVM's core, assembly parser, and support components so emitted textual IR is parsed
   and verified in-process before it is exposed to callers.
 - Host object emission uses LLVM target discovery, a host `TargetMachine`, and the target's object-file pass pipeline.
+- Initial executable linking delegates to a CMake-discovered host Clang/C driver through an argument-vector process
+  launch; no shell command construction is used.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
@@ -36,4 +38,4 @@ analysis, and lowering components.
 
 - Add the first shared foundation/source/diagnostics libraries.
 - Define the initial frontend pipeline from source text to parsed syntax trees.
-- Add explicit target selection and linker integration after the host-object slice is stable.
+- Replace the provisional external host-link driver with a deliberate cross-platform linker strategy.
