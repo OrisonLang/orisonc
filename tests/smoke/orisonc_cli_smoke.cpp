@@ -1848,13 +1848,14 @@ int main() {
     assert(read_command_output(object_command).empty());
     assert(std::filesystem::file_size(object_path) > 0);
 
+    auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
     auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
     auto build_command =
-        executable.string() + " --build " + emit_path.string() + " -o " + executable_path.string();
+        executable.string() + " --build " + demo_path.string() + " -o " + executable_path.string();
     assert(read_command_output(build_command).empty());
     auto executable_status = std::system(executable_path.string().c_str());
     assert(WIFEXITED(executable_status));
-    assert(WEXITSTATUS(executable_status) == 42);
+    assert(WEXITSTATUS(executable_status) == 0);
 
     assert_cli_parse_failure(
         executable,

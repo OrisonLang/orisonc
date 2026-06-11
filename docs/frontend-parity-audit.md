@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: shared source-loading, parse, semantic, verified-IR, and object stages now live in `orison_pipeline`; all compiler CLI modes reuse it, and `examples/minimal.or` provides a checked-in end-to-end build/link/run demo.
 - 2026-06-11: `orisonc --build <file> -o <executable>` now compiles through native object emission and links a runnable host executable through the dedicated `orison_link` library and a CMake-discovered Clang/C driver.
 - 2026-06-11: `orisonc --emit-object <file> -o <output>` now lowers verified IR through a host LLVM `TargetMachine`, applies the host triple and data layout, and writes a native object file after successful code generation.
 - 2026-06-11: lowering now links LLVM in-process, parses every generated textual module, and runs LLVM module verification before publishing IR; malformed generated output becomes a lowering diagnostic and is never emitted by `orisonc --emit-llvm`.

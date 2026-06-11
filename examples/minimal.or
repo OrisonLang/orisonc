@@ -1,0 +1,4 @@
+package demo.minimal
+
+function main() -> UInt32
+    0 as UInt32

@@ -47,11 +47,35 @@ The intended tool suite is:
 
 Each tool should be distributed as a monolithic statically linked executable. Internally, the implementation should remain modular and library-oriented.
 
+## Minimal compiler demo
+
+The smallest checked-in program is `examples/minimal.or`:
+
+```text
+package demo.minimal
+
+function main() -> UInt32
+    0 as UInt32
+```
+
+Configure, build, compile, link, and run it with:
+
+```sh
+cmake -S . -B build
+cmake --build build
+build/tools/orisonc/orisonc --build examples/minimal.or -o build/minimal
+build/minimal
+```
+
+The demo exits successfully with status `0`. The same file can be inspected with `--emit-llvm` or compiled with
+`--emit-object`.
+
 ## Repository expectations
 
 The repository should evolve toward a layout similar to:
 
 - `compiler/`
+- `examples/`
 - `runtime/`
 - `tools/`
 - `tests/`

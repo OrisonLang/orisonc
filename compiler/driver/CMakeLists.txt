@@ -11,10 +11,7 @@ target_link_libraries(orison_driver
     PUBLIC
         orison_diagnostics
         orison_link
-        orison_lowering
-        orison_semantics
-        orison_source
-        orison_syntax
+        orison_pipeline
 )
 
 target_compile_features(orison_driver PUBLIC cxx_std_23)

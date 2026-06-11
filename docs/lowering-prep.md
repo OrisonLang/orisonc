@@ -99,6 +99,11 @@ behind a separate `orison_link` library, writes a unique temporary object, invok
 driver with `posix_spawn` argument vectors, and removes temporary or failed output artifacts. This is an initial
 POSIX host-link path, not yet the final cross-platform or cross-target linker design.
 
+Source loading, parsing, semantic analysis, verified IR emission, and native object emission now compose through
+the reusable `orison_pipeline` library. `--parse`, `--emit-llvm`, `--emit-object`, and `--build` share those stage
+boundaries rather than maintaining separate copies of the compiler flow. `examples/minimal.or` is the stable
+zero-exit demo input for repeatedly exercising the end-to-end path.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 

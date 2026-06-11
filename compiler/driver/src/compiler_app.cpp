@@ -1,11 +1,7 @@
 #include "orison/driver/compiler_app.hpp"
 
 #include "orison/link/host_linker.hpp"
-#include "orison/lowering/llvm_ir_emitter.hpp"
-#include "orison/lowering/llvm_object_emitter.hpp"
-#include "orison/semantics/module_semantic_analyzer.hpp"
-#include "orison/source/source_file.hpp"
-#include "orison/syntax/module_parser.hpp"
+#include "orison/pipeline/compile_pipeline.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -197,89 +193,28 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--emit-llvm") {
-        auto maybe_source = source::SourceFile::read(std::filesystem::path(args[2]));
-        if (!maybe_source.has_value()) {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
-                .stderr_text = "error: unable to read source file\n",
-            };
-        }
-
-        syntax::ModuleParser parser;
-        auto parse_result = parser.parse(*maybe_source);
-        if (parse_result.diagnostics.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = parse_result.diagnostics.render(maybe_source->path().string()),
-            };
-        }
-
-        semantics::ModuleSemanticAnalyzer semantic_analyzer;
-        auto semantic_analysis = semantic_analyzer.analyze(parse_result.module);
-        if (semantic_analysis.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = semantic_analysis.render(maybe_source->path().string()),
-            };
-        }
-
-        lowering::LlvmIrEmitter emitter;
-        auto emission = emitter.emit(parse_result.module, semantic_analysis);
-        if (emission.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = emission.render(maybe_source->path().string()),
+                .stderr_text = std::move(result.error_text),
             };
         }
         return CompileResult {
             .exit_code = 0,
-            .stdout_text = std::move(emission.ir_text),
+            .stdout_text = std::move(result.ir_text),
         };
     }
 
     if (args.size() == 5 && std::string_view(args[1]) == "--emit-object" &&
         std::string_view(args[3]) == "-o") {
-        auto maybe_source = source::SourceFile::read(std::filesystem::path(args[2]));
-        if (!maybe_source.has_value()) {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.emit_object(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
-                .stderr_text = "error: unable to read source file\n",
-            };
-        }
-
-        syntax::ModuleParser parser;
-        auto parse_result = parser.parse(*maybe_source);
-        if (parse_result.diagnostics.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = parse_result.diagnostics.render(maybe_source->path().string()),
-            };
-        }
-
-        semantics::ModuleSemanticAnalyzer semantic_analyzer;
-        auto semantic_analysis = semantic_analyzer.analyze(parse_result.module);
-        if (semantic_analysis.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = semantic_analysis.render(maybe_source->path().string()),
-            };
-        }
-
-        lowering::LlvmIrEmitter ir_emitter;
-        auto ir_emission = ir_emitter.emit(parse_result.module, semantic_analysis);
-        if (ir_emission.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = ir_emission.render(maybe_source->path().string()),
-            };
-        }
-
-        lowering::LlvmObjectEmitter object_emitter;
-        auto object_emission = object_emitter.emit(ir_emission.ir_text);
-        if (object_emission.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = object_emission.diagnostics.render(maybe_source->path().string()),
+                .stderr_text = std::move(result.error_text),
             };
         }
 
@@ -292,8 +227,8 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             };
         }
         output.write(
-            object_emission.object_bytes.data(),
-            static_cast<std::streamsize>(object_emission.object_bytes.size())
+            result.object_bytes.data(),
+            static_cast<std::streamsize>(result.object_bytes.size())
         );
         output.close();
         if (!output) {
@@ -307,90 +242,40 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
 
     if (args.size() == 5 && std::string_view(args[1]) == "--build" &&
         std::string_view(args[3]) == "-o") {
-        auto maybe_source = source::SourceFile::read(std::filesystem::path(args[2]));
-        if (!maybe_source.has_value()) {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.emit_object(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
-                .stderr_text = "error: unable to read source file\n",
-            };
-        }
-
-        syntax::ModuleParser parser;
-        auto parse_result = parser.parse(*maybe_source);
-        if (parse_result.diagnostics.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = parse_result.diagnostics.render(maybe_source->path().string()),
-            };
-        }
-
-        semantics::ModuleSemanticAnalyzer semantic_analyzer;
-        auto semantic_analysis = semantic_analyzer.analyze(parse_result.module);
-        if (semantic_analysis.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = semantic_analysis.render(maybe_source->path().string()),
-            };
-        }
-
-        lowering::LlvmIrEmitter ir_emitter;
-        auto ir_emission = ir_emitter.emit(parse_result.module, semantic_analysis);
-        if (ir_emission.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = ir_emission.render(maybe_source->path().string()),
-            };
-        }
-
-        lowering::LlvmObjectEmitter object_emitter;
-        auto object_emission = object_emitter.emit(ir_emission.ir_text);
-        if (object_emission.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = object_emission.diagnostics.render(maybe_source->path().string()),
+                .stderr_text = std::move(result.error_text),
             };
         }
 
         link::HostLinker linker;
-        auto link_result = linker.link(object_emission.object_bytes, std::filesystem::path(args[4]));
+        auto link_result = linker.link(result.object_bytes, std::filesystem::path(args[4]));
         if (link_result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
-                .stderr_text = link_result.diagnostics.render(maybe_source->path().string()),
+                .stderr_text = link_result.diagnostics.render(result.source_file->path().string()),
             };
         }
         return CompileResult {.exit_code = 0};
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--parse") {
-        auto maybe_source = source::SourceFile::read(std::filesystem::path(args[2]));
-        if (!maybe_source.has_value()) {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.analyze(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
-                .stderr_text = "error: unable to read source file\n",
+                .stderr_text = std::move(result.error_text),
             };
         }
-
-        syntax::ModuleParser parser;
-        auto parse_result = parser.parse(*maybe_source);
-        if (parse_result.diagnostics.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = parse_result.diagnostics.render(maybe_source->path().string()),
-            };
-        }
-
-        semantics::ModuleSemanticAnalyzer semantic_analyzer;
-        auto semantic_analysis = semantic_analyzer.analyze(parse_result.module);
-        if (semantic_analysis.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = semantic_analysis.render(maybe_source->path().string()),
-            };
-        }
+        auto const& source_file = *result.source_file;
+        auto const& parse_result = result.parse_result;
 
         std::ostringstream output;
-        output << "parsed " << maybe_source->path().string() << '\n';
+        output << "parsed " << source_file.path().string() << '\n';
         output << "package " << parse_result.module.package_name << '\n';
         output << "top-level declarations: " << parse_result.module.top_level_declaration_count << '\n';
         output << "imports: " << parse_result.module.imports.size() << '\n';

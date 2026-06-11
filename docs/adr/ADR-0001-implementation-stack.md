@@ -30,6 +30,8 @@ analysis, and lowering components.
 - Host object emission uses LLVM target discovery, a host `TargetMachine`, and the target's object-file pass pipeline.
 - Initial executable linking delegates to a CMake-discovered host Clang/C driver through an argument-vector process
   launch; no shell command construction is used.
+- Shared frontend, LLVM IR, and object compilation stages live behind `orison_pipeline`; CLI modes select an
+  artifact or continue into linking without duplicating stage orchestration.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
