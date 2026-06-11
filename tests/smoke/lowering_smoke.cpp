@@ -1,4 +1,5 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
+#include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -877,6 +878,45 @@ void test_reject_unsupported_return_expression() {
     assert(result.diagnostics.entries().front().message == "lowering does not yet support this return expression");
 }
 
+void test_reject_malformed_generated_llvm_ir() {
+    orison::lowering::LlvmIrVerifier verifier;
+    auto diagnostics = verifier.verify(
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  ret i1 1\n"
+        "}\n"
+    );
+
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(
+        diagnostics.entries().front().message.find("generated LLVM IR failed to parse") != std::string::npos
+    );
+}
+
+void test_reject_invalid_generated_llvm_module() {
+    orison::lowering::LlvmIrVerifier verifier;
+    auto diagnostics = verifier.verify(
+        "define i32 @main(i1 %condition) {\n"
+        "entry:\n"
+        "  br i1 %condition, label %left, label %right\n"
+        "left:\n"
+        "  br label %merge\n"
+        "right:\n"
+        "  br label %merge\n"
+        "merge:\n"
+        "  %value = phi i32 [1, %left]\n"
+        "  ret i32 %value\n"
+        "}\n"
+    );
+
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().size() == 1);
+    assert(
+        diagnostics.entries().front().message.find("generated LLVM IR failed verification") != std::string::npos
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -900,5 +940,7 @@ auto main() -> int {
     test_emit_single_uint32_parameter_function_call_return();
     test_emit_multi_uint32_parameter_function_call_return();
     test_reject_unsupported_return_expression();
+    test_reject_malformed_generated_llvm_ir();
+    test_reject_invalid_generated_llvm_module();
     return 0;
 }

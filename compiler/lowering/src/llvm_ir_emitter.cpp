@@ -1,4 +1,5 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
+#include "orison/lowering/llvm_ir_verifier.hpp"
 
 #include <array>
 #include <optional>
@@ -1170,7 +1171,12 @@ auto LlvmIrEmitter::emit(
     }
 
     if (!result.has_errors()) {
-        result.ir_text = output.str();
+        auto ir_text = output.str();
+        LlvmIrVerifier verifier;
+        result.diagnostics = verifier.verify(ir_text);
+        if (!result.has_errors()) {
+            result.ir_text = std::move(ir_text);
+        }
     }
     return result;
 }

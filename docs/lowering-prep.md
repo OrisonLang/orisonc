@@ -83,6 +83,12 @@ The compiler driver now exposes this lowering slice through `orisonc --emit-llvm
 writes textual LLVM IR to stdout; source loading, parse, semantic, and lowering failures return path-aware
 diagnostics on stderr without emitting partial IR.
 
+`orison_lowering` now parses every generated module with LLVM's assembly parser and runs LLVM module verification
+before publishing `ir_text`. Parser or verifier failures become lowering diagnostics, so both library callers and
+`orisonc --emit-llvm` reject malformed backend output instead of forwarding it.
+The current development environment supplies LLVM as a monolithic shared library; release builds still require
+static LLVM archives to satisfy the toolchain's static-distribution requirement.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
@@ -106,4 +112,4 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
 2. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.
 3. Define choice representation before lowering constructor-pattern `switch` arms.
-4. Add LLVM module verification before extending the CLI toward object emission.
+4. Add target-machine and object emission support behind a separate CLI option.

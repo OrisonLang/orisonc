@@ -4,7 +4,7 @@ project(
     Orison
     VERSION 0.1.0
     DESCRIPTION "Orison systems programming language toolchain"
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 set(CMAKE_CXX_STANDARD 23)
@@ -12,6 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(ORISON_ENABLE_TESTS "Build Orison test targets" ON)
+
+find_package(LLVM REQUIRED CONFIG)
 
 add_subdirectory(compiler)
 add_subdirectory(tools)

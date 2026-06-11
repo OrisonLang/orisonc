@@ -25,11 +25,14 @@ analysis, and lowering components.
 
 - The build system should standardize on a `CMake`-based native workflow.
 - Repository layout should separate reusable compiler libraries from tool entry points and tests.
-- Early scaffolding can remain independent from linked LLVM components until the backend layer is introduced.
+- The lowering library links LLVM's core, assembly parser, and support components so emitted textual IR is parsed
+  and verified in-process before it is exposed to callers.
+- Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
+  release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
 
 ## Follow-up work
 
 - Add the first shared foundation/source/diagnostics libraries.
 - Define the initial frontend pipeline from source text to parsed syntax trees.
-- Introduce explicit LLVM discovery and backend targets once lowering begins.
+- Extend the linked LLVM boundary from verification into target-machine and object emission support.
