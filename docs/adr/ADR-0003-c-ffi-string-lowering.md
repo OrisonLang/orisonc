@@ -15,16 +15,19 @@ The first runnable foreign-function example passes a string literal to a C funct
 - The call passes the global address as LLVM `ptr`.
 - This conversion is limited to C foreign-call arguments. Ordinary `Pointer<Byte>` parameters still require explicit
   pointer-like expressions.
-- C foreign imports without an explicit library clause lower to LLVM external declarations.
+- Supported C foreign imports lower to LLVM external declarations.
+- Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
+  arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.
 
 ## Consequences
 
 - C string calls require no runtime allocation and have static storage duration.
 - Embedded null bytes are representable, but C callees observe the first null as the string terminator.
-- Foreign library selection, variadic declarations, non-C ABIs, and general `Text` representation remain future work.
+- Variadic declarations, non-C ABIs, nonstandard library search paths, and general `Text` representation remain
+  future work.
 
 ## Follow-up work
 
 - Add an explicit variadic FFI model before supporting additional `printf` arguments.
-- Define foreign library propagation into the linker.
+- Define target-aware library naming and search paths for cross-compilation.

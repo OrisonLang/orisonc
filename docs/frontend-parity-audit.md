@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: explicit C `library "name"` clauses now propagate through the shared pipeline into `--build` and `run` as deduplicated direct linker arguments; host-linker coverage resolves and executes `cos` from `libm`, and the checked-in FFI example includes the tour's math-library declarations.
 - 2026-06-11: the C FFI hello-world example now lowers and runs; C imports without library clauses emit LLVM declarations, string literals passed to foreign `Pointer<Byte>` parameters become immutable null-terminated globals, host objects use PIC relocation, and the string-to-pointer conversion remains unavailable to ordinary function calls.
 - 2026-06-11: `orisonc run <file>` now compiles, links, and executes through the shared pipeline while propagating the program exit status and cleaning temporary artifacts; eleven frontend-validated `examples/tour_*.or` files now cover the implemented tour surface, including a C `printf` hello-world source whose backend requirements are explicitly tracked.
 - 2026-06-11: shared source-loading, parse, semantic, verified-IR, and object stages now live in `orison_pipeline`; all compiler CLI modes reuse it, and `examples/minimal.or` provides a checked-in end-to-end build/link/run demo.

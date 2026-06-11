@@ -204,7 +204,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         }
 
         link::HostRunner runner;
-        auto run_result = runner.run(result.object_bytes);
+        auto run_result = runner.run(result.object_bytes, result.link_libraries);
         if (run_result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
@@ -274,7 +274,11 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         }
 
         link::HostLinker linker;
-        auto link_result = linker.link(result.object_bytes, std::filesystem::path(args[4]));
+        auto link_result = linker.link(
+            result.object_bytes,
+            std::filesystem::path(args[4]),
+            result.link_libraries
+        );
         if (link_result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,

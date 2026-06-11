@@ -109,6 +109,23 @@ add_test(
     COMMAND orison_examples_smoke
 )
 
+add_executable(orison_host_linker_smoke
+    smoke/host_linker_smoke.cpp
+)
+
+target_link_libraries(orison_host_linker_smoke
+    PRIVATE
+        orison_link
+        orison_lowering
+)
+
+target_compile_features(orison_host_linker_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_host_linker_smoke
+    COMMAND orison_host_linker_smoke
+)
+
 add_executable(orison_lexer_smoke
     smoke/lexer_smoke.cpp
 )

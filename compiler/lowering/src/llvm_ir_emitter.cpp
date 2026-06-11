@@ -1217,7 +1217,7 @@ auto collect_lowering_context(syntax::ModuleSyntax const& module) -> LoweringCon
     }
 
     for (auto const& foreign_import : module.foreign_imports) {
-        if (unquoted_text(foreign_import.abi) != "c" || !foreign_import.library_name.empty()) {
+        if (unquoted_text(foreign_import.abi) != "c") {
             continue;
         }
         for (auto const& function : foreign_import.functions) {

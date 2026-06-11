@@ -3,7 +3,9 @@
 #include "orison/diagnostics/diagnostic_bag.hpp"
 
 #include <filesystem>
+#include <string>
 #include <string_view>
+#include <vector>
 
 namespace orison::link {
 
@@ -17,7 +19,8 @@ class HostLinker {
 public:
     auto link(
         std::string_view object_bytes,
-        std::filesystem::path const& output_path
+        std::filesystem::path const& output_path,
+        std::vector<std::string> const& libraries = {}
     ) const -> HostLinkResult;
 };
 

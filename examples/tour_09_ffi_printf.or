@@ -3,5 +3,9 @@ package examples.ffi
 package foreign "c"
     function printf(format: Pointer<Byte>) -> Int32
 
+package foreign "c" library "m"
+    function sin(value: Float64) -> Float64
+    function cos(value: Float64) -> Float64
+
 public function main() -> Int32
     printf("Hello world from Orison!\n")

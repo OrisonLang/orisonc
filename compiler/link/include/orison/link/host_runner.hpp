@@ -2,7 +2,9 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 
+#include <string>
 #include <string_view>
+#include <vector>
 
 namespace orison::link {
 
@@ -15,7 +17,10 @@ struct HostRunResult {
 
 class HostRunner {
 public:
-    auto run(std::string_view object_bytes) const -> HostRunResult;
+    auto run(
+        std::string_view object_bytes,
+        std::vector<std::string> const& libraries = {}
+    ) const -> HostRunResult;
 };
 
 }  // namespace orison::link

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <filesystem>
+#include <fstream>
 #include <string>
 
 auto main() -> int {
@@ -26,5 +27,21 @@ auto main() -> int {
     auto missing = pipeline.analyze(source_path.parent_path() / "missing.or");
     assert(missing.has_errors());
     assert(missing.error_text == "error: unable to read source file\n");
+
+    auto library_path = std::filesystem::temp_directory_path() / "orison_pipeline_libraries.or";
+    {
+        std::ofstream source(library_path);
+        source << "package demo.libraries\n";
+        source << "package foreign \"c\" library \"m\"\n";
+        source << "    function first(value: Int32) -> Int32\n";
+        source << "package foreign \"c\" library \"m\"\n";
+        source << "    function second(value: Int32) -> Int32\n";
+        source << "function main() -> Int32\n";
+        source << "    0 as Int32\n";
+    }
+    auto libraries = pipeline.analyze(library_path);
+    assert(!libraries.has_errors());
+    assert(libraries.link_libraries.size() == 1);
+    assert(libraries.link_libraries.front() == "m");
     return 0;
 }

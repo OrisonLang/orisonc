@@ -108,6 +108,8 @@ zero-exit demo input for repeatedly exercising the end-to-end path.
 The numbered `examples/tour_*.or` files are frontend-validated tour slices. The C `printf` hello-world example now
 also lowers and runs: C imports become LLVM declarations, string literal arguments become immutable null-terminated
 globals, and `Pointer<Byte>` lowers to LLVM `ptr` at this boundary. Host objects use PIC relocation for PIE linking.
+Explicit C library clauses now flow through the shared pipeline into host linking as deduplicated `-lname` arguments;
+the linker smoke test resolves and executes a real `cos` call through `libm`.
 
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.

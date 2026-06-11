@@ -47,12 +47,15 @@ auto HostRunResult::has_errors() const -> bool {
     return diagnostics.has_errors();
 }
 
-auto HostRunner::run(std::string_view object_bytes) const -> HostRunResult {
+auto HostRunner::run(
+    std::string_view object_bytes,
+    std::vector<std::string> const& libraries
+) const -> HostRunResult {
     auto result = HostRunResult {};
     auto executable = TemporaryExecutable(temporary_executable_path());
 
     HostLinker linker;
-    auto link_result = linker.link(object_bytes, executable.path());
+    auto link_result = linker.link(object_bytes, executable.path(), libraries);
     if (link_result.has_errors()) {
         result.diagnostics = std::move(link_result.diagnostics);
         return result;

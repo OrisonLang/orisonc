@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace orison::pipeline {
 
@@ -16,6 +17,7 @@ struct CompilePipelineResult {
     semantics::SemanticAnalysisResult semantic_result;
     std::string ir_text;
     std::string object_bytes;
+    std::vector<std::string> link_libraries;
     std::string error_text;
 
     auto has_errors() const -> bool;

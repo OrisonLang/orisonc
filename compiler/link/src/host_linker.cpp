@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <utility>
+#include <vector>
 
 extern char** environ;
 
@@ -47,7 +48,8 @@ auto HostLinkResult::has_errors() const -> bool {
 
 auto HostLinker::link(
     std::string_view object_bytes,
-    std::filesystem::path const& output_path
+    std::filesystem::path const& output_path,
+    std::vector<std::string> const& libraries
 ) const -> HostLinkResult {
     auto result = HostLinkResult {};
     auto temporary_object = TemporaryObject(temporary_object_path());
@@ -68,16 +70,25 @@ auto HostLinker::link(
     auto output_path_text = output_path.string();
     auto cleanup_error = std::error_code {};
     std::filesystem::remove(output_path, cleanup_error);
-    char* arguments[] {
-        driver.data(),
-        object_path.data(),
-        const_cast<char*>("-o"),
-        output_path_text.data(),
-        nullptr,
-    };
+    auto argument_storage = std::vector<std::string> {};
+    argument_storage.reserve(4 + libraries.size());
+    argument_storage.push_back(driver);
+    argument_storage.push_back(object_path);
+    for (auto const& library : libraries) {
+        argument_storage.push_back("-l" + library);
+    }
+    argument_storage.push_back("-o");
+    argument_storage.push_back(output_path_text);
+
+    auto arguments = std::vector<char*> {};
+    arguments.reserve(argument_storage.size() + 1);
+    for (auto& argument : argument_storage) {
+        arguments.push_back(argument.data());
+    }
+    arguments.push_back(nullptr);
 
     auto process_id = pid_t {};
-    auto spawn_error = posix_spawn(&process_id, driver.c_str(), nullptr, nullptr, arguments, environ);
+    auto spawn_error = posix_spawn(&process_id, driver.c_str(), nullptr, nullptr, arguments.data(), environ);
     if (spawn_error != 0) {
         result.diagnostics.error(
             1,

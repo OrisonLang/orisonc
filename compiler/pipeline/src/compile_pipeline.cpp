@@ -3,9 +3,36 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 
+#include <algorithm>
+#include <string_view>
 #include <utility>
 
 namespace orison::pipeline {
+namespace {
+
+auto unquoted_text(std::string_view text) -> std::string {
+    if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
+        return std::string(text.substr(1, text.size() - 2));
+    }
+    return std::string(text);
+}
+
+void collect_link_libraries(
+    syntax::ModuleSyntax const& module,
+    std::vector<std::string>& libraries
+) {
+    for (auto const& foreign_import : module.foreign_imports) {
+        if (unquoted_text(foreign_import.abi) != "c" || foreign_import.library_name.empty()) {
+            continue;
+        }
+        auto library = unquoted_text(foreign_import.library_name);
+        if (std::find(libraries.begin(), libraries.end(), library) == libraries.end()) {
+            libraries.push_back(std::move(library));
+        }
+    }
+}
+
+}  // namespace
 
 auto CompilePipelineResult::has_errors() const -> bool {
     return !error_text.empty();
@@ -25,6 +52,7 @@ auto CompilePipeline::analyze(std::filesystem::path const& source_path) const ->
         result.error_text = result.parse_result.diagnostics.render(result.source_file->path().string());
         return result;
     }
+    collect_link_libraries(result.parse_result.module, result.link_libraries);
 
     semantics::ModuleSemanticAnalyzer semantic_analyzer;
     result.semantic_result = semantic_analyzer.analyze(result.parse_result.module);
