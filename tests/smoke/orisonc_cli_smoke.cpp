@@ -1829,6 +1829,18 @@ int main() {
     assert(output.find("first statement alternate count: 0") != std::string::npos);
     assert(output.find("first statement switch cases: 0") != std::string::npos);
 
+    auto emit_path = std::filesystem::temp_directory_path() / "orison_cli_emit_llvm.or";
+    {
+        std::ofstream emit_source(emit_path);
+        emit_source << "package demo.emit\n";
+        emit_source << "function main() -> UInt32\n";
+        emit_source << "    42 as UInt32\n";
+    }
+    auto emit_output = read_command_output(executable.string() + " --emit-llvm " + emit_path.string());
+    assert(emit_output.find("; package demo.emit") != std::string::npos);
+    assert(emit_output.find("define i32 @main()") != std::string::npos);
+    assert(emit_output.find("ret i32 42") != std::string::npos);
+
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",

@@ -79,6 +79,10 @@ Final scalar `switch` statements lower through LLVM's `switch` terminator, one b
 immutable bindings are isolated between arms, and exhaustive switches without `default` use an `unreachable`
 fallback block. Final `if` and `switch` containers can recursively appear inside either kind of branch arm.
 
+The compiler driver now exposes this lowering slice through `orisonc --emit-llvm <file>`. Successful emission
+writes textual LLVM IR to stdout; source loading, parse, semantic, and lowering failures return path-aware
+diagnostics on stderr without emitting partial IR.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
@@ -100,6 +104,6 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 ## Suggested implementation order
 
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
-2. Add explicit CLI lowering output after the library emitter has enough useful expression coverage.
-3. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.
-4. Define choice representation before lowering constructor-pattern `switch` arms.
+2. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.
+3. Define choice representation before lowering constructor-pattern `switch` arms.
+4. Add LLVM module verification before extending the CLI toward object emission.

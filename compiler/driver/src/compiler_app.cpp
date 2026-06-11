@@ -1,5 +1,6 @@
 #include "orison/driver/compiler_app.hpp"
 
+#include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -7,6 +8,7 @@
 #include <filesystem>
 #include <sstream>
 #include <string_view>
+#include <utility>
 
 namespace orison::driver {
 namespace {
@@ -14,7 +16,7 @@ namespace {
 auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> std::string;
 
 auto usage_text() -> std::string {
-    return "usage: orisonc --version | --parse <file>";
+    return "usage: orisonc --version | --parse <file> | --emit-llvm <file>";
 }
 
 auto render_type(orison::syntax::TypeSyntax const& type) -> std::string {
@@ -188,6 +190,47 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
     if (args.size() > 1 && std::string_view(args[1]) == "--version") {
         return CompileResult {.exit_code = 0, .stdout_text = "orisonc 0.1.0-dev\n"};
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--emit-llvm") {
+        auto maybe_source = source::SourceFile::read(std::filesystem::path(args[2]));
+        if (!maybe_source.has_value()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = "error: unable to read source file\n",
+            };
+        }
+
+        syntax::ModuleParser parser;
+        auto parse_result = parser.parse(*maybe_source);
+        if (parse_result.diagnostics.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = parse_result.diagnostics.render(maybe_source->path().string()),
+            };
+        }
+
+        semantics::ModuleSemanticAnalyzer semantic_analyzer;
+        auto semantic_analysis = semantic_analyzer.analyze(parse_result.module);
+        if (semantic_analysis.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = semantic_analysis.render(maybe_source->path().string()),
+            };
+        }
+
+        lowering::LlvmIrEmitter emitter;
+        auto emission = emitter.emit(parse_result.module, semantic_analysis);
+        if (emission.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = emission.render(maybe_source->path().string()),
+            };
+        }
+        return CompileResult {
+            .exit_code = 0,
+            .stdout_text = std::move(emission.ir_text),
+        };
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--parse") {

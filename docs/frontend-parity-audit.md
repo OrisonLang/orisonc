@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: `orisonc --emit-llvm <file>` now runs source loading, parsing, semantic analysis, and LLVM IR emission through the compiler driver, writing successful textual IR to stdout and path-aware stage diagnostics to stderr.
 - 2026-06-10: final scalar value-pattern `switch` statements now emit LLVM `switch` terminators, isolated case blocks, and merge `phi` values; integer/boolean patterns, case-local bindings, explicit defaults, exhaustive no-default boolean switches, and recursively nested final branch containers are supported.
 - 2026-06-10: final branch blocks now lower recursively when their last statement is another value-producing `if ... else`; nested arms inherit outer branch bindings, restore sibling scopes, and feed their inner merge value into the outer `phi`.
 - 2026-06-10: final `if ... else` lowering now supports multi-statement arms with leading immutable bindings; branch scopes restore outer bindings between arms while function-wide SSA name counters uniquify repeated local names.

@@ -497,6 +497,17 @@ auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path con
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--emit-llvm",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 void assert_wrap_duplicate_parse_failure(orison::driver::CompileResult const& result) {
     assert(result.exit_code == 1);
     assert(result.stdout_text.empty());
@@ -538,6 +549,47 @@ int main() {
     assert(result.exit_code == 0);
     assert(result.stdout_text == "orisonc 0.1.0-dev\n");
     assert(result.stderr_text.empty());
+
+    auto emit_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_llvm.or";
+    write_concurrency_fixture(
+        emit_path,
+        "demo.emit",
+        {
+            "function main() -> UInt32",
+            "    42 as UInt32",
+        }
+    );
+    auto emit_result = run_emit_llvm(app, emit_path);
+    assert(emit_result.exit_code == 0);
+    assert(emit_result.stderr_text.empty());
+    assert(
+        emit_result.stdout_text ==
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.emit\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  ret i32 42\n"
+        "}\n"
+        "\n"
+    );
+
+    auto emit_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_llvm_failure.or";
+    write_concurrency_fixture(
+        emit_failure_path,
+        "demo.emit",
+        {
+            "function same(left: Bool, right: Bool) -> Bool",
+            "    left == right",
+        }
+    );
+    auto emit_failure = run_emit_llvm(app, emit_failure_path);
+    assert(emit_failure.exit_code == 1);
+    assert(emit_failure.stdout_text.empty());
+    assert(
+        emit_failure.stderr_text.find("lowering does not yet support this return expression") != std::string::npos
+    );
 
     auto path = std::filesystem::temp_directory_path() / "orison_compiler_app_await_failure.or";
     write_concurrency_fixture(
