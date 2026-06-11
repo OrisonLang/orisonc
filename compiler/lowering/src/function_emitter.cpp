@@ -147,9 +147,11 @@ void emit_function_body(
         );
     }
     if (!lowered.has_value()) {
+        auto detail = render_expression_lowering_failure(state.failure);
         diagnostics.error(
             expression != nullptr ? expression->line : function.line,
-            "lowering does not yet support this return expression"
+            "lowering does not yet support this return expression" +
+                (detail.empty() ? std::string {} : ": " + detail)
         );
         return;
     }

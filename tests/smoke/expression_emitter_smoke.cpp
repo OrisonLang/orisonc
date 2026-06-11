@@ -73,6 +73,57 @@ int main() {
         "ternary.merge.0:\n"
         "  %tmp2 = phi i32 [%tmp0, %ternary.then.0], [%tmp1, %ternary.else.0]\n"
     );
+
+    auto unknown = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "missing",
+    };
+    output = {};
+    auto failed = orison::lowering::lower_expression(
+        unknown,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        state,
+        output
+    );
+    assert(!failed.has_value());
+    assert(
+        state.failure.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::unknown_name
+    );
+    assert(
+        orison::lowering::render_expression_lowering_failure(state.failure) ==
+        "unknown lowered name: missing"
+    );
+
+    auto call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "choose",
+            }
+        ),
+    };
+    output = {};
+    failed = orison::lowering::lower_expression(
+        call,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        state,
+        output
+    );
+    assert(!failed.has_value());
+    assert(
+        state.failure.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::call_arity_mismatch
+    );
+    assert(
+        orison::lowering::render_expression_lowering_failure(state.failure) ==
+        "call arity mismatch: choose expects 3 arguments, got 0"
+    );
     std::filesystem::remove(path);
     return 0;
 }

@@ -46,6 +46,8 @@ analysis, and lowering components.
   explicit counters/maps and request deterministic names without duplicating formatting or increment behavior.
 - Ordinary function definitions retain their shared lowered signatures in the module context even when a type is
   unsupported; function emission consumes that model directly for declarations, bindings, signedness, and diagnostics.
+- Expression lowering records a structured first failure reason and detail in explicit lowering state; callers retain
+  optional value flow while producing targeted diagnostics for names, types, operators, calls, casts, and branches.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

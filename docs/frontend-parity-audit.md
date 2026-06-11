@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: expression lowering now records structured first-failure reasons for unsupported expressions, names, type/signedness mismatches, casts, operators, branch mismatches, and call lookup/type/arity/argument failures; let/return diagnostics include rendered detail.
 - 2026-06-11: function definitions now consume the authoritative shared lowered signature for return/parameter types and signedness; unsupported ordinary signatures remain in context for targeted diagnostics, eliminating parallel syntax-to-LLVM remapping without changing IR.
 - 2026-06-11: LLVM local, temporary, and indexed block naming now use a shared stateless utility with direct counter/collision coverage; expression, control-flow, and function output remain unchanged.
 - 2026-06-11: final value-producing `if`/`switch` CFG emission, nested value blocks, and branch-local immutable bindings now compile in a dedicated control-flow component; function assembly and generated IR remain unchanged.

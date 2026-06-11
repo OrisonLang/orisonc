@@ -1081,7 +1081,10 @@ void test_reject_unsupported_return_expression() {
 
     assert(result.has_errors());
     assert(result.diagnostics.entries().size() == 1);
-    assert(result.diagnostics.entries().front().message == "lowering does not yet support this return expression");
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support this return expression: cannot infer operand type: =="
+    );
 }
 
 void test_reject_malformed_generated_llvm_ir() {

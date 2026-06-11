@@ -30,12 +30,35 @@ struct ExpressionEmissionContext {
     StringConstantTable const& string_constants;
 };
 
+enum class ExpressionLoweringFailureReason {
+    none,
+    unsupported_expression,
+    missing_string_constant,
+    unknown_name,
+    type_mismatch,
+    signedness_mismatch,
+    unsupported_cast,
+    unsupported_operator,
+    cannot_infer_operand_type,
+    branch_type_mismatch,
+    unknown_function,
+    call_return_type_mismatch,
+    call_arity_mismatch,
+    call_argument_failure,
+};
+
+struct ExpressionLoweringFailure {
+    ExpressionLoweringFailureReason reason = ExpressionLoweringFailureReason::none;
+    std::string detail;
+};
+
 struct ExpressionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
     std::unordered_map<std::string, std::size_t> local_name_counts;
     std::size_t next_temporary_index = 0;
     std::size_t next_block_index = 0;
     std::string current_block = "entry";
+    ExpressionLoweringFailure failure;
 };
 
 auto lower_expression(
@@ -65,5 +88,9 @@ auto lower_boolean_literal(
 ) -> std::optional<LoweredExpression>;
 
 auto is_integer_llvm_type(std::string_view type) -> bool;
+
+auto render_expression_lowering_failure(
+    ExpressionLoweringFailure const& failure
+) -> std::string;
 
 }  // namespace orison::lowering

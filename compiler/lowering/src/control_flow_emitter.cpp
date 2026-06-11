@@ -40,7 +40,12 @@ auto lower_let_binding(
 ) -> bool {
     auto lowered = lower_expression(statement.expression, expected_llvm_type, expected_signedness, context, state, output);
     if (!lowered.has_value()) {
-        diagnostics.error(statement.line, "lowering does not yet support this let initializer");
+        auto detail = render_expression_lowering_failure(state.failure);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this let initializer" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
         return false;
     }
 

@@ -17,6 +17,19 @@ namespace {
 using EmissionContext = ExpressionEmissionContext;
 using FunctionLoweringState = ExpressionLoweringState;
 
+void record_failure(
+    FunctionLoweringState& state,
+    ExpressionLoweringFailureReason reason,
+    std::string detail
+) {
+    if (state.failure.reason == ExpressionLoweringFailureReason::none) {
+        state.failure = ExpressionLoweringFailure {
+            .reason = reason,
+            .detail = std::move(detail),
+        };
+    }
+}
+
 auto lowered_integer_literal(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -177,6 +190,11 @@ auto lowered_expression(
     if (expression.kind == syntax::ExpressionKind::string_literal && expected_llvm_type == "ptr") {
         auto const* constant = context.string_constants.find(expression.text);
         if (constant == nullptr) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::missing_string_constant,
+                expression.text
+            );
             return std::nullopt;
         }
         return LoweredExpression {
@@ -189,12 +207,24 @@ auto lowered_expression(
     if (expression.kind == syntax::ExpressionKind::name) {
         auto binding = state.immutable_bindings.find(expression.text);
         if (binding == state.immutable_bindings.end()) {
+            record_failure(state, ExpressionLoweringFailureReason::unknown_name, expression.text);
             return std::nullopt;
         }
         if (binding->second.type != expected_llvm_type) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::type_mismatch,
+                expression.text + " has LLVM type " + binding->second.type +
+                    ", expected " + std::string(expected_llvm_type)
+            );
             return std::nullopt;
         }
         if (binding->second.signedness != expected_signedness) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::signedness_mismatch,
+                expression.text
+            );
             return std::nullopt;
         }
         return binding->second;
@@ -206,6 +236,11 @@ auto lowered_expression(
         };
         auto cast_type = llvm_type_for(target_type);
         if (!cast_type.has_value() || *cast_type != expected_llvm_type) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::unsupported_cast,
+                expression.text
+            );
             return std::nullopt;
         }
         if (auto integer = lowered_integer_literal(
@@ -215,7 +250,15 @@ auto lowered_expression(
             )) {
             return integer;
         }
-        return lowered_float_literal(*expression.left, expected_llvm_type);
+        auto lowered_float = lowered_float_literal(*expression.left, expected_llvm_type);
+        if (!lowered_float.has_value()) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::unsupported_cast,
+                expression.text
+            );
+        }
+        return lowered_float;
     }
 
     if (expression.kind == syntax::ExpressionKind::unary && expression.text == "not" &&
@@ -287,8 +330,16 @@ auto lowered_expression(
             state,
             output
         );
-        if (!else_value.has_value() || then_value->type != else_value->type ||
+        if (!else_value.has_value()) {
+            return std::nullopt;
+        }
+        if (then_value->type != else_value->type ||
             then_value->signedness != else_value->signedness) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::branch_type_mismatch,
+                "ternary branches"
+            );
             return std::nullopt;
         }
         auto else_exit_block = state.current_block;
@@ -346,6 +397,11 @@ auto lowered_expression(
             }
             if (!operand_type.has_value() || !is_integer_llvm_type_impl(operand_type->type) ||
                 operand_type->signedness == IntegerSignedness::not_integer) {
+                record_failure(
+                    state,
+                    ExpressionLoweringFailureReason::cannot_infer_operand_type,
+                    expression.text
+                );
                 return std::nullopt;
             }
 
@@ -385,6 +441,11 @@ auto lowered_expression(
 
         auto instruction = llvm_binary_instruction_for(expression.text, expected_signedness);
         if (!instruction.has_value()) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::unsupported_operator,
+                expression.text
+            );
             return std::nullopt;
         }
         auto left = lowered_expression(*expression.left, expected_llvm_type, expected_signedness, context, state, output);
@@ -407,11 +468,31 @@ auto lowered_expression(
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
         auto function = context.lowering.functions.find(expression.left->text);
-        if (function == context.lowering.functions.end() ||
-            function->second.return_type != expected_llvm_type) {
+        if (function == context.lowering.functions.end()) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::unknown_function,
+                expression.left->text
+            );
+            return std::nullopt;
+        }
+        if (function->second.return_type != expected_llvm_type) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::call_return_type_mismatch,
+                expression.left->text + " returns " + function->second.return_type +
+                    ", expected " + std::string(expected_llvm_type)
+            );
             return std::nullopt;
         }
         if (function->second.parameter_types.size() != expression.arguments.size()) {
+            record_failure(
+                state,
+                ExpressionLoweringFailureReason::call_arity_mismatch,
+                expression.left->text + " expects " +
+                    std::to_string(function->second.parameter_types.size()) + " arguments, got " +
+                    std::to_string(expression.arguments.size())
+            );
             return std::nullopt;
         }
 
@@ -427,6 +508,13 @@ auto lowered_expression(
                 output
             );
             if (!argument.has_value()) {
+                if (state.failure.reason == ExpressionLoweringFailureReason::none) {
+                    record_failure(
+                        state,
+                        ExpressionLoweringFailureReason::call_argument_failure,
+                        expression.left->text + " argument " + std::to_string(index + 1)
+                    );
+                }
                 return std::nullopt;
             }
             auto promotion = index >= function->second.fixed_abi_parameter_count
@@ -488,6 +576,11 @@ auto lowered_expression(
         };
     }
 
+    record_failure(
+        state,
+        ExpressionLoweringFailureReason::unsupported_expression,
+        expression.text
+    );
     return std::nullopt;
 }
 
@@ -501,6 +594,7 @@ auto lower_expression(
     ExpressionLoweringState& state,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
+    state.failure = {};
     return lowered_expression(
         expression,
         expected_llvm_type,
@@ -536,6 +630,56 @@ auto lower_boolean_literal(
 
 auto is_integer_llvm_type(std::string_view type) -> bool {
     return is_integer_llvm_type_impl(type);
+}
+
+auto render_expression_lowering_failure(
+    ExpressionLoweringFailure const& failure
+) -> std::string {
+    auto prefix = std::string {};
+    switch (failure.reason) {
+    case ExpressionLoweringFailureReason::none:
+        return {};
+    case ExpressionLoweringFailureReason::unsupported_expression:
+        prefix = "unsupported expression";
+        break;
+    case ExpressionLoweringFailureReason::missing_string_constant:
+        prefix = "missing lowered string constant";
+        break;
+    case ExpressionLoweringFailureReason::unknown_name:
+        prefix = "unknown lowered name";
+        break;
+    case ExpressionLoweringFailureReason::type_mismatch:
+        prefix = "expression type mismatch";
+        break;
+    case ExpressionLoweringFailureReason::signedness_mismatch:
+        prefix = "expression signedness mismatch";
+        break;
+    case ExpressionLoweringFailureReason::unsupported_cast:
+        prefix = "unsupported cast";
+        break;
+    case ExpressionLoweringFailureReason::unsupported_operator:
+        prefix = "unsupported operator";
+        break;
+    case ExpressionLoweringFailureReason::cannot_infer_operand_type:
+        prefix = "cannot infer operand type";
+        break;
+    case ExpressionLoweringFailureReason::branch_type_mismatch:
+        prefix = "branch type mismatch";
+        break;
+    case ExpressionLoweringFailureReason::unknown_function:
+        prefix = "unknown lowered function";
+        break;
+    case ExpressionLoweringFailureReason::call_return_type_mismatch:
+        prefix = "call return type mismatch";
+        break;
+    case ExpressionLoweringFailureReason::call_arity_mismatch:
+        prefix = "call arity mismatch";
+        break;
+    case ExpressionLoweringFailureReason::call_argument_failure:
+        prefix = "call argument lowering failed";
+        break;
+    }
+    return failure.detail.empty() ? prefix : prefix + ": " + failure.detail;
 }
 
 }  // namespace orison::lowering
