@@ -299,6 +299,67 @@ void test_emit_int32_comparison_returns() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_boolean_expression_returns() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_boolean_expressions.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function enabled() -> Bool\n"
+        "    true\n"
+        "\n"
+        "function disabled() -> Bool\n"
+        "    false\n"
+        "\n"
+        "function invert(flag: Bool) -> Bool\n"
+        "    not flag\n"
+        "\n"
+        "function allowed(left: Bool, right: Bool) -> Bool\n"
+        "    left or right\n"
+        "\n"
+        "function in_range(value: UInt32) -> Bool\n"
+        "    value >= 1 as UInt32 and value <= 10 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i1 @enabled() {\n"
+        "entry:\n"
+        "  ret i1 1\n"
+        "}\n"
+        "\n"
+        "define i1 @disabled() {\n"
+        "entry:\n"
+        "  ret i1 0\n"
+        "}\n"
+        "\n"
+        "define i1 @invert(i1 %flag) {\n"
+        "entry:\n"
+        "  %tmp0 = xor i1 %flag, true\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @allowed(i1 %left, i1 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = or i1 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @in_range(i32 %value) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp uge i32 %value, 1\n"
+        "  %tmp1 = icmp ule i32 %value, 10\n"
+        "  %tmp2 = and i1 %tmp0, %tmp1\n"
+        "  ret i1 %tmp2\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -441,7 +502,7 @@ void test_reject_unsupported_return_expression() {
         "package demo.lowering\n"
         "\n"
         "function flag() -> Bool\n"
-        "    true\n"
+        "    true ? false : true\n"
     );
 
     assert(result.has_errors());
@@ -459,6 +520,7 @@ auto main() -> int {
     test_emit_int32_division_return();
     test_emit_uint32_comparison_returns();
     test_emit_int32_comparison_returns();
+    test_emit_boolean_expression_returns();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();

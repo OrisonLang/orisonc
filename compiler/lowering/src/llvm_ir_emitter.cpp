@@ -112,6 +112,21 @@ auto lowered_integer_literal(
     };
 }
 
+auto lowered_boolean_literal(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::boolean_literal || expected_llvm_type != "i1") {
+        return std::nullopt;
+    }
+
+    return LoweredExpression {
+        .type = "i1",
+        .value = expression.text == "true" ? "1" : "0",
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 auto llvm_binary_instruction_for(
     std::string_view operator_text,
     IntegerSignedness signedness
@@ -216,6 +231,9 @@ auto lowered_expression(
     if (auto literal = lowered_integer_literal(expression, expected_llvm_type, expected_signedness)) {
         return literal;
     }
+    if (auto literal = lowered_boolean_literal(expression, expected_llvm_type)) {
+        return literal;
+    }
 
     if (expression.kind == syntax::ExpressionKind::name) {
         auto binding = state.immutable_bindings.find(expression.text);
@@ -242,9 +260,63 @@ auto lowered_expression(
         return lowered_integer_literal(*expression.left, expected_llvm_type, integer_signedness_for(target_type));
     }
 
+    if (expression.kind == syntax::ExpressionKind::unary && expression.text == "not" &&
+        expression.left != nullptr && expected_llvm_type == "i1") {
+        auto operand = lowered_expression(
+            *expression.left,
+            "i1",
+            IntegerSignedness::not_integer,
+            context,
+            state,
+            output
+        );
+        if (!operand.has_value()) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+        output << "  " << temporary_name << " = xor i1 " << operand->value << ", true\n";
+        return LoweredExpression {
+            .type = "i1",
+            .value = std::move(temporary_name),
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
     if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&
         expression.right != nullptr) {
         if (expected_llvm_type == "i1") {
+            if (expression.text == "and" || expression.text == "or") {
+                auto left = lowered_expression(
+                    *expression.left,
+                    "i1",
+                    IntegerSignedness::not_integer,
+                    context,
+                    state,
+                    output
+                );
+                auto right = lowered_expression(
+                    *expression.right,
+                    "i1",
+                    IntegerSignedness::not_integer,
+                    context,
+                    state,
+                    output
+                );
+                if (!left.has_value() || !right.has_value()) {
+                    return std::nullopt;
+                }
+
+                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+                output << "  " << temporary_name << " = " << expression.text << " i1 ";
+                output << left->value << ", " << right->value << "\n";
+                return LoweredExpression {
+                    .type = "i1",
+                    .value = std::move(temporary_name),
+                    .signedness = IntegerSignedness::not_integer,
+                };
+            }
+
             auto operand_type = inferred_expression_type(*expression.left, context, state);
             if (!operand_type.has_value()) {
                 operand_type = inferred_expression_type(*expression.right, context, state);
