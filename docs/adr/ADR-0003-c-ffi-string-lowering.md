@@ -39,6 +39,8 @@ The first runnable foreign-function example passes a string literal to a C funct
   diagnostics live in a dedicated lowering-context builder; LLVM emission adds only IR-specific string-global state.
 - String literal decoding, null termination, first-occurrence deduplication, module traversal, and LLVM byte encoding
   live in a dedicated string-constant component; the emitter consumes the ordered encoded table.
+- LLVM string-global and foreign-declaration formatting live in a dedicated module-prelude component that consumes
+  only lowered string and signature models; function and expression lowering do not own module declaration syntax.
 - Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
   arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.

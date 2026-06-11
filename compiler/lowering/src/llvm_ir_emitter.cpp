@@ -1,6 +1,7 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/module_prelude.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -1099,39 +1100,6 @@ void emit_function(
     output << "}\n";
 }
 
-void emit_module_prelude(EmissionContext const& context, std::ostringstream& output) {
-    for (auto const& constant : context.string_constants.constants) {
-        output << "@" << constant.name << " = private unnamed_addr constant [";
-        output << constant.bytes.size() << " x i8] c\"" << constant.llvm_bytes << "\"\n";
-    }
-    if (!context.string_constants.constants.empty()) {
-        output << "\n";
-    }
-
-    for (auto const& declaration : context.foreign_declarations) {
-        output << "declare " << declaration.return_type << " @" << declaration.symbol_name << "(";
-        auto emitted_parameter_count = declaration.adapter == CAbiAdapterKind::variadic
-            ? declaration.fixed_abi_parameter_count
-            : declaration.parameter_types.size();
-        for (auto index = std::size_t {0}; index < emitted_parameter_count; ++index) {
-            if (index > 0) {
-                output << ", ";
-            }
-            output << declaration.parameter_types[index];
-        }
-        if (declaration.adapter == CAbiAdapterKind::variadic) {
-            if (emitted_parameter_count > 0) {
-                output << ", ";
-            }
-            output << "...";
-        }
-        output << ")\n";
-    }
-    if (!context.foreign_declarations.empty()) {
-        output << "\n";
-    }
-}
-
 }  // namespace
 
 auto LlvmIrEmissionResult::has_errors() const -> bool {
@@ -1170,7 +1138,7 @@ auto LlvmIrEmitter::emit(
         return result;
     }
     context.string_constants = collect_string_constants(module);
-    emit_module_prelude(context, output);
+    output << emit_module_prelude(context.string_constants, context.foreign_declarations);
     for (auto const& function : module.functions) {
         emit_function(function, context, result.diagnostics, output);
         output << "\n";
