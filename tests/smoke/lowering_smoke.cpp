@@ -598,6 +598,135 @@ void test_emit_nested_final_if_returns() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_final_integer_switch_returns() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_final_integer_switch.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(value: UInt32) -> UInt32\n"
+        "    switch value\n"
+        "        0 => 10 as UInt32\n"
+        "        1 =>\n"
+        "            let base = 20 as UInt32\n"
+        "            base + 1 as UInt32\n"
+        "        default =>\n"
+        "            let base = 30 as UInt32\n"
+        "            return base\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i32 %value) {\n"
+        "entry:\n"
+        "  switch i32 %value, label %switch.default.0 [\n"
+        "    i32 0, label %switch.case.0.0\n"
+        "    i32 1, label %switch.case.0.1\n"
+        "  ]\n"
+        "switch.case.0.0:\n"
+        "  br label %switch.merge.0\n"
+        "switch.case.0.1:\n"
+        "  %base = add i32 0, 20\n"
+        "  %tmp0 = add i32 %base, 1\n"
+        "  br label %switch.merge.0\n"
+        "switch.default.0:\n"
+        "  %base.1 = add i32 0, 30\n"
+        "  br label %switch.merge.0\n"
+        "switch.merge.0:\n"
+        "  %tmp1 = phi i32 [10, %switch.case.0.0], [%tmp0, %switch.case.0.1], [%base.1, %switch.default.0]\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_emit_exhaustive_boolean_switch_returns() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_exhaustive_boolean_switch.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(flag: Bool) -> UInt32\n"
+        "    switch flag\n"
+        "        true => 1 as UInt32\n"
+        "        false => 2 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %flag) {\n"
+        "entry:\n"
+        "  switch i1 %flag, label %switch.unreachable.0 [\n"
+        "    i1 1, label %switch.case.0.0\n"
+        "    i1 0, label %switch.case.0.1\n"
+        "  ]\n"
+        "switch.case.0.0:\n"
+        "  br label %switch.merge.0\n"
+        "switch.case.0.1:\n"
+        "  br label %switch.merge.0\n"
+        "switch.unreachable.0:\n"
+        "  unreachable\n"
+        "switch.merge.0:\n"
+        "  %tmp0 = phi i32 [1, %switch.case.0.0], [2, %switch.case.0.1]\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_emit_switch_nested_in_final_if() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_switch_nested_in_final_if.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(enabled: Bool, value: UInt32) -> UInt32\n"
+        "    if enabled\n"
+        "        switch value\n"
+        "            0 => 1 as UInt32\n"
+        "            default => 2 as UInt32\n"
+        "    else\n"
+        "        3 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %enabled, i32 %value) {\n"
+        "entry:\n"
+        "  br i1 %enabled, label %if.then.0, label %if.else.0\n"
+        "if.then.0:\n"
+        "  switch i32 %value, label %switch.default.1 [\n"
+        "    i32 0, label %switch.case.1.0\n"
+        "  ]\n"
+        "switch.case.1.0:\n"
+        "  br label %switch.merge.1\n"
+        "switch.default.1:\n"
+        "  br label %switch.merge.1\n"
+        "switch.merge.1:\n"
+        "  %tmp0 = phi i32 [1, %switch.case.1.0], [2, %switch.default.1]\n"
+        "  br label %if.merge.0\n"
+        "if.else.0:\n"
+        "  br label %if.merge.0\n"
+        "if.merge.0:\n"
+        "  %tmp1 = phi i32 [%tmp0, %switch.merge.1], [3, %if.else.0]\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -763,6 +892,9 @@ auto main() -> int {
     test_emit_final_if_expression_returns();
     test_emit_final_if_branch_local_bindings();
     test_emit_nested_final_if_returns();
+    test_emit_final_integer_switch_returns();
+    test_emit_exhaustive_boolean_switch_returns();
+    test_emit_switch_nested_in_final_if();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();

@@ -6,7 +6,7 @@ Started: the lowering library scaffold now emits text LLVM IR for the initial co
 function slice, leading immutable `let` bindings, simple fixed-width integer arithmetic, same-module function calls,
 fixed-width integer comparisons returning `Bool`, boolean literals and operators, fixed-width integer function
 parameters, ternary expressions, final value-producing `if ... else` statements, and diagnostics for unsupported
-shapes.
+shapes. Final scalar value-pattern `switch` statements now lower through LLVM case blocks and merge values too.
 
 ## Aggregate-context closure
 
@@ -74,6 +74,11 @@ expression or explicit value return. Arms may begin with branch-local immutable 
 restored between arms while function-wide SSA name counters keep repeated source names unique. Arm exit-block
 tracking supports both ternaries and recursively nested final `if ... else` statements inside an arm.
 
+Final scalar `switch` statements lower through LLVM's `switch` terminator, one block per value arm, and a merge
+`phi`. Integer and boolean literal patterns are supported, including same-width integer cast patterns. Case-local
+immutable bindings are isolated between arms, and exhaustive switches without `default` use an `unreachable`
+fallback block. Final `if` and `switch` containers can recursively appear inside either kind of branch arm.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
@@ -95,6 +100,6 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 ## Suggested implementation order
 
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
-2. Add final `switch` lowering using the same value-producing branch and merge model.
-3. Add explicit CLI lowering output after the library emitter has enough useful expression coverage.
-4. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.
+2. Add explicit CLI lowering output after the library emitter has enough useful expression coverage.
+3. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.
+4. Define choice representation before lowering constructor-pattern `switch` arms.
