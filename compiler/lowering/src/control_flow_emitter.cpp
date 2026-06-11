@@ -18,6 +18,23 @@ namespace {
 using EmissionContext = ExpressionEmissionContext;
 using FunctionLoweringState = ExpressionLoweringState;
 
+void record_control_flow_failure(
+    FunctionLoweringState& state,
+    ControlFlowLoweringFailureReason reason,
+    std::string detail = {}
+) {
+    if (state.control_flow_failure.reason == ControlFlowLoweringFailureReason::none) {
+        state.control_flow_failure = {
+            .reason = reason,
+            .detail = std::move(detail),
+        };
+    }
+}
+
+auto expression_failure_detail(FunctionLoweringState const& state) -> std::string {
+    return render_expression_lowering_failure(state.failure);
+}
+
 auto return_expression_for(syntax::StatementSyntax const& statement) -> syntax::ExpressionSyntax const* {
     if (statement.kind == syntax::StatementKind::return_statement) {
         return &statement.expression;
@@ -157,6 +174,11 @@ auto lower_final_if_statement(
 ) -> std::optional<LoweredExpression> {
     if (statement.kind != syntax::StatementKind::if_statement || statement.nested_statements.empty() ||
         statement.alternate_statements.empty()) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::invalid_if_shape,
+            "a final if requires non-empty then and else arms"
+        );
         return std::nullopt;
     }
 
@@ -169,6 +191,11 @@ auto lower_final_if_statement(
         output
     );
     if (!condition.has_value()) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::if_condition_failure,
+            expression_failure_detail(state)
+        );
         return std::nullopt;
     }
 
@@ -191,6 +218,11 @@ auto lower_final_if_statement(
         output
     );
     if (!then_value.has_value()) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::if_then_arm_failure,
+            expression_failure_detail(state)
+        );
         return std::nullopt;
     }
     auto then_exit_block = state.current_block;
@@ -208,8 +240,21 @@ auto lower_final_if_statement(
         diagnostics,
         output
     );
-    if (!else_value.has_value() || then_value->type != else_value->type ||
+    if (!else_value.has_value()) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::if_else_arm_failure,
+            expression_failure_detail(state)
+        );
+        return std::nullopt;
+    }
+    if (then_value->type != else_value->type ||
         then_value->signedness != else_value->signedness) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::if_branch_type_mismatch,
+            then_value->type + " versus " + else_value->type
+        );
         return std::nullopt;
     }
     auto else_exit_block = state.current_block;
@@ -332,12 +377,21 @@ auto lower_final_switch_statement(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (statement.kind != syntax::StatementKind::switch_statement || statement.switch_cases.empty()) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::invalid_switch_shape,
+            "a final switch requires at least one case"
+        );
         return std::nullopt;
     }
 
     auto subject_type = infer_expression_type(statement.expression, context, state);
     if (!subject_type.has_value() ||
         (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::switch_subject_type_failure
+        );
         return std::nullopt;
     }
     auto subject = lower_expression(
@@ -349,6 +403,11 @@ auto lower_final_switch_statement(
         output
     );
     if (!subject.has_value()) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::switch_subject_failure,
+            expression_failure_detail(state)
+        );
         return std::nullopt;
     }
 
@@ -372,6 +431,10 @@ auto lower_final_switch_statement(
         };
         if (switch_case.is_default) {
             if (default_case_index.has_value()) {
+                record_control_flow_failure(
+                    state,
+                    ControlFlowLoweringFailureReason::duplicate_switch_default
+                );
                 return std::nullopt;
             }
             lowered_case.block = llvm_block_name("switch.default", block_index);
@@ -380,6 +443,10 @@ auto lower_final_switch_statement(
             lowered_case.block = llvm_block_name("switch.case", block_index, value_case_index++);
             lowered_case.pattern = lowered_switch_pattern(switch_case.pattern, *subject_type);
             if (!lowered_case.pattern.has_value()) {
+                record_control_flow_failure(
+                    state,
+                    ControlFlowLoweringFailureReason::unsupported_switch_pattern
+                );
                 return std::nullopt;
             }
         }
@@ -414,6 +481,11 @@ auto lower_final_switch_statement(
             output
         );
         if (!case_value.has_value()) {
+            record_control_flow_failure(
+                state,
+                ControlFlowLoweringFailureReason::switch_case_failure,
+                expression_failure_detail(state)
+            );
             return std::nullopt;
         }
         auto case_exit_block = state.current_block;
@@ -427,12 +499,22 @@ auto lower_final_switch_statement(
     }
 
     if (incoming_values.empty()) {
+        record_control_flow_failure(
+            state,
+            ControlFlowLoweringFailureReason::invalid_switch_shape,
+            "a final switch requires a value-producing case"
+        );
         return std::nullopt;
     }
     auto const& result_type = incoming_values.front().first;
     for (auto const& [incoming_value, incoming_block] : incoming_values) {
         static_cast<void>(incoming_block);
         if (incoming_value.type != result_type.type || incoming_value.signedness != result_type.signedness) {
+            record_control_flow_failure(
+                state,
+                ControlFlowLoweringFailureReason::switch_case_type_mismatch,
+                result_type.type + " versus " + incoming_value.type
+            );
             return std::nullopt;
         }
     }
@@ -493,6 +575,7 @@ auto lower_final_control_flow_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
+    state.control_flow_failure = {};
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_final_if_statement(
             statement,
@@ -516,6 +599,53 @@ auto lower_final_control_flow_statement(
         );
     }
     return std::nullopt;
+}
+
+auto render_control_flow_lowering_failure(
+    ControlFlowLoweringFailure const& failure
+) -> std::string {
+    auto prefix = std::string {};
+    switch (failure.reason) {
+    case ControlFlowLoweringFailureReason::none:
+        return {};
+    case ControlFlowLoweringFailureReason::invalid_if_shape:
+        prefix = "invalid final if shape";
+        break;
+    case ControlFlowLoweringFailureReason::if_condition_failure:
+        prefix = "if condition lowering failed";
+        break;
+    case ControlFlowLoweringFailureReason::if_then_arm_failure:
+        prefix = "if then arm lowering failed";
+        break;
+    case ControlFlowLoweringFailureReason::if_else_arm_failure:
+        prefix = "if else arm lowering failed";
+        break;
+    case ControlFlowLoweringFailureReason::if_branch_type_mismatch:
+        prefix = "if branch type mismatch";
+        break;
+    case ControlFlowLoweringFailureReason::invalid_switch_shape:
+        prefix = "invalid final switch shape";
+        break;
+    case ControlFlowLoweringFailureReason::switch_subject_type_failure:
+        prefix = "switch subject type is not lowerable";
+        break;
+    case ControlFlowLoweringFailureReason::switch_subject_failure:
+        prefix = "switch subject lowering failed";
+        break;
+    case ControlFlowLoweringFailureReason::duplicate_switch_default:
+        prefix = "switch has multiple default cases";
+        break;
+    case ControlFlowLoweringFailureReason::unsupported_switch_pattern:
+        prefix = "switch pattern lowering failed";
+        break;
+    case ControlFlowLoweringFailureReason::switch_case_failure:
+        prefix = "switch case lowering failed";
+        break;
+    case ControlFlowLoweringFailureReason::switch_case_type_mismatch:
+        prefix = "switch case type mismatch";
+        break;
+    }
+    return failure.detail.empty() ? prefix : prefix + ": " + failure.detail;
 }
 
 }  // namespace orison::lowering

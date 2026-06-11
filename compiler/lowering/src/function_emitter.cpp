@@ -90,6 +90,8 @@ void emit_function_body(
     }
     auto const* expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
     auto lowered_final_statement = std::optional<LoweredExpression> {};
+    auto attempted_final_control_flow = false;
+    auto final_statement_line = function.line;
     for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
         auto const& statement = function.body_statements[index];
         auto is_last_statement = index + 1 == function.body_statements.size();
@@ -111,6 +113,8 @@ void emit_function_body(
         if (is_last_statement) {
             if (statement.kind == syntax::StatementKind::if_statement ||
                 statement.kind == syntax::StatementKind::switch_statement) {
+                attempted_final_control_flow = true;
+                final_statement_line = statement.line;
                 lowered_final_statement = lower_final_control_flow_statement(
                     statement,
                     signature.return_type,
@@ -127,6 +131,16 @@ void emit_function_body(
         }
 
         diagnostics.error(statement.line, "lowering does not yet support this statement");
+        return;
+    }
+
+    if (attempted_final_control_flow && !lowered_final_statement.has_value()) {
+        auto detail = render_control_flow_lowering_failure(state.control_flow_failure);
+        diagnostics.error(
+            final_statement_line,
+            "lowering does not yet support this final control-flow statement" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
         return;
     }
 

@@ -34,4 +34,8 @@ auto lower_final_control_flow_statement(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
 
+auto render_control_flow_lowering_failure(
+    ControlFlowLoweringFailure const& failure
+) -> std::string;
+
 }  // namespace orison::lowering

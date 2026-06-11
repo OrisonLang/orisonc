@@ -52,6 +52,27 @@ struct ExpressionLoweringFailure {
     std::string detail;
 };
 
+enum class ControlFlowLoweringFailureReason {
+    none,
+    invalid_if_shape,
+    if_condition_failure,
+    if_then_arm_failure,
+    if_else_arm_failure,
+    if_branch_type_mismatch,
+    invalid_switch_shape,
+    switch_subject_type_failure,
+    switch_subject_failure,
+    duplicate_switch_default,
+    unsupported_switch_pattern,
+    switch_case_failure,
+    switch_case_type_mismatch,
+};
+
+struct ControlFlowLoweringFailure {
+    ControlFlowLoweringFailureReason reason = ControlFlowLoweringFailureReason::none;
+    std::string detail;
+};
+
 struct ExpressionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
     std::unordered_map<std::string, std::size_t> local_name_counts;
@@ -59,6 +80,7 @@ struct ExpressionLoweringState {
     std::size_t next_block_index = 0;
     std::string current_block = "entry";
     ExpressionLoweringFailure failure;
+    ControlFlowLoweringFailure control_flow_failure;
 };
 
 auto lower_expression(

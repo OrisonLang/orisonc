@@ -81,6 +81,29 @@ int main() {
         "if.merge.0:\n"
         "  %tmp2 = phi i32 [%value, %if.then.0], [%value.1, %if.else.0]\n"
     );
+
+    auto& malformed_if = parse_result.module.functions.front().body_statements.front();
+    malformed_if.alternate_statements.clear();
+    auto malformed_state = orison::lowering::ExpressionLoweringState {};
+    auto malformed_output = std::ostringstream {};
+    auto malformed = orison::lowering::lower_final_control_flow_statement(
+        malformed_if,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        malformed_state,
+        diagnostics,
+        malformed_output
+    );
+    assert(!malformed.has_value());
+    assert(
+        malformed_state.control_flow_failure.reason ==
+        orison::lowering::ControlFlowLoweringFailureReason::invalid_if_shape
+    );
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(malformed_state.control_flow_failure) ==
+        "invalid final if shape: a final if requires non-empty then and else arms"
+    );
     std::filesystem::remove(path);
     return 0;
 }

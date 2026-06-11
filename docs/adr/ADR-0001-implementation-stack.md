@@ -48,6 +48,9 @@ analysis, and lowering components.
   unsupported; function emission consumes that model directly for declarations, bindings, signedness, and diagnostics.
 - Expression lowering records a structured first failure reason and detail in explicit lowering state; callers retain
   optional value flow while producing targeted diagnostics for names, types, operators, calls, casts, and branches.
+- Final control-flow lowering records a separate structured first failure in the same explicit state; `if` and `switch`
+  diagnostics identify shape, condition/subject, arm/case, pattern, and merge failures while retaining nested expression
+  failure details.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

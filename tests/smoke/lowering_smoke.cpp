@@ -1087,6 +1087,49 @@ void test_reject_unsupported_return_expression() {
     );
 }
 
+void test_reject_unsupported_final_if_arm_expression() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_final_if_arm.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function same(flag: Bool, left: Bool, right: Bool) -> Bool\n"
+        "    if flag\n"
+        "        left == right\n"
+        "    else\n"
+        "        false\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support this final control-flow statement: "
+        "if then arm lowering failed: cannot infer operand type: =="
+    );
+}
+
+void test_reject_unsupported_final_switch_case_expression() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_final_switch_case.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function same(flag: Bool, left: Bool, right: Bool) -> Bool\n"
+        "    switch flag\n"
+        "        true => left == right\n"
+        "        false => false\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support this final control-flow statement: "
+        "switch case lowering failed: cannot infer operand type: =="
+    );
+}
+
 void test_reject_malformed_generated_llvm_ir() {
     orison::lowering::LlvmIrVerifier verifier;
     auto diagnostics = verifier.verify(
@@ -1169,6 +1212,8 @@ auto main() -> int {
     test_reject_printf_adapter_with_unsupported_trailing_type();
     test_emit_fixed_arity_c_foreign_call();
     test_reject_unsupported_return_expression();
+    test_reject_unsupported_final_if_arm_expression();
+    test_reject_unsupported_final_switch_case_expression();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();
