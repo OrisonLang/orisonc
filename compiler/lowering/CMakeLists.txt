@@ -1,5 +1,6 @@
 add_library(orison_lowering STATIC
     src/c_abi_adapter.cpp
+    src/expression_emitter.cpp
     src/function_emitter.cpp
     src/function_signature.cpp
     src/llvm_ir_emitter.cpp

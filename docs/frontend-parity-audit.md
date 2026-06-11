@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: recursive LLVM expression lowering now compiles in a dedicated translation unit; function statement/control-flow emission consumes shared expression, inference, and literal APIs with direct and full-suite output preserved.
 - 2026-06-11: expression lowering now exposes a dedicated API plus a shared SSA value/state model for bindings, temporary names, block identities, and current-block tracking; direct ternary/arithmetic coverage pins deterministic IR while full module output remains unchanged.
 - 2026-06-11: per-function LLVM signature, SSA expression, branch, switch, and return emission now live behind a dedicated component with direct success and diagnostic coverage; module orchestration and generated IR remain unchanged.
 - 2026-06-11: LLVM string-global and foreign-declaration formatting now live in a dedicated module-prelude component with independent fixed and adapted declaration coverage; complete emitter output remains unchanged.

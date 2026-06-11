@@ -14,487 +14,8 @@
 namespace orison::lowering {
 namespace {
 
-struct LoweredType {
-    std::string type;
-    IntegerSignedness signedness = IntegerSignedness::not_integer;
-};
-
 using EmissionContext = ExpressionEmissionContext;
 using FunctionLoweringState = ExpressionLoweringState;
-
-auto lowered_integer_literal(
-    syntax::ExpressionSyntax const& expression,
-    std::string_view expected_llvm_type,
-    IntegerSignedness expected_signedness
-) -> std::optional<LoweredExpression> {
-    if (expression.kind != syntax::ExpressionKind::integer_literal) {
-        return std::nullopt;
-    }
-
-    return LoweredExpression {
-        .type = std::string(expected_llvm_type),
-        .value = expression.text,
-        .signedness = expected_signedness,
-    };
-}
-
-auto lowered_float_literal(
-    syntax::ExpressionSyntax const& expression,
-    std::string_view expected_llvm_type
-) -> std::optional<LoweredExpression> {
-    if (expression.kind != syntax::ExpressionKind::float_literal ||
-        (expected_llvm_type != "float" && expected_llvm_type != "double")) {
-        return std::nullopt;
-    }
-
-    return LoweredExpression {
-        .type = std::string(expected_llvm_type),
-        .value = expression.text,
-        .signedness = IntegerSignedness::not_integer,
-    };
-}
-
-auto lowered_boolean_literal(
-    syntax::ExpressionSyntax const& expression,
-    std::string_view expected_llvm_type
-) -> std::optional<LoweredExpression> {
-    if (expression.kind != syntax::ExpressionKind::boolean_literal || expected_llvm_type != "i1") {
-        return std::nullopt;
-    }
-
-    return LoweredExpression {
-        .type = "i1",
-        .value = expression.text == "true" ? "1" : "0",
-        .signedness = IntegerSignedness::not_integer,
-    };
-}
-
-auto llvm_binary_instruction_for(
-    std::string_view operator_text,
-    IntegerSignedness signedness
-) -> std::optional<std::string_view> {
-    if (operator_text == "+") {
-        return "add";
-    }
-    if (operator_text == "-") {
-        return "sub";
-    }
-    if (operator_text == "*") {
-        return "mul";
-    }
-    if (operator_text == "/") {
-        return signedness == IntegerSignedness::signed_integer ? "sdiv" : "udiv";
-    }
-    return std::nullopt;
-}
-
-auto llvm_integer_comparison_predicate_for(
-    std::string_view operator_text,
-    IntegerSignedness signedness
-) -> std::optional<std::string_view> {
-    if (operator_text == "==") {
-        return "eq";
-    }
-    if (operator_text == "!=") {
-        return "ne";
-    }
-    if (operator_text == "<") {
-        return signedness == IntegerSignedness::signed_integer ? "slt" : "ult";
-    }
-    if (operator_text == "<=") {
-        return signedness == IntegerSignedness::signed_integer ? "sle" : "ule";
-    }
-    if (operator_text == ">") {
-        return signedness == IntegerSignedness::signed_integer ? "sgt" : "ugt";
-    }
-    if (operator_text == ">=") {
-        return signedness == IntegerSignedness::signed_integer ? "sge" : "uge";
-    }
-    return std::nullopt;
-}
-
-auto is_integer_llvm_type(std::string_view type) -> bool {
-    return type == "i8" || type == "i16" || type == "i32" || type == "i64";
-}
-
-auto inferred_expression_type(
-    syntax::ExpressionSyntax const& expression,
-    EmissionContext const& context,
-    FunctionLoweringState const& state
-) -> std::optional<LoweredType> {
-    if (expression.kind == syntax::ExpressionKind::name) {
-        auto binding = state.immutable_bindings.find(expression.text);
-        if (binding == state.immutable_bindings.end()) {
-            return std::nullopt;
-        }
-        return LoweredType {
-            .type = binding->second.type,
-            .signedness = binding->second.signedness,
-        };
-    }
-
-    if (expression.kind == syntax::ExpressionKind::cast) {
-        syntax::TypeSyntax target_type {
-            .name = expression.text,
-        };
-        auto cast_type = llvm_type_for(target_type);
-        if (!cast_type.has_value()) {
-            return std::nullopt;
-        }
-        return LoweredType {
-            .type = std::string(*cast_type),
-            .signedness = integer_signedness_for(target_type),
-        };
-    }
-
-    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
-        expression.left->kind == syntax::ExpressionKind::name) {
-        auto function = context.lowering.functions.find(expression.left->text);
-        if (function == context.lowering.functions.end()) {
-            return std::nullopt;
-        }
-        return LoweredType {
-            .type = function->second.return_type,
-            .signedness = function->second.return_signedness,
-        };
-    }
-
-    return std::nullopt;
-}
-
-auto lowered_expression(
-    syntax::ExpressionSyntax const& expression,
-    std::string_view expected_llvm_type,
-    IntegerSignedness expected_signedness,
-    EmissionContext const& context,
-    FunctionLoweringState& state,
-    std::ostringstream& output
-) -> std::optional<LoweredExpression> {
-    if (auto literal = lowered_integer_literal(expression, expected_llvm_type, expected_signedness)) {
-        return literal;
-    }
-    if (auto literal = lowered_float_literal(expression, expected_llvm_type)) {
-        return literal;
-    }
-    if (auto literal = lowered_boolean_literal(expression, expected_llvm_type)) {
-        return literal;
-    }
-    if (expression.kind == syntax::ExpressionKind::string_literal && expected_llvm_type == "ptr") {
-        auto const* constant = context.string_constants.find(expression.text);
-        if (constant == nullptr) {
-            return std::nullopt;
-        }
-        return LoweredExpression {
-            .type = "ptr",
-            .value = "@" + constant->name,
-            .signedness = IntegerSignedness::not_integer,
-        };
-    }
-
-    if (expression.kind == syntax::ExpressionKind::name) {
-        auto binding = state.immutable_bindings.find(expression.text);
-        if (binding == state.immutable_bindings.end()) {
-            return std::nullopt;
-        }
-        if (binding->second.type != expected_llvm_type) {
-            return std::nullopt;
-        }
-        if (binding->second.signedness != expected_signedness) {
-            return std::nullopt;
-        }
-        return binding->second;
-    }
-
-    if (expression.kind == syntax::ExpressionKind::cast && expression.left != nullptr) {
-        syntax::TypeSyntax target_type {
-            .name = expression.text,
-        };
-        auto cast_type = llvm_type_for(target_type);
-        if (!cast_type.has_value() || *cast_type != expected_llvm_type) {
-            return std::nullopt;
-        }
-        if (auto integer = lowered_integer_literal(
-                *expression.left,
-                expected_llvm_type,
-                integer_signedness_for(target_type)
-            )) {
-            return integer;
-        }
-        return lowered_float_literal(*expression.left, expected_llvm_type);
-    }
-
-    if (expression.kind == syntax::ExpressionKind::unary && expression.text == "not" &&
-        expression.left != nullptr && expected_llvm_type == "i1") {
-        auto operand = lowered_expression(
-            *expression.left,
-            "i1",
-            IntegerSignedness::not_integer,
-            context,
-            state,
-            output
-        );
-        if (!operand.has_value()) {
-            return std::nullopt;
-        }
-
-        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-        output << "  " << temporary_name << " = xor i1 " << operand->value << ", true\n";
-        return LoweredExpression {
-            .type = "i1",
-            .value = std::move(temporary_name),
-            .signedness = IntegerSignedness::not_integer,
-        };
-    }
-
-    if (expression.kind == syntax::ExpressionKind::ternary && expression.left != nullptr &&
-        expression.right != nullptr && expression.alternate != nullptr) {
-        auto condition = lowered_expression(
-            *expression.left,
-            "i1",
-            IntegerSignedness::not_integer,
-            context,
-            state,
-            output
-        );
-        if (!condition.has_value()) {
-            return std::nullopt;
-        }
-
-        auto block_index = state.next_block_index++;
-        auto then_block = "ternary.then." + std::to_string(block_index);
-        auto else_block = "ternary.else." + std::to_string(block_index);
-        auto merge_block = "ternary.merge." + std::to_string(block_index);
-        output << "  br i1 " << condition->value << ", label %" << then_block << ", label %" << else_block << "\n";
-
-        output << then_block << ":\n";
-        state.current_block = then_block;
-        auto then_value = lowered_expression(
-            *expression.right,
-            expected_llvm_type,
-            expected_signedness,
-            context,
-            state,
-            output
-        );
-        if (!then_value.has_value()) {
-            return std::nullopt;
-        }
-        auto then_exit_block = state.current_block;
-        output << "  br label %" << merge_block << "\n";
-
-        output << else_block << ":\n";
-        state.current_block = else_block;
-        auto else_value = lowered_expression(
-            *expression.alternate,
-            expected_llvm_type,
-            expected_signedness,
-            context,
-            state,
-            output
-        );
-        if (!else_value.has_value() || then_value->type != else_value->type ||
-            then_value->signedness != else_value->signedness) {
-            return std::nullopt;
-        }
-        auto else_exit_block = state.current_block;
-        output << "  br label %" << merge_block << "\n";
-
-        output << merge_block << ":\n";
-        state.current_block = merge_block;
-        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-        output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
-        output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
-        return LoweredExpression {
-            .type = then_value->type,
-            .value = std::move(temporary_name),
-            .signedness = then_value->signedness,
-        };
-    }
-
-    if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&
-        expression.right != nullptr) {
-        if (expected_llvm_type == "i1") {
-            if (expression.text == "and" || expression.text == "or") {
-                auto left = lowered_expression(
-                    *expression.left,
-                    "i1",
-                    IntegerSignedness::not_integer,
-                    context,
-                    state,
-                    output
-                );
-                auto right = lowered_expression(
-                    *expression.right,
-                    "i1",
-                    IntegerSignedness::not_integer,
-                    context,
-                    state,
-                    output
-                );
-                if (!left.has_value() || !right.has_value()) {
-                    return std::nullopt;
-                }
-
-                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-                output << "  " << temporary_name << " = " << expression.text << " i1 ";
-                output << left->value << ", " << right->value << "\n";
-                return LoweredExpression {
-                    .type = "i1",
-                    .value = std::move(temporary_name),
-                    .signedness = IntegerSignedness::not_integer,
-                };
-            }
-
-            auto operand_type = inferred_expression_type(*expression.left, context, state);
-            if (!operand_type.has_value()) {
-                operand_type = inferred_expression_type(*expression.right, context, state);
-            }
-            if (!operand_type.has_value() || !is_integer_llvm_type(operand_type->type) ||
-                operand_type->signedness == IntegerSignedness::not_integer) {
-                return std::nullopt;
-            }
-
-            auto predicate = llvm_integer_comparison_predicate_for(expression.text, operand_type->signedness);
-            if (predicate.has_value()) {
-                auto left = lowered_expression(
-                    *expression.left,
-                    operand_type->type,
-                    operand_type->signedness,
-                    context,
-                    state,
-                    output
-                );
-                auto right = lowered_expression(
-                    *expression.right,
-                    operand_type->type,
-                    operand_type->signedness,
-                    context,
-                    state,
-                    output
-                );
-                if (!left.has_value() || !right.has_value() || left->type != right->type ||
-                    left->signedness != right->signedness) {
-                    return std::nullopt;
-                }
-
-                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-                output << "  " << temporary_name << " = icmp " << *predicate << " " << left->type << " ";
-                output << left->value << ", " << right->value << "\n";
-                return LoweredExpression {
-                    .type = "i1",
-                    .value = std::move(temporary_name),
-                    .signedness = IntegerSignedness::not_integer,
-                };
-            }
-        }
-
-        auto instruction = llvm_binary_instruction_for(expression.text, expected_signedness);
-        if (!instruction.has_value()) {
-            return std::nullopt;
-        }
-        auto left = lowered_expression(*expression.left, expected_llvm_type, expected_signedness, context, state, output);
-        auto right = lowered_expression(*expression.right, expected_llvm_type, expected_signedness, context, state, output);
-        if (!left.has_value() || !right.has_value() || left->type != right->type ||
-            left->signedness != right->signedness) {
-            return std::nullopt;
-        }
-
-        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-        output << "  " << temporary_name << " = " << *instruction << " " << left->type << " " << left->value << ", ";
-        output << right->value << "\n";
-        return LoweredExpression {
-            .type = left->type,
-            .value = std::move(temporary_name),
-            .signedness = left->signedness,
-        };
-    }
-
-    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
-        expression.left->kind == syntax::ExpressionKind::name) {
-        auto function = context.lowering.functions.find(expression.left->text);
-        if (function == context.lowering.functions.end() ||
-            function->second.return_type != expected_llvm_type) {
-            return std::nullopt;
-        }
-        if (function->second.parameter_types.size() != expression.arguments.size()) {
-            return std::nullopt;
-        }
-
-        auto arguments = std::vector<LoweredExpression> {};
-        arguments.reserve(expression.arguments.size());
-        for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
-            auto argument = lowered_expression(
-                expression.arguments[index],
-                function->second.parameter_types[index],
-                function->second.parameter_signedness[index],
-                context,
-                state,
-                output
-            );
-            if (!argument.has_value()) {
-                return std::nullopt;
-            }
-            auto promotion = index >= function->second.fixed_abi_parameter_count
-                ? c_abi_promotion_for(argument->type)
-                : CAbiPromotion::none;
-            if (function->second.adapter == CAbiAdapterKind::variadic &&
-                promotion == CAbiPromotion::integer_to_i32) {
-                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-                auto instruction =
-                    argument->signedness == IntegerSignedness::signed_integer ? "sext" : "zext";
-                output << "  " << temporary_name << " = " << instruction << " " << argument->type << " ";
-                output << argument->value << " to i32\n";
-                argument = LoweredExpression {
-                    .type = "i32",
-                    .value = std::move(temporary_name),
-                    .signedness = argument->signedness,
-                };
-            }
-            if (function->second.adapter == CAbiAdapterKind::variadic &&
-                promotion == CAbiPromotion::float_to_double) {
-                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-                output << "  " << temporary_name << " = fpext float " << argument->value << " to double\n";
-                argument = LoweredExpression {
-                    .type = "double",
-                    .value = std::move(temporary_name),
-                    .signedness = IntegerSignedness::not_integer,
-                };
-            }
-            arguments.push_back(std::move(*argument));
-        }
-
-        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
-        output << "  " << temporary_name << " = call " << function->second.return_type;
-        if (function->second.adapter == CAbiAdapterKind::variadic) {
-            output << " (";
-            for (auto index = std::size_t {0}; index < function->second.fixed_abi_parameter_count; ++index) {
-                if (index > 0) {
-                    output << ", ";
-                }
-                output << function->second.parameter_types[index];
-            }
-            if (function->second.fixed_abi_parameter_count > 0) {
-                output << ", ";
-            }
-            output << "...)";
-        }
-        output << " @" << function->second.symbol_name << "(";
-        for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
-            if (index > 0) {
-                output << ", ";
-            }
-            output << arguments[index].type << " " << arguments[index].value;
-        }
-        output << ")\n";
-        return LoweredExpression {
-            .type = function->second.return_type,
-            .value = std::move(temporary_name),
-            .signedness = function->second.return_signedness,
-        };
-    }
-
-    return std::nullopt;
-}
 
 auto return_expression_for(syntax::StatementSyntax const& statement) -> syntax::ExpressionSyntax const* {
     if (statement.kind == syntax::StatementKind::return_statement) {
@@ -530,7 +51,7 @@ auto lower_let_binding(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    auto lowered = lowered_expression(statement.expression, expected_llvm_type, expected_signedness, context, state, output);
+    auto lowered = lower_expression(statement.expression, expected_llvm_type, expected_signedness, context, state, output);
     if (!lowered.has_value()) {
         diagnostics.error(statement.line, "lowering does not yet support this let initializer");
         return false;
@@ -623,7 +144,7 @@ auto lower_value_statement_block(
     if (expression == nullptr) {
         return std::nullopt;
     }
-    return lowered_expression(
+    return lower_expression(
         *expression,
         expected_llvm_type,
         expected_signedness,
@@ -647,7 +168,7 @@ auto lower_final_if_statement(
         return std::nullopt;
     }
 
-    auto condition = lowered_expression(
+    auto condition = lower_expression(
         statement.expression,
         "i1",
         IntegerSignedness::not_integer,
@@ -775,7 +296,7 @@ auto lower_switch_case_statement_block(
     if (expression == nullptr) {
         return std::nullopt;
     }
-    return lowered_expression(
+    return lower_expression(
         *expression,
         expected_llvm_type,
         expected_signedness,
@@ -789,10 +310,10 @@ auto lowered_switch_pattern(
     syntax::ExpressionSyntax const& pattern,
     LoweredType const& subject_type
 ) -> std::optional<LoweredExpression> {
-    if (auto literal = lowered_integer_literal(pattern, subject_type.type, subject_type.signedness)) {
+    if (auto literal = lower_integer_literal(pattern, subject_type.type, subject_type.signedness)) {
         return literal;
     }
-    if (auto literal = lowered_boolean_literal(pattern, subject_type.type)) {
+    if (auto literal = lower_boolean_literal(pattern, subject_type.type)) {
         return literal;
     }
     if (pattern.kind != syntax::ExpressionKind::cast || pattern.left == nullptr) {
@@ -806,7 +327,7 @@ auto lowered_switch_pattern(
     if (!cast_type.has_value() || *cast_type != subject_type.type) {
         return std::nullopt;
     }
-    return lowered_integer_literal(*pattern.left, subject_type.type, subject_type.signedness);
+    return lower_integer_literal(*pattern.left, subject_type.type, subject_type.signedness);
 }
 
 auto lower_final_switch_statement(
@@ -822,12 +343,12 @@ auto lower_final_switch_statement(
         return std::nullopt;
     }
 
-    auto subject_type = inferred_expression_type(statement.expression, context, state);
+    auto subject_type = infer_expression_type(statement.expression, context, state);
     if (!subject_type.has_value() ||
         (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
         return std::nullopt;
     }
-    auto subject = lowered_expression(
+    auto subject = lower_expression(
         statement.expression,
         subject_type->type,
         subject_type->signedness,
@@ -1070,7 +591,7 @@ void emit_function_body(
 
     auto lowered = std::move(lowered_final_statement);
     if (!lowered.has_value()) {
-        lowered = lowered_expression(*expression, *llvm_return_type, return_signedness, context, state, output);
+        lowered = lower_expression(*expression, *llvm_return_type, return_signedness, context, state, output);
     }
     if (!lowered.has_value()) {
         diagnostics.error(
@@ -1085,24 +606,6 @@ void emit_function_body(
 }
 
 }  // namespace
-
-auto lower_expression(
-    syntax::ExpressionSyntax const& expression,
-    std::string_view expected_llvm_type,
-    IntegerSignedness expected_signedness,
-    ExpressionEmissionContext const& context,
-    ExpressionLoweringState& state,
-    std::ostringstream& output
-) -> std::optional<LoweredExpression> {
-    return lowered_expression(
-        expression,
-        expected_llvm_type,
-        expected_signedness,
-        context,
-        state,
-        output
-    );
-}
 
 auto emit_function(
     syntax::FunctionSyntax const& function,

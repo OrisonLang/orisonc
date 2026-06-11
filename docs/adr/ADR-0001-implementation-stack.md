@@ -38,6 +38,8 @@ analysis, and lowering components.
   component; module emission owns only module assembly, shared context construction, and final LLVM verification.
 - Expression lowering exposes a dedicated API and shared function-local state model for bindings, deterministic SSA
   names, block identities, and current-block tracking so expression and statement CFG lowering use one state.
+- Recursive expression lowering and scalar expression-type/literal utilities compile in their own translation unit;
+  function statement/control-flow emission consumes that API instead of owning expression implementation details.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

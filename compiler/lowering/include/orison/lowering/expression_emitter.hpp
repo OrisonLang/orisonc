@@ -20,6 +20,11 @@ struct LoweredExpression {
     IntegerSignedness signedness = IntegerSignedness::not_integer;
 };
 
+struct LoweredType {
+    std::string type;
+    IntegerSignedness signedness = IntegerSignedness::not_integer;
+};
+
 struct ExpressionEmissionContext {
     LoweringContext const& lowering;
     StringConstantTable const& string_constants;
@@ -41,5 +46,24 @@ auto lower_expression(
     ExpressionLoweringState& state,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
+
+auto infer_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    ExpressionEmissionContext const& context,
+    ExpressionLoweringState const& state
+) -> std::optional<LoweredType>;
+
+auto lower_integer_literal(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness
+) -> std::optional<LoweredExpression>;
+
+auto lower_boolean_literal(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type
+) -> std::optional<LoweredExpression>;
+
+auto is_integer_llvm_type(std::string_view type) -> bool;
 
 }  // namespace orison::lowering
