@@ -5,7 +5,7 @@
 Started: the lowering library scaffold now emits text LLVM IR for the initial constant-returning `UInt32`
 function slice, leading immutable `let` bindings, simple fixed-width integer arithmetic, same-module function calls,
 fixed-width integer comparisons returning `Bool`, boolean literals and operators, fixed-width integer function
-parameters, and diagnostics for unsupported shapes.
+parameters, ternary expressions, and diagnostics for unsupported shapes.
 
 ## Aggregate-context closure
 
@@ -64,6 +64,10 @@ and equality uses `eq`/`ne`.
 Boolean literals lower to `i1 1`/`i1 0`; `not` emits `xor i1 ..., true`; and `and`/`or` emit LLVM `i1`
 operations. Boolean operands can include nested integer comparisons and same-module calls.
 
+Ternary expressions lower through conditional branches into labeled then/else blocks and merge with an LLVM
+`phi` value. The lowering state tracks each arm's actual exit block so nested ternaries produce valid predecessor
+labels in outer `phi` nodes.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
@@ -85,6 +89,6 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 ## Suggested implementation order
 
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
-2. Add conditional expression or branch lowering now that boolean conditions emit usable `i1` values.
+2. Add statement-level `if ... else` branch lowering using the ternary block/merge machinery.
 3. Add explicit CLI lowering output after the library emitter has enough useful expression coverage.
 4. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.

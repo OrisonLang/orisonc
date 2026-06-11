@@ -43,6 +43,8 @@ struct LoweringContext {
 struct FunctionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
     std::size_t next_temporary_index = 0;
+    std::size_t next_block_index = 0;
+    std::string current_block = "entry";
 };
 
 auto has_generic_arguments(syntax::TypeSyntax const& type) -> bool {
@@ -280,6 +282,71 @@ auto lowered_expression(
             .type = "i1",
             .value = std::move(temporary_name),
             .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::ternary && expression.left != nullptr &&
+        expression.right != nullptr && expression.alternate != nullptr) {
+        auto condition = lowered_expression(
+            *expression.left,
+            "i1",
+            IntegerSignedness::not_integer,
+            context,
+            state,
+            output
+        );
+        if (!condition.has_value()) {
+            return std::nullopt;
+        }
+
+        auto block_index = state.next_block_index++;
+        auto then_block = "ternary.then." + std::to_string(block_index);
+        auto else_block = "ternary.else." + std::to_string(block_index);
+        auto merge_block = "ternary.merge." + std::to_string(block_index);
+        output << "  br i1 " << condition->value << ", label %" << then_block << ", label %" << else_block << "\n";
+
+        output << then_block << ":\n";
+        state.current_block = then_block;
+        auto then_value = lowered_expression(
+            *expression.right,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            state,
+            output
+        );
+        if (!then_value.has_value()) {
+            return std::nullopt;
+        }
+        auto then_exit_block = state.current_block;
+        output << "  br label %" << merge_block << "\n";
+
+        output << else_block << ":\n";
+        state.current_block = else_block;
+        auto else_value = lowered_expression(
+            *expression.alternate,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            state,
+            output
+        );
+        if (!else_value.has_value() || then_value->type != else_value->type ||
+            then_value->signedness != else_value->signedness) {
+            return std::nullopt;
+        }
+        auto else_exit_block = state.current_block;
+        output << "  br label %" << merge_block << "\n";
+
+        output << merge_block << ":\n";
+        state.current_block = merge_block;
+        auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+        output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
+        output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
+        return LoweredExpression {
+            .type = then_value->type,
+            .value = std::move(temporary_name),
+            .signedness = then_value->signedness,
         };
     }
 

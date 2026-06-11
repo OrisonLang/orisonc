@@ -360,6 +360,74 @@ void test_emit_boolean_expression_returns() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_ternary_expression_returns() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_ternary_expressions.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(flag: Bool) -> UInt32\n"
+        "    flag ? 1 as UInt32 : 2 as UInt32\n"
+        "\n"
+        "function choose_flag(flag: Bool) -> Bool\n"
+        "    flag ? true : false\n"
+        "\n"
+        "function choose_nested(first: Bool, second: Bool) -> UInt32\n"
+        "    first ? second ? 1 as UInt32 : 2 as UInt32 : 3 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %flag) {\n"
+        "entry:\n"
+        "  br i1 %flag, label %ternary.then.0, label %ternary.else.0\n"
+        "ternary.then.0:\n"
+        "  br label %ternary.merge.0\n"
+        "ternary.else.0:\n"
+        "  br label %ternary.merge.0\n"
+        "ternary.merge.0:\n"
+        "  %tmp0 = phi i32 [1, %ternary.then.0], [2, %ternary.else.0]\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @choose_flag(i1 %flag) {\n"
+        "entry:\n"
+        "  br i1 %flag, label %ternary.then.0, label %ternary.else.0\n"
+        "ternary.then.0:\n"
+        "  br label %ternary.merge.0\n"
+        "ternary.else.0:\n"
+        "  br label %ternary.merge.0\n"
+        "ternary.merge.0:\n"
+        "  %tmp0 = phi i1 [1, %ternary.then.0], [0, %ternary.else.0]\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i32 @choose_nested(i1 %first, i1 %second) {\n"
+        "entry:\n"
+        "  br i1 %first, label %ternary.then.0, label %ternary.else.0\n"
+        "ternary.then.0:\n"
+        "  br i1 %second, label %ternary.then.1, label %ternary.else.1\n"
+        "ternary.then.1:\n"
+        "  br label %ternary.merge.1\n"
+        "ternary.else.1:\n"
+        "  br label %ternary.merge.1\n"
+        "ternary.merge.1:\n"
+        "  %tmp0 = phi i32 [1, %ternary.then.1], [2, %ternary.else.1]\n"
+        "  br label %ternary.merge.0\n"
+        "ternary.else.0:\n"
+        "  br label %ternary.merge.0\n"
+        "ternary.merge.0:\n"
+        "  %tmp1 = phi i32 [%tmp0, %ternary.merge.1], [3, %ternary.else.0]\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -501,8 +569,8 @@ void test_reject_unsupported_return_expression() {
         path,
         "package demo.lowering\n"
         "\n"
-        "function flag() -> Bool\n"
-        "    true ? false : true\n"
+        "function same(left: Bool, right: Bool) -> Bool\n"
+        "    left == right\n"
     );
 
     assert(result.has_errors());
@@ -521,6 +589,7 @@ auto main() -> int {
     test_emit_uint32_comparison_returns();
     test_emit_int32_comparison_returns();
     test_emit_boolean_expression_returns();
+    test_emit_ternary_expression_returns();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();

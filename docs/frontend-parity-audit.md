@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-10: lowering now emits integer and boolean ternary expressions as conditional branches with then/else labels and an LLVM `phi` result; current-block tracking preserves correct predecessor labels for nested ternaries.
 - 2026-06-10: lowering now emits boolean literals and word-based boolean operators: `true`/`false` become `i1 1`/`i1 0`, `not` emits `xor`, and `and`/`or` emit LLVM `i1` operations with nested comparison operands.
 - 2026-06-05: lowering now preserves fixed-width integer signedness in lowered value metadata, so signed `Int*` division emits LLVM `sdiv` and signed comparisons emit `slt`/`sle`/`sgt`/`sge` while unsigned paths keep `udiv` and unsigned predicates.
 - 2026-06-05: lowering now emits fixed-width integer comparisons returning `Bool`/`i1` through LLVM `icmp`, including `eq`, `ne`, and unsigned ordering predicates for the current `UInt32` path.
