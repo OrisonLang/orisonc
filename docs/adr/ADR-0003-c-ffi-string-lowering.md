@@ -23,6 +23,8 @@ The first runnable foreign-function example passes a string literal to a C funct
 - Backend adapter metadata is keyed by the external ABI symbol. The initial `printf` adapter requires an `Int32` return
   and a leading `Pointer<Byte>` parameter, emits the LLVM `ptr, ...` ABI declaration, and applies C integer promotions
   only to explicitly declared trailing parameters.
+- Explicit trailing pointers and 64-bit integers retain their LLVM `ptr` and `i64` representations; only C's required
+  narrow integer promotions alter an explicitly declared Orison argument type at the ABI boundary.
 - Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
   arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.
