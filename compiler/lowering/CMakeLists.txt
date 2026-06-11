@@ -3,6 +3,7 @@ add_library(orison_lowering STATIC
     src/llvm_ir_emitter.cpp
     src/llvm_object_emitter.cpp
     src/llvm_ir_verifier.cpp
+    src/type_lowering.cpp
 )
 
 target_include_directories(orison_lowering

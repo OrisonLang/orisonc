@@ -31,6 +31,8 @@ The first runnable foreign-function example passes a string literal to a C funct
   and `double`.
 - Adapter lookup, signature validation, and promotion classification live in a dedicated lowering component; the LLVM
   emitter consumes those decisions and remains responsible only for emitting signed/unsigned extension instructions.
+- Orison-to-LLVM scalar type mapping, integer signedness, and parameter-vector lowering live in a shared lowering type
+  component used by both ordinary function lowering and C ABI adapter validation.
 - Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
   arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.
