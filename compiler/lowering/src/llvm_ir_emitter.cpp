@@ -561,6 +561,88 @@ auto lower_let_binding(
     return true;
 }
 
+auto lower_final_if_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringContext const& context,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (statement.kind != syntax::StatementKind::if_statement || statement.nested_statements.size() != 1 ||
+        statement.alternate_statements.size() != 1) {
+        return std::nullopt;
+    }
+
+    auto condition = lowered_expression(
+        statement.expression,
+        "i1",
+        IntegerSignedness::not_integer,
+        context,
+        state,
+        output
+    );
+    if (!condition.has_value()) {
+        return std::nullopt;
+    }
+
+    auto const* then_expression = return_expression_for(statement.nested_statements.front());
+    auto const* else_expression = return_expression_for(statement.alternate_statements.front());
+    if (then_expression == nullptr || else_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto block_index = state.next_block_index++;
+    auto then_block = "if.then." + std::to_string(block_index);
+    auto else_block = "if.else." + std::to_string(block_index);
+    auto merge_block = "if.merge." + std::to_string(block_index);
+    output << "  br i1 " << condition->value << ", label %" << then_block << ", label %" << else_block << "\n";
+
+    output << then_block << ":\n";
+    state.current_block = then_block;
+    auto then_value = lowered_expression(
+        *then_expression,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        state,
+        output
+    );
+    if (!then_value.has_value()) {
+        return std::nullopt;
+    }
+    auto then_exit_block = state.current_block;
+    output << "  br label %" << merge_block << "\n";
+
+    output << else_block << ":\n";
+    state.current_block = else_block;
+    auto else_value = lowered_expression(
+        *else_expression,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        state,
+        output
+    );
+    if (!else_value.has_value() || then_value->type != else_value->type ||
+        then_value->signedness != else_value->signedness) {
+        return std::nullopt;
+    }
+    auto else_exit_block = state.current_block;
+    output << "  br label %" << merge_block << "\n";
+
+    output << merge_block << ":\n";
+    state.current_block = merge_block;
+    auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+    output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
+    output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
+    return LoweredExpression {
+        .type = then_value->type,
+        .value = std::move(temporary_name),
+        .signedness = then_value->signedness,
+    };
+}
+
 void emit_function(
     syntax::FunctionSyntax const& function,
     LoweringContext const& context,
@@ -627,6 +709,7 @@ void emit_function(
         });
     }
     auto const* expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
+    auto lowered_final_statement = std::optional<LoweredExpression> {};
     for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
         auto const& statement = function.body_statements[index];
         auto is_last_statement = index + 1 == function.body_statements.size();
@@ -646,6 +729,17 @@ void emit_function(
         }
 
         if (is_last_statement) {
+            if (statement.kind == syntax::StatementKind::if_statement) {
+                lowered_final_statement = lower_final_if_statement(
+                    statement,
+                    *llvm_return_type,
+                    return_signedness,
+                    context,
+                    state,
+                    output
+                );
+                break;
+            }
             expression = return_expression_for(statement);
             break;
         }
@@ -654,14 +748,20 @@ void emit_function(
         return;
     }
 
-    if (expression == nullptr) {
+    if (!lowered_final_statement.has_value() && expression == nullptr) {
         diagnostics.error(function.line, "lowering requires leading let bindings followed by a return or final expression");
         return;
     }
 
-    auto lowered = lowered_expression(*expression, *llvm_return_type, return_signedness, context, state, output);
+    auto lowered = std::move(lowered_final_statement);
     if (!lowered.has_value()) {
-        diagnostics.error(expression->line, "lowering does not yet support this return expression");
+        lowered = lowered_expression(*expression, *llvm_return_type, return_signedness, context, state, output);
+    }
+    if (!lowered.has_value()) {
+        diagnostics.error(
+            expression != nullptr ? expression->line : function.line,
+            "lowering does not yet support this return expression"
+        );
         return;
     }
 

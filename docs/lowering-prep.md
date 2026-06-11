@@ -5,7 +5,8 @@
 Started: the lowering library scaffold now emits text LLVM IR for the initial constant-returning `UInt32`
 function slice, leading immutable `let` bindings, simple fixed-width integer arithmetic, same-module function calls,
 fixed-width integer comparisons returning `Bool`, boolean literals and operators, fixed-width integer function
-parameters, ternary expressions, and diagnostics for unsupported shapes.
+parameters, ternary expressions, final value-producing `if ... else` statements, and diagnostics for unsupported
+shapes.
 
 ## Aggregate-context closure
 
@@ -68,6 +69,9 @@ Ternary expressions lower through conditional branches into labeled then/else bl
 `phi` value. The lowering state tracks each arm's actual exit block so nested ternaries produce valid predecessor
 labels in outer `phi` nodes.
 
+Final `if ... else` statements now reuse the same branch/merge model when each arm contains one value-producing
+expression or explicit value return. Arm exit-block tracking also supports a ternary nested inside an if arm.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
@@ -89,6 +93,6 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 ## Suggested implementation order
 
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
-2. Add statement-level `if ... else` branch lowering using the ternary block/merge machinery.
+2. Extend branch lowering to multi-statement arms with branch-local immutable bindings.
 3. Add explicit CLI lowering output after the library emitter has enough useful expression coverage.
 4. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.

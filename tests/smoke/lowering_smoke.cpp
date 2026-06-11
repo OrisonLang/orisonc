@@ -428,6 +428,83 @@ void test_emit_ternary_expression_returns() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_final_if_expression_returns() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_final_if_expressions.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(flag: Bool) -> UInt32\n"
+        "    if flag\n"
+        "        1 as UInt32\n"
+        "    else\n"
+        "        2 as UInt32\n"
+        "\n"
+        "function choose_return(flag: Bool) -> UInt32\n"
+        "    if flag\n"
+        "        return 3 as UInt32\n"
+        "    else\n"
+        "        return 4 as UInt32\n"
+        "\n"
+        "function choose_nested(first: Bool, second: Bool) -> UInt32\n"
+        "    if first\n"
+        "        second ? 5 as UInt32 : 6 as UInt32\n"
+        "    else\n"
+        "        7 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %flag) {\n"
+        "entry:\n"
+        "  br i1 %flag, label %if.then.0, label %if.else.0\n"
+        "if.then.0:\n"
+        "  br label %if.merge.0\n"
+        "if.else.0:\n"
+        "  br label %if.merge.0\n"
+        "if.merge.0:\n"
+        "  %tmp0 = phi i32 [1, %if.then.0], [2, %if.else.0]\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i32 @choose_return(i1 %flag) {\n"
+        "entry:\n"
+        "  br i1 %flag, label %if.then.0, label %if.else.0\n"
+        "if.then.0:\n"
+        "  br label %if.merge.0\n"
+        "if.else.0:\n"
+        "  br label %if.merge.0\n"
+        "if.merge.0:\n"
+        "  %tmp0 = phi i32 [3, %if.then.0], [4, %if.else.0]\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i32 @choose_nested(i1 %first, i1 %second) {\n"
+        "entry:\n"
+        "  br i1 %first, label %if.then.0, label %if.else.0\n"
+        "if.then.0:\n"
+        "  br i1 %second, label %ternary.then.1, label %ternary.else.1\n"
+        "ternary.then.1:\n"
+        "  br label %ternary.merge.1\n"
+        "ternary.else.1:\n"
+        "  br label %ternary.merge.1\n"
+        "ternary.merge.1:\n"
+        "  %tmp0 = phi i32 [5, %ternary.then.1], [6, %ternary.else.1]\n"
+        "  br label %if.merge.0\n"
+        "if.else.0:\n"
+        "  br label %if.merge.0\n"
+        "if.merge.0:\n"
+        "  %tmp1 = phi i32 [%tmp0, %ternary.merge.1], [7, %if.else.0]\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -590,6 +667,7 @@ auto main() -> int {
     test_emit_int32_comparison_returns();
     test_emit_boolean_expression_returns();
     test_emit_ternary_expression_returns();
+    test_emit_final_if_expression_returns();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
