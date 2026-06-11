@@ -99,6 +99,22 @@ add_test(
     COMMAND orison_type_lowering_smoke
 )
 
+add_executable(orison_function_signature_smoke
+    smoke/function_signature_smoke.cpp
+)
+
+target_link_libraries(orison_function_signature_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_function_signature_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_function_signature_smoke
+    COMMAND orison_function_signature_smoke
+)
+
 add_executable(orison_pipeline_smoke
     smoke/compile_pipeline_smoke.cpp
 )

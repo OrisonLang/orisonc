@@ -1,4 +1,5 @@
 #include "orison/lowering/c_abi_adapter.hpp"
+#include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -26,24 +27,14 @@ struct LoweredExpression {
     IntegerSignedness signedness = IntegerSignedness::not_integer;
 };
 
-struct FunctionSignature {
-    std::string return_type;
-    IntegerSignedness return_signedness = IntegerSignedness::not_integer;
-    std::vector<std::string> parameter_types;
-    std::vector<IntegerSignedness> parameter_signedness;
-    std::string symbol_name;
-    CAbiAdapterKind adapter = CAbiAdapterKind::none;
-    std::size_t fixed_abi_parameter_count = 0;
-};
-
 struct StringConstant {
     std::string name;
     std::string bytes;
 };
 
 struct LoweringContext {
-    std::unordered_map<std::string, FunctionSignature> functions;
-    std::vector<FunctionSignature> foreign_declarations;
+    std::unordered_map<std::string, LoweredFunctionSignature> functions;
+    std::vector<LoweredFunctionSignature> foreign_declarations;
     std::unordered_map<std::string, std::size_t> string_constant_indices;
     std::vector<StringConstant> string_constants;
 };
@@ -1184,21 +1175,12 @@ auto collect_lowering_context(
 ) -> LoweringContext {
     auto context = LoweringContext {};
     for (auto const& function : module.functions) {
-        auto return_type = llvm_type_for(function.return_type);
-        if (!return_type.has_value()) {
+        auto signature =
+            lower_function_signature(function.return_type, function.parameters, function.name);
+        if (!has_supported_function_signature_types(signature)) {
             continue;
         }
-        auto parameter_types = llvm_parameter_types_for(function.parameters);
-        if (!parameter_types.has_value()) {
-            continue;
-        }
-        context.functions.emplace(function.name, FunctionSignature {
-            .return_type = std::string(*return_type),
-            .return_signedness = integer_signedness_for(function.return_type),
-            .parameter_types = std::move(*parameter_types),
-            .parameter_signedness = parameter_signedness_for(function.parameters),
-            .symbol_name = function.name,
-        });
+        context.functions.emplace(function.name, std::move(signature));
     }
 
     for (auto const& foreign_import : module.foreign_imports) {
@@ -1210,26 +1192,14 @@ auto collect_lowering_context(
                 ? function.name
                 : std::string(unquoted_text(function.external_name));
             auto const* adapter = find_c_abi_adapter(symbol_name);
-            auto return_type = llvm_type_for(function.return_type);
-            auto parameter_types = llvm_parameter_types_for(function.parameters);
+            auto signature =
+                lower_function_signature(function.return_type, function.parameters, std::move(symbol_name));
             if (adapter != nullptr) {
-                auto rendered_parameter_types = std::vector<std::string> {};
-                rendered_parameter_types.reserve(function.parameters.size());
-                for (auto const& parameter : function.parameters) {
-                    auto parameter_type = llvm_type_for(parameter.type);
-                    rendered_parameter_types.push_back(
-                        parameter_type.has_value() ? std::string(*parameter_type) : std::string {}
-                    );
-                }
-                auto validation = validate_c_abi_adapter_signature(
-                    *adapter,
-                    return_type.has_value() ? *return_type : std::string_view {},
-                    rendered_parameter_types
-                );
+                auto validation = apply_c_abi_adapter(signature, *adapter);
                 if (validation.error == CAbiAdapterValidationError::invalid_fixed_prefix) {
                     diagnostics.error(
                         1,
-                        "foreign symbol '" + symbol_name +
+                        "foreign symbol '" + signature.symbol_name +
                             "' does not match the required fixed C ABI prefix"
                     );
                     continue;
@@ -1237,26 +1207,15 @@ auto collect_lowering_context(
                 if (validation.error == CAbiAdapterValidationError::unsupported_trailing_parameter) {
                     diagnostics.error(
                         1,
-                        "foreign symbol '" + symbol_name + "' parameter '" +
+                        "foreign symbol '" + signature.symbol_name + "' parameter '" +
                             function.parameters[validation.parameter_index].name +
                             "' has no supported C variadic ABI representation"
                     );
                     continue;
                 }
             }
-            if (!return_type.has_value() || !parameter_types.has_value()) {
+            if (!has_supported_function_signature_types(signature)) {
                 continue;
-            }
-            auto signature = FunctionSignature {
-                .return_type = std::string(*return_type),
-                .return_signedness = integer_signedness_for(function.return_type),
-                .parameter_types = std::move(*parameter_types),
-                .parameter_signedness = parameter_signedness_for(function.parameters),
-                .symbol_name = std::move(symbol_name),
-            };
-            if (adapter != nullptr) {
-                signature.adapter = adapter->kind;
-                signature.fixed_abi_parameter_count = adapter->fixed_parameter_count;
             }
             context.functions.emplace(function.name, signature);
             context.foreign_declarations.push_back(std::move(signature));

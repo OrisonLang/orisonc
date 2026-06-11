@@ -33,6 +33,8 @@ The first runnable foreign-function example passes a string literal to a C funct
   emitter consumes those decisions and remains responsible only for emitting signed/unsigned extension instructions.
 - Orison-to-LLVM scalar type mapping, integer signedness, and parameter-vector lowering live in a shared lowering type
   component used by both ordinary function lowering and C ABI adapter validation.
+- Lowered function signatures are a shared structured model built once from syntax and then optionally adapted for a
+  foreign ABI, avoiding parallel return-type, parameter-type, signedness, symbol, and adapter state construction.
 - Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
   arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.

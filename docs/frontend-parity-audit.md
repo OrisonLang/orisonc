@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: lowered function signatures now use a shared structured model and builder across ordinary context collection and C ABI adaptation, with independent coverage for complete, adapted, and unsupported signatures; generated IR remains unchanged.
 - 2026-06-11: Orison-to-LLVM scalar type mapping, integer signedness, and parameter-vector lowering now live in a dedicated shared lowering module with independent smoke coverage; emitter output remains unchanged.
 - 2026-06-11: C ABI adapter lookup, fixed-prefix/trailing-type validation, and promotion classification now live in a dedicated lowering module with independent smoke coverage; LLVM IR emission consumes the policy without changing generated output.
 - 2026-06-11: fixed-to-variadic C adapter declarations now reject unsupported trailing parameter representations before function lowering; targeted coverage rejects `Text` while retaining pointers, integers through 64 bits, `Float32`, and `Float64`.
