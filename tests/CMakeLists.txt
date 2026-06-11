@@ -163,6 +163,22 @@ add_test(
     COMMAND orison_module_prelude_smoke
 )
 
+add_executable(orison_function_emitter_smoke
+    smoke/function_emitter_smoke.cpp
+)
+
+target_link_libraries(orison_function_emitter_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_function_emitter_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_function_emitter_smoke
+    COMMAND orison_function_emitter_smoke
+)
+
 add_executable(orison_pipeline_smoke
     smoke/compile_pipeline_smoke.cpp
 )

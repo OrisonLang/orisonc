@@ -1,0 +1,61 @@
+#include "orison/lowering/function_emitter.hpp"
+#include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/string_constants.hpp"
+#include "orison/source/source_file.hpp"
+#include "orison/syntax/module_parser.hpp"
+
+#include <cassert>
+#include <filesystem>
+#include <fstream>
+
+int main() {
+    auto path = std::filesystem::temp_directory_path() / "orison_function_emitter_smoke.or";
+    {
+        auto output = std::ofstream(path);
+        output << "package demo.function_emitter\n"
+                  "\n"
+                  "function add(left: UInt32, right: UInt32) -> UInt32\n"
+                  "    left + right\n";
+    }
+
+    auto source = orison::source::SourceFile::read(path);
+    assert(source.has_value());
+    auto parser = orison::syntax::ModuleParser {};
+    auto parse_result = parser.parse(*source);
+    assert(!parse_result.diagnostics.has_errors());
+
+    auto diagnostics = orison::diagnostics::DiagnosticBag {};
+    auto context = orison::lowering::build_lowering_context(parse_result.module, diagnostics);
+    assert(!diagnostics.has_errors());
+    auto strings = orison::lowering::collect_string_constants(parse_result.module);
+    auto function_ir = orison::lowering::emit_function(
+        parse_result.module.functions.front(),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        function_ir ==
+        "define i32 @add(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = add i32 %left, %right\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+    );
+
+    parse_result.module.functions.front().is_async = true;
+    diagnostics = {};
+    assert(
+        orison::lowering::emit_function(
+            parse_result.module.functions.front(),
+            context,
+            strings,
+            diagnostics
+        ).empty()
+    );
+    assert(diagnostics.has_errors());
+    assert(diagnostics.entries().front().message == "lowering does not yet support async functions");
+    std::filesystem::remove(path);
+    return 0;
+}

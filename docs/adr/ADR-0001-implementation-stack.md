@@ -34,6 +34,8 @@ analysis, and lowering components.
   inherited standard streams, propagates its exit status, and removes the temporary artifact.
 - Shared frontend, LLVM IR, and object compilation stages live behind `orison_pipeline`; CLI modes select an
   artifact or continue into linking without duplicating stage orchestration.
+- Per-function LLVM signature, SSA expression, control-flow, and return emission live behind a dedicated lowering
+  component; module emission owns only module assembly, shared context construction, and final LLVM verification.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

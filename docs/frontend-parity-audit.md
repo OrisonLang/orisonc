@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: per-function LLVM signature, SSA expression, branch, switch, and return emission now live behind a dedicated component with direct success and diagnostic coverage; module orchestration and generated IR remain unchanged.
 - 2026-06-11: LLVM string-global and foreign-declaration formatting now live in a dedicated module-prelude component with independent fixed and adapted declaration coverage; complete emitter output remains unchanged.
 - 2026-06-11: string literal decoding, null termination, deduplication, nested module traversal, and LLVM byte encoding now live in a dedicated lowering component with independent escape and ordering coverage; emitted globals remain unchanged.
 - 2026-06-11: module-wide callable collection and foreign ABI adaptation now live in a dedicated lowering-context builder with independent success and diagnostic coverage; the LLVM emitter retains only IR-specific string-global state and generated IR remains unchanged.
