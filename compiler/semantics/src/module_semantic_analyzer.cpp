@@ -265,6 +265,10 @@ private:
         return false;
     }
 
+    auto is_float_type_name(std::string const& type_name) const -> bool {
+        return type_name == "Float32" || type_name == "Float64";
+    }
+
     struct IntegerTypeInfo {
         int bit_width = 0;
         bool is_fixed_width = false;
@@ -1513,6 +1517,8 @@ private:
             return "Bool";
         case syntax::ExpressionKind::integer_literal:
             return "Int64";
+        case syntax::ExpressionKind::float_literal:
+            return "Float64";
         case syntax::ExpressionKind::array_literal:
             if (expression.arguments.empty()) {
                 return {};
@@ -2028,6 +2034,9 @@ private:
         }
 
         if (expression.kind == syntax::ExpressionKind::integer_literal && is_integer_type_name(expected_type_name)) {
+            return false;
+        }
+        if (expression.kind == syntax::ExpressionKind::float_literal && is_float_type_name(expected_type_name)) {
             return false;
         }
 

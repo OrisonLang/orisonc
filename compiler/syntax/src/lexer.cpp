@@ -352,14 +352,48 @@ auto Lexer::lex(source::SourceFile const& source_file) const -> LexResult {
                     break;
                 }
             } else {
-                while (index < input.size() && std::isdigit(static_cast<unsigned char>(input[index])) != 0) {
+                while (index < input.size() &&
+                       (std::isdigit(static_cast<unsigned char>(input[index])) != 0 || input[index] == '_')) {
                     ++index;
                     ++column;
                 }
             }
 
+            auto is_float = false;
+            if (index < input.size() && input[index] == '.' && index + 1 < input.size() &&
+                std::isdigit(static_cast<unsigned char>(input[index + 1])) != 0) {
+                is_float = true;
+                ++index;
+                ++column;
+                while (index < input.size() &&
+                       (std::isdigit(static_cast<unsigned char>(input[index])) != 0 || input[index] == '_')) {
+                    ++index;
+                    ++column;
+                }
+            }
+            if (index < input.size() && (input[index] == 'e' || input[index] == 'E')) {
+                auto exponent_index = index + 1;
+                if (exponent_index < input.size() &&
+                    (input[exponent_index] == '+' || input[exponent_index] == '-')) {
+                    ++exponent_index;
+                }
+                if (exponent_index < input.size() &&
+                    std::isdigit(static_cast<unsigned char>(input[exponent_index])) != 0) {
+                    is_float = true;
+                    while (index <= exponent_index) {
+                        ++index;
+                        ++column;
+                    }
+                    while (index < input.size() &&
+                           (std::isdigit(static_cast<unsigned char>(input[index])) != 0 || input[index] == '_')) {
+                        ++index;
+                        ++column;
+                    }
+                }
+            }
+
             token.lexeme = input.substr(start, index - start);
-            token.kind = TokenKind::integer_literal;
+            token.kind = is_float ? TokenKind::float_literal : TokenKind::integer_literal;
             result.tokens.push_back(token);
             continue;
         }

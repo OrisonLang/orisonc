@@ -962,6 +962,39 @@ void test_emit_fixed_printf_adapter_with_pointer_and_64_bit_arguments() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_fixed_printf_adapter_with_float_promotion() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_fixed_printf_float_arguments.or";
+    auto result = lower_source(
+        path,
+        "package demo.ffi\n"
+        "\n"
+        "package foreign \"c\"\n"
+        "    function print_checked(format: Pointer<Byte>, narrow: Float32, wide: Float64) -> Int32 as \"printf\"\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    print_checked(\"Orison\\n\", 1.5 as Float32, 2.5 as Float64)\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.ffi\n"
+        "\n"
+        "@.str.0 = private unnamed_addr constant [8 x i8] c\"Orison\\0A\\00\"\n"
+        "\n"
+        "declare i32 @printf(ptr, ...)\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = fpext float 1.5 to double\n"
+        "  %tmp1 = call i32 (ptr, ...) @printf(ptr @.str.0, double %tmp0, double 2.5)\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_reject_printf_adapter_with_invalid_fixed_prefix() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_invalid_printf_adapter.or";
     auto result = lower_source(
@@ -1107,6 +1140,7 @@ auto main() -> int {
     test_emit_c_foreign_call_with_string_literal();
     test_emit_fixed_printf_adapter_with_integer_promotion();
     test_emit_fixed_printf_adapter_with_pointer_and_64_bit_arguments();
+    test_emit_fixed_printf_adapter_with_float_promotion();
     test_reject_printf_adapter_with_invalid_fixed_prefix();
     test_emit_fixed_arity_c_foreign_call();
     test_reject_unsupported_return_expression();

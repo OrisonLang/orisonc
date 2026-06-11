@@ -72,6 +72,7 @@ struct StatementSyntax;
 enum class ExpressionKind {
     name,
     integer_literal,
+    float_literal,
     string_literal,
     boolean_literal,
     array_literal,

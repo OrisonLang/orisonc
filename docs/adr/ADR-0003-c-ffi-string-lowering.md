@@ -25,6 +25,7 @@ The first runnable foreign-function example passes a string literal to a C funct
   only to explicitly declared trailing parameters.
 - Explicit trailing pointers and 64-bit integers retain their LLVM `ptr` and `i64` representations; only C's required
   narrow integer promotions alter an explicitly declared Orison argument type at the ABI boundary.
+- Explicit trailing `Float32` arguments promote from LLVM `float` to `double`; `Float64` arguments remain `double`.
 - Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
   arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.

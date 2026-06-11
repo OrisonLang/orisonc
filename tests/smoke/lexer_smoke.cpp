@@ -53,6 +53,7 @@ int main() {
         output << "    let label: Text = \"ready\"\n";
         output << "    let mask = 0xFF\n";
         output << "    let bits = 0b1010_0001\n";
+        output << "    let ratio = 1.5e+2\n";
         output << "    let first = source.items[0]\n";
         output << "    let absolute = source.value < 0 ? -source.value : source.value\n";
         output << "    let city = source.user?.profile?.address?.city\n";
@@ -105,6 +106,7 @@ int main() {
     bool saw_string = false;
     bool saw_hex = false;
     bool saw_binary = false;
+    bool saw_float = false;
     bool saw_left_bracket = false;
     bool saw_right_bracket = false;
     bool saw_question_dot = false;
@@ -196,6 +198,9 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::integer_literal && token.lexeme == "0b1010_0001") {
             saw_binary = true;
         }
+        if (token.kind == orison::syntax::TokenKind::float_literal && token.lexeme == "1.5e+2") {
+            saw_float = true;
+        }
         if (token.kind == orison::syntax::TokenKind::left_bracket) {
             saw_left_bracket = true;
         }
@@ -267,6 +272,7 @@ int main() {
     assert(saw_string);
     assert(saw_hex);
     assert(saw_binary);
+    assert(saw_float);
     assert(saw_left_bracket);
     assert(saw_right_bracket);
     assert(saw_question_dot);

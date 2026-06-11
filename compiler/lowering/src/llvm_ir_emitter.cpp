@@ -120,6 +120,8 @@ auto llvm_type_for(syntax::TypeSyntax const& type) -> std::optional<std::string_
         TypeMapping {"Int32", "i32"},
         TypeMapping {"UInt64", "i64"},
         TypeMapping {"Int64", "i64"},
+        TypeMapping {"Float32", "float"},
+        TypeMapping {"Float64", "double"},
     };
 
     for (auto const& mapping : mappings) {
@@ -218,6 +220,22 @@ auto lowered_integer_literal(
         .type = std::string(expected_llvm_type),
         .value = expression.text,
         .signedness = expected_signedness,
+    };
+}
+
+auto lowered_float_literal(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::float_literal ||
+        (expected_llvm_type != "float" && expected_llvm_type != "double")) {
+        return std::nullopt;
+    }
+
+    return LoweredExpression {
+        .type = std::string(expected_llvm_type),
+        .value = expression.text,
+        .signedness = IntegerSignedness::not_integer,
     };
 }
 
@@ -340,6 +358,9 @@ auto lowered_expression(
     if (auto literal = lowered_integer_literal(expression, expected_llvm_type, expected_signedness)) {
         return literal;
     }
+    if (auto literal = lowered_float_literal(expression, expected_llvm_type)) {
+        return literal;
+    }
     if (auto literal = lowered_boolean_literal(expression, expected_llvm_type)) {
         return literal;
     }
@@ -378,7 +399,14 @@ auto lowered_expression(
         if (!cast_type.has_value() || *cast_type != expected_llvm_type) {
             return std::nullopt;
         }
-        return lowered_integer_literal(*expression.left, expected_llvm_type, integer_signedness_for(target_type));
+        if (auto integer = lowered_integer_literal(
+                *expression.left,
+                expected_llvm_type,
+                integer_signedness_for(target_type)
+            )) {
+            return integer;
+        }
+        return lowered_float_literal(*expression.left, expected_llvm_type);
     }
 
     if (expression.kind == syntax::ExpressionKind::unary && expression.text == "not" &&
@@ -603,6 +631,16 @@ auto lowered_expression(
                     .type = "i32",
                     .value = std::move(temporary_name),
                     .signedness = argument->signedness,
+                };
+            }
+            if (function->second.adapter == ForeignCallAdapter::c_variadic &&
+                index >= function->second.fixed_abi_parameter_count && argument->type == "float") {
+                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+                output << "  " << temporary_name << " = fpext float " << argument->value << " to double\n";
+                argument = LoweredExpression {
+                    .type = "double",
+                    .value = std::move(temporary_name),
+                    .signedness = IntegerSignedness::not_integer,
                 };
             }
             arguments.push_back(std::move(*argument));

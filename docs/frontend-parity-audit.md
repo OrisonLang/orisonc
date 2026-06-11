@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: canonical decimal/exponent float literals now lex, parse, infer, and lower as `Float32`/`Float64`; fixed `printf` adapter coverage pins C's required `Float32`-to-`Float64` promotion while explicit `Float64` arguments remain LLVM `double`.
 - 2026-06-11: fixed `printf` adapter coverage now pins explicit trailing `Pointer<Byte>`, `Int64`, and `UInt64` parameters as LLVM `ptr`, signed `i64`, and unsigned `i64` operands without promotion; only narrow integer arguments use C default promotions.
 - 2026-06-11: lowering now uses explicit external-symbol adapter metadata to map fixed Orison `printf` declarations onto LLVM's variadic C ABI form; the adapter validates the fixed `Pointer<Byte>` prefix and applies C integer promotions only to statically declared trailing arguments, with no variadic or spread syntax added.
 - 2026-06-11: explicit C `library "name"` clauses now propagate through the shared pipeline into `--build` and `run` as deduplicated direct linker arguments; host-linker coverage resolves and executes `cos` from `libm`, and the checked-in FFI example includes the tour's math-library declarations.

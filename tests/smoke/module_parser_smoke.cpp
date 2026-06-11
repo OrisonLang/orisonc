@@ -1781,6 +1781,30 @@ void test_equality_expression_success() {
     assert(while_statement.expression.right->text == "false");
 }
 
+void test_float_literal_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_float_literal_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.float_literal\n";
+        output << "function value() -> Float32\n";
+        output << "    1.5e+2 as Float32\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    auto const& expression = result.module.functions.front().body_statements.front().expression;
+    assert(expression.kind == orison::syntax::ExpressionKind::cast);
+    assert(expression.text == "Float32");
+    assert(expression.left);
+    assert(expression.left->kind == orison::syntax::ExpressionKind::float_literal);
+    assert(expression.left->text == "1.5e+2");
+}
+
 void test_modulo_expression_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_modulo_success.or";
     {
@@ -2169,6 +2193,7 @@ int main() {
     test_while_statement_success();
     test_for_statement_success();
     test_defer_statement_success();
+    test_float_literal_success();
     test_equality_expression_success();
     test_modulo_expression_success();
     test_unary_expression_success();
