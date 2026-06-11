@@ -131,6 +131,22 @@ add_test(
     COMMAND orison_lowering_context_smoke
 )
 
+add_executable(orison_string_constants_smoke
+    smoke/string_constants_smoke.cpp
+)
+
+target_link_libraries(orison_string_constants_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_string_constants_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_string_constants_smoke
+    COMMAND orison_string_constants_smoke
+)
+
 add_executable(orison_pipeline_smoke
     smoke/compile_pipeline_smoke.cpp
 )

@@ -1,9 +1,9 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
-#include <iomanip>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -26,14 +26,8 @@ struct LoweredExpression {
     IntegerSignedness signedness = IntegerSignedness::not_integer;
 };
 
-struct StringConstant {
-    std::string name;
-    std::string bytes;
-};
-
 struct EmissionContext : LoweringContext {
-    std::unordered_map<std::string, std::size_t> string_constant_indices;
-    std::vector<StringConstant> string_constants;
+    StringConstantTable string_constants;
 };
 
 struct FunctionLoweringState {
@@ -43,66 +37,6 @@ struct FunctionLoweringState {
     std::size_t next_block_index = 0;
     std::string current_block = "entry";
 };
-
-auto unquoted_text(std::string_view text) -> std::string_view {
-    if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
-        return text.substr(1, text.size() - 2);
-    }
-    return text;
-}
-
-auto decoded_string_literal(std::string_view text) -> std::string {
-    text = unquoted_text(text);
-    auto decoded = std::string {};
-    decoded.reserve(text.size() + 1);
-    for (auto index = std::size_t {0}; index < text.size(); ++index) {
-        if (text[index] != '\\' || index + 1 == text.size()) {
-            decoded.push_back(text[index]);
-            continue;
-        }
-
-        auto escaped = text[++index];
-        switch (escaped) {
-        case 'n':
-            decoded.push_back('\n');
-            break;
-        case 'r':
-            decoded.push_back('\r');
-            break;
-        case 't':
-            decoded.push_back('\t');
-            break;
-        case '0':
-            decoded.push_back('\0');
-            break;
-        case '\\':
-            decoded.push_back('\\');
-            break;
-        case '"':
-            decoded.push_back('"');
-            break;
-        default:
-            decoded.push_back(escaped);
-            break;
-        }
-    }
-    decoded.push_back('\0');
-    return decoded;
-}
-
-auto llvm_string_bytes(std::string_view bytes) -> std::string {
-    auto output = std::ostringstream {};
-    output << std::uppercase << std::hex << std::setfill('0');
-    for (auto byte : bytes) {
-        auto value = static_cast<unsigned char>(byte);
-        if (value >= 0x20 && value <= 0x7e && byte != '"' && byte != '\\') {
-            output << byte;
-        } else {
-            output << '\\' << std::setw(2) << static_cast<unsigned int>(value);
-        }
-    }
-    return output.str();
-}
 
 auto lowered_integer_literal(
     syntax::ExpressionSyntax const& expression,
@@ -262,14 +196,13 @@ auto lowered_expression(
         return literal;
     }
     if (expression.kind == syntax::ExpressionKind::string_literal && expected_llvm_type == "ptr") {
-        auto constant_index = context.string_constant_indices.find(expression.text);
-        if (constant_index == context.string_constant_indices.end()) {
+        auto const* constant = context.string_constants.find(expression.text);
+        if (constant == nullptr) {
             return std::nullopt;
         }
-        auto const& constant = context.string_constants[constant_index->second];
         return LoweredExpression {
             .type = "ptr",
-            .value = "@" + constant.name,
+            .value = "@" + constant->name,
             .signedness = IntegerSignedness::not_integer,
         };
     }
@@ -1166,71 +1099,12 @@ void emit_function(
     output << "}\n";
 }
 
-void collect_expression_strings(
-    syntax::ExpressionSyntax const& expression,
-    EmissionContext& context
-) {
-    if (expression.kind == syntax::ExpressionKind::string_literal &&
-        !context.string_constant_indices.contains(expression.text)) {
-        auto name = ".str." + std::to_string(context.string_constants.size());
-        context.string_constant_indices.emplace(expression.text, context.string_constants.size());
-        context.string_constants.push_back(StringConstant {
-            .name = std::move(name),
-            .bytes = decoded_string_literal(expression.text),
-        });
-    }
-    if (expression.left) {
-        collect_expression_strings(*expression.left, context);
-    }
-    if (expression.right) {
-        collect_expression_strings(*expression.right, context);
-    }
-    if (expression.alternate) {
-        collect_expression_strings(*expression.alternate, context);
-    }
-    for (auto const& argument : expression.arguments) {
-        collect_expression_strings(argument, context);
-    }
-    for (auto const& statement : expression.nested_statements) {
-        if (statement) {
-            collect_expression_strings(statement->expression, context);
-        }
-    }
-}
-
-void collect_statement_strings(syntax::StatementSyntax const& statement, EmissionContext& context) {
-    collect_expression_strings(statement.expression, context);
-    collect_expression_strings(statement.assignment_target, context);
-    for (auto const& nested : statement.nested_statements) {
-        collect_statement_strings(nested, context);
-    }
-    for (auto const& alternate : statement.alternate_statements) {
-        collect_statement_strings(alternate, context);
-    }
-    for (auto const& switch_case : statement.switch_cases) {
-        collect_expression_strings(switch_case.pattern, context);
-        for (auto const& nested : switch_case.statements) {
-            if (nested) {
-                collect_statement_strings(*nested, context);
-            }
-        }
-    }
-}
-
-void collect_module_strings(syntax::ModuleSyntax const& module, EmissionContext& context) {
-    for (auto const& function : module.functions) {
-        for (auto const& statement : function.body_statements) {
-            collect_statement_strings(statement, context);
-        }
-    }
-}
-
 void emit_module_prelude(EmissionContext const& context, std::ostringstream& output) {
-    for (auto const& constant : context.string_constants) {
+    for (auto const& constant : context.string_constants.constants) {
         output << "@" << constant.name << " = private unnamed_addr constant [";
-        output << constant.bytes.size() << " x i8] c\"" << llvm_string_bytes(constant.bytes) << "\"\n";
+        output << constant.bytes.size() << " x i8] c\"" << constant.llvm_bytes << "\"\n";
     }
-    if (!context.string_constants.empty()) {
+    if (!context.string_constants.constants.empty()) {
         output << "\n";
     }
 
@@ -1295,7 +1169,7 @@ auto LlvmIrEmitter::emit(
     if (result.has_errors()) {
         return result;
     }
-    collect_module_strings(module, context);
+    context.string_constants = collect_string_constants(module);
     emit_module_prelude(context, output);
     for (auto const& function : module.functions) {
         emit_function(function, context, result.diagnostics, output);
