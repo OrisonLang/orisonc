@@ -1,4 +1,5 @@
 add_library(orison_lowering STATIC
+    src/c_abi_adapter.cpp
     src/llvm_ir_emitter.cpp
     src/llvm_object_emitter.cpp
     src/llvm_ir_verifier.cpp

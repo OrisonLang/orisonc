@@ -29,6 +29,8 @@ The first runnable foreign-function example passes a string literal to a C funct
 - Adapter declarations reject trailing parameters without a supported scalar C variadic ABI representation before
   function lowering. The current accepted LLVM representations are pointers, integer widths through 64 bits, `float`,
   and `double`.
+- Adapter lookup, signature validation, and promotion classification live in a dedicated lowering component; the LLVM
+  emitter consumes those decisions and remains responsible only for emitting signed/unsigned extension instructions.
 - Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
   arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.

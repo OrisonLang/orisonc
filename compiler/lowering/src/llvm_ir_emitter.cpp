@@ -1,3 +1,4 @@
+#include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 
@@ -20,11 +21,6 @@ enum class IntegerSignedness {
     unsigned_integer,
 };
 
-enum class ForeignCallAdapter {
-    none,
-    c_variadic,
-};
-
 struct LoweredType {
     std::string type;
     IntegerSignedness signedness = IntegerSignedness::not_integer;
@@ -42,7 +38,7 @@ struct FunctionSignature {
     std::vector<std::string> parameter_types;
     std::vector<IntegerSignedness> parameter_signedness;
     std::string symbol_name;
-    ForeignCallAdapter adapter = ForeignCallAdapter::none;
+    CAbiAdapterKind adapter = CAbiAdapterKind::none;
     std::size_t fixed_abi_parameter_count = 0;
 };
 
@@ -65,36 +61,6 @@ struct FunctionLoweringState {
     std::size_t next_block_index = 0;
     std::string current_block = "entry";
 };
-
-struct CForeignAdapterMetadata {
-    std::string_view symbol_name;
-    std::string_view return_type;
-    std::string_view first_parameter_type;
-    std::size_t fixed_parameter_count;
-};
-
-constexpr auto c_foreign_adapters = std::array {
-    CForeignAdapterMetadata {
-        .symbol_name = "printf",
-        .return_type = "i32",
-        .first_parameter_type = "ptr",
-        .fixed_parameter_count = 1,
-    },
-};
-
-auto c_foreign_adapter_for(std::string_view symbol_name) -> CForeignAdapterMetadata const* {
-    for (auto const& adapter : c_foreign_adapters) {
-        if (adapter.symbol_name == symbol_name) {
-            return &adapter;
-        }
-    }
-    return nullptr;
-}
-
-auto is_supported_c_variadic_argument_type(std::string_view llvm_type) -> bool {
-    return llvm_type == "ptr" || llvm_type == "i1" || llvm_type == "i8" || llvm_type == "i16" ||
-           llvm_type == "i32" || llvm_type == "i64" || llvm_type == "float" || llvm_type == "double";
-}
 
 auto has_generic_arguments(syntax::TypeSyntax const& type) -> bool {
     return !type.generic_arguments.empty();
@@ -624,9 +590,11 @@ auto lowered_expression(
             if (!argument.has_value()) {
                 return std::nullopt;
             }
-            if (function->second.adapter == ForeignCallAdapter::c_variadic &&
-                index >= function->second.fixed_abi_parameter_count &&
-                (argument->type == "i1" || argument->type == "i8" || argument->type == "i16")) {
+            auto promotion = index >= function->second.fixed_abi_parameter_count
+                ? c_abi_promotion_for(argument->type)
+                : CAbiPromotion::none;
+            if (function->second.adapter == CAbiAdapterKind::variadic &&
+                promotion == CAbiPromotion::integer_to_i32) {
                 auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
                 auto instruction =
                     argument->signedness == IntegerSignedness::signed_integer ? "sext" : "zext";
@@ -638,8 +606,8 @@ auto lowered_expression(
                     .signedness = argument->signedness,
                 };
             }
-            if (function->second.adapter == ForeignCallAdapter::c_variadic &&
-                index >= function->second.fixed_abi_parameter_count && argument->type == "float") {
+            if (function->second.adapter == CAbiAdapterKind::variadic &&
+                promotion == CAbiPromotion::float_to_double) {
                 auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
                 output << "  " << temporary_name << " = fpext float " << argument->value << " to double\n";
                 argument = LoweredExpression {
@@ -653,7 +621,7 @@ auto lowered_expression(
 
         auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
         output << "  " << temporary_name << " = call " << function->second.return_type;
-        if (function->second.adapter == ForeignCallAdapter::c_variadic) {
+        if (function->second.adapter == CAbiAdapterKind::variadic) {
             output << " (";
             for (auto index = std::size_t {0}; index < function->second.fixed_abi_parameter_count; ++index) {
                 if (index > 0) {
@@ -1329,12 +1297,24 @@ auto collect_lowering_context(
             auto symbol_name = function.external_name.empty()
                 ? function.name
                 : std::string(unquoted_text(function.external_name));
-            auto const* adapter = c_foreign_adapter_for(symbol_name);
+            auto const* adapter = find_c_abi_adapter(symbol_name);
             auto return_type = llvm_type_for(function.return_type);
             auto parameter_types = llvm_parameter_types_for(function.parameters);
             if (adapter != nullptr) {
-                if (!return_type.has_value() || *return_type != adapter->return_type ||
-                    function.parameters.size() < adapter->fixed_parameter_count) {
+                auto rendered_parameter_types = std::vector<std::string> {};
+                rendered_parameter_types.reserve(function.parameters.size());
+                for (auto const& parameter : function.parameters) {
+                    auto parameter_type = llvm_type_for(parameter.type);
+                    rendered_parameter_types.push_back(
+                        parameter_type.has_value() ? std::string(*parameter_type) : std::string {}
+                    );
+                }
+                auto validation = validate_c_abi_adapter_signature(
+                    *adapter,
+                    return_type.has_value() ? *return_type : std::string_view {},
+                    rendered_parameter_types
+                );
+                if (validation.error == CAbiAdapterValidationError::invalid_fixed_prefix) {
                     diagnostics.error(
                         1,
                         "foreign symbol '" + symbol_name +
@@ -1342,31 +1322,11 @@ auto collect_lowering_context(
                     );
                     continue;
                 }
-
-                auto prefix_type = llvm_type_for(function.parameters.front().type);
-                if (!prefix_type.has_value() || *prefix_type != adapter->first_parameter_type) {
-                    diagnostics.error(
-                        1,
-                        "foreign symbol '" + symbol_name +
-                            "' does not match the required fixed C ABI prefix"
-                    );
-                    continue;
-                }
-
-                auto unsupported_parameter = static_cast<syntax::ParameterSyntax const*>(nullptr);
-                for (auto index = adapter->fixed_parameter_count; index < function.parameters.size(); ++index) {
-                    auto parameter_type = llvm_type_for(function.parameters[index].type);
-                    if (!parameter_type.has_value() ||
-                        !is_supported_c_variadic_argument_type(*parameter_type)) {
-                        unsupported_parameter = &function.parameters[index];
-                        break;
-                    }
-                }
-                if (unsupported_parameter != nullptr) {
+                if (validation.error == CAbiAdapterValidationError::unsupported_trailing_parameter) {
                     diagnostics.error(
                         1,
                         "foreign symbol '" + symbol_name + "' parameter '" +
-                            unsupported_parameter->name +
+                            function.parameters[validation.parameter_index].name +
                             "' has no supported C variadic ABI representation"
                     );
                     continue;
@@ -1383,7 +1343,7 @@ auto collect_lowering_context(
                 .symbol_name = std::move(symbol_name),
             };
             if (adapter != nullptr) {
-                signature.adapter = ForeignCallAdapter::c_variadic;
+                signature.adapter = adapter->kind;
                 signature.fixed_abi_parameter_count = adapter->fixed_parameter_count;
             }
             context.functions.emplace(function.name, signature);
@@ -1463,7 +1423,7 @@ void emit_module_prelude(LoweringContext const& context, std::ostringstream& out
 
     for (auto const& declaration : context.foreign_declarations) {
         output << "declare " << declaration.return_type << " @" << declaration.symbol_name << "(";
-        auto emitted_parameter_count = declaration.adapter == ForeignCallAdapter::c_variadic
+        auto emitted_parameter_count = declaration.adapter == CAbiAdapterKind::variadic
             ? declaration.fixed_abi_parameter_count
             : declaration.parameter_types.size();
         for (auto index = std::size_t {0}; index < emitted_parameter_count; ++index) {
@@ -1472,7 +1432,7 @@ void emit_module_prelude(LoweringContext const& context, std::ostringstream& out
             }
             output << declaration.parameter_types[index];
         }
-        if (declaration.adapter == ForeignCallAdapter::c_variadic) {
+        if (declaration.adapter == CAbiAdapterKind::variadic) {
             if (emitted_parameter_count > 0) {
                 output << ", ";
             }

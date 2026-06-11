@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: C ABI adapter lookup, fixed-prefix/trailing-type validation, and promotion classification now live in a dedicated lowering module with independent smoke coverage; LLVM IR emission consumes the policy without changing generated output.
 - 2026-06-11: fixed-to-variadic C adapter declarations now reject unsupported trailing parameter representations before function lowering; targeted coverage rejects `Text` while retaining pointers, integers through 64 bits, `Float32`, and `Float64`.
 - 2026-06-11: canonical decimal/exponent float literals now lex, parse, infer, and lower as `Float32`/`Float64`; fixed `printf` adapter coverage pins C's required `Float32`-to-`Float64` promotion while explicit `Float64` arguments remain LLVM `double`.
 - 2026-06-11: fixed `printf` adapter coverage now pins explicit trailing `Pointer<Byte>`, `Int64`, and `UInt64` parameters as LLVM `ptr`, signed `i64`, and unsigned `i64` operands without promotion; only narrow integer arguments use C default promotions.
