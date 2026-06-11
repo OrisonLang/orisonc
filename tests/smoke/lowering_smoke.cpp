@@ -1016,6 +1016,27 @@ void test_reject_printf_adapter_with_invalid_fixed_prefix() {
     );
 }
 
+void test_reject_printf_adapter_with_unsupported_trailing_type() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_printf_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.ffi\n"
+        "\n"
+        "package foreign \"c\"\n"
+        "    function print_checked(format: Pointer<Byte>, value: Text) -> Int32 as \"printf\"\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    print_checked(\"Orison\\n\", \"unsafe representation\")\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "foreign symbol 'printf' parameter 'value' has no supported C variadic ABI representation"
+    );
+}
+
 void test_emit_fixed_arity_c_foreign_call() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_fixed_arity_c_foreign_call.or";
     auto result = lower_source(
@@ -1142,6 +1163,7 @@ auto main() -> int {
     test_emit_fixed_printf_adapter_with_pointer_and_64_bit_arguments();
     test_emit_fixed_printf_adapter_with_float_promotion();
     test_reject_printf_adapter_with_invalid_fixed_prefix();
+    test_reject_printf_adapter_with_unsupported_trailing_type();
     test_emit_fixed_arity_c_foreign_call();
     test_reject_unsupported_return_expression();
     test_reject_malformed_generated_llvm_ir();

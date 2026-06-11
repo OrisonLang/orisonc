@@ -91,6 +91,11 @@ auto c_foreign_adapter_for(std::string_view symbol_name) -> CForeignAdapterMetad
     return nullptr;
 }
 
+auto is_supported_c_variadic_argument_type(std::string_view llvm_type) -> bool {
+    return llvm_type == "ptr" || llvm_type == "i1" || llvm_type == "i8" || llvm_type == "i16" ||
+           llvm_type == "i32" || llvm_type == "i64" || llvm_type == "float" || llvm_type == "double";
+}
+
 auto has_generic_arguments(syntax::TypeSyntax const& type) -> bool {
     return !type.generic_arguments.empty();
 }
@@ -1321,8 +1326,52 @@ auto collect_lowering_context(
             continue;
         }
         for (auto const& function : foreign_import.functions) {
+            auto symbol_name = function.external_name.empty()
+                ? function.name
+                : std::string(unquoted_text(function.external_name));
+            auto const* adapter = c_foreign_adapter_for(symbol_name);
             auto return_type = llvm_type_for(function.return_type);
             auto parameter_types = llvm_parameter_types_for(function.parameters);
+            if (adapter != nullptr) {
+                if (!return_type.has_value() || *return_type != adapter->return_type ||
+                    function.parameters.size() < adapter->fixed_parameter_count) {
+                    diagnostics.error(
+                        1,
+                        "foreign symbol '" + symbol_name +
+                            "' does not match the required fixed C ABI prefix"
+                    );
+                    continue;
+                }
+
+                auto prefix_type = llvm_type_for(function.parameters.front().type);
+                if (!prefix_type.has_value() || *prefix_type != adapter->first_parameter_type) {
+                    diagnostics.error(
+                        1,
+                        "foreign symbol '" + symbol_name +
+                            "' does not match the required fixed C ABI prefix"
+                    );
+                    continue;
+                }
+
+                auto unsupported_parameter = static_cast<syntax::ParameterSyntax const*>(nullptr);
+                for (auto index = adapter->fixed_parameter_count; index < function.parameters.size(); ++index) {
+                    auto parameter_type = llvm_type_for(function.parameters[index].type);
+                    if (!parameter_type.has_value() ||
+                        !is_supported_c_variadic_argument_type(*parameter_type)) {
+                        unsupported_parameter = &function.parameters[index];
+                        break;
+                    }
+                }
+                if (unsupported_parameter != nullptr) {
+                    diagnostics.error(
+                        1,
+                        "foreign symbol '" + symbol_name + "' parameter '" +
+                            unsupported_parameter->name +
+                            "' has no supported C variadic ABI representation"
+                    );
+                    continue;
+                }
+            }
             if (!return_type.has_value() || !parameter_types.has_value()) {
                 continue;
             }
@@ -1331,21 +1380,9 @@ auto collect_lowering_context(
                 .return_signedness = integer_signedness_for(function.return_type),
                 .parameter_types = std::move(*parameter_types),
                 .parameter_signedness = parameter_signedness_for(function.parameters),
-                .symbol_name = function.external_name.empty()
-                                   ? function.name
-                                   : std::string(unquoted_text(function.external_name)),
+                .symbol_name = std::move(symbol_name),
             };
-            if (auto const* adapter = c_foreign_adapter_for(signature.symbol_name)) {
-                if (signature.return_type != adapter->return_type ||
-                    signature.parameter_types.size() < adapter->fixed_parameter_count ||
-                    signature.parameter_types.front() != adapter->first_parameter_type) {
-                    diagnostics.error(
-                        1,
-                        "foreign symbol '" + signature.symbol_name +
-                            "' does not match the required fixed C ABI prefix"
-                    );
-                    continue;
-                }
+            if (adapter != nullptr) {
                 signature.adapter = ForeignCallAdapter::c_variadic;
                 signature.fixed_abi_parameter_count = adapter->fixed_parameter_count;
             }
