@@ -35,6 +35,8 @@ The first runnable foreign-function example passes a string literal to a C funct
   component used by both ordinary function lowering and C ABI adapter validation.
 - Lowered function signatures are a shared structured model built once from syntax and then optionally adapted for a
   foreign ABI, avoiding parallel return-type, parameter-type, signedness, symbol, and adapter state construction.
+- Module-wide callable collection, ordered foreign declarations, ABI filtering, adapter application, and adapter
+  diagnostics live in a dedicated lowering-context builder; LLVM emission adds only IR-specific string-global state.
 - Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
   arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.

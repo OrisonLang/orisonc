@@ -1,7 +1,6 @@
-#include "orison/lowering/c_abi_adapter.hpp"
-#include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
+#include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <iomanip>
@@ -32,9 +31,7 @@ struct StringConstant {
     std::string bytes;
 };
 
-struct LoweringContext {
-    std::unordered_map<std::string, LoweredFunctionSignature> functions;
-    std::vector<LoweredFunctionSignature> foreign_declarations;
+struct EmissionContext : LoweringContext {
     std::unordered_map<std::string, std::size_t> string_constant_indices;
     std::vector<StringConstant> string_constants;
 };
@@ -204,7 +201,7 @@ auto is_integer_llvm_type(std::string_view type) -> bool {
 
 auto inferred_expression_type(
     syntax::ExpressionSyntax const& expression,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<LoweredType> {
     if (expression.kind == syntax::ExpressionKind::name) {
@@ -251,7 +248,7 @@ auto lowered_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState& state,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
@@ -610,7 +607,7 @@ auto lower_let_binding(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -635,7 +632,7 @@ auto lower_final_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -645,7 +642,7 @@ auto lower_final_switch_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -655,7 +652,7 @@ auto lower_value_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -722,7 +719,7 @@ auto lower_final_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -804,7 +801,7 @@ auto lower_switch_case_statement_block(
     std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -898,7 +895,7 @@ auto lower_final_switch_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    LoweringContext const& context,
+    EmissionContext const& context,
     FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -1031,7 +1028,7 @@ auto lower_final_switch_statement(
 
 void emit_function(
     syntax::FunctionSyntax const& function,
-    LoweringContext const& context,
+    EmissionContext const& context,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) {
@@ -1169,64 +1166,9 @@ void emit_function(
     output << "}\n";
 }
 
-auto collect_lowering_context(
-    syntax::ModuleSyntax const& module,
-    diagnostics::DiagnosticBag& diagnostics
-) -> LoweringContext {
-    auto context = LoweringContext {};
-    for (auto const& function : module.functions) {
-        auto signature =
-            lower_function_signature(function.return_type, function.parameters, function.name);
-        if (!has_supported_function_signature_types(signature)) {
-            continue;
-        }
-        context.functions.emplace(function.name, std::move(signature));
-    }
-
-    for (auto const& foreign_import : module.foreign_imports) {
-        if (unquoted_text(foreign_import.abi) != "c") {
-            continue;
-        }
-        for (auto const& function : foreign_import.functions) {
-            auto symbol_name = function.external_name.empty()
-                ? function.name
-                : std::string(unquoted_text(function.external_name));
-            auto const* adapter = find_c_abi_adapter(symbol_name);
-            auto signature =
-                lower_function_signature(function.return_type, function.parameters, std::move(symbol_name));
-            if (adapter != nullptr) {
-                auto validation = apply_c_abi_adapter(signature, *adapter);
-                if (validation.error == CAbiAdapterValidationError::invalid_fixed_prefix) {
-                    diagnostics.error(
-                        1,
-                        "foreign symbol '" + signature.symbol_name +
-                            "' does not match the required fixed C ABI prefix"
-                    );
-                    continue;
-                }
-                if (validation.error == CAbiAdapterValidationError::unsupported_trailing_parameter) {
-                    diagnostics.error(
-                        1,
-                        "foreign symbol '" + signature.symbol_name + "' parameter '" +
-                            function.parameters[validation.parameter_index].name +
-                            "' has no supported C variadic ABI representation"
-                    );
-                    continue;
-                }
-            }
-            if (!has_supported_function_signature_types(signature)) {
-                continue;
-            }
-            context.functions.emplace(function.name, signature);
-            context.foreign_declarations.push_back(std::move(signature));
-        }
-    }
-    return context;
-}
-
 void collect_expression_strings(
     syntax::ExpressionSyntax const& expression,
-    LoweringContext& context
+    EmissionContext& context
 ) {
     if (expression.kind == syntax::ExpressionKind::string_literal &&
         !context.string_constant_indices.contains(expression.text)) {
@@ -1256,7 +1198,7 @@ void collect_expression_strings(
     }
 }
 
-void collect_statement_strings(syntax::StatementSyntax const& statement, LoweringContext& context) {
+void collect_statement_strings(syntax::StatementSyntax const& statement, EmissionContext& context) {
     collect_expression_strings(statement.expression, context);
     collect_expression_strings(statement.assignment_target, context);
     for (auto const& nested : statement.nested_statements) {
@@ -1275,7 +1217,7 @@ void collect_statement_strings(syntax::StatementSyntax const& statement, Lowerin
     }
 }
 
-void collect_module_strings(syntax::ModuleSyntax const& module, LoweringContext& context) {
+void collect_module_strings(syntax::ModuleSyntax const& module, EmissionContext& context) {
     for (auto const& function : module.functions) {
         for (auto const& statement : function.body_statements) {
             collect_statement_strings(statement, context);
@@ -1283,7 +1225,7 @@ void collect_module_strings(syntax::ModuleSyntax const& module, LoweringContext&
     }
 }
 
-void emit_module_prelude(LoweringContext const& context, std::ostringstream& output) {
+void emit_module_prelude(EmissionContext const& context, std::ostringstream& output) {
     for (auto const& constant : context.string_constants) {
         output << "@" << constant.name << " = private unnamed_addr constant [";
         output << constant.bytes.size() << " x i8] c\"" << llvm_string_bytes(constant.bytes) << "\"\n";
@@ -1348,7 +1290,8 @@ auto LlvmIrEmitter::emit(
     }
     output << "\n";
 
-    auto context = collect_lowering_context(module, result.diagnostics);
+    auto context = EmissionContext {};
+    static_cast<LoweringContext&>(context) = build_lowering_context(module, result.diagnostics);
     if (result.has_errors()) {
         return result;
     }
