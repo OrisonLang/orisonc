@@ -42,6 +42,7 @@ struct LoweringContext {
 
 struct FunctionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
+    std::unordered_map<std::string, std::size_t> local_name_counts;
     std::size_t next_temporary_index = 0;
     std::size_t next_block_index = 0;
     std::string current_block = "entry";
@@ -510,6 +511,16 @@ auto local_value_name(std::string_view name) -> std::string {
     return "%" + std::string(name);
 }
 
+auto next_local_value_name(std::string_view name, FunctionLoweringState& state) -> std::string {
+    auto& count = state.local_name_counts[std::string(name)];
+    auto value_name = local_value_name(name);
+    if (count > 0) {
+        value_name += "." + std::to_string(count);
+    }
+    ++count;
+    return value_name;
+}
+
 auto llvm_parameter_types_for(
     std::vector<syntax::ParameterSyntax> const& parameters
 ) -> std::optional<std::vector<std::string>> {
@@ -551,14 +562,57 @@ auto lower_let_binding(
         return false;
     }
 
-    auto local_name = local_value_name(statement.name);
+    auto local_name = next_local_value_name(statement.name, state);
     output << "  " << local_name << " = add " << lowered->type << " 0, " << lowered->value << "\n";
-    state.immutable_bindings.emplace(statement.name, LoweredExpression {
+    state.immutable_bindings[statement.name] = LoweredExpression {
         .type = lowered->type,
         .value = std::move(local_name),
         .signedness = lowered->signedness,
-    });
+    };
     return true;
+}
+
+auto lower_value_statement_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringContext const& context,
+    FunctionLoweringState& state,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (statements.empty()) {
+        return std::nullopt;
+    }
+
+    for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
+        auto const& statement = statements[index];
+        if (statement.kind != syntax::StatementKind::let_binding ||
+            !lower_let_binding(
+                statement,
+                expected_llvm_type,
+                expected_signedness,
+                context,
+                state,
+                diagnostics,
+                output
+            )) {
+            return std::nullopt;
+        }
+    }
+
+    auto const* expression = return_expression_for(statements.back());
+    if (expression == nullptr) {
+        return std::nullopt;
+    }
+    return lowered_expression(
+        *expression,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        state,
+        output
+    );
 }
 
 auto lower_final_if_statement(
@@ -567,10 +621,11 @@ auto lower_final_if_statement(
     IntegerSignedness expected_signedness,
     LoweringContext const& context,
     FunctionLoweringState& state,
+    diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    if (statement.kind != syntax::StatementKind::if_statement || statement.nested_statements.size() != 1 ||
-        statement.alternate_statements.size() != 1) {
+    if (statement.kind != syntax::StatementKind::if_statement || statement.nested_statements.empty() ||
+        statement.alternate_statements.empty()) {
         return std::nullopt;
     }
 
@@ -586,12 +641,6 @@ auto lower_final_if_statement(
         return std::nullopt;
     }
 
-    auto const* then_expression = return_expression_for(statement.nested_statements.front());
-    auto const* else_expression = return_expression_for(statement.alternate_statements.front());
-    if (then_expression == nullptr || else_expression == nullptr) {
-        return std::nullopt;
-    }
-
     auto block_index = state.next_block_index++;
     auto then_block = "if.then." + std::to_string(block_index);
     auto else_block = "if.else." + std::to_string(block_index);
@@ -600,12 +649,14 @@ auto lower_final_if_statement(
 
     output << then_block << ":\n";
     state.current_block = then_block;
-    auto then_value = lowered_expression(
-        *then_expression,
+    auto outer_bindings = state.immutable_bindings;
+    auto then_value = lower_value_statement_block(
+        statement.nested_statements,
         expected_llvm_type,
         expected_signedness,
         context,
         state,
+        diagnostics,
         output
     );
     if (!then_value.has_value()) {
@@ -616,12 +667,14 @@ auto lower_final_if_statement(
 
     output << else_block << ":\n";
     state.current_block = else_block;
-    auto else_value = lowered_expression(
-        *else_expression,
+    state.immutable_bindings = outer_bindings;
+    auto else_value = lower_value_statement_block(
+        statement.alternate_statements,
         expected_llvm_type,
         expected_signedness,
         context,
         state,
+        diagnostics,
         output
     );
     if (!else_value.has_value() || then_value->type != else_value->type ||
@@ -633,6 +686,7 @@ auto lower_final_if_statement(
 
     output << merge_block << ":\n";
     state.current_block = merge_block;
+    state.immutable_bindings = std::move(outer_bindings);
     auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
     output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
     output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
@@ -702,6 +756,7 @@ void emit_function(
 
     auto state = FunctionLoweringState {};
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+        state.local_name_counts[function.parameters[index].name] = 1;
         state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
             .type = (*llvm_parameter_types)[index],
             .value = local_value_name(function.parameters[index].name),
@@ -736,6 +791,7 @@ void emit_function(
                     return_signedness,
                     context,
                     state,
+                    diagnostics,
                     output
                 );
                 break;

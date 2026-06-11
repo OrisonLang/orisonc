@@ -505,6 +505,47 @@ void test_emit_final_if_expression_returns() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_final_if_branch_local_bindings() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_final_if_branch_locals.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(flag: Bool) -> UInt32\n"
+        "    if flag\n"
+        "        let value = 1 as UInt32\n"
+        "        let result = value + 1 as UInt32\n"
+        "        result\n"
+        "    else\n"
+        "        let value = 3 as UInt32\n"
+        "        return value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %flag) {\n"
+        "entry:\n"
+        "  br i1 %flag, label %if.then.0, label %if.else.0\n"
+        "if.then.0:\n"
+        "  %value = add i32 0, 1\n"
+        "  %tmp0 = add i32 %value, 1\n"
+        "  %result = add i32 0, %tmp0\n"
+        "  br label %if.merge.0\n"
+        "if.else.0:\n"
+        "  %value.1 = add i32 0, 3\n"
+        "  br label %if.merge.0\n"
+        "if.merge.0:\n"
+        "  %tmp1 = phi i32 [%result, %if.then.0], [%value.1, %if.else.0]\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -668,6 +709,7 @@ auto main() -> int {
     test_emit_boolean_expression_returns();
     test_emit_ternary_expression_returns();
     test_emit_final_if_expression_returns();
+    test_emit_final_if_branch_local_bindings();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
