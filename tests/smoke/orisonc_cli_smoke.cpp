@@ -43,6 +43,23 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     return output;
 }
 
+auto read_command_output_with_exit_code(std::string const& command, int expected_exit_code) -> std::string {
+    std::array<char, 256> buffer {};
+    std::string output;
+
+    FILE* pipe = popen(command.c_str(), "r");
+    assert(pipe != nullptr);
+
+    while (std::fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+        output += buffer.data();
+    }
+
+    auto status = pclose(pipe);
+    assert(WIFEXITED(status));
+    assert(WEXITSTATUS(status) == expected_exit_code);
+    return output;
+}
+
 template <typename SourceLines>
 void assert_cli_parse_failure(
     std::filesystem::path const& executable,
@@ -1861,6 +1878,13 @@ int main() {
     auto run_status = std::system(run_command.c_str());
     assert(WIFEXITED(run_status));
     assert(WEXITSTATUS(run_status) == 0);
+
+    auto ffi_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_09_ffi_printf.or";
+    auto ffi_output = read_command_output_with_exit_code(
+        executable.string() + " run " + ffi_demo_path.string(),
+        25
+    );
+    assert(ffi_output == "Hello world from Orison!\n");
 
     assert_cli_parse_failure(
         executable,

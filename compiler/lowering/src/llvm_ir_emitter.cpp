@@ -2,6 +2,7 @@
 #include "orison/lowering/llvm_ir_verifier.hpp"
 
 #include <array>
+#include <iomanip>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -35,10 +36,19 @@ struct FunctionSignature {
     IntegerSignedness return_signedness = IntegerSignedness::not_integer;
     std::vector<std::string> parameter_types;
     std::vector<IntegerSignedness> parameter_signedness;
+    std::string symbol_name;
+};
+
+struct StringConstant {
+    std::string name;
+    std::string bytes;
 };
 
 struct LoweringContext {
     std::unordered_map<std::string, FunctionSignature> functions;
+    std::vector<FunctionSignature> foreign_declarations;
+    std::unordered_map<std::string, std::size_t> string_constant_indices;
+    std::vector<StringConstant> string_constants;
 };
 
 struct FunctionLoweringState {
@@ -54,6 +64,9 @@ auto has_generic_arguments(syntax::TypeSyntax const& type) -> bool {
 }
 
 auto llvm_type_for(syntax::TypeSyntax const& type) -> std::optional<std::string_view> {
+    if (type.name == "Pointer" && type.generic_arguments.size() == 1) {
+        return "ptr";
+    }
     if (has_generic_arguments(type)) {
         return std::nullopt;
     }
@@ -84,6 +97,66 @@ auto llvm_type_for(syntax::TypeSyntax const& type) -> std::optional<std::string_
     }
 
     return std::nullopt;
+}
+
+auto unquoted_text(std::string_view text) -> std::string_view {
+    if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
+        return text.substr(1, text.size() - 2);
+    }
+    return text;
+}
+
+auto decoded_string_literal(std::string_view text) -> std::string {
+    text = unquoted_text(text);
+    auto decoded = std::string {};
+    decoded.reserve(text.size() + 1);
+    for (auto index = std::size_t {0}; index < text.size(); ++index) {
+        if (text[index] != '\\' || index + 1 == text.size()) {
+            decoded.push_back(text[index]);
+            continue;
+        }
+
+        auto escaped = text[++index];
+        switch (escaped) {
+        case 'n':
+            decoded.push_back('\n');
+            break;
+        case 'r':
+            decoded.push_back('\r');
+            break;
+        case 't':
+            decoded.push_back('\t');
+            break;
+        case '0':
+            decoded.push_back('\0');
+            break;
+        case '\\':
+            decoded.push_back('\\');
+            break;
+        case '"':
+            decoded.push_back('"');
+            break;
+        default:
+            decoded.push_back(escaped);
+            break;
+        }
+    }
+    decoded.push_back('\0');
+    return decoded;
+}
+
+auto llvm_string_bytes(std::string_view bytes) -> std::string {
+    auto output = std::ostringstream {};
+    output << std::uppercase << std::hex << std::setfill('0');
+    for (auto byte : bytes) {
+        auto value = static_cast<unsigned char>(byte);
+        if (value >= 0x20 && value <= 0x7e && byte != '"' && byte != '\\') {
+            output << byte;
+        } else {
+            output << '\\' << std::setw(2) << static_cast<unsigned int>(value);
+        }
+    }
+    return output.str();
 }
 
 auto integer_signedness_for(syntax::TypeSyntax const& type) -> IntegerSignedness {
@@ -237,6 +310,18 @@ auto lowered_expression(
     }
     if (auto literal = lowered_boolean_literal(expression, expected_llvm_type)) {
         return literal;
+    }
+    if (expression.kind == syntax::ExpressionKind::string_literal && expected_llvm_type == "ptr") {
+        auto constant_index = context.string_constant_indices.find(expression.text);
+        if (constant_index == context.string_constant_indices.end()) {
+            return std::nullopt;
+        }
+        auto const& constant = context.string_constants[constant_index->second];
+        return LoweredExpression {
+            .type = "ptr",
+            .value = "@" + constant.name,
+            .signedness = IntegerSignedness::not_integer,
+        };
     }
 
     if (expression.kind == syntax::ExpressionKind::name) {
@@ -479,7 +564,7 @@ auto lowered_expression(
 
         auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
         output << "  " << temporary_name << " = call " << function->second.return_type;
-        output << " @" << expression.left->text << "(";
+        output << " @" << function->second.symbol_name << "(";
         for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
             if (index > 0) {
                 output << ", ";
@@ -1127,9 +1212,117 @@ auto collect_lowering_context(syntax::ModuleSyntax const& module) -> LoweringCon
             .return_signedness = integer_signedness_for(function.return_type),
             .parameter_types = std::move(*parameter_types),
             .parameter_signedness = parameter_signedness_for(function.parameters),
+            .symbol_name = function.name,
         });
     }
+
+    for (auto const& foreign_import : module.foreign_imports) {
+        if (unquoted_text(foreign_import.abi) != "c" || !foreign_import.library_name.empty()) {
+            continue;
+        }
+        for (auto const& function : foreign_import.functions) {
+            auto return_type = llvm_type_for(function.return_type);
+            auto parameter_types = llvm_parameter_types_for(function.parameters);
+            if (!return_type.has_value() || !parameter_types.has_value()) {
+                continue;
+            }
+            auto signature = FunctionSignature {
+                .return_type = std::string(*return_type),
+                .return_signedness = integer_signedness_for(function.return_type),
+                .parameter_types = std::move(*parameter_types),
+                .parameter_signedness = parameter_signedness_for(function.parameters),
+                .symbol_name = function.external_name.empty()
+                                   ? function.name
+                                   : std::string(unquoted_text(function.external_name)),
+            };
+            context.functions.emplace(function.name, signature);
+            context.foreign_declarations.push_back(std::move(signature));
+        }
+    }
     return context;
+}
+
+void collect_expression_strings(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext& context
+) {
+    if (expression.kind == syntax::ExpressionKind::string_literal &&
+        !context.string_constant_indices.contains(expression.text)) {
+        auto name = ".str." + std::to_string(context.string_constants.size());
+        context.string_constant_indices.emplace(expression.text, context.string_constants.size());
+        context.string_constants.push_back(StringConstant {
+            .name = std::move(name),
+            .bytes = decoded_string_literal(expression.text),
+        });
+    }
+    if (expression.left) {
+        collect_expression_strings(*expression.left, context);
+    }
+    if (expression.right) {
+        collect_expression_strings(*expression.right, context);
+    }
+    if (expression.alternate) {
+        collect_expression_strings(*expression.alternate, context);
+    }
+    for (auto const& argument : expression.arguments) {
+        collect_expression_strings(argument, context);
+    }
+    for (auto const& statement : expression.nested_statements) {
+        if (statement) {
+            collect_expression_strings(statement->expression, context);
+        }
+    }
+}
+
+void collect_statement_strings(syntax::StatementSyntax const& statement, LoweringContext& context) {
+    collect_expression_strings(statement.expression, context);
+    collect_expression_strings(statement.assignment_target, context);
+    for (auto const& nested : statement.nested_statements) {
+        collect_statement_strings(nested, context);
+    }
+    for (auto const& alternate : statement.alternate_statements) {
+        collect_statement_strings(alternate, context);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        collect_expression_strings(switch_case.pattern, context);
+        for (auto const& nested : switch_case.statements) {
+            if (nested) {
+                collect_statement_strings(*nested, context);
+            }
+        }
+    }
+}
+
+void collect_module_strings(syntax::ModuleSyntax const& module, LoweringContext& context) {
+    for (auto const& function : module.functions) {
+        for (auto const& statement : function.body_statements) {
+            collect_statement_strings(statement, context);
+        }
+    }
+}
+
+void emit_module_prelude(LoweringContext const& context, std::ostringstream& output) {
+    for (auto const& constant : context.string_constants) {
+        output << "@" << constant.name << " = private unnamed_addr constant [";
+        output << constant.bytes.size() << " x i8] c\"" << llvm_string_bytes(constant.bytes) << "\"\n";
+    }
+    if (!context.string_constants.empty()) {
+        output << "\n";
+    }
+
+    for (auto const& declaration : context.foreign_declarations) {
+        output << "declare " << declaration.return_type << " @" << declaration.symbol_name << "(";
+        for (auto index = std::size_t {0}; index < declaration.parameter_types.size(); ++index) {
+            if (index > 0) {
+                output << ", ";
+            }
+            output << declaration.parameter_types[index];
+        }
+        output << ")\n";
+    }
+    if (!context.foreign_declarations.empty()) {
+        output << "\n";
+    }
 }
 
 }  // namespace
@@ -1165,6 +1358,8 @@ auto LlvmIrEmitter::emit(
     output << "\n";
 
     auto context = collect_lowering_context(module);
+    collect_module_strings(module, context);
+    emit_module_prelude(context, output);
     for (auto const& function : module.functions) {
         emit_function(function, context, result.diagnostics, output);
         output << "\n";

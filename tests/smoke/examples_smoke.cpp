@@ -3,6 +3,7 @@
 #include <array>
 #include <cassert>
 #include <filesystem>
+#include <fstream>
 #include <string_view>
 
 auto main() -> int {
@@ -27,8 +28,29 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    auto backend = pipeline.emit_object(examples / "minimal.or");
-    assert(!backend.has_errors());
-    assert(!backend.object_bytes.empty());
+    constexpr auto backend_examples = std::array<std::string_view, 2> {
+        "minimal.or",
+        "tour_09_ffi_printf.or",
+    };
+    for (auto name : backend_examples) {
+        auto backend = pipeline.emit_object(examples / name);
+        assert(!backend.has_errors());
+        assert(!backend.object_bytes.empty());
+    }
+
+    auto ordinary_pointer_path = std::filesystem::temp_directory_path() / "orison_string_pointer_boundary.or";
+    {
+        std::ofstream source(ordinary_pointer_path);
+        source << "package examples.boundary\n";
+        source << "function consume(value: Pointer<Byte>) -> Int32\n";
+        source << "    0 as Int32\n";
+        source << "function main() -> Int32\n";
+        source << "    consume(\"not an ordinary pointer\")\n";
+    }
+    auto ordinary_pointer = pipeline.analyze(ordinary_pointer_path);
+    assert(ordinary_pointer.has_errors());
+    assert(
+        ordinary_pointer.error_text.find("requires a structurally pointer-like expression") != std::string::npos
+    );
     return 0;
 }

@@ -73,7 +73,7 @@ auto LlvmObjectEmitter::emit(std::string_view ir_text) const -> LlvmObjectEmissi
 
     auto options = llvm::TargetOptions {};
     auto target_machine = std::unique_ptr<llvm::TargetMachine>(
-        target->createTargetMachine(triple, "generic", "", options, std::nullopt)
+        target->createTargetMachine(triple, "generic", "", options, llvm::Reloc::PIC_)
     );
     if (!target_machine) {
         result.diagnostics.error(1, "LLVM could not create a target machine for '" + triple.str() + "'");

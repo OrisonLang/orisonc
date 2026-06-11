@@ -70,7 +70,7 @@ The demo exits successfully with status `0`. Use `--build examples/minimal.or -o
 executable. The same file can be inspected with `--emit-llvm` or compiled with `--emit-object`.
 
 Focused examples for the language-tour sections live under `examples/tour_*.or`. See `examples/README.md` for
-the feature and validation matrix, including the frontend-only C `printf` hello-world example.
+the feature and validation matrix, including the runnable C `printf` hello-world example.
 
 ## Repository expectations
 

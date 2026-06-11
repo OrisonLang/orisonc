@@ -864,6 +864,38 @@ void test_emit_multi_uint32_parameter_function_call_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_c_foreign_call_with_string_literal() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_c_foreign_string_call.or";
+    auto result = lower_source(
+        path,
+        "package demo.ffi\n"
+        "\n"
+        "package foreign \"c\"\n"
+        "    function printf(format: Pointer<Byte>) -> Int32\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    printf(\"Hello world from Orison!\\n\")\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.ffi\n"
+        "\n"
+        "@.str.0 = private unnamed_addr constant [26 x i8] c\"Hello world from Orison!\\0A\\00\"\n"
+        "\n"
+        "declare i32 @printf(ptr)\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = call i32 @printf(ptr @.str.0)\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_reject_unsupported_return_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_expression.or";
     auto result = lower_source(
@@ -953,6 +985,7 @@ auto main() -> int {
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
     test_emit_multi_uint32_parameter_function_call_return();
+    test_emit_c_foreign_call_with_string_literal();
     test_reject_unsupported_return_expression();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();

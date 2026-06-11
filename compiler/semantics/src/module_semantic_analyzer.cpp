@@ -51,6 +51,7 @@ struct CallableSignature {
     std::vector<std::string> generic_parameters;
     std::vector<syntax::ParameterSyntax> parameters;
     syntax::TypeSyntax return_type;
+    bool foreign = false;
 };
 
 struct RecordFieldSignature {
@@ -904,7 +905,8 @@ private:
         std::unordered_map<std::string, syntax::TypeSyntax> const& bindings,
         std::unordered_set<std::size_t> const& diagnosed_indices,
         std::string_view call_context,
-        std::size_t parameter_offset = 0
+        std::size_t parameter_offset = 0,
+        bool allow_string_pointer = false
     ) {
         for (std::size_t index = 0; index < arguments.size(); ++index) {
             if (diagnosed_indices.contains(index)) {
@@ -918,6 +920,10 @@ private:
             }
 
             auto parameter_type_name = render_type_name(parameter_type);
+            if (allow_string_pointer && parameter_type_name == "Pointer<Byte>" &&
+                arguments[index].kind == syntax::ExpressionKind::string_literal) {
+                continue;
+            }
             auto saved_expected_pointer_type_name = expected_pointer_type_name_;
             if (is_pointer_type_name(parameter_type_name)) {
                 expected_pointer_type_name_ = parameter_type_name;
@@ -2065,7 +2071,9 @@ private:
                     signature.generic_parameters,
                     bindings,
                     diagnosed_indices,
-                    "function"
+                    "function",
+                    0,
+                    signature.foreign
                 );
                 return;
             }
@@ -3228,7 +3236,20 @@ private:
                 .generic_parameters = function.generic_parameters,
                 .parameters = function.parameters,
                 .return_type = function.return_type,
+                .foreign = false,
             });
+        }
+
+        for (auto const& foreign_import : module_.foreign_imports) {
+            for (auto const& function : foreign_import.functions) {
+                callable_signatures_.push_back(CallableSignature {
+                    .name = function.name,
+                    .generic_parameters = {},
+                    .parameters = function.parameters,
+                    .return_type = function.return_type,
+                    .foreign = true,
+                });
+            }
         }
 
         for (auto const& implementation : module_.implementations) {
@@ -3261,6 +3282,7 @@ private:
                 .generic_parameters = foreign_export.function.generic_parameters,
                 .parameters = foreign_export.function.parameters,
                 .return_type = foreign_export.function.return_type,
+                .foreign = false,
             });
         }
     }

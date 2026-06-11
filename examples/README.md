@@ -14,7 +14,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `tour_06_control_flow.or` | `guard`, `else`, `if`, `switch`, `default`, loops, `break`, `continue`, `defer` | frontend |
 | `tour_07_recursion.or` | recursion, explicit and implicit `return` | frontend |
 | `tour_08_collections.or` | arrays, views, dynamic arrays, indexing | frontend |
-| `tour_09_ffi_printf.or` | C FFI and `printf("Hello world from Orison!\\n")` | frontend |
+| `tour_09_ffi_printf.or` | C FFI and `printf("Hello world from Orison!\\n")` | backend |
 | `tour_10_unsafe_memory.or` | `const`, `unsafe`, pointers, raw and volatile access | frontend |
 | `tour_11_concurrency.or` | `async`, `await`, `task`, `thread` | frontend |
 
@@ -27,6 +27,10 @@ Run the backend demo with:
 build/tools/orisonc/orisonc run examples/minimal.or
 ```
 
-The `printf` example becomes runnable only when string literal storage, `Pointer<Byte>` FFI arguments, and foreign
-symbol declarations are represented in LLVM IR. Until then, it intentionally documents the accepted language surface
-without claiming backend support.
+Run the C FFI demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/tour_09_ffi_printf.or
+```
+
+It prints `Hello world from Orison!`. Its exit status is the value returned by `printf`.
