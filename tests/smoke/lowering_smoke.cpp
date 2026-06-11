@@ -884,16 +884,70 @@ void test_emit_c_foreign_call_with_string_literal() {
         "\n"
         "@.str.0 = private unnamed_addr constant [26 x i8] c\"Hello world from Orison!\\0A\\00\"\n"
         "\n"
-        "declare i32 @printf(ptr)\n"
+        "declare i32 @printf(ptr, ...)\n"
         "\n"
         "define i32 @main() {\n"
         "entry:\n"
-        "  %tmp0 = call i32 @printf(ptr @.str.0)\n"
+        "  %tmp0 = call i32 (ptr, ...) @printf(ptr @.str.0)\n"
         "  ret i32 %tmp0\n"
         "}\n"
         "\n"
     };
     assert(result.ir_text == expected);
+}
+
+void test_emit_fixed_printf_adapter_with_integer_promotion() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_fixed_printf_adapter.or";
+    auto result = lower_source(
+        path,
+        "package demo.ffi\n"
+        "\n"
+        "package foreign \"c\"\n"
+        "    function print_checked(format: Pointer<Byte>, value: Int16) -> Int32 as \"printf\"\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    print_checked(\"Hello world from Orison!\\n\", 42 as Int16)\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.ffi\n"
+        "\n"
+        "@.str.0 = private unnamed_addr constant [26 x i8] c\"Hello world from Orison!\\0A\\00\"\n"
+        "\n"
+        "declare i32 @printf(ptr, ...)\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = sext i16 42 to i32\n"
+        "  %tmp1 = call i32 (ptr, ...) @printf(ptr @.str.0, i32 %tmp0)\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_reject_printf_adapter_with_invalid_fixed_prefix() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_invalid_printf_adapter.or";
+    auto result = lower_source(
+        path,
+        "package demo.ffi\n"
+        "\n"
+        "package foreign \"c\"\n"
+        "    function print_checked(value: Int32) -> Int32 as \"printf\"\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    print_checked(42 as Int32)\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "foreign symbol 'printf' does not match the required fixed C ABI prefix"
+    );
 }
 
 void test_emit_fixed_arity_c_foreign_call() {
@@ -1018,6 +1072,8 @@ auto main() -> int {
     test_emit_single_uint32_parameter_function_call_return();
     test_emit_multi_uint32_parameter_function_call_return();
     test_emit_c_foreign_call_with_string_literal();
+    test_emit_fixed_printf_adapter_with_integer_promotion();
+    test_reject_printf_adapter_with_invalid_fixed_prefix();
     test_emit_fixed_arity_c_foreign_call();
     test_reject_unsupported_return_expression();
     test_reject_malformed_generated_llvm_ir();

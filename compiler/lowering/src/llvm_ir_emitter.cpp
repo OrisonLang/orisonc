@@ -20,6 +20,11 @@ enum class IntegerSignedness {
     unsigned_integer,
 };
 
+enum class ForeignCallAdapter {
+    none,
+    c_variadic,
+};
+
 struct LoweredType {
     std::string type;
     IntegerSignedness signedness = IntegerSignedness::not_integer;
@@ -37,6 +42,8 @@ struct FunctionSignature {
     std::vector<std::string> parameter_types;
     std::vector<IntegerSignedness> parameter_signedness;
     std::string symbol_name;
+    ForeignCallAdapter adapter = ForeignCallAdapter::none;
+    std::size_t fixed_abi_parameter_count = 0;
 };
 
 struct StringConstant {
@@ -58,6 +65,31 @@ struct FunctionLoweringState {
     std::size_t next_block_index = 0;
     std::string current_block = "entry";
 };
+
+struct CForeignAdapterMetadata {
+    std::string_view symbol_name;
+    std::string_view return_type;
+    std::string_view first_parameter_type;
+    std::size_t fixed_parameter_count;
+};
+
+constexpr auto c_foreign_adapters = std::array {
+    CForeignAdapterMetadata {
+        .symbol_name = "printf",
+        .return_type = "i32",
+        .first_parameter_type = "ptr",
+        .fixed_parameter_count = 1,
+    },
+};
+
+auto c_foreign_adapter_for(std::string_view symbol_name) -> CForeignAdapterMetadata const* {
+    for (auto const& adapter : c_foreign_adapters) {
+        if (adapter.symbol_name == symbol_name) {
+            return &adapter;
+        }
+    }
+    return nullptr;
+}
 
 auto has_generic_arguments(syntax::TypeSyntax const& type) -> bool {
     return !type.generic_arguments.empty();
@@ -559,11 +591,38 @@ auto lowered_expression(
             if (!argument.has_value()) {
                 return std::nullopt;
             }
+            if (function->second.adapter == ForeignCallAdapter::c_variadic &&
+                index >= function->second.fixed_abi_parameter_count &&
+                (argument->type == "i1" || argument->type == "i8" || argument->type == "i16")) {
+                auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
+                auto instruction =
+                    argument->signedness == IntegerSignedness::signed_integer ? "sext" : "zext";
+                output << "  " << temporary_name << " = " << instruction << " " << argument->type << " ";
+                output << argument->value << " to i32\n";
+                argument = LoweredExpression {
+                    .type = "i32",
+                    .value = std::move(temporary_name),
+                    .signedness = argument->signedness,
+                };
+            }
             arguments.push_back(std::move(*argument));
         }
 
         auto temporary_name = "%tmp" + std::to_string(state.next_temporary_index++);
         output << "  " << temporary_name << " = call " << function->second.return_type;
+        if (function->second.adapter == ForeignCallAdapter::c_variadic) {
+            output << " (";
+            for (auto index = std::size_t {0}; index < function->second.fixed_abi_parameter_count; ++index) {
+                if (index > 0) {
+                    output << ", ";
+                }
+                output << function->second.parameter_types[index];
+            }
+            if (function->second.fixed_abi_parameter_count > 0) {
+                output << ", ";
+            }
+            output << "...)";
+        }
         output << " @" << function->second.symbol_name << "(";
         for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
             if (index > 0) {
@@ -1196,7 +1255,10 @@ void emit_function(
     output << "}\n";
 }
 
-auto collect_lowering_context(syntax::ModuleSyntax const& module) -> LoweringContext {
+auto collect_lowering_context(
+    syntax::ModuleSyntax const& module,
+    diagnostics::DiagnosticBag& diagnostics
+) -> LoweringContext {
     auto context = LoweringContext {};
     for (auto const& function : module.functions) {
         auto return_type = llvm_type_for(function.return_type);
@@ -1235,6 +1297,20 @@ auto collect_lowering_context(syntax::ModuleSyntax const& module) -> LoweringCon
                                    ? function.name
                                    : std::string(unquoted_text(function.external_name)),
             };
+            if (auto const* adapter = c_foreign_adapter_for(signature.symbol_name)) {
+                if (signature.return_type != adapter->return_type ||
+                    signature.parameter_types.size() < adapter->fixed_parameter_count ||
+                    signature.parameter_types.front() != adapter->first_parameter_type) {
+                    diagnostics.error(
+                        1,
+                        "foreign symbol '" + signature.symbol_name +
+                            "' does not match the required fixed C ABI prefix"
+                    );
+                    continue;
+                }
+                signature.adapter = ForeignCallAdapter::c_variadic;
+                signature.fixed_abi_parameter_count = adapter->fixed_parameter_count;
+            }
             context.functions.emplace(function.name, signature);
             context.foreign_declarations.push_back(std::move(signature));
         }
@@ -1312,11 +1388,20 @@ void emit_module_prelude(LoweringContext const& context, std::ostringstream& out
 
     for (auto const& declaration : context.foreign_declarations) {
         output << "declare " << declaration.return_type << " @" << declaration.symbol_name << "(";
-        for (auto index = std::size_t {0}; index < declaration.parameter_types.size(); ++index) {
+        auto emitted_parameter_count = declaration.adapter == ForeignCallAdapter::c_variadic
+            ? declaration.fixed_abi_parameter_count
+            : declaration.parameter_types.size();
+        for (auto index = std::size_t {0}; index < emitted_parameter_count; ++index) {
             if (index > 0) {
                 output << ", ";
             }
             output << declaration.parameter_types[index];
+        }
+        if (declaration.adapter == ForeignCallAdapter::c_variadic) {
+            if (emitted_parameter_count > 0) {
+                output << ", ";
+            }
+            output << "...";
         }
         output << ")\n";
     }
@@ -1357,7 +1442,10 @@ auto LlvmIrEmitter::emit(
     }
     output << "\n";
 
-    auto context = collect_lowering_context(module);
+    auto context = collect_lowering_context(module, result.diagnostics);
+    if (result.has_errors()) {
+        return result;
+    }
     collect_module_strings(module, context);
     emit_module_prelude(context, output);
     for (auto const& function : module.functions) {

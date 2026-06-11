@@ -29,6 +29,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-11: lowering now uses explicit external-symbol adapter metadata to map fixed Orison `printf` declarations onto LLVM's variadic C ABI form; the adapter validates the fixed `Pointer<Byte>` prefix and applies C integer promotions only to statically declared trailing arguments, with no variadic or spread syntax added.
 - 2026-06-11: explicit C `library "name"` clauses now propagate through the shared pipeline into `--build` and `run` as deduplicated direct linker arguments; host-linker coverage resolves and executes `cos` from `libm`, and the checked-in FFI example includes the tour's math-library declarations.
 - 2026-06-11: C FFI declarations remain finite and fixed-arity at the Orison surface; semantic analysis now diagnoses call arity mismatches, LLVM golden coverage pins a two-parameter `strcmp` call, and `examples/ffi_fixed_parameters.or` compiles, links, and exits successfully without variadic or spread syntax.
 - 2026-06-11: the C FFI hello-world example now lowers and runs; C imports without library clauses emit LLVM declarations, string literals passed to foreign `Pointer<Byte>` parameters become immutable null-terminated globals, host objects use PIC relocation, and the string-to-pointer conversion remains unavailable to ordinary function calls.

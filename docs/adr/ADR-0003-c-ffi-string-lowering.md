@@ -20,6 +20,9 @@ The first runnable foreign-function example passes a string literal to a C funct
 - Orison does not expose C-style variadic parameters, spread syntax, or implicit extra arguments.
 - A backend may adapt a fixed Orison declaration to a target ABI entry point that is variadic, but that adaptation must
   preserve the finite source contract and apply target-specific calling convention rules.
+- Backend adapter metadata is keyed by the external ABI symbol. The initial `printf` adapter requires an `Int32` return
+  and a leading `Pointer<Byte>` parameter, emits the LLVM `ptr, ...` ABI declaration, and applies C integer promotions
+  only to explicitly declared trailing parameters.
 - Explicit foreign library names are deduplicated in source order and passed to the host linker as direct `-lname`
   arguments without shell command construction.
 - Host object generation uses position-independent relocation so global addresses link with default PIE toolchains.
@@ -28,10 +31,11 @@ The first runnable foreign-function example passes a string literal to a C funct
 
 - C string calls require no runtime allocation and have static storage duration.
 - Embedded null bytes are representable, but C callees observe the first null as the string terminator.
-- C variadic source declarations are intentionally excluded. Non-C ABIs, nonstandard library search paths, safe
-  target-specific adapters for variadic C entry points, and general `Text` representation remain future work.
+- C variadic source declarations are intentionally excluded. The initial adapter table is deliberately narrow;
+  non-C ABIs, nonstandard library search paths, additional reviewed adapters, and general `Text` representation remain
+  future work.
 
 ## Follow-up work
 
-- Add explicit backend adapter metadata before mapping fixed Orison signatures to variadic C ABI entry points.
+- Add reviewed adapter entries only when their fixed ABI prefix, promotions, and safety constraints are testable.
 - Define target-aware library naming and search paths for cross-compilation.
