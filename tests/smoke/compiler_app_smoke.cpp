@@ -508,6 +508,23 @@ auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_emit_object(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& output_path
+) -> orison::driver::CompileResult {
+    auto source_path_text = source_path.string();
+    auto output_path_text = output_path.string();
+    std::array<char const*, 5> argv {
+        "orisonc",
+        "--emit-object",
+        source_path_text.c_str(),
+        "-o",
+        output_path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 void assert_wrap_duplicate_parse_failure(orison::driver::CompileResult const& result) {
     assert(result.exit_code == 1);
     assert(result.stdout_text.empty());
@@ -590,6 +607,20 @@ int main() {
     assert(
         emit_failure.stderr_text.find("lowering does not yet support this return expression") != std::string::npos
     );
+
+    auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
+    auto object_result = run_emit_object(app, emit_path, object_path);
+    assert(object_result.exit_code == 0);
+    assert(object_result.stdout_text.empty());
+    assert(object_result.stderr_text.empty());
+    assert(std::filesystem::file_size(object_path) > 0);
+
+    auto missing_directory = std::filesystem::temp_directory_path() / "orison_missing_object_directory";
+    std::filesystem::remove_all(missing_directory);
+    auto object_write_failure = run_emit_object(app, emit_path, missing_directory / "output.o");
+    assert(object_write_failure.exit_code == 1);
+    assert(object_write_failure.stdout_text.empty());
+    assert(object_write_failure.stderr_text == "error: unable to write object file\n");
 
     auto path = std::filesystem::temp_directory_path() / "orison_compiler_app_await_failure.or";
     write_concurrency_fixture(

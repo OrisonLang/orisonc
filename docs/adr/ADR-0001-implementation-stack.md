@@ -27,6 +27,7 @@ analysis, and lowering components.
 - Repository layout should separate reusable compiler libraries from tool entry points and tests.
 - The lowering library links LLVM's core, assembly parser, and support components so emitted textual IR is parsed
   and verified in-process before it is exposed to callers.
+- Host object emission uses LLVM target discovery, a host `TargetMachine`, and the target's object-file pass pipeline.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
@@ -35,4 +36,4 @@ analysis, and lowering components.
 
 - Add the first shared foundation/source/diagnostics libraries.
 - Define the initial frontend pipeline from source text to parsed syntax trees.
-- Extend the linked LLVM boundary from verification into target-machine and object emission support.
+- Add explicit target selection and linker integration after the host-object slice is stable.

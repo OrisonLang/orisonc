@@ -89,6 +89,11 @@ before publishing `ir_text`. Parser or verifier failures become lowering diagnos
 The current development environment supplies LLVM as a monolithic shared library; release builds still require
 static LLVM archives to satisfy the toolchain's static-distribution requirement.
 
+The first native code-generation boundary is now available through
+`orisonc --emit-object <file> -o <output>`. It reparses the verified module, selects the host LLVM target,
+assigns the target triple and data layout, runs the target object-emission pipeline, and writes the resulting
+native object bytes only after code generation succeeds.
+
 Zero-argument same-module calls now use a precomputed function signature map and emit temporaries such as
 `%tmp0 = call i32 @one()`, including when the call result is used as a `+` operand.
 
@@ -112,4 +117,4 @@ The current semantic pass primarily validates and diagnoses. First lowering shou
 1. Extend constant integer lowering across the fixed-width integer types already mapped by the scaffold.
 2. Introduce a checked lowering representation once expression type facts need to survive beyond the current narrow AST walk.
 3. Define choice representation before lowering constructor-pattern `switch` arms.
-4. Add target-machine and object emission support behind a separate CLI option.
+4. Add explicit target selection and linker integration after the host-object path is stable.

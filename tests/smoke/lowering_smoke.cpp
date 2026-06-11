@@ -1,4 +1,5 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
+#include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
@@ -917,6 +918,19 @@ void test_reject_invalid_generated_llvm_module() {
     );
 }
 
+void test_emit_native_object_file() {
+    orison::lowering::LlvmObjectEmitter emitter;
+    auto result = emitter.emit(
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  ret i32 42\n"
+        "}\n"
+    );
+
+    assert(!result.has_errors());
+    assert(!result.object_bytes.empty());
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -942,5 +956,6 @@ auto main() -> int {
     test_reject_unsupported_return_expression();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
+    test_emit_native_object_file();
     return 0;
 }

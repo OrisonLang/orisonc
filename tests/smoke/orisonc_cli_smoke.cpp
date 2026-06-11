@@ -1841,6 +1841,12 @@ int main() {
     assert(emit_output.find("define i32 @main()") != std::string::npos);
     assert(emit_output.find("ret i32 42") != std::string::npos);
 
+    auto object_path = std::filesystem::temp_directory_path() / "orison_cli_emit_object.o";
+    auto object_command =
+        executable.string() + " --emit-object " + emit_path.string() + " -o " + object_path.string();
+    assert(read_command_output(object_command).empty());
+    assert(std::filesystem::file_size(object_path) > 0);
+
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",
