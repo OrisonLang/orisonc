@@ -39,6 +39,24 @@ auto lower_let_statement(
     std::ostringstream& output
 ) -> bool;
 
+auto lower_var_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view fallback_llvm_type,
+    IntegerSignedness fallback_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool;
+
+auto lower_assignment_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool;
+
 auto lower_value_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
     std::string_view expected_llvm_type,

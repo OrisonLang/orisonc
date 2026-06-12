@@ -133,13 +133,16 @@ auto inferred_expression_type(
 ) -> std::optional<LoweredType> {
     if (expression.kind == syntax::ExpressionKind::name) {
         auto binding = state.immutable_bindings.find(expression.text);
-        if (binding == state.immutable_bindings.end()) {
-            return std::nullopt;
+        if (binding != state.immutable_bindings.end()) {
+            return LoweredType {
+                .type = binding->second.type,
+                .signedness = binding->second.signedness,
+            };
         }
-        return LoweredType {
-            .type = binding->second.type,
-            .signedness = binding->second.signedness,
-        };
+        auto mutable_binding = state.mutable_bindings.find(expression.text);
+        return mutable_binding == state.mutable_bindings.end()
+            ? std::nullopt
+            : std::optional<LoweredType> {mutable_binding->second.type};
     }
 
     if (expression.kind == syntax::ExpressionKind::cast) {
@@ -210,8 +213,36 @@ auto lowered_expression(
     if (expression.kind == syntax::ExpressionKind::name) {
         auto binding = state.immutable_bindings.find(expression.text);
         if (binding == state.immutable_bindings.end()) {
-            record_failure(failures, ExpressionLoweringFailureReason::unknown_name, expression.text);
-            return std::nullopt;
+            auto mutable_binding = state.mutable_bindings.find(expression.text);
+            if (mutable_binding == state.mutable_bindings.end()) {
+                record_failure(failures, ExpressionLoweringFailureReason::unknown_name, expression.text);
+                return std::nullopt;
+            }
+            if (mutable_binding->second.type.type != expected_llvm_type) {
+                record_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::type_mismatch,
+                    expression.text + " has LLVM type " + mutable_binding->second.type.type +
+                        ", expected " + std::string(expected_llvm_type)
+                );
+                return std::nullopt;
+            }
+            if (mutable_binding->second.type.signedness != expected_signedness) {
+                record_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::signedness_mismatch,
+                    expression.text
+                );
+                return std::nullopt;
+            }
+            auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+            output << "  " << temporary_name << " = load " << mutable_binding->second.type.type
+                   << ", ptr " << mutable_binding->second.storage << "\n";
+            return LoweredExpression {
+                .type = mutable_binding->second.type.type,
+                .value = std::move(temporary_name),
+                .signedness = mutable_binding->second.type.signedness,
+            };
         }
         if (binding->second.type != expected_llvm_type) {
             record_failure(

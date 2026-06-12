@@ -43,6 +43,8 @@ analysis, and lowering components.
   function statement/control-flow emission consumes that API instead of owning expression implementation details.
 - Value-bearing statement extraction and immutable `let` emission compile in a dedicated statement component;
   function and control-flow emission share it without assigning ordinary statement policy to CFG lowering.
+- Straight-line scalar mutable locals use explicit LLVM stack storage; statement lowering owns `var` allocation,
+  initialization, and name-target assignment, while expression lowering emits visible loads from typed mutable bindings.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable bindings are isolated by a dedicated RAII scope that snapshots only the visible binding map,

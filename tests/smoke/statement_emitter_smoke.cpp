@@ -1,3 +1,4 @@
+#include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -38,7 +39,12 @@ int main() {
                   "\n"
                   "function increment(input: UInt32) -> UInt32\n"
                   "    let value = input + 1 as UInt32\n"
-                  "    value\n";
+                  "    value\n"
+                  "\n"
+                  "function mutate(input: UInt32) -> UInt32\n"
+                  "    var total: UInt32 = input\n"
+                  "    total = total + 1 as UInt32\n"
+                  "    total\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -85,6 +91,75 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(output.str() == "  %tmp0 = add i32 %input, 1\n  %value = add i32 0, %tmp0\n");
     assert(state.immutable_bindings.at("value").value == "%value");
+
+    auto mutable_state = orison::lowering::FunctionLoweringState {};
+    mutable_state.local_name_counts["input"] = 1;
+    mutable_state.immutable_bindings.emplace("input", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%input",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto mutable_failures = orison::lowering::LoweringFailures {};
+    auto mutable_session = orison::lowering::FunctionLoweringSession {
+        .state = mutable_state,
+        .failures = mutable_failures,
+    };
+    auto const& mutable_statements = parse_result.module.functions[1].body_statements;
+    output = {};
+    assert(orison::lowering::lower_var_statement(
+        mutable_statements[0],
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        mutable_session,
+        diagnostics,
+        output
+    ));
+    assert(orison::lowering::lower_assignment_statement(
+        mutable_statements[1],
+        context,
+        mutable_session,
+        diagnostics,
+        output
+    ));
+    auto mutable_value = orison::lowering::lower_expression(
+        mutable_statements[2].expression,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        mutable_session,
+        output
+    );
+    assert(mutable_value.has_value());
+    assert(mutable_value->value == "%tmp2");
+    assert(
+        output.str() ==
+        "  %total.addr = alloca i32\n"
+        "  store i32 %input, ptr %total.addr\n"
+        "  %tmp0 = load i32, ptr %total.addr\n"
+        "  %tmp1 = add i32 %tmp0, 1\n"
+        "  store i32 %tmp1, ptr %total.addr\n"
+        "  %tmp2 = load i32, ptr %total.addr\n"
+    );
+
+    auto immutable_assignment = orison::syntax::StatementSyntax {};
+    immutable_assignment.kind = orison::syntax::StatementKind::assignment_statement;
+    immutable_assignment.assignment_target.kind = orison::syntax::ExpressionKind::name;
+    immutable_assignment.assignment_target.text = "input";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_assignment_statement(
+        immutable_assignment,
+        context,
+        mutable_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering assignment target is not a mutable local"
+    );
+    assert(output.str().empty());
 
     auto block_state = orison::lowering::FunctionLoweringState {};
     block_state.local_name_counts["input"] = 1;

@@ -117,6 +117,32 @@ void emit_function_body(
             }
             continue;
         }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::var_binding) {
+            if (!lower_var_statement(
+                    statement,
+                    signature.return_type,
+                    signature.return_signedness,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                )) {
+                return;
+            }
+            continue;
+        }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::assignment_statement) {
+            if (!lower_assignment_statement(
+                    statement,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                )) {
+                return;
+            }
+            continue;
+        }
 
         if (is_last_statement) {
             if (statement.kind == syntax::StatementKind::if_statement ||
@@ -153,7 +179,10 @@ void emit_function_body(
     }
 
     if (!lowered_final_statement.has_value() && expression == nullptr) {
-        diagnostics.error(function.line, "lowering requires leading let bindings followed by a return or final expression");
+        diagnostics.error(
+            function.line,
+            "lowering requires supported leading statements followed by a return or final expression"
+        );
         return;
     }
 

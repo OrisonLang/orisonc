@@ -15,7 +15,12 @@ int main() {
         output << "package demo.function_emitter\n"
                   "\n"
                   "function add(left: UInt32, right: UInt32) -> UInt32\n"
-                  "    left + right\n";
+                  "    left + right\n"
+                  "\n"
+                  "function increment_mutable(input: UInt32) -> UInt32\n"
+                  "    var value: UInt32 = input\n"
+                  "    value = value + 1 as UInt32\n"
+                  "    value\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -42,6 +47,28 @@ int main() {
         "entry:\n"
         "  %tmp0 = add i32 %left, %right\n"
         "  ret i32 %tmp0\n"
+        "}\n"
+    );
+
+    auto mutable_ir = orison::lowering::emit_function(
+        parse_result.module.functions[1],
+        context.functions.at("increment_mutable"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        mutable_ir ==
+        "define i32 @increment_mutable(i32 %input) {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 %input, ptr %value.addr\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = add i32 %tmp0, 1\n"
+        "  store i32 %tmp1, ptr %value.addr\n"
+        "  %tmp2 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp2\n"
         "}\n"
     );
 

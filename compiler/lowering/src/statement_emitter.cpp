@@ -123,6 +123,104 @@ auto lower_let_statement(
     return true;
 }
 
+auto lower_var_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view fallback_llvm_type,
+    IntegerSignedness fallback_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    auto type = LoweredType {
+        .type = std::string(fallback_llvm_type),
+        .signedness = fallback_signedness,
+    };
+    if (!statement.annotated_type.name.empty()) {
+        auto annotated_type = llvm_type_for(statement.annotated_type);
+        if (!annotated_type.has_value() || *annotated_type == "void") {
+            diagnostics.error(statement.line, "lowering does not yet support this var type");
+            return false;
+        }
+        type = {
+            .type = std::string(*annotated_type),
+            .signedness = integer_signedness_for(statement.annotated_type),
+        };
+    } else if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
+        type = std::move(*inferred);
+    }
+
+    auto lowered = lower_expression(
+        statement.expression,
+        type.type,
+        type.signedness,
+        context,
+        session,
+        output
+    );
+    if (!lowered.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this var initializer" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return false;
+    }
+
+    auto storage = next_llvm_local_value_name(
+        statement.name + ".addr",
+        session.state.local_name_counts
+    );
+    output << "  " << storage << " = alloca " << type.type << "\n";
+    output << "  store " << type.type << " " << lowered->value << ", ptr " << storage << "\n";
+    session.state.mutable_bindings[statement.name] = MutableBinding {
+        .type = std::move(type),
+        .storage = std::move(storage),
+    };
+    return true;
+}
+
+auto lower_assignment_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (statement.assignment_target.kind != syntax::ExpressionKind::name) {
+        diagnostics.error(statement.line, "lowering only supports assignment to mutable local names");
+        return false;
+    }
+    auto binding = session.state.mutable_bindings.find(statement.assignment_target.text);
+    if (binding == session.state.mutable_bindings.end()) {
+        diagnostics.error(statement.line, "lowering assignment target is not a mutable local");
+        return false;
+    }
+
+    auto lowered = lower_expression(
+        statement.expression,
+        binding->second.type.type,
+        binding->second.type.signedness,
+        context,
+        session,
+        output
+    );
+    if (!lowered.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this assignment value" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return false;
+    }
+
+    output << "  store " << binding->second.type.type << " " << lowered->value
+           << ", ptr " << binding->second.storage << "\n";
+    return true;
+}
+
 auto lower_value_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
     std::string_view expected_llvm_type,
