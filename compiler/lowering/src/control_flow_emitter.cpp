@@ -1,6 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/immutable_binding_scope.hpp"
+#include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -8,6 +9,7 @@
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
+#include <array>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -133,9 +135,9 @@ auto lower_final_if_statement(
     auto then_block = llvm_block_name("if.then", block_index);
     auto else_block = llvm_block_name("if.else", block_index);
     auto merge_block = llvm_block_name("if.merge", block_index);
-    output << "  br i1 " << condition->value << ", label %" << then_block << ", label %" << else_block << "\n";
+    emit_llvm_conditional_branch(output, condition->value, then_block, else_block);
 
-    output << then_block << ":\n";
+    emit_llvm_block_label(output, then_block);
     state.current_block = then_block;
     auto binding_scope = ImmutableBindingScope(state);
     auto then_value = lower_value_statement_block(
@@ -157,9 +159,9 @@ auto lower_final_if_statement(
         return std::nullopt;
     }
     auto then_exit_block = state.current_block;
-    output << "  br label %" << merge_block << "\n";
+    emit_llvm_branch(output, merge_block);
 
-    output << else_block << ":\n";
+    emit_llvm_block_label(output, else_block);
     state.current_block = else_block;
     binding_scope.reset();
     auto else_value = lower_value_statement_block(
@@ -190,13 +192,22 @@ auto lower_final_if_statement(
         return std::nullopt;
     }
     auto else_exit_block = state.current_block;
-    output << "  br label %" << merge_block << "\n";
+    emit_llvm_branch(output, merge_block);
 
-    output << merge_block << ":\n";
+    emit_llvm_block_label(output, merge_block);
     state.current_block = merge_block;
     auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-    output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
-    output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
+    auto incoming = std::array {
+        LlvmPhiIncoming {
+            .value = then_value->value,
+            .block = then_exit_block,
+        },
+        LlvmPhiIncoming {
+            .value = else_value->value,
+            .block = else_exit_block,
+        },
+    };
+    emit_llvm_phi(output, temporary_name, then_value->type, incoming);
     return LoweredExpression {
         .type = then_value->type,
         .value = std::move(temporary_name),
@@ -318,20 +329,23 @@ auto lower_final_switch_statement(
 
     auto const& default_block =
         default_case_index.has_value() ? lowered_cases[*default_case_index].block : fallback_block;
-    output << "  switch " << subject->type << " " << subject->value << ", label %" << default_block << " [\n";
+    auto switch_targets = std::vector<LlvmSwitchTarget> {};
+    switch_targets.reserve(lowered_cases.size());
     for (auto const& lowered_case : lowered_cases) {
         if (lowered_case.pattern.has_value()) {
-            output << "    " << subject->type << " " << lowered_case.pattern->value;
-            output << ", label %" << lowered_case.block << "\n";
+            switch_targets.push_back(LlvmSwitchTarget {
+                .value = lowered_case.pattern->value,
+                .block = lowered_case.block,
+            });
         }
     }
-    output << "  ]\n";
+    emit_llvm_switch(output, subject->type, subject->value, default_block, switch_targets);
 
     auto binding_scope = ImmutableBindingScope(state);
     auto incoming_values = std::vector<std::pair<LoweredExpression, std::string>> {};
     incoming_values.reserve(lowered_cases.size());
     for (auto const& lowered_case : lowered_cases) {
-        output << lowered_case.block << ":\n";
+        emit_llvm_block_label(output, lowered_case.block);
         state.current_block = lowered_case.block;
         binding_scope.reset();
         auto case_value = lower_value_statement_block(
@@ -353,13 +367,13 @@ auto lower_final_switch_statement(
             return std::nullopt;
         }
         auto case_exit_block = state.current_block;
-        output << "  br label %" << merge_block << "\n";
+        emit_llvm_branch(output, merge_block);
         incoming_values.emplace_back(std::move(*case_value), std::move(case_exit_block));
     }
 
     if (!default_case_index.has_value()) {
-        output << fallback_block << ":\n";
-        output << "  unreachable\n";
+        emit_llvm_block_label(output, fallback_block);
+        emit_llvm_unreachable(output);
     }
 
     if (incoming_values.empty()) {
@@ -383,17 +397,18 @@ auto lower_final_switch_statement(
         }
     }
 
-    output << merge_block << ":\n";
+    emit_llvm_block_label(output, merge_block);
     state.current_block = merge_block;
     auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-    output << "  " << temporary_name << " = phi " << result_type.type << " ";
-    for (auto index = std::size_t {0}; index < incoming_values.size(); ++index) {
-        if (index > 0) {
-            output << ", ";
-        }
-        output << "[" << incoming_values[index].first.value << ", %" << incoming_values[index].second << "]";
+    auto phi_incoming = std::vector<LlvmPhiIncoming> {};
+    phi_incoming.reserve(incoming_values.size());
+    for (auto const& [incoming_value, incoming_block] : incoming_values) {
+        phi_incoming.push_back(LlvmPhiIncoming {
+            .value = incoming_value.value,
+            .block = incoming_block,
+        });
     }
-    output << "\n";
+    emit_llvm_phi(output, temporary_name, result_type.type, phi_incoming);
     return LoweredExpression {
         .type = result_type.type,
         .value = std::move(temporary_name),

@@ -5,6 +5,7 @@ add_library(orison_lowering STATIC
     src/function_emitter.cpp
     src/function_signature.cpp
     src/immutable_binding_scope.cpp
+    src/llvm_cfg.cpp
     src/llvm_ir_emitter.cpp
     src/llvm_object_emitter.cpp
     src/llvm_ir_verifier.cpp

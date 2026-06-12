@@ -1,9 +1,11 @@
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
+#include <array>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -303,9 +305,9 @@ auto lowered_expression(
         auto then_block = llvm_block_name("ternary.then", block_index);
         auto else_block = llvm_block_name("ternary.else", block_index);
         auto merge_block = llvm_block_name("ternary.merge", block_index);
-        output << "  br i1 " << condition->value << ", label %" << then_block << ", label %" << else_block << "\n";
+        emit_llvm_conditional_branch(output, condition->value, then_block, else_block);
 
-        output << then_block << ":\n";
+        emit_llvm_block_label(output, then_block);
         state.current_block = then_block;
         auto then_value = lowered_expression(
             *expression.right,
@@ -319,9 +321,9 @@ auto lowered_expression(
             return std::nullopt;
         }
         auto then_exit_block = state.current_block;
-        output << "  br label %" << merge_block << "\n";
+        emit_llvm_branch(output, merge_block);
 
-        output << else_block << ":\n";
+        emit_llvm_block_label(output, else_block);
         state.current_block = else_block;
         auto else_value = lowered_expression(
             *expression.alternate,
@@ -344,13 +346,22 @@ auto lowered_expression(
             return std::nullopt;
         }
         auto else_exit_block = state.current_block;
-        output << "  br label %" << merge_block << "\n";
+        emit_llvm_branch(output, merge_block);
 
-        output << merge_block << ":\n";
+        emit_llvm_block_label(output, merge_block);
         state.current_block = merge_block;
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
-        output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
+        auto incoming = std::array {
+            LlvmPhiIncoming {
+                .value = then_value->value,
+                .block = then_exit_block,
+            },
+            LlvmPhiIncoming {
+                .value = else_value->value,
+                .block = else_exit_block,
+            },
+        };
+        emit_llvm_phi(output, temporary_name, then_value->type, incoming);
         return LoweredExpression {
             .type = then_value->type,
             .value = std::move(temporary_name),
