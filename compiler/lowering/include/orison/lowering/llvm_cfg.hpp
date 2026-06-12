@@ -1,5 +1,7 @@
 #pragma once
 
+#include "orison/lowering/merge_plan.hpp"
+
 #include <ostream>
 #include <span>
 #include <string_view>
@@ -7,11 +9,6 @@
 namespace orison::lowering {
 
 struct LlvmSwitchTarget {
-    std::string_view value;
-    std::string_view block;
-};
-
-struct LlvmPhiIncoming {
     std::string_view value;
     std::string_view block;
 };
@@ -41,7 +38,7 @@ void emit_llvm_phi(
     std::ostream& output,
     std::string_view result,
     std::string_view type,
-    std::span<LlvmPhiIncoming const> incoming
+    std::span<BranchMergeIncoming const> incoming
 );
 
 }  // namespace orison::lowering

@@ -42,7 +42,7 @@ void emit_llvm_phi(
     std::ostream& output,
     std::string_view result,
     std::string_view type,
-    std::span<LlvmPhiIncoming const> incoming
+    std::span<BranchMergeIncoming const> incoming
 ) {
     output << "  " << result << " = phi " << type << " ";
     for (auto index = std::size_t {0}; index < incoming.size(); ++index) {

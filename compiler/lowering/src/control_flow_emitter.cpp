@@ -5,6 +5,7 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/merge_plan.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/switch_plan.hpp"
@@ -183,8 +184,19 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
-    if (then_value->type != else_value->type ||
-        then_value->signedness != else_value->signedness) {
+    auto else_exit_block = state.current_block;
+    auto merge_inputs = std::array {
+        BranchMergeInput {
+            .value = &*then_value,
+            .block = then_exit_block,
+        },
+        BranchMergeInput {
+            .value = &*else_value,
+            .block = else_exit_block,
+        },
+    };
+    auto merge = plan_branch_merge(merge_inputs);
+    if (!merge.plan.has_value()) {
         record_control_flow_failure(
             failures,
             ControlFlowLoweringFailureReason::if_branch_type_mismatch,
@@ -192,27 +204,21 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
-    auto else_exit_block = state.current_block;
     emit_llvm_branch(output, merge_block);
 
     emit_llvm_block_label(output, merge_block);
     state.current_block = merge_block;
     auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-    auto incoming = std::array {
-        LlvmPhiIncoming {
-            .value = then_value->value,
-            .block = then_exit_block,
-        },
-        LlvmPhiIncoming {
-            .value = else_value->value,
-            .block = else_exit_block,
-        },
-    };
-    emit_llvm_phi(output, temporary_name, then_value->type, incoming);
+    emit_llvm_phi(
+        output,
+        temporary_name,
+        merge.plan->result_type.type,
+        merge.plan->incoming
+    );
     return LoweredExpression {
-        .type = then_value->type,
+        .type = merge.plan->result_type.type,
         .value = std::move(temporary_name),
-        .signedness = then_value->signedness,
+        .signedness = merge.plan->result_type.signedness,
     };
 }
 
@@ -283,8 +289,10 @@ auto lower_final_switch_statement(
     emit_llvm_switch(output, subject->type, subject->value, plan.default_block, switch_targets);
 
     auto binding_scope = ImmutableBindingScope(state);
-    auto incoming_values = std::vector<std::pair<LoweredExpression, std::string>> {};
+    auto incoming_values = std::vector<LoweredExpression> {};
+    auto incoming_blocks = std::vector<std::string> {};
     incoming_values.reserve(plan.cases.size());
+    incoming_blocks.reserve(plan.cases.size());
     for (auto const& planned_case : plan.cases) {
         emit_llvm_block_label(output, planned_case.block);
         state.current_block = planned_case.block;
@@ -309,7 +317,8 @@ auto lower_final_switch_statement(
         }
         auto case_exit_block = state.current_block;
         emit_llvm_branch(output, plan.merge_block);
-        incoming_values.emplace_back(std::move(*case_value), std::move(case_exit_block));
+        incoming_values.push_back(std::move(*case_value));
+        incoming_blocks.push_back(std::move(case_exit_block));
     }
 
     if (!plan.has_default) {
@@ -325,35 +334,40 @@ auto lower_final_switch_statement(
         );
         return std::nullopt;
     }
-    auto const& result_type = incoming_values.front().first;
-    for (auto const& [incoming_value, incoming_block] : incoming_values) {
-        static_cast<void>(incoming_block);
-        if (incoming_value.type != result_type.type || incoming_value.signedness != result_type.signedness) {
-            record_control_flow_failure(
-                failures,
-                ControlFlowLoweringFailureReason::switch_case_type_mismatch,
-                result_type.type + " versus " + incoming_value.type
-            );
-            return std::nullopt;
-        }
+    auto merge_inputs = std::vector<BranchMergeInput> {};
+    merge_inputs.reserve(incoming_values.size());
+    for (auto index = std::size_t {0}; index < incoming_values.size(); ++index) {
+        merge_inputs.push_back(BranchMergeInput {
+            .value = &incoming_values[index],
+            .block = incoming_blocks[index],
+        });
+    }
+    auto merge = plan_branch_merge(merge_inputs);
+    if (!merge.plan.has_value()) {
+        auto detail = merge.mismatch.has_value()
+            ? merge.mismatch->expected.type + " versus " + merge.mismatch->actual.type
+            : std::string {};
+        record_control_flow_failure(
+            failures,
+            ControlFlowLoweringFailureReason::switch_case_type_mismatch,
+            std::move(detail)
+        );
+        return std::nullopt;
     }
 
     emit_llvm_block_label(output, plan.merge_block);
     state.current_block = plan.merge_block;
     auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-    auto phi_incoming = std::vector<LlvmPhiIncoming> {};
-    phi_incoming.reserve(incoming_values.size());
-    for (auto const& [incoming_value, incoming_block] : incoming_values) {
-        phi_incoming.push_back(LlvmPhiIncoming {
-            .value = incoming_value.value,
-            .block = incoming_block,
-        });
-    }
-    emit_llvm_phi(output, temporary_name, result_type.type, phi_incoming);
+    emit_llvm_phi(
+        output,
+        temporary_name,
+        merge.plan->result_type.type,
+        merge.plan->incoming
+    );
     return LoweredExpression {
-        .type = result_type.type,
+        .type = merge.plan->result_type.type,
         .value = std::move(temporary_name),
-        .signedness = result_type.signedness,
+        .signedness = merge.plan->result_type.signedness,
     };
 }
 

@@ -31,11 +31,11 @@ int main() {
     orison::lowering::emit_llvm_unreachable(output);
 
     auto incoming = std::array {
-        orison::lowering::LlvmPhiIncoming {
+        orison::lowering::BranchMergeIncoming {
             .value = "%left",
             .block = "if.then.0",
         },
-        orison::lowering::LlvmPhiIncoming {
+        orison::lowering::BranchMergeIncoming {
             .value = "%right",
             .block = "if.else.0",
         },

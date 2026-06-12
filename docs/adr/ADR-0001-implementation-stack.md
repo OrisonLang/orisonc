@@ -55,6 +55,8 @@ analysis, and lowering components.
   stateless utility; expression and statement CFG emitters retain semantic decisions and predecessor/state tracking.
 - Final scalar switch case/default validation, pattern lowering, and deterministic block planning live in a dedicated
   component that returns a non-owning plan; control-flow emission executes the plan and owns branch value merging.
+- Ternary, final `if`, and final `switch` result compatibility plus phi-input assembly live in a neutral merge planner;
+  emitters retain caller-specific failure categories, merge-block state transitions, temporary naming, and text emission.
 - Ordinary function definitions retain their shared lowered signatures in the module context even when a type is
   unsupported; function emission consumes that model directly for declarations, bindings, signedness, and diagnostics.
 - Expression lowering records a structured first failure reason and detail in an explicit failure model; callers retain

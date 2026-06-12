@@ -2,6 +2,7 @@
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/merge_plan.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -336,8 +337,19 @@ auto lowered_expression(
         if (!else_value.has_value()) {
             return std::nullopt;
         }
-        if (then_value->type != else_value->type ||
-            then_value->signedness != else_value->signedness) {
+        auto else_exit_block = state.current_block;
+        auto merge_inputs = std::array {
+            BranchMergeInput {
+                .value = &*then_value,
+                .block = then_exit_block,
+            },
+            BranchMergeInput {
+                .value = &*else_value,
+                .block = else_exit_block,
+            },
+        };
+        auto merge = plan_branch_merge(merge_inputs);
+        if (!merge.plan.has_value()) {
             record_failure(
                 failures,
                 ExpressionLoweringFailureReason::branch_type_mismatch,
@@ -345,27 +357,21 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
-        auto else_exit_block = state.current_block;
         emit_llvm_branch(output, merge_block);
 
         emit_llvm_block_label(output, merge_block);
         state.current_block = merge_block;
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        auto incoming = std::array {
-            LlvmPhiIncoming {
-                .value = then_value->value,
-                .block = then_exit_block,
-            },
-            LlvmPhiIncoming {
-                .value = else_value->value,
-                .block = else_exit_block,
-            },
-        };
-        emit_llvm_phi(output, temporary_name, then_value->type, incoming);
+        emit_llvm_phi(
+            output,
+            temporary_name,
+            merge.plan->result_type.type,
+            merge.plan->incoming
+        );
         return LoweredExpression {
-            .type = then_value->type,
+            .type = merge.plan->result_type.type,
             .value = std::move(temporary_name),
-            .signedness = then_value->signedness,
+            .signedness = merge.plan->result_type.signedness,
         };
     }
 
