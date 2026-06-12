@@ -44,7 +44,14 @@ int main() {
                   "function mutate(input: UInt32) -> UInt32\n"
                   "    var total: UInt32 = input\n"
                   "    total = total + 1 as UInt32\n"
-                  "    total\n";
+                  "    total\n"
+                  "\n"
+                  "function observe(input: UInt32) -> UInt32\n"
+                  "    input\n"
+                  "\n"
+                  "function call_observe(input: UInt32) -> UInt32\n"
+                  "    observe(input)\n"
+                  "    input\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -142,6 +149,31 @@ int main() {
         "  %tmp2 = load i32, ptr %total.addr\n"
     );
 
+    auto call_state = orison::lowering::FunctionLoweringState {};
+    call_state.local_name_counts["input"] = 1;
+    call_state.immutable_bindings.emplace("input", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%input",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto call_failures = orison::lowering::LoweringFailures {};
+    auto call_session = orison::lowering::FunctionLoweringSession {
+        .state = call_state,
+        .failures = call_failures,
+    };
+    auto const& call_statement = parse_result.module.functions[3].body_statements[0];
+    diagnostics = {};
+    output = {};
+    assert(orison::lowering::lower_call_statement(
+        call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(!diagnostics.has_errors());
+    assert(output.str() == "  %tmp0 = call i32 @observe(i32 %input)\n");
+
     auto immutable_assignment = orison::syntax::StatementSyntax {};
     immutable_assignment.kind = orison::syntax::StatementKind::assignment_statement;
     immutable_assignment.assignment_target.kind = orison::syntax::ExpressionKind::name;
@@ -235,6 +267,25 @@ int main() {
     assert(
         diagnostics.entries().front().message ==
         "lowering does not yet support this let initializer: unknown lowered name: missing"
+    );
+
+    auto non_call_statement = orison::syntax::StatementSyntax {};
+    non_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    non_call_statement.line = 5;
+    non_call_statement.expression.kind = orison::syntax::ExpressionKind::name;
+    non_call_statement.expression.text = "input";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        non_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering call statement requires a call expression"
     );
 
     std::filesystem::remove(path);

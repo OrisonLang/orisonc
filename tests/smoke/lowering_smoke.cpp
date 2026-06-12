@@ -158,6 +158,58 @@ void test_emit_mutable_uint32_while_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_while_call_statement() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_while_call.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> UInt32\n"
+        "    value\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    while value < 2 as UInt32\n"
+        "        observe(value)\n"
+        "        value = value + 1 as UInt32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @observe(i32 %value) {\n"
+        "entry:\n"
+        "  ret i32 %value\n"
+        "}\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.condition.0:\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = icmp ult i32 %tmp0, 2\n"
+        "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
+        "while.body.0:\n"
+        "  %tmp2 = load i32, ptr %value.addr\n"
+        "  %tmp3 = call i32 @observe(i32 %tmp2)\n"
+        "  %tmp4 = load i32, ptr %value.addr\n"
+        "  %tmp5 = add i32 %tmp4, 1\n"
+        "  store i32 %tmp5, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.exit.0:\n"
+        "  %tmp6 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp6\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_reject_unsupported_while_body_statement() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_while_body.or";
     auto result = lower_source(
@@ -176,7 +228,7 @@ void test_reject_unsupported_while_body_statement() {
     assert(result.diagnostics.entries().size() == 1);
     assert(
         result.diagnostics.entries().front().message ==
-        "lowering while body only supports mutable-local assignments"
+        "lowering while body only supports mutable-local assignments and call statements"
     );
 }
 
@@ -1393,6 +1445,7 @@ auto main() -> int {
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();
     test_emit_mutable_uint32_while_return();
+    test_emit_while_call_statement();
     test_reject_unsupported_while_body_statement();
     test_emit_uint32_add_return();
     test_emit_uint32_arithmetic_return();

@@ -26,10 +26,15 @@ auto lower_while_statement(
         return false;
     }
     for (auto const& body_statement : statement.nested_statements) {
-        if (body_statement.kind != syntax::StatementKind::assignment_statement) {
+        auto const is_assignment =
+            body_statement.kind == syntax::StatementKind::assignment_statement;
+        auto const is_call =
+            body_statement.kind == syntax::StatementKind::expression_statement &&
+            body_statement.expression.kind == syntax::ExpressionKind::call;
+        if (!is_assignment && !is_call) {
             diagnostics.error(
                 body_statement.line,
-                "lowering while body only supports mutable-local assignments"
+                "lowering while body only supports mutable-local assignments and call statements"
             );
             return false;
         }
@@ -66,7 +71,10 @@ auto lower_while_statement(
     emit_llvm_block_label(output, body_block);
     session.state.current_block = body_block;
     for (auto const& body_statement : statement.nested_statements) {
-        if (!lower_assignment_statement(body_statement, context, session, diagnostics, output)) {
+        auto lowered = body_statement.kind == syntax::StatementKind::assignment_statement
+            ? lower_assignment_statement(body_statement, context, session, diagnostics, output)
+            : lower_call_statement(body_statement, context, session, diagnostics, output);
+        if (!lowered) {
             return false;
         }
     }

@@ -258,6 +258,44 @@ auto lower_assignment_statement(
     return true;
 }
 
+auto lower_call_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (statement.kind != syntax::StatementKind::expression_statement ||
+        statement.expression.kind != syntax::ExpressionKind::call) {
+        diagnostics.error(statement.line, "lowering call statement requires a call expression");
+        return false;
+    }
+
+    auto type = infer_expression_type(statement.expression, context, session.state);
+    if (!type.has_value() || type->type.empty() || type->type == "void") {
+        diagnostics.error(statement.line, "lowering does not yet support this call statement result type");
+        return false;
+    }
+    auto lowered = lower_expression(
+        statement.expression,
+        type->type,
+        type->signedness,
+        context,
+        session,
+        output
+    );
+    if (!lowered.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this call statement" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return false;
+    }
+    return true;
+}
+
 auto lower_value_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
     std::string_view expected_llvm_type,
