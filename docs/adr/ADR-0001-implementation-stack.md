@@ -43,6 +43,8 @@ analysis, and lowering components.
   function statement/control-flow emission consumes that API instead of owning expression implementation details.
 - Value-bearing statement extraction and immutable `let` emission compile in a dedicated statement component;
   function and control-flow emission share it without assigning ordinary statement policy to CFG lowering.
+- Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
+  statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Final value-producing `if`/`switch` CFG emission, nested value blocks, and branch-local immutable bindings compile
   in a dedicated control-flow component; function emission owns signatures, parameters, and final return assembly.
 - LLVM local-value, temporary, and indexed block naming policy lives in a shared stateless utility; emitters retain

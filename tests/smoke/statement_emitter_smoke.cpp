@@ -10,6 +10,25 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <memory>
+#include <optional>
+#include <vector>
+
+namespace {
+
+auto reject_control_flow(
+    orison::syntax::StatementSyntax const&,
+    std::string_view,
+    orison::lowering::IntegerSignedness,
+    orison::lowering::LoweringEmissionContext const&,
+    orison::lowering::FunctionLoweringSession&,
+    orison::diagnostics::DiagnosticBag&,
+    std::ostringstream&
+) -> std::optional<orison::lowering::LoweredExpression> {
+    return std::nullopt;
+}
+
+}  // namespace
 
 int main() {
     auto path = std::filesystem::temp_directory_path() / "orison_statement_emitter_smoke.or";
@@ -66,6 +85,56 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(output.str() == "  %tmp0 = add i32 %input, 1\n  %value = add i32 0, %tmp0\n");
     assert(state.immutable_bindings.at("value").value == "%value");
+
+    auto block_state = orison::lowering::FunctionLoweringState {};
+    block_state.local_name_counts["input"] = 1;
+    block_state.immutable_bindings.emplace("input", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%input",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto block_failures = orison::lowering::LoweringFailures {};
+    auto block_session = orison::lowering::FunctionLoweringSession {
+        .state = block_state,
+        .failures = block_failures,
+    };
+    diagnostics = {};
+    output = {};
+    auto block_value = orison::lowering::lower_value_statement_block(
+        statements,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        block_session,
+        diagnostics,
+        output,
+        reject_control_flow
+    );
+    assert(block_value.has_value());
+    assert(block_value->value == "%value");
+    assert(output.str() == "  %tmp0 = add i32 %input, 1\n  %value = add i32 0, %tmp0\n");
+
+    auto pointer_owned_statements =
+        std::vector<std::unique_ptr<orison::syntax::StatementSyntax>> {};
+    auto pointer_owned_value = std::make_unique<orison::syntax::StatementSyntax>();
+    pointer_owned_value->kind = orison::syntax::StatementKind::expression_statement;
+    pointer_owned_value->expression.kind = orison::syntax::ExpressionKind::name;
+    pointer_owned_value->expression.text = "input";
+    pointer_owned_statements.push_back(std::move(pointer_owned_value));
+    output = {};
+    auto pointer_block_value = orison::lowering::lower_value_statement_block(
+        pointer_owned_statements,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        block_session,
+        diagnostics,
+        output,
+        reject_control_flow
+    );
+    assert(pointer_block_value.has_value());
+    assert(pointer_block_value->value == "%input");
+    assert(output.str().empty());
 
     auto return_statement = orison::syntax::StatementSyntax {};
     return_statement.kind = orison::syntax::StatementKind::return_statement;

@@ -56,8 +56,8 @@ auto lower_final_switch_statement(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
 
-auto lower_value_statement_block(
-    std::vector<syntax::StatementSyntax> const& statements,
+auto lower_nested_final_control_flow(
+    syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
@@ -65,30 +65,9 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    if (statements.empty()) {
-        return std::nullopt;
-    }
-
-    for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
-        auto const& statement = statements[index];
-        if (statement.kind != syntax::StatementKind::let_binding ||
-            !lower_let_statement(
-                statement,
-                expected_llvm_type,
-                expected_signedness,
-                context,
-                session,
-                diagnostics,
-                output
-            )) {
-            return std::nullopt;
-        }
-    }
-
-    auto const& final_statement = statements.back();
-    if (final_statement.kind == syntax::StatementKind::if_statement) {
+    if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_final_if_statement(
-            final_statement,
+            statement,
             expected_llvm_type,
             expected_signedness,
             context,
@@ -97,9 +76,9 @@ auto lower_value_statement_block(
             output
         );
     }
-    if (final_statement.kind == syntax::StatementKind::switch_statement) {
+    if (statement.kind == syntax::StatementKind::switch_statement) {
         return lower_final_switch_statement(
-            final_statement,
+            statement,
             expected_llvm_type,
             expected_signedness,
             context,
@@ -108,19 +87,7 @@ auto lower_value_statement_block(
             output
         );
     }
-
-    auto const* expression = value_expression_for(final_statement);
-    if (expression == nullptr) {
-        return std::nullopt;
-    }
-    return lower_expression(
-        *expression,
-        expected_llvm_type,
-        expected_signedness,
-        context,
-        session,
-        output
-    );
+    return std::nullopt;
 }
 
 auto lower_final_if_statement(
@@ -177,7 +144,8 @@ auto lower_final_if_statement(
         context,
         session,
         diagnostics,
-        output
+        output,
+        lower_nested_final_control_flow
     );
     if (!then_value.has_value()) {
         record_control_flow_failure(
@@ -200,7 +168,8 @@ auto lower_final_if_statement(
         context,
         session,
         diagnostics,
-        output
+        output,
+        lower_nested_final_control_flow
     );
     if (!else_value.has_value()) {
         record_control_flow_failure(
@@ -233,76 +202,6 @@ auto lower_final_if_statement(
         .value = std::move(temporary_name),
         .signedness = then_value->signedness,
     };
-}
-
-auto lower_switch_case_statement_block(
-    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
-    std::string_view expected_llvm_type,
-    IntegerSignedness expected_signedness,
-    EmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
-) -> std::optional<LoweredExpression> {
-    if (statements.empty()) {
-        return std::nullopt;
-    }
-
-    for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
-        auto const* statement = statements[index].get();
-        if (statement == nullptr || statement->kind != syntax::StatementKind::let_binding ||
-            !lower_let_statement(
-                *statement,
-                expected_llvm_type,
-                expected_signedness,
-                context,
-                session,
-                diagnostics,
-                output
-            )) {
-            return std::nullopt;
-        }
-    }
-
-    auto const* final_statement = statements.back().get();
-    if (final_statement == nullptr) {
-        return std::nullopt;
-    }
-    if (final_statement->kind == syntax::StatementKind::if_statement) {
-        return lower_final_if_statement(
-            *final_statement,
-            expected_llvm_type,
-            expected_signedness,
-            context,
-            session,
-            diagnostics,
-            output
-        );
-    }
-    if (final_statement->kind == syntax::StatementKind::switch_statement) {
-        return lower_final_switch_statement(
-            *final_statement,
-            expected_llvm_type,
-            expected_signedness,
-            context,
-            session,
-            diagnostics,
-            output
-        );
-    }
-
-    auto const* expression = value_expression_for(*final_statement);
-    if (expression == nullptr) {
-        return std::nullopt;
-    }
-    return lower_expression(
-        *expression,
-        expected_llvm_type,
-        expected_signedness,
-        context,
-        session,
-        output
-    );
 }
 
 auto lowered_switch_pattern(
@@ -435,14 +334,15 @@ auto lower_final_switch_statement(
         output << lowered_case.block << ":\n";
         state.current_block = lowered_case.block;
         state.immutable_bindings = outer_bindings;
-        auto case_value = lower_switch_case_statement_block(
+        auto case_value = lower_value_statement_block(
             lowered_case.syntax->statements,
             expected_llvm_type,
             expected_signedness,
             context,
             session,
             diagnostics,
-            output
+            output,
+            lower_nested_final_control_flow
         );
         if (!case_value.has_value()) {
             record_control_flow_failure(
