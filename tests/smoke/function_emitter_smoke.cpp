@@ -20,6 +20,12 @@ int main() {
                   "function increment_mutable(input: UInt32) -> UInt32\n"
                   "    var value: UInt32 = input\n"
                   "    value = value + 1 as UInt32\n"
+                  "    value\n"
+                  "\n"
+                  "function count_to_three() -> UInt32\n"
+                  "    var value = 0 as UInt32\n"
+                  "    while value < 3 as UInt32\n"
+                  "        value = value + 1 as UInt32\n"
                   "    value\n";
     }
 
@@ -69,6 +75,36 @@ int main() {
         "  store i32 %tmp1, ptr %value.addr\n"
         "  %tmp2 = load i32, ptr %value.addr\n"
         "  ret i32 %tmp2\n"
+        "}\n"
+    );
+
+    auto while_ir = orison::lowering::emit_function(
+        parse_result.module.functions[2],
+        context.functions.at("count_to_three"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        while_ir ==
+        "define i32 @count_to_three() {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.condition.0:\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = icmp ult i32 %tmp0, 3\n"
+        "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
+        "while.body.0:\n"
+        "  %tmp2 = load i32, ptr %value.addr\n"
+        "  %tmp3 = add i32 %tmp2, 1\n"
+        "  store i32 %tmp3, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.exit.0:\n"
+        "  %tmp4 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp4\n"
         "}\n"
     );
 

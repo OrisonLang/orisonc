@@ -45,6 +45,9 @@ analysis, and lowering components.
   function and control-flow emission share it without assigning ordinary statement policy to CFG lowering.
 - Straight-line scalar mutable locals use explicit LLVM stack storage; statement lowering owns `var` allocation,
   initialization, and name-target assignment, while expression lowering emits visible loads from typed mutable bindings.
+- Initial `while` lowering owns deterministic condition/body/exit CFG emission in a dedicated loop component and
+  supports assignment-only bodies over visible scalar mutable locals; declarations and loop-control statements remain
+  explicit follow-up work.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable and mutable binding visibility is isolated by a dedicated RAII scope that snapshots both maps,

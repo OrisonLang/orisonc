@@ -22,6 +22,7 @@ add_library(orison_lowering STATIC
     src/switch_emitter.cpp
     src/switch_plan.cpp
     src/type_lowering.cpp
+    src/while_emitter.cpp
 )
 
 target_include_directories(orison_lowering

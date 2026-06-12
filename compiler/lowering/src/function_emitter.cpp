@@ -8,6 +8,7 @@
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
+#include "orison/lowering/while_emitter.hpp"
 
 #include <optional>
 #include <sstream>
@@ -139,6 +140,12 @@ void emit_function_body(
                     diagnostics,
                     output
                 )) {
+                return;
+            }
+            continue;
+        }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::while_statement) {
+            if (!lower_while_statement(statement, context, session, diagnostics, output)) {
                 return;
             }
             continue;

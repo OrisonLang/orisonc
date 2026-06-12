@@ -1,0 +1,20 @@
+#pragma once
+
+#include "orison/diagnostics/diagnostic_bag.hpp"
+#include "orison/lowering/function_lowering_session.hpp"
+#include "orison/lowering/lowering_emission_context.hpp"
+#include "orison/syntax/module_parser.hpp"
+
+#include <sstream>
+
+namespace orison::lowering {
+
+auto lower_while_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool;
+
+}  // namespace orison::lowering
