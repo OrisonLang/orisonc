@@ -7,6 +7,7 @@
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
+#include "orison/lowering/switch_plan.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <array>
@@ -215,30 +216,6 @@ auto lower_final_if_statement(
     };
 }
 
-auto lowered_switch_pattern(
-    syntax::ExpressionSyntax const& pattern,
-    LoweredType const& subject_type
-) -> std::optional<LoweredExpression> {
-    if (auto literal = lower_integer_literal(pattern, subject_type.type, subject_type.signedness)) {
-        return literal;
-    }
-    if (auto literal = lower_boolean_literal(pattern, subject_type.type)) {
-        return literal;
-    }
-    if (pattern.kind != syntax::ExpressionKind::cast || pattern.left == nullptr) {
-        return std::nullopt;
-    }
-
-    syntax::TypeSyntax target_type {
-        .name = pattern.text,
-    };
-    auto cast_type = llvm_type_for(target_type);
-    if (!cast_type.has_value() || *cast_type != subject_type.type) {
-        return std::nullopt;
-    }
-    return lower_integer_literal(*pattern.left, subject_type.type, subject_type.signedness);
-}
-
 auto lower_final_switch_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -285,71 +262,35 @@ auto lower_final_switch_statement(
         return std::nullopt;
     }
 
-    struct LoweredSwitchCase {
-        syntax::SwitchCaseSyntax const* syntax = nullptr;
-        std::string block;
-        std::optional<LoweredExpression> pattern;
-    };
-
     auto block_index = next_llvm_block_index(state.next_block_index);
-    auto merge_block = llvm_block_name("switch.merge", block_index);
-    auto fallback_block = llvm_block_name("switch.unreachable", block_index);
-    auto lowered_cases = std::vector<LoweredSwitchCase> {};
-    lowered_cases.reserve(statement.switch_cases.size());
-    auto default_case_index = std::optional<std::size_t> {};
-    auto value_case_index = std::size_t {0};
-
-    for (auto const& switch_case : statement.switch_cases) {
-        auto lowered_case = LoweredSwitchCase {
-            .syntax = &switch_case,
-        };
-        if (switch_case.is_default) {
-            if (default_case_index.has_value()) {
-                record_control_flow_failure(
-                    failures,
-                    ControlFlowLoweringFailureReason::duplicate_switch_default
-                );
-                return std::nullopt;
-            }
-            lowered_case.block = llvm_block_name("switch.default", block_index);
-            default_case_index = lowered_cases.size();
-        } else {
-            lowered_case.block = llvm_block_name("switch.case", block_index, value_case_index++);
-            lowered_case.pattern = lowered_switch_pattern(switch_case.pattern, *subject_type);
-            if (!lowered_case.pattern.has_value()) {
-                record_control_flow_failure(
-                    failures,
-                    ControlFlowLoweringFailureReason::unsupported_switch_pattern
-                );
-                return std::nullopt;
-            }
-        }
-        lowered_cases.push_back(std::move(lowered_case));
+    auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
+    if (!planning.plan.has_value()) {
+        record_control_flow_failure(failures, planning.failure);
+        return std::nullopt;
     }
+    auto const& plan = *planning.plan;
 
-    auto const& default_block =
-        default_case_index.has_value() ? lowered_cases[*default_case_index].block : fallback_block;
     auto switch_targets = std::vector<LlvmSwitchTarget> {};
-    switch_targets.reserve(lowered_cases.size());
-    for (auto const& lowered_case : lowered_cases) {
-        if (lowered_case.pattern.has_value()) {
+    switch_targets.reserve(plan.cases.size());
+    for (auto const& planned_case : plan.cases) {
+        if (planned_case.pattern.has_value()) {
             switch_targets.push_back(LlvmSwitchTarget {
-                .value = lowered_case.pattern->value,
-                .block = lowered_case.block,
+                .value = planned_case.pattern->value,
+                .block = planned_case.block,
             });
         }
     }
-    emit_llvm_switch(output, subject->type, subject->value, default_block, switch_targets);
+    emit_llvm_switch(output, subject->type, subject->value, plan.default_block, switch_targets);
 
     auto binding_scope = ImmutableBindingScope(state);
     auto incoming_values = std::vector<std::pair<LoweredExpression, std::string>> {};
-    incoming_values.reserve(lowered_cases.size());
-    for (auto const& lowered_case : lowered_cases) {
-        emit_llvm_block_label(output, lowered_case.block);
-        state.current_block = lowered_case.block;
+    incoming_values.reserve(plan.cases.size());
+    for (auto const& planned_case : plan.cases) {
+        emit_llvm_block_label(output, planned_case.block);
+        state.current_block = planned_case.block;
         binding_scope.reset();
         auto case_value = lower_value_statement_block(
-            lowered_case.syntax->statements,
+            planned_case.syntax->statements,
             expected_llvm_type,
             expected_signedness,
             context,
@@ -367,12 +308,12 @@ auto lower_final_switch_statement(
             return std::nullopt;
         }
         auto case_exit_block = state.current_block;
-        emit_llvm_branch(output, merge_block);
+        emit_llvm_branch(output, plan.merge_block);
         incoming_values.emplace_back(std::move(*case_value), std::move(case_exit_block));
     }
 
-    if (!default_case_index.has_value()) {
-        emit_llvm_block_label(output, fallback_block);
+    if (!plan.has_default) {
+        emit_llvm_block_label(output, plan.fallback_block);
         emit_llvm_unreachable(output);
     }
 
@@ -397,8 +338,8 @@ auto lower_final_switch_statement(
         }
     }
 
-    emit_llvm_block_label(output, merge_block);
-    state.current_block = merge_block;
+    emit_llvm_block_label(output, plan.merge_block);
+    state.current_block = plan.merge_block;
     auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
     auto phi_incoming = std::vector<LlvmPhiIncoming> {};
     phi_incoming.reserve(incoming_values.size());

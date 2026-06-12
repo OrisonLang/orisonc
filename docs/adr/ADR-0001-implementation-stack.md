@@ -53,6 +53,8 @@ analysis, and lowering components.
   explicit counters/maps and request deterministic names without duplicating formatting or increment behavior.
 - LLVM CFG text formatting for labels, branches, switches, unreachable blocks, and phi nodes lives in a shared
   stateless utility; expression and statement CFG emitters retain semantic decisions and predecessor/state tracking.
+- Final scalar switch case/default validation, pattern lowering, and deterministic block planning live in a dedicated
+  component that returns a non-owning plan; control-flow emission executes the plan and owns branch value merging.
 - Ordinary function definitions retain their shared lowered signatures in the module context even when a type is
   unsupported; function emission consumes that model directly for declarations, bindings, signedness, and diagnostics.
 - Expression lowering records a structured first failure reason and detail in an explicit failure model; callers retain
