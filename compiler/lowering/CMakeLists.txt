@@ -11,6 +11,7 @@ add_library(orison_lowering STATIC
     src/lowering_context.cpp
     src/lowering_diagnostics.cpp
     src/module_prelude.cpp
+    src/statement_emitter.cpp
     src/string_constants.cpp
     src/type_lowering.cpp
 )

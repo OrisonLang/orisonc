@@ -41,6 +41,8 @@ analysis, and lowering components.
   emitter owning the model.
 - Recursive expression lowering and scalar expression-type/literal utilities compile in their own translation unit;
   function statement/control-flow emission consumes that API instead of owning expression implementation details.
+- Value-bearing statement extraction and immutable `let` emission compile in a dedicated statement component;
+  function and control-flow emission share it without assigning ordinary statement policy to CFG lowering.
 - Final value-producing `if`/`switch` CFG emission, nested value blocks, and branch-local immutable bindings compile
   in a dedicated control-flow component; function emission owns signatures, parameters, and final return assembly.
 - LLVM local-value, temporary, and indexed block naming policy lives in a shared stateless utility; emitters retain

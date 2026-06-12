@@ -6,6 +6,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
 
 #include <optional>
