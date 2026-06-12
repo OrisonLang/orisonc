@@ -1,5 +1,6 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/immutable_binding_scope.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -136,7 +137,7 @@ auto lower_final_if_statement(
 
     output << then_block << ":\n";
     state.current_block = then_block;
-    auto outer_bindings = state.immutable_bindings;
+    auto binding_scope = ImmutableBindingScope(state);
     auto then_value = lower_value_statement_block(
         statement.nested_statements,
         expected_llvm_type,
@@ -160,7 +161,7 @@ auto lower_final_if_statement(
 
     output << else_block << ":\n";
     state.current_block = else_block;
-    state.immutable_bindings = outer_bindings;
+    binding_scope.reset();
     auto else_value = lower_value_statement_block(
         statement.alternate_statements,
         expected_llvm_type,
@@ -193,7 +194,6 @@ auto lower_final_if_statement(
 
     output << merge_block << ":\n";
     state.current_block = merge_block;
-    state.immutable_bindings = std::move(outer_bindings);
     auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
     output << "  " << temporary_name << " = phi " << then_value->type << " [" << then_value->value;
     output << ", %" << then_exit_block << "], [" << else_value->value << ", %" << else_exit_block << "]\n";
@@ -327,13 +327,13 @@ auto lower_final_switch_statement(
     }
     output << "  ]\n";
 
-    auto outer_bindings = state.immutable_bindings;
+    auto binding_scope = ImmutableBindingScope(state);
     auto incoming_values = std::vector<std::pair<LoweredExpression, std::string>> {};
     incoming_values.reserve(lowered_cases.size());
     for (auto const& lowered_case : lowered_cases) {
         output << lowered_case.block << ":\n";
         state.current_block = lowered_case.block;
-        state.immutable_bindings = outer_bindings;
+        binding_scope.reset();
         auto case_value = lower_value_statement_block(
             lowered_case.syntax->statements,
             expected_llvm_type,
@@ -385,7 +385,6 @@ auto lower_final_switch_statement(
 
     output << merge_block << ":\n";
     state.current_block = merge_block;
-    state.immutable_bindings = std::move(outer_bindings);
     auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
     output << "  " << temporary_name << " = phi " << result_type.type << " ";
     for (auto index = std::size_t {0}; index < incoming_values.size(); ++index) {

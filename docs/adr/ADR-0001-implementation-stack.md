@@ -45,6 +45,8 @@ analysis, and lowering components.
   function and control-flow emission share it without assigning ordinary statement policy to CFG lowering.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
+- Branch-local immutable bindings are isolated by a dedicated RAII scope that snapshots only the visible binding map,
+  resets it between sibling paths, and restores it on every success or failure exit while SSA/CFG counters remain global.
 - Final value-producing `if`/`switch` CFG emission, nested value blocks, and branch-local immutable bindings compile
   in a dedicated control-flow component; function emission owns signatures, parameters, and final return assembly.
 - LLVM local-value, temporary, and indexed block naming policy lives in a shared stateless utility; emitters retain

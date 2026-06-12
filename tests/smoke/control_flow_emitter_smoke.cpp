@@ -76,6 +76,8 @@ int main() {
     assert(lowered.has_value());
     assert(lowered->value == "%tmp2");
     assert(state.current_block == "if.merge.0");
+    assert(state.immutable_bindings.size() == 3);
+    assert(!state.immutable_bindings.contains("value"));
     assert(
         output.str() ==
         "  br i1 %flag, label %if.then.0, label %if.else.0\n"
