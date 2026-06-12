@@ -47,8 +47,8 @@ analysis, and lowering components.
   initialization, and name-target assignment, while expression lowering emits visible loads from typed mutable bindings.
 - Initial `while` lowering owns deterministic condition/body/exit CFG emission in a dedicated loop component and
   supports mutable-local assignments plus discarded scalar-result call statements; declarations, `Unit` calls, member
-  calls, and nested control flow remain explicit follow-up work. Direct terminal `break` and `continue` resolve through
-  a function-local nearest-loop target stack.
+  calls, and declarations remain explicit follow-up work. Direct and conditionally nested `break`/`continue` resolve
+  through a function-local nearest-loop target stack, and statement-level `if` emits merges only for live branches.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable and mutable binding visibility is isolated by a dedicated RAII scope that snapshots both maps,

@@ -270,6 +270,111 @@ void test_emit_terminal_while_continue() {
     assert(result.ir_text.find("  br label %while.condition.0\nwhile.exit.0:\n") != std::string::npos);
 }
 
+void test_emit_conditional_while_continue_and_break() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_conditional_while_control.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    while value < 5 as UInt32\n"
+        "        value = value + 1 as UInt32\n"
+        "        if value == 2 as UInt32\n"
+        "            continue\n"
+        "        if value == 4 as UInt32\n"
+        "            break\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.condition.0:\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = icmp ult i32 %tmp0, 5\n"
+        "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
+        "while.body.0:\n"
+        "  %tmp2 = load i32, ptr %value.addr\n"
+        "  %tmp3 = add i32 %tmp2, 1\n"
+        "  store i32 %tmp3, ptr %value.addr\n"
+        "  %tmp4 = load i32, ptr %value.addr\n"
+        "  %tmp5 = icmp eq i32 %tmp4, 2\n"
+        "  br i1 %tmp5, label %if.then.1, label %if.merge.1\n"
+        "if.then.1:\n"
+        "  br label %while.condition.0\n"
+        "if.merge.1:\n"
+        "  %tmp6 = load i32, ptr %value.addr\n"
+        "  %tmp7 = icmp eq i32 %tmp6, 4\n"
+        "  br i1 %tmp7, label %if.then.2, label %if.merge.2\n"
+        "if.then.2:\n"
+        "  br label %while.exit.0\n"
+        "if.merge.2:\n"
+        "  br label %while.condition.0\n"
+        "while.exit.0:\n"
+        "  %tmp8 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp8\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_emit_terminating_while_if_else() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_terminating_while_if_else.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    while value < 1 as UInt32\n"
+        "        if flag\n"
+        "            break\n"
+        "        else\n"
+        "            continue\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("if.merge.1:") == std::string::npos);
+    assert(result.ir_text.find("if.then.1:\n  br label %while.exit.0\n") != std::string::npos);
+    assert(
+        result.ir_text.find("if.else.1:\n  br label %while.condition.0\n") != std::string::npos
+    );
+}
+
+void test_emit_nested_while_if_control() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_nested_while_if.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main(first: Bool, second: Bool) -> UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    while value < 1 as UInt32\n"
+        "        if first\n"
+        "            if second\n"
+        "                break\n"
+        "        value = value + 1 as UInt32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("if.then.1:\n  br i1 %second, label %if.then.2") != std::string::npos);
+    assert(result.ir_text.find("if.then.2:\n  br label %while.exit.0\n") != std::string::npos);
+    assert(result.ir_text.find("if.merge.2:\n  br label %if.merge.1\n") != std::string::npos);
+}
+
 void test_reject_nonterminal_while_loop_control() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_nonterminal_while_control.or";
@@ -289,7 +394,7 @@ void test_reject_nonterminal_while_loop_control() {
     assert(result.diagnostics.entries().size() == 1);
     assert(
         result.diagnostics.entries().front().message ==
-        "lowering requires break or continue to end the while body"
+        "lowering does not support statements after terminating loop control"
     );
 }
 
@@ -312,7 +417,7 @@ void test_reject_unsupported_while_body_statement() {
     assert(
         result.diagnostics.entries().front().message ==
         "lowering while body only supports mutable-local assignments, call statements, "
-        "and terminal loop control"
+        "loop control, and nested if statements"
     );
 }
 
@@ -1532,6 +1637,9 @@ auto main() -> int {
     test_emit_while_call_statement();
     test_emit_terminal_while_break();
     test_emit_terminal_while_continue();
+    test_emit_conditional_while_continue_and_break();
+    test_emit_terminating_while_if_else();
+    test_emit_nested_while_if_control();
     test_reject_nonterminal_while_loop_control();
     test_reject_unsupported_while_body_statement();
     test_emit_uint32_add_return();
