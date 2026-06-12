@@ -1,13 +1,11 @@
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
-#include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
-#include "orison/lowering/merge_plan.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
-#include <array>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -307,55 +305,56 @@ auto lowered_expression(
             ConditionalPlanKind::ternary,
             next_llvm_block_index(state.next_block_index)
         );
-        emit_llvm_conditional_branch(
-            output,
-            condition->value,
-            plan.then_block,
-            plan.else_block
-        );
-
-        emit_llvm_block_label(output, plan.then_block);
-        state.current_block = plan.then_block;
-        auto then_value = lowered_expression(
-            *expression.right,
-            expected_llvm_type,
-            expected_signedness,
-            context,
-            session,
-            output
-        );
-        if (!then_value.has_value()) {
-            return std::nullopt;
-        }
-        auto then_exit_block = state.current_block;
-        emit_llvm_branch(output, plan.merge_block);
-
-        emit_llvm_block_label(output, plan.else_block);
-        state.current_block = plan.else_block;
-        auto else_value = lowered_expression(
-            *expression.alternate,
-            expected_llvm_type,
-            expected_signedness,
-            context,
-            session,
-            output
-        );
-        if (!else_value.has_value()) {
-            return std::nullopt;
-        }
-        auto else_exit_block = state.current_block;
-        auto merge_inputs = std::array {
-            BranchMergeInput {
-                .value = &*then_value,
-                .block = then_exit_block,
-            },
-            BranchMergeInput {
-                .value = &*else_value,
-                .block = else_exit_block,
-            },
+        struct ArmContext {
+            syntax::ExpressionSyntax const& then_expression;
+            syntax::ExpressionSyntax const& else_expression;
+            std::string_view expected_llvm_type;
+            IntegerSignedness expected_signedness;
+            EmissionContext const& context;
+            FunctionLoweringSession& session;
+            std::ostringstream& output;
         };
-        auto merge = plan_branch_merge(merge_inputs);
-        if (!merge.plan.has_value()) {
+        auto arm_context = ArmContext {
+            .then_expression = *expression.right,
+            .else_expression = *expression.alternate,
+            .expected_llvm_type = expected_llvm_type,
+            .expected_signedness = expected_signedness,
+            .context = context,
+            .session = session,
+            .output = output,
+        };
+        auto result = emit_conditional_value(
+            plan,
+            condition->value,
+            state,
+            output,
+            ConditionalLoweringCallbacks {
+                .context = &arm_context,
+                .lower_then = [](void* opaque) {
+                    auto& arm = *static_cast<ArmContext*>(opaque);
+                    return lowered_expression(
+                        arm.then_expression,
+                        arm.expected_llvm_type,
+                        arm.expected_signedness,
+                        arm.context,
+                        arm.session,
+                        arm.output
+                    );
+                },
+                .lower_else = [](void* opaque) {
+                    auto& arm = *static_cast<ArmContext*>(opaque);
+                    return lowered_expression(
+                        arm.else_expression,
+                        arm.expected_llvm_type,
+                        arm.expected_signedness,
+                        arm.context,
+                        arm.session,
+                        arm.output
+                    );
+                },
+            }
+        );
+        if (result.failure == ConditionalEmissionFailure::branch_mismatch) {
             record_failure(
                 failures,
                 ExpressionLoweringFailureReason::branch_type_mismatch,
@@ -363,22 +362,7 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
-        emit_llvm_branch(output, plan.merge_block);
-
-        emit_llvm_block_label(output, plan.merge_block);
-        state.current_block = plan.merge_block;
-        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        emit_llvm_phi(
-            output,
-            temporary_name,
-            merge.plan->result_type.type,
-            merge.plan->incoming
-        );
-        return LoweredExpression {
-            .type = merge.plan->result_type.type,
-            .value = std::move(temporary_name),
-            .signedness = merge.plan->result_type.signedness,
-        };
+        return result.value;
     }
 
     if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&

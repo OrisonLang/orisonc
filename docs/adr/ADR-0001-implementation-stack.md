@@ -54,7 +54,10 @@ analysis, and lowering components.
 - LLVM CFG text formatting for labels, branches, switches, unreachable blocks, and phi nodes lives in a shared
   stateless utility; expression and statement CFG emitters retain semantic decisions and predecessor/state tracking.
 - Ternary and final `if` block naming lives in a neutral conditional planner; expression and control-flow emitters
-  allocate the shared block index and retain branch-body lowering, predecessor tracking, merging, and text emission.
+  allocate the shared block index and provide caller-specific arm lowering.
+- Ternary and final `if` conditional CFG execution lives in a shared emitter over non-owning callbacks; it owns branch
+  labels, predecessor tracking, merge planning, phi emission, and current-block transitions while callers retain arm
+  lowering, binding-scope policy, and diagnostic translation.
 - Final scalar switch case/default validation, pattern lowering, and deterministic block planning live in a dedicated
   component that returns a non-owning plan; control-flow emission executes the plan and owns branch value merging.
 - Ternary, final `if`, and final `switch` result compatibility plus phi-input assembly live in a neutral merge planner;

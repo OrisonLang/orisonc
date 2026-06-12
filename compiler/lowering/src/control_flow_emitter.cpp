@@ -1,4 +1,5 @@
 #include "orison/lowering/control_flow_emitter.hpp"
+#include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/immutable_binding_scope.hpp"
@@ -12,7 +13,6 @@
 #include "orison/lowering/switch_plan.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
-#include <array>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -138,22 +138,66 @@ auto lower_final_if_statement(
         ConditionalPlanKind::if_statement,
         next_llvm_block_index(state.next_block_index)
     );
-    emit_llvm_conditional_branch(output, condition->value, plan.then_block, plan.else_block);
-
-    emit_llvm_block_label(output, plan.then_block);
-    state.current_block = plan.then_block;
     auto binding_scope = ImmutableBindingScope(state);
-    auto then_value = lower_value_statement_block(
-        statement.nested_statements,
-        expected_llvm_type,
-        expected_signedness,
-        context,
-        session,
-        diagnostics,
+    struct ArmContext {
+        syntax::StatementSyntax const& statement;
+        std::string_view expected_llvm_type;
+        IntegerSignedness expected_signedness;
+        EmissionContext const& context;
+        FunctionLoweringSession& session;
+        diagnostics::DiagnosticBag& diagnostics;
+        std::ostringstream& output;
+        ImmutableBindingScope& binding_scope;
+    };
+    auto arm_context = ArmContext {
+        .statement = statement,
+        .expected_llvm_type = expected_llvm_type,
+        .expected_signedness = expected_signedness,
+        .context = context,
+        .session = session,
+        .diagnostics = diagnostics,
+        .output = output,
+        .binding_scope = binding_scope,
+    };
+    auto result = emit_conditional_value(
+        plan,
+        condition->value,
+        state,
         output,
-        lower_nested_final_control_flow
+        ConditionalLoweringCallbacks {
+            .context = &arm_context,
+            .lower_then = [](void* opaque) {
+                auto& arm = *static_cast<ArmContext*>(opaque);
+                return lower_value_statement_block(
+                    arm.statement.nested_statements,
+                    arm.expected_llvm_type,
+                    arm.expected_signedness,
+                    arm.context,
+                    arm.session,
+                    arm.diagnostics,
+                    arm.output,
+                    lower_nested_final_control_flow
+                );
+            },
+            .between_arms = [](void* opaque) {
+                static_cast<ArmContext*>(opaque)->binding_scope.reset();
+            },
+            .lower_else = [](void* opaque) {
+                auto& arm = *static_cast<ArmContext*>(opaque);
+                return lower_value_statement_block(
+                    arm.statement.alternate_statements,
+                    arm.expected_llvm_type,
+                    arm.expected_signedness,
+                    arm.context,
+                    arm.session,
+                    arm.diagnostics,
+                    arm.output,
+                    lower_nested_final_control_flow
+                );
+            },
+        }
     );
-    if (!then_value.has_value()) {
+    if (result.failure == ConditionalEmissionFailure::then_arm) {
         record_control_flow_failure(
             failures,
             ControlFlowLoweringFailureReason::if_then_arm_failure,
@@ -161,23 +205,7 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
-    auto then_exit_block = state.current_block;
-    emit_llvm_branch(output, plan.merge_block);
-
-    emit_llvm_block_label(output, plan.else_block);
-    state.current_block = plan.else_block;
-    binding_scope.reset();
-    auto else_value = lower_value_statement_block(
-        statement.alternate_statements,
-        expected_llvm_type,
-        expected_signedness,
-        context,
-        session,
-        diagnostics,
-        output,
-        lower_nested_final_control_flow
-    );
-    if (!else_value.has_value()) {
+    if (result.failure == ConditionalEmissionFailure::else_arm) {
         record_control_flow_failure(
             failures,
             ControlFlowLoweringFailureReason::if_else_arm_failure,
@@ -185,42 +213,16 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
-    auto else_exit_block = state.current_block;
-    auto merge_inputs = std::array {
-        BranchMergeInput {
-            .value = &*then_value,
-            .block = then_exit_block,
-        },
-        BranchMergeInput {
-            .value = &*else_value,
-            .block = else_exit_block,
-        },
-    };
-    auto merge = plan_branch_merge(merge_inputs);
-    if (!merge.plan.has_value()) {
+    if (result.failure == ConditionalEmissionFailure::branch_mismatch) {
+        auto const& mismatch = *result.mismatch;
         record_control_flow_failure(
             failures,
             ControlFlowLoweringFailureReason::if_branch_type_mismatch,
-            then_value->type + " versus " + else_value->type
+            mismatch.expected.type + " versus " + mismatch.actual.type
         );
         return std::nullopt;
     }
-    emit_llvm_branch(output, plan.merge_block);
-
-    emit_llvm_block_label(output, plan.merge_block);
-    state.current_block = plan.merge_block;
-    auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-    emit_llvm_phi(
-        output,
-        temporary_name,
-        merge.plan->result_type.type,
-        merge.plan->incoming
-    );
-    return LoweredExpression {
-        .type = merge.plan->result_type.type,
-        .value = std::move(temporary_name),
-        .signedness = merge.plan->result_type.signedness,
-    };
+    return result.value;
 }
 
 auto lower_final_switch_statement(
