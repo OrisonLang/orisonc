@@ -1,6 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_emitter.hpp"
+#include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
@@ -15,7 +16,6 @@ namespace orison::lowering {
 namespace {
 
 using EmissionContext = ExpressionEmissionContext;
-using FunctionLoweringState = ExpressionLoweringState;
 
 void emit_function_body(
     syntax::FunctionSyntax const& function,
@@ -161,7 +161,7 @@ void emit_function_body(
         );
     }
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(state.failure);
+        auto detail = render_expression_lowering_failure(state.expression_failure);
         diagnostics.error(
             expression != nullptr ? expression->line : function.line,
             "lowering does not yet support this return expression" +

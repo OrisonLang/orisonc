@@ -1,4 +1,5 @@
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
@@ -32,7 +33,7 @@ int main() {
         .lowering = lowering,
         .string_constants = strings,
     };
-    auto state = orison::lowering::ExpressionLoweringState {};
+    auto state = orison::lowering::FunctionLoweringState {};
     state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
         .type = "i1",
         .value = "%flag",
@@ -89,11 +90,11 @@ int main() {
     );
     assert(!failed.has_value());
     assert(
-        state.failure.reason ==
+        state.expression_failure.reason ==
         orison::lowering::ExpressionLoweringFailureReason::unknown_name
     );
     assert(
-        orison::lowering::render_expression_lowering_failure(state.failure) ==
+        orison::lowering::render_expression_lowering_failure(state.expression_failure) ==
         "unknown lowered name: missing"
     );
 
@@ -117,11 +118,11 @@ int main() {
     );
     assert(!failed.has_value());
     assert(
-        state.failure.reason ==
+        state.expression_failure.reason ==
         orison::lowering::ExpressionLoweringFailureReason::call_arity_mismatch
     );
     assert(
-        orison::lowering::render_expression_lowering_failure(state.failure) ==
+        orison::lowering::render_expression_lowering_failure(state.expression_failure) ==
         "call arity mismatch: choose expects 3 arguments, got 0"
     );
     std::filesystem::remove(path);

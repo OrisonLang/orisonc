@@ -16,7 +16,6 @@ namespace orison::lowering {
 namespace {
 
 using EmissionContext = ExpressionEmissionContext;
-using FunctionLoweringState = ExpressionLoweringState;
 
 void record_control_flow_failure(
     FunctionLoweringState& state,
@@ -32,7 +31,7 @@ void record_control_flow_failure(
 }
 
 auto expression_failure_detail(FunctionLoweringState const& state) -> std::string {
-    return render_expression_lowering_failure(state.failure);
+    return render_expression_lowering_failure(state.expression_failure);
 }
 
 auto return_expression_for(syntax::StatementSyntax const& statement) -> syntax::ExpressionSyntax const* {
@@ -57,7 +56,7 @@ auto lower_let_binding(
 ) -> bool {
     auto lowered = lower_expression(statement.expression, expected_llvm_type, expected_signedness, context, state, output);
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(state.failure);
+        auto detail = render_expression_lowering_failure(state.expression_failure);
         diagnostics.error(
             statement.line,
             "lowering does not yet support this let initializer" +
@@ -551,7 +550,7 @@ auto lower_let_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
-    ExpressionLoweringState& state,
+    FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
@@ -571,7 +570,7 @@ auto lower_final_control_flow_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
-    ExpressionLoweringState& state,
+    FunctionLoweringState& state,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {

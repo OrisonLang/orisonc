@@ -36,8 +36,9 @@ analysis, and lowering components.
   artifact or continue into linking without duplicating stage orchestration.
 - Per-function LLVM signature, SSA expression, control-flow, and return emission live behind a dedicated lowering
   component; module emission owns only module assembly, shared context construction, and final LLVM verification.
-- Expression lowering exposes a dedicated API and shared function-local state model for bindings, deterministic SSA
-  names, block identities, and current-block tracking so expression and statement CFG lowering use one state.
+- A dedicated neutral function-lowering state model owns lowered bindings, deterministic SSA names, block identities,
+  current-block tracking, and structured emitter failures so expression and statement CFG lowering use one state
+  without either emitter owning the shared model.
 - Recursive expression lowering and scalar expression-type/literal utilities compile in their own translation unit;
   function statement/control-flow emission consumes that API instead of owning expression implementation details.
 - Final value-producing `if`/`switch` CFG emission, nested value blocks, and branch-local immutable bindings compile
@@ -46,7 +47,7 @@ analysis, and lowering components.
   explicit counters/maps and request deterministic names without duplicating formatting or increment behavior.
 - Ordinary function definitions retain their shared lowered signatures in the module context even when a type is
   unsupported; function emission consumes that model directly for declarations, bindings, signedness, and diagnostics.
-- Expression lowering records a structured first failure reason and detail in explicit lowering state; callers retain
+- Expression lowering records a structured first failure reason and detail in explicit function-lowering state; callers retain
   optional value flow while producing targeted diagnostics for names, types, operators, calls, casts, and branches.
 - Final control-flow lowering records a separate structured first failure in the same explicit state; `if` and `switch`
   diagnostics identify shape, condition/subject, arm/case, pattern, and merge failures while retaining nested expression

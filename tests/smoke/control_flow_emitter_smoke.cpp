@@ -1,4 +1,5 @@
 #include "orison/lowering/control_flow_emitter.hpp"
+#include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
@@ -37,7 +38,7 @@ int main() {
         .lowering = lowering,
         .string_constants = strings,
     };
-    auto state = orison::lowering::ExpressionLoweringState {};
+    auto state = orison::lowering::FunctionLoweringState {};
     state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
         .type = "i1",
         .value = "%flag",
@@ -84,7 +85,7 @@ int main() {
 
     auto& malformed_if = parse_result.module.functions.front().body_statements.front();
     malformed_if.alternate_statements.clear();
-    auto malformed_state = orison::lowering::ExpressionLoweringState {};
+    auto malformed_state = orison::lowering::FunctionLoweringState {};
     auto malformed_output = std::ostringstream {};
     auto malformed = orison::lowering::lower_final_control_flow_statement(
         malformed_if,

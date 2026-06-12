@@ -15,15 +15,14 @@ namespace orison::lowering {
 namespace {
 
 using EmissionContext = ExpressionEmissionContext;
-using FunctionLoweringState = ExpressionLoweringState;
 
 void record_failure(
     FunctionLoweringState& state,
     ExpressionLoweringFailureReason reason,
     std::string detail
 ) {
-    if (state.failure.reason == ExpressionLoweringFailureReason::none) {
-        state.failure = ExpressionLoweringFailure {
+    if (state.expression_failure.reason == ExpressionLoweringFailureReason::none) {
+        state.expression_failure = ExpressionLoweringFailure {
             .reason = reason,
             .detail = std::move(detail),
         };
@@ -508,7 +507,7 @@ auto lowered_expression(
                 output
             );
             if (!argument.has_value()) {
-                if (state.failure.reason == ExpressionLoweringFailureReason::none) {
+                if (state.expression_failure.reason == ExpressionLoweringFailureReason::none) {
                     record_failure(
                         state,
                         ExpressionLoweringFailureReason::call_argument_failure,
@@ -591,10 +590,10 @@ auto lower_expression(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
-    ExpressionLoweringState& state,
+    FunctionLoweringState& state,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    state.failure = {};
+    state.expression_failure = {};
     return lowered_expression(
         expression,
         expected_llvm_type,
@@ -608,7 +607,7 @@ auto lower_expression(
 auto infer_expression_type(
     syntax::ExpressionSyntax const& expression,
     ExpressionEmissionContext const& context,
-    ExpressionLoweringState const& state
+    FunctionLoweringState const& state
 ) -> std::optional<LoweredType> {
     return inferred_expression_type(expression, context, state);
 }
