@@ -1,8 +1,7 @@
 #pragma once
 
 #include "orison/lowering/function_lowering_session.hpp"
-#include "orison/lowering/lowering_context.hpp"
-#include "orison/lowering/string_constants.hpp"
+#include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/syntax/module_parser.hpp"
 
@@ -18,23 +17,18 @@ struct LoweredType {
     IntegerSignedness signedness = IntegerSignedness::not_integer;
 };
 
-struct ExpressionEmissionContext {
-    LoweringContext const& lowering;
-    StringConstantTable const& string_constants;
-};
-
 auto lower_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    ExpressionEmissionContext const& context,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
 
 auto infer_expression_type(
     syntax::ExpressionSyntax const& expression,
-    ExpressionEmissionContext const& context,
+    LoweringEmissionContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<LoweredType>;
 

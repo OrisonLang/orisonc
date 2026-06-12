@@ -2,6 +2,7 @@
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -30,7 +31,7 @@ int main() {
     auto lowering = orison::lowering::build_lowering_context(parse_result.module, diagnostics);
     assert(!diagnostics.has_errors());
     auto strings = orison::lowering::collect_string_constants(parse_result.module);
-    auto context = orison::lowering::ExpressionEmissionContext {
+    auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
         .string_constants = strings,
     };

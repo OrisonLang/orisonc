@@ -4,6 +4,7 @@
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 
@@ -16,7 +17,7 @@
 namespace orison::lowering {
 namespace {
 
-using EmissionContext = ExpressionEmissionContext;
+using EmissionContext = LoweringEmissionContext;
 
 void emit_function_body(
     syntax::FunctionSyntax const& function,

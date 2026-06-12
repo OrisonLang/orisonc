@@ -16,7 +16,7 @@
 namespace orison::lowering {
 namespace {
 
-using EmissionContext = ExpressionEmissionContext;
+using EmissionContext = LoweringEmissionContext;
 
 void record_control_flow_failure(
     LoweringFailures& failures,
@@ -563,7 +563,7 @@ auto lower_let_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    ExpressionEmissionContext const& context,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -583,7 +583,7 @@ auto lower_final_control_flow_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    ExpressionEmissionContext const& context,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output

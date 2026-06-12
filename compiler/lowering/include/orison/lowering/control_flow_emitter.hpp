@@ -3,6 +3,7 @@
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
+#include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <optional>
@@ -19,7 +20,7 @@ auto lower_let_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    ExpressionEmissionContext const& context,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -29,7 +30,7 @@ auto lower_final_control_flow_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    ExpressionEmissionContext const& context,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output

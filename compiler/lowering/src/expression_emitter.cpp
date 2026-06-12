@@ -14,7 +14,7 @@
 namespace orison::lowering {
 namespace {
 
-using EmissionContext = ExpressionEmissionContext;
+using EmissionContext = LoweringEmissionContext;
 
 void record_failure(
     LoweringFailures& failures,
@@ -605,7 +605,7 @@ auto lower_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
-    ExpressionEmissionContext const& context,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
@@ -623,7 +623,7 @@ auto lower_expression(
 
 auto infer_expression_type(
     syntax::ExpressionSyntax const& expression,
-    ExpressionEmissionContext const& context,
+    LoweringEmissionContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<LoweredType> {
     return inferred_expression_type(expression, context, state);
