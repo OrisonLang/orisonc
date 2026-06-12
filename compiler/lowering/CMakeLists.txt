@@ -14,6 +14,7 @@ add_library(orison_lowering STATIC
     src/llvm_names.cpp
     src/lowering_context.cpp
     src/lowering_diagnostics.cpp
+    src/merge_emitter.cpp
     src/merge_plan.cpp
     src/module_prelude.cpp
     src/statement_emitter.cpp

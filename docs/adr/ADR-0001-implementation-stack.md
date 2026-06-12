@@ -64,7 +64,9 @@ analysis, and lowering components.
   case labels, predecessor tracking, fallback blocks, merge planning, phi emission, and current-block transitions while
   control-flow lowering retains subject validation, case-body lowering, binding-scope policy, and diagnostics.
 - Ternary, final `if`, and final `switch` result compatibility plus phi-input assembly live in a neutral merge planner;
-  emitters retain caller-specific failure categories, merge-block state transitions, temporary naming, and text emission.
+  control-flow executors retain caller-specific failure categories.
+- Successful branch merge finalization lives in a shared merge emitter; it owns merge labels, current-block transitions,
+  temporary naming, phi emission, and construction of the resulting lowered value.
 - Ordinary function definitions retain their shared lowered signatures in the module context even when a type is
   unsupported; function emission consumes that model directly for declarations, bindings, signedness, and diagnostics.
 - Expression lowering records a structured first failure reason and detail in an explicit failure model; callers retain

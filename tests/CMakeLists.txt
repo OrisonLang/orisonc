@@ -371,6 +371,22 @@ add_test(
     COMMAND orison_merge_plan_smoke
 )
 
+add_executable(orison_merge_emitter_smoke
+    smoke/merge_emitter_smoke.cpp
+)
+
+target_link_libraries(orison_merge_emitter_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_merge_emitter_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_merge_emitter_smoke
+    COMMAND orison_merge_emitter_smoke
+)
+
 add_executable(orison_pipeline_smoke
     smoke/compile_pipeline_smoke.cpp
 )

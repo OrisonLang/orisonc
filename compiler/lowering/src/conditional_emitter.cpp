@@ -1,7 +1,7 @@
 #include "orison/lowering/conditional_emitter.hpp"
 
 #include "orison/lowering/llvm_cfg.hpp"
-#include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/merge_emitter.hpp"
 
 #include <array>
 #include <utility>
@@ -70,21 +70,8 @@ auto emit_conditional_value(
     }
 
     emit_llvm_branch(output, plan.merge_block);
-    emit_llvm_block_label(output, plan.merge_block);
-    state.current_block = plan.merge_block;
-    auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-    emit_llvm_phi(
-        output,
-        temporary_name,
-        merge.plan->result_type.type,
-        merge.plan->incoming
-    );
     return {
-        .value = LoweredExpression {
-            .type = merge.plan->result_type.type,
-            .value = std::move(temporary_name),
-            .signedness = merge.plan->result_type.signedness,
-        },
+        .value = emit_branch_merge_value(plan.merge_block, *merge.plan, state, output),
     };
 }
 
