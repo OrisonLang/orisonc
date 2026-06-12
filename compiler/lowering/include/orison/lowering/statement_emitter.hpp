@@ -65,6 +65,13 @@ auto lower_call_statement(
     std::ostringstream& output
 ) -> bool;
 
+auto lower_loop_control_statement(
+    syntax::StatementSyntax const& statement,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool;
+
 auto lower_value_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
     std::string_view expected_llvm_type,

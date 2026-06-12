@@ -1,6 +1,7 @@
 #include "orison/lowering/statement_emitter.hpp"
 
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
@@ -293,6 +294,30 @@ auto lower_call_statement(
         );
         return false;
     }
+    return true;
+}
+
+auto lower_loop_control_statement(
+    syntax::StatementSyntax const& statement,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (statement.kind != syntax::StatementKind::break_statement &&
+        statement.kind != syntax::StatementKind::continue_statement) {
+        diagnostics.error(statement.line, "loop-control lowering requires break or continue");
+        return false;
+    }
+    if (session.state.loop_targets.empty()) {
+        diagnostics.error(statement.line, "loop-control lowering requires an active loop");
+        return false;
+    }
+
+    auto const& targets = session.state.loop_targets.back();
+    auto const& target = statement.kind == syntax::StatementKind::break_statement
+        ? targets.break_target
+        : targets.continue_target;
+    emit_llvm_branch(output, target);
     return true;
 }
 

@@ -5,12 +5,18 @@
 #include <cstddef>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace orison::lowering {
 
 struct MutableBinding {
     LoweredType type;
     std::string storage;
+};
+
+struct LoopTargets {
+    std::string break_target;
+    std::string continue_target;
 };
 
 struct FunctionLoweringState {
@@ -20,6 +26,7 @@ struct FunctionLoweringState {
     std::size_t next_temporary_index = 0;
     std::size_t next_block_index = 0;
     std::string current_block = "entry";
+    std::vector<LoopTargets> loop_targets;
 };
 
 }  // namespace orison::lowering

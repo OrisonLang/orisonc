@@ -288,6 +288,40 @@ int main() {
         "lowering call statement requires a call expression"
     );
 
+    auto loop_state = orison::lowering::FunctionLoweringState {};
+    loop_state.loop_targets.push_back(orison::lowering::LoopTargets {
+        .break_target = "while.exit.0",
+        .continue_target = "while.condition.0",
+    });
+    auto loop_failures = orison::lowering::LoweringFailures {};
+    auto loop_session = orison::lowering::FunctionLoweringSession {
+        .state = loop_state,
+        .failures = loop_failures,
+    };
+    auto break_statement = orison::syntax::StatementSyntax {};
+    break_statement.kind = orison::syntax::StatementKind::break_statement;
+    diagnostics = {};
+    output = {};
+    assert(orison::lowering::lower_loop_control_statement(
+        break_statement,
+        loop_session,
+        diagnostics,
+        output
+    ));
+    assert(output.str() == "  br label %while.exit.0\n");
+
+    auto continue_statement = orison::syntax::StatementSyntax {};
+    continue_statement.kind = orison::syntax::StatementKind::continue_statement;
+    diagnostics = {};
+    output = {};
+    assert(orison::lowering::lower_loop_control_statement(
+        continue_statement,
+        loop_session,
+        diagnostics,
+        output
+    ));
+    assert(output.str() == "  br label %while.condition.0\n");
+
     std::filesystem::remove(path);
     return 0;
 }
