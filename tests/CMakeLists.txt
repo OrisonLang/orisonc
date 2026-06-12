@@ -211,20 +211,20 @@ add_test(
     COMMAND orison_statement_emitter_smoke
 )
 
-add_executable(orison_immutable_binding_scope_smoke
-    smoke/immutable_binding_scope_smoke.cpp
+add_executable(orison_branch_binding_scope_smoke
+    smoke/branch_binding_scope_smoke.cpp
 )
 
-target_link_libraries(orison_immutable_binding_scope_smoke
+target_link_libraries(orison_branch_binding_scope_smoke
     PRIVATE
         orison_lowering
 )
 
-target_compile_features(orison_immutable_binding_scope_smoke PRIVATE cxx_std_23)
+target_compile_features(orison_branch_binding_scope_smoke PRIVATE cxx_std_23)
 
 add_test(
-    NAME orison_immutable_binding_scope_smoke
-    COMMAND orison_immutable_binding_scope_smoke
+    NAME orison_branch_binding_scope_smoke
+    COMMAND orison_branch_binding_scope_smoke
 )
 
 add_executable(orison_control_flow_emitter_smoke

@@ -13,6 +13,43 @@
 namespace orison::lowering {
 namespace {
 
+auto lower_prefix_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (statement.kind == syntax::StatementKind::let_binding) {
+        return lower_let_statement(
+            statement,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+    }
+    if (statement.kind == syntax::StatementKind::var_binding) {
+        return lower_var_statement(
+            statement,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+    }
+    if (statement.kind == syntax::StatementKind::assignment_statement) {
+        return lower_assignment_statement(statement, context, session, diagnostics, output);
+    }
+    return false;
+}
+
 auto lower_value_statement_block(
     std::span<syntax::StatementSyntax const* const> statements,
     std::string_view expected_llvm_type,
@@ -29,8 +66,8 @@ auto lower_value_statement_block(
 
     for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
         auto const* statement = statements[index];
-        if (statement == nullptr || statement->kind != syntax::StatementKind::let_binding ||
-            !lower_let_statement(
+        if (statement == nullptr ||
+            !lower_prefix_statement(
                 *statement,
                 expected_llvm_type,
                 expected_signedness,

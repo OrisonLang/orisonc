@@ -1,0 +1,28 @@
+#pragma once
+
+#include "orison/lowering/function_lowering_state.hpp"
+
+#include <string>
+#include <unordered_map>
+
+namespace orison::lowering {
+
+class BranchBindingScope {
+public:
+    explicit BranchBindingScope(FunctionLoweringState& state);
+    ~BranchBindingScope() noexcept;
+
+    BranchBindingScope(BranchBindingScope const&) = delete;
+    auto operator=(BranchBindingScope const&) -> BranchBindingScope& = delete;
+    BranchBindingScope(BranchBindingScope&&) = delete;
+    auto operator=(BranchBindingScope&&) -> BranchBindingScope& = delete;
+
+    void reset();
+
+private:
+    FunctionLoweringState& state_;
+    std::unordered_map<std::string, LoweredExpression> saved_immutable_bindings_;
+    std::unordered_map<std::string, MutableBinding> saved_mutable_bindings_;
+};
+
+}  // namespace orison::lowering

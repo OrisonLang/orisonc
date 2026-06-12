@@ -2,7 +2,7 @@
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
-#include "orison/lowering/immutable_binding_scope.hpp"
+#include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -136,7 +136,7 @@ auto lower_final_if_statement(
         ConditionalPlanKind::if_statement,
         next_llvm_block_index(state.next_block_index)
     );
-    auto binding_scope = ImmutableBindingScope(state);
+    auto binding_scope = BranchBindingScope(state);
     struct ArmContext {
         syntax::StatementSyntax const& statement;
         std::string_view expected_llvm_type;
@@ -145,7 +145,7 @@ auto lower_final_if_statement(
         FunctionLoweringSession& session;
         diagnostics::DiagnosticBag& diagnostics;
         std::ostringstream& output;
-        ImmutableBindingScope& binding_scope;
+        BranchBindingScope& binding_scope;
     };
     auto arm_context = ArmContext {
         .statement = statement,
@@ -277,7 +277,7 @@ auto lower_final_switch_statement(
     }
     auto const& plan = *planning.plan;
 
-    auto binding_scope = ImmutableBindingScope(state);
+    auto binding_scope = BranchBindingScope(state);
     struct CaseContext {
         std::string_view expected_llvm_type;
         IntegerSignedness expected_signedness;
@@ -285,7 +285,7 @@ auto lower_final_switch_statement(
         FunctionLoweringSession& session;
         diagnostics::DiagnosticBag& diagnostics;
         std::ostringstream& output;
-        ImmutableBindingScope& binding_scope;
+        BranchBindingScope& binding_scope;
     };
     auto case_context = CaseContext {
         .expected_llvm_type = expected_llvm_type,

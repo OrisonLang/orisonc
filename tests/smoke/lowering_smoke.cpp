@@ -580,6 +580,59 @@ void test_emit_final_if_branch_local_bindings() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_final_if_mutable_branch_prefixes() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_final_if_mutable_prefixes.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(flag: Bool) -> UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    if flag\n"
+        "        value = 1 as UInt32\n"
+        "        var local = 10 as UInt32\n"
+        "        local + value\n"
+        "    else\n"
+        "        value = 2 as UInt32\n"
+        "        var local = 20 as UInt32\n"
+        "        local + value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %flag) {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  br i1 %flag, label %if.then.0, label %if.else.0\n"
+        "if.then.0:\n"
+        "  store i32 1, ptr %value.addr\n"
+        "  %local.addr = alloca i32\n"
+        "  store i32 10, ptr %local.addr\n"
+        "  %tmp0 = load i32, ptr %local.addr\n"
+        "  %tmp1 = load i32, ptr %value.addr\n"
+        "  %tmp2 = add i32 %tmp0, %tmp1\n"
+        "  br label %if.merge.0\n"
+        "if.else.0:\n"
+        "  store i32 2, ptr %value.addr\n"
+        "  %local.addr.1 = alloca i32\n"
+        "  store i32 20, ptr %local.addr.1\n"
+        "  %tmp3 = load i32, ptr %local.addr.1\n"
+        "  %tmp4 = load i32, ptr %value.addr\n"
+        "  %tmp5 = add i32 %tmp3, %tmp4\n"
+        "  br label %if.merge.0\n"
+        "if.merge.0:\n"
+        "  %tmp6 = phi i32 [%tmp2, %if.then.0], [%tmp5, %if.else.0]\n"
+        "  ret i32 %tmp6\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_nested_final_if_returns() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_nested_final_if.or";
     auto result = lower_source(
@@ -672,6 +725,62 @@ void test_emit_final_integer_switch_returns() {
         "switch.merge.0:\n"
         "  %tmp1 = phi i32 [10, %switch.case.0.0], [%tmp0, %switch.case.0.1], [%base.1, %switch.default.0]\n"
         "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_emit_final_switch_mutable_case_prefixes() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_switch_mutable_prefixes.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(selector: UInt32) -> UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    switch selector\n"
+        "        0 =>\n"
+        "            value = 1 as UInt32\n"
+        "            var local = 10 as UInt32\n"
+        "            local + value\n"
+        "        default =>\n"
+        "            value = 2 as UInt32\n"
+        "            var local = 20 as UInt32\n"
+        "            local + value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i32 %selector) {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  switch i32 %selector, label %switch.default.0 [\n"
+        "    i32 0, label %switch.case.0.0\n"
+        "  ]\n"
+        "switch.case.0.0:\n"
+        "  store i32 1, ptr %value.addr\n"
+        "  %local.addr = alloca i32\n"
+        "  store i32 10, ptr %local.addr\n"
+        "  %tmp0 = load i32, ptr %local.addr\n"
+        "  %tmp1 = load i32, ptr %value.addr\n"
+        "  %tmp2 = add i32 %tmp0, %tmp1\n"
+        "  br label %switch.merge.0\n"
+        "switch.default.0:\n"
+        "  store i32 2, ptr %value.addr\n"
+        "  %local.addr.1 = alloca i32\n"
+        "  store i32 20, ptr %local.addr.1\n"
+        "  %tmp3 = load i32, ptr %local.addr.1\n"
+        "  %tmp4 = load i32, ptr %value.addr\n"
+        "  %tmp5 = add i32 %tmp3, %tmp4\n"
+        "  br label %switch.merge.0\n"
+        "switch.merge.0:\n"
+        "  %tmp6 = phi i32 [%tmp2, %switch.case.0.0], [%tmp5, %switch.default.0]\n"
+        "  ret i32 %tmp6\n"
         "}\n"
         "\n"
     };
@@ -1229,8 +1338,10 @@ auto main() -> int {
     test_emit_ternary_expression_returns();
     test_emit_final_if_expression_returns();
     test_emit_final_if_branch_local_bindings();
+    test_emit_final_if_mutable_branch_prefixes();
     test_emit_nested_final_if_returns();
     test_emit_final_integer_switch_returns();
+    test_emit_final_switch_mutable_case_prefixes();
     test_emit_exhaustive_boolean_switch_returns();
     test_emit_switch_nested_in_final_if();
     test_emit_zero_argument_function_call_return();
