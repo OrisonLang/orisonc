@@ -1,6 +1,7 @@
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"

@@ -9,6 +9,7 @@ add_library(orison_lowering STATIC
     src/llvm_ir_verifier.cpp
     src/llvm_names.cpp
     src/lowering_context.cpp
+    src/lowering_diagnostics.cpp
     src/module_prelude.cpp
     src/string_constants.cpp
     src/type_lowering.cpp

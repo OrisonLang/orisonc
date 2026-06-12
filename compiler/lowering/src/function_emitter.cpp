@@ -3,6 +3,7 @@
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 

@@ -52,6 +52,8 @@ analysis, and lowering components.
 - Final control-flow lowering records a separate structured first failure in the same explicit state; `if` and `switch`
   diagnostics identify shape, condition/subject, arm/case, pattern, and merge failures while retaining nested expression
   failure details.
+- Lowering failure rendering lives in a dedicated diagnostics component over the neutral failure records; expression,
+  control-flow, and function emitters consume one stable text policy without owning diagnostic wording.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

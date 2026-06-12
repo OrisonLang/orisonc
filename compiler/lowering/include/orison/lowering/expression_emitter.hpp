@@ -51,8 +51,4 @@ auto lower_boolean_literal(
 
 auto is_integer_llvm_type(std::string_view type) -> bool;
 
-auto render_expression_lowering_failure(
-    ExpressionLoweringFailure const& failure
-) -> std::string;
-
 }  // namespace orison::lowering

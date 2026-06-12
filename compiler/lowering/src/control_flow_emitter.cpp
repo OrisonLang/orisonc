@@ -1,6 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -598,53 +599,6 @@ auto lower_final_control_flow_statement(
         );
     }
     return std::nullopt;
-}
-
-auto render_control_flow_lowering_failure(
-    ControlFlowLoweringFailure const& failure
-) -> std::string {
-    auto prefix = std::string {};
-    switch (failure.reason) {
-    case ControlFlowLoweringFailureReason::none:
-        return {};
-    case ControlFlowLoweringFailureReason::invalid_if_shape:
-        prefix = "invalid final if shape";
-        break;
-    case ControlFlowLoweringFailureReason::if_condition_failure:
-        prefix = "if condition lowering failed";
-        break;
-    case ControlFlowLoweringFailureReason::if_then_arm_failure:
-        prefix = "if then arm lowering failed";
-        break;
-    case ControlFlowLoweringFailureReason::if_else_arm_failure:
-        prefix = "if else arm lowering failed";
-        break;
-    case ControlFlowLoweringFailureReason::if_branch_type_mismatch:
-        prefix = "if branch type mismatch";
-        break;
-    case ControlFlowLoweringFailureReason::invalid_switch_shape:
-        prefix = "invalid final switch shape";
-        break;
-    case ControlFlowLoweringFailureReason::switch_subject_type_failure:
-        prefix = "switch subject type is not lowerable";
-        break;
-    case ControlFlowLoweringFailureReason::switch_subject_failure:
-        prefix = "switch subject lowering failed";
-        break;
-    case ControlFlowLoweringFailureReason::duplicate_switch_default:
-        prefix = "switch has multiple default cases";
-        break;
-    case ControlFlowLoweringFailureReason::unsupported_switch_pattern:
-        prefix = "switch pattern lowering failed";
-        break;
-    case ControlFlowLoweringFailureReason::switch_case_failure:
-        prefix = "switch case lowering failed";
-        break;
-    case ControlFlowLoweringFailureReason::switch_case_type_mismatch:
-        prefix = "switch case type mismatch";
-        break;
-    }
-    return failure.detail.empty() ? prefix : prefix + ": " + failure.detail;
 }
 
 }  // namespace orison::lowering
