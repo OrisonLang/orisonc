@@ -17,12 +17,12 @@ namespace {
 using EmissionContext = ExpressionEmissionContext;
 
 void record_failure(
-    FunctionLoweringState& state,
+    LoweringFailures& failures,
     ExpressionLoweringFailureReason reason,
     std::string detail
 ) {
-    if (state.expression_failure.reason == ExpressionLoweringFailureReason::none) {
-        state.expression_failure = ExpressionLoweringFailure {
+    if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
+        failures.expression = ExpressionLoweringFailure {
             .reason = reason,
             .detail = std::move(detail),
         };
@@ -175,6 +175,7 @@ auto lowered_expression(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (auto literal = lowered_integer_literal(expression, expected_llvm_type, expected_signedness)) {
@@ -190,7 +191,7 @@ auto lowered_expression(
         auto const* constant = context.string_constants.find(expression.text);
         if (constant == nullptr) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::missing_string_constant,
                 expression.text
             );
@@ -206,12 +207,12 @@ auto lowered_expression(
     if (expression.kind == syntax::ExpressionKind::name) {
         auto binding = state.immutable_bindings.find(expression.text);
         if (binding == state.immutable_bindings.end()) {
-            record_failure(state, ExpressionLoweringFailureReason::unknown_name, expression.text);
+            record_failure(failures, ExpressionLoweringFailureReason::unknown_name, expression.text);
             return std::nullopt;
         }
         if (binding->second.type != expected_llvm_type) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::type_mismatch,
                 expression.text + " has LLVM type " + binding->second.type +
                     ", expected " + std::string(expected_llvm_type)
@@ -220,7 +221,7 @@ auto lowered_expression(
         }
         if (binding->second.signedness != expected_signedness) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::signedness_mismatch,
                 expression.text
             );
@@ -236,7 +237,7 @@ auto lowered_expression(
         auto cast_type = llvm_type_for(target_type);
         if (!cast_type.has_value() || *cast_type != expected_llvm_type) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::unsupported_cast,
                 expression.text
             );
@@ -252,7 +253,7 @@ auto lowered_expression(
         auto lowered_float = lowered_float_literal(*expression.left, expected_llvm_type);
         if (!lowered_float.has_value()) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::unsupported_cast,
                 expression.text
             );
@@ -268,6 +269,7 @@ auto lowered_expression(
             IntegerSignedness::not_integer,
             context,
             state,
+            failures,
             output
         );
         if (!operand.has_value()) {
@@ -291,6 +293,7 @@ auto lowered_expression(
             IntegerSignedness::not_integer,
             context,
             state,
+            failures,
             output
         );
         if (!condition.has_value()) {
@@ -311,6 +314,7 @@ auto lowered_expression(
             expected_signedness,
             context,
             state,
+            failures,
             output
         );
         if (!then_value.has_value()) {
@@ -327,6 +331,7 @@ auto lowered_expression(
             expected_signedness,
             context,
             state,
+            failures,
             output
         );
         if (!else_value.has_value()) {
@@ -335,7 +340,7 @@ auto lowered_expression(
         if (then_value->type != else_value->type ||
             then_value->signedness != else_value->signedness) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::branch_type_mismatch,
                 "ternary branches"
             );
@@ -366,6 +371,7 @@ auto lowered_expression(
                     IntegerSignedness::not_integer,
                     context,
                     state,
+                    failures,
                     output
                 );
                 auto right = lowered_expression(
@@ -374,6 +380,7 @@ auto lowered_expression(
                     IntegerSignedness::not_integer,
                     context,
                     state,
+                    failures,
                     output
                 );
                 if (!left.has_value() || !right.has_value()) {
@@ -397,7 +404,7 @@ auto lowered_expression(
             if (!operand_type.has_value() || !is_integer_llvm_type_impl(operand_type->type) ||
                 operand_type->signedness == IntegerSignedness::not_integer) {
                 record_failure(
-                    state,
+                    failures,
                     ExpressionLoweringFailureReason::cannot_infer_operand_type,
                     expression.text
                 );
@@ -412,6 +419,7 @@ auto lowered_expression(
                     operand_type->signedness,
                     context,
                     state,
+                    failures,
                     output
                 );
                 auto right = lowered_expression(
@@ -420,6 +428,7 @@ auto lowered_expression(
                     operand_type->signedness,
                     context,
                     state,
+                    failures,
                     output
                 );
                 if (!left.has_value() || !right.has_value() || left->type != right->type ||
@@ -441,14 +450,30 @@ auto lowered_expression(
         auto instruction = llvm_binary_instruction_for(expression.text, expected_signedness);
         if (!instruction.has_value()) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::unsupported_operator,
                 expression.text
             );
             return std::nullopt;
         }
-        auto left = lowered_expression(*expression.left, expected_llvm_type, expected_signedness, context, state, output);
-        auto right = lowered_expression(*expression.right, expected_llvm_type, expected_signedness, context, state, output);
+        auto left = lowered_expression(
+            *expression.left,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            state,
+            failures,
+            output
+        );
+        auto right = lowered_expression(
+            *expression.right,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            state,
+            failures,
+            output
+        );
         if (!left.has_value() || !right.has_value() || left->type != right->type ||
             left->signedness != right->signedness) {
             return std::nullopt;
@@ -469,7 +494,7 @@ auto lowered_expression(
         auto function = context.lowering.functions.find(expression.left->text);
         if (function == context.lowering.functions.end()) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::unknown_function,
                 expression.left->text
             );
@@ -477,7 +502,7 @@ auto lowered_expression(
         }
         if (function->second.return_type != expected_llvm_type) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::call_return_type_mismatch,
                 expression.left->text + " returns " + function->second.return_type +
                     ", expected " + std::string(expected_llvm_type)
@@ -486,7 +511,7 @@ auto lowered_expression(
         }
         if (function->second.parameter_types.size() != expression.arguments.size()) {
             record_failure(
-                state,
+                failures,
                 ExpressionLoweringFailureReason::call_arity_mismatch,
                 expression.left->text + " expects " +
                     std::to_string(function->second.parameter_types.size()) + " arguments, got " +
@@ -504,12 +529,13 @@ auto lowered_expression(
                 function->second.parameter_signedness[index],
                 context,
                 state,
+                failures,
                 output
             );
             if (!argument.has_value()) {
-                if (state.expression_failure.reason == ExpressionLoweringFailureReason::none) {
+                if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
                     record_failure(
-                        state,
+                        failures,
                         ExpressionLoweringFailureReason::call_argument_failure,
                         expression.left->text + " argument " + std::to_string(index + 1)
                     );
@@ -576,7 +602,7 @@ auto lowered_expression(
     }
 
     record_failure(
-        state,
+        failures,
         ExpressionLoweringFailureReason::unsupported_expression,
         expression.text
     );
@@ -591,15 +617,17 @@ auto lower_expression(
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    state.expression_failure = {};
+    failures.expression = {};
     return lowered_expression(
         expression,
         expected_llvm_type,
         expected_signedness,
         context,
         state,
+        failures,
         output
     );
 }

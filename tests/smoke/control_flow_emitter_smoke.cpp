@@ -2,6 +2,7 @@
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/lowering_failures.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -40,6 +41,7 @@ int main() {
         .string_constants = strings,
     };
     auto state = orison::lowering::FunctionLoweringState {};
+    auto failures = orison::lowering::LoweringFailures {};
     state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
         .type = "i1",
         .value = "%flag",
@@ -62,6 +64,7 @@ int main() {
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
         state,
+        failures,
         diagnostics,
         output
     );
@@ -87,6 +90,7 @@ int main() {
     auto& malformed_if = parse_result.module.functions.front().body_statements.front();
     malformed_if.alternate_statements.clear();
     auto malformed_state = orison::lowering::FunctionLoweringState {};
+    auto malformed_failures = orison::lowering::LoweringFailures {};
     auto malformed_output = std::ostringstream {};
     auto malformed = orison::lowering::lower_final_control_flow_statement(
         malformed_if,
@@ -94,16 +98,17 @@ int main() {
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
         malformed_state,
+        malformed_failures,
         diagnostics,
         malformed_output
     );
     assert(!malformed.has_value());
     assert(
-        malformed_state.control_flow_failure.reason ==
+        malformed_failures.control_flow.reason ==
         orison::lowering::ControlFlowLoweringFailureReason::invalid_if_shape
     );
     assert(
-        orison::lowering::render_control_flow_lowering_failure(malformed_state.control_flow_failure) ==
+        orison::lowering::render_control_flow_lowering_failure(malformed_failures.control_flow) ==
         "invalid final if shape: a final if requires non-empty then and else arms"
     );
     std::filesystem::remove(path);

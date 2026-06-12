@@ -2,6 +2,7 @@
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/lowering_failures.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -35,6 +36,7 @@ int main() {
         .string_constants = strings,
     };
     auto state = orison::lowering::FunctionLoweringState {};
+    auto failures = orison::lowering::LoweringFailures {};
     state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
         .type = "i1",
         .value = "%flag",
@@ -57,6 +59,7 @@ int main() {
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
         state,
+        failures,
         output
     );
     assert(lowered.has_value());
@@ -87,15 +90,16 @@ int main() {
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
         state,
+        failures,
         output
     );
     assert(!failed.has_value());
     assert(
-        state.expression_failure.reason ==
+        failures.expression.reason ==
         orison::lowering::ExpressionLoweringFailureReason::unknown_name
     );
     assert(
-        orison::lowering::render_expression_lowering_failure(state.expression_failure) ==
+        orison::lowering::render_expression_lowering_failure(failures.expression) ==
         "unknown lowered name: missing"
     );
 
@@ -115,15 +119,16 @@ int main() {
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
         state,
+        failures,
         output
     );
     assert(!failed.has_value());
     assert(
-        state.expression_failure.reason ==
+        failures.expression.reason ==
         orison::lowering::ExpressionLoweringFailureReason::call_arity_mismatch
     );
     assert(
-        orison::lowering::render_expression_lowering_failure(state.expression_failure) ==
+        orison::lowering::render_expression_lowering_failure(failures.expression) ==
         "call arity mismatch: choose expects 3 arguments, got 0"
     );
     std::filesystem::remove(path);

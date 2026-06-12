@@ -4,6 +4,7 @@
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/lowering_failures.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 
@@ -81,6 +82,7 @@ void emit_function_body(
     output << "entry:\n";
 
     auto state = FunctionLoweringState {};
+    auto failures = LoweringFailures {};
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         state.local_name_counts[function.parameters[index].name] = 1;
         state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
@@ -103,6 +105,7 @@ void emit_function_body(
                     signature.return_signedness,
                     context,
                     state,
+                    failures,
                     diagnostics,
                     output
                 )) {
@@ -122,6 +125,7 @@ void emit_function_body(
                     signature.return_signedness,
                     context,
                     state,
+                    failures,
                     diagnostics,
                     output
                 );
@@ -136,7 +140,7 @@ void emit_function_body(
     }
 
     if (attempted_final_control_flow && !lowered_final_statement.has_value()) {
-        auto detail = render_control_flow_lowering_failure(state.control_flow_failure);
+        auto detail = render_control_flow_lowering_failure(failures.control_flow);
         diagnostics.error(
             final_statement_line,
             "lowering does not yet support this final control-flow statement" +
@@ -158,11 +162,12 @@ void emit_function_body(
             signature.return_signedness,
             context,
             state,
+            failures,
             output
         );
     }
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(state.expression_failure);
+        auto detail = render_expression_lowering_failure(failures.expression);
         diagnostics.error(
             expression != nullptr ? expression->line : function.line,
             "lowering does not yet support this return expression" +

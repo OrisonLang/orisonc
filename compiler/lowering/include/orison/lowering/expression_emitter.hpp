@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/function_lowering_state.hpp"
+#include "orison/lowering/lowering_failures.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -29,6 +30,7 @@ auto lower_expression(
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
 

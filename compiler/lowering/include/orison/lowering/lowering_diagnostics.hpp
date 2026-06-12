@@ -1,6 +1,6 @@
 #pragma once
 
-#include "orison/lowering/function_lowering_state.hpp"
+#include "orison/lowering/lowering_failures.hpp"
 
 #include <string>
 

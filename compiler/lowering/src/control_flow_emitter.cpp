@@ -19,20 +19,20 @@ namespace {
 using EmissionContext = ExpressionEmissionContext;
 
 void record_control_flow_failure(
-    FunctionLoweringState& state,
+    LoweringFailures& failures,
     ControlFlowLoweringFailureReason reason,
     std::string detail = {}
 ) {
-    if (state.control_flow_failure.reason == ControlFlowLoweringFailureReason::none) {
-        state.control_flow_failure = {
+    if (failures.control_flow.reason == ControlFlowLoweringFailureReason::none) {
+        failures.control_flow = {
             .reason = reason,
             .detail = std::move(detail),
         };
     }
 }
 
-auto expression_failure_detail(FunctionLoweringState const& state) -> std::string {
-    return render_expression_lowering_failure(state.expression_failure);
+auto expression_failure_detail(LoweringFailures const& failures) -> std::string {
+    return render_expression_lowering_failure(failures.expression);
 }
 
 auto return_expression_for(syntax::StatementSyntax const& statement) -> syntax::ExpressionSyntax const* {
@@ -52,12 +52,21 @@ auto lower_let_binding(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    auto lowered = lower_expression(statement.expression, expected_llvm_type, expected_signedness, context, state, output);
+    auto lowered = lower_expression(
+        statement.expression,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        state,
+        failures,
+        output
+    );
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(state.expression_failure);
+        auto detail = render_expression_lowering_failure(failures.expression);
         diagnostics.error(
             statement.line,
             "lowering does not yet support this let initializer" +
@@ -82,6 +91,7 @@ auto lower_final_if_statement(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
@@ -92,6 +102,7 @@ auto lower_final_switch_statement(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
@@ -102,6 +113,7 @@ auto lower_value_statement_block(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
@@ -118,6 +130,7 @@ auto lower_value_statement_block(
                 expected_signedness,
                 context,
                 state,
+                failures,
                 diagnostics,
                 output
             )) {
@@ -133,6 +146,7 @@ auto lower_value_statement_block(
             expected_signedness,
             context,
             state,
+            failures,
             diagnostics,
             output
         );
@@ -144,6 +158,7 @@ auto lower_value_statement_block(
             expected_signedness,
             context,
             state,
+            failures,
             diagnostics,
             output
         );
@@ -159,6 +174,7 @@ auto lower_value_statement_block(
         expected_signedness,
         context,
         state,
+        failures,
         output
     );
 }
@@ -169,13 +185,14 @@ auto lower_final_if_statement(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (statement.kind != syntax::StatementKind::if_statement || statement.nested_statements.empty() ||
         statement.alternate_statements.empty()) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::invalid_if_shape,
             "a final if requires non-empty then and else arms"
         );
@@ -188,13 +205,14 @@ auto lower_final_if_statement(
         IntegerSignedness::not_integer,
         context,
         state,
+        failures,
         output
     );
     if (!condition.has_value()) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::if_condition_failure,
-            expression_failure_detail(state)
+            expression_failure_detail(failures)
         );
         return std::nullopt;
     }
@@ -214,14 +232,15 @@ auto lower_final_if_statement(
         expected_signedness,
         context,
         state,
+        failures,
         diagnostics,
         output
     );
     if (!then_value.has_value()) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::if_then_arm_failure,
-            expression_failure_detail(state)
+            expression_failure_detail(failures)
         );
         return std::nullopt;
     }
@@ -237,21 +256,22 @@ auto lower_final_if_statement(
         expected_signedness,
         context,
         state,
+        failures,
         diagnostics,
         output
     );
     if (!else_value.has_value()) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::if_else_arm_failure,
-            expression_failure_detail(state)
+            expression_failure_detail(failures)
         );
         return std::nullopt;
     }
     if (then_value->type != else_value->type ||
         then_value->signedness != else_value->signedness) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::if_branch_type_mismatch,
             then_value->type + " versus " + else_value->type
         );
@@ -279,6 +299,7 @@ auto lower_switch_case_statement_block(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
@@ -295,6 +316,7 @@ auto lower_switch_case_statement_block(
                 expected_signedness,
                 context,
                 state,
+                failures,
                 diagnostics,
                 output
             )) {
@@ -313,6 +335,7 @@ auto lower_switch_case_statement_block(
             expected_signedness,
             context,
             state,
+            failures,
             diagnostics,
             output
         );
@@ -324,6 +347,7 @@ auto lower_switch_case_statement_block(
             expected_signedness,
             context,
             state,
+            failures,
             diagnostics,
             output
         );
@@ -339,6 +363,7 @@ auto lower_switch_case_statement_block(
         expected_signedness,
         context,
         state,
+        failures,
         output
     );
 }
@@ -373,12 +398,13 @@ auto lower_final_switch_statement(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (statement.kind != syntax::StatementKind::switch_statement || statement.switch_cases.empty()) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::invalid_switch_shape,
             "a final switch requires at least one case"
         );
@@ -389,7 +415,7 @@ auto lower_final_switch_statement(
     if (!subject_type.has_value() ||
         (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::switch_subject_type_failure
         );
         return std::nullopt;
@@ -400,13 +426,14 @@ auto lower_final_switch_statement(
         subject_type->signedness,
         context,
         state,
+        failures,
         output
     );
     if (!subject.has_value()) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::switch_subject_failure,
-            expression_failure_detail(state)
+            expression_failure_detail(failures)
         );
         return std::nullopt;
     }
@@ -432,7 +459,7 @@ auto lower_final_switch_statement(
         if (switch_case.is_default) {
             if (default_case_index.has_value()) {
                 record_control_flow_failure(
-                    state,
+                    failures,
                     ControlFlowLoweringFailureReason::duplicate_switch_default
                 );
                 return std::nullopt;
@@ -444,7 +471,7 @@ auto lower_final_switch_statement(
             lowered_case.pattern = lowered_switch_pattern(switch_case.pattern, *subject_type);
             if (!lowered_case.pattern.has_value()) {
                 record_control_flow_failure(
-                    state,
+                    failures,
                     ControlFlowLoweringFailureReason::unsupported_switch_pattern
                 );
                 return std::nullopt;
@@ -477,14 +504,15 @@ auto lower_final_switch_statement(
             expected_signedness,
             context,
             state,
+            failures,
             diagnostics,
             output
         );
         if (!case_value.has_value()) {
             record_control_flow_failure(
-                state,
+                failures,
                 ControlFlowLoweringFailureReason::switch_case_failure,
-                expression_failure_detail(state)
+                expression_failure_detail(failures)
             );
             return std::nullopt;
         }
@@ -500,7 +528,7 @@ auto lower_final_switch_statement(
 
     if (incoming_values.empty()) {
         record_control_flow_failure(
-            state,
+            failures,
             ControlFlowLoweringFailureReason::invalid_switch_shape,
             "a final switch requires a value-producing case"
         );
@@ -511,7 +539,7 @@ auto lower_final_switch_statement(
         static_cast<void>(incoming_block);
         if (incoming_value.type != result_type.type || incoming_value.signedness != result_type.signedness) {
             record_control_flow_failure(
-                state,
+                failures,
                 ControlFlowLoweringFailureReason::switch_case_type_mismatch,
                 result_type.type + " versus " + incoming_value.type
             );
@@ -552,6 +580,7 @@ auto lower_let_statement(
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
@@ -561,6 +590,7 @@ auto lower_let_statement(
         expected_signedness,
         context,
         state,
+        failures,
         diagnostics,
         output
     );
@@ -572,10 +602,11 @@ auto lower_final_control_flow_statement(
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    state.control_flow_failure = {};
+    failures.control_flow = {};
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_final_if_statement(
             statement,
@@ -583,6 +614,7 @@ auto lower_final_control_flow_statement(
             expected_signedness,
             context,
             state,
+            failures,
             diagnostics,
             output
         );
@@ -594,6 +626,7 @@ auto lower_final_control_flow_statement(
             expected_signedness,
             context,
             state,
+            failures,
             diagnostics,
             output
         );
