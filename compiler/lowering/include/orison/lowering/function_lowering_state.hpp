@@ -1,18 +1,12 @@
 #pragma once
 
-#include "orison/lowering/type_lowering.hpp"
+#include "orison/lowering/lowered_value.hpp"
 
 #include <cstddef>
 #include <string>
 #include <unordered_map>
 
 namespace orison::lowering {
-
-struct LoweredExpression {
-    std::string type;
-    std::string value;
-    IntegerSignedness signedness = IntegerSignedness::not_integer;
-};
 
 struct FunctionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;

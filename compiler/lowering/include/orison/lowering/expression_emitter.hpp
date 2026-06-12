@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/function_lowering_session.hpp"
+#include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -11,11 +12,6 @@
 #include <string_view>
 
 namespace orison::lowering {
-
-struct LoweredType {
-    std::string type;
-    IntegerSignedness signedness = IntegerSignedness::not_integer;
-};
 
 auto lower_expression(
     syntax::ExpressionSyntax const& expression,

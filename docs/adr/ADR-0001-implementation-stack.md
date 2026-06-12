@@ -60,6 +60,8 @@ analysis, and lowering components.
   owned state and failure objects, reducing recursive parameter lists without recombining their responsibilities.
 - Immutable module lowering data and string constants are exposed through a neutral `LoweringEmissionContext`;
   expression, control-flow, and function emission share it without assigning context ownership to an emitter.
+- Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
+  emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

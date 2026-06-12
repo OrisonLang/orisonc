@@ -1,5 +1,6 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
+#include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
