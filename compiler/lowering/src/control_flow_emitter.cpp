@@ -1,4 +1,5 @@
 #include "orison/lowering/control_flow_emitter.hpp"
+#include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/immutable_binding_scope.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
@@ -133,14 +134,14 @@ auto lower_final_if_statement(
         return std::nullopt;
     }
 
-    auto block_index = next_llvm_block_index(state.next_block_index);
-    auto then_block = llvm_block_name("if.then", block_index);
-    auto else_block = llvm_block_name("if.else", block_index);
-    auto merge_block = llvm_block_name("if.merge", block_index);
-    emit_llvm_conditional_branch(output, condition->value, then_block, else_block);
+    auto plan = plan_conditional(
+        ConditionalPlanKind::if_statement,
+        next_llvm_block_index(state.next_block_index)
+    );
+    emit_llvm_conditional_branch(output, condition->value, plan.then_block, plan.else_block);
 
-    emit_llvm_block_label(output, then_block);
-    state.current_block = then_block;
+    emit_llvm_block_label(output, plan.then_block);
+    state.current_block = plan.then_block;
     auto binding_scope = ImmutableBindingScope(state);
     auto then_value = lower_value_statement_block(
         statement.nested_statements,
@@ -161,10 +162,10 @@ auto lower_final_if_statement(
         return std::nullopt;
     }
     auto then_exit_block = state.current_block;
-    emit_llvm_branch(output, merge_block);
+    emit_llvm_branch(output, plan.merge_block);
 
-    emit_llvm_block_label(output, else_block);
-    state.current_block = else_block;
+    emit_llvm_block_label(output, plan.else_block);
+    state.current_block = plan.else_block;
     binding_scope.reset();
     auto else_value = lower_value_statement_block(
         statement.alternate_statements,
@@ -204,10 +205,10 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
-    emit_llvm_branch(output, merge_block);
+    emit_llvm_branch(output, plan.merge_block);
 
-    emit_llvm_block_label(output, merge_block);
-    state.current_block = merge_block;
+    emit_llvm_block_label(output, plan.merge_block);
+    state.current_block = plan.merge_block;
     auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
     emit_llvm_phi(
         output,
