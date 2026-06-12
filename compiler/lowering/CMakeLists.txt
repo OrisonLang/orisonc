@@ -18,6 +18,7 @@ add_library(orison_lowering STATIC
     src/module_prelude.cpp
     src/statement_emitter.cpp
     src/string_constants.cpp
+    src/switch_emitter.cpp
     src/switch_plan.cpp
     src/type_lowering.cpp
 )

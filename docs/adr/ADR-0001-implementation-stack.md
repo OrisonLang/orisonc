@@ -59,7 +59,10 @@ analysis, and lowering components.
   labels, predecessor tracking, merge planning, phi emission, and current-block transitions while callers retain arm
   lowering, binding-scope policy, and diagnostic translation.
 - Final scalar switch case/default validation, pattern lowering, and deterministic block planning live in a dedicated
-  component that returns a non-owning plan; control-flow emission executes the plan and owns branch value merging.
+  component that returns a non-owning plan.
+- Final switch CFG execution lives in a shared emitter over non-owning callbacks; it owns dispatch-table emission,
+  case labels, predecessor tracking, fallback blocks, merge planning, phi emission, and current-block transitions while
+  control-flow lowering retains subject validation, case-body lowering, binding-scope policy, and diagnostics.
 - Ternary, final `if`, and final `switch` result compatibility plus phi-input assembly live in a neutral merge planner;
   emitters retain caller-specific failure categories, merge-block state transitions, temporary naming, and text emission.
 - Ordinary function definitions retain their shared lowered signatures in the module context even when a type is

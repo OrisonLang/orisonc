@@ -291,6 +291,22 @@ add_test(
     COMMAND orison_switch_plan_smoke
 )
 
+add_executable(orison_switch_emitter_smoke
+    smoke/switch_emitter_smoke.cpp
+)
+
+target_link_libraries(orison_switch_emitter_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_switch_emitter_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_switch_emitter_smoke
+    COMMAND orison_switch_emitter_smoke
+)
+
 add_executable(orison_lowering_diagnostics_smoke
     smoke/lowering_diagnostics_smoke.cpp
 )
