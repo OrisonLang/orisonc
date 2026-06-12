@@ -56,6 +56,8 @@ analysis, and lowering components.
   control-flow, and function emitters consume one stable text policy without owning diagnostic wording.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
+- Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately
+  owned state and failure objects, reducing recursive parameter lists without recombining their responsibilities.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

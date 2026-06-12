@@ -51,18 +51,18 @@ auto lower_let_binding(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
+    auto& state = session.state;
+    auto& failures = session.failures;
     auto lowered = lower_expression(
         statement.expression,
         expected_llvm_type,
         expected_signedness,
         context,
-        state,
-        failures,
+        session,
         output
     );
     if (!lowered.has_value()) {
@@ -90,8 +90,7 @@ auto lower_final_if_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
@@ -101,8 +100,7 @@ auto lower_final_switch_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
@@ -112,8 +110,7 @@ auto lower_value_statement_block(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
@@ -129,8 +126,7 @@ auto lower_value_statement_block(
                 expected_llvm_type,
                 expected_signedness,
                 context,
-                state,
-                failures,
+                session,
                 diagnostics,
                 output
             )) {
@@ -145,8 +141,7 @@ auto lower_value_statement_block(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             diagnostics,
             output
         );
@@ -157,8 +152,7 @@ auto lower_value_statement_block(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             diagnostics,
             output
         );
@@ -173,8 +167,7 @@ auto lower_value_statement_block(
         expected_llvm_type,
         expected_signedness,
         context,
-        state,
-        failures,
+        session,
         output
     );
 }
@@ -184,11 +177,12 @@ auto lower_final_if_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
+    auto& state = session.state;
+    auto& failures = session.failures;
     if (statement.kind != syntax::StatementKind::if_statement || statement.nested_statements.empty() ||
         statement.alternate_statements.empty()) {
         record_control_flow_failure(
@@ -204,8 +198,7 @@ auto lower_final_if_statement(
         "i1",
         IntegerSignedness::not_integer,
         context,
-        state,
-        failures,
+        session,
         output
     );
     if (!condition.has_value()) {
@@ -231,8 +224,7 @@ auto lower_final_if_statement(
         expected_llvm_type,
         expected_signedness,
         context,
-        state,
-        failures,
+        session,
         diagnostics,
         output
     );
@@ -255,8 +247,7 @@ auto lower_final_if_statement(
         expected_llvm_type,
         expected_signedness,
         context,
-        state,
-        failures,
+        session,
         diagnostics,
         output
     );
@@ -298,8 +289,7 @@ auto lower_switch_case_statement_block(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
@@ -315,8 +305,7 @@ auto lower_switch_case_statement_block(
                 expected_llvm_type,
                 expected_signedness,
                 context,
-                state,
-                failures,
+                session,
                 diagnostics,
                 output
             )) {
@@ -334,8 +323,7 @@ auto lower_switch_case_statement_block(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             diagnostics,
             output
         );
@@ -346,8 +334,7 @@ auto lower_switch_case_statement_block(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             diagnostics,
             output
         );
@@ -362,8 +349,7 @@ auto lower_switch_case_statement_block(
         expected_llvm_type,
         expected_signedness,
         context,
-        state,
-        failures,
+        session,
         output
     );
 }
@@ -397,11 +383,12 @@ auto lower_final_switch_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
+    auto& state = session.state;
+    auto& failures = session.failures;
     if (statement.kind != syntax::StatementKind::switch_statement || statement.switch_cases.empty()) {
         record_control_flow_failure(
             failures,
@@ -425,8 +412,7 @@ auto lower_final_switch_statement(
         subject_type->type,
         subject_type->signedness,
         context,
-        state,
-        failures,
+        session,
         output
     );
     if (!subject.has_value()) {
@@ -503,8 +489,7 @@ auto lower_final_switch_statement(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             diagnostics,
             output
         );
@@ -579,8 +564,7 @@ auto lower_let_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
@@ -589,8 +573,7 @@ auto lower_let_statement(
         expected_llvm_type,
         expected_signedness,
         context,
-        state,
-        failures,
+        session,
         diagnostics,
         output
     );
@@ -601,11 +584,11 @@ auto lower_final_control_flow_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
+    auto& failures = session.failures;
     failures.control_flow = {};
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_final_if_statement(
@@ -613,8 +596,7 @@ auto lower_final_control_flow_statement(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             diagnostics,
             output
         );
@@ -625,8 +607,7 @@ auto lower_final_control_flow_statement(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             diagnostics,
             output
         );

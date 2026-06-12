@@ -1,8 +1,7 @@
 #include "orison/lowering/expression_emitter.hpp"
-#include "orison/lowering/function_lowering_state.hpp"
+#include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
-#include "orison/lowering/lowering_failures.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -37,6 +36,10 @@ int main() {
     };
     auto state = orison::lowering::FunctionLoweringState {};
     auto failures = orison::lowering::LoweringFailures {};
+    auto session = orison::lowering::FunctionLoweringSession {
+        .state = state,
+        .failures = failures,
+    };
     state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
         .type = "i1",
         .value = "%flag",
@@ -58,8 +61,7 @@ int main() {
         "i32",
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
-        state,
-        failures,
+        session,
         output
     );
     assert(lowered.has_value());
@@ -89,8 +91,7 @@ int main() {
         "i32",
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
-        state,
-        failures,
+        session,
         output
     );
     assert(!failed.has_value());
@@ -118,8 +119,7 @@ int main() {
         "i32",
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
-        state,
-        failures,
+        session,
         output
     );
     assert(!failed.has_value());

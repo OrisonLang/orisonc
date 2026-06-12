@@ -1,10 +1,9 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_emitter.hpp"
-#include "orison/lowering/function_lowering_state.hpp"
+#include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
-#include "orison/lowering/lowering_failures.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 
@@ -83,6 +82,10 @@ void emit_function_body(
 
     auto state = FunctionLoweringState {};
     auto failures = LoweringFailures {};
+    auto session = FunctionLoweringSession {
+        .state = state,
+        .failures = failures,
+    };
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         state.local_name_counts[function.parameters[index].name] = 1;
         state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
@@ -104,8 +107,7 @@ void emit_function_body(
                     signature.return_type,
                     signature.return_signedness,
                     context,
-                    state,
-                    failures,
+                    session,
                     diagnostics,
                     output
                 )) {
@@ -124,8 +126,7 @@ void emit_function_body(
                     signature.return_type,
                     signature.return_signedness,
                     context,
-                    state,
-                    failures,
+                    session,
                     diagnostics,
                     output
                 );
@@ -161,8 +162,7 @@ void emit_function_body(
             signature.return_type,
             signature.return_signedness,
             context,
-            state,
-            failures,
+            session,
             output
         );
     }

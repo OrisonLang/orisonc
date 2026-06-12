@@ -1,8 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
-#include "orison/lowering/function_lowering_state.hpp"
+#include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
-#include "orison/lowering/lowering_failures.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -42,6 +41,10 @@ int main() {
     };
     auto state = orison::lowering::FunctionLoweringState {};
     auto failures = orison::lowering::LoweringFailures {};
+    auto session = orison::lowering::FunctionLoweringSession {
+        .state = state,
+        .failures = failures,
+    };
     state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
         .type = "i1",
         .value = "%flag",
@@ -63,8 +66,7 @@ int main() {
         "i32",
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
-        state,
-        failures,
+        session,
         diagnostics,
         output
     );
@@ -91,14 +93,17 @@ int main() {
     malformed_if.alternate_statements.clear();
     auto malformed_state = orison::lowering::FunctionLoweringState {};
     auto malformed_failures = orison::lowering::LoweringFailures {};
+    auto malformed_session = orison::lowering::FunctionLoweringSession {
+        .state = malformed_state,
+        .failures = malformed_failures,
+    };
     auto malformed_output = std::ostringstream {};
     auto malformed = orison::lowering::lower_final_control_flow_statement(
         malformed_if,
         "i32",
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
-        malformed_state,
-        malformed_failures,
+        malformed_session,
         diagnostics,
         malformed_output
     );

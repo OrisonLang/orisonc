@@ -174,10 +174,11 @@ auto lowered_expression(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
+    auto& state = session.state;
+    auto& failures = session.failures;
     if (auto literal = lowered_integer_literal(expression, expected_llvm_type, expected_signedness)) {
         return literal;
     }
@@ -268,8 +269,7 @@ auto lowered_expression(
             "i1",
             IntegerSignedness::not_integer,
             context,
-            state,
-            failures,
+            session,
             output
         );
         if (!operand.has_value()) {
@@ -292,8 +292,7 @@ auto lowered_expression(
             "i1",
             IntegerSignedness::not_integer,
             context,
-            state,
-            failures,
+            session,
             output
         );
         if (!condition.has_value()) {
@@ -313,8 +312,7 @@ auto lowered_expression(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             output
         );
         if (!then_value.has_value()) {
@@ -330,8 +328,7 @@ auto lowered_expression(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             output
         );
         if (!else_value.has_value()) {
@@ -370,8 +367,7 @@ auto lowered_expression(
                     "i1",
                     IntegerSignedness::not_integer,
                     context,
-                    state,
-                    failures,
+                    session,
                     output
                 );
                 auto right = lowered_expression(
@@ -379,8 +375,7 @@ auto lowered_expression(
                     "i1",
                     IntegerSignedness::not_integer,
                     context,
-                    state,
-                    failures,
+                    session,
                     output
                 );
                 if (!left.has_value() || !right.has_value()) {
@@ -418,8 +413,7 @@ auto lowered_expression(
                     operand_type->type,
                     operand_type->signedness,
                     context,
-                    state,
-                    failures,
+                    session,
                     output
                 );
                 auto right = lowered_expression(
@@ -427,8 +421,7 @@ auto lowered_expression(
                     operand_type->type,
                     operand_type->signedness,
                     context,
-                    state,
-                    failures,
+                    session,
                     output
                 );
                 if (!left.has_value() || !right.has_value() || left->type != right->type ||
@@ -461,8 +454,7 @@ auto lowered_expression(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             output
         );
         auto right = lowered_expression(
@@ -470,8 +462,7 @@ auto lowered_expression(
             expected_llvm_type,
             expected_signedness,
             context,
-            state,
-            failures,
+            session,
             output
         );
         if (!left.has_value() || !right.has_value() || left->type != right->type ||
@@ -528,8 +519,7 @@ auto lowered_expression(
                 function->second.parameter_types[index],
                 function->second.parameter_signedness[index],
                 context,
-                state,
-                failures,
+                session,
                 output
             );
             if (!argument.has_value()) {
@@ -616,18 +606,17 @@ auto lower_expression(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
+    auto& failures = session.failures;
     failures.expression = {};
     return lowered_expression(
         expression,
         expected_llvm_type,
         expected_signedness,
         context,
-        state,
-        failures,
+        session,
         output
     );
 }

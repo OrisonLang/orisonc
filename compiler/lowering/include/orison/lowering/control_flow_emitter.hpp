@@ -2,8 +2,7 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/expression_emitter.hpp"
-#include "orison/lowering/function_lowering_state.hpp"
-#include "orison/lowering/lowering_failures.hpp"
+#include "orison/lowering/function_lowering_session.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <optional>
@@ -21,8 +20,7 @@ auto lower_let_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool;
@@ -32,8 +30,7 @@ auto lower_final_control_flow_statement(
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     ExpressionEmissionContext const& context,
-    FunctionLoweringState& state,
-    LoweringFailures& failures,
+    FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
