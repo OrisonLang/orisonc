@@ -1,4 +1,5 @@
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -549,84 +550,20 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto arguments = std::vector<LoweredExpression> {};
-        arguments.reserve(expression.arguments.size());
-        for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
-            auto argument = lowered_expression(
-                expression.arguments[index],
-                function->second.parameter_types[index],
-                function->second.parameter_signedness[index],
-                context,
-                session,
-                output
-            );
-            if (!argument.has_value()) {
-                if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
-                    record_failure(
-                        failures,
-                        ExpressionLoweringFailureReason::call_argument_failure,
-                        expression.left->text + " argument " + std::to_string(index + 1)
-                    );
-                }
-                return std::nullopt;
+        auto arguments = lower_call_arguments(expression, function->second, context, session, output);
+        if (!arguments.has_value()) {
+            if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
+                record_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::call_argument_failure,
+                    expression.left->text
+                );
             }
-            auto promotion = index >= function->second.fixed_abi_parameter_count
-                ? c_abi_promotion_for(argument->type)
-                : CAbiPromotion::none;
-            if (function->second.adapter == CAbiAdapterKind::variadic &&
-                promotion == CAbiPromotion::integer_to_i32) {
-                auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-                auto instruction =
-                    argument->signedness == IntegerSignedness::signed_integer ? "sext" : "zext";
-                output << "  " << temporary_name << " = " << instruction << " " << argument->type << " ";
-                output << argument->value << " to i32\n";
-                argument = LoweredExpression {
-                    .type = "i32",
-                    .value = std::move(temporary_name),
-                    .signedness = argument->signedness,
-                };
-            }
-            if (function->second.adapter == CAbiAdapterKind::variadic &&
-                promotion == CAbiPromotion::float_to_double) {
-                auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-                output << "  " << temporary_name << " = fpext float " << argument->value << " to double\n";
-                argument = LoweredExpression {
-                    .type = "double",
-                    .value = std::move(temporary_name),
-                    .signedness = IntegerSignedness::not_integer,
-                };
-            }
-            arguments.push_back(std::move(*argument));
+            return std::nullopt;
         }
 
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        output << "  " << temporary_name << " = call " << function->second.return_type;
-        if (function->second.adapter == CAbiAdapterKind::variadic) {
-            output << " (";
-            for (auto index = std::size_t {0}; index < function->second.fixed_abi_parameter_count; ++index) {
-                if (index > 0) {
-                    output << ", ";
-                }
-                output << function->second.parameter_types[index];
-            }
-            if (function->second.fixed_abi_parameter_count > 0) {
-                output << ", ";
-            }
-            output << "...)";
-        }
-        output << " @" << function->second.symbol_name << "(";
-        for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
-            if (index > 0) {
-                output << ", ";
-            }
-            output << arguments[index].type << " " << arguments[index].value;
-        }
-        output << ")\n";
-        return LoweredExpression {
-            .type = function->second.return_type,
-            .value = std::move(temporary_name),
-            .signedness = function->second.return_signedness,
-        };
+        return emit_value_call(std::move(temporary_name), function->second, *arguments, output);
     }
 
     record_failure(

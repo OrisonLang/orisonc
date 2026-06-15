@@ -50,6 +50,8 @@ analysis, and lowering components.
   statements plus direct `Unit` call statements; member calls remain explicit follow-up work. Direct and conditionally
   nested `break`/`continue` resolve through a function-local nearest-loop target stack, and statement-level `if` emits
   merges only for live branches.
+- Shared LLVM call argument lowering and call-instruction formatting live in a dedicated call emitter; value-producing
+  expression calls and direct `Unit` statement calls consume the same signature, operand, and C ABI adapter policy.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable and mutable binding visibility is isolated by a dedicated RAII scope that snapshots both maps,

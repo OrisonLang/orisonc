@@ -83,6 +83,22 @@ add_test(
     COMMAND orison_c_abi_adapter_smoke
 )
 
+add_executable(orison_call_emitter_smoke
+    smoke/call_emitter_smoke.cpp
+)
+
+target_link_libraries(orison_call_emitter_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_call_emitter_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_call_emitter_smoke
+    COMMAND orison_call_emitter_smoke
+)
+
 add_executable(orison_type_lowering_smoke
     smoke/type_lowering_smoke.cpp
 )

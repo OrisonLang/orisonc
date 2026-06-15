@@ -1,4 +1,5 @@
 add_library(orison_lowering STATIC
+    src/call_emitter.cpp
     src/c_abi_adapter.cpp
     src/conditional_emitter.cpp
     src/conditional_plan.cpp
