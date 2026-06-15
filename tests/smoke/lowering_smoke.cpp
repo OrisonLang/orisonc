@@ -210,6 +210,58 @@ void test_emit_while_call_statement() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_while_unit_call_statement() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_while_unit_call.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    while value < 2 as UInt32\n"
+        "        observe(value)\n"
+        "        value = value + 1 as UInt32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define void @observe(i32 %value) {\n"
+        "entry:\n"
+        "  ret void\n"
+        "}\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.condition.0:\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = icmp ult i32 %tmp0, 2\n"
+        "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
+        "while.body.0:\n"
+        "  %tmp2 = load i32, ptr %value.addr\n"
+        "  call void @observe(i32 %tmp2)\n"
+        "  %tmp3 = load i32, ptr %value.addr\n"
+        "  %tmp4 = add i32 %tmp3, 1\n"
+        "  store i32 %tmp4, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.exit.0:\n"
+        "  %tmp5 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp5\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_while_local_bindings() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_while_local_bindings.or";
     auto result = lower_source(
@@ -1726,6 +1778,7 @@ auto main() -> int {
     test_emit_mutable_uint32_assignment_return();
     test_emit_mutable_uint32_while_return();
     test_emit_while_call_statement();
+    test_emit_while_unit_call_statement();
     test_emit_while_local_bindings();
     test_restore_outer_binding_after_while_local_shadow();
     test_emit_terminal_while_break();

@@ -49,8 +49,12 @@ int main() {
                   "function observe(input: UInt32) -> UInt32\n"
                   "    input\n"
                   "\n"
+                  "function observe_unit(input: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
                   "function call_observe(input: UInt32) -> UInt32\n"
                   "    observe(input)\n"
+                  "    observe_unit(input)\n"
                   "    input\n";
     }
 
@@ -161,7 +165,7 @@ int main() {
         .state = call_state,
         .failures = call_failures,
     };
-    auto const& call_statement = parse_result.module.functions[3].body_statements[0];
+    auto const& call_statement = parse_result.module.functions[4].body_statements[0];
     diagnostics = {};
     output = {};
     assert(orison::lowering::lower_call_statement(
@@ -173,6 +177,19 @@ int main() {
     ));
     assert(!diagnostics.has_errors());
     assert(output.str() == "  %tmp0 = call i32 @observe(i32 %input)\n");
+
+    auto const& unit_call_statement = parse_result.module.functions[4].body_statements[1];
+    diagnostics = {};
+    output = {};
+    assert(orison::lowering::lower_call_statement(
+        unit_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(!diagnostics.has_errors());
+    assert(output.str() == "  call void @observe_unit(i32 %input)\n");
 
     auto immutable_assignment = orison::syntax::StatementSyntax {};
     immutable_assignment.kind = orison::syntax::StatementKind::assignment_statement;

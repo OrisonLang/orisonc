@@ -1,5 +1,6 @@
 #include "orison/lowering/statement_emitter.hpp"
 
+#include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -110,6 +111,121 @@ auto lower_value_statement_block(
         session,
         output
     );
+}
+
+auto append_call_signature(
+    std::ostringstream& output,
+    LoweredFunctionSignature const& function
+) -> void {
+    output << function.return_type;
+    if (function.adapter == CAbiAdapterKind::variadic) {
+        output << " (";
+        for (auto index = std::size_t {0}; index < function.fixed_abi_parameter_count; ++index) {
+            if (index > 0) {
+                output << ", ";
+            }
+            output << function.parameter_types[index];
+        }
+        if (function.fixed_abi_parameter_count > 0) {
+            output << ", ";
+        }
+        output << "...)";
+    }
+}
+
+auto lower_call_arguments(
+    syntax::ExpressionSyntax const& expression,
+    LoweredFunctionSignature const& function,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::vector<LoweredExpression>> {
+    if (function.parameter_types.size() != expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    auto arguments = std::vector<LoweredExpression> {};
+    arguments.reserve(expression.arguments.size());
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto argument = lower_expression(
+            expression.arguments[index],
+            function.parameter_types[index],
+            function.parameter_signedness[index],
+            context,
+            session,
+            output
+        );
+        if (!argument.has_value()) {
+            return std::nullopt;
+        }
+        auto promotion = index >= function.fixed_abi_parameter_count
+            ? c_abi_promotion_for(argument->type)
+            : CAbiPromotion::none;
+        if (function.adapter == CAbiAdapterKind::variadic &&
+            promotion == CAbiPromotion::integer_to_i32) {
+            auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+            auto instruction =
+                argument->signedness == IntegerSignedness::signed_integer ? "sext" : "zext";
+            output << "  " << temporary_name << " = " << instruction << " " << argument->type
+                   << " " << argument->value << " to i32\n";
+            argument = LoweredExpression {
+                .type = "i32",
+                .value = std::move(temporary_name),
+                .signedness = argument->signedness,
+            };
+        }
+        if (function.adapter == CAbiAdapterKind::variadic &&
+            promotion == CAbiPromotion::float_to_double) {
+            auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+            output << "  " << temporary_name << " = fpext float " << argument->value
+                   << " to double\n";
+            argument = LoweredExpression {
+                .type = "double",
+                .value = std::move(temporary_name),
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+        arguments.push_back(std::move(*argument));
+    }
+    return arguments;
+}
+
+auto lower_void_call_statement(
+    syntax::StatementSyntax const& statement,
+    LoweredFunctionSignature const& function,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    auto arguments = lower_call_arguments(
+        statement.expression,
+        function,
+        context,
+        session,
+        output
+    );
+    if (!arguments.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this call statement" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return false;
+    }
+
+    output << "  call ";
+    append_call_signature(output, function);
+    output << " @" << function.symbol_name << "(";
+    for (auto index = std::size_t {0}; index < arguments->size(); ++index) {
+        if (index > 0) {
+            output << ", ";
+        }
+        output << (*arguments)[index].type << " " << (*arguments)[index].value;
+    }
+    output << ")\n";
+    return true;
 }
 
 }  // namespace
@@ -273,9 +389,29 @@ auto lower_call_statement(
     }
 
     auto type = infer_expression_type(statement.expression, context, session.state);
-    if (!type.has_value() || type->type.empty() || type->type == "void") {
+    if (!type.has_value() || type->type.empty()) {
         diagnostics.error(statement.line, "lowering does not yet support this call statement result type");
         return false;
+    }
+    if (type->type == "void") {
+        if (statement.expression.left == nullptr ||
+            statement.expression.left->kind != syntax::ExpressionKind::name) {
+            diagnostics.error(statement.line, "lowering call statement requires a direct function name");
+            return false;
+        }
+        auto function = context.lowering.functions.find(statement.expression.left->text);
+        if (function == context.lowering.functions.end()) {
+            diagnostics.error(statement.line, "lowering call statement target is unknown");
+            return false;
+        }
+        return lower_void_call_statement(
+            statement,
+            function->second,
+            context,
+            session,
+            diagnostics,
+            output
+        );
     }
     auto lowered = lower_expression(
         statement.expression,
