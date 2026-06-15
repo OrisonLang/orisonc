@@ -104,6 +104,9 @@ analysis, and lowering components.
   can distinguish unknown receiver types, unknown methods, ambiguous methods, and resolved-but-not-emitted calls.
   Lowered methods receive deterministic internal symbols of the form `method.<receiver>.<method>`, with non-identifier
   receiver characters sanitized to `_`; member-call emission still remains disabled.
+- Method definitions that fit the existing scalar function subset are emitted after top-level functions using those
+  stable symbols; member-call expressions still remain disabled until receiver argument and method-call lowering are
+  implemented.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

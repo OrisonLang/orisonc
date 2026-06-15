@@ -58,7 +58,7 @@ void emit_function_body(
     }
 
     if (signature.return_type == "void") {
-        output << "define void @" << function.name << "(";
+        output << "define void @" << signature.symbol_name << "(";
         for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
             if (index > 0) {
                 output << ", ";
@@ -73,7 +73,7 @@ void emit_function_body(
         return;
     }
 
-    output << "define " << signature.return_type << " @" << function.name << "(";
+    output << "define " << signature.return_type << " @" << signature.symbol_name << "(";
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         if (index > 0) {
             output << ", ";

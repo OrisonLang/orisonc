@@ -7,6 +7,7 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 
 int main() {
     auto path = std::filesystem::temp_directory_path() / "orison_function_emitter_smoke.or";
@@ -105,6 +106,60 @@ int main() {
         "while.exit.0:\n"
         "  %tmp4 = load i32, ptr %value.addr\n"
         "  ret i32 %tmp4\n"
+        "}\n"
+    );
+
+    auto method = orison::syntax::FunctionSyntax {
+        .name = "scale",
+        .parameters = {
+            orison::syntax::ParameterSyntax {
+                .name = "value",
+                .type = orison::syntax::TypeSyntax {.name = "UInt32"},
+            },
+        },
+        .return_type = orison::syntax::TypeSyntax {.name = "UInt32"},
+    };
+    method.body_statements.push_back(orison::syntax::StatementSyntax {
+        .kind = orison::syntax::StatementKind::expression_statement,
+        .expression = orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::binary,
+            .text = "+",
+            .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                orison::syntax::ExpressionSyntax {
+                    .kind = orison::syntax::ExpressionKind::name,
+                    .text = "value",
+                }
+            ),
+            .right = std::make_unique<orison::syntax::ExpressionSyntax>(
+                orison::syntax::ExpressionSyntax {
+                    .kind = orison::syntax::ExpressionKind::integer_literal,
+                    .text = "1",
+                }
+            ),
+        },
+    });
+    auto method_signature = orison::lowering::LoweredFunctionSignature {
+        .return_type = "i32",
+        .return_signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+        .parameter_types = {"i32"},
+        .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+        .symbol_name = "method.Device.scale",
+    };
+    diagnostics = {};
+    auto method_ir = orison::lowering::emit_function(
+        method,
+        method_signature,
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        method_ir ==
+        "define i32 @method.Device.scale(i32 %value) {\n"
+        "entry:\n"
+        "  %tmp0 = add i32 %value, 1\n"
+        "  ret i32 %tmp0\n"
         "}\n"
     );
 

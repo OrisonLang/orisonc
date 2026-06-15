@@ -564,6 +564,40 @@ void test_reject_unsupported_while_body_statement() {
     );
 }
 
+void test_emit_scalar_extension_method_definition() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_scalar_extension_method.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend Device\n"
+        "    function scale(value: UInt32) -> UInt32\n"
+        "        value + 1 as UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  ret i32 0\n"
+        "}\n"
+        "\n"
+        "define i32 @method.Device.scale(i32 %value) {\n"
+        "entry:\n"
+        "  %tmp0 = add i32 %value, 1\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_uint32_add_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_uint32_add.or";
     auto result = lower_source(
@@ -1788,6 +1822,7 @@ auto main() -> int {
     test_emit_nested_while_if_control();
     test_reject_nonterminal_while_loop_control();
     test_reject_unsupported_while_body_statement();
+    test_emit_scalar_extension_method_definition();
     test_emit_uint32_add_return();
     test_emit_uint32_arithmetic_return();
     test_emit_int32_division_return();

@@ -6,6 +6,7 @@
 #include "orison/lowering/module_prelude.hpp"
 #include "orison/lowering/string_constants.hpp"
 
+#include <cstddef>
 #include <sstream>
 #include <utility>
 
@@ -61,6 +62,39 @@ auto LlvmIrEmitter::emit(
             result.diagnostics
         );
         output << "\n";
+    }
+
+    auto method_index = std::size_t {0};
+    auto emit_method = [&](syntax::FunctionSyntax const& method) -> bool {
+        if (method_index >= context.methods.size()) {
+            result.diagnostics.error(method.line, "lowering context is missing method signature");
+            return false;
+        }
+        auto const& lowered_method = context.methods[method_index++];
+        output << emit_function(
+            method,
+            lowered_method.signature,
+            context,
+            string_constants,
+            result.diagnostics
+        );
+        output << "\n";
+        return !result.has_errors();
+    };
+
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            if (!emit_method(method)) {
+                return result;
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            if (!emit_method(method)) {
+                return result;
+            }
+        }
     }
 
     if (!result.has_errors()) {
