@@ -96,7 +96,8 @@ analysis, and lowering components.
   expression, control-flow, and function emission share it without assigning context ownership to an emitter.
 - Lowering context retains receiver-qualified method signatures from `implements` and `extend` blocks in a separate
   method model; current member-call statement lowering still rejects emission until receiver-aware call lowering can
-  consume that model.
+  consume that model. Method lookup reports `found`, `not_found`, or `ambiguous` rather than silently selecting among
+  duplicate receiver/name matches.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

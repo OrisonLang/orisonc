@@ -84,6 +84,29 @@ int main() {
     assert(context.methods[1].signature.return_type == "void");
     assert(context.methods[1].signature.parameter_types.size() == 1);
     assert(context.methods[1].signature.parameter_types[0].empty());
+    auto read_lookup = orison::lowering::find_lowered_method_signature(context, "Device", "read");
+    assert(read_lookup.result == orison::lowering::LoweredMethodLookupResult::found);
+    assert(read_lookup.method == &context.methods[0]);
+    assert(read_lookup.method->signature.return_type == "i32");
+    auto missing_receiver_lookup =
+        orison::lowering::find_lowered_method_signature(context, "MissingDevice", "read");
+    assert(missing_receiver_lookup.result == orison::lowering::LoweredMethodLookupResult::not_found);
+    assert(missing_receiver_lookup.method == nullptr);
+    auto missing_name_lookup = orison::lowering::find_lowered_method_signature(context, "Device", "write");
+    assert(missing_name_lookup.result == orison::lowering::LoweredMethodLookupResult::not_found);
+    assert(missing_name_lookup.method == nullptr);
+
+    auto duplicate_context = context;
+    duplicate_context.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Device",
+        .method_name = "read",
+        .signature = context.methods[0].signature,
+    });
+    auto ambiguous_lookup =
+        orison::lowering::find_lowered_method_signature(duplicate_context, "Device", "read");
+    assert(ambiguous_lookup.result == orison::lowering::LoweredMethodLookupResult::ambiguous);
+    assert(ambiguous_lookup.method == nullptr);
+
     auto const& foreign = context.foreign_declarations.front();
     assert(foreign.symbol_name == "printf");
     assert(foreign.adapter == orison::lowering::CAbiAdapterKind::variadic);

@@ -112,4 +112,31 @@ auto build_lowering_context(
     return context;
 }
 
+auto find_lowered_method_signature(
+    LoweringContext const& context,
+    std::string_view receiver_type_name,
+    std::string_view method_name
+) -> LoweredMethodLookup {
+    auto const* match = static_cast<LoweredMethodSignature const*>(nullptr);
+    for (auto const& method : context.methods) {
+        if (method.receiver_type_name != receiver_type_name || method.method_name != method_name) {
+            continue;
+        }
+        if (match != nullptr) {
+            return LoweredMethodLookup {
+                .result = LoweredMethodLookupResult::ambiguous,
+            };
+        }
+        match = &method;
+    }
+
+    if (match == nullptr) {
+        return {};
+    }
+    return LoweredMethodLookup {
+        .result = LoweredMethodLookupResult::found,
+        .method = match,
+    };
+}
+
 }  // namespace orison::lowering
