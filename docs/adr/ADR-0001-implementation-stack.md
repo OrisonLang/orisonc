@@ -94,6 +94,9 @@ analysis, and lowering components.
   owned state and failure objects, reducing recursive parameter lists without recombining their responsibilities.
 - Immutable module lowering data and string constants are exposed through a neutral `LoweringEmissionContext`;
   expression, control-flow, and function emission share it without assigning context ownership to an emitter.
+- Lowering context retains receiver-qualified method signatures from `implements` and `extend` blocks in a separate
+  method model; current member-call statement lowering still rejects emission until receiver-aware call lowering can
+  consume that model.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

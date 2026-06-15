@@ -2,6 +2,7 @@
 
 #include "orison/lowering/c_abi_adapter.hpp"
 
+#include <cstddef>
 #include <string_view>
 #include <utility>
 
@@ -15,6 +16,34 @@ auto unquoted_text(std::string_view text) -> std::string_view {
     return text;
 }
 
+auto render_type_name(syntax::TypeSyntax const& type) -> std::string {
+    auto rendered = type.name;
+    if (type.generic_arguments.empty()) {
+        return rendered;
+    }
+
+    rendered += "<";
+    for (auto index = std::size_t {0}; index < type.generic_arguments.size(); ++index) {
+        if (index > 0) {
+            rendered += ", ";
+        }
+        rendered += render_type_name(type.generic_arguments[index]);
+    }
+    rendered += ">";
+    return rendered;
+}
+
+auto collect_method_signature(
+    std::string receiver_type_name,
+    syntax::FunctionSyntax const& method
+) -> LoweredMethodSignature {
+    return LoweredMethodSignature {
+        .receiver_type_name = std::move(receiver_type_name),
+        .method_name = method.name,
+        .signature = lower_function_signature(method.return_type, method.parameters, method.name),
+    };
+}
+
 }  // namespace
 
 auto build_lowering_context(
@@ -26,6 +55,20 @@ auto build_lowering_context(
         auto signature =
             lower_function_signature(function.return_type, function.parameters, function.name);
         context.functions.emplace(function.name, std::move(signature));
+    }
+
+    for (auto const& implementation : module.implementations) {
+        auto receiver_type_name = render_type_name(implementation.receiver_type);
+        for (auto const& method : implementation.methods) {
+            context.methods.push_back(collect_method_signature(receiver_type_name, method));
+        }
+    }
+
+    for (auto const& extension : module.extensions) {
+        auto receiver_type_name = render_type_name(extension.receiver_type);
+        for (auto const& method : extension.methods) {
+            context.methods.push_back(collect_method_signature(receiver_type_name, method));
+        }
     }
 
     for (auto const& foreign_import : module.foreign_imports) {

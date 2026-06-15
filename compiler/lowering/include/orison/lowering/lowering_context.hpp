@@ -10,8 +10,15 @@
 
 namespace orison::lowering {
 
+struct LoweredMethodSignature {
+    std::string receiver_type_name;
+    std::string method_name;
+    LoweredFunctionSignature signature;
+};
+
 struct LoweringContext {
     std::unordered_map<std::string, LoweredFunctionSignature> functions;
+    std::vector<LoweredMethodSignature> methods;
     std::vector<LoweredFunctionSignature> foreign_declarations;
 };
 
