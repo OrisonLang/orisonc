@@ -75,12 +75,14 @@ int main() {
     assert(context.foreign_declarations.size() == 1);
     assert(context.methods[0].receiver_type_name == "Device");
     assert(context.methods[0].method_name == "read");
+    assert(context.methods[0].signature.symbol_name == "method.Device.read");
     assert(context.methods[0].signature.return_type == "i32");
     assert(context.methods[0].signature.parameter_types.size() == 2);
     assert(context.methods[0].signature.parameter_types[0].empty());
     assert(context.methods[0].signature.parameter_types[1] == "i32");
     assert(context.methods[1].receiver_type_name == "Box<UInt32>");
     assert(context.methods[1].method_name == "reset");
+    assert(context.methods[1].signature.symbol_name == "method.Box_UInt32_.reset");
     assert(context.methods[1].signature.return_type == "void");
     assert(context.methods[1].signature.parameter_types.size() == 1);
     assert(context.methods[1].signature.parameter_types[0].empty());
@@ -106,6 +108,10 @@ int main() {
         orison::lowering::find_lowered_method_signature(duplicate_context, "Device", "read");
     assert(ambiguous_lookup.result == orison::lowering::LoweredMethodLookupResult::ambiguous);
     assert(ambiguous_lookup.method == nullptr);
+    assert(
+        orison::lowering::lowered_method_symbol_name("Pair<Header, UInt16>", "read_value") ==
+        "method.Pair_Header__UInt16_.read_value"
+    );
 
     auto const& foreign = context.foreign_declarations.front();
     assert(foreign.symbol_name == "printf");

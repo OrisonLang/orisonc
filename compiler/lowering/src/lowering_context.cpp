@@ -20,10 +20,15 @@ auto collect_method_signature(
     std::string receiver_type_name,
     syntax::FunctionSyntax const& method
 ) -> LoweredMethodSignature {
+    auto symbol_name = lowered_method_symbol_name(receiver_type_name, method.name);
     return LoweredMethodSignature {
-        .receiver_type_name = std::move(receiver_type_name),
+        .receiver_type_name = receiver_type_name,
         .method_name = method.name,
-        .signature = lower_function_signature(method.return_type, method.parameters, method.name),
+        .signature = lower_function_signature(
+            method.return_type,
+            method.parameters,
+            std::move(symbol_name)
+        ),
     };
 }
 
@@ -120,6 +125,29 @@ auto find_lowered_method_signature(
         .result = LoweredMethodLookupResult::found,
         .method = match,
     };
+}
+
+auto lowered_method_symbol_name(
+    std::string_view receiver_type_name,
+    std::string_view method_name
+) -> std::string {
+    auto symbol = std::string {"method."};
+    auto append_sanitized = [&symbol](std::string_view text) {
+        for (auto character : text) {
+            if ((character >= 'a' && character <= 'z') ||
+                (character >= 'A' && character <= 'Z') ||
+                (character >= '0' && character <= '9') ||
+                character == '_') {
+                symbol.push_back(character);
+                continue;
+            }
+            symbol.push_back('_');
+        }
+    };
+    append_sanitized(receiver_type_name);
+    symbol += ".";
+    append_sanitized(method_name);
+    return symbol;
 }
 
 }  // namespace orison::lowering

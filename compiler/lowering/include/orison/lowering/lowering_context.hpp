@@ -45,4 +45,9 @@ auto find_lowered_method_signature(
     std::string_view method_name
 ) -> LoweredMethodLookup;
 
+auto lowered_method_symbol_name(
+    std::string_view receiver_type_name,
+    std::string_view method_name
+) -> std::string;
+
 }  // namespace orison::lowering

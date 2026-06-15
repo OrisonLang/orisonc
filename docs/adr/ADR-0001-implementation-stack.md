@@ -102,6 +102,8 @@ analysis, and lowering components.
   inference for member-call expressions consumes that map and currently supports direct name receivers only.
   Member-call statement diagnostics compose receiver inference with lowered method lookup so unsupported member calls
   can distinguish unknown receiver types, unknown methods, ambiguous methods, and resolved-but-not-emitted calls.
+  Lowered methods receive deterministic internal symbols of the form `method.<receiver>.<method>`, with non-identifier
+  receiver characters sanitized to `_`; member-call emission still remains disabled.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
