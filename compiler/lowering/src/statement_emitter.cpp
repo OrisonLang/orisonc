@@ -319,6 +319,12 @@ auto lower_call_statement(
         diagnostics.error(statement.line, "lowering call statement requires a call expression");
         return false;
     }
+    if (statement.expression.left != nullptr &&
+        (statement.expression.left->kind == syntax::ExpressionKind::member_access ||
+         statement.expression.left->kind == syntax::ExpressionKind::null_safe_member_access)) {
+        diagnostics.error(statement.line, "lowering member call statements is not yet supported");
+        return false;
+    }
 
     auto type = infer_expression_type(statement.expression, context, session.state);
     if (!type.has_value() || type->type.empty()) {

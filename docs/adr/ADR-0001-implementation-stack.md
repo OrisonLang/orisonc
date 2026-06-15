@@ -54,6 +54,7 @@ analysis, and lowering components.
   expression calls and direct `Unit` statement calls consume the same signature, operand, and C ABI adapter policy.
   Statement-side `Unit` calls still own call-statement diagnostics and translate arity/argument failures into the
   same structured lowering failure categories used by expression calls.
+  Member-call statements are rejected explicitly until receiver-aware call lowering has a lowered method model.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable and mutable binding visibility is isolated by a dedicated RAII scope that snapshots both maps,

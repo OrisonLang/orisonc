@@ -355,6 +355,56 @@ int main() {
         "lowering call statement requires a call expression"
     );
 
+    auto member_call_statement = orison::syntax::StatementSyntax {};
+    member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    member_call_statement.line = 8;
+    member_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    member_call_statement.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    member_call_statement.expression.left->kind = orison::syntax::ExpressionKind::member_access;
+    member_call_statement.expression.left->text = "observe";
+    member_call_statement.expression.left->left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    member_call_statement.expression.left->left->kind = orison::syntax::ExpressionKind::name;
+    member_call_statement.expression.left->left->text = "receiver";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        member_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering member call statements is not yet supported"
+    );
+    assert(output.str().empty());
+
+    auto null_safe_member_call_statement = orison::syntax::StatementSyntax {};
+    null_safe_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    null_safe_member_call_statement.line = 9;
+    null_safe_member_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    null_safe_member_call_statement.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_member_call_statement.expression.left->kind = orison::syntax::ExpressionKind::null_safe_member_access;
+    null_safe_member_call_statement.expression.left->text = "observe";
+    null_safe_member_call_statement.expression.left->left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_member_call_statement.expression.left->left->kind = orison::syntax::ExpressionKind::name;
+    null_safe_member_call_statement.expression.left->left->text = "receiver";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        null_safe_member_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering member call statements is not yet supported"
+    );
+    assert(output.str().empty());
+
     auto loop_state = orison::lowering::FunctionLoweringState {};
     loop_state.loop_targets.push_back(orison::lowering::LoopTargets {
         .break_target = "while.exit.0",
