@@ -23,6 +23,7 @@ private:
     FunctionLoweringState& state_;
     std::unordered_map<std::string, LoweredExpression> saved_immutable_bindings_;
     std::unordered_map<std::string, MutableBinding> saved_mutable_bindings_;
+    std::unordered_map<std::string, std::string> saved_source_type_names_;
 };
 
 }  // namespace orison::lowering

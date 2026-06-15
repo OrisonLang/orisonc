@@ -98,6 +98,8 @@ analysis, and lowering components.
   method model; current member-call statement lowering still rejects emission until receiver-aware call lowering can
   consume that model. Method lookup reports `found`, `not_found`, or `ambiguous` rather than silently selecting among
   duplicate receiver/name matches.
+- Function lowering state keeps source-level type names in a side map for parameters and annotated locals; receiver
+  inference for member-call expressions consumes that map and currently supports direct name receivers only.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

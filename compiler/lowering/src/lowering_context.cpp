@@ -1,8 +1,8 @@
 #include "orison/lowering/lowering_context.hpp"
 
 #include "orison/lowering/c_abi_adapter.hpp"
+#include "orison/lowering/member_call_receiver.hpp"
 
-#include <cstddef>
 #include <string_view>
 #include <utility>
 
@@ -14,23 +14,6 @@ auto unquoted_text(std::string_view text) -> std::string_view {
         return text.substr(1, text.size() - 2);
     }
     return text;
-}
-
-auto render_type_name(syntax::TypeSyntax const& type) -> std::string {
-    auto rendered = type.name;
-    if (type.generic_arguments.empty()) {
-        return rendered;
-    }
-
-    rendered += "<";
-    for (auto index = std::size_t {0}; index < type.generic_arguments.size(); ++index) {
-        if (index > 0) {
-            rendered += ", ";
-        }
-        rendered += render_type_name(type.generic_arguments[index]);
-    }
-    rendered += ">";
-    return rendered;
 }
 
 auto collect_method_signature(
@@ -58,14 +41,14 @@ auto build_lowering_context(
     }
 
     for (auto const& implementation : module.implementations) {
-        auto receiver_type_name = render_type_name(implementation.receiver_type);
+        auto receiver_type_name = render_source_type_name(implementation.receiver_type);
         for (auto const& method : implementation.methods) {
             context.methods.push_back(collect_method_signature(receiver_type_name, method));
         }
     }
 
     for (auto const& extension : module.extensions) {
-        auto receiver_type_name = render_type_name(extension.receiver_type);
+        auto receiver_type_name = render_source_type_name(extension.receiver_type);
         for (auto const& method : extension.methods) {
             context.methods.push_back(collect_method_signature(receiver_type_name, method));
         }

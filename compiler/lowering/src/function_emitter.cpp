@@ -6,6 +6,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/while_emitter.hpp"
@@ -96,6 +97,10 @@ void emit_function_body(
             .value = llvm_local_value_name(function.parameters[index].name),
             .signedness = signature.parameter_signedness[index],
         });
+        state.source_type_names.emplace(
+            function.parameters[index].name,
+            render_source_type_name(function.parameters[index].type)
+        );
     }
     auto const* expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
     auto lowered_final_statement = std::optional<LoweredExpression> {};

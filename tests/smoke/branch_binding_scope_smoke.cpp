@@ -17,6 +17,8 @@ int main() {
         },
         .storage = "%outer_mutable.addr",
     });
+    state.source_type_names["outer"] = "Outer";
+    state.source_type_names["outer_mutable"] = "OuterMutable";
     state.local_name_counts["outer"] = 1;
     state.next_temporary_index = 4;
     state.next_block_index = 2;
@@ -34,6 +36,8 @@ int main() {
             },
             .storage = "%branch_mutable.addr",
         });
+        state.source_type_names["branch"] = "Branch";
+        state.source_type_names["branch_mutable"] = "BranchMutable";
         state.local_name_counts["branch"] = 1;
         state.next_temporary_index = 5;
         state.next_block_index = 3;
@@ -46,6 +50,11 @@ int main() {
         assert(state.mutable_bindings.size() == 1);
         assert(state.mutable_bindings.contains("outer_mutable"));
         assert(!state.mutable_bindings.contains("branch_mutable"));
+        assert(state.source_type_names.size() == 2);
+        assert(state.source_type_names.contains("outer"));
+        assert(state.source_type_names.contains("outer_mutable"));
+        assert(!state.source_type_names.contains("branch"));
+        assert(!state.source_type_names.contains("branch_mutable"));
         assert(state.local_name_counts.contains("branch"));
         assert(state.next_temporary_index == 5);
         assert(state.next_block_index == 3);
@@ -62,6 +71,8 @@ int main() {
             },
             .storage = "%sibling_mutable.addr",
         });
+        state.source_type_names["sibling"] = "Sibling";
+        state.source_type_names["sibling_mutable"] = "SiblingMutable";
     }
 
     assert(state.immutable_bindings.size() == 1);
@@ -70,6 +81,11 @@ int main() {
     assert(state.mutable_bindings.size() == 1);
     assert(state.mutable_bindings.contains("outer_mutable"));
     assert(!state.mutable_bindings.contains("sibling_mutable"));
+    assert(state.source_type_names.size() == 2);
+    assert(state.source_type_names.contains("outer"));
+    assert(state.source_type_names.contains("outer_mutable"));
+    assert(!state.source_type_names.contains("sibling"));
+    assert(!state.source_type_names.contains("sibling_mutable"));
     assert(state.local_name_counts.contains("branch"));
     assert(state.next_temporary_index == 5);
     assert(state.next_block_index == 3);
@@ -87,6 +103,8 @@ int main() {
             },
             .storage = "%unwound_mutable.addr",
         });
+        state.source_type_names["unwound"] = "Unwound";
+        state.source_type_names["unwound_mutable"] = "UnwoundMutable";
         throw std::runtime_error("test unwind");
     } catch (std::runtime_error const&) {
     }
@@ -96,5 +114,10 @@ int main() {
     assert(state.mutable_bindings.size() == 1);
     assert(state.mutable_bindings.contains("outer_mutable"));
     assert(!state.mutable_bindings.contains("unwound_mutable"));
+    assert(state.source_type_names.size() == 2);
+    assert(state.source_type_names.contains("outer"));
+    assert(state.source_type_names.contains("outer_mutable"));
+    assert(!state.source_type_names.contains("unwound"));
+    assert(!state.source_type_names.contains("unwound_mutable"));
     return 0;
 }

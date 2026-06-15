@@ -6,6 +6,7 @@
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/member_call_receiver.hpp"
 
 #include <span>
 #include <string>
@@ -206,6 +207,10 @@ auto lower_let_statement(
         .value = std::move(local_name),
         .signedness = lowered->signedness,
     };
+    if (!statement.annotated_type.name.empty()) {
+        session.state.source_type_names[statement.name] =
+            render_source_type_name(statement.annotated_type);
+    }
     return true;
 }
 
@@ -264,6 +269,10 @@ auto lower_var_statement(
         .type = std::move(type),
         .storage = std::move(storage),
     };
+    if (!statement.annotated_type.name.empty()) {
+        session.state.source_type_names[statement.name] =
+            render_source_type_name(statement.annotated_type);
+    }
     return true;
 }
 

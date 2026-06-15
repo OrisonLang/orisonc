@@ -143,6 +143,7 @@ int main() {
     );
     assert(mutable_value.has_value());
     assert(mutable_value->value == "%tmp2");
+    assert(mutable_state.source_type_names.at("total") == "UInt32");
     assert(
         output.str() ==
         "  %total.addr = alloca i32\n"

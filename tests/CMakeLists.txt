@@ -227,6 +227,22 @@ add_test(
     COMMAND orison_statement_emitter_smoke
 )
 
+add_executable(orison_member_call_receiver_smoke
+    smoke/member_call_receiver_smoke.cpp
+)
+
+target_link_libraries(orison_member_call_receiver_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_member_call_receiver_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_member_call_receiver_smoke
+    COMMAND orison_member_call_receiver_smoke
+)
+
 add_executable(orison_branch_binding_scope_smoke
     smoke/branch_binding_scope_smoke.cpp
 )
