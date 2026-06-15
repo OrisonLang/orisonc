@@ -191,6 +191,56 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(output.str() == "  call void @observe_unit(i32 %input)\n");
 
+    auto unit_arity_mismatch = orison::syntax::StatementSyntax {};
+    unit_arity_mismatch.kind = orison::syntax::StatementKind::expression_statement;
+    unit_arity_mismatch.line = 6;
+    unit_arity_mismatch.expression.kind = orison::syntax::ExpressionKind::call;
+    unit_arity_mismatch.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    unit_arity_mismatch.expression.left->kind = orison::syntax::ExpressionKind::name;
+    unit_arity_mismatch.expression.left->text = "observe_unit";
+    call_failures = {};
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        unit_arity_mismatch,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering call statement failed: call arity mismatch: observe_unit expects 1 arguments, got 0"
+    );
+    assert(output.str().empty());
+
+    auto unit_bad_argument = orison::syntax::StatementSyntax {};
+    unit_bad_argument.kind = orison::syntax::StatementKind::expression_statement;
+    unit_bad_argument.line = 7;
+    unit_bad_argument.expression.kind = orison::syntax::ExpressionKind::call;
+    unit_bad_argument.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    unit_bad_argument.expression.left->kind = orison::syntax::ExpressionKind::name;
+    unit_bad_argument.expression.left->text = "observe_unit";
+    unit_bad_argument.expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "missing",
+    });
+    call_failures = {};
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        unit_bad_argument,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering call statement failed: unknown lowered name: missing"
+    );
+    assert(output.str().empty());
+
     auto immutable_assignment = orison::syntax::StatementSyntax {};
     immutable_assignment.kind = orison::syntax::StatementKind::assignment_statement;
     immutable_assignment.assignment_target.kind = orison::syntax::ExpressionKind::name;

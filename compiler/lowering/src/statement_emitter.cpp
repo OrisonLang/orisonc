@@ -9,6 +9,7 @@
 
 #include <span>
 #include <string>
+#include <utility>
 
 namespace orison::lowering {
 namespace {
@@ -113,12 +114,25 @@ auto lower_value_statement_block(
 
 auto lower_void_call_statement(
     syntax::StatementSyntax const& statement,
+    std::string const& function_name,
     LoweredFunctionSignature const& function,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
+    if (function.parameter_types.size() != statement.expression.arguments.size()) {
+        session.failures.expression = ExpressionLoweringFailure {
+            .reason = ExpressionLoweringFailureReason::call_arity_mismatch,
+            .detail = function_name + " expects " +
+                std::to_string(function.parameter_types.size()) + " arguments, got " +
+                std::to_string(statement.expression.arguments.size()),
+        };
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(statement.line, "lowering call statement failed: " + detail);
+        return false;
+    }
+
     auto arguments = lower_call_arguments(
         statement.expression,
         function,
@@ -127,10 +141,16 @@ auto lower_void_call_statement(
         output
     );
     if (!arguments.has_value()) {
+        if (session.failures.expression.reason == ExpressionLoweringFailureReason::none) {
+            session.failures.expression = ExpressionLoweringFailure {
+                .reason = ExpressionLoweringFailureReason::call_argument_failure,
+                .detail = function_name,
+            };
+        }
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this call statement" +
+            "lowering call statement failed" +
                 (detail.empty() ? std::string {} : ": " + detail)
         );
         return false;
@@ -318,6 +338,7 @@ auto lower_call_statement(
         }
         return lower_void_call_statement(
             statement,
+            statement.expression.left->text,
             function->second,
             context,
             session,
