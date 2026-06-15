@@ -356,6 +356,28 @@ int main() {
         "lowering call statement requires a call expression"
     );
 
+    auto unsupported_member_call_statement = orison::syntax::StatementSyntax {};
+    unsupported_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    unsupported_member_call_statement.line = 8;
+    unsupported_member_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    unsupported_member_call_statement.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    unsupported_member_call_statement.expression.left->kind = orison::syntax::ExpressionKind::member_access;
+    unsupported_member_call_statement.expression.left->text = "observe";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        unsupported_member_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering member call statement has unsupported receiver shape"
+    );
+    assert(output.str().empty());
+
     auto member_call_statement = orison::syntax::StatementSyntax {};
     member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
     member_call_statement.line = 8;
@@ -377,7 +399,48 @@ int main() {
     ));
     assert(
         diagnostics.entries().front().message ==
-        "lowering member call statements is not yet supported"
+        "lowering member call receiver type is unknown"
+    );
+    assert(output.str().empty());
+
+    call_state.source_type_names["receiver"] = "Device";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        member_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering member call target is unknown: Device.observe"
+    );
+    assert(output.str().empty());
+
+    lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Device",
+        .method_name = "observe",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "void",
+            .parameter_types = {"i32"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .symbol_name = "Device.observe",
+        },
+    });
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        member_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering member call statements is not yet supported: Device.observe"
     );
     assert(output.str().empty());
 
@@ -402,7 +465,32 @@ int main() {
     ));
     assert(
         diagnostics.entries().front().message ==
-        "lowering member call statements is not yet supported"
+        "lowering member call statements is not yet supported: Device.observe"
+    );
+    assert(output.str().empty());
+
+    lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Device",
+        .method_name = "observe",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "void",
+            .parameter_types = {"i32"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .symbol_name = "Device.observe.duplicate",
+        },
+    });
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        member_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering member call target is ambiguous: Device.observe"
     );
     assert(output.str().empty());
 

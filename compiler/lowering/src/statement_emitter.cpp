@@ -161,6 +161,52 @@ auto lower_void_call_statement(
     return true;
 }
 
+auto diagnose_member_call_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringState const& state,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    auto receiver = infer_member_call_receiver(statement.expression, state);
+    if (receiver.result == MemberCallReceiverInferenceResult::unsupported_shape) {
+        diagnostics.error(statement.line, "lowering member call statement has unsupported receiver shape");
+        return false;
+    }
+    if (receiver.result == MemberCallReceiverInferenceResult::not_found) {
+        diagnostics.error(statement.line, "lowering member call receiver type is unknown");
+        return false;
+    }
+
+    auto method = find_lowered_method_signature(
+        context.lowering,
+        receiver.receiver_type_name,
+        receiver.method_name
+    );
+    if (method.result == LoweredMethodLookupResult::not_found) {
+        diagnostics.error(
+            statement.line,
+            "lowering member call target is unknown: " + receiver.receiver_type_name +
+                "." + receiver.method_name
+        );
+        return false;
+    }
+    if (method.result == LoweredMethodLookupResult::ambiguous) {
+        diagnostics.error(
+            statement.line,
+            "lowering member call target is ambiguous: " + receiver.receiver_type_name +
+                "." + receiver.method_name
+        );
+        return false;
+    }
+
+    diagnostics.error(
+        statement.line,
+        "lowering member call statements is not yet supported: " +
+            receiver.receiver_type_name + "." + receiver.method_name
+    );
+    return false;
+}
+
 }  // namespace
 
 auto value_expression_for(
@@ -331,8 +377,7 @@ auto lower_call_statement(
     if (statement.expression.left != nullptr &&
         (statement.expression.left->kind == syntax::ExpressionKind::member_access ||
          statement.expression.left->kind == syntax::ExpressionKind::null_safe_member_access)) {
-        diagnostics.error(statement.line, "lowering member call statements is not yet supported");
-        return false;
+        return diagnose_member_call_statement(statement, context, session.state, diagnostics);
     }
 
     auto type = infer_expression_type(statement.expression, context, session.state);
