@@ -210,6 +210,98 @@ void test_emit_while_call_statement() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_while_local_bindings() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_while_local_bindings.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    while value < 2 as UInt32\n"
+        "        let step = 1 as UInt32\n"
+        "        var local: UInt32 = value + step\n"
+        "        value = local + step\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.condition.0:\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = icmp ult i32 %tmp0, 2\n"
+        "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
+        "while.body.0:\n"
+        "  %step = add i32 0, 1\n"
+        "  %tmp2 = load i32, ptr %value.addr\n"
+        "  %tmp3 = add i32 %tmp2, %step\n"
+        "  %local.addr = alloca i32\n"
+        "  store i32 %tmp3, ptr %local.addr\n"
+        "  %tmp4 = load i32, ptr %local.addr\n"
+        "  %tmp5 = add i32 %tmp4, %step\n"
+        "  store i32 %tmp5, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.exit.0:\n"
+        "  %tmp6 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp6\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_restore_outer_binding_after_while_local_shadow() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_while_local_shadow.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let step = 5 as UInt32\n"
+        "    var value = 0 as UInt32\n"
+        "    while value < 1 as UInt32\n"
+        "        let step = 1 as UInt32\n"
+        "        value = step\n"
+        "        break\n"
+        "    step\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %step = add i32 0, 5\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.condition.0:\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = icmp ult i32 %tmp0, 1\n"
+        "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
+        "while.body.0:\n"
+        "  %step.1 = add i32 0, 1\n"
+        "  store i32 %step.1, ptr %value.addr\n"
+        "  br label %while.exit.0\n"
+        "while.exit.0:\n"
+        "  ret i32 %step\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_terminal_while_break() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_while_break.or";
     auto result = lower_source(
@@ -407,8 +499,7 @@ void test_reject_unsupported_while_body_statement() {
         "function main() -> UInt32\n"
         "    var value = 0 as UInt32\n"
         "    while value < 3 as UInt32\n"
-        "        let increment = 1 as UInt32\n"
-        "        value = value + increment\n"
+        "        value\n"
         "    value\n"
     );
 
@@ -416,8 +507,8 @@ void test_reject_unsupported_while_body_statement() {
     assert(result.diagnostics.entries().size() == 1);
     assert(
         result.diagnostics.entries().front().message ==
-        "lowering while body only supports mutable-local assignments, call statements, "
-        "loop control, and nested if statements"
+        "lowering while body only supports local bindings, mutable-local assignments, "
+        "call statements, loop control, and nested if statements"
     );
 }
 
@@ -1635,6 +1726,8 @@ auto main() -> int {
     test_emit_mutable_uint32_assignment_return();
     test_emit_mutable_uint32_while_return();
     test_emit_while_call_statement();
+    test_emit_while_local_bindings();
+    test_restore_outer_binding_after_while_local_shadow();
     test_emit_terminal_while_break();
     test_emit_terminal_while_continue();
     test_emit_conditional_while_continue_and_break();

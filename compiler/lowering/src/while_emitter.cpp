@@ -1,5 +1,6 @@
 #include "orison/lowering/while_emitter.hpp"
 
+#include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
@@ -7,6 +8,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 
+#include <optional>
 #include <string>
 
 namespace orison::lowering {
@@ -79,6 +81,7 @@ auto lower_while_body_if(
         next_llvm_block_index(session.state.next_block_index)
     );
     auto const has_else = !statement.alternate_statements.empty();
+    auto binding_scope = BranchBindingScope(session.state);
     emit_llvm_conditional_branch(
         output,
         condition->value,
@@ -99,6 +102,7 @@ auto lower_while_body_if(
 
     auto else_flow = StatementFlow::falls_through;
     if (has_else) {
+        binding_scope.reset();
         emit_llvm_block_label(output, plan.else_block);
         session.state.current_block = plan.else_block;
         else_flow = lower_while_body_block(
@@ -121,9 +125,28 @@ auto lower_while_body_if(
         return StatementFlow::terminated;
     }
 
+    binding_scope.reset();
     emit_llvm_block_label(output, plan.merge_block);
     session.state.current_block = plan.merge_block;
     return StatementFlow::falls_through;
+}
+
+auto inferred_loop_binding_type(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<LoweredType> {
+    if (!statement.annotated_type.name.empty()) {
+        auto type = llvm_type_for(statement.annotated_type);
+        if (!type.has_value() || *type == "void") {
+            return std::nullopt;
+        }
+        return LoweredType {
+            .type = std::string(*type),
+            .signedness = integer_signedness_for(statement.annotated_type),
+        };
+    }
+    return infer_expression_type(statement.expression, context, state);
 }
 
 auto lower_while_body_statement(
@@ -133,6 +156,40 @@ auto lower_while_body_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
+    if (statement.kind == syntax::StatementKind::let_binding) {
+        auto type = inferred_loop_binding_type(statement, context, session.state);
+        if (!type.has_value()) {
+            diagnostics.error(statement.line, "lowering does not yet support this while let type");
+            return StatementFlow::failed;
+        }
+        return lower_let_statement(
+            statement,
+            type->type,
+            type->signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        ) ? StatementFlow::falls_through
+          : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::var_binding) {
+        auto type = inferred_loop_binding_type(statement, context, session.state);
+        if (!type.has_value()) {
+            diagnostics.error(statement.line, "lowering does not yet support this while var type");
+            return StatementFlow::failed;
+        }
+        return lower_var_statement(
+            statement,
+            type->type,
+            type->signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        ) ? StatementFlow::falls_through
+          : StatementFlow::failed;
+    }
     if (statement.kind == syntax::StatementKind::assignment_statement) {
         return lower_assignment_statement(statement, context, session, diagnostics, output)
             ? StatementFlow::falls_through
@@ -156,8 +213,8 @@ auto lower_while_body_statement(
 
     diagnostics.error(
         statement.line,
-        "lowering while body only supports mutable-local assignments, call statements, "
-        "loop control, and nested if statements"
+        "lowering while body only supports local bindings, mutable-local assignments, "
+        "call statements, loop control, and nested if statements"
     );
     return StatementFlow::failed;
 }
@@ -240,6 +297,7 @@ auto lower_while_statement(
             .continue_target = condition_block,
         },
     };
+    auto body_scope = BranchBindingScope(session.state);
     auto body_flow =
         lower_while_body_block(statement.nested_statements, context, session, diagnostics, output);
     if (body_flow == StatementFlow::failed) {
