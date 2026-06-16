@@ -2,6 +2,7 @@
 
 `minimal.or` is the stable backend demo and must compile, link, and run with exit status `0`.
 `ffi_fixed_parameters.or` demonstrates a finite C FFI contract with two explicit `Pointer<Byte>` parameters.
+`nested_pointer_aggregate_assignment.or` demonstrates nested pointer-backed aggregate assignment on records and fixed arrays.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
@@ -18,6 +19,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `tour_09_ffi_printf.or` | C FFI, explicit `library "m"`, and `printf("Hello world from Orison!\\n")` | backend |
 | `tour_10_unsafe_memory.or` | `const`, `unsafe`, pointers, raw and volatile access | frontend |
 | `tour_11_concurrency.or` | `async`, `await`, `task`, `thread` | frontend |
+| `nested_pointer_aggregate_assignment.or` | nested pointer-backed aggregate assignment | frontend |
 
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
 The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
@@ -43,3 +45,11 @@ build/tools/orisonc/orisonc run examples/ffi_fixed_parameters.or
 ```
 
 It calls `strcmp` with exactly two statically checked arguments and exits with status `0`.
+
+Run the nested aggregate assignment demo with:
+
+```sh
+build/tools/orisonc/orisonc --parse examples/nested_pointer_aggregate_assignment.or
+```
+
+It currently serves as a frontend parity check for nested pointer-backed aggregate assignment.

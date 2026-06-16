@@ -1,0 +1,16 @@
+package examples.aggregates
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+record Log
+    entries: Array<UartRegisters, 2>
+
+record Matrix
+    rows: Array<Array<Byte, 4>, 2>
+
+unsafe function assign_nested_pointer_aggregate(log: Pointer<Log>, matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Unit
+    log.entries[index].status = 8 as UInt32
+    matrix.rows[index][inner] = 1 as Byte
+    return
