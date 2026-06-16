@@ -788,6 +788,54 @@ int main() {
     assert(emit_pointer_aggregate_assignment.stdout_text.find("store i32 4, ptr %tmp") != std::string::npos);
     assert(emit_pointer_aggregate_assignment.stdout_text.find("store i8 7, ptr %tmp") != std::string::npos);
 
+    auto emit_pointer_nested_aggregate_assignment_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_pointer_nested_aggregate_assignment.or";
+    write_concurrency_fixture(
+        emit_pointer_nested_aggregate_assignment_path,
+        "demo.emit",
+        {
+            "record Registers",
+            "    data: UInt32",
+            "    status: UInt32",
+            "record Buffer",
+            "    bytes: Array<Byte, 4>",
+            "record Log",
+            "    entries: Array<Registers, 2>",
+            "record Matrix",
+            "    rows: Array<Array<Byte, 4>, 2>",
+            "unsafe function main(log: Pointer<Log>, matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Unit",
+            "    log.entries[index].status = 8 as UInt32",
+            "    matrix.rows[index][inner] = 1 as Byte",
+            "    return",
+        }
+    );
+    auto emit_pointer_nested_aggregate_assignment =
+        run_emit_llvm(app, emit_pointer_nested_aggregate_assignment_path);
+    assert(emit_pointer_nested_aggregate_assignment.exit_code == 0);
+    assert(emit_pointer_nested_aggregate_assignment.stderr_text.empty());
+    assert(
+        emit_pointer_nested_aggregate_assignment.stdout_text.find(
+            "getelementptr %record.Log, ptr %log, i32 0, i32 0"
+        ) != std::string::npos
+    );
+    assert(
+        emit_pointer_nested_aggregate_assignment.stdout_text.find(
+            "getelementptr [2 x %record.Registers], ptr %tmp"
+        ) != std::string::npos
+    );
+    assert(
+        emit_pointer_nested_aggregate_assignment.stdout_text.find(
+            "getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0"
+        ) != std::string::npos
+    );
+    assert(
+        emit_pointer_nested_aggregate_assignment.stdout_text.find(
+            "getelementptr [2 x [4 x i8]], ptr %tmp"
+        ) != std::string::npos
+    );
+    assert(emit_pointer_nested_aggregate_assignment.stdout_text.find("store i32 8, ptr %tmp") != std::string::npos);
+    assert(emit_pointer_nested_aggregate_assignment.stdout_text.find("store i8 1, ptr %tmp") != std::string::npos);
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);

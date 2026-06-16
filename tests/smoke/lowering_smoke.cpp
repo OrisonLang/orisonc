@@ -2546,6 +2546,11 @@ void test_emit_raw_mmio_intrinsics() {
         "    regs.status = 4 as UInt32\n"
         "    buffer.bytes[index] = 7\n"
         "    return\n"
+        "\n"
+        "unsafe function assign_nested_pointer_aggregate(log: Pointer<Log>, matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Unit\n"
+        "    log.entries[index].status = 8 as UInt32\n"
+        "    matrix.rows[index][inner] = 1 as Byte\n"
+        "    return\n"
     );
 
     assert(!result.has_errors());
@@ -2659,6 +2664,27 @@ void test_emit_raw_mmio_intrinsics() {
     );
     assert(result.ir_text.find("store i32 4, ptr %tmp") != std::string::npos);
     assert(result.ir_text.find("store i8 7, ptr %tmp") != std::string::npos);
+    assert(
+        result.ir_text.find("define void @assign_nested_pointer_aggregate(ptr %log, ptr %matrix, i64 %index, i64 %inner)") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.Log, ptr %log, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr [2 x %record.UartRegisters], ptr %tmp") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr [2 x [4 x i8]], ptr %tmp") != std::string::npos
+    );
+    assert(result.ir_text.find("store i32 8, ptr %tmp") != std::string::npos);
+    assert(result.ir_text.find("store i8 1, ptr %tmp") != std::string::npos);
     assert(
         result.ir_text.find("getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0") !=
         std::string::npos

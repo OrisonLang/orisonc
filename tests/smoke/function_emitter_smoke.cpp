@@ -86,6 +86,12 @@ int main() {
                   "record Buffer\n"
                   "    bytes: Array<Byte, 4>\n"
                   "\n"
+                  "record Log\n"
+                  "    entries: Array<Registers, 2>\n"
+                  "\n"
+                  "record Matrix\n"
+                  "    rows: Array<Array<Byte, 4>, 2>\n"
+                  "\n"
                   "unsafe function assign_aggregate(index: UInt64) -> Unit\n"
                   "    var regs = Registers(0 as UInt32, 1 as UInt32)\n"
                   "    regs.status = 3 as UInt32\n"
@@ -96,6 +102,11 @@ int main() {
                   "unsafe function assign_pointer_aggregate(regs: Pointer<Registers>, buffer: Pointer<Buffer>, index: UInt64) -> Unit\n"
                   "    regs.status = 4 as UInt32\n"
                   "    buffer.bytes[index] = 7\n"
+                  "    return\n"
+                  "\n"
+                  "unsafe function assign_nested_pointer_aggregate(log: Pointer<Log>, matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Unit\n"
+                  "    log.entries[index].status = 8 as UInt32\n"
+                  "    matrix.rows[index][inner] = 1 as Byte\n"
                   "    return\n";
     }
 
@@ -319,6 +330,34 @@ int main() {
     assert(pointer_aggregate_ir.find("store i32 4, ptr %tmp") != std::string::npos);
     assert(pointer_aggregate_ir.find("store i8 7, ptr %tmp") != std::string::npos);
     assert(pointer_aggregate_ir.find("ret void") != std::string::npos);
+
+    auto nested_pointer_aggregate_ir = orison::lowering::emit_function(
+        parse_result.module.functions[14],
+        context.functions.at("assign_nested_pointer_aggregate"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        nested_pointer_aggregate_ir.find("getelementptr %record.Log, ptr %log, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        nested_pointer_aggregate_ir.find("getelementptr [2 x %record.Registers], ptr %tmp") !=
+        std::string::npos
+    );
+    assert(
+        nested_pointer_aggregate_ir.find("getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        nested_pointer_aggregate_ir.find("getelementptr [2 x [4 x i8]], ptr %tmp") !=
+        std::string::npos
+    );
+    assert(nested_pointer_aggregate_ir.find("store i32 8, ptr %tmp") != std::string::npos);
+    assert(nested_pointer_aggregate_ir.find("store i8 1, ptr %tmp") != std::string::npos);
+    assert(nested_pointer_aggregate_ir.find("ret void") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

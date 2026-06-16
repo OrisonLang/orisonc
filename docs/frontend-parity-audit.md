@@ -48,7 +48,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-16: parser assignment statements now accept indexed targets such as `items[index] = value`, and lowering now
   supports supported aggregate field/index assignment on the current non-generic record/fixed-array subset for both
   mutable-local storage and pointer-backed unsafe paths, including `local.field = value`, `local.items[index] = value`,
-  `pointer.field = value`, and `pointer.items[index] = value`.
+  `pointer.field = value`, `pointer.items[index] = value`, and nested pointer-backed mixed paths like
+  `pointer.items[index].field = value` plus `pointer.rows[index][inner] = value`.
 - 2026-06-16: fixed `Array<T, N>` record fields now lower to LLVM array field types when `T` is supported, and
   `address_of(pointer.array[index])` plus `address_of(pointer.inner.array[index])` lower through terminal array element
   GEPs for known `Pointer<Record>` sources; array-of-record element field paths like

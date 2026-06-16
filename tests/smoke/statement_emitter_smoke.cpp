@@ -64,6 +64,12 @@ int main() {
                   "record Buffer\n"
                   "    bytes: Array<Byte, 4>\n"
                   "\n"
+                  "record Log\n"
+                  "    entries: Array<Registers, 2>\n"
+                  "\n"
+                  "record Matrix\n"
+                  "    rows: Array<Array<Byte, 4>, 2>\n"
+                  "\n"
                   "unsafe function assign_register_status() -> Unit\n"
                   "    var regs = Registers(0 as UInt32, 1 as UInt32)\n"
                   "    regs.status = 3 as UInt32\n"
@@ -77,6 +83,11 @@ int main() {
                   "unsafe function assign_pointer_aggregate(regs: Pointer<Registers>, buffer: Pointer<Buffer>, index: UInt64) -> Unit\n"
                   "    regs.status = 4 as UInt32\n"
                   "    buffer.bytes[index] = 7\n"
+                  "    return\n"
+                  "\n"
+                  "unsafe function assign_nested_pointer_aggregate(log: Pointer<Log>, matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Unit\n"
+                  "    log.entries[index].status = 8 as UInt32\n"
+                  "    matrix.rows[index][inner] = 1 as Byte\n"
                   "    return\n";
     }
 
@@ -361,9 +372,17 @@ int main() {
         .value = "%index",
         .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
     });
+    pointer_state.immutable_bindings.emplace("inner", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%inner",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
     pointer_state.source_type_names["regs"] = "Pointer<Registers>";
     pointer_state.source_type_names["buffer"] = "Pointer<Buffer>";
+    pointer_state.source_type_names["log"] = "Pointer<Log>";
+    pointer_state.source_type_names["matrix"] = "Pointer<Matrix>";
     pointer_state.source_type_names["index"] = "UInt64";
+    pointer_state.source_type_names["inner"] = "UInt64";
     auto pointer_failures = orison::lowering::LoweringFailures {};
     auto pointer_session = orison::lowering::FunctionLoweringSession {
         .state = pointer_state,
