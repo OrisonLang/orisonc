@@ -2369,6 +2369,61 @@ void test_emit_nested_defer_cleanup_in_for_and_repeat_unsafe_blocks() {
     std::filesystem::remove(path);
 }
 
+void test_emit_nonvoid_repeat_for_unsafe_prefixes() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_nonvoid_repeat_for_unsafe.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    repeat\n"
+        "        observe(1 as UInt32)\n"
+        "    while false\n"
+        "    for item in [2 as UInt32, 3 as UInt32]\n"
+        "        observe(item)\n"
+        "    unsafe\n"
+        "        observe(4 as UInt32)\n"
+        "    5 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    auto const main_pos = result.ir_text.find("define i32 @main()");
+    assert(main_pos != std::string::npos);
+    auto const main_ir = result.ir_text.substr(main_pos);
+    assert(main_ir.find("repeat.body") != std::string::npos);
+    assert(main_ir.find("for.iteration") != std::string::npos);
+    assert(main_ir.find("call void @observe(i32 4)") != std::string::npos);
+    assert(main_ir.find("ret i32 5") != std::string::npos);
+    std::filesystem::remove(path);
+}
+
+void test_reject_statements_after_terminating_nonvoid_statement() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nonvoid_terminating_if.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    if flag\n"
+        "        return 4 as UInt32\n"
+        "    else\n"
+        "        return 5 as UInt32\n"
+        "    6 as UInt32\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support statements after a terminating non-Unit statement"
+    );
+    std::filesystem::remove(path);
+}
+
 void test_reject_malformed_generated_llvm_ir() {
     orison::lowering::LlvmIrVerifier verifier;
     auto diagnostics = verifier.verify(
@@ -2480,6 +2535,8 @@ auto main() -> int {
     test_emit_nested_defer_cleanup_on_for_and_repeat();
     test_emit_nested_defer_cleanup_in_unsafe_block();
     test_emit_nested_defer_cleanup_in_for_and_repeat_unsafe_blocks();
+    test_emit_nonvoid_repeat_for_unsafe_prefixes();
+    test_reject_statements_after_terminating_nonvoid_statement();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();

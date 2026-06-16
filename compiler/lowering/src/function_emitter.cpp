@@ -1390,9 +1390,26 @@ void emit_function_body(
     auto lowered_final_statement = std::optional<LoweredExpression> {};
     auto attempted_final_control_flow = false;
     auto final_statement_line = function.line;
+    auto leading_statement_flow = StatementFlow::falls_through;
+    auto propagate_leading_statement_flow = [&leading_statement_flow](StatementFlow flow) -> bool {
+        if (flow == StatementFlow::failed) {
+            return false;
+        }
+        if (flow == StatementFlow::terminated) {
+            leading_statement_flow = StatementFlow::terminated;
+        }
+        return true;
+    };
     for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
         auto const& statement = function.body_statements[index];
         auto is_last_statement = index + 1 == function.body_statements.size();
+        if (leading_statement_flow == StatementFlow::terminated) {
+            diagnostics.error(
+                statement.line,
+                "lowering does not yet support statements after a terminating non-Unit statement"
+            );
+            return;
+        }
         if (!is_last_statement && statement.kind == syntax::StatementKind::let_binding) {
             if (!lower_let_statement(
                     statement,
@@ -1445,6 +1462,30 @@ void emit_function_body(
             }
             continue;
         }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::repeat_statement) {
+            if (!propagate_leading_statement_flow(
+                    lower_unit_repeat_statement(statement, context, session, diagnostics, output)
+                )) {
+                return;
+            }
+            continue;
+        }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::for_statement) {
+            if (!propagate_leading_statement_flow(
+                    lower_unit_for_statement(statement, context, session, diagnostics, output)
+                )) {
+                return;
+            }
+            continue;
+        }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::unsafe_statement) {
+            if (!propagate_leading_statement_flow(
+                    lower_unit_unsafe_statement(statement, context, session, diagnostics, output)
+                )) {
+                return;
+            }
+            continue;
+        }
         if (!is_last_statement && statement.kind == syntax::StatementKind::expression_statement &&
             statement.expression.kind == syntax::ExpressionKind::call) {
             if (!lower_call_statement(statement, context, session, diagnostics, output)) {
@@ -1453,7 +1494,7 @@ void emit_function_body(
             continue;
         }
         if (statement.kind == syntax::StatementKind::guard_statement) {
-            if (lower_guard_statement(
+            if (!propagate_leading_statement_flow(lower_guard_statement(
                     statement,
                     signature.return_type,
                     signature.return_signedness,
@@ -1461,13 +1502,13 @@ void emit_function_body(
                     session,
                     diagnostics,
                     output
-                ) == StatementFlow::failed) {
+                ))) {
                 return;
             }
             continue;
         }
         if (!is_last_statement && statement.kind == syntax::StatementKind::if_statement) {
-            if (lower_nonvoid_if_statement(
+            if (!propagate_leading_statement_flow(lower_nonvoid_if_statement(
                     statement,
                     signature.return_type,
                     signature.return_signedness,
@@ -1475,13 +1516,13 @@ void emit_function_body(
                     session,
                     diagnostics,
                     output
-                ) == StatementFlow::failed) {
+                ))) {
                 return;
             }
             continue;
         }
         if (!is_last_statement && statement.kind == syntax::StatementKind::switch_statement) {
-            if (lower_nonvoid_switch_statement(
+            if (!propagate_leading_statement_flow(lower_nonvoid_switch_statement(
                     statement,
                     signature.return_type,
                     signature.return_signedness,
@@ -1489,7 +1530,7 @@ void emit_function_body(
                     session,
                     diagnostics,
                     output
-                ) == StatementFlow::failed) {
+                ))) {
                 return;
             }
             continue;

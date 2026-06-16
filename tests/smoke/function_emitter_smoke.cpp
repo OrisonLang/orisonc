@@ -51,7 +51,17 @@ int main() {
                   "    switch flag\n"
                   "        true => return value\n"
                   "        false => observe(value)\n"
-                  "    value + 2 as UInt32\n";
+                  "    value + 2 as UInt32\n"
+                  "\n"
+                  "function repeat_for_unsafe_then_return(value: UInt32) -> UInt32\n"
+                  "    repeat\n"
+                  "        observe(1 as UInt32)\n"
+                  "    while false\n"
+                  "    for item in [2 as UInt32, 3 as UInt32]\n"
+                  "        observe(item)\n"
+                  "    unsafe\n"
+                  "        observe(value)\n"
+                  "    value\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -180,6 +190,19 @@ int main() {
     assert(switch_then_return_ir.find("switch i1") != std::string::npos);
     assert(switch_then_return_ir.find("call void @observe") != std::string::npos);
     assert(switch_then_return_ir.find("ret i32") != std::string::npos);
+
+    auto repeat_for_unsafe_ir = orison::lowering::emit_function(
+        parse_result.module.functions.back(),
+        context.functions.at("repeat_for_unsafe_then_return"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(repeat_for_unsafe_ir.find("repeat.body") != std::string::npos);
+    assert(repeat_for_unsafe_ir.find("for.iteration") != std::string::npos);
+    assert(repeat_for_unsafe_ir.find("call void @observe(i32 %value)") != std::string::npos);
+    assert(repeat_for_unsafe_ir.find("ret i32 %value") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);
