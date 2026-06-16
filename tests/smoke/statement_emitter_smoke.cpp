@@ -419,40 +419,61 @@ int main() {
     );
     assert(output.str().empty());
 
+    call_state.immutable_bindings.emplace("device", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%device",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    call_state.source_type_names["device"] = "UInt32";
     lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
-        .receiver_type_name = "Device",
-        .method_name = "observe",
+        .receiver_type_name = "UInt32",
+        .method_name = "reset",
         .signature = orison::lowering::LoweredFunctionSignature {
             .return_type = "void",
             .parameter_types = {"i32"},
             .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
-            .symbol_name = "Device.observe",
+            .symbol_name = "method.UInt32.reset",
         },
     });
+    auto direct_member_call_statement = orison::syntax::StatementSyntax {};
+    direct_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    direct_member_call_statement.line = 9;
+    direct_member_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    direct_member_call_statement.expression.left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    direct_member_call_statement.expression.left->kind =
+        orison::syntax::ExpressionKind::member_access;
+    direct_member_call_statement.expression.left->text = "reset";
+    direct_member_call_statement.expression.left->left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    direct_member_call_statement.expression.left->left->kind =
+        orison::syntax::ExpressionKind::name;
+    direct_member_call_statement.expression.left->left->text = "device";
     diagnostics = {};
     output = {};
-    assert(!orison::lowering::lower_call_statement(
-        member_call_statement,
+    assert(orison::lowering::lower_call_statement(
+        direct_member_call_statement,
         context,
         call_session,
         diagnostics,
         output
     ));
-    assert(
-        diagnostics.entries().front().message ==
-        "lowering member call statements is not yet supported: Device.observe"
-    );
-    assert(output.str().empty());
+    assert(!diagnostics.has_errors());
+    assert(output.str() == "  call void @method.UInt32.reset(i32 %device)\n");
 
     auto null_safe_member_call_statement = orison::syntax::StatementSyntax {};
     null_safe_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
-    null_safe_member_call_statement.line = 9;
+    null_safe_member_call_statement.line = 10;
     null_safe_member_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
-    null_safe_member_call_statement.expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
-    null_safe_member_call_statement.expression.left->kind = orison::syntax::ExpressionKind::null_safe_member_access;
+    null_safe_member_call_statement.expression.left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_member_call_statement.expression.left->kind =
+        orison::syntax::ExpressionKind::null_safe_member_access;
     null_safe_member_call_statement.expression.left->text = "observe";
-    null_safe_member_call_statement.expression.left->left = std::make_unique<orison::syntax::ExpressionSyntax>();
-    null_safe_member_call_statement.expression.left->left->kind = orison::syntax::ExpressionKind::name;
+    null_safe_member_call_statement.expression.left->left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_member_call_statement.expression.left->left->kind =
+        orison::syntax::ExpressionKind::name;
     null_safe_member_call_statement.expression.left->left->text = "receiver";
     diagnostics = {};
     output = {};
@@ -465,9 +486,20 @@ int main() {
     ));
     assert(
         diagnostics.entries().front().message ==
-        "lowering member call statements is not yet supported: Device.observe"
+        "lowering null-safe member call statements is not yet supported"
     );
     assert(output.str().empty());
+
+    lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Device",
+        .method_name = "observe",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "void",
+            .parameter_types = {"i32"},
+            .parameter_signedness = {orison::lowering::IntegerSignedness::unsigned_integer},
+            .symbol_name = "Device.observe",
+        },
+    });
 
     lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Device",

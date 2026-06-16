@@ -161,20 +161,19 @@ auto lower_void_call_statement(
     return true;
 }
 
-auto diagnose_member_call_statement(
-    syntax::StatementSyntax const& statement,
+struct ResolvedMemberCall {
+    MemberCallReceiverInference receiver;
+    LoweredMethodLookup method;
+};
+
+auto resolve_member_call(
+    syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
-    FunctionLoweringState const& state,
-    diagnostics::DiagnosticBag& diagnostics
-) -> bool {
-    auto receiver = infer_member_call_receiver(statement.expression, state);
-    if (receiver.result == MemberCallReceiverInferenceResult::unsupported_shape) {
-        diagnostics.error(statement.line, "lowering member call statement has unsupported receiver shape");
-        return false;
-    }
-    if (receiver.result == MemberCallReceiverInferenceResult::not_found) {
-        diagnostics.error(statement.line, "lowering member call receiver type is unknown");
-        return false;
+    FunctionLoweringState const& state
+) -> ResolvedMemberCall {
+    auto receiver = infer_member_call_receiver(expression, state);
+    if (receiver.result != MemberCallReceiverInferenceResult::found) {
+        return {.receiver = std::move(receiver)};
     }
 
     auto method = find_lowered_method_signature(
@@ -182,29 +181,111 @@ auto diagnose_member_call_statement(
         receiver.receiver_type_name,
         receiver.method_name
     );
-    if (method.result == LoweredMethodLookupResult::not_found) {
+    return ResolvedMemberCall {
+        .receiver = std::move(receiver),
+        .method = std::move(method),
+    };
+}
+
+auto member_call_target_name(ResolvedMemberCall const& resolved) -> std::string {
+    return resolved.receiver.receiver_type_name + "." + resolved.receiver.method_name;
+}
+
+auto diagnose_member_call_statement(
+    syntax::StatementSyntax const& statement,
+    ResolvedMemberCall const& resolved,
+    diagnostics::DiagnosticBag& diagnostics
+) -> LoweredFunctionSignature const* {
+    if (resolved.receiver.result == MemberCallReceiverInferenceResult::unsupported_shape) {
+        diagnostics.error(statement.line, "lowering member call statement has unsupported receiver shape");
+        return nullptr;
+    }
+    if (resolved.receiver.result == MemberCallReceiverInferenceResult::not_found) {
+        diagnostics.error(statement.line, "lowering member call receiver type is unknown");
+        return nullptr;
+    }
+
+    auto const target_name = member_call_target_name(resolved);
+    if (resolved.method.result == LoweredMethodLookupResult::not_found) {
         diagnostics.error(
             statement.line,
-            "lowering member call target is unknown: " + receiver.receiver_type_name +
-                "." + receiver.method_name
+            "lowering member call target is unknown: " + target_name
         );
+        return nullptr;
+    }
+    if (resolved.method.result == LoweredMethodLookupResult::ambiguous) {
+        diagnostics.error(
+            statement.line,
+            "lowering member call target is ambiguous: " + target_name
+        );
+        return nullptr;
+    }
+
+    if (resolved.method.method == nullptr ||
+        !has_supported_function_signature_types(resolved.method.method->signature)) {
+        diagnostics.error(
+            statement.line,
+            "lowering member call target is not lowerable: " + target_name
+        );
+        return nullptr;
+    }
+
+    return &resolved.method.method->signature;
+}
+
+auto lower_void_member_call_statement(
+    syntax::StatementSyntax const& statement,
+    syntax::ExpressionSyntax const& receiver_expression,
+    std::string const& target_name,
+    LoweredFunctionSignature const& function,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    auto const expected_argument_count = function.parameter_types.empty()
+        ? std::size_t {0}
+        : function.parameter_types.size() - 1;
+    if (expected_argument_count != statement.expression.arguments.size()) {
+        session.failures.expression = ExpressionLoweringFailure {
+            .reason = ExpressionLoweringFailureReason::call_arity_mismatch,
+            .detail = target_name + " expects " + std::to_string(expected_argument_count) +
+                " arguments, got " + std::to_string(statement.expression.arguments.size()),
+        };
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(statement.line, "lowering member call statement failed: " + detail);
         return false;
     }
-    if (method.result == LoweredMethodLookupResult::ambiguous) {
+
+    auto arguments = lower_member_call_arguments(
+        receiver_expression,
+        std::span<syntax::ExpressionSyntax const>(
+            statement.expression.arguments.data(),
+            statement.expression.arguments.size()
+        ),
+        function,
+        context,
+        session,
+        output
+    );
+    if (!arguments.has_value()) {
+        if (session.failures.expression.reason == ExpressionLoweringFailureReason::none) {
+            session.failures.expression = ExpressionLoweringFailure {
+                .reason = ExpressionLoweringFailureReason::call_argument_failure,
+                .detail = target_name,
+            };
+        }
+        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering member call target is ambiguous: " + receiver.receiver_type_name +
-                "." + receiver.method_name
+            "lowering member call statement failed" +
+                (detail.empty() ? std::string {} : ": " + detail)
         );
         return false;
     }
 
-    diagnostics.error(
-        statement.line,
-        "lowering member call statements is not yet supported: " +
-            receiver.receiver_type_name + "." + receiver.method_name
-    );
-    return false;
+    emit_void_call(function, *arguments, output);
+    return true;
 }
 
 }  // namespace
@@ -375,9 +456,53 @@ auto lower_call_statement(
         return false;
     }
     if (statement.expression.left != nullptr &&
-        (statement.expression.left->kind == syntax::ExpressionKind::member_access ||
-         statement.expression.left->kind == syntax::ExpressionKind::null_safe_member_access)) {
-        return diagnose_member_call_statement(statement, context, session.state, diagnostics);
+        statement.expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+        diagnostics.error(
+            statement.line,
+            "lowering null-safe member call statements is not yet supported"
+        );
+        return false;
+    }
+    if (statement.expression.left != nullptr &&
+        statement.expression.left->kind == syntax::ExpressionKind::member_access) {
+        auto resolved = resolve_member_call(statement.expression, context, session.state);
+        auto function = diagnose_member_call_statement(statement, resolved, diagnostics);
+        if (function == nullptr) {
+            return false;
+        }
+
+        auto const target_name = member_call_target_name(resolved);
+        if (function->return_type == "void") {
+            return lower_void_member_call_statement(
+                statement,
+                *statement.expression.left->left,
+                target_name,
+                *function,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        }
+
+        auto lowered = lower_expression(
+            statement.expression,
+            function->return_type,
+            function->return_signedness,
+            context,
+            session,
+            output
+        );
+        if (!lowered.has_value()) {
+            auto detail = render_expression_lowering_failure(session.failures.expression);
+            diagnostics.error(
+                statement.line,
+                "lowering does not yet support this call statement" +
+                    (detail.empty() ? std::string {} : ": " + detail)
+            );
+            return false;
+        }
+        return true;
     }
 
     auto type = infer_expression_type(statement.expression, context, session.state);

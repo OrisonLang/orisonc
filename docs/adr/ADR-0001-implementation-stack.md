@@ -51,10 +51,10 @@ analysis, and lowering components.
   nested `break`/`continue` resolve through a function-local nearest-loop target stack, and statement-level `if` emits
   merges only for live branches.
 - Shared LLVM call argument lowering and call-instruction formatting live in a dedicated call emitter; value-producing
-  expression calls, direct `Unit` statement calls, and direct scalar member-call expressions consume the same
-  signature, operand, and C ABI adapter policy. Statement-side `Unit` calls still own call-statement diagnostics and
-  translate arity/argument failures into the same structured lowering failure categories used by expression calls.
-  Member-call statements and null-safe member-call lowering remain explicit follow-up work.
+  expression calls, direct `Unit` statement calls, and direct scalar member-call statements consume the same
+  signature, operand, and C ABI adapter policy. Statement-side `Unit` and member-call calls still own call-statement
+  diagnostics and translate arity/argument failures into the same structured lowering failure categories used by
+  expression calls. Null-safe member-call lowering remains explicit follow-up work.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable and mutable binding visibility is isolated by a dedicated RAII scope that snapshots both maps,
@@ -99,15 +99,18 @@ analysis, and lowering components.
   duplicate receiver/name matches.
 - Function lowering state keeps source-level type names in a side map for parameters and annotated locals; receiver
   inference for member-call expressions consumes that map and currently supports direct name receivers only. Direct
-  member-call expressions now lower through explicit receiver arguments for scalar receiver methods, while
-  member-call statements and null-safe member-call expressions remain future work.
+  member-call expressions now lower through explicit receiver arguments for scalar receiver methods, and direct
+  member-call statements now lower through the same receiver-aware path while null-safe member-call expressions remain
+  future work.
   Member-call statement diagnostics compose receiver inference with lowered method lookup so unsupported member calls
   can distinguish unknown receiver types, unknown methods, ambiguous methods, and resolved-but-not-emitted calls.
   Lowered methods receive deterministic internal symbols of the form `method.<receiver>.<method>`, with non-identifier
   receiver characters sanitized to `_`.
 - Method definitions that fit the existing scalar function subset are emitted after top-level functions using those
-  stable symbols; direct member-call expressions on scalar receivers now lower through the shared call emitter, while
-  member-call statements and null-safe member calls remain future work.
+  stable symbols; direct member-call expressions and statements on scalar receivers now lower through the shared call
+  emitter, while null-safe member calls remain future work.
+- Direct scalar member-call statements now lower through explicit receiver arguments and the shared call emitter for
+  supported scalar receivers; null-safe member-call statements remain future work.
 - Receiver-self method parameters (`this: This`, `shared.This`, `exclusive.This`) are lowered as the concrete receiver
   type when that receiver has a supported LLVM representation, enabling scalar receiver method definitions while
   leaving aggregate receiver layout future work.

@@ -644,6 +644,60 @@ void test_emit_scalar_member_call_expression() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_scalar_member_call_statement() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_scalar_member_call_statement.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function reset(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    while value < 1 as UInt32\n"
+        "        value.reset()\n"
+        "        value = value + 1 as UInt32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 0, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.condition.0:\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = icmp ult i32 %tmp0, 1\n"
+        "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
+        "while.body.0:\n"
+        "  %tmp2 = load i32, ptr %value.addr\n"
+        "  call void @method.UInt32.reset(i32 %tmp2)\n"
+        "  %tmp3 = load i32, ptr %value.addr\n"
+        "  %tmp4 = add i32 %tmp3, 1\n"
+        "  store i32 %tmp4, ptr %value.addr\n"
+        "  br label %while.condition.0\n"
+        "while.exit.0:\n"
+        "  %tmp5 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp5\n"
+        "}\n"
+        "\n"
+        "define void @method.UInt32.reset(i32 %this) {\n"
+        "entry:\n"
+        "  ret void\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_uint32_add_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_uint32_add.or";
     auto result = lower_source(
@@ -1870,6 +1924,7 @@ auto main() -> int {
     test_reject_unsupported_while_body_statement();
     test_emit_scalar_extension_method_definition();
     test_emit_scalar_member_call_expression();
+    test_emit_scalar_member_call_statement();
     test_emit_uint32_add_return();
     test_emit_uint32_arithmetic_return();
     test_emit_int32_division_return();
