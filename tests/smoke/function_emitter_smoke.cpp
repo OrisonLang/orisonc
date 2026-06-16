@@ -625,6 +625,106 @@ int main() {
     assert(loop_control_continue_third_call < loop_control_continue_exit);
     std::filesystem::remove(defer_loop_control_path);
 
+    auto defer_for_repeat_path =
+        std::filesystem::temp_directory_path() / "orison_function_emitter_defer_for_repeat.or";
+    {
+        auto output = std::ofstream(defer_for_repeat_path);
+        output << "package demo.function_emitter\n"
+                  "\n"
+                  "function observe(value: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_on_for_continue(value: UInt32) -> Unit\n"
+                  "    for item in [0 as UInt32, 1 as UInt32, 2 as UInt32]\n"
+                  "        defer\n"
+                  "            observe(1 as UInt32)\n"
+                  "        defer\n"
+                  "            observe(2 as UInt32)\n"
+                  "            defer\n"
+                  "                observe(3 as UInt32)\n"
+                  "        continue\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_on_repeat_break(value: UInt32) -> Unit\n"
+                  "    repeat\n"
+                  "        defer\n"
+                  "            observe(1 as UInt32)\n"
+                  "        defer\n"
+                  "            observe(2 as UInt32)\n"
+                  "            defer\n"
+                  "                observe(3 as UInt32)\n"
+                  "        break\n"
+                  "    while value < 3 as UInt32\n"
+                  "    return\n";
+    }
+    auto defer_for_repeat_source = orison::source::SourceFile::read(defer_for_repeat_path);
+    assert(defer_for_repeat_source.has_value());
+    auto defer_for_repeat_parser = orison::syntax::ModuleParser {};
+    auto defer_for_repeat_parse = defer_for_repeat_parser.parse(*defer_for_repeat_source);
+    assert(!defer_for_repeat_parse.diagnostics.has_errors());
+    diagnostics = {};
+    auto defer_for_repeat_context = orison::lowering::build_lowering_context(
+        defer_for_repeat_parse.module,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto defer_for_repeat_strings =
+        orison::lowering::collect_string_constants(defer_for_repeat_parse.module);
+
+    auto for_continue_ir = orison::lowering::emit_function(
+        defer_for_repeat_parse.module.functions[1],
+        defer_for_repeat_context.functions.at("cleanup_on_for_continue"),
+        defer_for_repeat_context,
+        defer_for_repeat_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto for_function_pos = for_continue_ir.find("define void @cleanup_on_for_continue");
+    assert(for_function_pos != std::string::npos);
+    auto for_function_ir = for_continue_ir.substr(for_function_pos);
+    auto for_first_call = for_function_ir.find("call void @observe(i32 2)");
+    assert(for_first_call != std::string::npos);
+    auto for_second_call = for_function_ir.find("call void @observe(i32 3)", for_first_call + 1);
+    assert(for_second_call != std::string::npos);
+    auto for_third_call = for_function_ir.find("call void @observe(i32 1)", for_second_call + 1);
+    assert(for_third_call != std::string::npos);
+    auto for_continue_exit = for_function_ir.find("br label %for.iteration.0.1");
+    assert(for_continue_exit != std::string::npos);
+    assert(for_first_call < for_second_call);
+    assert(for_second_call < for_third_call);
+    assert(for_third_call < for_continue_exit);
+
+    diagnostics = {};
+    auto repeat_break_ir = orison::lowering::emit_function(
+        defer_for_repeat_parse.module.functions[2],
+        defer_for_repeat_context.functions.at("cleanup_on_repeat_break"),
+        defer_for_repeat_context,
+        defer_for_repeat_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto repeat_function_pos = repeat_break_ir.find("define void @cleanup_on_repeat_break");
+    assert(repeat_function_pos != std::string::npos);
+    auto repeat_function_ir = repeat_break_ir.substr(repeat_function_pos);
+    auto repeat_first_call = repeat_function_ir.find("call void @observe(i32 2)");
+    assert(repeat_first_call != std::string::npos);
+    auto repeat_second_call = repeat_function_ir.find(
+        "call void @observe(i32 3)",
+        repeat_first_call + 1
+    );
+    assert(repeat_second_call != std::string::npos);
+    auto repeat_third_call = repeat_function_ir.find(
+        "call void @observe(i32 1)",
+        repeat_second_call + 1
+    );
+    assert(repeat_third_call != std::string::npos);
+    auto repeat_exit = repeat_function_ir.find("br label %repeat.exit.0");
+    assert(repeat_exit != std::string::npos);
+    assert(repeat_first_call < repeat_second_call);
+    assert(repeat_second_call < repeat_third_call);
+    assert(repeat_third_call < repeat_exit);
+    std::filesystem::remove(defer_for_repeat_path);
+
     auto method = orison::syntax::FunctionSyntax {
         .name = "scale",
         .parameters = {

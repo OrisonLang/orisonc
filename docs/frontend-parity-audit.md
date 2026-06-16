@@ -454,3 +454,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-15: non-final `switch` statements in non-`Unit` function bodies now lower through the same early-exit path as `guard` and `if`, so individual cases can return early while other cases fall through to later statements after the switch.
 - 2026-06-15: order-sensitive regressions now pin multiple nested defers within the same cleanup block.
 - 2026-06-15: order-sensitive regressions now also pin recursive defer replay on loop-control exits.
+- 2026-06-15: order-sensitive regressions now also pin recursive defer replay on `for` continue exits and `repeat` break exits.
