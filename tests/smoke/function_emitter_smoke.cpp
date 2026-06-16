@@ -395,9 +395,11 @@ int main() {
                   "\n"
                   "function cleanup_then_cleanup(value: UInt32) -> Unit\n"
                   "    defer\n"
-                  "        observe(value)\n"
+                  "        observe(1 as UInt32)\n"
+                  "    defer\n"
+                  "        observe(2 as UInt32)\n"
                   "        defer\n"
-                  "            observe(value)\n"
+                  "            observe(3 as UInt32)\n"
                   "    return\n";
     }
     auto defer_nested_source = orison::source::SourceFile::read(defer_nested_path);
@@ -423,17 +425,23 @@ int main() {
     auto nested_function_pos = defer_nested_ir.find("define void @cleanup_then_cleanup");
     assert(nested_function_pos != std::string::npos);
     auto nested_function_ir = defer_nested_ir.substr(nested_function_pos);
-    auto nested_first_call = nested_function_ir.find("call void @observe(i32 %value)");
+    auto nested_first_call = nested_function_ir.find("call void @observe(i32 2)");
     assert(nested_first_call != std::string::npos);
     auto nested_second_call = nested_function_ir.find(
-        "call void @observe(i32 %value)",
+        "call void @observe(i32 3)",
         nested_first_call + 1
     );
     assert(nested_second_call != std::string::npos);
+    auto nested_third_call = nested_function_ir.find(
+        "call void @observe(i32 1)",
+        nested_second_call + 1
+    );
+    assert(nested_third_call != std::string::npos);
     auto nested_ret_void = nested_function_ir.find("ret void");
     assert(nested_ret_void != std::string::npos);
     assert(nested_first_call < nested_second_call);
-    assert(nested_second_call < nested_ret_void);
+    assert(nested_second_call < nested_third_call);
+    assert(nested_third_call < nested_ret_void);
     std::filesystem::remove(defer_nested_path);
 
     auto method = orison::syntax::FunctionSyntax {

@@ -1990,9 +1990,11 @@ void test_emit_nested_defer_cleanup_defers() {
         "\n"
         "function cleanup_then_cleanup(value: UInt32) -> Unit\n"
         "    defer\n"
-        "        observe(value)\n"
+        "        observe(1 as UInt32)\n"
+        "    defer\n"
+        "        observe(2 as UInt32)\n"
         "        defer\n"
-        "            observe(value)\n"
+        "            observe(3 as UInt32)\n"
         "    return\n"
     );
 
@@ -2000,14 +2002,17 @@ void test_emit_nested_defer_cleanup_defers() {
     auto const function_pos = result.ir_text.find("define void @cleanup_then_cleanup");
     assert(function_pos != std::string::npos);
     auto const function_ir = result.ir_text.substr(function_pos);
-    auto const first_call = function_ir.find("call void @observe(i32 %value)");
+    auto const first_call = function_ir.find("call void @observe(i32 2)");
     assert(first_call != std::string::npos);
-    auto const second_call = function_ir.find("call void @observe(i32 %value)", first_call + 1);
+    auto const second_call = function_ir.find("call void @observe(i32 3)", first_call + 1);
     assert(second_call != std::string::npos);
+    auto const third_call = function_ir.find("call void @observe(i32 1)", second_call + 1);
+    assert(third_call != std::string::npos);
     auto const ret_void = function_ir.find("ret void");
     assert(ret_void != std::string::npos);
     assert(first_call < second_call);
-    assert(second_call < ret_void);
+    assert(second_call < third_call);
+    assert(third_call < ret_void);
     std::filesystem::remove(path);
 }
 

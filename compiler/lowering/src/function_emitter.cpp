@@ -728,10 +728,11 @@ auto emit_deferred_cleanup_to_depth_impl(
     auto scope_index = session.state.defer_cleanup_scopes.size();
     auto scope_output = std::ostringstream {};
     while (scope_index > target_depth) {
-        auto const& scope = session.state.defer_cleanup_scopes[scope_index - 1];
+        auto const scope = session.state.defer_cleanup_scopes[scope_index - 1];
         auto cleanup_output = std::ostringstream {};
-        for (auto block_index = scope.blocks.size(); block_index-- > 0;) {
-            auto const& block = scope.blocks[block_index];
+        auto const blocks = scope.blocks;
+        for (auto block_index = blocks.size(); block_index-- > 0;) {
+            auto const& block = blocks[block_index];
             auto block_output = std::ostringstream {};
             auto flow = lower_unit_statement_block(
                 block.statements,
