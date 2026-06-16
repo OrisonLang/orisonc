@@ -41,7 +41,6 @@ struct FunctionLoweringState {
     std::vector<DeferredCleanupScopeState> defer_cleanup_scopes;
     std::size_t next_temporary_index = 0;
     std::size_t next_block_index = 0;
-    std::size_t defer_cleanup_nesting = 0;
     std::string current_block = "entry";
     std::vector<LoopTargets> loop_targets;
 };

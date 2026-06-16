@@ -613,13 +613,6 @@ auto record_deferred_cleanup(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics
 ) -> bool {
-    if (session.state.defer_cleanup_nesting > 0) {
-        diagnostics.error(
-            statement.line,
-            "lowering defer cleanup blocks currently cannot schedule additional defers"
-        );
-        return false;
-    }
     if (session.state.defer_cleanup_scopes.empty()) {
         diagnostics.error(statement.line, "lowering defer statements requires an active cleanup scope");
         return false;

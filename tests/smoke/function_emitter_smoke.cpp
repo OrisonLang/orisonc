@@ -384,6 +384,58 @@ int main() {
     assert(break_call < break_exit);
     std::filesystem::remove(defer_break_path);
 
+    auto defer_nested_path =
+        std::filesystem::temp_directory_path() / "orison_function_emitter_defer_nested.or";
+    {
+        auto output = std::ofstream(defer_nested_path);
+        output << "package demo.function_emitter\n"
+                  "\n"
+                  "function observe(value: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_then_cleanup(value: UInt32) -> Unit\n"
+                  "    defer\n"
+                  "        observe(value)\n"
+                  "        defer\n"
+                  "            observe(value)\n"
+                  "    return\n";
+    }
+    auto defer_nested_source = orison::source::SourceFile::read(defer_nested_path);
+    assert(defer_nested_source.has_value());
+    auto defer_nested_parser = orison::syntax::ModuleParser {};
+    auto defer_nested_parse = defer_nested_parser.parse(*defer_nested_source);
+    assert(!defer_nested_parse.diagnostics.has_errors());
+    diagnostics = {};
+    auto defer_nested_context = orison::lowering::build_lowering_context(
+        defer_nested_parse.module,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto defer_nested_strings = orison::lowering::collect_string_constants(defer_nested_parse.module);
+    auto defer_nested_ir = orison::lowering::emit_function(
+        defer_nested_parse.module.functions[1],
+        defer_nested_context.functions.at("cleanup_then_cleanup"),
+        defer_nested_context,
+        defer_nested_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto nested_function_pos = defer_nested_ir.find("define void @cleanup_then_cleanup");
+    assert(nested_function_pos != std::string::npos);
+    auto nested_function_ir = defer_nested_ir.substr(nested_function_pos);
+    auto nested_first_call = nested_function_ir.find("call void @observe(i32 %value)");
+    assert(nested_first_call != std::string::npos);
+    auto nested_second_call = nested_function_ir.find(
+        "call void @observe(i32 %value)",
+        nested_first_call + 1
+    );
+    assert(nested_second_call != std::string::npos);
+    auto nested_ret_void = nested_function_ir.find("ret void");
+    assert(nested_ret_void != std::string::npos);
+    assert(nested_first_call < nested_second_call);
+    assert(nested_second_call < nested_ret_void);
+    std::filesystem::remove(defer_nested_path);
+
     auto method = orison::syntax::FunctionSyntax {
         .name = "scale",
         .parameters = {

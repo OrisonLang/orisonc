@@ -54,26 +54,6 @@ private:
     FunctionLoweringState& state_;
 };
 
-class DeferredCleanupEmissionScope {
-public:
-    explicit DeferredCleanupEmissionScope(FunctionLoweringState& state)
-        : state_(state) {
-        ++state_.defer_cleanup_nesting;
-    }
-
-    ~DeferredCleanupEmissionScope() noexcept {
-        --state_.defer_cleanup_nesting;
-    }
-
-    DeferredCleanupEmissionScope(DeferredCleanupEmissionScope const&) = delete;
-    auto operator=(DeferredCleanupEmissionScope const&) -> DeferredCleanupEmissionScope& = delete;
-    DeferredCleanupEmissionScope(DeferredCleanupEmissionScope&&) = delete;
-    auto operator=(DeferredCleanupEmissionScope&&) -> DeferredCleanupEmissionScope& = delete;
-
-private:
-    FunctionLoweringState& state_;
-};
-
 auto lower_unit_statement_block(
     std::span<syntax::StatementSyntax const*> statements,
     EmissionContext const& context,
@@ -740,7 +720,6 @@ auto emit_deferred_cleanup_to_depth_impl(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    [[maybe_unused]] auto cleanup_scope = DeferredCleanupEmissionScope {session.state};
     if (target_depth > session.state.defer_cleanup_scopes.size()) {
         diagnostics.error(1, "lowering defer cleanup depth is inconsistent with the active scope stack");
         return false;

@@ -1979,7 +1979,7 @@ void test_reject_unsupported_final_switch_case_expression() {
     );
 }
 
-void test_reject_nested_defer_cleanup_defers() {
+void test_emit_nested_defer_cleanup_defers() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_nested_defer_cleanup.or";
     auto result = lower_source(
         path,
@@ -1990,17 +1990,24 @@ void test_reject_nested_defer_cleanup_defers() {
         "\n"
         "function cleanup_then_cleanup(value: UInt32) -> Unit\n"
         "    defer\n"
+        "        observe(value)\n"
         "        defer\n"
         "            observe(value)\n"
         "    return\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message ==
-        "lowering defer cleanup blocks currently cannot schedule additional defers"
-    );
+    assert(!result.has_errors());
+    auto const function_pos = result.ir_text.find("define void @cleanup_then_cleanup");
+    assert(function_pos != std::string::npos);
+    auto const function_ir = result.ir_text.substr(function_pos);
+    auto const first_call = function_ir.find("call void @observe(i32 %value)");
+    assert(first_call != std::string::npos);
+    auto const second_call = function_ir.find("call void @observe(i32 %value)", first_call + 1);
+    assert(second_call != std::string::npos);
+    auto const ret_void = function_ir.find("ret void");
+    assert(ret_void != std::string::npos);
+    assert(first_call < second_call);
+    assert(second_call < ret_void);
     std::filesystem::remove(path);
 }
 
@@ -2109,7 +2116,7 @@ auto main() -> int {
     test_reject_unsupported_return_expression();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
-    test_reject_nested_defer_cleanup_defers();
+    test_emit_nested_defer_cleanup_defers();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();
