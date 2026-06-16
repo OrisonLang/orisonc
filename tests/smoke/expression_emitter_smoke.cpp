@@ -25,6 +25,9 @@ int main() {
                   "record Buffer\n"
                   "    bytes: Array<Byte, 4>\n"
                   "\n"
+                  "record Log\n"
+                  "    entries: Array<UartRegisters, 2>\n"
+                  "\n"
                   "record Device\n"
                   "    registers: UartRegisters\n"
                   "    buffer: Buffer\n"
@@ -240,6 +243,10 @@ int main() {
         .type = "ptr",
         .value = "%buffer",
     });
+    raw_state.immutable_bindings.emplace("log", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%log",
+    });
     raw_state.immutable_bindings.emplace("device", orison::lowering::LoweredExpression {
         .type = "ptr",
         .value = "%device",
@@ -250,6 +257,7 @@ int main() {
     raw_state.source_type_names.emplace("value", "UInt32");
     raw_state.source_type_names.emplace("regs", "Pointer<UartRegisters>");
     raw_state.source_type_names.emplace("buffer", "Pointer<Buffer>");
+    raw_state.source_type_names.emplace("log", "Pointer<Log>");
     raw_state.source_type_names.emplace("device", "Pointer<Device>");
     auto raw_failures = orison::lowering::LoweringFailures {};
     auto raw_session = orison::lowering::FunctionLoweringSession {
@@ -526,6 +534,60 @@ int main() {
         "  %tmp12 = getelementptr %record.Buffer, ptr %tmp11, i32 0, i32 0\n"
         "  %tmp13 = getelementptr [4 x i8], ptr %tmp12, i64 0, i64 %index\n"
         "  %tmp14 = ptrtoint ptr %tmp13 to i64\n"
+    );
+
+    auto array_of_records_address_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "address_of",
+            }
+        ),
+    };
+    auto array_of_records_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::member_access,
+        .text = "status",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::index_access,
+                .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                    orison::syntax::ExpressionSyntax {
+                        .kind = orison::syntax::ExpressionKind::member_access,
+                        .text = "entries",
+                        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                            orison::syntax::ExpressionSyntax {
+                                .kind = orison::syntax::ExpressionKind::name,
+                                .text = "log",
+                            }
+                        ),
+                    }
+                ),
+            }
+        ),
+    };
+    array_of_records_access.left->arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "index",
+    });
+    array_of_records_address_call.arguments.push_back(std::move(array_of_records_access));
+    output = {};
+    auto array_of_records_address = orison::lowering::lower_expression(
+        array_of_records_address_call,
+        "i64",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(array_of_records_address.has_value());
+    assert(array_of_records_address->value == "%tmp18");
+    assert(
+        output.str() ==
+        "  %tmp15 = getelementptr %record.Log, ptr %log, i32 0, i32 0\n"
+        "  %tmp16 = getelementptr [2 x %record.UartRegisters], ptr %tmp15, i64 0, i64 %index\n"
+        "  %tmp17 = getelementptr %record.UartRegisters, ptr %tmp16, i32 0, i32 1\n"
+        "  %tmp18 = ptrtoint ptr %tmp17 to i64\n"
     );
 
     std::filesystem::remove(path);

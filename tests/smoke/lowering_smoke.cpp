@@ -2461,6 +2461,9 @@ void test_emit_raw_mmio_intrinsics() {
         "record Buffer\n"
         "    bytes: Array<Byte, 4>\n"
         "\n"
+        "record Log\n"
+        "    entries: Array<UartRegisters, 2>\n"
+        "\n"
         "record Device\n"
         "    registers: UartRegisters\n"
         "    buffer: Buffer\n"
@@ -2489,11 +2492,15 @@ void test_emit_raw_mmio_intrinsics() {
         "\n"
         "unsafe function nested_byte_address(device: Pointer<Device>, index: UInt64) -> Address\n"
         "    address_of(device.buffer.bytes[index])\n"
+        "\n"
+        "unsafe function entry_status_address(log: Pointer<Log>, index: UInt64) -> Address\n"
+        "    address_of(log.entries[index].status)\n"
     );
 
     assert(!result.has_errors());
     assert(result.ir_text.find("%record.UartRegisters = type { i32, i32 }") != std::string::npos);
     assert(result.ir_text.find("%record.Buffer = type { [4 x i8] }") != std::string::npos);
+    assert(result.ir_text.find("%record.Log = type { [2 x %record.UartRegisters] }") != std::string::npos);
     assert(
         result.ir_text.find("%record.Device = type { %record.UartRegisters, %record.Buffer }") !=
         std::string::npos
@@ -2530,6 +2537,18 @@ void test_emit_raw_mmio_intrinsics() {
     );
     assert(
         result.ir_text.find("getelementptr %record.Device, ptr %device, i32 0, i32 1") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("define i64 @entry_status_address(ptr %log, i64 %index)") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.Log, ptr %log, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr [2 x %record.UartRegisters], ptr %tmp") !=
         std::string::npos
     );
     std::filesystem::remove(path);

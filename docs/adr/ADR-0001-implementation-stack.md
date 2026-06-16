@@ -151,7 +151,9 @@ analysis, and lowering components.
   forms like `address_of(pointer.inner.field)` lower through struct `getelementptr` steps when the source is a known
   `Pointer<Record>`. Fixed `Array<T, N>` fields lower to LLVM array fields when `T` is supported, and terminal indexed
   forms like `address_of(pointer.array[index])` and `address_of(pointer.inner.array[index])` lower through an array
-  element `getelementptr`; record value emission and more general indexed aggregate chains remain future work.
+  element `getelementptr`; array-of-record element field paths like `address_of(pointer.items[index].field)` also lower
+  through the same mixed member/index walker. Record value emission and more general indexed aggregate chains remain
+  future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
