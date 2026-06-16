@@ -107,6 +107,9 @@ analysis, and lowering components.
 - Method definitions that fit the existing scalar function subset are emitted after top-level functions using those
   stable symbols; member-call expressions still remain disabled until receiver argument and method-call lowering are
   implemented.
+- Receiver-self method parameters (`this: This`, `shared.This`, `exclusive.This`) are lowered as the concrete receiver
+  type when that receiver has a supported LLVM representation, enabling scalar receiver method definitions while
+  leaving aggregate receiver layout future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

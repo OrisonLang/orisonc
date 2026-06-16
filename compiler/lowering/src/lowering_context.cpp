@@ -16,7 +16,27 @@ auto unquoted_text(std::string_view text) -> std::string_view {
     return text;
 }
 
+auto is_receiver_self_type(syntax::TypeSyntax const& type) -> bool {
+    return type.generic_arguments.empty() &&
+        (type.name == "This" || type.name == "shared.This" || type.name == "exclusive.This");
+}
+
+auto lower_method_signature(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::FunctionSyntax const& method,
+    std::string symbol_name
+) -> LoweredFunctionSignature {
+    auto parameters = method.parameters;
+    for (auto& parameter : parameters) {
+        if (parameter.name == "this" && is_receiver_self_type(parameter.type)) {
+            parameter.type = receiver_type;
+        }
+    }
+    return lower_function_signature(method.return_type, parameters, std::move(symbol_name));
+}
+
 auto collect_method_signature(
+    syntax::TypeSyntax const& receiver_type,
     std::string receiver_type_name,
     syntax::FunctionSyntax const& method
 ) -> LoweredMethodSignature {
@@ -24,11 +44,7 @@ auto collect_method_signature(
     return LoweredMethodSignature {
         .receiver_type_name = receiver_type_name,
         .method_name = method.name,
-        .signature = lower_function_signature(
-            method.return_type,
-            method.parameters,
-            std::move(symbol_name)
-        ),
+        .signature = lower_method_signature(receiver_type, method, std::move(symbol_name)),
     };
 }
 
@@ -48,14 +64,22 @@ auto build_lowering_context(
     for (auto const& implementation : module.implementations) {
         auto receiver_type_name = render_source_type_name(implementation.receiver_type);
         for (auto const& method : implementation.methods) {
-            context.methods.push_back(collect_method_signature(receiver_type_name, method));
+            context.methods.push_back(collect_method_signature(
+                implementation.receiver_type,
+                receiver_type_name,
+                method
+            ));
         }
     }
 
     for (auto const& extension : module.extensions) {
         auto receiver_type_name = render_source_type_name(extension.receiver_type);
         for (auto const& method : extension.methods) {
-            context.methods.push_back(collect_method_signature(receiver_type_name, method));
+            context.methods.push_back(collect_method_signature(
+                extension.receiver_type,
+                receiver_type_name,
+                method
+            ));
         }
     }
 

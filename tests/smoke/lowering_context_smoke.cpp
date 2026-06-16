@@ -46,6 +46,18 @@ int main() {
         .return_type = TypeSyntax {.name = "Unit"},
     });
     module.extensions.push_back(std::move(extension));
+
+    auto scalar_extension = ExtensionSyntax {
+        .receiver_type = TypeSyntax {.name = "UInt32"},
+    };
+    scalar_extension.methods.push_back(FunctionSyntax {
+        .name = "identity",
+        .parameters = {
+            ParameterSyntax {.name = "this", .type = TypeSyntax {.name = "shared.This"}},
+        },
+        .return_type = TypeSyntax {.name = "UInt32"},
+    });
+    module.extensions.push_back(std::move(scalar_extension));
     module.foreign_imports.push_back(ForeignImportBlockSyntax {
         .abi = "\"c\"",
         .functions = {
@@ -71,7 +83,7 @@ int main() {
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
     assert(context.functions.size() == 2);
-    assert(context.methods.size() == 2);
+    assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
     assert(context.methods[0].receiver_type_name == "Device");
     assert(context.methods[0].method_name == "read");
@@ -86,6 +98,12 @@ int main() {
     assert(context.methods[1].signature.return_type == "void");
     assert(context.methods[1].signature.parameter_types.size() == 1);
     assert(context.methods[1].signature.parameter_types[0].empty());
+    assert(context.methods[2].receiver_type_name == "UInt32");
+    assert(context.methods[2].method_name == "identity");
+    assert(context.methods[2].signature.symbol_name == "method.UInt32.identity");
+    assert(context.methods[2].signature.return_type == "i32");
+    assert(context.methods[2].signature.parameter_types.size() == 1);
+    assert(context.methods[2].signature.parameter_types[0] == "i32");
     auto read_lookup = orison::lowering::find_lowered_method_signature(context, "Device", "read");
     assert(read_lookup.result == orison::lowering::LoweredMethodLookupResult::found);
     assert(read_lookup.method == &context.methods[0]);
