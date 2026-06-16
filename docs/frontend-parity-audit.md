@@ -33,7 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-16: fixed `Array<T, N>` record fields now lower to LLVM array field types when `T` is supported, and
   `address_of(pointer.array[index])` plus `address_of(pointer.inner.array[index])` lower through terminal array element
   GEPs for known `Pointer<Record>` sources; array-of-record element field paths like
-  `address_of(pointer.items[index].field)` now lower through the same mixed member/index walker.
+  `address_of(pointer.items[index].field)` and nested-array shapes like `address_of(pointer.rows[index][inner])` now
+  lower through the same mixed member/index walker.
 - 2026-06-16: `address_of(pointer.inner.field)` now lowers for chained record-field paths on known `Pointer<Record>`
   sources by emitting one struct GEP per field hop; general indexed aggregate chains and record-value-backed field
   addresses remain pending.

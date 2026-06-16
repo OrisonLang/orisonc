@@ -519,6 +519,35 @@ auto array_element_source_type_name(std::string_view type_name) -> std::optional
     return arguments[0];
 }
 
+auto llvm_type_for_source_type_name(
+    std::string_view type_name,
+    LoweringContext const& context
+) -> std::optional<std::string> {
+    if (auto lowered = lowered_type_for_source_type_name(type_name)) {
+        return lowered->type;
+    }
+
+    if (auto record = context.records.find(std::string(type_name)); record != context.records.end()) {
+        return record->second.llvm_type_name;
+    }
+
+    constexpr auto prefix = std::string_view {"Array<"};
+    if (type_name.starts_with(prefix) && type_name.ends_with(">") &&
+        type_name.size() > prefix.size() + 1) {
+        auto arguments = split_top_level_generic_arguments(
+            type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
+        );
+        if (arguments.size() == 2 && !arguments[1].empty()) {
+            auto element_type = llvm_type_for_source_type_name(arguments[0], context);
+            if (element_type.has_value()) {
+                return "[" + arguments[1] + " x " + *element_type + "]";
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
 auto lower_pointer_record_field_address(
     syntax::ExpressionSyntax const& operand,
     LoweringEmissionContext const& context,
@@ -671,15 +700,16 @@ auto lower_pointer_record_field_address(
             continue;
         }
 
-        auto element_lowered_type = lowered_type_for_source_type_name(current_source_type_name);
-        if (!element_lowered_type.has_value()) {
+        auto element_llvm_type =
+            llvm_type_for_source_type_name(current_source_type_name, context.lowering);
+        if (!element_llvm_type.has_value()) {
             current_layout = nullptr;
             current_llvm_type_name.clear();
             expect_record_layout = false;
             continue;
         }
         current_layout = nullptr;
-        current_llvm_type_name = element_lowered_type->type;
+        current_llvm_type_name = *element_llvm_type;
         expect_record_layout = false;
     }
 

@@ -63,6 +63,27 @@ int main() {
             },
         },
     });
+    module.records.push_back(RecordSyntax {
+        .name = "Matrix",
+        .fields = {
+            FieldSyntax {
+                .name = "rows",
+                .type = TypeSyntax {
+                    .name = "Array",
+                    .generic_arguments = {
+                        TypeSyntax {
+                            .name = "Array",
+                            .generic_arguments = {
+                                TypeSyntax {.name = "Byte"},
+                                TypeSyntax {.name = "4"},
+                            },
+                        },
+                        TypeSyntax {.name = "2"},
+                    },
+                },
+            },
+        },
+    });
     auto implementation = ImplementationSyntax {
         .interface_type = TypeSyntax {.name = "Reader"},
         .receiver_type = TypeSyntax {.name = "Device"},
@@ -128,7 +149,7 @@ int main() {
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
     assert(context.functions.size() == 2);
-    assert(context.records.size() == 4);
+    assert(context.records.size() == 5);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
     assert(context.records.contains("UartRegisters"));
@@ -166,6 +187,13 @@ int main() {
     assert(log_layout.fields[0].source_type_name == "Array<UartRegisters, 2>");
     assert(log_layout.fields[0].llvm_type == "[2 x %record.UartRegisters]");
     assert(log_layout.fields[0].index == 0);
+    assert(context.records.contains("Matrix"));
+    auto const& matrix_layout = context.records.at("Matrix");
+    assert(matrix_layout.fields.size() == 1);
+    assert(matrix_layout.fields[0].name == "rows");
+    assert(matrix_layout.fields[0].source_type_name == "Array<Array<Byte, 4>, 2>");
+    assert(matrix_layout.fields[0].llvm_type == "[2 x [4 x i8]]");
+    assert(matrix_layout.fields[0].index == 0);
     assert(context.methods[0].receiver_type_name == "Device");
     assert(context.methods[0].method_name == "read");
     assert(context.methods[0].signature.symbol_name == "method.Device.read");

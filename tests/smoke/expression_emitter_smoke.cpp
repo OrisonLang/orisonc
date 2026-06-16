@@ -28,6 +28,9 @@ int main() {
                   "record Log\n"
                   "    entries: Array<UartRegisters, 2>\n"
                   "\n"
+                  "record Matrix\n"
+                  "    rows: Array<Array<Byte, 4>, 2>\n"
+                  "\n"
                   "record Device\n"
                   "    registers: UartRegisters\n"
                   "    buffer: Buffer\n"
@@ -230,6 +233,11 @@ int main() {
         .value = "%index",
         .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
     });
+    raw_state.immutable_bindings.emplace("inner", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%inner",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
     raw_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {
         .type = "i32",
         .value = "%value",
@@ -247,6 +255,10 @@ int main() {
         .type = "ptr",
         .value = "%log",
     });
+    raw_state.immutable_bindings.emplace("matrix", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%matrix",
+    });
     raw_state.immutable_bindings.emplace("device", orison::lowering::LoweredExpression {
         .type = "ptr",
         .value = "%device",
@@ -254,10 +266,12 @@ int main() {
     raw_state.source_type_names.emplace("pointer", "Pointer<UInt32>");
     raw_state.source_type_names.emplace("address", "Address");
     raw_state.source_type_names.emplace("index", "UInt64");
+    raw_state.source_type_names.emplace("inner", "UInt64");
     raw_state.source_type_names.emplace("value", "UInt32");
     raw_state.source_type_names.emplace("regs", "Pointer<UartRegisters>");
     raw_state.source_type_names.emplace("buffer", "Pointer<Buffer>");
     raw_state.source_type_names.emplace("log", "Pointer<Log>");
+    raw_state.source_type_names.emplace("matrix", "Pointer<Matrix>");
     raw_state.source_type_names.emplace("device", "Pointer<Device>");
     auto raw_failures = orison::lowering::LoweringFailures {};
     auto raw_session = orison::lowering::FunctionLoweringSession {
@@ -588,6 +602,63 @@ int main() {
         "  %tmp16 = getelementptr [2 x %record.UartRegisters], ptr %tmp15, i64 0, i64 %index\n"
         "  %tmp17 = getelementptr %record.UartRegisters, ptr %tmp16, i32 0, i32 1\n"
         "  %tmp18 = ptrtoint ptr %tmp17 to i64\n"
+    );
+
+    auto nested_indices_address_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "address_of",
+            }
+        ),
+    };
+    auto nested_indices_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::index_access,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::index_access,
+                .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                    orison::syntax::ExpressionSyntax {
+                        .kind = orison::syntax::ExpressionKind::member_access,
+                        .text = "rows",
+                        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                            orison::syntax::ExpressionSyntax {
+                                .kind = orison::syntax::ExpressionKind::name,
+                                .text = "matrix",
+                            }
+                        ),
+                    }
+                ),
+            }
+        ),
+    };
+    nested_indices_access.left->arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "index",
+    });
+    nested_indices_access.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "inner",
+    });
+    nested_indices_address_call.arguments.push_back(std::move(nested_indices_access));
+    output = {};
+    auto nested_indices_address = orison::lowering::lower_expression(
+        nested_indices_address_call,
+        "i64",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(nested_indices_address.has_value());
+    assert(nested_indices_address->value == "%tmp22");
+    assert(
+        output.str() ==
+        "  %tmp19 = getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0\n"
+        "  %tmp20 = getelementptr [2 x [4 x i8]], ptr %tmp19, i64 0, i64 %index\n"
+        "  %tmp21 = getelementptr [4 x i8], ptr %tmp20, i64 0, i64 %inner\n"
+        "  %tmp22 = ptrtoint ptr %tmp21 to i64\n"
     );
 
     std::filesystem::remove(path);
