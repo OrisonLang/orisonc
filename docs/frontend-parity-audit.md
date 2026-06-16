@@ -25,7 +25,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
-- lowering gaps after the current recursive void path: unsafe-function declarations, raw MMIO intrinsics, non-array-literal `for` iteration, and non-final return-bearing `switch` lowering
+- lowering gaps after the current recursive void path: unsafe-function declarations, raw MMIO intrinsics, and non-array-literal `for` iteration
 
 ## Latest update
 
@@ -450,3 +450,4 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-15: `Unit`-returning function bodies now recurse through supported statement blocks instead of short-circuiting, covering statement-level `if`/`switch`, `repeat`, provisional array-literal `for`, `unsafe`, `defer`, direct call/member-call statements, and naked returns before emitting `ret void`; unsafe-function declarations and raw MMIO lowering remain future work.
 - 2026-06-15: `Address` now maps to LLVM `i64` in lowering, and `Pointer(...)` now lowers through `inttoptr` from an `i64` source so the new unsafe-block smoke path can compile without implementing raw memory intrinsics yet.
 - 2026-06-15: `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return branches before a later final expression or final control-flow statement.
+- 2026-06-15: non-final `switch` statements in non-`Unit` function bodies now lower through the same early-exit path as `guard` and `if`, so individual cases can return early while other cases fall through to later statements after the switch.

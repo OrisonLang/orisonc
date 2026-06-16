@@ -45,7 +45,13 @@ int main() {
                   "function observe_then_return(value: UInt32) -> Unit\n"
                   "    observe(value)\n"
                   "    value.reset()\n"
-                  "    return\n";
+                  "    return\n"
+                  "\n"
+                  "function switch_then_return(value: UInt32, flag: Bool) -> UInt32\n"
+                  "    switch flag\n"
+                  "        true => return value\n"
+                  "        false => observe(value)\n"
+                  "    value + 2 as UInt32\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -162,6 +168,18 @@ int main() {
         "  ret void\n"
         "}\n"
     );
+
+    auto switch_then_return_ir = orison::lowering::emit_function(
+        parse_result.module.functions[6],
+        context.functions.at("switch_then_return"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(switch_then_return_ir.find("switch i1") != std::string::npos);
+    assert(switch_then_return_ir.find("call void @observe") != std::string::npos);
+    assert(switch_then_return_ir.find("ret i32") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

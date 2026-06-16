@@ -156,6 +156,16 @@ auto lower_nonvoid_if_statement(
     std::ostringstream& output
 ) -> StatementFlow;
 
+auto lower_nonvoid_switch_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
 auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.text.empty() && expression.arguments.empty() && expression.nested_statements.empty() &&
            expression.left == nullptr && expression.right == nullptr && expression.alternate == nullptr;
@@ -727,6 +737,26 @@ auto lower_guard_statement_block(
                 diagnostics,
                 output
             );
+        } else if (statement->kind == syntax::StatementKind::if_statement) {
+            flow = lower_nonvoid_if_statement(
+                *statement,
+                return_llvm_type,
+                return_signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        } else if (statement->kind == syntax::StatementKind::switch_statement) {
+            flow = lower_nonvoid_switch_statement(
+                *statement,
+                return_llvm_type,
+                return_signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            );
         } else if (statement->kind == syntax::StatementKind::guard_statement) {
             flow = lower_guard_statement(
                 *statement,
@@ -761,6 +791,31 @@ auto lower_guard_statement_block(
     statement_pointers.reserve(statements.size());
     for (auto const& statement : statements) {
         statement_pointers.push_back(&statement);
+    }
+    return lower_guard_statement_block(
+        statement_pointers,
+        return_llvm_type,
+        return_signedness,
+        context,
+        session,
+        diagnostics,
+        output
+    );
+}
+
+auto lower_guard_statement_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
+    statement_pointers.reserve(statements.size());
+    for (auto const& statement : statements) {
+        statement_pointers.push_back(statement.get());
     }
     return lower_guard_statement_block(
         statement_pointers,
@@ -914,6 +969,106 @@ auto lower_nonvoid_if_statement(
     emit_llvm_block_label(output, plan.merge_block);
     session.state.current_block = plan.merge_block;
     if (then_flow == StatementFlow::terminated && has_else && else_flow == StatementFlow::terminated) {
+        return StatementFlow::terminated;
+    }
+    return StatementFlow::falls_through;
+}
+
+auto lower_nonvoid_switch_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
+    if (!subject_type.has_value() ||
+        (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
+        diagnostics.error(statement.line, "lowering does not yet support this non-void switch subject");
+        return StatementFlow::failed;
+    }
+
+    auto subject = lower_expression(
+        statement.expression,
+        subject_type->type,
+        subject_type->signedness,
+        context,
+        session,
+        output
+    );
+    if (!subject.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this non-void switch subject" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
+    if (!planning.plan.has_value()) {
+        auto detail = render_control_flow_lowering_failure(ControlFlowLoweringFailure {
+            .reason = planning.failure,
+        });
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this non-void switch statement" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+
+    auto const& plan = *planning.plan;
+    auto binding_scope = BranchBindingScope(session.state);
+    auto switch_targets = std::vector<LlvmSwitchTarget> {};
+    switch_targets.reserve(plan.cases.size());
+    for (auto const& planned_case : plan.cases) {
+        if (planned_case.pattern.has_value()) {
+            switch_targets.push_back(LlvmSwitchTarget {
+                .value = planned_case.pattern->value,
+                .block = planned_case.block,
+            });
+        }
+    }
+    emit_llvm_switch(output, subject->type, subject->value, plan.default_block, switch_targets);
+
+    auto all_cases_terminated = true;
+    for (auto const& planned_case : plan.cases) {
+        binding_scope.reset();
+        emit_llvm_block_label(output, planned_case.block);
+        session.state.current_block = planned_case.block;
+
+        auto case_flow = lower_guard_statement_block(
+            planned_case.syntax->statements,
+            return_llvm_type,
+            return_signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (case_flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+        if (case_flow == StatementFlow::falls_through) {
+            emit_llvm_branch(output, plan.merge_block);
+            all_cases_terminated = false;
+        }
+    }
+
+    if (!plan.has_default) {
+        emit_llvm_block_label(output, plan.fallback_block);
+        emit_llvm_unreachable(output);
+    }
+
+    binding_scope.reset();
+    emit_llvm_block_label(output, plan.merge_block);
+    session.state.current_block = plan.merge_block;
+    if (all_cases_terminated) {
         return StatementFlow::terminated;
     }
     return StatementFlow::falls_through;
@@ -1179,6 +1334,20 @@ void emit_function_body(
         }
         if (!is_last_statement && statement.kind == syntax::StatementKind::if_statement) {
             if (lower_nonvoid_if_statement(
+                    statement,
+                    signature.return_type,
+                    signature.return_signedness,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                ) == StatementFlow::failed) {
+                return;
+            }
+            continue;
+        }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::switch_statement) {
+            if (lower_nonvoid_switch_statement(
                     statement,
                     signature.return_type,
                     signature.return_signedness,
