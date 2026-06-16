@@ -2293,6 +2293,82 @@ void test_emit_nested_defer_cleanup_in_unsafe_block() {
     std::filesystem::remove(path);
 }
 
+void test_emit_nested_defer_cleanup_in_for_and_repeat_unsafe_blocks() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nested_defer_for_repeat_unsafe.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function cleanup_on_for_unsafe_continue(value: UInt32) -> Unit\n"
+        "    for item in [0 as UInt32, 1 as UInt32, 2 as UInt32]\n"
+        "        unsafe\n"
+        "            defer\n"
+        "                observe(1 as UInt32)\n"
+        "            defer\n"
+        "                observe(2 as UInt32)\n"
+        "                defer\n"
+        "                    observe(3 as UInt32)\n"
+        "            continue\n"
+        "    return\n"
+        "\n"
+        "function cleanup_on_repeat_unsafe_break(value: UInt32) -> Unit\n"
+        "    repeat\n"
+        "        unsafe\n"
+        "            defer\n"
+        "                observe(1 as UInt32)\n"
+        "            defer\n"
+        "                observe(2 as UInt32)\n"
+        "                defer\n"
+        "                    observe(3 as UInt32)\n"
+        "            break\n"
+        "    while value < 3 as UInt32\n"
+        "    return\n"
+    );
+
+    assert(!result.has_errors());
+
+    auto const for_function_pos = result.ir_text.find("define void @cleanup_on_for_unsafe_continue");
+    assert(for_function_pos != std::string::npos);
+    auto const for_function_ir = result.ir_text.substr(for_function_pos);
+    auto const for_first_call = for_function_ir.find("call void @observe(i32 2)");
+    assert(for_first_call != std::string::npos);
+    auto const for_second_call = for_function_ir.find("call void @observe(i32 3)", for_first_call + 1);
+    assert(for_second_call != std::string::npos);
+    auto const for_third_call = for_function_ir.find("call void @observe(i32 1)", for_second_call + 1);
+    assert(for_third_call != std::string::npos);
+    auto const for_exit = for_function_ir.find("br label %for.iteration.0.1");
+    assert(for_exit != std::string::npos);
+    assert(for_first_call < for_second_call);
+    assert(for_second_call < for_third_call);
+    assert(for_third_call < for_exit);
+
+    auto const repeat_function_pos = result.ir_text.find("define void @cleanup_on_repeat_unsafe_break");
+    assert(repeat_function_pos != std::string::npos);
+    auto const repeat_function_ir = result.ir_text.substr(repeat_function_pos);
+    auto const repeat_first_call = repeat_function_ir.find("call void @observe(i32 2)");
+    assert(repeat_first_call != std::string::npos);
+    auto const repeat_second_call = repeat_function_ir.find(
+        "call void @observe(i32 3)",
+        repeat_first_call + 1
+    );
+    assert(repeat_second_call != std::string::npos);
+    auto const repeat_third_call = repeat_function_ir.find(
+        "call void @observe(i32 1)",
+        repeat_second_call + 1
+    );
+    assert(repeat_third_call != std::string::npos);
+    auto const repeat_exit = repeat_function_ir.find("br label %repeat.exit.0");
+    assert(repeat_exit != std::string::npos);
+    assert(repeat_first_call < repeat_second_call);
+    assert(repeat_second_call < repeat_third_call);
+    assert(repeat_third_call < repeat_exit);
+    std::filesystem::remove(path);
+}
+
 void test_reject_malformed_generated_llvm_ir() {
     orison::lowering::LlvmIrVerifier verifier;
     auto diagnostics = verifier.verify(
@@ -2403,6 +2479,7 @@ auto main() -> int {
     test_emit_nested_defer_cleanup_on_loop_control();
     test_emit_nested_defer_cleanup_on_for_and_repeat();
     test_emit_nested_defer_cleanup_in_unsafe_block();
+    test_emit_nested_defer_cleanup_in_for_and_repeat_unsafe_blocks();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();
