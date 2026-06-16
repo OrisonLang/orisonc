@@ -455,3 +455,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-15: order-sensitive regressions now pin multiple nested defers within the same cleanup block.
 - 2026-06-15: order-sensitive regressions now also pin recursive defer replay on loop-control exits.
 - 2026-06-15: order-sensitive regressions now also pin recursive defer replay on `for` continue exits and `repeat` break exits.
+- 2026-06-15: order-sensitive regressions now also pin recursive defer replay through nested `unsafe` blocks that contain loop-control exits.
+- 2026-06-15: LLVM `while` bodies now also accept nested `unsafe` blocks, reusing the existing cleanup replay path so `defer` blocks inside `unsafe` continue to run before `break` and `continue`.

@@ -131,6 +131,18 @@ auto lower_while_body_if(
     return StatementFlow::falls_through;
 }
 
+auto lower_while_body_unsafe(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    [[maybe_unused]] auto binding_scope = BranchBindingScope(session.state);
+    auto flow = lower_while_body_block(statement.nested_statements, context, session, diagnostics, output);
+    return flow;
+}
+
 auto inferred_loop_binding_type(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
@@ -215,11 +227,14 @@ auto lower_while_body_statement(
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_while_body_if(statement, context, session, diagnostics, output);
     }
+    if (statement.kind == syntax::StatementKind::unsafe_statement) {
+        return lower_while_body_unsafe(statement, context, session, diagnostics, output);
+    }
 
     diagnostics.error(
         statement.line,
         "lowering while body only supports local bindings, mutable-local assignments, "
-        "call statements, loop control, and nested if statements"
+        "call statements, loop control, nested if statements, and unsafe blocks"
     );
     return StatementFlow::failed;
 }

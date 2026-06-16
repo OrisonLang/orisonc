@@ -725,6 +725,120 @@ int main() {
     assert(repeat_third_call < repeat_exit);
     std::filesystem::remove(defer_for_repeat_path);
 
+    auto defer_unsafe_loop_control_path = std::filesystem::temp_directory_path() /
+        "orison_function_emitter_defer_unsafe_loop_control.or";
+    {
+        auto output = std::ofstream(defer_unsafe_loop_control_path);
+        output << "package demo.function_emitter\n"
+                  "\n"
+                  "function observe(value: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_on_unsafe_break(value: UInt32) -> Unit\n"
+                  "    while value < 3 as UInt32\n"
+                  "        unsafe\n"
+                  "            defer\n"
+                  "                observe(1 as UInt32)\n"
+                  "            defer\n"
+                  "                observe(2 as UInt32)\n"
+                  "                defer\n"
+                  "                    observe(3 as UInt32)\n"
+                  "            break\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_on_unsafe_continue(value: UInt32) -> Unit\n"
+                  "    while value < 3 as UInt32\n"
+                  "        unsafe\n"
+                  "            defer\n"
+                  "                observe(1 as UInt32)\n"
+                  "            defer\n"
+                  "                observe(2 as UInt32)\n"
+                  "                defer\n"
+                  "                    observe(3 as UInt32)\n"
+                  "            continue\n"
+                  "    return\n";
+    }
+    auto defer_unsafe_loop_control_source =
+        orison::source::SourceFile::read(defer_unsafe_loop_control_path);
+    assert(defer_unsafe_loop_control_source.has_value());
+    auto defer_unsafe_loop_control_parser = orison::syntax::ModuleParser {};
+    auto defer_unsafe_loop_control_parse =
+        defer_unsafe_loop_control_parser.parse(*defer_unsafe_loop_control_source);
+    assert(!defer_unsafe_loop_control_parse.diagnostics.has_errors());
+    diagnostics = {};
+    auto defer_unsafe_loop_control_context = orison::lowering::build_lowering_context(
+        defer_unsafe_loop_control_parse.module,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto defer_unsafe_loop_control_strings =
+        orison::lowering::collect_string_constants(defer_unsafe_loop_control_parse.module);
+
+    auto unsafe_break_ir = orison::lowering::emit_function(
+        defer_unsafe_loop_control_parse.module.functions[1],
+        defer_unsafe_loop_control_context.functions.at("cleanup_on_unsafe_break"),
+        defer_unsafe_loop_control_context,
+        defer_unsafe_loop_control_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto unsafe_break_function_pos = unsafe_break_ir.find("define void @cleanup_on_unsafe_break");
+    assert(unsafe_break_function_pos != std::string::npos);
+    auto unsafe_break_function_ir = unsafe_break_ir.substr(unsafe_break_function_pos);
+    auto unsafe_break_first_call = unsafe_break_function_ir.find("call void @observe(i32 2)");
+    assert(unsafe_break_first_call != std::string::npos);
+    auto unsafe_break_second_call = unsafe_break_function_ir.find(
+        "call void @observe(i32 3)",
+        unsafe_break_first_call + 1
+    );
+    assert(unsafe_break_second_call != std::string::npos);
+    auto unsafe_break_third_call = unsafe_break_function_ir.find(
+        "call void @observe(i32 1)",
+        unsafe_break_second_call + 1
+    );
+    assert(unsafe_break_third_call != std::string::npos);
+    auto unsafe_break_exit = unsafe_break_function_ir.find("br label %while.exit.0");
+    assert(unsafe_break_exit != std::string::npos);
+    assert(unsafe_break_first_call < unsafe_break_second_call);
+    assert(unsafe_break_second_call < unsafe_break_third_call);
+    assert(unsafe_break_third_call < unsafe_break_exit);
+
+    diagnostics = {};
+    auto unsafe_continue_ir = orison::lowering::emit_function(
+        defer_unsafe_loop_control_parse.module.functions[2],
+        defer_unsafe_loop_control_context.functions.at("cleanup_on_unsafe_continue"),
+        defer_unsafe_loop_control_context,
+        defer_unsafe_loop_control_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto unsafe_continue_function_pos =
+        unsafe_continue_ir.find("define void @cleanup_on_unsafe_continue");
+    assert(unsafe_continue_function_pos != std::string::npos);
+    auto unsafe_continue_function_ir =
+        unsafe_continue_ir.substr(unsafe_continue_function_pos);
+    auto unsafe_continue_first_call = unsafe_continue_function_ir.find("call void @observe(i32 2)");
+    assert(unsafe_continue_first_call != std::string::npos);
+    auto unsafe_continue_second_call = unsafe_continue_function_ir.find(
+        "call void @observe(i32 3)",
+        unsafe_continue_first_call + 1
+    );
+    assert(unsafe_continue_second_call != std::string::npos);
+    auto unsafe_continue_third_call = unsafe_continue_function_ir.find(
+        "call void @observe(i32 1)",
+        unsafe_continue_second_call + 1
+    );
+    assert(unsafe_continue_third_call != std::string::npos);
+    auto unsafe_continue_exit = unsafe_continue_function_ir.find(
+        "br label %while.condition.0",
+        unsafe_continue_third_call + 1
+    );
+    assert(unsafe_continue_exit != std::string::npos);
+    assert(unsafe_continue_first_call < unsafe_continue_second_call);
+    assert(unsafe_continue_second_call < unsafe_continue_third_call);
+    assert(unsafe_continue_third_call < unsafe_continue_exit);
+    std::filesystem::remove(defer_unsafe_loop_control_path);
+
     auto method = orison::syntax::FunctionSyntax {
         .name = "scale",
         .parameters = {
