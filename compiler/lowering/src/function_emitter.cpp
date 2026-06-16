@@ -54,6 +54,26 @@ private:
     FunctionLoweringState& state_;
 };
 
+class DeferredCleanupEmissionScope {
+public:
+    explicit DeferredCleanupEmissionScope(FunctionLoweringState& state)
+        : state_(state) {
+        ++state_.defer_cleanup_nesting;
+    }
+
+    ~DeferredCleanupEmissionScope() noexcept {
+        --state_.defer_cleanup_nesting;
+    }
+
+    DeferredCleanupEmissionScope(DeferredCleanupEmissionScope const&) = delete;
+    auto operator=(DeferredCleanupEmissionScope const&) -> DeferredCleanupEmissionScope& = delete;
+    DeferredCleanupEmissionScope(DeferredCleanupEmissionScope&&) = delete;
+    auto operator=(DeferredCleanupEmissionScope&&) -> DeferredCleanupEmissionScope& = delete;
+
+private:
+    FunctionLoweringState& state_;
+};
+
 auto lower_unit_statement_block(
     std::span<syntax::StatementSyntax const*> statements,
     EmissionContext const& context,
@@ -64,6 +84,14 @@ auto lower_unit_statement_block(
 
 auto lower_unit_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_statement_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -129,7 +157,6 @@ auto lower_unit_unsafe_statement(
 
 auto lower_unit_defer_statement(
     syntax::StatementSyntax const& statement,
-    bool is_last_statement,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -232,6 +259,7 @@ auto lower_unit_statement_block(
     std::ostringstream& output
 ) -> StatementFlow {
     auto flow = StatementFlow::falls_through;
+    DeferredCleanupScope defer_scope(session.state);
     for (auto index = std::size_t {0}; index < statements.size(); ++index) {
         auto const* statement = statements[index];
         if (statement == nullptr) {
@@ -251,6 +279,16 @@ auto lower_unit_statement_block(
             return StatementFlow::failed;
         }
     }
+    if (flow == StatementFlow::falls_through &&
+        !emit_deferred_cleanup_to_depth(
+            defer_scope.cleanup_depth(),
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return StatementFlow::failed;
+    }
     return flow;
 }
 
@@ -267,6 +305,47 @@ auto lower_unit_statement_block(
         statement_pointers.push_back(&statement);
     }
     return lower_unit_statement_block(statement_pointers, context, session, diagnostics, output);
+}
+
+auto lower_unit_statement_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto flow = StatementFlow::falls_through;
+    DeferredCleanupScope defer_scope(session.state);
+    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+        auto const* statement = statements[index];
+        if (statement == nullptr) {
+            return StatementFlow::failed;
+        }
+        if (flow == StatementFlow::terminated) {
+            diagnostics.error(
+                statement->line,
+                "lowering does not yet support statements after a terminating Unit statement"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto const is_last_statement = index + 1 == statements.size();
+        flow = lower_unit_statement(*statement, is_last_statement, context, session, diagnostics, output);
+        if (flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+    }
+    if (flow == StatementFlow::falls_through &&
+        !emit_deferred_cleanup_to_depth(
+            defer_scope.cleanup_depth(),
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return StatementFlow::failed;
+    }
+    return flow;
 }
 
 auto lower_unit_statement_block(
@@ -475,6 +554,7 @@ auto lower_unit_repeat_statement(
         LoopTargets {
             .break_target = exit_block,
             .continue_target = condition_block,
+            .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
         },
     };
     [[maybe_unused]] auto body_scope = BranchBindingScope(session.state);
@@ -598,6 +678,7 @@ auto lower_unit_for_statement(
             .continue_target = index + 1 < statement.expression.arguments.size()
                 ? iteration_blocks[index + 1]
                 : exit_block,
+            .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
         };
         [[maybe_unused]] auto target_scope = LoopTargetScope {session.state, std::move(loop_targets)};
         auto body_flow = lower_unit_statement_block(
@@ -639,23 +720,65 @@ auto lower_unit_unsafe_statement(
 
 auto lower_unit_defer_statement(
     syntax::StatementSyntax const& statement,
-    bool is_last_statement,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    if (!is_last_statement) {
-        diagnostics.error(statement.line, "lowering defer statements currently requires them to be final");
+    if (!record_deferred_cleanup(statement, session, diagnostics)) {
         return StatementFlow::failed;
+    }
+    (void)context;
+    (void)output;
+    return StatementFlow::falls_through;
+}
+
+auto emit_deferred_cleanup_to_depth_impl(
+    std::size_t target_depth,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    [[maybe_unused]] auto cleanup_scope = DeferredCleanupEmissionScope {session.state};
+    if (target_depth > session.state.defer_cleanup_scopes.size()) {
+        diagnostics.error(1, "lowering defer cleanup depth is inconsistent with the active scope stack");
+        return false;
     }
 
-    [[maybe_unused]] auto binding_scope = BranchBindingScope(session.state);
-    auto flow = lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
-    if (flow == StatementFlow::failed) {
-        return StatementFlow::failed;
+    auto scope_index = session.state.defer_cleanup_scopes.size();
+    auto scope_output = std::ostringstream {};
+    while (scope_index > target_depth) {
+        auto const& scope = session.state.defer_cleanup_scopes[scope_index - 1];
+        auto cleanup_output = std::ostringstream {};
+        for (auto block_index = scope.blocks.size(); block_index-- > 0;) {
+            auto const& block = scope.blocks[block_index];
+            auto block_output = std::ostringstream {};
+            auto flow = lower_unit_statement_block(
+                block.statements,
+                context,
+                session,
+                diagnostics,
+                block_output
+            );
+            if (flow == StatementFlow::failed) {
+                return false;
+            }
+            if (flow == StatementFlow::terminated) {
+                diagnostics.error(
+                    block.line,
+                    "lowering defer cleanup blocks currently requires them to fall through"
+                );
+                return false;
+            }
+            cleanup_output << block_output.str();
+        }
+        scope_output << cleanup_output.str();
+        --scope_index;
     }
-    return flow;
+
+    output << scope_output.str();
+    return true;
 }
 
 auto lower_guard_return_statement(
@@ -670,6 +793,9 @@ auto lower_guard_return_statement(
     if (return_llvm_type == "void") {
         if (!is_empty_expression(statement.expression)) {
             diagnostics.error(statement.line, "lowering does not yet support return expressions in Unit guard failure blocks");
+            return StatementFlow::failed;
+        }
+        if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
             return StatementFlow::failed;
         }
         output << "  ret void\n";
@@ -699,6 +825,9 @@ auto lower_guard_return_statement(
         return StatementFlow::failed;
     }
 
+    if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+        return StatementFlow::failed;
+    }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
     return StatementFlow::terminated;
 }
@@ -713,6 +842,7 @@ auto lower_guard_statement_block(
     std::ostringstream& output
 ) -> StatementFlow {
     auto flow = StatementFlow::falls_through;
+    DeferredCleanupScope defer_scope(session.state);
     for (auto index = std::size_t {0}; index < statements.size(); ++index) {
         auto const* statement = statements[index];
         if (statement == nullptr) {
@@ -774,6 +904,16 @@ auto lower_guard_statement_block(
         if (flow == StatementFlow::failed) {
             return StatementFlow::failed;
         }
+    }
+    if (flow == StatementFlow::falls_through &&
+        !emit_deferred_cleanup_to_depth(
+            defer_scope.cleanup_depth(),
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return StatementFlow::failed;
     }
     return flow;
 }
@@ -1131,12 +1271,15 @@ auto lower_unit_statement(
             diagnostics.error(statement.line, "lowering does not yet support return expressions in Unit functions");
             return StatementFlow::failed;
         }
+        if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+            return StatementFlow::failed;
+        }
         output << "  ret void\n";
         return StatementFlow::terminated;
     }
     if (statement.kind == syntax::StatementKind::break_statement ||
         statement.kind == syntax::StatementKind::continue_statement) {
-        if (!lower_loop_control_statement(statement, session, diagnostics, output)) {
+        if (!lower_loop_control_statement(statement, context, session, diagnostics, output)) {
             return StatementFlow::failed;
         }
         return StatementFlow::terminated;
@@ -1166,7 +1309,8 @@ auto lower_unit_statement(
         return lower_unit_unsafe_statement(statement, context, session, diagnostics, output);
     }
     if (statement.kind == syntax::StatementKind::defer_statement) {
-        return lower_unit_defer_statement(statement, is_last_statement, context, session, diagnostics, output);
+        (void)is_last_statement;
+        return lower_unit_defer_statement(statement, context, session, diagnostics, output);
     }
     if (statement.kind == syntax::StatementKind::expression_statement &&
         statement.expression.kind == syntax::ExpressionKind::call) {
@@ -1244,6 +1388,7 @@ void emit_function_body(
             render_source_type_name(function.parameters[index].type)
         );
     }
+    [[maybe_unused]] auto function_scope = DeferredCleanupScope {state};
 
     if (signature.return_type == "void") {
         auto flow = lower_unit_statement_block(function.body_statements, context, session, diagnostics, output);
@@ -1252,6 +1397,9 @@ void emit_function_body(
         }
 
         if (flow == StatementFlow::falls_through) {
+            if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+                return;
+            }
             output << "  ret void\n";
         }
         output << "}\n";
@@ -1301,6 +1449,12 @@ void emit_function_body(
                     diagnostics,
                     output
                 )) {
+                return;
+            }
+            continue;
+        }
+        if (statement.kind == syntax::StatementKind::defer_statement) {
+            if (!record_deferred_cleanup(statement, session, diagnostics)) {
                 return;
             }
             continue;
@@ -1424,11 +1578,24 @@ void emit_function_body(
         return;
     }
 
+    if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+        return;
+    }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
     output << "}\n";
 }
 
 }  // namespace
+
+auto emit_deferred_cleanup_to_depth(
+    std::size_t target_depth,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    return emit_deferred_cleanup_to_depth_impl(target_depth, context, session, diagnostics, output);
+}
 
 auto emit_function(
     syntax::FunctionSyntax const& function,

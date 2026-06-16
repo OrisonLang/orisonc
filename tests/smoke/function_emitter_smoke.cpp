@@ -290,6 +290,100 @@ int main() {
     assert(branchy_ir.find("ret void") != std::string::npos);
     std::filesystem::remove(branchy_path);
 
+    auto defer_return_path =
+        std::filesystem::temp_directory_path() / "orison_function_emitter_defer_return.or";
+    {
+        auto output = std::ofstream(defer_return_path);
+        output << "package demo.function_emitter\n"
+                  "\n"
+                  "function observe(value: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_then_return(value: UInt32, flag: Bool) -> Unit\n"
+                  "    defer\n"
+                  "        observe(value)\n"
+                  "    if flag\n"
+                  "        return\n"
+                  "    return\n";
+    }
+    auto defer_return_source = orison::source::SourceFile::read(defer_return_path);
+    assert(defer_return_source.has_value());
+    auto defer_return_parser = orison::syntax::ModuleParser {};
+    auto defer_return_parse = defer_return_parser.parse(*defer_return_source);
+    assert(!defer_return_parse.diagnostics.has_errors());
+    diagnostics = {};
+    auto defer_return_context = orison::lowering::build_lowering_context(
+        defer_return_parse.module,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto defer_return_strings = orison::lowering::collect_string_constants(defer_return_parse.module);
+    auto defer_return_ir = orison::lowering::emit_function(
+        defer_return_parse.module.functions[1],
+        defer_return_context.functions.at("cleanup_then_return"),
+        defer_return_context,
+        defer_return_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto first_defer_call = defer_return_ir.find("call void @observe(i32 %value)");
+    assert(first_defer_call != std::string::npos);
+    auto second_defer_call = defer_return_ir.find(
+        "call void @observe(i32 %value)",
+        first_defer_call + 1
+    );
+    assert(second_defer_call != std::string::npos);
+    auto first_ret_void = defer_return_ir.find("ret void");
+    assert(first_ret_void != std::string::npos);
+    auto second_ret_void = defer_return_ir.find("ret void", first_ret_void + 1);
+    assert(second_ret_void != std::string::npos);
+    assert(first_defer_call < first_ret_void);
+    assert(second_defer_call < second_ret_void);
+    std::filesystem::remove(defer_return_path);
+
+    auto defer_break_path =
+        std::filesystem::temp_directory_path() / "orison_function_emitter_defer_break.or";
+    {
+        auto output = std::ofstream(defer_break_path);
+        output << "package demo.function_emitter\n"
+                  "\n"
+                  "function observe(value: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_on_break(value: UInt32) -> Unit\n"
+                  "    while value < 3 as UInt32\n"
+                  "        defer\n"
+                  "            observe(value)\n"
+                  "        break\n"
+                  "    return\n";
+    }
+    auto defer_break_source = orison::source::SourceFile::read(defer_break_path);
+    assert(defer_break_source.has_value());
+    auto defer_break_parser = orison::syntax::ModuleParser {};
+    auto defer_break_parse = defer_break_parser.parse(*defer_break_source);
+    assert(!defer_break_parse.diagnostics.has_errors());
+    diagnostics = {};
+    auto defer_break_context = orison::lowering::build_lowering_context(
+        defer_break_parse.module,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto defer_break_strings = orison::lowering::collect_string_constants(defer_break_parse.module);
+    auto defer_break_ir = orison::lowering::emit_function(
+        defer_break_parse.module.functions[1],
+        defer_break_context.functions.at("cleanup_on_break"),
+        defer_break_context,
+        defer_break_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto break_call = defer_break_ir.find("call void @observe(i32 %value)");
+    assert(break_call != std::string::npos);
+    auto break_exit = defer_break_ir.find("br label %while.exit.0");
+    assert(break_exit != std::string::npos);
+    assert(break_call < break_exit);
+    std::filesystem::remove(defer_break_path);
+
     auto method = orison::syntax::FunctionSyntax {
         .name = "scale",
         .parameters = {

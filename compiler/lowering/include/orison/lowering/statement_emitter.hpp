@@ -7,6 +7,7 @@
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/syntax/module_parser.hpp"
 
+#include <cstddef>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -14,6 +15,23 @@
 #include <vector>
 
 namespace orison::lowering {
+
+class DeferredCleanupScope {
+public:
+    explicit DeferredCleanupScope(FunctionLoweringState& state);
+    ~DeferredCleanupScope() noexcept;
+
+    DeferredCleanupScope(DeferredCleanupScope const&) = delete;
+    auto operator=(DeferredCleanupScope const&) -> DeferredCleanupScope& = delete;
+    DeferredCleanupScope(DeferredCleanupScope&&) = delete;
+    auto operator=(DeferredCleanupScope&&) -> DeferredCleanupScope& = delete;
+
+    auto cleanup_depth() const -> std::size_t;
+
+private:
+    FunctionLoweringState& state_;
+    std::size_t cleanup_depth_ = 0;
+};
 
 using FinalControlFlowLowerer = std::optional<LoweredExpression> (*)(
     syntax::StatementSyntax const& statement,
@@ -57,6 +75,20 @@ auto lower_assignment_statement(
     std::ostringstream& output
 ) -> bool;
 
+auto record_deferred_cleanup(
+    syntax::StatementSyntax const& statement,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool;
+
+auto emit_deferred_cleanup_to_depth(
+    std::size_t target_depth,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool;
+
 auto lower_call_statement(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
@@ -67,6 +99,7 @@ auto lower_call_statement(
 
 auto lower_loop_control_statement(
     syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -74,6 +107,17 @@ auto lower_loop_control_statement(
 
 auto lower_value_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    FinalControlFlowLowerer lower_final_control_flow
+) -> std::optional<LoweredExpression>;
+
+auto lower_value_statement_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     LoweringEmissionContext const& context,

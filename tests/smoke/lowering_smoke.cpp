@@ -414,6 +414,40 @@ void test_emit_terminal_while_continue() {
     assert(result.ir_text.find("  br label %while.condition.0\nwhile.exit.0:\n") != std::string::npos);
 }
 
+void test_emit_defer_cleanup_on_early_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_defer_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function cleanup_then_return(value: UInt32, flag: Bool) -> Unit\n"
+        "    defer\n"
+        "        observe(value)\n"
+        "    if flag\n"
+        "        return\n"
+        "    return\n"
+    );
+
+    assert(!result.has_errors());
+    auto const function_pos = result.ir_text.find("define void @cleanup_then_return");
+    assert(function_pos != std::string::npos);
+    auto const function_ir = result.ir_text.substr(function_pos);
+    auto const first_call = function_ir.find("call void @observe(i32 %value)");
+    assert(first_call != std::string::npos);
+    auto const second_call = function_ir.find("call void @observe(i32 %value)", first_call + 1);
+    assert(second_call != std::string::npos);
+    auto const first_ret = function_ir.find("ret void");
+    assert(first_ret != std::string::npos);
+    auto const second_ret = function_ir.find("ret void", first_ret + 1);
+    assert(second_ret != std::string::npos);
+    assert(first_call < first_ret);
+    assert(second_call < second_ret);
+    std::filesystem::remove(path);
+}
+
 void test_emit_conditional_while_continue_and_break() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_conditional_while_control.or";
@@ -2010,6 +2044,7 @@ auto main() -> int {
     test_restore_outer_binding_after_while_local_shadow();
     test_emit_terminal_while_break();
     test_emit_terminal_while_continue();
+    test_emit_defer_cleanup_on_early_return();
     test_emit_conditional_while_continue_and_break();
     test_emit_terminating_while_if_else();
     test_emit_nested_while_if_control();

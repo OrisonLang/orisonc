@@ -15,6 +15,19 @@
 namespace orison::lowering {
 namespace {
 
+auto deferred_cleanup_block_for(
+    syntax::StatementSyntax const& statement
+) -> DeferredCleanupBlock {
+    auto block = DeferredCleanupBlock {
+        .line = statement.line,
+    };
+    block.statements.reserve(statement.nested_statements.size());
+    for (auto const& nested_statement : statement.nested_statements) {
+        block.statements.push_back(&nested_statement);
+    }
+    return block;
+}
+
 auto lower_prefix_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -49,6 +62,9 @@ auto lower_prefix_statement(
     if (statement.kind == syntax::StatementKind::assignment_statement) {
         return lower_assignment_statement(statement, context, session, diagnostics, output);
     }
+    if (statement.kind == syntax::StatementKind::defer_statement) {
+        return record_deferred_cleanup(statement, session, diagnostics);
+    }
     return false;
 }
 
@@ -65,6 +81,7 @@ auto lower_value_statement_block(
     if (statements.empty()) {
         return std::nullopt;
     }
+    DeferredCleanupScope defer_scope(session.state);
 
     for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
         auto const* statement = statements[index];
@@ -88,7 +105,7 @@ auto lower_value_statement_block(
     }
     if (final_statement->kind == syntax::StatementKind::if_statement ||
         final_statement->kind == syntax::StatementKind::switch_statement) {
-        return lower_final_control_flow(
+        auto lowered = lower_final_control_flow(
             *final_statement,
             expected_llvm_type,
             expected_signedness,
@@ -97,13 +114,26 @@ auto lower_value_statement_block(
             diagnostics,
             output
         );
+        if (!lowered.has_value()) {
+            return std::nullopt;
+        }
+        if (!emit_deferred_cleanup_to_depth(
+                defer_scope.cleanup_depth(),
+                context,
+                session,
+                diagnostics,
+                output
+            )) {
+            return std::nullopt;
+        }
+        return lowered;
     }
 
     auto const* expression = value_expression_for(*final_statement);
     if (expression == nullptr) {
         return std::nullopt;
     }
-    return lower_expression(
+    auto lowered = lower_expression(
         *expression,
         expected_llvm_type,
         expected_signedness,
@@ -111,6 +141,19 @@ auto lower_value_statement_block(
         session,
         output
     );
+    if (!lowered.has_value()) {
+        return std::nullopt;
+    }
+    if (!emit_deferred_cleanup_to_depth(
+            defer_scope.cleanup_depth(),
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return std::nullopt;
+    }
+    return lowered;
 }
 
 auto lower_void_call_statement(
@@ -551,8 +594,44 @@ auto lower_call_statement(
     return true;
 }
 
+DeferredCleanupScope::DeferredCleanupScope(FunctionLoweringState& state)
+    : state_(state),
+      cleanup_depth_(state.defer_cleanup_scopes.size()) {
+    state_.defer_cleanup_scopes.emplace_back();
+}
+
+DeferredCleanupScope::~DeferredCleanupScope() noexcept {
+    state_.defer_cleanup_scopes.pop_back();
+}
+
+auto DeferredCleanupScope::cleanup_depth() const -> std::size_t {
+    return cleanup_depth_;
+}
+
+auto record_deferred_cleanup(
+    syntax::StatementSyntax const& statement,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics
+) -> bool {
+    if (session.state.defer_cleanup_nesting > 0) {
+        diagnostics.error(
+            statement.line,
+            "lowering defer cleanup blocks currently cannot schedule additional defers"
+        );
+        return false;
+    }
+    if (session.state.defer_cleanup_scopes.empty()) {
+        diagnostics.error(statement.line, "lowering defer statements requires an active cleanup scope");
+        return false;
+    }
+
+    session.state.defer_cleanup_scopes.back().blocks.push_back(deferred_cleanup_block_for(statement));
+    return true;
+}
+
 auto lower_loop_control_statement(
     syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
@@ -571,6 +650,9 @@ auto lower_loop_control_statement(
     auto const& target = statement.kind == syntax::StatementKind::break_statement
         ? targets.break_target
         : targets.continue_target;
+    if (!emit_deferred_cleanup_to_depth(targets.defer_cleanup_depth, context, session, diagnostics, output)) {
+        return false;
+    }
     emit_llvm_branch(output, target);
     return true;
 }
@@ -600,6 +682,94 @@ auto lower_value_statement_block(
         output,
         lower_final_control_flow
     );
+}
+
+auto lower_value_statement_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    FinalControlFlowLowerer lower_final_control_flow
+) -> std::optional<LoweredExpression> {
+    if (statements.empty()) {
+        return std::nullopt;
+    }
+    DeferredCleanupScope defer_scope(session.state);
+
+    for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
+        auto const* statement = statements[index];
+        if (statement == nullptr ||
+            !lower_prefix_statement(
+                *statement,
+                expected_llvm_type,
+                expected_signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            )) {
+            return std::nullopt;
+        }
+    }
+
+    auto const* final_statement = statements.back();
+    if (final_statement == nullptr) {
+        return std::nullopt;
+    }
+    if (final_statement->kind == syntax::StatementKind::if_statement ||
+        final_statement->kind == syntax::StatementKind::switch_statement) {
+        auto lowered = lower_final_control_flow(
+            *final_statement,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (!lowered.has_value()) {
+            return std::nullopt;
+        }
+        if (!emit_deferred_cleanup_to_depth(
+                defer_scope.cleanup_depth(),
+                context,
+                session,
+                diagnostics,
+                output
+            )) {
+            return std::nullopt;
+        }
+        return lowered;
+    }
+
+    auto const* expression = value_expression_for(*final_statement);
+    if (expression == nullptr) {
+        return std::nullopt;
+    }
+    auto lowered = lower_expression(
+        *expression,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        session,
+        output
+    );
+    if (!lowered.has_value()) {
+        return std::nullopt;
+    }
+    if (!emit_deferred_cleanup_to_depth(
+            defer_scope.cleanup_depth(),
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return std::nullopt;
+    }
+    return lowered;
 }
 
 auto lower_value_statement_block(

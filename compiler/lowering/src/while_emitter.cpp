@@ -201,9 +201,14 @@ auto lower_while_body_statement(
             ? StatementFlow::falls_through
             : StatementFlow::failed;
     }
+    if (statement.kind == syntax::StatementKind::defer_statement) {
+        return record_deferred_cleanup(statement, session, diagnostics)
+            ? StatementFlow::falls_through
+            : StatementFlow::failed;
+    }
     if (statement.kind == syntax::StatementKind::break_statement ||
         statement.kind == syntax::StatementKind::continue_statement) {
-        return lower_loop_control_statement(statement, session, diagnostics, output)
+        return lower_loop_control_statement(statement, context, session, diagnostics, output)
             ? StatementFlow::terminated
             : StatementFlow::failed;
     }
@@ -227,6 +232,7 @@ auto lower_while_body_block(
     std::ostringstream& output
 ) -> StatementFlow {
     auto flow = StatementFlow::falls_through;
+    DeferredCleanupScope defer_scope(session.state);
     for (auto const& statement : statements) {
         if (flow == StatementFlow::terminated) {
             diagnostics.error(
@@ -239,6 +245,16 @@ auto lower_while_body_block(
         if (flow == StatementFlow::failed) {
             return flow;
         }
+    }
+    if (flow == StatementFlow::falls_through &&
+        !emit_deferred_cleanup_to_depth(
+            defer_scope.cleanup_depth(),
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return StatementFlow::failed;
     }
     return flow;
 }
@@ -295,6 +311,7 @@ auto lower_while_statement(
         LoopTargets {
             .break_target = exit_block,
             .continue_target = condition_block,
+            .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
         },
     };
     auto body_scope = BranchBindingScope(session.state);

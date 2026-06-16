@@ -542,6 +542,7 @@ int main() {
     output = {};
     assert(orison::lowering::lower_loop_control_statement(
         break_statement,
+        context,
         loop_session,
         diagnostics,
         output
@@ -554,6 +555,7 @@ int main() {
     output = {};
     assert(orison::lowering::lower_loop_control_statement(
         continue_statement,
+        context,
         loop_session,
         diagnostics,
         output

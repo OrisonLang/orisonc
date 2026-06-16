@@ -61,6 +61,9 @@ analysis, and lowering components.
   dedicated void path that emits `ret void` instead of short-circuiting the whole body; binding statements in that
   path infer their own local types from annotations or initializers, while final value-producing control flow remains
   on the non-void path.
+- `defer` statements now lower as scoped cleanup records that replay on lexical scope exit, explicit `return`
+  statements, and loop-control exits through the existing function-body and loop-body emission paths; cleanup blocks
+  currently cannot schedule additional defers and must fall through.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.
