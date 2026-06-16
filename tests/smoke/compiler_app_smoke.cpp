@@ -755,6 +755,39 @@ int main() {
         ) != std::string::npos
     );
 
+    auto emit_pointer_aggregate_assignment_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_pointer_aggregate_assignment.or";
+    write_concurrency_fixture(
+        emit_pointer_aggregate_assignment_path,
+        "demo.emit",
+        {
+            "record Registers",
+            "    data: UInt32",
+            "    status: UInt32",
+            "record Buffer",
+            "    bytes: Array<Byte, 4>",
+            "unsafe function main(regs: Pointer<Registers>, buffer: Pointer<Buffer>, index: UInt64) -> Unit",
+            "    regs.status = 4 as UInt32",
+            "    buffer.bytes[index] = 7",
+            "    return",
+        }
+    );
+    auto emit_pointer_aggregate_assignment = run_emit_llvm(app, emit_pointer_aggregate_assignment_path);
+    assert(emit_pointer_aggregate_assignment.exit_code == 0);
+    assert(emit_pointer_aggregate_assignment.stderr_text.empty());
+    assert(
+        emit_pointer_aggregate_assignment.stdout_text.find(
+            "getelementptr %record.Registers, ptr %regs, i32 0, i32 1"
+        ) != std::string::npos
+    );
+    assert(
+        emit_pointer_aggregate_assignment.stdout_text.find(
+            "getelementptr %record.Buffer, ptr %buffer, i32 0, i32 0"
+        ) != std::string::npos
+    );
+    assert(emit_pointer_aggregate_assignment.stdout_text.find("store i32 4, ptr %tmp") != std::string::npos);
+    assert(emit_pointer_aggregate_assignment.stdout_text.find("store i8 7, ptr %tmp") != std::string::npos);
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);

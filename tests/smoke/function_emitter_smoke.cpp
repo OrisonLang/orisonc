@@ -83,11 +83,19 @@ int main() {
                   "    data: UInt32\n"
                   "    status: UInt32\n"
                   "\n"
+                  "record Buffer\n"
+                  "    bytes: Array<Byte, 4>\n"
+                  "\n"
                   "unsafe function assign_aggregate(index: UInt64) -> Unit\n"
                   "    var regs = Registers(0 as UInt32, 1 as UInt32)\n"
                   "    regs.status = 3 as UInt32\n"
                   "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
                   "    bytes[index] = 9\n"
+                  "    return\n"
+                  "\n"
+                  "unsafe function assign_pointer_aggregate(regs: Pointer<Registers>, buffer: Pointer<Buffer>, index: UInt64) -> Unit\n"
+                  "    regs.status = 4 as UInt32\n"
+                  "    buffer.bytes[index] = 7\n"
                   "    return\n";
     }
 
@@ -296,6 +304,21 @@ int main() {
     assert(reassign_aggregate_ir.find("getelementptr %record.Registers, ptr %regs.addr, i32 0, i32 1") != std::string::npos);
     assert(reassign_aggregate_ir.find("getelementptr [4 x i8], ptr %bytes.addr, i64 0, i64 %index") != std::string::npos);
     assert(reassign_aggregate_ir.find("ret void") != std::string::npos);
+
+    auto pointer_aggregate_ir = orison::lowering::emit_function(
+        parse_result.module.functions[13],
+        context.functions.at("assign_pointer_aggregate"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(pointer_aggregate_ir.find("getelementptr %record.Registers, ptr %regs, i32 0, i32 1") != std::string::npos);
+    assert(pointer_aggregate_ir.find("getelementptr %record.Buffer, ptr %buffer, i32 0, i32 0") != std::string::npos);
+    assert(pointer_aggregate_ir.find("getelementptr [4 x i8], ptr %tmp") != std::string::npos);
+    assert(pointer_aggregate_ir.find("store i32 4, ptr %tmp") != std::string::npos);
+    assert(pointer_aggregate_ir.find("store i8 7, ptr %tmp") != std::string::npos);
+    assert(pointer_aggregate_ir.find("ret void") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

@@ -26,8 +26,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: immutable aggregate `let` values, aggregate construction
-  beyond the current lowerable non-generic record/fixed-array subset, aggregate assignment beyond supported mutable
-  local record/fixed-array field and index targets, and non-array-literal `for` iteration
+  beyond the current lowerable non-generic record/fixed-array subset, aggregate assignment beyond the currently
+  supported mutable-local and pointer-backed record/fixed-array field and index targets, and non-array-literal `for`
+  iteration
 
 ## Latest update
 
@@ -45,8 +46,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   `var bytes: Array<Byte, 4> = ...; bytes = ...` now emit direct aggregate stores before later field/index address use;
   broader aggregate assignment shapes remain pending.
 - 2026-06-16: parser assignment statements now accept indexed targets such as `items[index] = value`, and lowering now
-  supports supported mutable-local aggregate field/index assignment on the current non-generic record/fixed-array
-  subset, including `local.field = value` and `local.items[index] = value`.
+  supports supported aggregate field/index assignment on the current non-generic record/fixed-array subset for both
+  mutable-local storage and pointer-backed unsafe paths, including `local.field = value`, `local.items[index] = value`,
+  `pointer.field = value`, and `pointer.items[index] = value`.
 - 2026-06-16: fixed `Array<T, N>` record fields now lower to LLVM array field types when `T` is supported, and
   `address_of(pointer.array[index])` plus `address_of(pointer.inner.array[index])` lower through terminal array element
   GEPs for known `Pointer<Record>` sources; array-of-record element field paths like

@@ -72,6 +72,11 @@ int main() {
                   "unsafe function assign_bytes_element(index: UInt64) -> Unit\n"
                   "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
                   "    bytes[index] = 9\n"
+                  "    return\n"
+                  "\n"
+                  "unsafe function assign_pointer_aggregate(regs: Pointer<Registers>, buffer: Pointer<Buffer>, index: UInt64) -> Unit\n"
+                  "    regs.status = 4 as UInt32\n"
+                  "    buffer.bytes[index] = 7\n"
                   "    return\n";
     }
 
@@ -339,6 +344,52 @@ int main() {
     ));
     assert(output.str().find("getelementptr [4 x i8], ptr %bytes.addr, i64 0, i64 %index") != std::string::npos);
     assert(output.str().find("store i8 9, ptr %tmp") != std::string::npos);
+
+    auto pointer_state = orison::lowering::FunctionLoweringState {};
+    pointer_state.immutable_bindings.emplace("regs", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%regs",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    pointer_state.immutable_bindings.emplace("buffer", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%buffer",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    pointer_state.immutable_bindings.emplace("index", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%index",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    pointer_state.source_type_names["regs"] = "Pointer<Registers>";
+    pointer_state.source_type_names["buffer"] = "Pointer<Buffer>";
+    pointer_state.source_type_names["index"] = "UInt64";
+    auto pointer_failures = orison::lowering::LoweringFailures {};
+    auto pointer_session = orison::lowering::FunctionLoweringSession {
+        .state = pointer_state,
+        .failures = pointer_failures,
+    };
+    auto const& pointer_statements = parse_result.module.functions[7].body_statements;
+    output = {};
+    assert(orison::lowering::lower_assignment_statement(
+        pointer_statements[0],
+        context,
+        pointer_session,
+        diagnostics,
+        output
+    ));
+    assert(orison::lowering::lower_assignment_statement(
+        pointer_statements[1],
+        context,
+        pointer_session,
+        diagnostics,
+        output
+    ));
+    assert(output.str().find("getelementptr %record.Registers, ptr %regs, i32 0, i32 1") != std::string::npos);
+    assert(output.str().find("getelementptr %record.Buffer, ptr %buffer, i32 0, i32 0") != std::string::npos);
+    assert(output.str().find("getelementptr [4 x i8], ptr %tmp") != std::string::npos);
+    assert(output.str().find("store i32 4, ptr %tmp") != std::string::npos);
+    assert(output.str().find("store i8 7, ptr %tmp") != std::string::npos);
 
     auto block_state = orison::lowering::FunctionLoweringState {};
     block_state.local_name_counts["input"] = 1;

@@ -2541,6 +2541,11 @@ void test_emit_raw_mmio_intrinsics() {
         "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
         "    bytes[index] = 9\n"
         "    return\n"
+        "\n"
+        "unsafe function assign_pointer_aggregate(regs: Pointer<UartRegisters>, buffer: Pointer<Buffer>, index: UInt64) -> Unit\n"
+        "    regs.status = 4 as UInt32\n"
+        "    buffer.bytes[index] = 7\n"
+        "    return\n"
     );
 
     assert(!result.has_errors());
@@ -2640,6 +2645,20 @@ void test_emit_raw_mmio_intrinsics() {
     assert(result.ir_text.find("store i32 4, ptr %tmp") != std::string::npos);
     assert(result.ir_text.find("define void @assign_local_array_byte(i64 %index)") != std::string::npos);
     assert(result.ir_text.find("store i8 9, ptr %tmp") != std::string::npos);
+    assert(
+        result.ir_text.find("define void @assign_pointer_aggregate(ptr %regs, ptr %buffer, i64 %index)") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.UartRegisters, ptr %regs, i32 0, i32 1") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.Buffer, ptr %buffer, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(result.ir_text.find("store i32 4, ptr %tmp") != std::string::npos);
+    assert(result.ir_text.find("store i8 7, ptr %tmp") != std::string::npos);
     assert(
         result.ir_text.find("getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0") !=
         std::string::npos

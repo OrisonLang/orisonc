@@ -151,6 +151,16 @@ auto array_element_source_type_name(std::string_view type_name) -> std::optional
     return arguments[0];
 }
 
+auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"Pointer<"};
+    if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
+        type_name.size() <= prefix.size() + 1) {
+        return std::nullopt;
+    }
+
+    return std::string(type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1));
+}
+
 auto find_record_field(
     LoweredRecordLayout const& layout,
     std::string_view field_name
@@ -231,10 +241,6 @@ auto lower_assignment_target(
     }
 
     auto binding = session.state.mutable_bindings.find(base_expression->text);
-    if (binding == session.state.mutable_bindings.end()) {
-        diagnostics.error(target.line, "lowering assignment target is not a mutable local");
-        return std::nullopt;
-    }
     auto source_type = session.state.source_type_names.find(base_expression->text);
     if (source_type == session.state.source_type_names.end()) {
         diagnostics.error(
@@ -244,8 +250,36 @@ auto lower_assignment_target(
         return std::nullopt;
     }
 
-    auto current_pointer = binding->second.storage;
     auto current_source_type_name = source_type->second;
+    auto current_pointer = std::string {};
+    if (auto pointee_source_type = pointer_pointee_source_type_name(current_source_type_name)) {
+        auto lowered_base = lower_expression(
+            *base_expression,
+            "ptr",
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_base.has_value()) {
+            auto detail = render_expression_lowering_failure(session.failures.expression);
+            diagnostics.error(
+                target.line,
+                "lowering aggregate assignment target failed" +
+                    (detail.empty() ? std::string {} : ": " + detail)
+            );
+            return std::nullopt;
+        }
+        current_pointer = std::move(lowered_base->value);
+        current_source_type_name = std::move(*pointee_source_type);
+    } else {
+        if (binding == session.state.mutable_bindings.end()) {
+            diagnostics.error(target.line, "lowering assignment target is not a mutable local");
+            return std::nullopt;
+        }
+        current_pointer = binding->second.storage;
+    }
+
     auto current_layout = static_cast<LoweredRecordLayout const*>(nullptr);
     auto current_llvm_type_name = std::string {};
     auto expect_record_layout = false;
