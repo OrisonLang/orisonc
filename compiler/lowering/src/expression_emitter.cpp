@@ -83,6 +83,25 @@ auto lowered_boolean_literal(
     };
 }
 
+auto inferred_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<LoweredType>;
+
+auto signedness_for_expected_array_element(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    EmissionContext const& context,
+    FunctionLoweringState const& state
+) -> IntegerSignedness {
+    auto inferred = inferred_expression_type(expression, context, state);
+    if (inferred.has_value() && inferred->type == expected_llvm_type) {
+        return inferred->signedness;
+    }
+    return IntegerSignedness::not_integer;
+}
+
 auto llvm_binary_instruction_for(
     std::string_view operator_text,
     IntegerSignedness signedness
@@ -139,6 +158,12 @@ auto lowered_expression(
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
+
+auto inferred_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<LoweredType>;
 
 auto is_low_level_intrinsic_name(std::string_view name) -> bool {
     return name == "address_of" || name == "raw_read" || name == "raw_write" ||
@@ -338,6 +363,29 @@ auto inferred_expression_type(
         return LoweredType {
             .type = resolved.method.method->signature.return_type,
             .signedness = resolved.method.method->signature.return_signedness,
+        };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::array_literal) {
+        if (expression.arguments.empty()) {
+            return std::nullopt;
+        }
+
+        auto element_type = inferred_expression_type(expression.arguments.front(), context, state);
+        if (!element_type.has_value()) {
+            return std::nullopt;
+        }
+        for (auto index = std::size_t {1}; index < expression.arguments.size(); ++index) {
+            auto next_type = inferred_expression_type(expression.arguments[index], context, state);
+            if (!next_type.has_value() || next_type->type != element_type->type ||
+                next_type->signedness != element_type->signedness) {
+                return std::nullopt;
+            }
+        }
+
+        return LoweredType {
+            .type = "[" + std::to_string(expression.arguments.size()) + " x " + element_type->type + "]",
+            .signedness = IntegerSignedness::not_integer,
         };
     }
 
@@ -556,6 +604,131 @@ auto llvm_type_for_source_type_name(
     return std::nullopt;
 }
 
+struct ParsedLlvmArrayType {
+    std::string element_type;
+    std::size_t length = 0;
+};
+
+auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType> {
+    if (!type.starts_with("[") || !type.ends_with("]") || type.size() < 6) {
+        return std::nullopt;
+    }
+
+    auto depth = std::size_t {0};
+    auto separator = std::size_t {0};
+    for (auto index = std::size_t {1}; index + 1 < type.size(); ++index) {
+        auto const character = type[index];
+        if (character == '[') {
+            ++depth;
+            continue;
+        }
+        if (character == ']') {
+            if (depth > 0) {
+                --depth;
+            }
+            continue;
+        }
+        if (depth == 0 && character == 'x' && index > 1 && index + 2 < type.size() &&
+            type[index - 1] == ' ' && type[index + 1] == ' ') {
+            separator = index;
+            break;
+        }
+    }
+    if (separator == 0) {
+        return std::nullopt;
+    }
+
+    auto length_text = std::string {type.substr(1, separator - 2)};
+    auto element_type = std::string {type.substr(separator + 2, type.size() - separator - 3)};
+    if (length_text.empty() || element_type.empty()) {
+        return std::nullopt;
+    }
+
+    auto length = std::size_t {0};
+    for (auto character : length_text) {
+        if (character < '0' || character > '9') {
+            return std::nullopt;
+        }
+        length = (length * 10) + static_cast<std::size_t>(character - '0');
+    }
+
+    return ParsedLlvmArrayType {
+        .element_type = std::move(element_type),
+        .length = length,
+    };
+}
+
+auto lower_array_literal_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    LoweringFailures& failures,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::array_literal) {
+        return std::nullopt;
+    }
+
+    auto array_type = parse_llvm_array_type(expected_llvm_type);
+    if (!array_type.has_value()) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::type_mismatch,
+            "array literal expected LLVM array type " + std::string(expected_llvm_type)
+        );
+        return std::nullopt;
+    }
+    if (expression.arguments.size() != array_type->length) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "array literal element count"
+        );
+        return std::nullopt;
+    }
+    if (array_type->length == 0) {
+        return LoweredExpression {
+            .type = std::string(expected_llvm_type),
+            .value = "zeroinitializer",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    auto aggregate_value = std::string {"undef"};
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto const& element = expression.arguments[index];
+        auto lowered_element = lowered_expression(
+            element,
+            array_type->element_type,
+            signedness_for_expected_array_element(
+                element,
+                array_type->element_type,
+                context,
+                session.state
+            ),
+            context,
+            session,
+            output
+        );
+        if (!lowered_element.has_value()) {
+            return std::nullopt;
+        }
+
+        auto aggregate_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << aggregate_name << " = insertvalue " << expected_llvm_type << " "
+               << aggregate_value << ", " << array_type->element_type << " "
+               << lowered_element->value << ", " << index << "\n";
+        aggregate_value = std::move(aggregate_name);
+    }
+
+    return LoweredExpression {
+        .type = std::string(expected_llvm_type),
+        .value = std::move(aggregate_value),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 auto lower_record_constructor_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -667,7 +840,7 @@ auto lower_pointer_record_field_address(
         break;
     }
     std::reverse(steps.begin(), steps.end());
-    if (steps.empty() || steps.front().kind != AddressPathStep::Kind::member) {
+    if (steps.empty()) {
         return std::nullopt;
     }
 
@@ -696,8 +869,18 @@ auto lower_pointer_record_field_address(
         return std::nullopt;
     }
 
-    auto layout = context.lowering.records.find(current_source_type_name);
-    if (layout == context.lowering.records.end()) {
+    auto current_layout = static_cast<LoweredRecordLayout const*>(nullptr);
+    auto current_llvm_type_name = std::string {};
+    auto expect_record_layout = false;
+    if (auto layout = context.lowering.records.find(current_source_type_name);
+        layout != context.lowering.records.end()) {
+        current_layout = &layout->second;
+        current_llvm_type_name = current_layout->llvm_type_name;
+        expect_record_layout = true;
+    } else if (auto llvm_type =
+                   llvm_type_for_source_type_name(current_source_type_name, context.lowering)) {
+        current_llvm_type_name = std::move(*llvm_type);
+    } else {
         record_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
@@ -705,9 +888,6 @@ auto lower_pointer_record_field_address(
         );
         return std::nullopt;
     }
-    auto current_layout = &layout->second;
-    auto current_llvm_type_name = current_layout->llvm_type_name;
-    auto expect_record_layout = true;
 
     for (auto index = std::size_t {0}; index < steps.size(); ++index) {
         auto const& step = steps[index];
@@ -1068,6 +1248,16 @@ auto lowered_expression(
     }
     if (auto literal = lowered_boolean_literal(expression, expected_llvm_type)) {
         return literal;
+    }
+    if (auto array_literal = lower_array_literal_expression(
+            expression,
+            expected_llvm_type,
+            context,
+            session,
+            failures,
+            output
+        )) {
+        return array_literal;
     }
     if (expression.kind == syntax::ExpressionKind::string_literal && expected_llvm_type == "ptr") {
         auto const* constant = context.string_constants.find(expression.text);

@@ -2505,6 +2505,22 @@ void test_emit_raw_mmio_intrinsics() {
         "unsafe function local_status_address() -> Address\n"
         "    var regs = UartRegisters(0 as UInt32, 1 as UInt32)\n"
         "    address_of(regs.status)\n"
+        "\n"
+        "unsafe function local_byte_address(index: UInt64) -> Address\n"
+        "    var buffer = Buffer([1, 2, 3, 4])\n"
+        "    address_of(buffer.bytes[index])\n"
+        "\n"
+        "unsafe function local_entry_status_address(index: UInt64) -> Address\n"
+        "    var log = Log([UartRegisters(1 as UInt32, 2 as UInt32), UartRegisters(3 as UInt32, 4 as UInt32)])\n"
+        "    address_of(log.entries[index].status)\n"
+        "\n"
+        "unsafe function local_matrix_byte_address(index: UInt64, inner: UInt64) -> Address\n"
+        "    var matrix = Matrix([[1, 2, 3, 4], [5, 6, 7, 8]])\n"
+        "    address_of(matrix.rows[index][inner])\n"
+        "\n"
+        "unsafe function local_array_byte_address(index: UInt64) -> Address\n"
+        "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
+        "    address_of(bytes[index])\n"
     );
 
     assert(!result.has_errors());
@@ -2583,6 +2599,19 @@ void test_emit_raw_mmio_intrinsics() {
         result.ir_text.find("getelementptr %record.UartRegisters, ptr %regs.addr, i32 0, i32 1") !=
         std::string::npos
     );
+    assert(result.ir_text.find("define i64 @local_byte_address(i64 %index)") != std::string::npos);
+    assert(result.ir_text.find("store %record.Buffer %tmp") != std::string::npos);
+    assert(result.ir_text.find("define i64 @local_entry_status_address(i64 %index)") != std::string::npos);
+    assert(result.ir_text.find("store %record.Log %tmp") != std::string::npos);
+    assert(
+        result.ir_text.find("define i64 @local_matrix_byte_address(i64 %index, i64 %inner)") !=
+        std::string::npos
+    );
+    assert(result.ir_text.find("store %record.Matrix %tmp") != std::string::npos);
+    assert(result.ir_text.find("define i64 @local_array_byte_address(i64 %index)") != std::string::npos);
+    assert(result.ir_text.find("%bytes.addr = alloca [4 x i8]") != std::string::npos);
+    assert(result.ir_text.find("store [4 x i8] %tmp") != std::string::npos);
+    assert(result.ir_text.find("getelementptr [4 x i8], ptr %bytes.addr, i64 0, i64 %index") != std::string::npos);
     assert(
         result.ir_text.find("getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0") !=
         std::string::npos

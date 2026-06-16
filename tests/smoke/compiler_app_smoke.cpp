@@ -666,6 +666,33 @@ int main() {
         ) != std::string::npos
     );
 
+    auto emit_local_array_address_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_local_array_address.or";
+    write_concurrency_fixture(
+        emit_local_array_address_path,
+        "demo.emit",
+        {
+            "record Buffer",
+            "    bytes: Array<Byte, 4>",
+            "unsafe function main(index: UInt64) -> Address",
+            "    var buffer = Buffer([1, 2, 3, 4])",
+            "    address_of(buffer.bytes[index])",
+        }
+    );
+    auto emit_local_array_address = run_emit_llvm(app, emit_local_array_address_path);
+    assert(emit_local_array_address.exit_code == 0);
+    assert(emit_local_array_address.stderr_text.empty());
+    assert(
+        emit_local_array_address.stdout_text.find(
+            "%tmp0 = insertvalue [4 x i8] undef, i8 1, 0"
+        ) != std::string::npos
+    );
+    assert(
+        emit_local_array_address.stdout_text.find(
+            "getelementptr [4 x i8], ptr %tmp5, i64 0, i64 %index"
+        ) != std::string::npos
+    );
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);
