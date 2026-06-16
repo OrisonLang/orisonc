@@ -61,6 +61,9 @@ analysis, and lowering components.
   dedicated void path that emits `ret void` instead of short-circuiting the whole body; binding statements in that
   path infer their own local types from annotations or initializers, while final value-producing control flow remains
   on the non-void path.
+- `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
+  blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
+  branches before a later final expression or final control-flow statement.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable and mutable binding visibility is isolated by a dedicated RAII scope that snapshots both maps,

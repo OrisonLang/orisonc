@@ -25,7 +25,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
-- lowering gaps after the current recursive void path: `guard` lowering, unsafe-function declarations, raw MMIO intrinsics, and non-array-literal `for` iteration
+- lowering gaps after the current recursive void path: unsafe-function declarations, raw MMIO intrinsics, non-array-literal `for` iteration, and non-final return-bearing `switch` lowering
 
 ## Latest update
 
@@ -447,5 +447,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-15: lowered method signatures now get deterministic internal symbol names such as `method.Device.read` and `method.Box_UInt32_.reset`, giving future receiver-aware emission a stable LLVM target while member-call emission remains disabled.
 - 2026-06-15: scalar-subset method definitions now emit after top-level functions using stable lowered method symbols, and direct member-call expressions on scalar receivers now call those methods through explicit receiver arguments while member-call statements and null-safe member calls remain diagnostic-only.
 - 2026-06-15: receiver-self method parameters now lower through the concrete receiver type for supported scalar receivers, so `extend UInt32` methods with `this: shared This` emit an `i32 %this` parameter while aggregate receiver layout remains unsupported.
-- 2026-06-15: `Unit`-returning function bodies now recurse through supported statement blocks instead of short-circuiting, covering statement-level `if`/`switch`, `repeat`, provisional array-literal `for`, `unsafe`, `defer`, direct call/member-call statements, and naked returns before emitting `ret void`; `guard`, unsafe-function declarations, and raw MMIO lowering remain future work.
+- 2026-06-15: `Unit`-returning function bodies now recurse through supported statement blocks instead of short-circuiting, covering statement-level `if`/`switch`, `repeat`, provisional array-literal `for`, `unsafe`, `defer`, direct call/member-call statements, and naked returns before emitting `ret void`; unsafe-function declarations and raw MMIO lowering remain future work.
 - 2026-06-15: `Address` now maps to LLVM `i64` in lowering, and `Pointer(...)` now lowers through `inttoptr` from an `i64` source so the new unsafe-block smoke path can compile without implementing raw memory intrinsics yet.
+- 2026-06-15: `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return branches before a later final expression or final control-flow statement.

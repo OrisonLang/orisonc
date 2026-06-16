@@ -173,6 +173,18 @@ int main() {
     auto control_flow_context = orison::lowering::build_lowering_context(control_flow_parse.module, diagnostics);
     assert(!diagnostics.has_errors());
     auto control_flow_strings = orison::lowering::collect_string_constants(control_flow_parse.module);
+    auto classify_ir = orison::lowering::emit_function(
+        control_flow_parse.module.functions.front(),
+        control_flow_context.functions.at("classify"),
+        control_flow_context,
+        control_flow_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(classify_ir.find("guard.failure.") != std::string::npos);
+    assert(classify_ir.find("ret i64 0") != std::string::npos);
+    assert(classify_ir.find("switch i64") != std::string::npos);
+
     auto control_flow_ir = orison::lowering::emit_function(
         control_flow_parse.module.functions[1],
         control_flow_context.functions.at("loops"),

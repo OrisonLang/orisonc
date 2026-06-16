@@ -136,6 +136,26 @@ auto lower_unit_defer_statement(
     std::ostringstream& output
 ) -> StatementFlow;
 
+auto lower_guard_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_nonvoid_if_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
 auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.text.empty() && expression.arguments.empty() && expression.nested_statements.empty() &&
            expression.left == nullptr && expression.right == nullptr && expression.alternate == nullptr;
@@ -628,6 +648,277 @@ auto lower_unit_defer_statement(
     return flow;
 }
 
+auto lower_guard_return_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    if (return_llvm_type == "void") {
+        if (!is_empty_expression(statement.expression)) {
+            diagnostics.error(statement.line, "lowering does not yet support return expressions in Unit guard failure blocks");
+            return StatementFlow::failed;
+        }
+        output << "  ret void\n";
+        return StatementFlow::terminated;
+    }
+
+    if (is_empty_expression(statement.expression)) {
+        diagnostics.error(statement.line, "lowering does not yet support bare return statements in non-Unit guard failure blocks");
+        return StatementFlow::failed;
+    }
+
+    auto lowered = lower_expression(
+        statement.expression,
+        return_llvm_type,
+        return_signedness,
+        context,
+        session,
+        output
+    );
+    if (!lowered.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this guard failure return" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+
+    output << "  ret " << lowered->type << " " << lowered->value << "\n";
+    return StatementFlow::terminated;
+}
+
+auto lower_guard_statement_block(
+    std::span<syntax::StatementSyntax const*> statements,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto flow = StatementFlow::falls_through;
+    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+        auto const* statement = statements[index];
+        if (statement == nullptr) {
+            return StatementFlow::failed;
+        }
+        if (flow == StatementFlow::terminated) {
+            diagnostics.error(
+                statement->line,
+                "lowering does not yet support statements after a terminating guard failure statement"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto const is_last_statement = index + 1 == statements.size();
+        if (statement->kind == syntax::StatementKind::return_statement) {
+            flow = lower_guard_return_statement(
+                *statement,
+                return_llvm_type,
+                return_signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        } else if (statement->kind == syntax::StatementKind::guard_statement) {
+            flow = lower_guard_statement(
+                *statement,
+                return_llvm_type,
+                return_signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        } else {
+            flow = lower_unit_statement(*statement, is_last_statement, context, session, diagnostics, output);
+        }
+
+        if (flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+    }
+    return flow;
+}
+
+auto lower_guard_statement_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
+    statement_pointers.reserve(statements.size());
+    for (auto const& statement : statements) {
+        statement_pointers.push_back(&statement);
+    }
+    return lower_guard_statement_block(
+        statement_pointers,
+        return_llvm_type,
+        return_signedness,
+        context,
+        session,
+        diagnostics,
+        output
+    );
+}
+
+auto lower_guard_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto condition = lower_expression(
+        statement.expression,
+        "i1",
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!condition.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this guard condition" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+
+    auto const block_index = next_llvm_block_index(session.state.next_block_index);
+    auto const failure_block = llvm_block_name("guard.failure", block_index);
+    auto const merge_block = llvm_block_name("guard.merge", block_index);
+    emit_llvm_conditional_branch(output, condition->value, merge_block, failure_block);
+
+    emit_llvm_block_label(output, failure_block);
+    session.state.current_block = failure_block;
+    [[maybe_unused]] auto failure_scope = BranchBindingScope(session.state);
+    auto failure_flow = lower_guard_statement_block(
+        statement.nested_statements,
+        return_llvm_type,
+        return_signedness,
+        context,
+        session,
+        diagnostics,
+        output
+    );
+    if (failure_flow == StatementFlow::failed) {
+        return StatementFlow::failed;
+    }
+    if (failure_flow == StatementFlow::falls_through) {
+        emit_llvm_branch(output, merge_block);
+    }
+
+    failure_scope.reset();
+    emit_llvm_block_label(output, merge_block);
+    session.state.current_block = merge_block;
+    return StatementFlow::falls_through;
+}
+
+auto lower_nonvoid_if_statement(
+    syntax::StatementSyntax const& statement,
+    std::string_view return_llvm_type,
+    IntegerSignedness return_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto condition = lower_expression(
+        statement.expression,
+        "i1",
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!condition.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this non-void if condition" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+
+    auto plan = plan_conditional(
+        ConditionalPlanKind::if_statement,
+        next_llvm_block_index(session.state.next_block_index)
+    );
+    auto has_else = !statement.alternate_statements.empty();
+    auto binding_scope = BranchBindingScope(session.state);
+    emit_llvm_conditional_branch(
+        output,
+        condition->value,
+        plan.then_block,
+        has_else ? plan.else_block : plan.merge_block
+    );
+
+    emit_llvm_block_label(output, plan.then_block);
+    session.state.current_block = plan.then_block;
+    auto then_flow = lower_guard_statement_block(
+        statement.nested_statements,
+        return_llvm_type,
+        return_signedness,
+        context,
+        session,
+        diagnostics,
+        output
+    );
+    if (then_flow == StatementFlow::failed) {
+        return StatementFlow::failed;
+    }
+    if (then_flow == StatementFlow::falls_through) {
+        emit_llvm_branch(output, plan.merge_block);
+    }
+
+    auto else_flow = StatementFlow::falls_through;
+    if (has_else) {
+        binding_scope.reset();
+        emit_llvm_block_label(output, plan.else_block);
+        session.state.current_block = plan.else_block;
+        else_flow = lower_guard_statement_block(
+            statement.alternate_statements,
+            return_llvm_type,
+            return_signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (else_flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+        if (else_flow == StatementFlow::falls_through) {
+            emit_llvm_branch(output, plan.merge_block);
+        }
+    }
+
+    binding_scope.reset();
+    emit_llvm_block_label(output, plan.merge_block);
+    session.state.current_block = plan.merge_block;
+    if (then_flow == StatementFlow::terminated && has_else && else_flow == StatementFlow::terminated) {
+        return StatementFlow::terminated;
+    }
+    return StatementFlow::falls_through;
+}
+
 auto lower_unit_statement(
     syntax::StatementSyntax const& statement,
     bool is_last_statement,
@@ -697,6 +988,9 @@ auto lower_unit_statement(
     }
     if (statement.kind == syntax::StatementKind::switch_statement) {
         return lower_unit_switch_statement(statement, context, session, diagnostics, output);
+    }
+    if (statement.kind == syntax::StatementKind::guard_statement) {
+        return lower_guard_statement(statement, "void", IntegerSignedness::not_integer, context, session, diagnostics, output);
     }
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_unit_if_statement(statement, context, session, diagnostics, output);
@@ -865,6 +1159,34 @@ void emit_function_body(
         if (!is_last_statement && statement.kind == syntax::StatementKind::expression_statement &&
             statement.expression.kind == syntax::ExpressionKind::call) {
             if (!lower_call_statement(statement, context, session, diagnostics, output)) {
+                return;
+            }
+            continue;
+        }
+        if (statement.kind == syntax::StatementKind::guard_statement) {
+            if (lower_guard_statement(
+                    statement,
+                    signature.return_type,
+                    signature.return_signedness,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                ) == StatementFlow::failed) {
+                return;
+            }
+            continue;
+        }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::if_statement) {
+            if (lower_nonvoid_if_statement(
+                    statement,
+                    signature.return_type,
+                    signature.return_signedness,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                ) == StatementFlow::failed) {
                 return;
             }
             continue;
