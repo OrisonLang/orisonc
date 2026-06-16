@@ -190,6 +190,15 @@ auto inferred_expression_type(
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Pointer" &&
+        expression.arguments.size() == 1) {
+        return LoweredType {
+            .type = "ptr",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
         auto function = context.lowering.functions.find(expression.left->text);
         if (function == context.lowering.functions.end()) {
@@ -572,6 +581,46 @@ auto lowered_expression(
             "null-safe member call lowering is not yet supported"
         );
         return std::nullopt;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Pointer") {
+        if (expected_llvm_type != "ptr") {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "Pointer construction"
+            );
+            return std::nullopt;
+        }
+        if (expression.arguments.size() != 1) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "Pointer construction"
+            );
+            return std::nullopt;
+        }
+
+        auto source = lowered_expression(
+            expression.arguments.front(),
+            "i64",
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+        if (!source.has_value()) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+        output << "  " << temporary_name << " = inttoptr i64 " << source->value << " to ptr\n";
+        return LoweredExpression {
+            .type = "ptr",
+            .value = std::move(temporary_name),
+            .signedness = IntegerSignedness::not_integer,
+        };
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&

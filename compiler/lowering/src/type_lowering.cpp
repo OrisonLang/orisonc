@@ -28,6 +28,7 @@ auto llvm_type_for(syntax::TypeSyntax const& type) -> std::optional<std::string_
         TypeMapping {"Unit", "void"},
         TypeMapping {"Bool", "i1"},
         TypeMapping {"Byte", "i8"},
+        TypeMapping {"Address", "i64"},
         TypeMapping {"UInt8", "i8"},
         TypeMapping {"Int8", "i8"},
         TypeMapping {"UInt16", "i16"},
@@ -55,6 +56,9 @@ auto integer_signedness_for(syntax::TypeSyntax const& type) -> IntegerSignedness
     if (type.name == "Byte" || type.name == "UInt8" || type.name == "UInt16" || type.name == "UInt32" ||
         type.name == "UInt64") {
         return IntegerSignedness::unsigned_integer;
+    }
+    if (type.name == "Address") {
+        return IntegerSignedness::not_integer;
     }
     if (type.name == "Int8" || type.name == "Int16" || type.name == "Int32" || type.name == "Int64") {
         return IntegerSignedness::signed_integer;

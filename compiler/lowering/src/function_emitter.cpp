@@ -1,7 +1,10 @@
 #include "orison/lowering/control_flow_emitter.hpp"
+#include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
+#include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
@@ -9,23 +12,163 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
+#include "orison/lowering/switch_plan.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/while_emitter.hpp"
 
 #include <optional>
+#include <memory>
+#include <span>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace orison::lowering {
 namespace {
 
 using EmissionContext = LoweringEmissionContext;
 
+enum class StatementFlow {
+    falls_through,
+    terminated,
+    failed,
+};
+
+class LoopTargetScope {
+public:
+    LoopTargetScope(FunctionLoweringState& state, LoopTargets targets)
+        : state_(state) {
+        state_.loop_targets.push_back(std::move(targets));
+    }
+
+    ~LoopTargetScope() {
+        state_.loop_targets.pop_back();
+    }
+
+    LoopTargetScope(LoopTargetScope const&) = delete;
+    auto operator=(LoopTargetScope const&) -> LoopTargetScope& = delete;
+
+private:
+    FunctionLoweringState& state_;
+};
+
+auto lower_unit_statement_block(
+    std::span<syntax::StatementSyntax const*> statements,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_statement_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_statement_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_statement(
+    syntax::StatementSyntax const& statement,
+    bool is_last_statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_if_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_switch_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_repeat_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_for_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_unsafe_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
+auto lower_unit_defer_statement(
+    syntax::StatementSyntax const& statement,
+    bool is_last_statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
 auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.text.empty() && expression.arguments.empty() && expression.nested_statements.empty() &&
            expression.left == nullptr && expression.right == nullptr && expression.alternate == nullptr;
+}
+
+auto infer_unit_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<LoweredType> {
+    auto inferred = infer_expression_type(expression, context, state);
+    if (inferred.has_value()) {
+        return inferred;
+    }
+    if (expression.kind == syntax::ExpressionKind::integer_literal) {
+        return LoweredType {
+            .type = "i64",
+            .signedness = IntegerSignedness::signed_integer,
+        };
+    }
+    if (expression.kind == syntax::ExpressionKind::boolean_literal) {
+        return LoweredType {
+            .type = "i1",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+    if (expression.kind == syntax::ExpressionKind::string_literal) {
+        return LoweredType {
+            .type = "ptr",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+    return std::nullopt;
 }
 
 auto infer_unit_binding_type(
@@ -44,11 +187,548 @@ auto infer_unit_binding_type(
         };
     }
 
-    auto inferred_type = infer_expression_type(statement.expression, context, state);
+    auto inferred_type = infer_unit_expression_type(statement.expression, context, state);
     if (!inferred_type.has_value() || inferred_type->type.empty() || inferred_type->type == "void") {
         return std::nullopt;
     }
     return inferred_type;
+}
+
+auto lower_unit_statement_block(
+    std::span<syntax::StatementSyntax const*> statements,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto flow = StatementFlow::falls_through;
+    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+        auto const* statement = statements[index];
+        if (statement == nullptr) {
+            return StatementFlow::failed;
+        }
+        if (flow == StatementFlow::terminated) {
+            diagnostics.error(
+                statement->line,
+                "lowering does not yet support statements after a terminating Unit statement"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto const is_last_statement = index + 1 == statements.size();
+        flow = lower_unit_statement(*statement, is_last_statement, context, session, diagnostics, output);
+        if (flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+    }
+    return flow;
+}
+
+auto lower_unit_statement_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
+    statement_pointers.reserve(statements.size());
+    for (auto const& statement : statements) {
+        statement_pointers.push_back(&statement);
+    }
+    return lower_unit_statement_block(statement_pointers, context, session, diagnostics, output);
+}
+
+auto lower_unit_statement_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
+    statement_pointers.reserve(statements.size());
+    for (auto const& statement : statements) {
+        statement_pointers.push_back(statement.get());
+    }
+    return lower_unit_statement_block(statement_pointers, context, session, diagnostics, output);
+}
+
+auto lower_unit_if_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto condition = lower_expression(
+        statement.expression,
+        "i1",
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!condition.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this Unit if condition" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+
+    auto plan = plan_conditional(
+        ConditionalPlanKind::if_statement,
+        next_llvm_block_index(session.state.next_block_index)
+    );
+    auto has_else = !statement.alternate_statements.empty();
+    auto binding_scope = BranchBindingScope(session.state);
+    emit_llvm_conditional_branch(
+        output,
+        condition->value,
+        plan.then_block,
+        has_else ? plan.else_block : plan.merge_block
+    );
+
+    emit_llvm_block_label(output, plan.then_block);
+    session.state.current_block = plan.then_block;
+    auto then_flow = lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
+    if (then_flow == StatementFlow::failed) {
+        return StatementFlow::failed;
+    }
+    if (then_flow == StatementFlow::falls_through) {
+        emit_llvm_branch(output, plan.merge_block);
+    }
+
+    auto else_flow = StatementFlow::falls_through;
+    if (has_else) {
+        binding_scope.reset();
+        emit_llvm_block_label(output, plan.else_block);
+        session.state.current_block = plan.else_block;
+        else_flow =
+            lower_unit_statement_block(statement.alternate_statements, context, session, diagnostics, output);
+        if (else_flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+        if (else_flow == StatementFlow::falls_through) {
+            emit_llvm_branch(output, plan.merge_block);
+        }
+    }
+
+    binding_scope.reset();
+    emit_llvm_block_label(output, plan.merge_block);
+    session.state.current_block = plan.merge_block;
+    if (then_flow == StatementFlow::terminated && has_else && else_flow == StatementFlow::terminated) {
+        return StatementFlow::terminated;
+    }
+    return StatementFlow::falls_through;
+}
+
+auto lower_unit_switch_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
+    if (!subject_type.has_value() ||
+        (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
+        diagnostics.error(statement.line, "lowering does not yet support this Unit switch subject");
+        return StatementFlow::failed;
+    }
+
+    auto subject = lower_expression(
+        statement.expression,
+        subject_type->type,
+        subject_type->signedness,
+        context,
+        session,
+        output
+    );
+    if (!subject.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this Unit switch subject" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
+    if (!planning.plan.has_value()) {
+        auto detail = render_control_flow_lowering_failure(ControlFlowLoweringFailure {
+            .reason = planning.failure,
+        });
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this Unit switch statement" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+
+    auto const& plan = *planning.plan;
+    auto binding_scope = BranchBindingScope(session.state);
+    auto switch_targets = std::vector<LlvmSwitchTarget> {};
+    switch_targets.reserve(plan.cases.size());
+    for (auto const& planned_case : plan.cases) {
+        if (planned_case.pattern.has_value()) {
+            switch_targets.push_back(LlvmSwitchTarget {
+                .value = planned_case.pattern->value,
+                .block = planned_case.block,
+            });
+        }
+    }
+    emit_llvm_switch(output, subject->type, subject->value, plan.default_block, switch_targets);
+
+    auto all_cases_terminated = true;
+    for (auto const& planned_case : plan.cases) {
+        binding_scope.reset();
+        emit_llvm_block_label(output, planned_case.block);
+        session.state.current_block = planned_case.block;
+
+        auto case_flow = lower_unit_statement_block(
+            planned_case.syntax->statements,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (case_flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+        if (case_flow == StatementFlow::falls_through) {
+            emit_llvm_branch(output, plan.merge_block);
+            all_cases_terminated = false;
+        }
+    }
+
+    if (!plan.has_default) {
+        emit_llvm_block_label(output, plan.fallback_block);
+        emit_llvm_unreachable(output);
+    }
+
+    binding_scope.reset();
+    emit_llvm_block_label(output, plan.merge_block);
+    session.state.current_block = plan.merge_block;
+    return all_cases_terminated ? StatementFlow::terminated : StatementFlow::falls_through;
+}
+
+auto lower_unit_repeat_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    if (statement.nested_statements.empty()) {
+        diagnostics.error(statement.line, "lowering repeat statements requires a non-empty body");
+        return StatementFlow::failed;
+    }
+
+    auto const block_index = next_llvm_block_index(session.state.next_block_index);
+    auto const body_block = llvm_block_name("repeat.body", block_index);
+    auto const condition_block = llvm_block_name("repeat.condition", block_index);
+    auto const exit_block = llvm_block_name("repeat.exit", block_index);
+
+    emit_llvm_branch(output, body_block);
+    emit_llvm_block_label(output, body_block);
+    session.state.current_block = body_block;
+
+    [[maybe_unused]] auto loop_scope = LoopTargetScope {
+        session.state,
+        LoopTargets {
+            .break_target = exit_block,
+            .continue_target = condition_block,
+        },
+    };
+    [[maybe_unused]] auto body_scope = BranchBindingScope(session.state);
+    auto body_flow = lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
+    if (body_flow == StatementFlow::failed) {
+        return StatementFlow::failed;
+    }
+    if (body_flow == StatementFlow::falls_through) {
+        emit_llvm_branch(output, condition_block);
+    }
+
+    emit_llvm_block_label(output, condition_block);
+    session.state.current_block = condition_block;
+    auto condition = lower_expression(
+        statement.expression,
+        "i1",
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!condition.has_value()) {
+        auto detail = render_expression_lowering_failure(session.failures.expression);
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this repeat condition" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return StatementFlow::failed;
+    }
+    emit_llvm_conditional_branch(output, condition->value, body_block, exit_block);
+
+    emit_llvm_block_label(output, exit_block);
+    session.state.current_block = exit_block;
+    return StatementFlow::falls_through;
+}
+
+auto lower_unit_for_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    if (statement.expression.kind != syntax::ExpressionKind::array_literal) {
+        diagnostics.error(statement.line, "lowering for statements currently requires an array literal iterable");
+        return StatementFlow::failed;
+    }
+
+    auto element_type = std::optional<LoweredType> {};
+    for (auto const& element : statement.expression.arguments) {
+        auto inferred = infer_unit_expression_type(element, context, session.state);
+        if (!inferred.has_value()) {
+            continue;
+        }
+        if (!element_type.has_value()) {
+            element_type = *inferred;
+            continue;
+        }
+        if (element_type->type != inferred->type || element_type->signedness != inferred->signedness) {
+            diagnostics.error(statement.line, "lowering for statements currently requires a uniform iterable type");
+            return StatementFlow::failed;
+        }
+    }
+    if (!element_type.has_value()) {
+        element_type = LoweredType {
+            .type = "i64",
+            .signedness = IntegerSignedness::signed_integer,
+        };
+    }
+
+    auto const block_index = next_llvm_block_index(session.state.next_block_index);
+    auto const exit_block = llvm_block_name("for.exit", block_index);
+    auto iteration_blocks = std::vector<std::string> {};
+    iteration_blocks.reserve(statement.expression.arguments.size());
+    for (auto index = std::size_t {0}; index < statement.expression.arguments.size(); ++index) {
+        iteration_blocks.push_back(llvm_block_name("for.iteration", block_index, index));
+    }
+
+    if (iteration_blocks.empty()) {
+        emit_llvm_branch(output, exit_block);
+        emit_llvm_block_label(output, exit_block);
+        session.state.current_block = exit_block;
+        return StatementFlow::falls_through;
+    }
+
+    auto loop_scope = BranchBindingScope(session.state);
+    emit_llvm_branch(output, iteration_blocks.front());
+
+    for (auto index = std::size_t {0}; index < statement.expression.arguments.size(); ++index) {
+        loop_scope.reset();
+        emit_llvm_block_label(output, iteration_blocks[index]);
+        session.state.current_block = iteration_blocks[index];
+
+        auto lowered_item = lower_expression(
+            statement.expression.arguments[index],
+            element_type->type,
+            element_type->signedness,
+            context,
+            session,
+            output
+        );
+        if (!lowered_item.has_value()) {
+            auto detail = render_expression_lowering_failure(session.failures.expression);
+            diagnostics.error(
+                statement.expression.arguments[index].line,
+                "lowering does not yet support this for iterable element" +
+                    (detail.empty() ? std::string {} : ": " + detail)
+            );
+            return StatementFlow::failed;
+        }
+
+        session.state.immutable_bindings[statement.name] = LoweredExpression {
+            .type = lowered_item->type,
+            .value = lowered_item->value,
+            .signedness = lowered_item->signedness,
+        };
+
+        auto loop_targets = LoopTargets {
+            .break_target = exit_block,
+            .continue_target = index + 1 < statement.expression.arguments.size()
+                ? iteration_blocks[index + 1]
+                : exit_block,
+        };
+        [[maybe_unused]] auto target_scope = LoopTargetScope {session.state, std::move(loop_targets)};
+        auto body_flow = lower_unit_statement_block(
+            statement.nested_statements,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+        if (body_flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+        if (body_flow == StatementFlow::falls_through) {
+            emit_llvm_branch(output, index + 1 < statement.expression.arguments.size()
+                                       ? iteration_blocks[index + 1]
+                                       : exit_block);
+        }
+    }
+
+    emit_llvm_block_label(output, exit_block);
+    session.state.current_block = exit_block;
+    return StatementFlow::falls_through;
+}
+
+auto lower_unit_unsafe_statement(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    [[maybe_unused]] auto binding_scope = BranchBindingScope(session.state);
+    auto flow = lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
+    if (flow == StatementFlow::failed) {
+        return StatementFlow::failed;
+    }
+    return flow;
+}
+
+auto lower_unit_defer_statement(
+    syntax::StatementSyntax const& statement,
+    bool is_last_statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    if (!is_last_statement) {
+        diagnostics.error(statement.line, "lowering defer statements currently requires them to be final");
+        return StatementFlow::failed;
+    }
+
+    [[maybe_unused]] auto binding_scope = BranchBindingScope(session.state);
+    auto flow = lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
+    if (flow == StatementFlow::failed) {
+        return StatementFlow::failed;
+    }
+    return flow;
+}
+
+auto lower_unit_statement(
+    syntax::StatementSyntax const& statement,
+    bool is_last_statement,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    if (statement.kind == syntax::StatementKind::let_binding) {
+        auto type = infer_unit_binding_type(statement, context, session.state);
+        if (!type.has_value()) {
+            diagnostics.error(statement.line, "lowering does not yet support this Unit let binding");
+            return StatementFlow::failed;
+        }
+        if (!lower_let_statement(
+                statement,
+                type->type,
+                type->signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            )) {
+            return StatementFlow::failed;
+        }
+        return StatementFlow::falls_through;
+    }
+    if (statement.kind == syntax::StatementKind::var_binding) {
+        auto type = infer_unit_binding_type(statement, context, session.state);
+        if (!type.has_value()) {
+            diagnostics.error(statement.line, "lowering does not yet support this Unit var binding");
+            return StatementFlow::failed;
+        }
+        if (!lower_var_statement(
+                statement,
+                type->type,
+                type->signedness,
+                context,
+                session,
+                diagnostics,
+                output
+            )) {
+            return StatementFlow::failed;
+        }
+        return StatementFlow::falls_through;
+    }
+    if (statement.kind == syntax::StatementKind::assignment_statement) {
+        if (!lower_assignment_statement(statement, context, session, diagnostics, output)) {
+            return StatementFlow::failed;
+        }
+        return StatementFlow::falls_through;
+    }
+    if (statement.kind == syntax::StatementKind::return_statement) {
+        if (!is_empty_expression(statement.expression)) {
+            diagnostics.error(statement.line, "lowering does not yet support return expressions in Unit functions");
+            return StatementFlow::failed;
+        }
+        output << "  ret void\n";
+        return StatementFlow::terminated;
+    }
+    if (statement.kind == syntax::StatementKind::break_statement ||
+        statement.kind == syntax::StatementKind::continue_statement) {
+        if (!lower_loop_control_statement(statement, session, diagnostics, output)) {
+            return StatementFlow::failed;
+        }
+        return StatementFlow::terminated;
+    }
+    if (statement.kind == syntax::StatementKind::switch_statement) {
+        return lower_unit_switch_statement(statement, context, session, diagnostics, output);
+    }
+    if (statement.kind == syntax::StatementKind::if_statement) {
+        return lower_unit_if_statement(statement, context, session, diagnostics, output);
+    }
+    if (statement.kind == syntax::StatementKind::while_statement) {
+        if (!lower_while_statement(statement, context, session, diagnostics, output)) {
+            return StatementFlow::failed;
+        }
+        return StatementFlow::falls_through;
+    }
+    if (statement.kind == syntax::StatementKind::repeat_statement) {
+        return lower_unit_repeat_statement(statement, context, session, diagnostics, output);
+    }
+    if (statement.kind == syntax::StatementKind::for_statement) {
+        return lower_unit_for_statement(statement, context, session, diagnostics, output);
+    }
+    if (statement.kind == syntax::StatementKind::unsafe_statement) {
+        return lower_unit_unsafe_statement(statement, context, session, diagnostics, output);
+    }
+    if (statement.kind == syntax::StatementKind::defer_statement) {
+        return lower_unit_defer_statement(statement, is_last_statement, context, session, diagnostics, output);
+    }
+    if (statement.kind == syntax::StatementKind::expression_statement &&
+        statement.expression.kind == syntax::ExpressionKind::call) {
+        if (!lower_call_statement(statement, context, session, diagnostics, output)) {
+            return StatementFlow::failed;
+        }
+        return StatementFlow::falls_through;
+    }
+
+    diagnostics.error(statement.line, "lowering does not yet support this statement");
+    return StatementFlow::failed;
 }
 
 void emit_function_body(
@@ -117,90 +797,14 @@ void emit_function_body(
     }
 
     if (signature.return_type == "void") {
-        for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
-            auto const& statement = function.body_statements[index];
-            auto is_last_statement = index + 1 == function.body_statements.size();
-            if (statement.kind == syntax::StatementKind::return_statement) {
-                if (!is_last_statement) {
-                    diagnostics.error(
-                        statement.line,
-                        "lowering does not yet support return statements before the end of Unit functions"
-                    );
-                    return;
-                }
-                if (!is_empty_expression(statement.expression)) {
-                    diagnostics.error(
-                        statement.line,
-                        "lowering does not yet support return expressions in Unit functions"
-                    );
-                    return;
-                }
-                output << "  ret void\n";
-                output << "}\n";
-                return;
-            }
-            if (statement.kind == syntax::StatementKind::let_binding) {
-                auto type = infer_unit_binding_type(statement, context, session.state);
-                if (!type.has_value()) {
-                    diagnostics.error(statement.line, "lowering does not yet support this Unit let binding");
-                    return;
-                }
-                if (!lower_let_statement(
-                        statement,
-                        type->type,
-                        type->signedness,
-                        context,
-                        session,
-                        diagnostics,
-                        output
-                    )) {
-                    return;
-                }
-                continue;
-            }
-            if (statement.kind == syntax::StatementKind::var_binding) {
-                auto type = infer_unit_binding_type(statement, context, session.state);
-                if (!type.has_value()) {
-                    diagnostics.error(statement.line, "lowering does not yet support this Unit var binding");
-                    return;
-                }
-                if (!lower_var_statement(
-                        statement,
-                        type->type,
-                        type->signedness,
-                        context,
-                        session,
-                        diagnostics,
-                        output
-                    )) {
-                    return;
-                }
-                continue;
-            }
-            if (statement.kind == syntax::StatementKind::assignment_statement) {
-                if (!lower_assignment_statement(statement, context, session, diagnostics, output)) {
-                    return;
-                }
-                continue;
-            }
-            if (statement.kind == syntax::StatementKind::while_statement) {
-                if (!lower_while_statement(statement, context, session, diagnostics, output)) {
-                    return;
-                }
-                continue;
-            }
-            if (statement.kind == syntax::StatementKind::expression_statement &&
-                statement.expression.kind == syntax::ExpressionKind::call) {
-                if (!lower_call_statement(statement, context, session, diagnostics, output)) {
-                    return;
-                }
-                continue;
-            }
-            diagnostics.error(statement.line, "lowering does not yet support this statement");
+        auto flow = lower_unit_statement_block(function.body_statements, context, session, diagnostics, output);
+        if (flow == StatementFlow::failed) {
             return;
         }
 
-        output << "  ret void\n";
+        if (flow == StatementFlow::falls_through) {
+            output << "  ret void\n";
+        }
         output << "}\n";
         return;
     }
