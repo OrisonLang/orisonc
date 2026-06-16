@@ -201,6 +201,125 @@ int main() {
             missing_member_session.failures.expression
         ) == "unknown lowered member call receiver: value"
     );
+
+    auto raw_state = orison::lowering::FunctionLoweringState {};
+    raw_state.immutable_bindings.emplace("pointer", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%pointer",
+    });
+    raw_state.immutable_bindings.emplace("address", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%address",
+    });
+    raw_state.immutable_bindings.emplace("index", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%index",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    raw_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%value",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    raw_state.source_type_names.emplace("pointer", "Pointer<UInt32>");
+    raw_state.source_type_names.emplace("address", "Address");
+    raw_state.source_type_names.emplace("index", "UInt64");
+    raw_state.source_type_names.emplace("value", "UInt32");
+    auto raw_failures = orison::lowering::LoweringFailures {};
+    auto raw_session = orison::lowering::FunctionLoweringSession {
+        .state = raw_state,
+        .failures = raw_failures,
+    };
+
+    auto raw_read_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "raw_read",
+            }
+        ),
+    };
+    raw_read_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "pointer",
+    });
+    output = {};
+    auto raw_read = orison::lowering::lower_expression(
+        raw_read_call,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(raw_read.has_value());
+    assert(raw_read->value == "%tmp0");
+    assert(output.str() == "  %tmp0 = load i32, ptr %pointer\n");
+
+    auto raw_offset_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "raw_offset",
+            }
+        ),
+    };
+    raw_offset_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "pointer",
+    });
+    raw_offset_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "index",
+    });
+    output = {};
+    auto raw_offset = orison::lowering::lower_expression(
+        raw_offset_call,
+        "ptr",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(raw_offset.has_value());
+    assert(raw_offset->value == "%tmp1");
+    assert(output.str() == "  %tmp1 = getelementptr i32, ptr %pointer, i64 %index\n");
+
+    auto volatile_write_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "volatile_write",
+            }
+        ),
+    };
+    volatile_write_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "address",
+    });
+    volatile_write_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "value",
+    });
+    output = {};
+    auto volatile_write = orison::lowering::lower_expression(
+        volatile_write_call,
+        "void",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(volatile_write.has_value());
+    assert(
+        output.str() ==
+        "  %tmp2 = inttoptr i64 %address to ptr\n"
+        "  store volatile i32 %value, ptr %tmp2\n"
+    );
+
     std::filesystem::remove(path);
     return 0;
 }

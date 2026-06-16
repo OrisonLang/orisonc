@@ -25,10 +25,14 @@ This file tracks which source-language frontend slices are reflected in the curr
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
-- lowering gaps after the current recursive statement path: raw MMIO intrinsics and non-array-literal `for` iteration
+- lowering gaps after the current recursive statement path: aggregate-layout `address_of`/field-address lowering and
+  non-array-literal `for` iteration
 
 ## Latest update
 
+- 2026-06-16: the initial raw/MMIO backend slice now lowers `Pointer<T>`-proven `raw_read`, `raw_write`,
+  `raw_offset`, `volatile_read`, and `volatile_write`; volatile operations emit LLVM volatile loads/stores, while
+  aggregate-layout forms of `address_of` remain pending until record/array layout lowering exists.
 - 2026-06-16: ordinary non-`Unit` function bodies now also accept leading `repeat`, `for`, and `unsafe` statements
   before the final expression, while still rejecting statements after a terminating non-`Unit` statement.
 - 2026-06-16: `unsafe function` declarations now lower identically to ordinary functions; the unsafe marker remains a

@@ -2448,6 +2448,36 @@ void test_reject_statements_after_terminating_nonvoid_statement() {
     std::filesystem::remove(path);
 }
 
+void test_emit_raw_mmio_intrinsics() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_raw_mmio.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "unsafe function read_word(address: Address) -> UInt32\n"
+        "    let pointer: Pointer<UInt32> = Pointer(address)\n"
+        "    raw_read(pointer)\n"
+        "\n"
+        "unsafe function write_word(address: Address, value: UInt32) -> Unit\n"
+        "    let pointer: Pointer<UInt32> = Pointer(address)\n"
+        "    raw_write(pointer, value)\n"
+        "\n"
+        "public function clear(address: Address) -> Unit\n"
+        "    unsafe\n"
+        "        let pointer: Pointer<Byte> = Pointer(address)\n"
+        "        volatile_write(pointer, 0 as Byte)\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("define i32 @read_word(i64 %address)") != std::string::npos);
+    assert(result.ir_text.find("load i32, ptr") != std::string::npos);
+    assert(result.ir_text.find("define void @write_word(i64 %address, i32 %value)") != std::string::npos);
+    assert(result.ir_text.find("store i32 %value, ptr") != std::string::npos);
+    assert(result.ir_text.find("define void @clear(i64 %address)") != std::string::npos);
+    assert(result.ir_text.find("store volatile i8 0, ptr") != std::string::npos);
+    std::filesystem::remove(path);
+}
+
 void test_reject_malformed_generated_llvm_ir() {
     orison::lowering::LlvmIrVerifier verifier;
     auto diagnostics = verifier.verify(
@@ -2562,6 +2592,7 @@ auto main() -> int {
     test_emit_nested_defer_cleanup_in_for_and_repeat_unsafe_blocks();
     test_emit_nonvoid_repeat_for_unsafe_prefixes();
     test_reject_statements_after_terminating_nonvoid_statement();
+    test_emit_raw_mmio_intrinsics();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();

@@ -130,6 +130,84 @@ auto is_integer_llvm_type_impl(std::string_view type) -> bool {
     return type == "i8" || type == "i16" || type == "i32" || type == "i64";
 }
 
+auto lowered_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression>;
+
+auto is_low_level_intrinsic_name(std::string_view name) -> bool {
+    return name == "address_of" || name == "raw_read" || name == "raw_write" ||
+           name == "raw_offset" || name == "volatile_read" || name == "volatile_write";
+}
+
+auto is_write_intrinsic_name(std::string_view name) -> bool {
+    return name == "raw_write" || name == "volatile_write";
+}
+
+auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"Pointer<"};
+    if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
+        type_name.size() <= prefix.size() + 1) {
+        return std::nullopt;
+    }
+
+    return std::string(type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1));
+}
+
+auto lowered_type_for_source_type_name(std::string_view source_type_name) -> std::optional<LoweredType> {
+    auto type = syntax::TypeSyntax {
+        .name = std::string(source_type_name),
+    };
+    auto lowered = llvm_type_for(type);
+    if (!lowered.has_value() || *lowered == "void") {
+        return std::nullopt;
+    }
+
+    return LoweredType {
+        .type = std::string(*lowered),
+        .signedness = integer_signedness_for(type),
+    };
+}
+
+auto source_type_name_for_expression(
+    syntax::ExpressionSyntax const& expression,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto source_type = state.source_type_names.find(expression.text);
+        if (source_type != state.source_type_names.end()) {
+            return source_type->second;
+        }
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset" &&
+        !expression.arguments.empty()) {
+        return source_type_name_for_expression(expression.arguments.front(), state);
+    }
+
+    return std::nullopt;
+}
+
+auto pointee_lowered_type_for_pointer_expression(
+    syntax::ExpressionSyntax const& expression,
+    FunctionLoweringState const& state
+) -> std::optional<LoweredType> {
+    auto source_type = source_type_name_for_expression(expression, state);
+    if (!source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto pointee_source_type = pointer_pointee_source_type_name(*source_type);
+    return pointee_source_type.has_value()
+        ? lowered_type_for_source_type_name(*pointee_source_type)
+        : std::nullopt;
+}
+
 struct ResolvedMemberCall {
     MemberCallReceiverInference receiver;
     LoweredMethodLookup method;
@@ -200,6 +278,34 @@ auto inferred_expression_type(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
+        auto const& intrinsic_name = expression.left->text;
+        if (is_write_intrinsic_name(intrinsic_name)) {
+            return LoweredType {
+                .type = "void",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+        if (intrinsic_name == "address_of") {
+            return LoweredType {
+                .type = "i64",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+        if (intrinsic_name == "raw_offset" && !expression.arguments.empty()) {
+            auto source_type = inferred_expression_type(expression.arguments.front(), context, state);
+            if (source_type.has_value() && (source_type->type == "ptr" || source_type->type == "i64")) {
+                return source_type;
+            }
+        }
+        if ((intrinsic_name == "raw_read" || intrinsic_name == "volatile_read") &&
+            !expression.arguments.empty()) {
+            auto pointee_type =
+                pointee_lowered_type_for_pointer_expression(expression.arguments.front(), state);
+            if (pointee_type.has_value()) {
+                return pointee_type;
+            }
+        }
+
         auto function = context.lowering.functions.find(expression.left->text);
         if (function == context.lowering.functions.end()) {
             return std::nullopt;
@@ -227,6 +333,326 @@ auto inferred_expression_type(
     }
 
     return std::nullopt;
+}
+
+auto lower_address_to_pointer(
+    LoweredExpression address,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> LoweredExpression {
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = inttoptr i64 " << address.value << " to ptr\n";
+    return LoweredExpression {
+        .type = "ptr",
+        .value = std::move(temporary_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
+auto lower_pointer_operand(
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    auto inferred = inferred_expression_type(expression, context, session.state);
+    if (inferred.has_value() && inferred->type == "ptr") {
+        return lowered_expression(
+            expression,
+            "ptr",
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+    }
+
+    auto source_type = source_type_name_for_expression(expression, session.state);
+    if (inferred.has_value() && inferred->type == "i64" &&
+        source_type.has_value() && *source_type == "Address") {
+        auto address = lowered_expression(
+            expression,
+            "i64",
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+        if (!address.has_value()) {
+            return std::nullopt;
+        }
+        return lower_address_to_pointer(std::move(*address), session, output);
+    }
+
+    return lowered_expression(
+        expression,
+        "ptr",
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+}
+
+auto lower_address_operand(
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    auto inferred = inferred_expression_type(expression, context, session.state);
+    if (inferred.has_value() && inferred->type == "ptr") {
+        auto pointer = lowered_expression(
+            expression,
+            "ptr",
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+        if (!pointer.has_value()) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << temporary_name << " = ptrtoint ptr " << pointer->value << " to i64\n";
+        return LoweredExpression {
+            .type = "i64",
+            .value = std::move(temporary_name),
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    return lowered_expression(
+        expression,
+        "i64",
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+}
+
+auto lower_address_of_intrinsic(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringFailures& failures,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expected_llvm_type != "i64" || expression.arguments.size() != 1) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "address_of"
+        );
+        return std::nullopt;
+    }
+
+    auto const& operand = expression.arguments.front();
+    if (operand.kind != syntax::ExpressionKind::name) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "address_of currently only lowers mutable local names"
+        );
+        return std::nullopt;
+    }
+
+    auto binding = session.state.mutable_bindings.find(operand.text);
+    if (binding == session.state.mutable_bindings.end()) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "address_of currently only lowers mutable local names"
+        );
+        return std::nullopt;
+    }
+
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = ptrtoint ptr " << binding->second.storage << " to i64\n";
+    return LoweredExpression {
+        .type = "i64",
+        .value = std::move(temporary_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
+auto lower_raw_offset_intrinsic(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    LoweringFailures& failures,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.arguments.size() != 2) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "raw_offset"
+        );
+        return std::nullopt;
+    }
+
+    auto offset = lowered_expression(
+        expression.arguments[1],
+        "i64",
+        IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        output
+    );
+    if (!offset.has_value()) {
+        return std::nullopt;
+    }
+
+    if (expected_llvm_type == "i64") {
+        auto address = lower_address_operand(expression.arguments.front(), context, session, output);
+        if (!address.has_value()) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << temporary_name << " = add i64 " << address->value << ", " << offset->value
+               << "\n";
+        return LoweredExpression {
+            .type = "i64",
+            .value = std::move(temporary_name),
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    if (expected_llvm_type != "ptr") {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::type_mismatch,
+            "raw_offset expected ptr or i64 result"
+        );
+        return std::nullopt;
+    }
+
+    auto pointee_type =
+        pointee_lowered_type_for_pointer_expression(expression.arguments.front(), session.state);
+    if (!pointee_type.has_value()) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "raw_offset requires a known Pointer<T> source"
+        );
+        return std::nullopt;
+    }
+
+    auto pointer = lower_pointer_operand(expression.arguments.front(), context, session, output);
+    if (!pointer.has_value()) {
+        return std::nullopt;
+    }
+
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = getelementptr " << pointee_type->type << ", ptr "
+           << pointer->value << ", i64 " << offset->value << "\n";
+    return LoweredExpression {
+        .type = "ptr",
+        .value = std::move(temporary_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
+auto lower_read_intrinsic(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    bool is_volatile,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    LoweringFailures& failures,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expected_llvm_type == "void" || expression.arguments.size() != 1) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            is_volatile ? "volatile_read" : "raw_read"
+        );
+        return std::nullopt;
+    }
+
+    auto pointer = lower_pointer_operand(expression.arguments.front(), context, session, output);
+    if (!pointer.has_value()) {
+        return std::nullopt;
+    }
+
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = load ";
+    if (is_volatile) {
+        output << "volatile ";
+    }
+    output << expected_llvm_type << ", ptr " << pointer->value << "\n";
+    return LoweredExpression {
+        .type = std::string(expected_llvm_type),
+        .value = std::move(temporary_name),
+        .signedness = expected_signedness,
+    };
+}
+
+auto lower_write_intrinsic(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    bool is_volatile,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    LoweringFailures& failures,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expected_llvm_type != "void" || expression.arguments.size() != 2) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            is_volatile ? "volatile_write" : "raw_write"
+        );
+        return std::nullopt;
+    }
+
+    auto value_type =
+        pointee_lowered_type_for_pointer_expression(expression.arguments.front(), session.state);
+    if (!value_type.has_value()) {
+        value_type = inferred_expression_type(expression.arguments[1], context, session.state);
+    }
+    if (!value_type.has_value() || value_type->type.empty() || value_type->type == "void") {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::cannot_infer_operand_type,
+            is_volatile ? "volatile_write value" : "raw_write value"
+        );
+        return std::nullopt;
+    }
+
+    auto pointer = lower_pointer_operand(expression.arguments.front(), context, session, output);
+    if (!pointer.has_value()) {
+        return std::nullopt;
+    }
+    auto value = lowered_expression(
+        expression.arguments[1],
+        value_type->type,
+        value_type->signedness,
+        context,
+        session,
+        output
+    );
+    if (!value.has_value()) {
+        return std::nullopt;
+    }
+
+    output << "  store ";
+    if (is_volatile) {
+        output << "volatile ";
+    }
+    output << value_type->type << " " << value->value << ", ptr " << pointer->value << "\n";
+    return LoweredExpression {
+        .type = "void",
+        .value = "",
+        .signedness = IntegerSignedness::not_integer,
+    };
 }
 
 auto lowered_expression(
@@ -621,6 +1047,54 @@ auto lowered_expression(
             .value = std::move(temporary_name),
             .signedness = IntegerSignedness::not_integer,
         };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name &&
+        is_low_level_intrinsic_name(expression.left->text)) {
+        auto const& intrinsic_name = expression.left->text;
+        if (intrinsic_name == "address_of") {
+            return lower_address_of_intrinsic(
+                expression,
+                expected_llvm_type,
+                failures,
+                session,
+                output
+            );
+        }
+        if (intrinsic_name == "raw_offset") {
+            return lower_raw_offset_intrinsic(
+                expression,
+                expected_llvm_type,
+                context,
+                session,
+                failures,
+                output
+            );
+        }
+        if (intrinsic_name == "raw_read" || intrinsic_name == "volatile_read") {
+            return lower_read_intrinsic(
+                expression,
+                expected_llvm_type,
+                expected_signedness,
+                intrinsic_name == "volatile_read",
+                context,
+                session,
+                failures,
+                output
+            );
+        }
+        if (intrinsic_name == "raw_write" || intrinsic_name == "volatile_write") {
+            return lower_write_intrinsic(
+                expression,
+                expected_llvm_type,
+                intrinsic_name == "volatile_write",
+                context,
+                session,
+                failures,
+                output
+            );
+        }
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&

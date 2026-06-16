@@ -141,6 +141,11 @@ analysis, and lowering components.
 - Receiver-self method parameters (`this: This`, `shared.This`, `exclusive.This`) are lowered as the concrete receiver
   type when that receiver has a supported LLVM representation, enabling scalar receiver method definitions while
   leaving aggregate receiver layout future work.
+- Raw/MMIO intrinsics now have an initial LLVM backend path for the pointer-proven subset: `raw_read` and
+  `volatile_read` emit loads, `raw_write` and `volatile_write` emit stores, `volatile_*` marks the access volatile,
+  and `raw_offset` emits `getelementptr` when the source is a known `Pointer<T>`. `Address` operands are converted to
+  `ptr` at the use site with `inttoptr`; aggregate-layout-backed `address_of` remains limited to mutable local storage
+  until record/array layout lowering exists.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

@@ -1407,10 +1407,15 @@ void emit_function_body(
             return;
         }
         if (!is_last_statement && statement.kind == syntax::StatementKind::let_binding) {
+            auto type = infer_unit_binding_type(statement, context, session.state);
+            if (!type.has_value()) {
+                diagnostics.error(statement.line, "lowering does not yet support this let binding");
+                return;
+            }
             if (!lower_let_statement(
                     statement,
-                    signature.return_type,
-                    signature.return_signedness,
+                    type->type,
+                    type->signedness,
                     context,
                     session,
                     diagnostics,

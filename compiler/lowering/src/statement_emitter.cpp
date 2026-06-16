@@ -370,8 +370,12 @@ auto lower_let_statement(
         return false;
     }
 
-    auto local_name = next_llvm_local_value_name(statement.name, session.state.local_name_counts);
-    output << "  " << local_name << " = add " << lowered->type << " 0, " << lowered->value << "\n";
+    auto local_name = lowered->type == "ptr"
+        ? lowered->value
+        : next_llvm_local_value_name(statement.name, session.state.local_name_counts);
+    if (lowered->type != "ptr") {
+        output << "  " << local_name << " = add " << lowered->type << " 0, " << lowered->value << "\n";
+    }
     session.state.immutable_bindings[statement.name] = LoweredExpression {
         .type = lowered->type,
         .value = std::move(local_name),
@@ -554,6 +558,29 @@ auto lower_call_statement(
         return false;
     }
     if (type->type == "void") {
+        if (statement.expression.left != nullptr &&
+            statement.expression.left->kind == syntax::ExpressionKind::name &&
+            (statement.expression.left->text == "raw_write" ||
+             statement.expression.left->text == "volatile_write")) {
+            auto lowered = lower_expression(
+                statement.expression,
+                "void",
+                IntegerSignedness::not_integer,
+                context,
+                session,
+                output
+            );
+            if (!lowered.has_value()) {
+                auto detail = render_expression_lowering_failure(session.failures.expression);
+                diagnostics.error(
+                    statement.line,
+                    "lowering does not yet support this call statement" +
+                        (detail.empty() ? std::string {} : ": " + detail)
+                );
+                return false;
+            }
+            return true;
+        }
         if (statement.expression.left == nullptr ||
             statement.expression.left->kind != syntax::ExpressionKind::name) {
             diagnostics.error(statement.line, "lowering call statement requires a direct function name");

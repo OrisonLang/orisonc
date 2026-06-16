@@ -63,6 +63,19 @@ int main() {
                   "        observe(value)\n"
                   "    value\n"
                   "\n"
+                  "unsafe function read_word(address: Address) -> UInt32\n"
+                  "    let pointer: Pointer<UInt32> = Pointer(address)\n"
+                  "    raw_read(pointer)\n"
+                  "\n"
+                  "unsafe function write_word(address: Address, value: UInt32) -> Unit\n"
+                  "    let pointer: Pointer<UInt32> = Pointer(address)\n"
+                  "    raw_write(pointer, value)\n"
+                  "\n"
+                  "public function clear(address: Address) -> Unit\n"
+                  "    unsafe\n"
+                  "        let pointer: Pointer<Byte> = Pointer(address)\n"
+                  "        volatile_write(pointer, 0 as Byte)\n"
+                  "\n"
                   "unsafe function unsafe_identity(value: UInt32) -> UInt32\n"
                   "    value\n";
     }
@@ -206,6 +219,42 @@ int main() {
     assert(repeat_for_unsafe_ir.find("for.iteration") != std::string::npos);
     assert(repeat_for_unsafe_ir.find("call void @observe(i32 %value)") != std::string::npos);
     assert(repeat_for_unsafe_ir.find("ret i32 %value") != std::string::npos);
+
+    auto read_word_ir = orison::lowering::emit_function(
+        parse_result.module.functions[8],
+        context.functions.at("read_word"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(read_word_ir.find("inttoptr i64 %address to ptr") != std::string::npos);
+    assert(read_word_ir.find("load i32, ptr") != std::string::npos);
+    assert(read_word_ir.find("ret i32") != std::string::npos);
+
+    auto write_word_ir = orison::lowering::emit_function(
+        parse_result.module.functions[9],
+        context.functions.at("write_word"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(write_word_ir.find("inttoptr i64 %address to ptr") != std::string::npos);
+    assert(write_word_ir.find("store i32 %value, ptr") != std::string::npos);
+    assert(write_word_ir.find("ret void") != std::string::npos);
+
+    auto clear_ir = orison::lowering::emit_function(
+        parse_result.module.functions[10],
+        context.functions.at("clear"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(clear_ir.find("inttoptr i64 %address to ptr") != std::string::npos);
+    assert(clear_ir.find("store volatile i8 0, ptr") != std::string::npos);
+    assert(clear_ir.find("ret void") != std::string::npos);
 
     auto unsafe_identity_ir = orison::lowering::emit_function(
         parse_result.module.functions.back(),
