@@ -53,8 +53,10 @@ analysis, and lowering components.
 - Shared LLVM call argument lowering and call-instruction formatting live in a dedicated call emitter; value-producing
   expression calls, direct `Unit` statement calls, and direct scalar member-call statements consume the same
   signature, operand, and C ABI adapter policy. Statement-side `Unit` and member-call calls still own call-statement
-  diagnostics and translate arity/argument failures into the same structured lowering failure categories used by
-  expression calls. Null-safe member-call lowering remains explicit follow-up work.
+  diagnostics for unsupported shapes and translate arity/argument failures into the same structured lowering failure
+  categories used by expression calls. Null-safe member-call lowering remains explicit follow-up work.
+- Ordinary function-body lowering now dispatches non-terminal call statements through the same call-statement helper as
+  while bodies, so direct and scalar member call statements can appear before the final return expression.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable and mutable binding visibility is isolated by a dedicated RAII scope that snapshots both maps,
@@ -102,8 +104,9 @@ analysis, and lowering components.
   member-call expressions now lower through explicit receiver arguments for scalar receiver methods, and direct
   member-call statements now lower through the same receiver-aware path while null-safe member-call expressions remain
   future work.
-  Member-call statement diagnostics compose receiver inference with lowered method lookup so unsupported member calls
-  can distinguish unknown receiver types, unknown methods, ambiguous methods, and resolved-but-not-emitted calls.
+  Member-call statement diagnostics compose receiver inference with lowered method lookup so unsupported receiver
+  shapes, unknown receiver types, unknown methods, ambiguous methods, and non-lowerable targets are diagnosed
+  explicitly.
   Lowered methods receive deterministic internal symbols of the form `method.<receiver>.<method>`, with non-identifier
   receiver characters sanitized to `_`.
 - Method definitions that fit the existing scalar function subset are emitted after top-level functions using those

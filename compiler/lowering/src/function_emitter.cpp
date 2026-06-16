@@ -155,6 +155,13 @@ void emit_function_body(
             }
             continue;
         }
+        if (!is_last_statement && statement.kind == syntax::StatementKind::expression_statement &&
+            statement.expression.kind == syntax::ExpressionKind::call) {
+            if (!lower_call_statement(statement, context, session, diagnostics, output)) {
+                return;
+            }
+            continue;
+        }
 
         if (is_last_statement) {
             if (statement.kind == syntax::StatementKind::if_statement ||

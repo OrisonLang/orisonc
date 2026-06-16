@@ -698,6 +698,53 @@ void test_emit_scalar_member_call_statement() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_scalar_call_statements() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_scalar_call_statements.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function reset(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let value: UInt32 = 1 as UInt32\n"
+        "    observe(value)\n"
+        "    value.reset()\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define void @observe(i32 %value) {\n"
+        "entry:\n"
+        "  ret void\n"
+        "}\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %value = add i32 0, 1\n"
+        "  call void @observe(i32 %value)\n"
+        "  call void @method.UInt32.reset(i32 %value)\n"
+        "  ret i32 %value\n"
+        "}\n"
+        "\n"
+        "define void @method.UInt32.reset(i32 %this) {\n"
+        "entry:\n"
+        "  ret void\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_uint32_add_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_uint32_add.or";
     auto result = lower_source(
@@ -1925,6 +1972,7 @@ auto main() -> int {
     test_emit_scalar_extension_method_definition();
     test_emit_scalar_member_call_expression();
     test_emit_scalar_member_call_statement();
+    test_emit_scalar_call_statements();
     test_emit_uint32_add_return();
     test_emit_uint32_arithmetic_return();
     test_emit_int32_division_return();

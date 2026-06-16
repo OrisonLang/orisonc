@@ -27,6 +27,18 @@ int main() {
                   "    var value = 0 as UInt32\n"
                   "    while value < 3 as UInt32\n"
                   "        value = value + 1 as UInt32\n"
+                  "    value\n"
+                  "\n"
+                  "extend UInt32\n"
+                  "    function reset(this: shared This) -> Unit\n"
+                  "        return\n"
+                  "\n"
+                  "function observe(value: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
+                  "function call_then_return(value: UInt32) -> UInt32\n"
+                  "    observe(value)\n"
+                  "    value.reset()\n"
                   "    value\n";
     }
 
@@ -106,6 +118,24 @@ int main() {
         "while.exit.0:\n"
         "  %tmp4 = load i32, ptr %value.addr\n"
         "  ret i32 %tmp4\n"
+        "}\n"
+    );
+
+    auto call_then_return_ir = orison::lowering::emit_function(
+        parse_result.module.functions[4],
+        context.functions.at("call_then_return"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        call_then_return_ir ==
+        "define i32 @call_then_return(i32 %value) {\n"
+        "entry:\n"
+        "  call void @observe(i32 %value)\n"
+        "  call void @method.UInt32.reset(i32 %value)\n"
+        "  ret i32 %value\n"
         "}\n"
     );
 
