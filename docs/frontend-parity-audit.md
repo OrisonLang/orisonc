@@ -25,12 +25,14 @@ This file tracks which source-language frontend slices are reflected in the curr
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
-- lowering gaps after the current recursive statement path: unsafe-function declarations, raw MMIO intrinsics, and non-array-literal `for` iteration
+- lowering gaps after the current recursive statement path: raw MMIO intrinsics and non-array-literal `for` iteration
 
 ## Latest update
 
 - 2026-06-16: ordinary non-`Unit` function bodies now also accept leading `repeat`, `for`, and `unsafe` statements
   before the final expression, while still rejecting statements after a terminating non-`Unit` statement.
+- 2026-06-16: `unsafe function` declarations now lower identically to ordinary functions; the unsafe marker remains a
+  semantic boundary and does not affect emitted LLVM signatures.
 - 2026-06-11: expression lowering now records structured first-failure reasons for unsupported expressions, names, type/signedness mismatches, casts, operators, branch mismatches, and call lookup/type/arity/argument failures; let/return diagnostics include rendered detail.
 - 2026-06-11: function definitions now consume the authoritative shared lowered signature for return/parameter types and signedness; unsupported ordinary signatures remain in context for targeted diagnostics, eliminating parallel syntax-to-LLVM remapping without changing IR.
 - 2026-06-11: LLVM local, temporary, and indexed block naming now use a shared stateless utility with direct counter/collision coverage; expression, control-flow, and function output remain unchanged.

@@ -1918,6 +1918,30 @@ void test_emit_fixed_arity_c_foreign_call() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_unsafe_function_identity_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsafe_function_identity.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "unsafe function unsafe_identity(value: UInt32) -> UInt32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @unsafe_identity(i32 %value) {\n"
+        "entry:\n"
+        "  ret i32 %value\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_reject_unsupported_return_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_expression.or";
     auto result = lower_source(
@@ -2526,6 +2550,7 @@ auto main() -> int {
     test_reject_printf_adapter_with_invalid_fixed_prefix();
     test_reject_printf_adapter_with_unsupported_trailing_type();
     test_emit_fixed_arity_c_foreign_call();
+    test_emit_unsafe_function_identity_return();
     test_reject_unsupported_return_expression();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();

@@ -60,6 +60,8 @@ analysis, and lowering components.
 - Ordinary non-`Unit` function-body lowering now also dispatches leading `repeat`, `for`, and `unsafe` statements
   through the same recursive unit path before the final return expression, while still rejecting statements that
   follow a terminating non-`Unit` statement.
+- `unsafe function` declarations now lower identically to ordinary functions; the unsafe marker remains a semantic
+  boundary and does not affect emitted LLVM signatures.
 - `Unit`-returning function bodies now lower supported leading statements and explicit naked returns through a
   dedicated void path that emits `ret void` instead of short-circuiting the whole body; binding statements in that
   path infer their own local types from annotations or initializers, while final value-producing control flow remains

@@ -61,6 +61,9 @@ int main() {
                   "        observe(item)\n"
                   "    unsafe\n"
                   "        observe(value)\n"
+                  "    value\n"
+                  "\n"
+                  "unsafe function unsafe_identity(value: UInt32) -> UInt32\n"
                   "    value\n";
     }
 
@@ -192,7 +195,7 @@ int main() {
     assert(switch_then_return_ir.find("ret i32") != std::string::npos);
 
     auto repeat_for_unsafe_ir = orison::lowering::emit_function(
-        parse_result.module.functions.back(),
+        parse_result.module.functions[7],
         context.functions.at("repeat_for_unsafe_then_return"),
         context,
         strings,
@@ -203,6 +206,22 @@ int main() {
     assert(repeat_for_unsafe_ir.find("for.iteration") != std::string::npos);
     assert(repeat_for_unsafe_ir.find("call void @observe(i32 %value)") != std::string::npos);
     assert(repeat_for_unsafe_ir.find("ret i32 %value") != std::string::npos);
+
+    auto unsafe_identity_ir = orison::lowering::emit_function(
+        parse_result.module.functions.back(),
+        context.functions.at("unsafe_identity"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        unsafe_identity_ir ==
+        "define i32 @unsafe_identity(i32 %value) {\n"
+        "entry:\n"
+        "  ret i32 %value\n"
+        "}\n"
+    );
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

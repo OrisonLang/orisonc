@@ -1315,10 +1315,6 @@ void emit_function_body(
         diagnostics.error(function.line, "lowering does not yet support async functions");
         return;
     }
-    if (function.is_unsafe) {
-        diagnostics.error(function.line, "lowering does not yet support unsafe functions");
-        return;
-    }
     if (!function.generic_parameters.empty()) {
         diagnostics.error(function.line, "lowering does not yet support generic functions");
         return;
