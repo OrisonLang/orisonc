@@ -693,6 +693,37 @@ int main() {
         ) != std::string::npos
     );
 
+    auto emit_aggregate_assignment_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_aggregate_assignment.or";
+    write_concurrency_fixture(
+        emit_aggregate_assignment_path,
+        "demo.emit",
+        {
+            "record Registers",
+            "    data: UInt32",
+            "    status: UInt32",
+            "unsafe function main(index: UInt64) -> Address",
+            "    var regs = Registers(0 as UInt32, 1 as UInt32)",
+            "    regs = Registers(2 as UInt32, 3 as UInt32)",
+            "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]",
+            "    bytes = [5, 6, 7, 8]",
+            "    address_of(bytes[index])",
+        }
+    );
+    auto emit_aggregate_assignment = run_emit_llvm(app, emit_aggregate_assignment_path);
+    assert(emit_aggregate_assignment.exit_code == 0);
+    assert(emit_aggregate_assignment.stderr_text.empty());
+    assert(
+        emit_aggregate_assignment.stdout_text.find(
+            "store %record.Registers %tmp"
+        ) != std::string::npos
+    );
+    assert(
+        emit_aggregate_assignment.stdout_text.find(
+            "store [4 x i8] %tmp"
+        ) != std::string::npos
+    );
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);

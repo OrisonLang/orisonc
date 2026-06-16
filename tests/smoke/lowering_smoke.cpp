@@ -2521,6 +2521,16 @@ void test_emit_raw_mmio_intrinsics() {
         "unsafe function local_array_byte_address(index: UInt64) -> Address\n"
         "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
         "    address_of(bytes[index])\n"
+        "\n"
+        "unsafe function reassign_local_status() -> Address\n"
+        "    var regs = UartRegisters(0 as UInt32, 1 as UInt32)\n"
+        "    regs = UartRegisters(2 as UInt32, 3 as UInt32)\n"
+        "    address_of(regs.status)\n"
+        "\n"
+        "unsafe function reassign_local_array_byte(index: UInt64) -> Address\n"
+        "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
+        "    bytes = [5, 6, 7, 8]\n"
+        "    address_of(bytes[index])\n"
     );
 
     assert(!result.has_errors());
@@ -2612,6 +2622,10 @@ void test_emit_raw_mmio_intrinsics() {
     assert(result.ir_text.find("%bytes.addr = alloca [4 x i8]") != std::string::npos);
     assert(result.ir_text.find("store [4 x i8] %tmp") != std::string::npos);
     assert(result.ir_text.find("getelementptr [4 x i8], ptr %bytes.addr, i64 0, i64 %index") != std::string::npos);
+    assert(result.ir_text.find("define i64 @reassign_local_status()") != std::string::npos);
+    assert(result.ir_text.find("store %record.UartRegisters %tmp") != std::string::npos);
+    assert(result.ir_text.find("define i64 @reassign_local_array_byte(i64 %index)") != std::string::npos);
+    assert(result.ir_text.find("store [4 x i8] %tmp") != std::string::npos);
     assert(
         result.ir_text.find("getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0") !=
         std::string::npos

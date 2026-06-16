@@ -77,7 +77,16 @@ int main() {
                   "        volatile_write(pointer, 0 as Byte)\n"
                   "\n"
                   "unsafe function unsafe_identity(value: UInt32) -> UInt32\n"
-                  "    value\n";
+                  "    value\n"
+                  "\n"
+                  "record Registers\n"
+                  "    data: UInt32\n"
+                  "    status: UInt32\n"
+                  "\n"
+                  "function reassign_aggregate() -> UInt32\n"
+                  "    var regs = Registers(0 as UInt32, 1 as UInt32)\n"
+                  "    regs = Registers(2 as UInt32, 3 as UInt32)\n"
+                  "    regs.status\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -257,7 +266,7 @@ int main() {
     assert(clear_ir.find("ret void") != std::string::npos);
 
     auto unsafe_identity_ir = orison::lowering::emit_function(
-        parse_result.module.functions.back(),
+        parse_result.module.functions[11],
         context.functions.at("unsafe_identity"),
         context,
         strings,
@@ -271,6 +280,17 @@ int main() {
         "  ret i32 %value\n"
         "}\n"
     );
+
+    auto reassign_aggregate_ir = orison::lowering::emit_function(
+        parse_result.module.functions[12],
+        context.functions.at("reassign_aggregate"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(reassign_aggregate_ir.find("store %record.Registers %tmp") != std::string::npos);
+    assert(reassign_aggregate_ir.find("getelementptr %record.Registers, ptr %regs.addr, i32 0, i32 1") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

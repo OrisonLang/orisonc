@@ -158,7 +158,9 @@ analysis, and lowering components.
   `address_of(local.field)` lowers through the same record-layout metadata from mutable local record storage. Expected
   fixed-array literals now materialize through recursive `insertvalue` as well, extending mutable local aggregate
   coverage to array-backed local record fields, local array-of-record fields, nested local arrays, and direct annotated
-  mutable local arrays. Immutable aggregate `let` values and broader aggregate construction remain future work.
+  mutable local arrays. Whole-value reassignment for those same mutable local aggregate subsets now reuses direct typed
+  aggregate stores, while immutable aggregate `let` values, aggregate field/element assignment, and broader aggregate
+  construction remain future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

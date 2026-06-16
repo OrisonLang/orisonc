@@ -55,7 +55,24 @@ int main() {
                   "function call_observe(input: UInt32) -> UInt32\n"
                   "    observe(input)\n"
                   "    observe_unit(input)\n"
-                  "    input\n";
+                  "    input\n"
+                  "\n"
+                  "record Registers\n"
+                  "    data: UInt32\n"
+                  "    status: UInt32\n"
+                  "\n"
+                  "record Buffer\n"
+                  "    bytes: Array<Byte, 4>\n"
+                  "\n"
+                  "function reassign_registers() -> UInt32\n"
+                  "    var regs = Registers(0 as UInt32, 1 as UInt32)\n"
+                  "    regs = Registers(2 as UInt32, 3 as UInt32)\n"
+                  "    regs.status\n"
+                  "\n"
+                  "function reassign_bytes(index: UInt64) -> Byte\n"
+                  "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
+                  "    bytes = [5, 6, 7, 8]\n"
+                  "    bytes[index]\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -260,6 +277,84 @@ int main() {
         "lowering assignment target is not a mutable local"
     );
     assert(output.str().empty());
+
+    auto aggregate_state = orison::lowering::FunctionLoweringState {};
+    auto aggregate_failures = orison::lowering::LoweringFailures {};
+    auto aggregate_session = orison::lowering::FunctionLoweringSession {
+        .state = aggregate_state,
+        .failures = aggregate_failures,
+    };
+    auto const& aggregate_statements = parse_result.module.functions[5].body_statements;
+    diagnostics = {};
+    output = {};
+    assert(orison::lowering::lower_var_statement(
+        aggregate_statements[0],
+        "%record.Registers",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        aggregate_session,
+        diagnostics,
+        output
+    ));
+    assert(orison::lowering::lower_assignment_statement(
+        aggregate_statements[1],
+        context,
+        aggregate_session,
+        diagnostics,
+        output
+    ));
+    auto aggregate_value = orison::lowering::lower_expression(
+        aggregate_statements[2].expression,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        aggregate_session,
+        output
+    );
+    assert(aggregate_value.has_value());
+    assert(output.str().find("store %record.Registers %tmp") != std::string::npos);
+
+    auto array_state = orison::lowering::FunctionLoweringState {};
+    array_state.local_name_counts["index"] = 1;
+    array_state.immutable_bindings.emplace("index", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%index",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto array_failures = orison::lowering::LoweringFailures {};
+    auto array_session = orison::lowering::FunctionLoweringSession {
+        .state = array_state,
+        .failures = array_failures,
+    };
+    auto const& array_statements = parse_result.module.functions[6].body_statements;
+    diagnostics = {};
+    output = {};
+    assert(orison::lowering::lower_var_statement(
+        array_statements[0],
+        "[4 x i8]",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        array_session,
+        diagnostics,
+        output
+    ));
+    assert(orison::lowering::lower_assignment_statement(
+        array_statements[1],
+        context,
+        array_session,
+        diagnostics,
+        output
+    ));
+    auto array_value = orison::lowering::lower_expression(
+        array_statements[2].expression,
+        "i8",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        array_session,
+        output
+    );
+    assert(array_value.has_value());
+    assert(output.str().find("store [4 x i8] %tmp") != std::string::npos);
 
     auto block_state = orison::lowering::FunctionLoweringState {};
     block_state.local_name_counts["input"] = 1;
