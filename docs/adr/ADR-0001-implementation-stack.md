@@ -57,6 +57,10 @@ analysis, and lowering components.
   categories used by expression calls. Null-safe member-call lowering remains explicit follow-up work.
 - Ordinary function-body lowering now dispatches non-terminal call statements through the same call-statement helper as
   while bodies, so direct and scalar member call statements can appear before the final return expression.
+- `Unit`-returning function bodies now lower supported leading statements and explicit naked returns through a
+  dedicated void path that emits `ret void` instead of short-circuiting the whole body; binding statements in that
+  path infer their own local types from annotations or initializers, while final value-producing control flow remains
+  on the non-void path.
 - Value-producing statement-block traversal also lives in the statement component and normalizes contiguous syntax
   statements plus pointer-owned switch-case statements through one policy; CFG recursion is supplied as a callback.
 - Branch-local immutable and mutable binding visibility is isolated by a dedicated RAII scope that snapshots both maps,

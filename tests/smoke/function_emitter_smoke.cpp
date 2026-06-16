@@ -39,7 +39,12 @@ int main() {
                   "function call_then_return(value: UInt32) -> UInt32\n"
                   "    observe(value)\n"
                   "    value.reset()\n"
-                  "    value\n";
+                  "    value\n"
+                  "\n"
+                  "function observe_then_return(value: UInt32) -> Unit\n"
+                  "    observe(value)\n"
+                  "    value.reset()\n"
+                  "    return\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -136,6 +141,24 @@ int main() {
         "  call void @observe(i32 %value)\n"
         "  call void @method.UInt32.reset(i32 %value)\n"
         "  ret i32 %value\n"
+        "}\n"
+    );
+
+    auto observe_then_return_ir = orison::lowering::emit_function(
+        parse_result.module.functions[5],
+        context.functions.at("observe_then_return"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        observe_then_return_ir ==
+        "define void @observe_then_return(i32 %value) {\n"
+        "entry:\n"
+        "  call void @observe(i32 %value)\n"
+        "  call void @method.UInt32.reset(i32 %value)\n"
+        "  ret void\n"
         "}\n"
     );
 

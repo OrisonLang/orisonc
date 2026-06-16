@@ -9,6 +9,7 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
+#include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/while_emitter.hpp"
 
 #include <optional>
@@ -21,6 +22,34 @@ namespace orison::lowering {
 namespace {
 
 using EmissionContext = LoweringEmissionContext;
+
+auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
+    return expression.text.empty() && expression.arguments.empty() && expression.nested_statements.empty() &&
+           expression.left == nullptr && expression.right == nullptr && expression.alternate == nullptr;
+}
+
+auto infer_unit_binding_type(
+    syntax::StatementSyntax const& statement,
+    EmissionContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<LoweredType> {
+    if (!statement.annotated_type.name.empty()) {
+        auto annotated_type = llvm_type_for(statement.annotated_type);
+        if (!annotated_type.has_value() || *annotated_type == "void") {
+            return std::nullopt;
+        }
+        return LoweredType {
+            .type = std::string(*annotated_type),
+            .signedness = integer_signedness_for(statement.annotated_type),
+        };
+    }
+
+    auto inferred_type = infer_expression_type(statement.expression, context, state);
+    if (!inferred_type.has_value() || inferred_type->type.empty() || inferred_type->type == "void") {
+        return std::nullopt;
+    }
+    return inferred_type;
+}
 
 void emit_function_body(
     syntax::FunctionSyntax const& function,
@@ -57,22 +86,6 @@ void emit_function_body(
         }
     }
 
-    if (signature.return_type == "void") {
-        output << "define void @" << signature.symbol_name << "(";
-        for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
-            if (index > 0) {
-                output << ", ";
-            }
-            output << signature.parameter_types[index] << " "
-                   << llvm_local_value_name(function.parameters[index].name);
-        }
-        output << ") {\n";
-        output << "entry:\n";
-        output << "  ret void\n";
-        output << "}\n";
-        return;
-    }
-
     output << "define " << signature.return_type << " @" << signature.symbol_name << "(";
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         if (index > 0) {
@@ -102,6 +115,96 @@ void emit_function_body(
             render_source_type_name(function.parameters[index].type)
         );
     }
+
+    if (signature.return_type == "void") {
+        for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
+            auto const& statement = function.body_statements[index];
+            auto is_last_statement = index + 1 == function.body_statements.size();
+            if (statement.kind == syntax::StatementKind::return_statement) {
+                if (!is_last_statement) {
+                    diagnostics.error(
+                        statement.line,
+                        "lowering does not yet support return statements before the end of Unit functions"
+                    );
+                    return;
+                }
+                if (!is_empty_expression(statement.expression)) {
+                    diagnostics.error(
+                        statement.line,
+                        "lowering does not yet support return expressions in Unit functions"
+                    );
+                    return;
+                }
+                output << "  ret void\n";
+                output << "}\n";
+                return;
+            }
+            if (statement.kind == syntax::StatementKind::let_binding) {
+                auto type = infer_unit_binding_type(statement, context, session.state);
+                if (!type.has_value()) {
+                    diagnostics.error(statement.line, "lowering does not yet support this Unit let binding");
+                    return;
+                }
+                if (!lower_let_statement(
+                        statement,
+                        type->type,
+                        type->signedness,
+                        context,
+                        session,
+                        diagnostics,
+                        output
+                    )) {
+                    return;
+                }
+                continue;
+            }
+            if (statement.kind == syntax::StatementKind::var_binding) {
+                auto type = infer_unit_binding_type(statement, context, session.state);
+                if (!type.has_value()) {
+                    diagnostics.error(statement.line, "lowering does not yet support this Unit var binding");
+                    return;
+                }
+                if (!lower_var_statement(
+                        statement,
+                        type->type,
+                        type->signedness,
+                        context,
+                        session,
+                        diagnostics,
+                        output
+                    )) {
+                    return;
+                }
+                continue;
+            }
+            if (statement.kind == syntax::StatementKind::assignment_statement) {
+                if (!lower_assignment_statement(statement, context, session, diagnostics, output)) {
+                    return;
+                }
+                continue;
+            }
+            if (statement.kind == syntax::StatementKind::while_statement) {
+                if (!lower_while_statement(statement, context, session, diagnostics, output)) {
+                    return;
+                }
+                continue;
+            }
+            if (statement.kind == syntax::StatementKind::expression_statement &&
+                statement.expression.kind == syntax::ExpressionKind::call) {
+                if (!lower_call_statement(statement, context, session, diagnostics, output)) {
+                    return;
+                }
+                continue;
+            }
+            diagnostics.error(statement.line, "lowering does not yet support this statement");
+            return;
+        }
+
+        output << "  ret void\n";
+        output << "}\n";
+        return;
+    }
+
     auto const* expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
     auto lowered_final_statement = std::optional<LoweredExpression> {};
     auto attempted_final_control_flow = false;
