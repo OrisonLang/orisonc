@@ -22,6 +22,9 @@ int main() {
                   "    data: UInt32\n"
                   "    status: UInt32\n"
                   "\n"
+                  "record Device\n"
+                  "    registers: UartRegisters\n"
+                  "\n"
                   "function choose(flag: Bool, left: UInt32, right: UInt32) -> UInt32\n"
                   "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n"
                   "\n"
@@ -229,11 +232,16 @@ int main() {
         .type = "ptr",
         .value = "%regs",
     });
+    raw_state.immutable_bindings.emplace("device", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%device",
+    });
     raw_state.source_type_names.emplace("pointer", "Pointer<UInt32>");
     raw_state.source_type_names.emplace("address", "Address");
     raw_state.source_type_names.emplace("index", "UInt64");
     raw_state.source_type_names.emplace("value", "UInt32");
     raw_state.source_type_names.emplace("regs", "Pointer<UartRegisters>");
+    raw_state.source_type_names.emplace("device", "Pointer<Device>");
     auto raw_failures = orison::lowering::LoweringFailures {};
     auto raw_session = orison::lowering::FunctionLoweringSession {
         .state = raw_state,
@@ -364,6 +372,50 @@ int main() {
         output.str() ==
         "  %tmp3 = getelementptr %record.UartRegisters, ptr %regs, i32 0, i32 1\n"
         "  %tmp4 = ptrtoint ptr %tmp3 to i64\n"
+    );
+
+    auto nested_field_address_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "address_of",
+            }
+        ),
+    };
+    auto nested_status_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::member_access,
+        .text = "status",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::member_access,
+                .text = "registers",
+                .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                    orison::syntax::ExpressionSyntax {
+                        .kind = orison::syntax::ExpressionKind::name,
+                        .text = "device",
+                    }
+                ),
+            }
+        ),
+    };
+    nested_field_address_call.arguments.push_back(std::move(nested_status_access));
+    output = {};
+    auto nested_field_address = orison::lowering::lower_expression(
+        nested_field_address_call,
+        "i64",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(nested_field_address.has_value());
+    assert(nested_field_address->value == "%tmp7");
+    assert(
+        output.str() ==
+        "  %tmp5 = getelementptr %record.Device, ptr %device, i32 0, i32 0\n"
+        "  %tmp6 = getelementptr %record.UartRegisters, ptr %tmp5, i32 0, i32 1\n"
+        "  %tmp7 = ptrtoint ptr %tmp6 to i64\n"
     );
 
     std::filesystem::remove(path);

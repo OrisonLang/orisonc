@@ -5,6 +5,7 @@
 #include "orison/lowering/type_lowering.hpp"
 
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 
 namespace orison::lowering {
@@ -49,7 +50,10 @@ auto collect_method_signature(
     };
 }
 
-auto collect_record_layout(syntax::RecordSyntax const& record) -> LoweredRecordLayout {
+auto collect_record_layout(
+    syntax::RecordSyntax const& record,
+    std::unordered_set<std::string> const& record_names
+) -> LoweredRecordLayout {
     auto layout = LoweredRecordLayout {
         .name = record.name,
         .llvm_type_name = lowered_record_type_name(record.name),
@@ -60,6 +64,8 @@ auto collect_record_layout(syntax::RecordSyntax const& record) -> LoweredRecordL
         auto llvm_type = std::string {};
         if (auto lowered_type = llvm_type_for(field.type); lowered_type.has_value()) {
             llvm_type = std::string {*lowered_type};
+        } else if (field.type.generic_arguments.empty() && record_names.contains(field.type.name)) {
+            llvm_type = lowered_record_type_name(field.type.name);
         }
         layout.fields.push_back(LoweredRecordField {
             .name = field.name,
@@ -78,8 +84,12 @@ auto build_lowering_context(
     diagnostics::DiagnosticBag& diagnostics
 ) -> LoweringContext {
     auto context = LoweringContext {};
+    auto record_names = std::unordered_set<std::string> {};
     for (auto const& record : module.records) {
-        context.records.emplace(record.name, collect_record_layout(record));
+        record_names.insert(record.name);
+    }
+    for (auto const& record : module.records) {
+        context.records.emplace(record.name, collect_record_layout(record, record_names));
     }
 
     for (auto const& function : module.functions) {

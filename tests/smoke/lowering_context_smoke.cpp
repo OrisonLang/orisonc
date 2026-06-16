@@ -42,6 +42,12 @@ int main() {
             },
         },
     });
+    module.records.push_back(RecordSyntax {
+        .name = "Device",
+        .fields = {
+            FieldSyntax {.name = "registers", .type = TypeSyntax {.name = "UartRegisters"}},
+        },
+    });
     auto implementation = ImplementationSyntax {
         .interface_type = TypeSyntax {.name = "Reader"},
         .receiver_type = TypeSyntax {.name = "Device"},
@@ -107,7 +113,7 @@ int main() {
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
     assert(context.functions.size() == 2);
-    assert(context.records.size() == 2);
+    assert(context.records.size() == 3);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
     assert(context.records.contains("UartRegisters"));
@@ -131,6 +137,13 @@ int main() {
     assert(packet_layout.fields[0].source_type_name == "Array<Byte, 4>");
     assert(packet_layout.fields[0].llvm_type.empty());
     assert(packet_layout.fields[0].index == 0);
+    assert(context.records.contains("Device"));
+    auto const& device_layout = context.records.at("Device");
+    assert(device_layout.fields.size() == 1);
+    assert(device_layout.fields[0].name == "registers");
+    assert(device_layout.fields[0].source_type_name == "UartRegisters");
+    assert(device_layout.fields[0].llvm_type == "%record.UartRegisters");
+    assert(device_layout.fields[0].index == 0);
     assert(context.methods[0].receiver_type_name == "Device");
     assert(context.methods[0].method_name == "read");
     assert(context.methods[0].signature.symbol_name == "method.Device.read");

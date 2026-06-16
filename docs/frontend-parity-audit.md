@@ -30,6 +30,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-16: `address_of(pointer.inner.field)` now lowers for chained record-field paths on known `Pointer<Record>`
+  sources by emitting one struct GEP per field hop; array/index GEPs and record-value-backed field addresses remain
+  pending.
 - 2026-06-16: lowering context now collects record field layout metadata from parsed records, preserving field order,
   source type names, supported LLVM field types, and named LLVM struct type names; non-generic records with fully
   supported fields now emit named LLVM structs, and `address_of(pointer.field)` lowers through a struct GEP for known

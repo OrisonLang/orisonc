@@ -147,9 +147,9 @@ analysis, and lowering components.
   `ptr` at the use site with `inttoptr`.
 - Lowering context now collects record field layout metadata from parsed records, preserving field order, source type
   names, supported LLVM field types, and canonical named LLVM struct type names. Non-generic records whose fields all
-  have supported LLVM types are emitted as named LLVM structs, and `address_of(pointer.field)` lowers through a struct
-  `getelementptr` when the source is a known `Pointer<Record>`; record value and array layout emission remain future
-  work.
+  have supported LLVM types are emitted as named LLVM structs, and `address_of(pointer.field)` plus chained record-field
+  forms like `address_of(pointer.inner.field)` lower through struct `getelementptr` steps when the source is a known
+  `Pointer<Record>`; record value and array layout emission remain future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

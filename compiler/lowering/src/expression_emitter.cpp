@@ -10,6 +10,7 @@
 #include "orison/lowering/type_lowering.hpp"
 
 #include <optional>
+#include <algorithm>
 #include <span>
 #include <sstream>
 #include <string>
@@ -456,7 +457,19 @@ auto lower_pointer_record_field_address(
         return std::nullopt;
     }
 
-    auto base_source_type = source_type_name_for_expression(*operand.left, session.state);
+    auto field_names = std::vector<std::string> {};
+    auto const* base_expression = &operand;
+    while (base_expression->kind == syntax::ExpressionKind::member_access &&
+           base_expression->left != nullptr) {
+        field_names.push_back(base_expression->text);
+        base_expression = base_expression->left.get();
+    }
+    std::reverse(field_names.begin(), field_names.end());
+    if (field_names.empty()) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_name_for_expression(*base_expression, session.state);
     if (!base_source_type.has_value()) {
         return std::nullopt;
     }
@@ -476,26 +489,45 @@ auto lower_pointer_record_field_address(
         return std::nullopt;
     }
 
-    auto const* field = find_record_field(layout->second, operand.text);
-    if (field == nullptr || field->llvm_type.empty() || field->llvm_type == "void") {
-        record_failure(
-            failures,
-            ExpressionLoweringFailureReason::unsupported_expression,
-            "address_of field layout"
-        );
-        return std::nullopt;
-    }
-
-    auto base_pointer = lower_pointer_operand(*operand.left, context, session, output);
+    auto base_pointer = lower_pointer_operand(*base_expression, context, session, output);
     if (!base_pointer.has_value()) {
         return std::nullopt;
     }
 
-    auto field_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << field_pointer_name << " = getelementptr " << layout->second.llvm_type_name
-           << ", ptr " << base_pointer->value << ", i32 0, i32 " << field->index << "\n";
+    auto field_pointer_value = base_pointer->value;
+    for (auto index = std::size_t {0}; index < field_names.size(); ++index) {
+        auto const* field = find_record_field(layout->second, field_names[index]);
+        if (field == nullptr || field->llvm_type.empty() || field->llvm_type == "void") {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "address_of field layout"
+            );
+            return std::nullopt;
+        }
+
+        auto field_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << field_pointer_name << " = getelementptr " << layout->second.llvm_type_name
+               << ", ptr " << field_pointer_value << ", i32 0, i32 " << field->index << "\n";
+        field_pointer_value = std::move(field_pointer_name);
+        if (index + 1 == field_names.size()) {
+            break;
+        }
+
+        auto nested_layout = context.lowering.records.find(field->source_type_name);
+        if (nested_layout == context.lowering.records.end()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "address_of nested field layout"
+            );
+            return std::nullopt;
+        }
+        layout = nested_layout;
+    }
+
     auto address_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << address_name << " = ptrtoint ptr " << field_pointer_name << " to i64\n";
+    output << "  " << address_name << " = ptrtoint ptr " << field_pointer_value << " to i64\n";
     return LoweredExpression {
         .type = "i64",
         .value = std::move(address_name),
