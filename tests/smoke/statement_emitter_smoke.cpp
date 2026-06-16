@@ -64,15 +64,15 @@ int main() {
                   "record Buffer\n"
                   "    bytes: Array<Byte, 4>\n"
                   "\n"
-                  "function reassign_registers() -> UInt32\n"
+                  "unsafe function assign_register_status() -> Unit\n"
                   "    var regs = Registers(0 as UInt32, 1 as UInt32)\n"
-                  "    regs = Registers(2 as UInt32, 3 as UInt32)\n"
-                  "    regs.status\n"
+                  "    regs.status = 3 as UInt32\n"
+                  "    return\n"
                   "\n"
-                  "function reassign_bytes(index: UInt64) -> Byte\n"
+                  "unsafe function assign_bytes_element(index: UInt64) -> Unit\n"
                   "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
-                  "    bytes = [5, 6, 7, 8]\n"
-                  "    bytes[index]\n";
+                  "    bytes[index] = 9\n"
+                  "    return\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -303,16 +303,8 @@ int main() {
         diagnostics,
         output
     ));
-    auto aggregate_value = orison::lowering::lower_expression(
-        aggregate_statements[2].expression,
-        "i32",
-        orison::lowering::IntegerSignedness::unsigned_integer,
-        context,
-        aggregate_session,
-        output
-    );
-    assert(aggregate_value.has_value());
-    assert(output.str().find("store %record.Registers %tmp") != std::string::npos);
+    assert(output.str().find("getelementptr %record.Registers, ptr %regs.addr, i32 0, i32 1") != std::string::npos);
+    assert(output.str().find("store i32 3, ptr %tmp") != std::string::npos);
 
     auto array_state = orison::lowering::FunctionLoweringState {};
     array_state.local_name_counts["index"] = 1;
@@ -345,16 +337,8 @@ int main() {
         diagnostics,
         output
     ));
-    auto array_value = orison::lowering::lower_expression(
-        array_statements[2].expression,
-        "i8",
-        orison::lowering::IntegerSignedness::unsigned_integer,
-        context,
-        array_session,
-        output
-    );
-    assert(array_value.has_value());
-    assert(output.str().find("store [4 x i8] %tmp") != std::string::npos);
+    assert(output.str().find("getelementptr [4 x i8], ptr %bytes.addr, i64 0, i64 %index") != std::string::npos);
+    assert(output.str().find("store i8 9, ptr %tmp") != std::string::npos);
 
     auto block_state = orison::lowering::FunctionLoweringState {};
     block_state.local_name_counts["input"] = 1;

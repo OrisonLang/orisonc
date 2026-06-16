@@ -159,8 +159,9 @@ analysis, and lowering components.
   fixed-array literals now materialize through recursive `insertvalue` as well, extending mutable local aggregate
   coverage to array-backed local record fields, local array-of-record fields, nested local arrays, and direct annotated
   mutable local arrays. Whole-value reassignment for those same mutable local aggregate subsets now reuses direct typed
-  aggregate stores, while immutable aggregate `let` values, aggregate field/element assignment, and broader aggregate
-  construction remain future work.
+  aggregate stores, and supported mutable local aggregate field/index assignment now lowers through direct field/element
+  addresses plus typed stores for record fields and fixed-array elements. Immutable aggregate `let` values and broader
+  aggregate construction/assignment remain future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

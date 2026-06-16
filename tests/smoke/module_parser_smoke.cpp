@@ -873,6 +873,36 @@ void test_assignment_success() {
     assert(result.module.functions.front().body_statements[1].assignment_target.left->text == "this");
 }
 
+void test_index_assignment_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_index_assignment_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.assign\n";
+        output << "function update(items: shared View<Byte>, index: UInt64) -> Unit\n";
+        output << "    items[index] = 9\n";
+        output << "    return\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 2);
+    assert(result.module.functions.front().body_statements[0].kind == orison::syntax::StatementKind::assignment_statement);
+    assert(result.module.functions.front().body_statements[0].assignment_target.kind ==
+           orison::syntax::ExpressionKind::index_access);
+    assert(result.module.functions.front().body_statements[0].assignment_target.left->text == "items");
+    assert(result.module.functions.front().body_statements[0].assignment_target.arguments.size() == 1);
+    assert(result.module.functions.front().body_statements[0].assignment_target.arguments[0].text == "index");
+    assert(result.module.functions.front().body_statements[0].expression.kind ==
+           orison::syntax::ExpressionKind::integer_literal);
+    assert(result.module.functions.front().body_statements[0].expression.text == "9");
+}
+
 void test_assignment_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_assignment_failure.or";
     {
@@ -2165,6 +2195,7 @@ int main() {
     test_where_success();
     test_where_failure();
     test_assignment_success();
+    test_index_assignment_success();
     test_assignment_failure();
     test_break_continue_success();
     test_break_continue_standalone_success();

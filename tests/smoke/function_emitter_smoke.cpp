@@ -83,10 +83,12 @@ int main() {
                   "    data: UInt32\n"
                   "    status: UInt32\n"
                   "\n"
-                  "function reassign_aggregate() -> UInt32\n"
+                  "unsafe function assign_aggregate(index: UInt64) -> Unit\n"
                   "    var regs = Registers(0 as UInt32, 1 as UInt32)\n"
-                  "    regs = Registers(2 as UInt32, 3 as UInt32)\n"
-                  "    regs.status\n";
+                  "    regs.status = 3 as UInt32\n"
+                  "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
+                  "    bytes[index] = 9\n"
+                  "    return\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -283,14 +285,17 @@ int main() {
 
     auto reassign_aggregate_ir = orison::lowering::emit_function(
         parse_result.module.functions[12],
-        context.functions.at("reassign_aggregate"),
+        context.functions.at("assign_aggregate"),
         context,
         strings,
         diagnostics
     );
     assert(!diagnostics.has_errors());
-    assert(reassign_aggregate_ir.find("store %record.Registers %tmp") != std::string::npos);
+    assert(reassign_aggregate_ir.find("store i32 3, ptr %tmp") != std::string::npos);
+    assert(reassign_aggregate_ir.find("store i8 9, ptr %tmp") != std::string::npos);
     assert(reassign_aggregate_ir.find("getelementptr %record.Registers, ptr %regs.addr, i32 0, i32 1") != std::string::npos);
+    assert(reassign_aggregate_ir.find("getelementptr [4 x i8], ptr %bytes.addr, i64 0, i64 %index") != std::string::npos);
+    assert(reassign_aggregate_ir.find("ret void") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

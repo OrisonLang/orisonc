@@ -26,8 +26,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: immutable aggregate `let` values, aggregate construction
-  beyond the current lowerable non-generic record/fixed-array subset, aggregate element/field assignment beyond whole
-  mutable-local replacement, and non-array-literal `for` iteration
+  beyond the current lowerable non-generic record/fixed-array subset, aggregate assignment beyond supported mutable
+  local record/fixed-array field and index targets, and non-array-literal `for` iteration
 
 ## Latest update
 
@@ -43,7 +43,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-16: whole-value mutable-local aggregate reassignment now lowers for the same supported non-generic
   record/fixed-array subset as aggregate initialization, so `var regs = ...; regs = ...` and
   `var bytes: Array<Byte, 4> = ...; bytes = ...` now emit direct aggregate stores before later field/index address use;
-  aggregate element/field assignment remains pending.
+  broader aggregate assignment shapes remain pending.
+- 2026-06-16: parser assignment statements now accept indexed targets such as `items[index] = value`, and lowering now
+  supports supported mutable-local aggregate field/index assignment on the current non-generic record/fixed-array
+  subset, including `local.field = value` and `local.items[index] = value`.
 - 2026-06-16: fixed `Array<T, N>` record fields now lower to LLVM array field types when `T` is supported, and
   `address_of(pointer.array[index])` plus `address_of(pointer.inner.array[index])` lower through terminal array element
   GEPs for known `Pointer<Record>` sources; array-of-record element field paths like

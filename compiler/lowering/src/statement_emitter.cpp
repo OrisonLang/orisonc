@@ -20,6 +20,10 @@ auto is_aggregate_llvm_type(std::string_view type) -> bool {
     return type.starts_with("%record.") || type.starts_with("[");
 }
 
+auto is_array_llvm_type(std::string_view type) -> bool {
+    return type.starts_with("[");
+}
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string> {
     auto arguments = std::vector<std::string> {};
     auto depth = std::size_t {0};
@@ -66,6 +70,15 @@ auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context
 ) -> std::optional<LoweredType> {
+    constexpr auto pointer_prefix = std::string_view {"Pointer<"};
+    if (type_name.starts_with(pointer_prefix) && type_name.ends_with(">") &&
+        type_name.size() > pointer_prefix.size() + 1) {
+        return LoweredType {
+            .type = "ptr",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
     auto type = syntax::TypeSyntax {.name = std::string(type_name)};
     if (auto lowered = llvm_type_for(type); lowered.has_value() && *lowered != "void") {
         return LoweredType {
@@ -120,6 +133,227 @@ auto source_type_name_for_initializer(
     }
 
     return std::nullopt;
+}
+
+auto array_element_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"Array<"};
+    if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
+        type_name.size() <= prefix.size() + 1) {
+        return std::nullopt;
+    }
+
+    auto arguments = split_top_level_generic_arguments(
+        type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
+    );
+    if (arguments.size() != 2 || arguments[0].empty()) {
+        return std::nullopt;
+    }
+    return arguments[0];
+}
+
+auto find_record_field(
+    LoweredRecordLayout const& layout,
+    std::string_view field_name
+) -> LoweredRecordField const* {
+    for (auto const& field : layout.fields) {
+        if (field.name == field_name) {
+            return &field;
+        }
+    }
+    return nullptr;
+}
+
+struct AssignmentTargetStep {
+    enum class Kind {
+        member,
+        index,
+    };
+
+    Kind kind = Kind::member;
+    std::string field_name;
+    syntax::ExpressionSyntax const* index_expression = nullptr;
+};
+
+struct LoweredAssignmentTarget {
+    LoweredType type;
+    std::string pointer;
+};
+
+auto lower_assignment_target(
+    syntax::ExpressionSyntax const& target,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> std::optional<LoweredAssignmentTarget> {
+    if (target.kind == syntax::ExpressionKind::name) {
+        auto binding = session.state.mutable_bindings.find(target.text);
+        if (binding == session.state.mutable_bindings.end()) {
+            diagnostics.error(target.line, "lowering assignment target is not a mutable local");
+            return std::nullopt;
+        }
+        return LoweredAssignmentTarget {
+            .type = binding->second.type,
+            .pointer = binding->second.storage,
+        };
+    }
+
+    auto steps = std::vector<AssignmentTargetStep> {};
+    auto const* base_expression = &target;
+    while (true) {
+        if (base_expression->kind == syntax::ExpressionKind::member_access &&
+            base_expression->left != nullptr) {
+            steps.push_back(AssignmentTargetStep {
+                .kind = AssignmentTargetStep::Kind::member,
+                .field_name = base_expression->text,
+            });
+            base_expression = base_expression->left.get();
+            continue;
+        }
+        if (base_expression->kind == syntax::ExpressionKind::index_access &&
+            base_expression->left != nullptr && base_expression->arguments.size() == 1) {
+            steps.push_back(AssignmentTargetStep {
+                .kind = AssignmentTargetStep::Kind::index,
+                .index_expression = &base_expression->arguments.front(),
+            });
+            base_expression = base_expression->left.get();
+            continue;
+        }
+        break;
+    }
+    std::reverse(steps.begin(), steps.end());
+    if (steps.empty() || base_expression->kind != syntax::ExpressionKind::name) {
+        diagnostics.error(
+            target.line,
+            "lowering only supports assignment to mutable local names and aggregate paths"
+        );
+        return std::nullopt;
+    }
+
+    auto binding = session.state.mutable_bindings.find(base_expression->text);
+    if (binding == session.state.mutable_bindings.end()) {
+        diagnostics.error(target.line, "lowering assignment target is not a mutable local");
+        return std::nullopt;
+    }
+    auto source_type = session.state.source_type_names.find(base_expression->text);
+    if (source_type == session.state.source_type_names.end()) {
+        diagnostics.error(
+            target.line,
+            "lowering aggregate assignment target type is unknown"
+        );
+        return std::nullopt;
+    }
+
+    auto current_pointer = binding->second.storage;
+    auto current_source_type_name = source_type->second;
+    auto current_layout = static_cast<LoweredRecordLayout const*>(nullptr);
+    auto current_llvm_type_name = std::string {};
+    auto expect_record_layout = false;
+    if (auto layout = context.lowering.records.find(current_source_type_name);
+        layout != context.lowering.records.end()) {
+        current_layout = &layout->second;
+        current_llvm_type_name = current_layout->llvm_type_name;
+        expect_record_layout = true;
+    } else if (auto lowered =
+                   lowered_type_for_source_type_name(current_source_type_name, context.lowering)) {
+        current_llvm_type_name = lowered->type;
+    } else {
+        diagnostics.error(target.line, "lowering aggregate assignment target type is unsupported");
+        return std::nullopt;
+    }
+
+    for (auto const& step : steps) {
+        if (step.kind == AssignmentTargetStep::Kind::member) {
+            if (!expect_record_layout || current_layout == nullptr) {
+                diagnostics.error(target.line, "lowering aggregate assignment member target is unsupported");
+                return std::nullopt;
+            }
+
+            auto const* field = find_record_field(*current_layout, step.field_name);
+            if (field == nullptr || field->llvm_type.empty() || field->llvm_type == "void") {
+                diagnostics.error(target.line, "lowering aggregate assignment member target is unsupported");
+                return std::nullopt;
+            }
+
+            auto field_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
+            output << "  " << field_pointer << " = getelementptr " << current_llvm_type_name
+                   << ", ptr " << current_pointer << ", i32 0, i32 " << field->index << "\n";
+            current_pointer = std::move(field_pointer);
+            current_source_type_name = field->source_type_name;
+            current_llvm_type_name = field->llvm_type;
+
+            if (auto layout = context.lowering.records.find(current_source_type_name);
+                layout != context.lowering.records.end()) {
+                current_layout = &layout->second;
+                current_llvm_type_name = current_layout->llvm_type_name;
+                expect_record_layout = true;
+            } else {
+                current_layout = nullptr;
+                expect_record_layout = false;
+            }
+            continue;
+        }
+
+        if (step.index_expression == nullptr || !is_array_llvm_type(current_llvm_type_name)) {
+            diagnostics.error(target.line, "lowering aggregate assignment index target is unsupported");
+            return std::nullopt;
+        }
+
+        auto lowered_index = lower_expression(
+            *step.index_expression,
+            "i64",
+            IntegerSignedness::unsigned_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_index.has_value()) {
+            auto detail = render_expression_lowering_failure(session.failures.expression);
+            diagnostics.error(
+                target.line,
+                "lowering aggregate assignment index failed" +
+                    (detail.empty() ? std::string {} : ": " + detail)
+            );
+            return std::nullopt;
+        }
+
+        auto element_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << element_pointer << " = getelementptr " << current_llvm_type_name
+               << ", ptr " << current_pointer << ", i64 0, i64 " << lowered_index->value << "\n";
+        current_pointer = std::move(element_pointer);
+        auto element_source_type = array_element_source_type_name(current_source_type_name);
+        if (!element_source_type.has_value()) {
+            diagnostics.error(target.line, "lowering aggregate assignment index source type is unsupported");
+            return std::nullopt;
+        }
+        current_source_type_name = std::move(*element_source_type);
+
+        if (auto layout = context.lowering.records.find(current_source_type_name);
+            layout != context.lowering.records.end()) {
+            current_layout = &layout->second;
+            current_llvm_type_name = current_layout->llvm_type_name;
+            expect_record_layout = true;
+        } else if (auto lowered =
+                       lowered_type_for_source_type_name(current_source_type_name, context.lowering)) {
+            current_layout = nullptr;
+            current_llvm_type_name = lowered->type;
+            expect_record_layout = false;
+        } else {
+            diagnostics.error(target.line, "lowering aggregate assignment index target type is unsupported");
+            return std::nullopt;
+        }
+    }
+
+    auto lowered_type = lowered_type_for_source_type_name(current_source_type_name, context.lowering);
+    if (!lowered_type.has_value()) {
+        diagnostics.error(target.line, "lowering aggregate assignment target type is unsupported");
+        return std::nullopt;
+    }
+
+    return LoweredAssignmentTarget {
+        .type = std::move(*lowered_type),
+        .pointer = std::move(current_pointer),
+    };
 }
 
 auto deferred_cleanup_block_for(
@@ -577,20 +811,21 @@ auto lower_assignment_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    if (statement.assignment_target.kind != syntax::ExpressionKind::name) {
-        diagnostics.error(statement.line, "lowering only supports assignment to mutable local names");
-        return false;
-    }
-    auto binding = session.state.mutable_bindings.find(statement.assignment_target.text);
-    if (binding == session.state.mutable_bindings.end()) {
-        diagnostics.error(statement.line, "lowering assignment target is not a mutable local");
+    auto target = lower_assignment_target(
+        statement.assignment_target,
+        context,
+        session,
+        diagnostics,
+        output
+    );
+    if (!target.has_value()) {
         return false;
     }
 
     auto lowered = lower_expression(
         statement.expression,
-        binding->second.type.type,
-        binding->second.type.signedness,
+        target->type.type,
+        target->type.signedness,
         context,
         session,
         output
@@ -605,8 +840,8 @@ auto lower_assignment_statement(
         return false;
     }
 
-    output << "  store " << binding->second.type.type << " " << lowered->value
-           << ", ptr " << binding->second.storage << "\n";
+    output << "  store " << target->type.type << " " << lowered->value
+           << ", ptr " << target->pointer << "\n";
     return true;
 }
 

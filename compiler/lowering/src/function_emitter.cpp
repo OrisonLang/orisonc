@@ -208,20 +208,106 @@ auto infer_unit_expression_type(
     return std::nullopt;
 }
 
+auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string> {
+    auto arguments = std::vector<std::string> {};
+    auto depth = std::size_t {0};
+    auto start = std::size_t {0};
+    for (auto index = std::size_t {0}; index < text.size(); ++index) {
+        auto const character = text[index];
+        if (character == '<') {
+            ++depth;
+            continue;
+        }
+        if (character == '>') {
+            if (depth > 0) {
+                --depth;
+            }
+            continue;
+        }
+        if (character == ',' && depth == 0) {
+            auto argument = std::string {text.substr(start, index - start)};
+            if (!argument.empty() && argument.front() == ' ') {
+                argument.erase(argument.begin());
+            }
+            if (!argument.empty() && argument.back() == ' ') {
+                argument.pop_back();
+            }
+            arguments.push_back(std::move(argument));
+            start = index + 1;
+        }
+    }
+
+    if (start < text.size()) {
+        auto argument = std::string {text.substr(start)};
+        if (!argument.empty() && argument.front() == ' ') {
+            argument.erase(argument.begin());
+        }
+        if (!argument.empty() && argument.back() == ' ') {
+            argument.pop_back();
+        }
+        arguments.push_back(std::move(argument));
+    }
+    return arguments;
+}
+
+auto lowered_type_for_source_type_name(
+    std::string_view type_name,
+    LoweringContext const& context
+) -> std::optional<LoweredType> {
+    constexpr auto pointer_prefix = std::string_view {"Pointer<"};
+    if (type_name.starts_with(pointer_prefix) && type_name.ends_with(">") &&
+        type_name.size() > pointer_prefix.size() + 1) {
+        return LoweredType {
+            .type = "ptr",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    auto type = syntax::TypeSyntax {.name = std::string(type_name)};
+    if (auto lowered = llvm_type_for(type); lowered.has_value() && *lowered != "void") {
+        return LoweredType {
+            .type = std::string(*lowered),
+            .signedness = integer_signedness_for(type),
+        };
+    }
+
+    if (auto record = context.records.find(std::string(type_name)); record != context.records.end()) {
+        return LoweredType {
+            .type = record->second.llvm_type_name,
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    constexpr auto prefix = std::string_view {"Array<"};
+    if (type_name.starts_with(prefix) && type_name.ends_with(">") &&
+        type_name.size() > prefix.size() + 1) {
+        auto arguments = split_top_level_generic_arguments(
+            type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
+        );
+        if (arguments.size() == 2 && !arguments[1].empty()) {
+            auto element_type = lowered_type_for_source_type_name(arguments[0], context);
+            if (element_type.has_value()) {
+                return LoweredType {
+                    .type = "[" + arguments[1] + " x " + element_type->type + "]",
+                    .signedness = IntegerSignedness::not_integer,
+                };
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
 auto infer_unit_binding_type(
     syntax::StatementSyntax const& statement,
     EmissionContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<LoweredType> {
     if (!statement.annotated_type.name.empty()) {
-        auto annotated_type = llvm_type_for(statement.annotated_type);
-        if (!annotated_type.has_value() || *annotated_type == "void") {
-            return std::nullopt;
-        }
-        return LoweredType {
-            .type = std::string(*annotated_type),
-            .signedness = integer_signedness_for(statement.annotated_type),
-        };
+        return lowered_type_for_source_type_name(
+            render_source_type_name(statement.annotated_type),
+            context.lowering
+        );
     }
 
     auto inferred_type = infer_unit_expression_type(statement.expression, context, state);

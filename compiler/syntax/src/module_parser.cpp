@@ -1046,7 +1046,8 @@ private:
     }
 
     auto is_assignable_expression(ExpressionSyntax const& expression) const -> bool {
-        return expression.kind == ExpressionKind::name || expression.kind == ExpressionKind::member_access;
+        return expression.kind == ExpressionKind::name || expression.kind == ExpressionKind::member_access ||
+               expression.kind == ExpressionKind::index_access;
     }
 
     auto current_starts_assignment_statement() const -> bool {
@@ -1063,6 +1064,23 @@ private:
                     return false;
                 }
                 ++lookahead;
+                continue;
+            }
+            if (kind == TokenKind::left_bracket) {
+                auto bracket_depth = std::size_t {1};
+                ++lookahead;
+                while (lookahead < tokens_.size() && bracket_depth > 0) {
+                    auto bracket_kind = tokens_[lookahead].kind;
+                    if (bracket_kind == TokenKind::left_bracket) {
+                        ++bracket_depth;
+                    } else if (bracket_kind == TokenKind::right_bracket) {
+                        --bracket_depth;
+                    }
+                    ++lookahead;
+                }
+                if (bracket_depth != 0) {
+                    return false;
+                }
                 continue;
             }
 
@@ -1114,7 +1132,10 @@ private:
         }
 
         if (!is_assignable_expression(statement.assignment_target)) {
-            result.diagnostics.error(current().line, "assignment target must be a name or member access");
+            result.diagnostics.error(
+                current().line,
+                "assignment target must be a name, member access, or index access"
+            );
             statement.valid = false;
             return statement;
         }
