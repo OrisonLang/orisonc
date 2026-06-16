@@ -22,8 +22,12 @@ int main() {
                   "    data: UInt32\n"
                   "    status: UInt32\n"
                   "\n"
+                  "record Buffer\n"
+                  "    bytes: Array<Byte, 4>\n"
+                  "\n"
                   "record Device\n"
                   "    registers: UartRegisters\n"
+                  "    buffer: Buffer\n"
                   "\n"
                   "function choose(flag: Bool, left: UInt32, right: UInt32) -> UInt32\n"
                   "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n"
@@ -232,6 +236,10 @@ int main() {
         .type = "ptr",
         .value = "%regs",
     });
+    raw_state.immutable_bindings.emplace("buffer", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%buffer",
+    });
     raw_state.immutable_bindings.emplace("device", orison::lowering::LoweredExpression {
         .type = "ptr",
         .value = "%device",
@@ -241,6 +249,7 @@ int main() {
     raw_state.source_type_names.emplace("index", "UInt64");
     raw_state.source_type_names.emplace("value", "UInt32");
     raw_state.source_type_names.emplace("regs", "Pointer<UartRegisters>");
+    raw_state.source_type_names.emplace("buffer", "Pointer<Buffer>");
     raw_state.source_type_names.emplace("device", "Pointer<Device>");
     auto raw_failures = orison::lowering::LoweringFailures {};
     auto raw_session = orison::lowering::FunctionLoweringSession {
@@ -416,6 +425,107 @@ int main() {
         "  %tmp5 = getelementptr %record.Device, ptr %device, i32 0, i32 0\n"
         "  %tmp6 = getelementptr %record.UartRegisters, ptr %tmp5, i32 0, i32 1\n"
         "  %tmp7 = ptrtoint ptr %tmp6 to i64\n"
+    );
+
+    auto array_field_address_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "address_of",
+            }
+        ),
+    };
+    auto array_field_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::index_access,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::member_access,
+                .text = "bytes",
+                .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                    orison::syntax::ExpressionSyntax {
+                        .kind = orison::syntax::ExpressionKind::name,
+                        .text = "buffer",
+                    }
+                ),
+            }
+        ),
+    };
+    array_field_access.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "index",
+    });
+    array_field_address_call.arguments.push_back(std::move(array_field_access));
+    output = {};
+    auto array_field_address = orison::lowering::lower_expression(
+        array_field_address_call,
+        "i64",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(array_field_address.has_value());
+    assert(array_field_address->value == "%tmp10");
+    assert(
+        output.str() ==
+        "  %tmp8 = getelementptr %record.Buffer, ptr %buffer, i32 0, i32 0\n"
+        "  %tmp9 = getelementptr [4 x i8], ptr %tmp8, i64 0, i64 %index\n"
+        "  %tmp10 = ptrtoint ptr %tmp9 to i64\n"
+    );
+
+    auto nested_array_address_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "address_of",
+            }
+        ),
+    };
+    auto nested_array_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::index_access,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::member_access,
+                .text = "bytes",
+                .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                    orison::syntax::ExpressionSyntax {
+                        .kind = orison::syntax::ExpressionKind::member_access,
+                        .text = "buffer",
+                        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                            orison::syntax::ExpressionSyntax {
+                                .kind = orison::syntax::ExpressionKind::name,
+                                .text = "device",
+                            }
+                        ),
+                    }
+                ),
+            }
+        ),
+    };
+    nested_array_access.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "index",
+    });
+    nested_array_address_call.arguments.push_back(std::move(nested_array_access));
+    output = {};
+    auto nested_array_address = orison::lowering::lower_expression(
+        nested_array_address_call,
+        "i64",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(nested_array_address.has_value());
+    assert(nested_array_address->value == "%tmp14");
+    assert(
+        output.str() ==
+        "  %tmp11 = getelementptr %record.Device, ptr %device, i32 0, i32 1\n"
+        "  %tmp12 = getelementptr %record.Buffer, ptr %tmp11, i32 0, i32 0\n"
+        "  %tmp13 = getelementptr [4 x i8], ptr %tmp12, i64 0, i64 %index\n"
+        "  %tmp14 = ptrtoint ptr %tmp13 to i64\n"
     );
 
     std::filesystem::remove(path);

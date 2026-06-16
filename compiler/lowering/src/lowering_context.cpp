@@ -50,6 +50,38 @@ auto collect_method_signature(
     };
 }
 
+auto is_decimal_integer_text(std::string_view text) -> bool {
+    if (text.empty()) {
+        return false;
+    }
+    for (auto character : text) {
+        if (character < '0' || character > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto llvm_field_type_for(
+    syntax::TypeSyntax const& type,
+    std::unordered_set<std::string> const& record_names
+) -> std::string {
+    if (auto lowered_type = llvm_type_for(type); lowered_type.has_value()) {
+        return std::string {*lowered_type};
+    }
+    if (type.generic_arguments.empty() && record_names.contains(type.name)) {
+        return lowered_record_type_name(type.name);
+    }
+    if (type.name == "Array" && type.generic_arguments.size() == 2 &&
+        is_decimal_integer_text(type.generic_arguments[1].name)) {
+        auto element_type = llvm_field_type_for(type.generic_arguments[0], record_names);
+        if (!element_type.empty() && element_type != "void") {
+            return "[" + type.generic_arguments[1].name + " x " + element_type + "]";
+        }
+    }
+    return {};
+}
+
 auto collect_record_layout(
     syntax::RecordSyntax const& record,
     std::unordered_set<std::string> const& record_names
@@ -61,16 +93,10 @@ auto collect_record_layout(
     layout.fields.reserve(record.fields.size());
     for (auto index = std::size_t {0}; index < record.fields.size(); ++index) {
         auto const& field = record.fields[index];
-        auto llvm_type = std::string {};
-        if (auto lowered_type = llvm_type_for(field.type); lowered_type.has_value()) {
-            llvm_type = std::string {*lowered_type};
-        } else if (field.type.generic_arguments.empty() && record_names.contains(field.type.name)) {
-            llvm_type = lowered_record_type_name(field.type.name);
-        }
         layout.fields.push_back(LoweredRecordField {
             .name = field.name,
             .source_type_name = render_source_type_name(field.type),
-            .llvm_type = std::move(llvm_type),
+            .llvm_type = llvm_field_type_for(field.type, record_names),
             .index = index,
         });
     }

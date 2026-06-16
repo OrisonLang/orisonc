@@ -149,7 +149,9 @@ analysis, and lowering components.
   names, supported LLVM field types, and canonical named LLVM struct type names. Non-generic records whose fields all
   have supported LLVM types are emitted as named LLVM structs, and `address_of(pointer.field)` plus chained record-field
   forms like `address_of(pointer.inner.field)` lower through struct `getelementptr` steps when the source is a known
-  `Pointer<Record>`; record value and array layout emission remain future work.
+  `Pointer<Record>`. Fixed `Array<T, N>` fields lower to LLVM array fields when `T` is supported, and terminal indexed
+  forms like `address_of(pointer.array[index])` and `address_of(pointer.inner.array[index])` lower through an array
+  element `getelementptr`; record value emission and more general indexed aggregate chains remain future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

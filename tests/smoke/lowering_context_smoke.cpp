@@ -135,7 +135,7 @@ int main() {
     assert(packet_layout.fields.size() == 1);
     assert(packet_layout.fields[0].name == "bytes");
     assert(packet_layout.fields[0].source_type_name == "Array<Byte, 4>");
-    assert(packet_layout.fields[0].llvm_type.empty());
+    assert(packet_layout.fields[0].llvm_type == "[4 x i8]");
     assert(packet_layout.fields[0].index == 0);
     assert(context.records.contains("Device"));
     auto const& device_layout = context.records.at("Device");

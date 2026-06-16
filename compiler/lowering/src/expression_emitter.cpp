@@ -9,8 +9,8 @@
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
-#include <optional>
 #include <algorithm>
+#include <optional>
 #include <span>
 #include <sstream>
 #include <string>
@@ -446,6 +446,10 @@ auto find_record_field(
     return nullptr;
 }
 
+auto is_array_llvm_type(std::string_view type) -> bool {
+    return type.starts_with("[");
+}
+
 auto lower_pointer_record_field_address(
     syntax::ExpressionSyntax const& operand,
     LoweringEmissionContext const& context,
@@ -453,12 +457,21 @@ auto lower_pointer_record_field_address(
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    if (operand.kind != syntax::ExpressionKind::member_access || operand.left == nullptr) {
+    auto const* addressable_operand = &operand;
+    auto const* index_expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
+    if (operand.kind == syntax::ExpressionKind::index_access && operand.left != nullptr &&
+        operand.arguments.size() == 1) {
+        addressable_operand = operand.left.get();
+        index_expression = &operand.arguments.front();
+    }
+
+    if (addressable_operand->kind != syntax::ExpressionKind::member_access ||
+        addressable_operand->left == nullptr) {
         return std::nullopt;
     }
 
     auto field_names = std::vector<std::string> {};
-    auto const* base_expression = &operand;
+    auto const* base_expression = addressable_operand;
     while (base_expression->kind == syntax::ExpressionKind::member_access &&
            base_expression->left != nullptr) {
         field_names.push_back(base_expression->text);
@@ -510,6 +523,34 @@ auto lower_pointer_record_field_address(
         output << "  " << field_pointer_name << " = getelementptr " << layout->second.llvm_type_name
                << ", ptr " << field_pointer_value << ", i32 0, i32 " << field->index << "\n";
         field_pointer_value = std::move(field_pointer_name);
+        if (index_expression != nullptr && index + 1 == field_names.size()) {
+            if (!is_array_llvm_type(field->llvm_type)) {
+                record_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::unsupported_expression,
+                    "address_of indexed field layout"
+                );
+                return std::nullopt;
+            }
+            auto lowered_index = lowered_expression(
+                *index_expression,
+                "i64",
+                IntegerSignedness::unsigned_integer,
+                context,
+                session,
+                output
+            );
+            if (!lowered_index.has_value()) {
+                return std::nullopt;
+            }
+
+            auto element_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
+            output << "  " << element_pointer_name << " = getelementptr " << field->llvm_type
+                   << ", ptr " << field_pointer_value << ", i64 0, i64 " << lowered_index->value
+                   << "\n";
+            field_pointer_value = std::move(element_pointer_name);
+            break;
+        }
         if (index + 1 == field_names.size()) {
             break;
         }
