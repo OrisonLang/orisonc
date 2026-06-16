@@ -1979,6 +1979,31 @@ void test_reject_unsupported_final_switch_case_expression() {
     );
 }
 
+void test_reject_nested_defer_cleanup_defers() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_nested_defer_cleanup.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function cleanup_then_cleanup(value: UInt32) -> Unit\n"
+        "    defer\n"
+        "        defer\n"
+        "            observe(value)\n"
+        "    return\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering defer cleanup blocks currently cannot schedule additional defers"
+    );
+    std::filesystem::remove(path);
+}
+
 void test_reject_malformed_generated_llvm_ir() {
     orison::lowering::LlvmIrVerifier verifier;
     auto diagnostics = verifier.verify(
@@ -2084,6 +2109,7 @@ auto main() -> int {
     test_reject_unsupported_return_expression();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
+    test_reject_nested_defer_cleanup_defers();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();
