@@ -2016,6 +2016,49 @@ void test_emit_nested_defer_cleanup_defers() {
     std::filesystem::remove(path);
 }
 
+void test_emit_nested_defer_cleanup_multiple_defers() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nested_defer_cleanup_multi.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function cleanup_then_cleanup(value: UInt32) -> Unit\n"
+        "    defer\n"
+        "        observe(1 as UInt32)\n"
+        "    defer\n"
+        "        observe(2 as UInt32)\n"
+        "        defer\n"
+        "            observe(3 as UInt32)\n"
+        "        defer\n"
+        "            observe(4 as UInt32)\n"
+        "    return\n"
+    );
+
+    assert(!result.has_errors());
+    auto const function_pos = result.ir_text.find("define void @cleanup_then_cleanup");
+    assert(function_pos != std::string::npos);
+    auto const function_ir = result.ir_text.substr(function_pos);
+    auto const first_call = function_ir.find("call void @observe(i32 2)");
+    assert(first_call != std::string::npos);
+    auto const second_call = function_ir.find("call void @observe(i32 4)", first_call + 1);
+    assert(second_call != std::string::npos);
+    auto const third_call = function_ir.find("call void @observe(i32 3)", second_call + 1);
+    assert(third_call != std::string::npos);
+    auto const fourth_call = function_ir.find("call void @observe(i32 1)", third_call + 1);
+    assert(fourth_call != std::string::npos);
+    auto const ret_void = function_ir.find("ret void");
+    assert(ret_void != std::string::npos);
+    assert(first_call < second_call);
+    assert(second_call < third_call);
+    assert(third_call < fourth_call);
+    assert(fourth_call < ret_void);
+    std::filesystem::remove(path);
+}
+
 void test_reject_malformed_generated_llvm_ir() {
     orison::lowering::LlvmIrVerifier verifier;
     auto diagnostics = verifier.verify(
@@ -2122,6 +2165,7 @@ auto main() -> int {
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();
+    test_emit_nested_defer_cleanup_multiple_defers();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();

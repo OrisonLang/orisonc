@@ -444,6 +444,76 @@ int main() {
     assert(nested_third_call < nested_ret_void);
     std::filesystem::remove(defer_nested_path);
 
+    auto defer_nested_multi_path =
+        std::filesystem::temp_directory_path() / "orison_function_emitter_defer_nested_multi.or";
+    {
+        auto output = std::ofstream(defer_nested_multi_path);
+        output << "package demo.function_emitter\n"
+                  "\n"
+                  "function observe(value: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_then_cleanup(value: UInt32) -> Unit\n"
+                  "    defer\n"
+                  "        observe(1 as UInt32)\n"
+                  "    defer\n"
+                  "        observe(2 as UInt32)\n"
+                  "        defer\n"
+                  "            observe(3 as UInt32)\n"
+                  "        defer\n"
+                  "            observe(4 as UInt32)\n"
+                  "    return\n";
+    }
+    auto defer_nested_multi_source = orison::source::SourceFile::read(defer_nested_multi_path);
+    assert(defer_nested_multi_source.has_value());
+    auto defer_nested_multi_parser = orison::syntax::ModuleParser {};
+    auto defer_nested_multi_parse = defer_nested_multi_parser.parse(*defer_nested_multi_source);
+    assert(!defer_nested_multi_parse.diagnostics.has_errors());
+    diagnostics = {};
+    auto defer_nested_multi_context = orison::lowering::build_lowering_context(
+        defer_nested_multi_parse.module,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto defer_nested_multi_strings =
+        orison::lowering::collect_string_constants(defer_nested_multi_parse.module);
+    auto defer_nested_multi_ir = orison::lowering::emit_function(
+        defer_nested_multi_parse.module.functions[1],
+        defer_nested_multi_context.functions.at("cleanup_then_cleanup"),
+        defer_nested_multi_context,
+        defer_nested_multi_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto nested_multi_function_pos =
+        defer_nested_multi_ir.find("define void @cleanup_then_cleanup");
+    assert(nested_multi_function_pos != std::string::npos);
+    auto nested_multi_function_ir = defer_nested_multi_ir.substr(nested_multi_function_pos);
+    auto nested_multi_first_call = nested_multi_function_ir.find("call void @observe(i32 2)");
+    assert(nested_multi_first_call != std::string::npos);
+    auto nested_multi_second_call = nested_multi_function_ir.find(
+        "call void @observe(i32 4)",
+        nested_multi_first_call + 1
+    );
+    assert(nested_multi_second_call != std::string::npos);
+    auto nested_multi_third_call = nested_multi_function_ir.find(
+        "call void @observe(i32 3)",
+        nested_multi_second_call + 1
+    );
+    assert(nested_multi_third_call != std::string::npos);
+    auto nested_multi_fourth_call = nested_multi_function_ir.find(
+        "call void @observe(i32 1)",
+        nested_multi_third_call + 1
+    );
+    assert(nested_multi_fourth_call != std::string::npos);
+    auto nested_multi_ret_void = nested_multi_function_ir.find("ret void");
+    assert(nested_multi_ret_void != std::string::npos);
+    assert(nested_multi_first_call < nested_multi_second_call);
+    assert(nested_multi_second_call < nested_multi_third_call);
+    assert(nested_multi_third_call < nested_multi_fourth_call);
+    assert(nested_multi_fourth_call < nested_multi_ret_void);
+    std::filesystem::remove(defer_nested_multi_path);
+
     auto method = orison::syntax::FunctionSyntax {
         .name = "scale",
         .parameters = {
