@@ -26,10 +26,15 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: record-value aggregate `address_of`, general indexed
-  aggregate chains, and non-array-literal `for` iteration
+  aggregate chains beyond mutable local record fields, immutable aggregate `let` values, and non-array-literal `for`
+  iteration
 
 ## Latest update
 
+- 2026-06-16: lowering now materializes lowerable non-generic record constructor calls as LLVM aggregate values via
+  `insertvalue`, allows those values in mutable local `var` storage, and lowers `address_of(local.field)` through the
+  same record-layout metadata already used by pointer-backed aggregate paths; local array-backed aggregate values and
+  immutable aggregate `let` bindings remain pending.
 - 2026-06-16: fixed `Array<T, N>` record fields now lower to LLVM array field types when `T` is supported, and
   `address_of(pointer.array[index])` plus `address_of(pointer.inner.array[index])` lower through terminal array element
   GEPs for known `Pointer<Record>` sources; array-of-record element field paths like

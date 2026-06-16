@@ -2501,6 +2501,10 @@ void test_emit_raw_mmio_intrinsics() {
         "\n"
         "unsafe function matrix_byte_address(matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Address\n"
         "    address_of(matrix.rows[index][inner])\n"
+        "\n"
+        "unsafe function local_status_address() -> Address\n"
+        "    var regs = UartRegisters(0 as UInt32, 1 as UInt32)\n"
+        "    address_of(regs.status)\n"
     );
 
     assert(!result.has_errors());
@@ -2560,6 +2564,23 @@ void test_emit_raw_mmio_intrinsics() {
     );
     assert(
         result.ir_text.find("define i64 @matrix_byte_address(ptr %matrix, i64 %index, i64 %inner)") !=
+        std::string::npos
+    );
+    assert(result.ir_text.find("define i64 @local_status_address()") != std::string::npos);
+    assert(
+        result.ir_text.find("%tmp0 = insertvalue %record.UartRegisters undef, i32 0, 0") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("%tmp1 = insertvalue %record.UartRegisters %tmp0, i32 1, 1") !=
+        std::string::npos
+    );
+    assert(result.ir_text.find("%regs.addr = alloca %record.UartRegisters") != std::string::npos);
+    assert(
+        result.ir_text.find("store %record.UartRegisters %tmp1, ptr %regs.addr") != std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.UartRegisters, ptr %regs.addr, i32 0, i32 1") !=
         std::string::npos
     );
     assert(

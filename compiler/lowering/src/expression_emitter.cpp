@@ -279,6 +279,14 @@ auto inferred_expression_type(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
+        auto record = context.lowering.records.find(expression.left->text);
+        if (record != context.lowering.records.end()) {
+            return LoweredType {
+                .type = record->second.llvm_type_name,
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+
         auto const& intrinsic_name = expression.left->text;
         if (is_write_intrinsic_name(intrinsic_name)) {
             return LoweredType {
@@ -548,6 +556,86 @@ auto llvm_type_for_source_type_name(
     return std::nullopt;
 }
 
+auto lower_record_constructor_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    LoweringFailures& failures,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.left == nullptr || expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto layout = context.lowering.records.find(expression.left->text);
+    if (layout == context.lowering.records.end()) {
+        return std::nullopt;
+    }
+    if (layout->second.llvm_type_name != expected_llvm_type) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::type_mismatch,
+            expression.left->text + " has LLVM type " + layout->second.llvm_type_name +
+                ", expected " + std::string(expected_llvm_type)
+        );
+        return std::nullopt;
+    }
+    if (layout->second.fields.size() != expression.arguments.size()) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::call_arity_mismatch,
+            expression.left->text + " expects " + std::to_string(layout->second.fields.size()) +
+                " arguments, got " + std::to_string(expression.arguments.size())
+        );
+        return std::nullopt;
+    }
+    if (layout->second.fields.empty()) {
+        return LoweredExpression {
+            .type = layout->second.llvm_type_name,
+            .value = "zeroinitializer",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    auto aggregate_value = std::string {"undef"};
+    for (auto index = std::size_t {0}; index < layout->second.fields.size(); ++index) {
+        auto const& field = layout->second.fields[index];
+        if (field.llvm_type.empty() || field.llvm_type == "void") {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "record constructor field layout"
+            );
+            return std::nullopt;
+        }
+
+        auto lowered_field = lowered_expression(
+            expression.arguments[index],
+            field.llvm_type,
+            integer_signedness_for(syntax::TypeSyntax {.name = field.source_type_name}),
+            context,
+            session,
+            output
+        );
+        if (!lowered_field.has_value()) {
+            return std::nullopt;
+        }
+
+        auto aggregate_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << aggregate_name << " = insertvalue " << layout->second.llvm_type_name << " "
+               << aggregate_value << ", " << field.llvm_type << " " << lowered_field->value << ", "
+               << index << "\n";
+        aggregate_value = std::move(aggregate_name);
+    }
+
+    return LoweredExpression {
+        .type = layout->second.llvm_type_name,
+        .value = std::move(aggregate_value),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 auto lower_pointer_record_field_address(
     syntax::ExpressionSyntax const& operand,
     LoweringEmissionContext const& context,
@@ -588,12 +676,27 @@ auto lower_pointer_record_field_address(
         return std::nullopt;
     }
 
-    auto record_name = pointer_pointee_source_type_name(*base_source_type);
-    if (!record_name.has_value()) {
+    auto current_pointer_value = std::string {};
+    auto current_source_type_name = std::string {};
+    if (auto record_name = pointer_pointee_source_type_name(*base_source_type)) {
+        auto base_pointer = lower_pointer_operand(*base_expression, context, session, output);
+        if (!base_pointer.has_value()) {
+            return std::nullopt;
+        }
+        current_pointer_value = std::move(base_pointer->value);
+        current_source_type_name = *record_name;
+    } else if (base_expression->kind == syntax::ExpressionKind::name) {
+        auto binding = session.state.mutable_bindings.find(base_expression->text);
+        if (binding == session.state.mutable_bindings.end()) {
+            return std::nullopt;
+        }
+        current_pointer_value = binding->second.storage;
+        current_source_type_name = *base_source_type;
+    } else {
         return std::nullopt;
     }
 
-    auto layout = context.lowering.records.find(*record_name);
+    auto layout = context.lowering.records.find(current_source_type_name);
     if (layout == context.lowering.records.end()) {
         record_failure(
             failures,
@@ -602,15 +705,7 @@ auto lower_pointer_record_field_address(
         );
         return std::nullopt;
     }
-
-    auto base_pointer = lower_pointer_operand(*base_expression, context, session, output);
-    if (!base_pointer.has_value()) {
-        return std::nullopt;
-    }
-
-    auto current_pointer_value = base_pointer->value;
     auto current_layout = &layout->second;
-    auto current_source_type_name = std::string {*record_name};
     auto current_llvm_type_name = current_layout->llvm_type_name;
     auto expect_record_layout = true;
 
@@ -754,7 +849,7 @@ auto lower_address_of_intrinsic(
         record_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
-            "address_of currently only lowers mutable local names and Pointer<Record> fields"
+            "address_of currently only lowers mutable local names and aggregate fields"
         );
         return std::nullopt;
     }
@@ -764,7 +859,7 @@ auto lower_address_of_intrinsic(
         record_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
-            "address_of currently only lowers mutable local names and Pointer<Record> fields"
+            "address_of currently only lowers mutable local names and aggregate fields"
         );
         return std::nullopt;
     }
@@ -1495,6 +1590,17 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
+        if (auto record_constructor = lower_record_constructor_expression(
+                expression,
+                expected_llvm_type,
+                context,
+                session,
+                failures,
+                output
+            )) {
+            return record_constructor;
+        }
+
         auto function = context.lowering.functions.find(expression.left->text);
         if (function == context.lowering.functions.end()) {
             record_failure(

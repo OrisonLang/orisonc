@@ -11,9 +11,116 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace orison::lowering {
 namespace {
+
+auto is_aggregate_llvm_type(std::string_view type) -> bool {
+    return type.starts_with("%record.") || type.starts_with("[");
+}
+
+auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string> {
+    auto arguments = std::vector<std::string> {};
+    auto depth = std::size_t {0};
+    auto start = std::size_t {0};
+    for (auto index = std::size_t {0}; index < text.size(); ++index) {
+        auto const character = text[index];
+        if (character == '<') {
+            ++depth;
+            continue;
+        }
+        if (character == '>') {
+            if (depth > 0) {
+                --depth;
+            }
+            continue;
+        }
+        if (character == ',' && depth == 0) {
+            auto argument = std::string {text.substr(start, index - start)};
+            if (!argument.empty() && argument.front() == ' ') {
+                argument.erase(argument.begin());
+            }
+            if (!argument.empty() && argument.back() == ' ') {
+                argument.pop_back();
+            }
+            arguments.push_back(std::move(argument));
+            start = index + 1;
+        }
+    }
+
+    if (start < text.size()) {
+        auto argument = std::string {text.substr(start)};
+        if (!argument.empty() && argument.front() == ' ') {
+            argument.erase(argument.begin());
+        }
+        if (!argument.empty() && argument.back() == ' ') {
+            argument.pop_back();
+        }
+        arguments.push_back(std::move(argument));
+    }
+    return arguments;
+}
+
+auto lowered_type_for_source_type_name(
+    std::string_view type_name,
+    LoweringContext const& context
+) -> std::optional<LoweredType> {
+    auto type = syntax::TypeSyntax {.name = std::string(type_name)};
+    if (auto lowered = llvm_type_for(type); lowered.has_value() && *lowered != "void") {
+        return LoweredType {
+            .type = std::string(*lowered),
+            .signedness = integer_signedness_for(type),
+        };
+    }
+
+    if (auto record = context.records.find(std::string(type_name)); record != context.records.end()) {
+        return LoweredType {
+            .type = record->second.llvm_type_name,
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    constexpr auto prefix = std::string_view {"Array<"};
+    if (type_name.starts_with(prefix) && type_name.ends_with(">") &&
+        type_name.size() > prefix.size() + 1) {
+        auto arguments = split_top_level_generic_arguments(
+            type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
+        );
+        if (arguments.size() == 2 && !arguments[1].empty()) {
+            auto element_type = lowered_type_for_source_type_name(arguments[0], context);
+            if (element_type.has_value()) {
+                return LoweredType {
+                    .type = "[" + arguments[1] + " x " + element_type->type + "]",
+                    .signedness = IntegerSignedness::not_integer,
+                };
+            }
+        }
+    }
+
+    return std::nullopt;
+}
+
+auto source_type_name_for_initializer(
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto source_type = state.source_type_names.find(expression.text);
+        if (source_type != state.source_type_names.end()) {
+            return source_type->second;
+        }
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name &&
+        context.lowering.records.contains(expression.left->text)) {
+        return expression.left->text;
+    }
+
+    return std::nullopt;
+}
 
 auto deferred_cleanup_block_for(
     syntax::StatementSyntax const& statement
@@ -369,6 +476,13 @@ auto lower_let_statement(
         );
         return false;
     }
+    if (is_aggregate_llvm_type(lowered->type)) {
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support immutable aggregate let initializers"
+        );
+        return false;
+    }
 
     auto local_name = lowered->type == "ptr"
         ? lowered->value
@@ -384,6 +498,9 @@ auto lower_let_statement(
     if (!statement.annotated_type.name.empty()) {
         session.state.source_type_names[statement.name] =
             render_source_type_name(statement.annotated_type);
+    } else if (auto inferred_source_type =
+                   source_type_name_for_initializer(statement.expression, context, session.state)) {
+        session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
     return true;
 }
@@ -402,15 +519,15 @@ auto lower_var_statement(
         .signedness = fallback_signedness,
     };
     if (!statement.annotated_type.name.empty()) {
-        auto annotated_type = llvm_type_for(statement.annotated_type);
-        if (!annotated_type.has_value() || *annotated_type == "void") {
+        auto annotated_type = lowered_type_for_source_type_name(
+            render_source_type_name(statement.annotated_type),
+            context.lowering
+        );
+        if (!annotated_type.has_value() || annotated_type->type == "void") {
             diagnostics.error(statement.line, "lowering does not yet support this var type");
             return false;
         }
-        type = {
-            .type = std::string(*annotated_type),
-            .signedness = integer_signedness_for(statement.annotated_type),
-        };
+        type = std::move(*annotated_type);
     } else if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
         type = std::move(*inferred);
     }
@@ -446,6 +563,9 @@ auto lower_var_statement(
     if (!statement.annotated_type.name.empty()) {
         session.state.source_type_names[statement.name] =
             render_source_type_name(statement.annotated_type);
+    } else if (auto inferred_source_type =
+                   source_type_name_for_initializer(statement.expression, context, session.state)) {
+        session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
     return true;
 }

@@ -153,7 +153,10 @@ analysis, and lowering components.
   forms like `address_of(pointer.array[index])` and `address_of(pointer.inner.array[index])` lower through an array
   element `getelementptr`; array-of-record element field paths like `address_of(pointer.items[index].field)` also lower
   through the same mixed member/index walker, which now also supports nested-array shapes like
-  `address_of(pointer.rows[index][inner])`. Record value emission and more general indexed aggregate chains remain
+  `address_of(pointer.rows[index][inner])`. Lowerable non-generic record constructor calls now materialize as LLVM
+  aggregate values through `insertvalue`, mutable local `var` storage accepts those aggregate values, and
+  `address_of(local.field)` lowers through the same record-layout metadata from mutable local record storage. Immutable
+  aggregate `let` values, local array-backed aggregate construction, and more general indexed aggregate chains remain
   future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.

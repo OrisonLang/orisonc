@@ -638,6 +638,34 @@ int main() {
         emit_failure.stderr_text.find("lowering does not yet support this return expression") != std::string::npos
     );
 
+    auto emit_local_record_address_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_local_record_address.or";
+    write_concurrency_fixture(
+        emit_local_record_address_path,
+        "demo.emit",
+        {
+            "record Registers",
+            "    data: UInt32",
+            "    status: UInt32",
+            "unsafe function main() -> Address",
+            "    var regs = Registers(0 as UInt32, 1 as UInt32)",
+            "    address_of(regs.status)",
+        }
+    );
+    auto emit_local_record_address = run_emit_llvm(app, emit_local_record_address_path);
+    assert(emit_local_record_address.exit_code == 0);
+    assert(emit_local_record_address.stderr_text.empty());
+    assert(
+        emit_local_record_address.stdout_text.find(
+            "%tmp0 = insertvalue %record.Registers undef, i32 0, 0"
+        ) != std::string::npos
+    );
+    assert(
+        emit_local_record_address.stdout_text.find(
+            "getelementptr %record.Registers, ptr %regs.addr, i32 0, i32 1"
+        ) != std::string::npos
+    );
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);
