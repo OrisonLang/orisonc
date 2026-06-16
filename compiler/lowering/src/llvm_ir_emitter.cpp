@@ -11,6 +11,44 @@
 #include <utility>
 
 namespace orison::lowering {
+namespace {
+
+auto can_emit_record_layout(syntax::RecordSyntax const& record, LoweredRecordLayout const& layout) -> bool {
+    if (!record.generic_parameters.empty() || layout.fields.size() != record.fields.size()) {
+        return false;
+    }
+    for (auto const& field : layout.fields) {
+        if (field.llvm_type.empty() || field.llvm_type == "void") {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto emit_record_layouts(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> std::string {
+    auto output = std::ostringstream {};
+    for (auto const& record : module.records) {
+        auto layout = context.records.find(record.name);
+        if (layout == context.records.end() || !can_emit_record_layout(record, layout->second)) {
+            continue;
+        }
+
+        output << layout->second.llvm_type_name << " = type { ";
+        for (auto index = std::size_t {0}; index < layout->second.fields.size(); ++index) {
+            if (index > 0) {
+                output << ", ";
+            }
+            output << layout->second.fields[index].llvm_type;
+        }
+        output << " }\n";
+    }
+    return output.str();
+}
+
+}  // namespace
 
 auto LlvmIrEmissionResult::has_errors() const -> bool {
     return diagnostics.has_errors();
@@ -47,6 +85,7 @@ auto LlvmIrEmitter::emit(
         return result;
     }
     auto string_constants = collect_string_constants(module);
+    output << emit_record_layouts(module, context);
     output << emit_module_prelude(string_constants, context.foreign_declarations);
     for (auto const& function : module.functions) {
         auto signature = context.functions.find(function.name);

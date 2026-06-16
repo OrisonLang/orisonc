@@ -18,6 +18,10 @@ int main() {
         auto output = std::ofstream(path);
         output << "package demo.expression_emitter\n"
                   "\n"
+                  "record UartRegisters\n"
+                  "    data: UInt32\n"
+                  "    status: UInt32\n"
+                  "\n"
                   "function choose(flag: Bool, left: UInt32, right: UInt32) -> UInt32\n"
                   "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n"
                   "\n"
@@ -221,10 +225,15 @@ int main() {
         .value = "%value",
         .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
     });
+    raw_state.immutable_bindings.emplace("regs", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%regs",
+    });
     raw_state.source_type_names.emplace("pointer", "Pointer<UInt32>");
     raw_state.source_type_names.emplace("address", "Address");
     raw_state.source_type_names.emplace("index", "UInt64");
     raw_state.source_type_names.emplace("value", "UInt32");
+    raw_state.source_type_names.emplace("regs", "Pointer<UartRegisters>");
     auto raw_failures = orison::lowering::LoweringFailures {};
     auto raw_session = orison::lowering::FunctionLoweringSession {
         .state = raw_state,
@@ -318,6 +327,43 @@ int main() {
         output.str() ==
         "  %tmp2 = inttoptr i64 %address to ptr\n"
         "  store volatile i32 %value, ptr %tmp2\n"
+    );
+
+    auto field_address_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "address_of",
+            }
+        ),
+    };
+    auto field_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::member_access,
+        .text = "status",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "regs",
+            }
+        ),
+    };
+    field_address_call.arguments.push_back(std::move(field_access));
+    output = {};
+    auto field_address = orison::lowering::lower_expression(
+        field_address_call,
+        "i64",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        raw_session,
+        output
+    );
+    assert(field_address.has_value());
+    assert(field_address->value == "%tmp4");
+    assert(
+        output.str() ==
+        "  %tmp3 = getelementptr %record.UartRegisters, ptr %regs, i32 0, i32 1\n"
+        "  %tmp4 = ptrtoint ptr %tmp3 to i64\n"
     );
 
     std::filesystem::remove(path);

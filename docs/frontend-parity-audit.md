@@ -25,17 +25,18 @@ This file tracks which source-language frontend slices are reflected in the curr
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
-- lowering gaps after the current recursive statement path: aggregate-layout `address_of`/field-address lowering and
-  non-array-literal `for` iteration
+- lowering gaps after the current recursive statement path: record-value/array-backed aggregate `address_of` lowering
+  and non-array-literal `for` iteration
 
 ## Latest update
 
 - 2026-06-16: lowering context now collects record field layout metadata from parsed records, preserving field order,
-  source type names, and supported LLVM field types as groundwork for aggregate-backed `address_of` and field-address
-  lowering; record value and array layout emission remain pending.
+  source type names, supported LLVM field types, and named LLVM struct type names; non-generic records with fully
+  supported fields now emit named LLVM structs, and `address_of(pointer.field)` lowers through a struct GEP for known
+  `Pointer<Record>` sources while record value and array layout emission remain pending.
 - 2026-06-16: the initial raw/MMIO backend slice now lowers `Pointer<T>`-proven `raw_read`, `raw_write`,
   `raw_offset`, `volatile_read`, and `volatile_write`; volatile operations emit LLVM volatile loads/stores, while
-  aggregate-layout forms of `address_of` remain pending until record/array layout lowering exists.
+  record-value and array-layout forms of `address_of` remain pending.
 - 2026-06-16: ordinary non-`Unit` function bodies now also accept leading `repeat`, `for`, and `unsafe` statements
   before the final expression, while still rejecting statements after a terminating non-`Unit` statement.
 - 2026-06-16: `unsafe function` declarations now lower identically to ordinary functions; the unsafe marker remains a

@@ -52,6 +52,7 @@ auto collect_method_signature(
 auto collect_record_layout(syntax::RecordSyntax const& record) -> LoweredRecordLayout {
     auto layout = LoweredRecordLayout {
         .name = record.name,
+        .llvm_type_name = lowered_record_type_name(record.name),
     };
     layout.fields.reserve(record.fields.size());
     for (auto index = std::size_t {0}; index < record.fields.size(); ++index) {
@@ -198,6 +199,21 @@ auto lowered_method_symbol_name(
     symbol += ".";
     append_sanitized(method_name);
     return symbol;
+}
+
+auto lowered_record_type_name(std::string_view record_name) -> std::string {
+    auto type_name = std::string {"%record."};
+    for (auto character : record_name) {
+        if ((character >= 'a' && character <= 'z') ||
+            (character >= 'A' && character <= 'Z') ||
+            (character >= '0' && character <= '9') ||
+            character == '_') {
+            type_name.push_back(character);
+            continue;
+        }
+        type_name.push_back('_');
+    }
+    return type_name;
 }
 
 }  // namespace orison::lowering

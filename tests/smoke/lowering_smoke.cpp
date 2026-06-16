@@ -2454,6 +2454,10 @@ void test_emit_raw_mmio_intrinsics() {
         path,
         "package demo.lowering\n"
         "\n"
+        "record UartRegisters\n"
+        "    data: UInt32\n"
+        "    status: UInt32\n"
+        "\n"
         "unsafe function read_word(address: Address) -> UInt32\n"
         "    let pointer: Pointer<UInt32> = Pointer(address)\n"
         "    raw_read(pointer)\n"
@@ -2466,15 +2470,24 @@ void test_emit_raw_mmio_intrinsics() {
         "    unsafe\n"
         "        let pointer: Pointer<Byte> = Pointer(address)\n"
         "        volatile_write(pointer, 0 as Byte)\n"
+        "\n"
+        "unsafe function status_address(regs: Pointer<UartRegisters>) -> Address\n"
+        "    address_of(regs.status)\n"
     );
 
     assert(!result.has_errors());
+    assert(result.ir_text.find("%record.UartRegisters = type { i32, i32 }") != std::string::npos);
     assert(result.ir_text.find("define i32 @read_word(i64 %address)") != std::string::npos);
     assert(result.ir_text.find("load i32, ptr") != std::string::npos);
     assert(result.ir_text.find("define void @write_word(i64 %address, i32 %value)") != std::string::npos);
     assert(result.ir_text.find("store i32 %value, ptr") != std::string::npos);
     assert(result.ir_text.find("define void @clear(i64 %address)") != std::string::npos);
     assert(result.ir_text.find("store volatile i8 0, ptr") != std::string::npos);
+    assert(result.ir_text.find("define i64 @status_address(ptr %regs)") != std::string::npos);
+    assert(
+        result.ir_text.find("getelementptr %record.UartRegisters, ptr %regs, i32 0, i32 1") !=
+        std::string::npos
+    );
     std::filesystem::remove(path);
 }
 

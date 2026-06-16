@@ -27,6 +27,7 @@ struct LoweredRecordField {
 
 struct LoweredRecordLayout {
     std::string name;
+    std::string llvm_type_name;
     std::vector<LoweredRecordField> fields;
 };
 
@@ -63,5 +64,7 @@ auto lowered_method_symbol_name(
     std::string_view receiver_type_name,
     std::string_view method_name
 ) -> std::string;
+
+auto lowered_record_type_name(std::string_view record_name) -> std::string;
 
 }  // namespace orison::lowering

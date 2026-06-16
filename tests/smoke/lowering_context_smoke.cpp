@@ -113,6 +113,7 @@ int main() {
     assert(context.records.contains("UartRegisters"));
     auto const& uart_layout = context.records.at("UartRegisters");
     assert(uart_layout.name == "UartRegisters");
+    assert(uart_layout.llvm_type_name == "%record.UartRegisters");
     assert(uart_layout.fields.size() == 2);
     assert(uart_layout.fields[0].name == "data");
     assert(uart_layout.fields[0].source_type_name == "UInt32");
@@ -124,6 +125,7 @@ int main() {
     assert(uart_layout.fields[1].index == 1);
     assert(context.records.contains("Packet"));
     auto const& packet_layout = context.records.at("Packet");
+    assert(packet_layout.llvm_type_name == "%record.Packet");
     assert(packet_layout.fields.size() == 1);
     assert(packet_layout.fields[0].name == "bytes");
     assert(packet_layout.fields[0].source_type_name == "Array<Byte, 4>");

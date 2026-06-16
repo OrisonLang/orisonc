@@ -144,11 +144,12 @@ analysis, and lowering components.
 - Raw/MMIO intrinsics now have an initial LLVM backend path for the pointer-proven subset: `raw_read` and
   `volatile_read` emit loads, `raw_write` and `volatile_write` emit stores, `volatile_*` marks the access volatile,
   and `raw_offset` emits `getelementptr` when the source is a known `Pointer<T>`. `Address` operands are converted to
-  `ptr` at the use site with `inttoptr`; aggregate-layout-backed `address_of` remains limited to mutable local storage
-  until record/array layout lowering exists.
+  `ptr` at the use site with `inttoptr`.
 - Lowering context now collects record field layout metadata from parsed records, preserving field order, source type
-  names, and supported LLVM field types. This is metadata groundwork for future aggregate-backed `address_of` and field
-  address lowering, not yet record value or array layout emission.
+  names, supported LLVM field types, and canonical named LLVM struct type names. Non-generic records whose fields all
+  have supported LLVM types are emitted as named LLVM structs, and `address_of(pointer.field)` lowers through a struct
+  `getelementptr` when the source is a known `Pointer<Record>`; record value and array layout emission remain future
+  work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

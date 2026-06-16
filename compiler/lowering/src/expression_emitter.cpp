@@ -433,9 +433,80 @@ auto lower_address_operand(
     );
 }
 
+auto find_record_field(
+    LoweredRecordLayout const& layout,
+    std::string_view field_name
+) -> LoweredRecordField const* {
+    for (auto const& field : layout.fields) {
+        if (field.name == field_name) {
+            return &field;
+        }
+    }
+    return nullptr;
+}
+
+auto lower_pointer_record_field_address(
+    syntax::ExpressionSyntax const& operand,
+    LoweringEmissionContext const& context,
+    LoweringFailures& failures,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (operand.kind != syntax::ExpressionKind::member_access || operand.left == nullptr) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_name_for_expression(*operand.left, session.state);
+    if (!base_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto record_name = pointer_pointee_source_type_name(*base_source_type);
+    if (!record_name.has_value()) {
+        return std::nullopt;
+    }
+
+    auto layout = context.lowering.records.find(*record_name);
+    if (layout == context.lowering.records.end()) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "address_of field source record layout"
+        );
+        return std::nullopt;
+    }
+
+    auto const* field = find_record_field(layout->second, operand.text);
+    if (field == nullptr || field->llvm_type.empty() || field->llvm_type == "void") {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "address_of field layout"
+        );
+        return std::nullopt;
+    }
+
+    auto base_pointer = lower_pointer_operand(*operand.left, context, session, output);
+    if (!base_pointer.has_value()) {
+        return std::nullopt;
+    }
+
+    auto field_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << field_pointer_name << " = getelementptr " << layout->second.llvm_type_name
+           << ", ptr " << base_pointer->value << ", i32 0, i32 " << field->index << "\n";
+    auto address_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << address_name << " = ptrtoint ptr " << field_pointer_name << " to i64\n";
+    return LoweredExpression {
+        .type = "i64",
+        .value = std::move(address_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 auto lower_address_of_intrinsic(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
+    LoweringEmissionContext const& context,
     LoweringFailures& failures,
     FunctionLoweringSession& session,
     std::ostringstream& output
@@ -450,11 +521,21 @@ auto lower_address_of_intrinsic(
     }
 
     auto const& operand = expression.arguments.front();
+    if (auto field_address = lower_pointer_record_field_address(
+            operand,
+            context,
+            failures,
+            session,
+            output
+        )) {
+        return field_address;
+    }
+
     if (operand.kind != syntax::ExpressionKind::name) {
         record_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
-            "address_of currently only lowers mutable local names"
+            "address_of currently only lowers mutable local names and Pointer<Record> fields"
         );
         return std::nullopt;
     }
@@ -464,7 +545,7 @@ auto lower_address_of_intrinsic(
         record_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
-            "address_of currently only lowers mutable local names"
+            "address_of currently only lowers mutable local names and Pointer<Record> fields"
         );
         return std::nullopt;
     }
@@ -1057,6 +1138,7 @@ auto lowered_expression(
             return lower_address_of_intrinsic(
                 expression,
                 expected_llvm_type,
+                context,
                 failures,
                 session,
                 output
