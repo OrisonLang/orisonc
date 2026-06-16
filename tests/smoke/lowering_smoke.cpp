@@ -2059,6 +2059,88 @@ void test_emit_nested_defer_cleanup_multiple_defers() {
     std::filesystem::remove(path);
 }
 
+void test_emit_nested_defer_cleanup_on_loop_control() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nested_defer_loop_control.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function cleanup_on_break(value: UInt32) -> Unit\n"
+        "    while value < 3 as UInt32\n"
+        "        defer\n"
+        "            observe(1 as UInt32)\n"
+        "        defer\n"
+        "            observe(2 as UInt32)\n"
+        "            defer\n"
+        "                observe(3 as UInt32)\n"
+        "        break\n"
+        "    return\n"
+        "\n"
+        "function cleanup_on_continue(value: UInt32) -> Unit\n"
+        "    while value < 3 as UInt32\n"
+        "        defer\n"
+        "            observe(1 as UInt32)\n"
+        "        defer\n"
+        "            observe(2 as UInt32)\n"
+        "            defer\n"
+        "                observe(3 as UInt32)\n"
+        "        continue\n"
+        "    return\n"
+    );
+
+    assert(!result.has_errors());
+
+    auto const break_function_pos = result.ir_text.find("define void @cleanup_on_break");
+    assert(break_function_pos != std::string::npos);
+    auto const break_function_ir = result.ir_text.substr(break_function_pos);
+    auto const break_first_call = break_function_ir.find("call void @observe(i32 2)");
+    assert(break_first_call != std::string::npos);
+    auto const break_second_call = break_function_ir.find(
+        "call void @observe(i32 3)",
+        break_first_call + 1
+    );
+    assert(break_second_call != std::string::npos);
+    auto const break_third_call = break_function_ir.find(
+        "call void @observe(i32 1)",
+        break_second_call + 1
+    );
+    assert(break_third_call != std::string::npos);
+    auto const break_exit = break_function_ir.find("br label %while.exit.0");
+    assert(break_exit != std::string::npos);
+    assert(break_first_call < break_second_call);
+    assert(break_second_call < break_third_call);
+    assert(break_third_call < break_exit);
+
+    auto const continue_function_pos = result.ir_text.find("define void @cleanup_on_continue");
+    assert(continue_function_pos != std::string::npos);
+    auto const continue_function_ir = result.ir_text.substr(continue_function_pos);
+    auto const continue_first_call = continue_function_ir.find("call void @observe(i32 2)");
+    assert(continue_first_call != std::string::npos);
+    auto const continue_second_call = continue_function_ir.find(
+        "call void @observe(i32 3)",
+        continue_first_call + 1
+    );
+    assert(continue_second_call != std::string::npos);
+    auto const continue_third_call = continue_function_ir.find(
+        "call void @observe(i32 1)",
+        continue_second_call + 1
+    );
+    assert(continue_third_call != std::string::npos);
+    auto const continue_exit = continue_function_ir.find(
+        "br label %while.condition.0",
+        continue_third_call + 1
+    );
+    assert(continue_exit != std::string::npos);
+    assert(continue_first_call < continue_second_call);
+    assert(continue_second_call < continue_third_call);
+    assert(continue_third_call < continue_exit);
+    std::filesystem::remove(path);
+}
+
 void test_reject_malformed_generated_llvm_ir() {
     orison::lowering::LlvmIrVerifier verifier;
     auto diagnostics = verifier.verify(
@@ -2166,6 +2248,7 @@ auto main() -> int {
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();
     test_emit_nested_defer_cleanup_multiple_defers();
+    test_emit_nested_defer_cleanup_on_loop_control();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();

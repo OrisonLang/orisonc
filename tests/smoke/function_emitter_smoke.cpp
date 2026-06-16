@@ -514,6 +514,117 @@ int main() {
     assert(nested_multi_fourth_call < nested_multi_ret_void);
     std::filesystem::remove(defer_nested_multi_path);
 
+    auto defer_loop_control_path =
+        std::filesystem::temp_directory_path() / "orison_function_emitter_defer_loop_control.or";
+    {
+        auto output = std::ofstream(defer_loop_control_path);
+        output << "package demo.function_emitter\n"
+                  "\n"
+                  "function observe(value: UInt32) -> Unit\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_on_break(value: UInt32) -> Unit\n"
+                  "    while value < 3 as UInt32\n"
+                  "        defer\n"
+                  "            observe(1 as UInt32)\n"
+                  "        defer\n"
+                  "            observe(2 as UInt32)\n"
+                  "            defer\n"
+                  "                observe(3 as UInt32)\n"
+                  "        break\n"
+                  "    return\n"
+                  "\n"
+                  "function cleanup_on_continue(value: UInt32) -> Unit\n"
+                  "    while value < 3 as UInt32\n"
+                  "        defer\n"
+                  "            observe(1 as UInt32)\n"
+                  "        defer\n"
+                  "            observe(2 as UInt32)\n"
+                  "            defer\n"
+                  "                observe(3 as UInt32)\n"
+                  "        continue\n"
+                  "    return\n";
+    }
+    auto defer_loop_control_source = orison::source::SourceFile::read(defer_loop_control_path);
+    assert(defer_loop_control_source.has_value());
+    auto defer_loop_control_parser = orison::syntax::ModuleParser {};
+    auto defer_loop_control_parse = defer_loop_control_parser.parse(*defer_loop_control_source);
+    assert(!defer_loop_control_parse.diagnostics.has_errors());
+    diagnostics = {};
+    auto defer_loop_control_context = orison::lowering::build_lowering_context(
+        defer_loop_control_parse.module,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto defer_loop_control_strings =
+        orison::lowering::collect_string_constants(defer_loop_control_parse.module);
+
+    auto loop_control_break_ir = orison::lowering::emit_function(
+        defer_loop_control_parse.module.functions[1],
+        defer_loop_control_context.functions.at("cleanup_on_break"),
+        defer_loop_control_context,
+        defer_loop_control_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto loop_control_break_function_pos = loop_control_break_ir.find("define void @cleanup_on_break");
+    assert(loop_control_break_function_pos != std::string::npos);
+    auto loop_control_break_function_ir = loop_control_break_ir.substr(loop_control_break_function_pos);
+    auto loop_control_break_first_call = loop_control_break_function_ir.find("call void @observe(i32 2)");
+    assert(loop_control_break_first_call != std::string::npos);
+    auto loop_control_break_second_call = loop_control_break_function_ir.find(
+        "call void @observe(i32 3)",
+        loop_control_break_first_call + 1
+    );
+    assert(loop_control_break_second_call != std::string::npos);
+    auto loop_control_break_third_call = loop_control_break_function_ir.find(
+        "call void @observe(i32 1)",
+        loop_control_break_second_call + 1
+    );
+    assert(loop_control_break_third_call != std::string::npos);
+    auto loop_control_break_exit = loop_control_break_function_ir.find("br label %while.exit.0");
+    assert(loop_control_break_exit != std::string::npos);
+    assert(loop_control_break_first_call < loop_control_break_second_call);
+    assert(loop_control_break_second_call < loop_control_break_third_call);
+    assert(loop_control_break_third_call < loop_control_break_exit);
+
+    diagnostics = {};
+    auto loop_control_continue_ir = orison::lowering::emit_function(
+        defer_loop_control_parse.module.functions[2],
+        defer_loop_control_context.functions.at("cleanup_on_continue"),
+        defer_loop_control_context,
+        defer_loop_control_strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    auto loop_control_continue_function_pos =
+        loop_control_continue_ir.find("define void @cleanup_on_continue");
+    assert(loop_control_continue_function_pos != std::string::npos);
+    auto loop_control_continue_function_ir =
+        loop_control_continue_ir.substr(loop_control_continue_function_pos);
+    auto loop_control_continue_first_call =
+        loop_control_continue_function_ir.find("call void @observe(i32 2)");
+    assert(loop_control_continue_first_call != std::string::npos);
+    auto loop_control_continue_second_call = loop_control_continue_function_ir.find(
+        "call void @observe(i32 3)",
+        loop_control_continue_first_call + 1
+    );
+    assert(loop_control_continue_second_call != std::string::npos);
+    auto loop_control_continue_third_call = loop_control_continue_function_ir.find(
+        "call void @observe(i32 1)",
+        loop_control_continue_second_call + 1
+    );
+    assert(loop_control_continue_third_call != std::string::npos);
+    auto loop_control_continue_exit = loop_control_continue_function_ir.find(
+        "br label %while.condition.0",
+        loop_control_continue_third_call + 1
+    );
+    assert(loop_control_continue_exit != std::string::npos);
+    assert(loop_control_continue_first_call < loop_control_continue_second_call);
+    assert(loop_control_continue_second_call < loop_control_continue_third_call);
+    assert(loop_control_continue_third_call < loop_control_continue_exit);
+    std::filesystem::remove(defer_loop_control_path);
+
     auto method = orison::syntax::FunctionSyntax {
         .name = "scale",
         .parameters = {
