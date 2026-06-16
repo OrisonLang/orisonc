@@ -146,6 +146,9 @@ analysis, and lowering components.
   and `raw_offset` emits `getelementptr` when the source is a known `Pointer<T>`. `Address` operands are converted to
   `ptr` at the use site with `inttoptr`; aggregate-layout-backed `address_of` remains limited to mutable local storage
   until record/array layout lowering exists.
+- Lowering context now collects record field layout metadata from parsed records, preserving field order, source type
+  names, and supported LLVM field types. This is metadata groundwork for future aggregate-backed `address_of` and field
+  address lowering, not yet record value or array layout emission.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

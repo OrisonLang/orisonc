@@ -4,6 +4,7 @@
 #include "orison/lowering/function_signature.hpp"
 #include "orison/syntax/module_parser.hpp"
 
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -17,8 +18,21 @@ struct LoweredMethodSignature {
     LoweredFunctionSignature signature;
 };
 
+struct LoweredRecordField {
+    std::string name;
+    std::string source_type_name;
+    std::string llvm_type;
+    std::size_t index = 0;
+};
+
+struct LoweredRecordLayout {
+    std::string name;
+    std::vector<LoweredRecordField> fields;
+};
+
 struct LoweringContext {
     std::unordered_map<std::string, LoweredFunctionSignature> functions;
+    std::unordered_map<std::string, LoweredRecordLayout> records;
     std::vector<LoweredMethodSignature> methods;
     std::vector<LoweredFunctionSignature> foreign_declarations;
 };

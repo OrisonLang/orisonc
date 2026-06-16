@@ -2,6 +2,7 @@
 
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/type_lowering.hpp"
 
 #include <string_view>
 #include <utility>
@@ -48,6 +49,27 @@ auto collect_method_signature(
     };
 }
 
+auto collect_record_layout(syntax::RecordSyntax const& record) -> LoweredRecordLayout {
+    auto layout = LoweredRecordLayout {
+        .name = record.name,
+    };
+    layout.fields.reserve(record.fields.size());
+    for (auto index = std::size_t {0}; index < record.fields.size(); ++index) {
+        auto const& field = record.fields[index];
+        auto llvm_type = std::string {};
+        if (auto lowered_type = llvm_type_for(field.type); lowered_type.has_value()) {
+            llvm_type = std::string {*lowered_type};
+        }
+        layout.fields.push_back(LoweredRecordField {
+            .name = field.name,
+            .source_type_name = render_source_type_name(field.type),
+            .llvm_type = std::move(llvm_type),
+            .index = index,
+        });
+    }
+    return layout;
+}
+
 }  // namespace
 
 auto build_lowering_context(
@@ -55,6 +77,10 @@ auto build_lowering_context(
     diagnostics::DiagnosticBag& diagnostics
 ) -> LoweringContext {
     auto context = LoweringContext {};
+    for (auto const& record : module.records) {
+        context.records.emplace(record.name, collect_record_layout(record));
+    }
+
     for (auto const& function : module.functions) {
         auto signature =
             lower_function_signature(function.return_type, function.parameters, function.name);

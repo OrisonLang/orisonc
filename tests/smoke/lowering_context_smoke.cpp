@@ -7,16 +7,40 @@ int main() {
     using orison::syntax::ForeignImportBlockSyntax;
     using orison::syntax::ForeignImportFunctionSyntax;
     using orison::syntax::FunctionSyntax;
+    using orison::syntax::FieldSyntax;
     using orison::syntax::ImplementationSyntax;
     using orison::syntax::ExtensionSyntax;
     using orison::syntax::ModuleSyntax;
     using orison::syntax::ParameterSyntax;
+    using orison::syntax::RecordSyntax;
     using orison::syntax::TypeSyntax;
 
     auto module = ModuleSyntax {};
     module.functions.push_back(FunctionSyntax {
         .name = "main",
         .return_type = TypeSyntax {.name = "Int32"},
+    });
+    module.records.push_back(RecordSyntax {
+        .name = "UartRegisters",
+        .fields = {
+            FieldSyntax {.name = "data", .type = TypeSyntax {.name = "UInt32"}},
+            FieldSyntax {.name = "status", .type = TypeSyntax {.name = "UInt32"}},
+        },
+    });
+    module.records.push_back(RecordSyntax {
+        .name = "Packet",
+        .fields = {
+            FieldSyntax {
+                .name = "bytes",
+                .type = TypeSyntax {
+                    .name = "Array",
+                    .generic_arguments = {
+                        TypeSyntax {.name = "Byte"},
+                        TypeSyntax {.name = "4"},
+                    },
+                },
+            },
+        },
     });
     auto implementation = ImplementationSyntax {
         .interface_type = TypeSyntax {.name = "Reader"},
@@ -83,8 +107,28 @@ int main() {
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
     assert(context.functions.size() == 2);
+    assert(context.records.size() == 2);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
+    assert(context.records.contains("UartRegisters"));
+    auto const& uart_layout = context.records.at("UartRegisters");
+    assert(uart_layout.name == "UartRegisters");
+    assert(uart_layout.fields.size() == 2);
+    assert(uart_layout.fields[0].name == "data");
+    assert(uart_layout.fields[0].source_type_name == "UInt32");
+    assert(uart_layout.fields[0].llvm_type == "i32");
+    assert(uart_layout.fields[0].index == 0);
+    assert(uart_layout.fields[1].name == "status");
+    assert(uart_layout.fields[1].source_type_name == "UInt32");
+    assert(uart_layout.fields[1].llvm_type == "i32");
+    assert(uart_layout.fields[1].index == 1);
+    assert(context.records.contains("Packet"));
+    auto const& packet_layout = context.records.at("Packet");
+    assert(packet_layout.fields.size() == 1);
+    assert(packet_layout.fields[0].name == "bytes");
+    assert(packet_layout.fields[0].source_type_name == "Array<Byte, 4>");
+    assert(packet_layout.fields[0].llvm_type.empty());
+    assert(packet_layout.fields[0].index == 0);
     assert(context.methods[0].receiver_type_name == "Device");
     assert(context.methods[0].method_name == "read");
     assert(context.methods[0].signature.symbol_name == "method.Device.read");

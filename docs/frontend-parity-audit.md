@@ -30,6 +30,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-16: lowering context now collects record field layout metadata from parsed records, preserving field order,
+  source type names, and supported LLVM field types as groundwork for aggregate-backed `address_of` and field-address
+  lowering; record value and array layout emission remain pending.
 - 2026-06-16: the initial raw/MMIO backend slice now lowers `Pointer<T>`-proven `raw_read`, `raw_write`,
   `raw_offset`, `volatile_read`, and `volatile_write`; volatile operations emit LLVM volatile loads/stores, while
   aggregate-layout forms of `address_of` remain pending until record/array layout lowering exists.
