@@ -19,6 +19,18 @@ int main() {
         std::pair {ExpressionLoweringFailureReason::unsupported_expression, "unsupported expression"},
         std::pair {ExpressionLoweringFailureReason::missing_string_constant, "missing lowered string constant"},
         std::pair {ExpressionLoweringFailureReason::unknown_name, "unknown lowered name"},
+        std::pair {
+            ExpressionLoweringFailureReason::unknown_member_call_receiver,
+            "unknown lowered member call receiver"
+        },
+        std::pair {
+            ExpressionLoweringFailureReason::unknown_member_call_target,
+            "unknown lowered member call target"
+        },
+        std::pair {
+            ExpressionLoweringFailureReason::ambiguous_member_call_target,
+            "ambiguous lowered member call target"
+        },
         std::pair {ExpressionLoweringFailureReason::type_mismatch, "expression type mismatch"},
         std::pair {ExpressionLoweringFailureReason::signedness_mismatch, "expression signedness mismatch"},
         std::pair {ExpressionLoweringFailureReason::unsupported_cast, "unsupported cast"},

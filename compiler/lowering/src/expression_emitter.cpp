@@ -2,12 +2,15 @@
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
+#include "orison/lowering/function_signature.hpp"
+#include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <optional>
+#include <span>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -127,6 +130,32 @@ auto is_integer_llvm_type_impl(std::string_view type) -> bool {
     return type == "i8" || type == "i16" || type == "i32" || type == "i64";
 }
 
+struct ResolvedMemberCall {
+    MemberCallReceiverInference receiver;
+    LoweredMethodLookup method;
+};
+
+auto resolve_member_call(
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringState const& state
+) -> ResolvedMemberCall {
+    auto receiver = infer_member_call_receiver(expression, state);
+    if (receiver.result != MemberCallReceiverInferenceResult::found) {
+        return {.receiver = std::move(receiver)};
+    }
+
+    auto method = find_lowered_method_signature(
+        context.lowering,
+        receiver.receiver_type_name,
+        receiver.method_name
+    );
+    return ResolvedMemberCall {
+        .receiver = std::move(receiver),
+        .method = std::move(method),
+    };
+}
+
 auto inferred_expression_type(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -169,6 +198,22 @@ auto inferred_expression_type(
         return LoweredType {
             .type = function->second.return_type,
             .signedness = function->second.return_signedness,
+        };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::member_access) {
+        auto resolved = resolve_member_call(expression, context, state);
+        if (resolved.receiver.result != MemberCallReceiverInferenceResult::found ||
+            resolved.method.result != LoweredMethodLookupResult::found ||
+            resolved.method.method == nullptr ||
+            !has_supported_function_signature_types(resolved.method.method->signature)) {
+            return std::nullopt;
+        }
+
+        return LoweredType {
+            .type = resolved.method.method->signature.return_type,
+            .signedness = resolved.method.method->signature.return_signedness,
         };
     }
 
@@ -517,6 +562,111 @@ auto lowered_expression(
             .value = std::move(temporary_name),
             .signedness = left->signedness,
         };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "null-safe member call lowering is not yet supported"
+        );
+        return std::nullopt;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::member_access) {
+        auto resolved = resolve_member_call(expression, context, state);
+        auto const receiver_name = expression.left->left != nullptr ? expression.left->left->text : std::string {};
+        auto const target_name = resolved.receiver.receiver_type_name + "." + resolved.receiver.method_name;
+        if (resolved.receiver.result == MemberCallReceiverInferenceResult::unsupported_shape) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "member call receiver shape"
+            );
+            return std::nullopt;
+        }
+        if (resolved.receiver.result == MemberCallReceiverInferenceResult::not_found) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unknown_member_call_receiver,
+                receiver_name
+            );
+            return std::nullopt;
+        }
+        if (resolved.method.result == LoweredMethodLookupResult::not_found) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unknown_member_call_target,
+                target_name
+            );
+            return std::nullopt;
+        }
+        if (resolved.method.result == LoweredMethodLookupResult::ambiguous) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::ambiguous_member_call_target,
+                target_name
+            );
+            return std::nullopt;
+        }
+        if (resolved.method.method == nullptr ||
+            !has_supported_function_signature_types(resolved.method.method->signature)) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "member call target is not lowerable: " + target_name
+            );
+            return std::nullopt;
+        }
+
+        auto const& method = resolved.method.method->signature;
+        if (method.return_type != expected_llvm_type) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::call_return_type_mismatch,
+                target_name + " returns " + method.return_type + ", expected " +
+                    std::string(expected_llvm_type)
+            );
+            return std::nullopt;
+        }
+
+        auto const expected_argument_count = method.parameter_types.size() - 1;
+        if (expected_argument_count != expression.arguments.size()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::call_arity_mismatch,
+                target_name + " expects " + std::to_string(expected_argument_count) +
+                    " arguments, got " + std::to_string(expression.arguments.size())
+            );
+            return std::nullopt;
+        }
+
+        auto arguments = lower_member_call_arguments(
+            *expression.left->left,
+            std::span<syntax::ExpressionSyntax const>(
+                expression.arguments.data(),
+                expression.arguments.size()
+            ),
+            method,
+            context,
+            session,
+            output
+        );
+        if (!arguments.has_value()) {
+            if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
+                record_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::call_argument_failure,
+                    target_name
+                );
+            }
+            return std::nullopt;
+        }
+
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+        return emit_value_call(std::move(temporary_name), method, *arguments, output);
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&

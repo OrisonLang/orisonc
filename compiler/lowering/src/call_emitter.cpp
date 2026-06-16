@@ -5,6 +5,7 @@
 #include "orison/lowering/llvm_names.hpp"
 
 #include <cstddef>
+#include <span>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -44,26 +45,44 @@ auto append_call_arguments(
     }
 }
 
-}  // namespace
-
-auto lower_call_arguments(
-    syntax::ExpressionSyntax const& expression,
+auto lower_call_arguments_impl(
+    syntax::ExpressionSyntax const* receiver_expression,
+    std::span<syntax::ExpressionSyntax const> arguments,
     LoweredFunctionSignature const& function,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<std::vector<LoweredExpression>> {
-    if (function.parameter_types.size() != expression.arguments.size()) {
+    auto const expected_argument_count = arguments.size() + (receiver_expression == nullptr ? 0 : 1);
+    if (function.parameter_types.size() != expected_argument_count) {
         return std::nullopt;
     }
 
-    auto arguments = std::vector<LoweredExpression> {};
-    arguments.reserve(expression.arguments.size());
-    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+    auto lowered_arguments = std::vector<LoweredExpression> {};
+    lowered_arguments.reserve(expected_argument_count);
+
+    auto parameter_index = std::size_t {0};
+    if (receiver_expression != nullptr) {
+        auto lowered_receiver = lower_expression(
+            *receiver_expression,
+            function.parameter_types.front(),
+            function.parameter_signedness.front(),
+            context,
+            session,
+            output
+        );
+        if (!lowered_receiver.has_value()) {
+            return std::nullopt;
+        }
+        lowered_arguments.push_back(std::move(*lowered_receiver));
+        parameter_index = 1;
+    }
+
+    for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
         auto argument = lower_expression(
-            expression.arguments[index],
-            function.parameter_types[index],
-            function.parameter_signedness[index],
+            arguments[index],
+            function.parameter_types[index + parameter_index],
+            function.parameter_signedness[index + parameter_index],
             context,
             session,
             output
@@ -72,7 +91,8 @@ auto lower_call_arguments(
             return std::nullopt;
         }
 
-        auto promotion = index >= function.fixed_abi_parameter_count
+        auto const actual_parameter_index = index + parameter_index;
+        auto promotion = actual_parameter_index >= function.fixed_abi_parameter_count
             ? c_abi_promotion_for(argument->type)
             : CAbiPromotion::none;
         if (function.adapter == CAbiAdapterKind::variadic &&
@@ -99,9 +119,47 @@ auto lower_call_arguments(
                 .signedness = IntegerSignedness::not_integer,
             };
         }
-        arguments.push_back(std::move(*argument));
+        lowered_arguments.push_back(std::move(*argument));
     }
-    return arguments;
+
+    return lowered_arguments;
+}
+
+}  // namespace
+
+auto lower_call_arguments(
+    syntax::ExpressionSyntax const& expression,
+    LoweredFunctionSignature const& function,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::vector<LoweredExpression>> {
+    return lower_call_arguments_impl(
+        nullptr,
+        std::span<syntax::ExpressionSyntax const>(expression.arguments.data(), expression.arguments.size()),
+        function,
+        context,
+        session,
+        output
+    );
+}
+
+auto lower_member_call_arguments(
+    syntax::ExpressionSyntax const& receiver_expression,
+    std::span<syntax::ExpressionSyntax const> arguments,
+    LoweredFunctionSignature const& function,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::vector<LoweredExpression>> {
+    return lower_call_arguments_impl(
+        &receiver_expression,
+        arguments,
+        function,
+        context,
+        session,
+        output
+    );
 }
 
 auto emit_value_call(

@@ -7,6 +7,7 @@
 #include "orison/syntax/module_parser.hpp"
 
 #include <optional>
+#include <span>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -15,6 +16,15 @@ namespace orison::lowering {
 
 auto lower_call_arguments(
     syntax::ExpressionSyntax const& expression,
+    LoweredFunctionSignature const& function,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::vector<LoweredExpression>>;
+
+auto lower_member_call_arguments(
+    syntax::ExpressionSyntax const& receiver_expression,
+    std::span<syntax::ExpressionSyntax const> arguments,
     LoweredFunctionSignature const& function,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,

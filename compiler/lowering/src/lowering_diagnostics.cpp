@@ -28,6 +28,15 @@ auto render_expression_lowering_failure(
     case ExpressionLoweringFailureReason::unknown_name:
         prefix = "unknown lowered name";
         break;
+    case ExpressionLoweringFailureReason::unknown_member_call_receiver:
+        prefix = "unknown lowered member call receiver";
+        break;
+    case ExpressionLoweringFailureReason::unknown_member_call_target:
+        prefix = "unknown lowered member call target";
+        break;
+    case ExpressionLoweringFailureReason::ambiguous_member_call_target:
+        prefix = "ambiguous lowered member call target";
+        break;
     case ExpressionLoweringFailureReason::type_mismatch:
         prefix = "expression type mismatch";
         break;

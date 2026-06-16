@@ -19,7 +19,14 @@ int main() {
         output << "package demo.expression_emitter\n"
                   "\n"
                   "function choose(flag: Bool, left: UInt32, right: UInt32) -> UInt32\n"
-                  "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n";
+                  "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n"
+                  "\n"
+                  "extend UInt32\n"
+                  "    function scale(this: shared This, amount: UInt32) -> UInt32\n"
+                  "        this + amount\n"
+                  "\n"
+                  "function call_method(value: UInt32) -> UInt32\n"
+                  "    value.scale(2 as UInt32)\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -132,6 +139,67 @@ int main() {
     assert(
         orison::lowering::render_expression_lowering_failure(failures.expression) ==
         "call arity mismatch: choose expects 3 arguments, got 0"
+    );
+
+    auto member_state = orison::lowering::FunctionLoweringState {};
+    member_state.local_name_counts["value"] = 1;
+    member_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%value",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    member_state.source_type_names.emplace("value", "UInt32");
+    auto member_failures = orison::lowering::LoweringFailures {};
+    auto member_session = orison::lowering::FunctionLoweringSession {
+        .state = member_state,
+        .failures = member_failures,
+    };
+    output = {};
+    auto member_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions[1].body_statements.front().expression,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        member_session,
+        output
+    );
+    assert(member_lowered.has_value());
+    assert(member_lowered->type == "i32");
+    assert(member_lowered->value == "%tmp0");
+    assert(
+        output.str() ==
+        "  %tmp0 = call i32 @method.UInt32.scale(i32 %value, i32 2)\n"
+    );
+
+    auto missing_member_state = orison::lowering::FunctionLoweringState {};
+    missing_member_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%value",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto missing_member_failures = orison::lowering::LoweringFailures {};
+    auto missing_member_session = orison::lowering::FunctionLoweringSession {
+        .state = missing_member_state,
+        .failures = missing_member_failures,
+    };
+    output = {};
+    auto missing_member_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions[1].body_statements.front().expression,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        missing_member_session,
+        output
+    );
+    assert(!missing_member_lowered.has_value());
+    assert(
+        missing_member_session.failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::unknown_member_call_receiver
+    );
+    assert(
+        orison::lowering::render_expression_lowering_failure(
+            missing_member_session.failures.expression
+        ) == "unknown lowered member call receiver: value"
     );
     std::filesystem::remove(path);
     return 0;
