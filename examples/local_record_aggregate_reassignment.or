@@ -1,0 +1,14 @@
+package examples.aggregates
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+unsafe function main() -> UInt32
+    var regs = UartRegisters(0 as UInt32, 1 as UInt32)
+    regs = UartRegisters(2 as UInt32, 3 as UInt32)
+    regs.status = 4 as UInt32
+    var bytes: Array<Byte, 4> = [1, 2, 3, 4]
+    bytes = [5, 6, 7, 8]
+    bytes[1] = 9
+    0 as UInt32

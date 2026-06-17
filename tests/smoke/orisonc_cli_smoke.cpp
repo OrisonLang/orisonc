@@ -1898,6 +1898,13 @@ int main() {
     assert(WIFEXITED(nested_aggregate_status));
     assert(WEXITSTATUS(nested_aggregate_status) == 0);
 
+    auto local_aggregate_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_aggregate_reassignment.or";
+    auto local_aggregate_status =
+        std::system((executable.string() + " run " + local_aggregate_demo_path.string()).c_str());
+    assert(WIFEXITED(local_aggregate_status));
+    assert(WEXITSTATUS(local_aggregate_status) == 0);
+
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",
