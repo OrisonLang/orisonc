@@ -1,0 +1,22 @@
+package examples.aggregates
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+record Log
+    entries: Array<UartRegisters, 2>
+
+record Matrix
+    rows: Array<Array<Byte, 4>, 2>
+
+unsafe function local_entry_status_address(index: UInt64) -> Address
+    var log = Log([UartRegisters(0 as UInt32, 0 as UInt32), UartRegisters(1 as UInt32, 1 as UInt32)])
+    address_of(log.entries[index].status)
+
+unsafe function local_matrix_byte_address(index: UInt64, inner: UInt64) -> Address
+    var matrix = Matrix([[0 as Byte, 0 as Byte, 0 as Byte, 0 as Byte], [1 as Byte, 1 as Byte, 1 as Byte, 1 as Byte]])
+    address_of(matrix.rows[index][inner])
+
+function main() -> UInt32
+    0 as UInt32

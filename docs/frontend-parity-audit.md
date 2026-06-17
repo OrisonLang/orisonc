@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   `pointer.rows[index][inner] = value` slice pinned outside the frozen spec and tour documents.
 - 2026-06-16: checked-in example coverage now also includes a small backend demo for local record and fixed-array
   reassignment, pinning the whole-value aggregate path independently from the pointer-backed demo.
+- 2026-06-16: checked-in example coverage now also includes a small backend demo for record-value-backed nested
+  addressing, pinning `address_of(local.entries[index].status)` and `address_of(local.rows[index][inner])` as a
+  separate runnable example.
 - 2026-06-16: lowering now materializes lowerable non-generic record constructor calls as LLVM aggregate values via
   `insertvalue`, allows those values in mutable local `var` storage, and lowers `address_of(local.field)` through the
   same record-layout metadata already used by pointer-backed aggregate paths; immutable aggregate `let` bindings and

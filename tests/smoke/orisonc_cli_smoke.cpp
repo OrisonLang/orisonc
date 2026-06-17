@@ -1905,6 +1905,13 @@ int main() {
     assert(WIFEXITED(local_aggregate_status));
     assert(WEXITSTATUS(local_aggregate_status) == 0);
 
+    auto nested_addressing_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_nested_addressing.or";
+    auto nested_addressing_status =
+        std::system((executable.string() + " run " + nested_addressing_demo_path.string()).c_str());
+    assert(WIFEXITED(nested_addressing_status));
+    assert(WEXITSTATUS(nested_addressing_status) == 0);
+
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",

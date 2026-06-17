@@ -4,6 +4,7 @@
 `ffi_fixed_parameters.or` demonstrates a finite C FFI contract with two explicit `Pointer<Byte>` parameters.
 `nested_pointer_aggregate_assignment.or` demonstrates nested pointer-backed aggregate assignment on records and fixed arrays.
 `local_record_aggregate_reassignment.or` demonstrates local record and fixed-array whole-value reassignment.
+`local_record_nested_addressing.or` demonstrates record-value-backed nested field and index addressing.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
@@ -22,6 +23,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `tour_11_concurrency.or` | `async`, `await`, `task`, `thread` | frontend |
 | `nested_pointer_aggregate_assignment.or` | nested pointer-backed aggregate assignment | backend |
 | `local_record_aggregate_reassignment.or` | local record and fixed-array reassignment | backend |
+| `local_record_nested_addressing.or` | record-value-backed nested addressing | backend |
 
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
 The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
@@ -63,3 +65,11 @@ build/tools/orisonc/orisonc run examples/local_record_aggregate_reassignment.or
 ```
 
 It returns `0` after exercising whole-value record and fixed-array reassignment.
+
+Run the local nested addressing demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_record_nested_addressing.or
+```
+
+It returns `0` after compiling local record-backed nested address calculations.
