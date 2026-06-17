@@ -146,7 +146,18 @@ int main() {
                   "    0 as UInt32\n"
                   "\n"
                   "function make_values() -> Array<UInt32, 3>\n"
-                  "    [1, 2, 3]\n";
+                  "    [1, 2, 3]\n"
+                  "\n"
+                  "extend UInt32\n"
+                  "    public function triple(this: shared This) -> Array<UInt32, 3>\n"
+                  "        [this, this, this]\n"
+                  "\n"
+                  "function sum_method_array_values() -> UInt32\n"
+                  "    var value: UInt32 = 1 as UInt32\n"
+                  "    var total = 0 as UInt32\n"
+                  "    for item in value.triple()\n"
+                  "        total = total + item\n"
+                  "    0 as UInt32\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -463,6 +474,18 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(make_values_ir.find("insertvalue [3 x i32]") != std::string::npos);
     assert(make_values_ir.find("ret [3 x i32]") != std::string::npos);
+
+    auto method_array_for_ir = orison::lowering::emit_function(
+        parse_result.module.functions[20],
+        context.functions.at("sum_method_array_values"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(method_array_for_ir.find("call [3 x i32] @method.UInt32.triple") != std::string::npos);
+    assert(method_array_for_ir.find("for.iteration") != std::string::npos);
+    assert(method_array_for_ir.find("ret i32 0") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

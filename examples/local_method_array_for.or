@@ -1,0 +1,12 @@
+package examples.collections
+
+extend UInt32
+    public function triple(this: shared This) -> Array<UInt32, 3>
+        [this, this, this]
+
+function main() -> UInt32
+    var value: UInt32 = 1 as UInt32
+    var total = 0 as UInt32
+    for item in value.triple()
+        total = total + item
+    0 as UInt32

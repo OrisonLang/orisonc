@@ -474,6 +474,26 @@ auto source_type_name_for_expression(
         return source_type_name_for_llvm_type(function->second.return_type, context);
     }
 
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::member_access) {
+        auto receiver = infer_member_call_receiver(expression, state);
+        if (receiver.result != MemberCallReceiverInferenceResult::found) {
+            return std::nullopt;
+        }
+
+        auto method = find_lowered_method_signature(
+            context.lowering,
+            receiver.receiver_type_name,
+            receiver.method_name
+        );
+        if (method.result != LoweredMethodLookupResult::found || method.method == nullptr ||
+            method.method->signature.return_type.empty() || method.method->signature.return_type == "void") {
+            return std::nullopt;
+        }
+
+        return source_type_name_for_llvm_type(method.method->signature.return_type, context);
+    }
+
     return std::nullopt;
 }
 

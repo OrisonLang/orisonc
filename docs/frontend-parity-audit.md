@@ -29,10 +29,12 @@ This file tracks which source-language frontend slices are reflected in the curr
   non-generic record/fixed-array subset, aggregate assignment beyond the currently supported mutable-local and
   pointer-backed record/fixed-array field and index targets, and iterable lowering beyond array literals plus named
   fixed-size arrays recovered from local names, nested record-backed array fields, index-derived array sources, and
-  indexed record-field array sources, plus helper-returned array sources
+  indexed record-field array sources, plus helper-returned and method-returned array sources
 
 ## Latest update
 
+- 2026-06-16: lowering now also resolves fixed-size arrays returned by methods for `for` loops, so shapes like
+  `value.triple()` lower through the same single-array-lower plus per-element-extract path.
 - 2026-06-16: lowering now also resolves fixed-size arrays returned by helper calls for `for` loops, so shapes like
   `make_values()` lower through the same single-array-lower plus per-element-extract path.
 - 2026-06-16: lowering now also resolves fixed-size arrays reached through indexed record fields for `for` loops, so
