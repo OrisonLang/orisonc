@@ -1919,6 +1919,14 @@ int main() {
     assert(WIFEXITED(indexed_array_for_status));
     assert(WEXITSTATUS(indexed_array_for_status) == 0);
 
+    auto indexed_field_for_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_index_field_for.or";
+    auto indexed_field_for_status = std::system(
+        (executable.string() + " run " + indexed_field_for_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(indexed_field_for_status));
+    assert(WEXITSTATUS(indexed_field_for_status) == 0);
+
     auto nested_immutable_aggregate_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_nested_aggregate_let.or";
     auto nested_immutable_aggregate_status = std::system(

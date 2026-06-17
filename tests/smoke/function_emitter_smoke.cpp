@@ -137,6 +137,19 @@ int main() {
                   "    var total = 0 as UInt32\n"
                   "    for item in grid.rows[0]\n"
                   "        total = total + item\n"
+                  "    0 as UInt32\n"
+                  "\n"
+                  "record Row\n"
+                  "    values: Array<UInt32, 3>\n"
+                  "\n"
+                  "record NestedGrid\n"
+                  "    rows: Array<Row, 2>\n"
+                  "\n"
+                  "function sum_indexed_record_field_values() -> UInt32\n"
+                  "    var grid = NestedGrid([Row([1, 2, 3]), Row([4, 5, 6])])\n"
+                  "    var total = 0 as UInt32\n"
+                  "    for item in grid.rows[0].values\n"
+                  "        total = total + item\n"
                   "    0 as UInt32\n";
     }
 
@@ -430,6 +443,21 @@ int main() {
     assert(indexed_record_array_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
     assert(indexed_record_array_for_ir.find("for.iteration") != std::string::npos);
     assert(indexed_record_array_for_ir.find("ret i32 0") != std::string::npos);
+
+    auto indexed_record_field_for_ir = orison::lowering::emit_function(
+        parse_result.module.functions[18],
+        context.functions.at("sum_indexed_record_field_values"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(indexed_record_field_for_ir.find("extractvalue %record.NestedGrid") != std::string::npos);
+    assert(indexed_record_field_for_ir.find("extractvalue [2 x %record.Row]") != std::string::npos);
+    assert(indexed_record_field_for_ir.find("extractvalue %record.Row") != std::string::npos);
+    assert(indexed_record_field_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
+    assert(indexed_record_field_for_ir.find("for.iteration") != std::string::npos);
+    assert(indexed_record_field_for_ir.find("ret i32 0") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

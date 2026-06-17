@@ -1,0 +1,14 @@
+package examples.collections
+
+public record Row
+    public values: Array<UInt32, 3>
+
+public record Grid
+    public rows: Array<Row, 2>
+
+function main() -> UInt32
+    var grid = Grid([Row([1, 2, 3]), Row([4, 5, 6])])
+    var total = 0 as UInt32
+    for item in grid.rows[0].values
+        total = total + item
+    0 as UInt32
