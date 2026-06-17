@@ -43,5 +43,16 @@ int main() {
     assert(!orison::lowering::has_supported_function_signature_types(unsupported));
     assert(unsupported.parameter_types.size() == 1);
     assert(unsupported.parameter_types.front().empty());
+
+    auto array_return = orison::lowering::lower_function_signature(
+        TypeSyntax {
+            .name = "Array",
+            .generic_arguments = {TypeSyntax {.name = "UInt32"}, TypeSyntax {.name = "3"}},
+        },
+        {},
+        "make_values"
+    );
+    assert(orison::lowering::has_supported_function_signature_types(array_return));
+    assert(array_return.return_type == "[3 x i32]");
     return 0;
 }

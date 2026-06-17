@@ -320,6 +320,50 @@ auto array_element_source_type_name(std::string_view type_name) -> std::optional
     return arguments[0];
 }
 
+auto source_type_name_for_llvm_type(
+    std::string_view llvm_type,
+    EmissionContext const& context
+) -> std::optional<std::string> {
+    if (llvm_type == "i1") {
+        return std::string {"Bool"};
+    }
+    if (llvm_type == "i8") {
+        return std::string {"UInt8"};
+    }
+    if (llvm_type == "i16") {
+        return std::string {"UInt16"};
+    }
+    if (llvm_type == "i32") {
+        return std::string {"UInt32"};
+    }
+    if (llvm_type == "i64") {
+        return std::string {"UInt64"};
+    }
+    if (llvm_type == "float") {
+        return std::string {"Float32"};
+    }
+    if (llvm_type == "double") {
+        return std::string {"Float64"};
+    }
+
+    for (auto const& [record_name, layout] : context.lowering.records) {
+        if (layout.llvm_type_name == llvm_type) {
+            return record_name;
+        }
+    }
+
+    if (auto array = parse_llvm_array_type(llvm_type)) {
+        auto element_source_type = source_type_name_for_llvm_type(array->element_type, context);
+        if (!element_source_type.has_value()) {
+            return std::nullopt;
+        }
+
+        return std::string {"Array<"} + *element_source_type + ", " + std::to_string(array->length) + ">";
+    }
+
+    return std::nullopt;
+}
+
 auto find_record_field(
     LoweredRecordLayout const& layout,
     std::string_view field_name
@@ -418,6 +462,16 @@ auto source_type_name_for_expression(
         }
 
         return array_element_source_type_name(*base_source_type);
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
+        auto function = context.lowering.functions.find(expression.left->text);
+        if (function == context.lowering.functions.end() || function->second.return_type == "void") {
+            return std::nullopt;
+        }
+
+        return source_type_name_for_llvm_type(function->second.return_type, context);
     }
 
     return std::nullopt;

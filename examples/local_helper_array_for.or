@@ -1,0 +1,10 @@
+package examples.collections
+
+function make_values() -> Array<UInt32, 3>
+    [1, 2, 3]
+
+function main() -> UInt32
+    var total = 0 as UInt32
+    for item in make_values()
+        total = total + item
+    0 as UInt32

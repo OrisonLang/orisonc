@@ -3,6 +3,38 @@
 #include <utility>
 
 namespace orison::lowering {
+namespace {
+
+auto is_decimal_integer_text(std::string_view text) -> bool {
+    if (text.empty()) {
+        return false;
+    }
+    for (auto character : text) {
+        if (character < '0' || character > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto lowered_function_type_for(syntax::TypeSyntax const& type) -> std::optional<std::string> {
+    if (type.name == "Array" && type.generic_arguments.size() == 2 &&
+        is_decimal_integer_text(type.generic_arguments[1].name)) {
+        auto element_type = lowered_function_type_for(type.generic_arguments[0]);
+        if (element_type.has_value() && *element_type != "void") {
+            return "[" + type.generic_arguments[1].name + " x " + *element_type + "]";
+        }
+        return std::nullopt;
+    }
+
+    if (auto lowered_type = llvm_type_for(type); lowered_type.has_value()) {
+        return std::string {*lowered_type};
+    }
+
+    return std::nullopt;
+}
+
+}  // namespace
 
 auto lower_function_signature(
     syntax::TypeSyntax const& return_type,
@@ -15,15 +47,15 @@ auto lower_function_signature(
         .symbol_name = std::move(symbol_name),
     };
 
-    if (auto lowered_return_type = llvm_type_for(return_type)) {
-        signature.return_type = *lowered_return_type;
+    if (auto lowered_return_type = lowered_function_type_for(return_type)) {
+        signature.return_type = std::move(*lowered_return_type);
     }
     signature.parameter_types.reserve(parameters.size());
     for (auto const& parameter : parameters) {
-        auto lowered_parameter_type = llvm_type_for(parameter.type);
-        signature.parameter_types.push_back(
-            lowered_parameter_type.has_value() ? std::string(*lowered_parameter_type) : std::string {}
-        );
+        auto lowered_parameter_type = lowered_function_type_for(parameter.type);
+        signature.parameter_types.push_back(lowered_parameter_type.has_value()
+                                                ? std::move(*lowered_parameter_type)
+                                                : std::string {});
     }
     return signature;
 }

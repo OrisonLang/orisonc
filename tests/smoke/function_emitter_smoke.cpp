@@ -139,18 +139,14 @@ int main() {
                   "        total = total + item\n"
                   "    0 as UInt32\n"
                   "\n"
-                  "record Row\n"
-                  "    values: Array<UInt32, 3>\n"
-                  "\n"
-                  "record NestedGrid\n"
-                  "    rows: Array<Row, 2>\n"
-                  "\n"
-                  "function sum_indexed_record_field_values() -> UInt32\n"
-                  "    var grid = NestedGrid([Row([1, 2, 3]), Row([4, 5, 6])])\n"
+                  "function sum_helper_array_values() -> UInt32\n"
                   "    var total = 0 as UInt32\n"
-                  "    for item in grid.rows[0].values\n"
+                  "    for item in make_values()\n"
                   "        total = total + item\n"
-                  "    0 as UInt32\n";
+                  "    0 as UInt32\n"
+                  "\n"
+                  "function make_values() -> Array<UInt32, 3>\n"
+                  "    [1, 2, 3]\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -444,20 +440,29 @@ int main() {
     assert(indexed_record_array_for_ir.find("for.iteration") != std::string::npos);
     assert(indexed_record_array_for_ir.find("ret i32 0") != std::string::npos);
 
-    auto indexed_record_field_for_ir = orison::lowering::emit_function(
+    auto helper_array_for_ir = orison::lowering::emit_function(
         parse_result.module.functions[18],
-        context.functions.at("sum_indexed_record_field_values"),
+        context.functions.at("sum_helper_array_values"),
         context,
         strings,
         diagnostics
     );
     assert(!diagnostics.has_errors());
-    assert(indexed_record_field_for_ir.find("extractvalue %record.NestedGrid") != std::string::npos);
-    assert(indexed_record_field_for_ir.find("extractvalue [2 x %record.Row]") != std::string::npos);
-    assert(indexed_record_field_for_ir.find("extractvalue %record.Row") != std::string::npos);
-    assert(indexed_record_field_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
-    assert(indexed_record_field_for_ir.find("for.iteration") != std::string::npos);
-    assert(indexed_record_field_for_ir.find("ret i32 0") != std::string::npos);
+    assert(helper_array_for_ir.find("call [3 x i32] @make_values()") != std::string::npos);
+    assert(helper_array_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
+    assert(helper_array_for_ir.find("for.iteration") != std::string::npos);
+    assert(helper_array_for_ir.find("ret i32 0") != std::string::npos);
+
+    auto make_values_ir = orison::lowering::emit_function(
+        parse_result.module.functions[19],
+        context.functions.at("make_values"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(make_values_ir.find("insertvalue [3 x i32]") != std::string::npos);
+    assert(make_values_ir.find("ret [3 x i32]") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);
