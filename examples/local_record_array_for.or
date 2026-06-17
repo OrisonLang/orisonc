@@ -1,0 +1,14 @@
+package examples.collections
+
+public record Bucket
+    public values: Array<UInt32, 3>
+
+public record Wrapper
+    public bucket: Bucket
+
+function main() -> UInt32
+    var wrapper = Wrapper(Bucket([1, 2, 3]))
+    var total = 0 as UInt32
+    for item in wrapper.bucket.values
+        total = total + item
+    0 as UInt32

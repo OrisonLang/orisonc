@@ -199,8 +199,15 @@ auto lowered_type_for_source_type_name(std::string_view source_type_name) -> std
     };
 }
 
+auto array_element_source_type_name(std::string_view type_name) -> std::optional<std::string>;
+auto find_record_field(
+    LoweredRecordLayout const& layout,
+    std::string_view field_name
+) -> LoweredRecordField const*;
+
 auto source_type_name_for_expression(
     syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<std::string> {
     if (expression.kind == syntax::ExpressionKind::name) {
@@ -210,10 +217,38 @@ auto source_type_name_for_expression(
         }
     }
 
+    if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
+        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
+        if (!base_source_type.has_value()) {
+            return std::nullopt;
+        }
+
+        auto layout = context.lowering.records.find(*base_source_type);
+        if (layout == context.lowering.records.end()) {
+            return std::nullopt;
+        }
+
+        auto const* field = find_record_field(layout->second, expression.text);
+        if (field == nullptr || field->source_type_name.empty()) {
+            return std::nullopt;
+        }
+        return field->source_type_name;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::index_access && expression.left != nullptr &&
+        expression.arguments.size() == 1) {
+        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
+        if (!base_source_type.has_value()) {
+            return std::nullopt;
+        }
+
+        return array_element_source_type_name(*base_source_type);
+    }
+
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset" &&
         !expression.arguments.empty()) {
-        return source_type_name_for_expression(expression.arguments.front(), state);
+        return source_type_name_for_expression(expression.arguments.front(), context, state);
     }
 
     return std::nullopt;
@@ -221,9 +256,10 @@ auto source_type_name_for_expression(
 
 auto pointee_lowered_type_for_pointer_expression(
     syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<LoweredType> {
-    auto source_type = source_type_name_for_expression(expression, state);
+    auto source_type = source_type_name_for_expression(expression, context, state);
     if (!source_type.has_value()) {
         return std::nullopt;
     }
@@ -334,7 +370,7 @@ auto inferred_expression_type(
         if ((intrinsic_name == "raw_read" || intrinsic_name == "volatile_read") &&
             !expression.arguments.empty()) {
             auto pointee_type =
-                pointee_lowered_type_for_pointer_expression(expression.arguments.front(), state);
+                pointee_lowered_type_for_pointer_expression(expression.arguments.front(), context, state);
             if (pointee_type.has_value()) {
                 return pointee_type;
             }
@@ -424,7 +460,7 @@ auto lower_pointer_operand(
         );
     }
 
-    auto source_type = source_type_name_for_expression(expression, session.state);
+    auto source_type = source_type_name_for_expression(expression, context, session.state);
     if (inferred.has_value() && inferred->type == "i64" &&
         source_type.has_value() && *source_type == "Address") {
         auto address = lowered_expression(
@@ -844,7 +880,7 @@ auto lower_pointer_record_field_address(
         return std::nullopt;
     }
 
-    auto base_source_type = source_type_name_for_expression(*base_expression, session.state);
+    auto base_source_type = source_type_name_for_expression(*base_expression, context, session.state);
     if (!base_source_type.has_value()) {
         return std::nullopt;
     }
@@ -1108,7 +1144,7 @@ auto lower_raw_offset_intrinsic(
     }
 
     auto pointee_type =
-        pointee_lowered_type_for_pointer_expression(expression.arguments.front(), session.state);
+        pointee_lowered_type_for_pointer_expression(expression.arguments.front(), context, session.state);
     if (!pointee_type.has_value()) {
         record_failure(
             failures,
@@ -1189,7 +1225,7 @@ auto lower_write_intrinsic(
     }
 
     auto value_type =
-        pointee_lowered_type_for_pointer_expression(expression.arguments.front(), session.state);
+        pointee_lowered_type_for_pointer_expression(expression.arguments.front(), context, session.state);
     if (!value_type.has_value()) {
         value_type = inferred_expression_type(expression.arguments[1], context, session.state);
     }
@@ -1328,6 +1364,70 @@ auto lowered_expression(
             return std::nullopt;
         }
         return binding->second;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
+        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
+        if (!base_source_type.has_value()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto layout = context.lowering.records.find(*base_source_type);
+        if (layout == context.lowering.records.end()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto const* field = find_record_field(layout->second, expression.text);
+        if (field == nullptr || field->source_type_name.empty()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto base_llvm_type = llvm_type_for_source_type_name(*base_source_type, context.lowering);
+        auto field_llvm_type = llvm_type_for_source_type_name(field->source_type_name, context.lowering);
+        if (!base_llvm_type.has_value() || !field_llvm_type.has_value()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto lowered_base = lowered_expression(
+            *expression.left,
+            *base_llvm_type,
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_base.has_value()) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+        output << "  " << temporary_name << " = extractvalue " << lowered_base->type << " "
+               << lowered_base->value << ", " << field->index << "\n";
+        return LoweredExpression {
+            .type = *field_llvm_type,
+            .value = std::move(temporary_name),
+            .signedness = IntegerSignedness::not_integer,
+        };
     }
 
     if (expression.kind == syntax::ExpressionKind::cast && expression.left != nullptr) {

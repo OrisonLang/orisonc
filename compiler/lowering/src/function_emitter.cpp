@@ -320,6 +320,18 @@ auto array_element_source_type_name(std::string_view type_name) -> std::optional
     return arguments[0];
 }
 
+auto find_record_field(
+    LoweredRecordLayout const& layout,
+    std::string_view field_name
+) -> LoweredRecordField const* {
+    for (auto const& field : layout.fields) {
+        if (field.name == field_name) {
+            return &field;
+        }
+    }
+    return nullptr;
+}
+
 auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context
@@ -370,6 +382,7 @@ auto lowered_type_for_source_type_name(
 
 auto source_type_name_for_expression(
     syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<std::string> {
     if (expression.kind == syntax::ExpressionKind::name) {
@@ -377,6 +390,34 @@ auto source_type_name_for_expression(
         if (source_type != state.source_type_names.end()) {
             return source_type->second;
         }
+    }
+
+    if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
+        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
+        if (!base_source_type.has_value()) {
+            return std::nullopt;
+        }
+
+        auto layout = context.lowering.records.find(*base_source_type);
+        if (layout == context.lowering.records.end()) {
+            return std::nullopt;
+        }
+
+        auto const* field = find_record_field(layout->second, expression.text);
+        if (field == nullptr || field->source_type_name.empty()) {
+            return std::nullopt;
+        }
+        return field->source_type_name;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::index_access && expression.left != nullptr &&
+        expression.arguments.size() == 1) {
+        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
+        if (!base_source_type.has_value()) {
+            return std::nullopt;
+        }
+
+        return array_element_source_type_name(*base_source_type);
     }
 
     return std::nullopt;
@@ -750,11 +791,20 @@ auto lower_unit_for_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     if (statement.expression.kind != syntax::ExpressionKind::array_literal) {
-        auto iterable_type = infer_unit_expression_type(statement.expression, context, session.state);
-        if (!iterable_type.has_value()) {
+        auto source_type_name = source_type_name_for_expression(statement.expression, context, session.state);
+        if (!source_type_name.has_value()) {
             diagnostics.error(
                 statement.line,
                 "lowering for statements currently requires an array literal or fixed-size array iterable"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto iterable_type = lowered_type_for_source_type_name(*source_type_name, context.lowering);
+        if (!iterable_type.has_value()) {
+            diagnostics.error(
+                statement.line,
+                "lowering for statements currently requires a fixed-size array iterable"
             );
             return StatementFlow::failed;
         }
@@ -768,20 +818,11 @@ auto lower_unit_for_statement(
             return StatementFlow::failed;
         }
 
-        auto source_type_name = source_type_name_for_expression(statement.expression, session.state);
-        if (!source_type_name.has_value()) {
-            diagnostics.error(
-                statement.line,
-                "lowering for statements currently requires a named fixed-size array iterable"
-            );
-            return StatementFlow::failed;
-        }
-
         auto element_source_type_name = array_element_source_type_name(*source_type_name);
         if (!element_source_type_name.has_value()) {
             diagnostics.error(
                 statement.line,
-                "lowering for statements currently requires a fixed-size array iterable"
+                "lowering for statements currently requires a named fixed-size array iterable"
             );
             return StatementFlow::failed;
         }
@@ -797,9 +838,7 @@ auto lower_unit_for_statement(
 
         auto lowered_iterable = lower_expression(
             statement.expression,
-            array_type->element_type.empty()
-                ? iterable_type->type
-                : ("[" + std::to_string(array_type->length) + " x " + array_type->element_type + "]"),
+            iterable_type->type,
             IntegerSignedness::not_integer,
             context,
             session,

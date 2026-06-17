@@ -114,7 +114,20 @@ int main() {
                   "    var total = 0 as UInt32\n"
                   "    for item in values\n"
                   "        total = total + item\n"
-                  "    total\n";
+                  "    total\n"
+                  "\n"
+                  "record Bucket\n"
+                  "    values: Array<UInt32, 3>\n"
+                  "\n"
+                  "record Wrapper\n"
+                  "    bucket: Bucket\n"
+                  "\n"
+                  "function sum_nested_record_array_values() -> UInt32\n"
+                  "    var wrapper = Wrapper(Bucket([1, 2, 3]))\n"
+                  "    var total = 0 as UInt32\n"
+                  "    for item in wrapper.bucket.values\n"
+                  "        total = total + item\n"
+                  "    0 as UInt32\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -378,6 +391,21 @@ int main() {
     assert(sum_array_values_ir.find("extractvalue [3 x i32]") != std::string::npos);
     assert(sum_array_values_ir.find("for.iteration") != std::string::npos);
     assert(sum_array_values_ir.find("ret i32") != std::string::npos);
+
+    auto nested_record_array_for_ir = orison::lowering::emit_function(
+        parse_result.module.functions[16],
+        context.functions.at("sum_nested_record_array_values"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(nested_record_array_for_ir.find("load %record.Wrapper, ptr %wrapper.addr") != std::string::npos);
+    assert(nested_record_array_for_ir.find("extractvalue %record.Wrapper") != std::string::npos);
+    assert(nested_record_array_for_ir.find("extractvalue %record.Bucket") != std::string::npos);
+    assert(nested_record_array_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
+    assert(nested_record_array_for_ir.find("for.iteration") != std::string::npos);
+    assert(nested_record_array_for_ir.find("ret i32 0") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);
