@@ -1891,6 +1891,13 @@ int main() {
     assert(WIFEXITED(fixed_ffi_status));
     assert(WEXITSTATUS(fixed_ffi_status) == 0);
 
+    auto nested_aggregate_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "nested_pointer_aggregate_assignment.or";
+    auto nested_aggregate_status =
+        std::system((executable.string() + " run " + nested_aggregate_demo_path.string()).c_str());
+    assert(WIFEXITED(nested_aggregate_status));
+    assert(WEXITSTATUS(nested_aggregate_status) == 0);
+
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",

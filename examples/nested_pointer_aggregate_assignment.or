@@ -14,3 +14,9 @@ unsafe function assign_nested_pointer_aggregate(log: Pointer<Log>, matrix: Point
     log.entries[index].status = 8 as UInt32
     matrix.rows[index][inner] = 1 as Byte
     return
+
+unsafe function main() -> UInt32
+    var log = Log([UartRegisters(0 as UInt32, 0 as UInt32), UartRegisters(0 as UInt32, 0 as UInt32)])
+    var matrix = Matrix([[0 as Byte, 0 as Byte, 0 as Byte, 0 as Byte], [0 as Byte, 0 as Byte, 0 as Byte, 0 as Byte]])
+    assign_nested_pointer_aggregate(Pointer(address_of(log)), Pointer(address_of(matrix)), 0 as UInt64, 1 as UInt64)
+    0 as UInt32

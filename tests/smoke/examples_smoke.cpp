@@ -8,7 +8,7 @@
 
 auto main() -> int {
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
-    constexpr auto frontend_examples = std::array<std::string_view, 12> {
+    constexpr auto frontend_examples = std::array<std::string_view, 11> {
         "tour_01_packages_imports.or",
         "tour_02_records_choices.or",
         "tour_03_interfaces_methods.or",
@@ -20,7 +20,6 @@ auto main() -> int {
         "tour_09_ffi_printf.or",
         "tour_10_unsafe_memory.or",
         "tour_11_concurrency.or",
-        "nested_pointer_aggregate_assignment.or",
     };
 
     orison::pipeline::CompilePipeline pipeline;
@@ -29,9 +28,10 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 3> {
+    constexpr auto backend_examples = std::array<std::string_view, 4> {
         "ffi_fixed_parameters.or",
         "minimal.or",
+        "nested_pointer_aggregate_assignment.or",
         "tour_09_ffi_printf.or",
     };
     for (auto name : backend_examples) {

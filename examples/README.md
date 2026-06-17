@@ -19,7 +19,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `tour_09_ffi_printf.or` | C FFI, explicit `library "m"`, and `printf("Hello world from Orison!\\n")` | backend |
 | `tour_10_unsafe_memory.or` | `const`, `unsafe`, pointers, raw and volatile access | frontend |
 | `tour_11_concurrency.or` | `async`, `await`, `task`, `thread` | frontend |
-| `nested_pointer_aggregate_assignment.or` | nested pointer-backed aggregate assignment | frontend |
+| `nested_pointer_aggregate_assignment.or` | nested pointer-backed aggregate assignment | backend |
 
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
 The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
@@ -49,7 +49,7 @@ It calls `strcmp` with exactly two statically checked arguments and exits with s
 Run the nested aggregate assignment demo with:
 
 ```sh
-build/tools/orisonc/orisonc --parse examples/nested_pointer_aggregate_assignment.or
+build/tools/orisonc/orisonc run examples/nested_pointer_aggregate_assignment.or
 ```
 
-It currently serves as a frontend parity check for nested pointer-backed aggregate assignment.
+It returns `0` after exercising nested pointer-backed aggregate assignment through a small local record demo.
