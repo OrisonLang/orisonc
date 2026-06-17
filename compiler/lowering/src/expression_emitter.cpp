@@ -1430,6 +1430,85 @@ auto lowered_expression(
         };
     }
 
+    if (expression.kind == syntax::ExpressionKind::index_access && expression.left != nullptr &&
+        expression.arguments.size() == 1) {
+        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
+        if (!base_source_type.has_value()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto element_source_type = array_element_source_type_name(*base_source_type);
+        if (!element_source_type.has_value()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto base_llvm_type = llvm_type_for_source_type_name(*base_source_type, context.lowering);
+        auto element_llvm_type = llvm_type_for_source_type_name(*element_source_type, context.lowering);
+        auto element_signedness = integer_signedness_for(syntax::TypeSyntax {
+            .name = *element_source_type,
+        });
+        if (!base_llvm_type.has_value() || !element_llvm_type.has_value()) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        if (*element_llvm_type != expected_llvm_type || element_signedness != expected_signedness) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::type_mismatch,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto lowered_base = lowered_expression(
+            *expression.left,
+            *base_llvm_type,
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_base.has_value()) {
+            return std::nullopt;
+        }
+
+        auto lowered_index = lowered_expression(
+            expression.arguments.front(),
+            "i64",
+            IntegerSignedness::unsigned_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_index.has_value()) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+        output << "  " << temporary_name << " = extractvalue " << lowered_base->type << " "
+               << lowered_base->value << ", " << lowered_index->value << "\n";
+        return LoweredExpression {
+            .type = *element_llvm_type,
+            .value = std::move(temporary_name),
+            .signedness = element_signedness,
+        };
+    }
+
     if (expression.kind == syntax::ExpressionKind::cast && expression.left != nullptr) {
         syntax::TypeSyntax target_type {
             .name = expression.text,

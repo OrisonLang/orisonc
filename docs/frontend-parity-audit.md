@@ -28,7 +28,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 - lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
   non-generic record/fixed-array subset, aggregate assignment beyond the currently supported mutable-local and
   pointer-backed record/fixed-array field and index targets, and iterable lowering beyond array literals plus named
-  fixed-size arrays recovered from local names and nested record-backed array fields
+  fixed-size arrays recovered from local names, nested record-backed array fields, and index-derived array sources
 
 ## Latest update
 
@@ -40,6 +40,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   iterable support remains pending.
 - 2026-06-16: lowering now also resolves nested record-backed fixed-size array sources for `for` loops, so member
   chains like `wrapper.bucket.values` follow the same single-lower plus per-element-extract path as local array names.
+- 2026-06-16: lowering now also resolves index-derived fixed-size array sources for `for` loops, so indexed shapes
+  like `grid.rows[0]` lower through the same single-array-lower plus per-element-extract path.
 - 2026-06-16: checked-in example coverage now also includes a small backend demo for nested immutable aggregate `let`
   bindings, pinning nested record and array literals on a single immutable local separate from the flat record and
   array binding example.

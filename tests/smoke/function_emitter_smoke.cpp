@@ -127,6 +127,16 @@ int main() {
                   "    var total = 0 as UInt32\n"
                   "    for item in wrapper.bucket.values\n"
                   "        total = total + item\n"
+                  "    0 as UInt32\n"
+                  "\n"
+                  "record Grid\n"
+                  "    rows: Array<Array<UInt32, 3>, 2>\n"
+                  "\n"
+                  "function sum_indexed_record_array_values() -> UInt32\n"
+                  "    var grid = Grid([[1, 2, 3], [4, 5, 6]])\n"
+                  "    var total = 0 as UInt32\n"
+                  "    for item in grid.rows[0]\n"
+                  "        total = total + item\n"
                   "    0 as UInt32\n";
     }
 
@@ -406,6 +416,20 @@ int main() {
     assert(nested_record_array_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
     assert(nested_record_array_for_ir.find("for.iteration") != std::string::npos);
     assert(nested_record_array_for_ir.find("ret i32 0") != std::string::npos);
+
+    auto indexed_record_array_for_ir = orison::lowering::emit_function(
+        parse_result.module.functions[17],
+        context.functions.at("sum_indexed_record_array_values"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(indexed_record_array_for_ir.find("extractvalue %record.Grid") != std::string::npos);
+    assert(indexed_record_array_for_ir.find("extractvalue [2 x [3 x i32]]") != std::string::npos);
+    assert(indexed_record_array_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
+    assert(indexed_record_array_for_ir.find("for.iteration") != std::string::npos);
+    assert(indexed_record_array_for_ir.find("ret i32 0") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

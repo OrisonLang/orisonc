@@ -11,6 +11,7 @@
 `local_nested_aggregate_let.or` demonstrates immutable aggregate `let` bindings for nested records and arrays.
 `local_array_for.or` demonstrates non-literal fixed-array iteration over a local array value.
 `local_record_array_for.or` demonstrates non-literal fixed-array iteration over a nested record-backed array.
+`local_record_index_for.or` demonstrates non-literal fixed-array iteration over an indexed nested array source.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
@@ -36,6 +37,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_nested_aggregate_let.or` | immutable nested aggregate `let` bindings | backend |
 | `local_array_for.or` | non-literal fixed-array iteration | backend |
 | `local_record_array_for.or` | nested record-backed fixed-array iteration | backend |
+| `local_record_index_for.or` | indexed nested fixed-array iteration | backend |
 
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
 The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
@@ -133,3 +135,11 @@ build/tools/orisonc/orisonc run examples/local_record_array_for.or
 ```
 
 It returns `0` after lowering a `for` loop over a fixed-size array stored inside a local record value.
+
+Run the indexed nested array `for` demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_record_index_for.or
+```
+
+It returns `0` after lowering a `for` loop over a fixed-size array reached through an array index.
