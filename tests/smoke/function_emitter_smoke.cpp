@@ -107,7 +107,14 @@ int main() {
                   "unsafe function assign_nested_pointer_aggregate(log: Pointer<Log>, matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Unit\n"
                   "    log.entries[index].status = 8 as UInt32\n"
                   "    matrix.rows[index][inner] = 1 as Byte\n"
-                  "    return\n";
+                  "    return\n"
+                  "\n"
+                  "function sum_array_values() -> UInt32\n"
+                  "    var values: Array<UInt32, 3> = [1, 2, 3]\n"
+                  "    var total = 0 as UInt32\n"
+                  "    for item in values\n"
+                  "        total = total + item\n"
+                  "    total\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -358,6 +365,19 @@ int main() {
     assert(nested_pointer_aggregate_ir.find("store i32 8, ptr %tmp") != std::string::npos);
     assert(nested_pointer_aggregate_ir.find("store i8 1, ptr %tmp") != std::string::npos);
     assert(nested_pointer_aggregate_ir.find("ret void") != std::string::npos);
+
+    auto sum_array_values_ir = orison::lowering::emit_function(
+        parse_result.module.functions[15],
+        context.functions.at("sum_array_values"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(sum_array_values_ir.find("load [3 x i32], ptr %values.addr") != std::string::npos);
+    assert(sum_array_values_ir.find("extractvalue [3 x i32]") != std::string::npos);
+    assert(sum_array_values_ir.find("for.iteration") != std::string::npos);
+    assert(sum_array_values_ir.find("ret i32") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

@@ -242,7 +242,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         }
 
         auto output_path = std::filesystem::path(args[4]);
-        auto output = std::ofstream(output_path, std::ios::binary);
+        auto output = std::ofstream(output_path, std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output) {
             return CompileResult {
                 .exit_code = 1,

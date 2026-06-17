@@ -53,7 +53,10 @@ auto HostLinker::link(
 ) const -> HostLinkResult {
     auto result = HostLinkResult {};
     auto temporary_object = TemporaryObject(temporary_object_path());
-    auto object_output = std::ofstream(temporary_object.path(), std::ios::binary);
+    auto object_output = std::ofstream(
+        temporary_object.path(),
+        std::ios::out | std::ios::binary | std::ios::trunc
+    );
     if (!object_output) {
         result.diagnostics.error(1, "unable to create temporary object file for linking");
         return result;

@@ -250,6 +250,76 @@ auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std
     return arguments;
 }
 
+struct ParsedLlvmArrayType {
+    std::string element_type;
+    std::size_t length = 0;
+};
+
+auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType> {
+    if (!type.starts_with("[") || !type.ends_with("]") || type.size() < 6) {
+        return std::nullopt;
+    }
+
+    auto depth = std::size_t {0};
+    auto separator = std::size_t {0};
+    for (auto index = std::size_t {1}; index + 1 < type.size(); ++index) {
+        auto const character = type[index];
+        if (character == '[') {
+            ++depth;
+            continue;
+        }
+        if (character == ']') {
+            if (depth > 0) {
+                --depth;
+            }
+            continue;
+        }
+        if (depth == 0 && character == 'x' && index > 1 && index + 2 < type.size() &&
+            type[index - 1] == ' ' && type[index + 1] == ' ') {
+            separator = index;
+            break;
+        }
+    }
+    if (separator == 0) {
+        return std::nullopt;
+    }
+
+    auto length_text = std::string {type.substr(1, separator - 2)};
+    auto element_type = std::string {type.substr(separator + 2, type.size() - separator - 3)};
+    if (length_text.empty() || element_type.empty()) {
+        return std::nullopt;
+    }
+
+    auto length = std::size_t {0};
+    for (auto character : length_text) {
+        if (character < '0' || character > '9') {
+            return std::nullopt;
+        }
+        length = (length * 10) + static_cast<std::size_t>(character - '0');
+    }
+
+    return ParsedLlvmArrayType {
+        .element_type = std::move(element_type),
+        .length = length,
+    };
+}
+
+auto array_element_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"Array<"};
+    if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
+        type_name.size() <= prefix.size() + 1) {
+        return std::nullopt;
+    }
+
+    auto arguments = split_top_level_generic_arguments(
+        type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
+    );
+    if (arguments.size() != 2 || arguments[0].empty()) {
+        return std::nullopt;
+    }
+    return arguments[0];
+}
+
 auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context
@@ -292,6 +362,20 @@ auto lowered_type_for_source_type_name(
                     .signedness = IntegerSignedness::not_integer,
                 };
             }
+        }
+    }
+
+    return std::nullopt;
+}
+
+auto source_type_name_for_expression(
+    syntax::ExpressionSyntax const& expression,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto source_type = state.source_type_names.find(expression.text);
+        if (source_type != state.source_type_names.end()) {
+            return source_type->second;
         }
     }
 
@@ -666,8 +750,129 @@ auto lower_unit_for_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     if (statement.expression.kind != syntax::ExpressionKind::array_literal) {
-        diagnostics.error(statement.line, "lowering for statements currently requires an array literal iterable");
-        return StatementFlow::failed;
+        auto iterable_type = infer_unit_expression_type(statement.expression, context, session.state);
+        if (!iterable_type.has_value()) {
+            diagnostics.error(
+                statement.line,
+                "lowering for statements currently requires an array literal or fixed-size array iterable"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto array_type = parse_llvm_array_type(iterable_type->type);
+        if (!array_type.has_value()) {
+            diagnostics.error(
+                statement.line,
+                "lowering for statements currently requires a fixed-size array iterable"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto source_type_name = source_type_name_for_expression(statement.expression, session.state);
+        if (!source_type_name.has_value()) {
+            diagnostics.error(
+                statement.line,
+                "lowering for statements currently requires a named fixed-size array iterable"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto element_source_type_name = array_element_source_type_name(*source_type_name);
+        if (!element_source_type_name.has_value()) {
+            diagnostics.error(
+                statement.line,
+                "lowering for statements currently requires a fixed-size array iterable"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto element_type = lowered_type_for_source_type_name(*element_source_type_name, context.lowering);
+        if (!element_type.has_value()) {
+            diagnostics.error(
+                statement.line,
+                "lowering for statements currently requires a fixed-size array iterable"
+            );
+            return StatementFlow::failed;
+        }
+
+        auto lowered_iterable = lower_expression(
+            statement.expression,
+            array_type->element_type.empty()
+                ? iterable_type->type
+                : ("[" + std::to_string(array_type->length) + " x " + array_type->element_type + "]"),
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_iterable.has_value()) {
+            auto detail = render_expression_lowering_failure(session.failures.expression);
+            diagnostics.error(
+                statement.expression.line,
+                "lowering for statements currently requires a fixed-size array iterable" +
+                    (detail.empty() ? std::string {} : ": " + detail)
+            );
+            return StatementFlow::failed;
+        }
+
+        auto const block_index = next_llvm_block_index(session.state.next_block_index);
+        auto const exit_block = llvm_block_name("for.exit", block_index);
+        auto iteration_blocks = std::vector<std::string> {};
+        iteration_blocks.reserve(array_type->length);
+        for (auto index = std::size_t {0}; index < array_type->length; ++index) {
+            iteration_blocks.push_back(llvm_block_name("for.iteration", block_index, index));
+        }
+
+        if (iteration_blocks.empty()) {
+            emit_llvm_branch(output, exit_block);
+            emit_llvm_block_label(output, exit_block);
+            session.state.current_block = exit_block;
+            return StatementFlow::falls_through;
+        }
+
+        auto loop_scope = BranchBindingScope(session.state);
+        emit_llvm_branch(output, iteration_blocks.front());
+
+        for (auto index = std::size_t {0}; index < array_type->length; ++index) {
+            loop_scope.reset();
+            emit_llvm_block_label(output, iteration_blocks[index]);
+            session.state.current_block = iteration_blocks[index];
+
+            auto item_name = next_llvm_temporary_name(session.state.next_temporary_index);
+            output << "  " << item_name << " = extractvalue " << lowered_iterable->type << " "
+                   << lowered_iterable->value << ", " << index << "\n";
+            session.state.immutable_bindings[statement.name] = LoweredExpression {
+                .type = element_type->type,
+                .value = std::move(item_name),
+                .signedness = element_type->signedness,
+            };
+            session.state.source_type_names[statement.name] = *element_source_type_name;
+
+            auto loop_targets = LoopTargets {
+                .break_target = exit_block,
+                .continue_target = index + 1 < array_type->length ? iteration_blocks[index + 1] : exit_block,
+                .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
+            };
+            [[maybe_unused]] auto target_scope = LoopTargetScope {session.state, std::move(loop_targets)};
+            auto body_flow = lower_unit_statement_block(
+                statement.nested_statements,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+            if (body_flow == StatementFlow::failed) {
+                return StatementFlow::failed;
+            }
+            if (body_flow == StatementFlow::falls_through) {
+                emit_llvm_branch(output, index + 1 < array_type->length ? iteration_blocks[index + 1]
+                                                                        : exit_block);
+            }
+        }
+
+        emit_llvm_block_label(output, exit_block);
+        session.state.current_block = exit_block;
+        return StatementFlow::falls_through;
     }
 
     auto element_type = std::optional<LoweredType> {};

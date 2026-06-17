@@ -9,6 +9,7 @@
 `local_record_nested_record_assignment.or` demonstrates nested record-field and fixed-array assignment on a local value.
 `local_aggregate_let.or` demonstrates immutable aggregate `let` bindings for records and fixed arrays.
 `local_nested_aggregate_let.or` demonstrates immutable aggregate `let` bindings for nested records and arrays.
+`local_array_for.or` demonstrates non-literal fixed-array iteration over a local array value.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
@@ -32,6 +33,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_record_nested_record_assignment.or` | nested record-field and array assignment | backend |
 | `local_aggregate_let.or` | immutable aggregate `let` bindings | backend |
 | `local_nested_aggregate_let.or` | immutable nested aggregate `let` bindings | backend |
+| `local_array_for.or` | non-literal fixed-array iteration | backend |
 
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
 The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
@@ -113,3 +115,11 @@ build/tools/orisonc/orisonc run examples/local_nested_aggregate_let.or
 ```
 
 It returns `0` after lowering immutable aggregate bindings for nested records and arrays.
+
+Run the named-array `for` demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_array_for.or
+```
+
+It returns `0` after lowering a `for` loop over a local fixed-size array value.
