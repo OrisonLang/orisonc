@@ -1,0 +1,10 @@
+package examples.aggregates
+
+record Registers
+    status: UInt32
+    control: UInt32
+
+unsafe function main() -> UInt32
+    let regs = Registers(0 as UInt32, 1 as UInt32)
+    let bytes: Array<Byte, 4> = [1, 2, 3, 4]
+    0 as UInt32

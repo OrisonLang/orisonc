@@ -57,6 +57,11 @@ int main() {
                   "    observe_unit(input)\n"
                   "    input\n"
                   "\n"
+                  "function aggregate_lets() -> UInt32\n"
+                  "    let regs = Registers(0 as UInt32, 1 as UInt32)\n"
+                  "    let bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
+                  "    0 as UInt32\n"
+                  "\n"
                   "record Registers\n"
                   "    data: UInt32\n"
                   "    status: UInt32\n"
@@ -294,13 +299,46 @@ int main() {
     );
     assert(output.str().empty());
 
+    auto aggregate_let_state = orison::lowering::FunctionLoweringState {};
+    auto aggregate_let_failures = orison::lowering::LoweringFailures {};
+    auto aggregate_let_session = orison::lowering::FunctionLoweringSession {
+        .state = aggregate_let_state,
+        .failures = aggregate_let_failures,
+    };
+    auto const& aggregate_let_statements = parse_result.module.functions[5].body_statements;
+    diagnostics = {};
+    output = {};
+    assert(orison::lowering::lower_let_statement(
+        aggregate_let_statements[0],
+        "%record.Registers",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        aggregate_let_session,
+        diagnostics,
+        output
+    ));
+    assert(orison::lowering::lower_let_statement(
+        aggregate_let_statements[1],
+        "[4 x i8]",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        aggregate_let_session,
+        diagnostics,
+        output
+    ));
+    assert(!diagnostics.has_errors());
+    assert(output.str().find("insertvalue %record.Registers undef, i32 0, 0") != std::string::npos);
+    assert(output.str().find("insertvalue [4 x i8] undef, i8 1, 0") != std::string::npos);
+    assert(aggregate_let_state.immutable_bindings.at("regs").type == "%record.Registers");
+    assert(aggregate_let_state.immutable_bindings.at("bytes").type == "[4 x i8]");
+
     auto aggregate_state = orison::lowering::FunctionLoweringState {};
     auto aggregate_failures = orison::lowering::LoweringFailures {};
     auto aggregate_session = orison::lowering::FunctionLoweringSession {
         .state = aggregate_state,
         .failures = aggregate_failures,
     };
-    auto const& aggregate_statements = parse_result.module.functions[5].body_statements;
+    auto const& aggregate_statements = parse_result.module.functions[6].body_statements;
     diagnostics = {};
     output = {};
     assert(orison::lowering::lower_var_statement(
@@ -334,7 +372,7 @@ int main() {
         .state = array_state,
         .failures = array_failures,
     };
-    auto const& array_statements = parse_result.module.functions[6].body_statements;
+    auto const& array_statements = parse_result.module.functions[7].body_statements;
     diagnostics = {};
     output = {};
     assert(orison::lowering::lower_var_statement(
@@ -388,7 +426,7 @@ int main() {
         .state = pointer_state,
         .failures = pointer_failures,
     };
-    auto const& pointer_statements = parse_result.module.functions[7].body_statements;
+    auto const& pointer_statements = parse_result.module.functions[8].body_statements;
     output = {};
     assert(orison::lowering::lower_assignment_statement(
         pointer_statements[0],

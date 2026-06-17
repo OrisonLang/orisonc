@@ -25,13 +25,16 @@ This file tracks which source-language frontend slices are reflected in the curr
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
-- lowering gaps after the current recursive statement path: immutable aggregate `let` values, aggregate construction
-  beyond the current lowerable non-generic record/fixed-array subset, aggregate assignment beyond the currently
-  supported mutable-local and pointer-backed record/fixed-array field and index targets, and non-array-literal `for`
-  iteration
+- lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
+  non-generic record/fixed-array subset, aggregate assignment beyond the currently supported mutable-local and
+  pointer-backed record/fixed-array field and index targets, immutable aggregate `let` values beyond the current
+  lowerable record/fixed-array subset, and non-array-literal `for` iteration
 
 ## Latest update
 
+- 2026-06-16: lowering now materializes immutable aggregate `let` bindings for lowerable non-generic record
+  constructor calls and fixed-array literals, so immutable locals can hold supported record and array values without
+  introducing a mutable stack slot; broader aggregate construction remains pending.
 - 2026-06-16: checked-in example coverage now includes a small backend demo for nested pointer-backed aggregate
   assignment, using a local record/pointer round-trip to keep the `pointer.items[index].field = value` and
   `pointer.rows[index][inner] = value` slice pinned outside the frozen spec and tour documents.

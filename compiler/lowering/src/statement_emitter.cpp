@@ -744,18 +744,11 @@ auto lower_let_statement(
         );
         return false;
     }
-    if (is_aggregate_llvm_type(lowered->type)) {
-        diagnostics.error(
-            statement.line,
-            "lowering does not yet support immutable aggregate let initializers"
-        );
-        return false;
-    }
-
-    auto local_name = lowered->type == "ptr"
+    auto const direct_binding = lowered->type == "ptr" || is_aggregate_llvm_type(lowered->type);
+    auto local_name = direct_binding
         ? lowered->value
         : next_llvm_local_value_name(statement.name, session.state.local_name_counts);
-    if (lowered->type != "ptr") {
+    if (!direct_binding) {
         output << "  " << local_name << " = add " << lowered->type << " 0, " << lowered->value << "\n";
     }
     session.state.immutable_bindings[statement.name] = LoweredExpression {
