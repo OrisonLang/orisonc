@@ -6,6 +6,7 @@
 `local_record_aggregate_reassignment.or` demonstrates local record and fixed-array whole-value reassignment.
 `local_record_nested_addressing.or` demonstrates record-value-backed nested field and index addressing.
 `local_record_nested_record_addressing.or` demonstrates nested record-field addressing on local values.
+`local_record_nested_record_assignment.or` demonstrates nested record-field and fixed-array assignment on a local value.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
@@ -26,6 +27,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_record_aggregate_reassignment.or` | local record and fixed-array reassignment | backend |
 | `local_record_nested_addressing.or` | record-value-backed nested addressing | backend |
 | `local_record_nested_record_addressing.or` | nested record-field addressing | backend |
+| `local_record_nested_record_assignment.or` | nested record-field and array assignment | backend |
 
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
 The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
@@ -83,3 +85,11 @@ build/tools/orisonc/orisonc run examples/local_record_nested_record_addressing.o
 ```
 
 It returns `0` after compiling local nested record-field addresses.
+
+Run the local nested record assignment demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_record_nested_record_assignment.or
+```
+
+It returns `0` after exercising nested record-field and fixed-array assignment on a local value.

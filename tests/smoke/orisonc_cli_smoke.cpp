@@ -1919,6 +1919,14 @@ int main() {
     assert(WIFEXITED(nested_record_status));
     assert(WEXITSTATUS(nested_record_status) == 0);
 
+    auto nested_record_assignment_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_nested_record_assignment.or";
+    auto nested_record_assignment_status = std::system(
+        (executable.string() + " run " + nested_record_assignment_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(nested_record_assignment_status));
+    assert(WEXITSTATUS(nested_record_assignment_status) == 0);
+
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_unknown_choice_constant.or",

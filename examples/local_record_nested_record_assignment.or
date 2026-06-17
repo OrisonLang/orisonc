@@ -1,0 +1,18 @@
+package examples.aggregates
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+record Buffer
+    bytes: Array<Byte, 4>
+
+record Device
+    registers: UartRegisters
+    buffer: Buffer
+
+unsafe function main() -> UInt32
+    var device = Device(UartRegisters(0 as UInt32, 1 as UInt32), Buffer([0 as Byte, 1 as Byte, 2 as Byte, 3 as Byte]))
+    device.registers.status = 4 as UInt32
+    device.buffer.bytes[1] = 7
+    0 as UInt32

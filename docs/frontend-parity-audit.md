@@ -43,6 +43,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-16: checked-in example coverage now also includes a small backend demo for nested record-field addressing on
   local values, pinning `address_of(local.registers.status)` and `address_of(local.buffer.bytes[index])` separately
   from the array-backed addressing examples.
+- 2026-06-16: checked-in example coverage now also includes a small backend demo for nested record-field and
+  fixed-array assignment on a local value, pinning `device.registers.status = value` and
+  `device.buffer.bytes[index] = value` separately from the address-only examples.
 - 2026-06-16: lowering now materializes lowerable non-generic record constructor calls as LLVM aggregate values via
   `insertvalue`, allows those values in mutable local `var` storage, and lowers `address_of(local.field)` through the
   same record-layout metadata already used by pointer-backed aggregate paths; immutable aggregate `let` bindings and
