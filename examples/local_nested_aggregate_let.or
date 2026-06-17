@@ -1,0 +1,16 @@
+package examples.aggregates
+
+record Registers
+    status: UInt32
+    control: UInt32
+
+record Matrix
+    rows: Array<Array<Byte, 4>, 2>
+
+record Device
+    registers: Registers
+    matrix: Matrix
+
+unsafe function main() -> UInt32
+    let device = Device(Registers(0 as UInt32, 1 as UInt32), Matrix([[1, 2, 3, 4], [5, 6, 7, 8]]))
+    0 as UInt32
