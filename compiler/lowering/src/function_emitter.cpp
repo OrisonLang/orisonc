@@ -480,7 +480,7 @@ auto source_type_name_for_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::member_access) {
-        auto receiver = infer_member_call_receiver(expression, state);
+        auto receiver = infer_member_call_receiver(expression, context.lowering, state);
         if (receiver.result != MemberCallReceiverInferenceResult::found) {
             return std::nullopt;
         }

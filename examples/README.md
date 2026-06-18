@@ -16,6 +16,7 @@
 `local_helper_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a helper function.
 `local_method_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a method.
 `local_record_method_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a record method.
+`local_member_receiver_method_array_for.or` demonstrates method-returned array iteration through member and index receivers.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
@@ -46,6 +47,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_helper_array_for.or` | helper-returned fixed-array iteration | backend |
 | `local_method_array_for.or` | method-returned fixed-array iteration | backend |
 | `local_record_method_array_for.or` | record-method-returned fixed-array iteration | backend |
+| `local_member_receiver_method_array_for.or` | member/index receiver method-returned fixed-array iteration | backend |
 
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
 The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
@@ -183,3 +185,11 @@ build/tools/orisonc/orisonc run examples/local_record_method_array_for.or
 ```
 
 It returns `0` after lowering a `for` loop over a fixed-size array returned by a record receiver method.
+
+Run the member/index receiver method-returned array `for` demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_member_receiver_method_array_for.or
+```
+
+It returns `0` after lowering `for` loops over fixed-size arrays returned by methods called through member and index receivers.

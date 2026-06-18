@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/function_lowering_state.hpp"
+#include "orison/lowering/lowering_context.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <string>
@@ -21,6 +22,7 @@ struct MemberCallReceiverInference {
 
 auto infer_member_call_receiver(
     syntax::ExpressionSyntax const& call_expression,
+    LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> MemberCallReceiverInference;
 

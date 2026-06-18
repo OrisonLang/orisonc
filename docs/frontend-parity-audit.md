@@ -36,6 +36,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-17: lowering now resolves fixed-size arrays returned by methods on non-generic record receivers with
   supported layouts, so shapes like `wrapper.view()` lower through the same single-array-lower plus
   per-element-extract path.
+- 2026-06-17: member-call receiver inference now recovers source types through record member access, fixed-array index
+  access, function-call returns, and method-call returns, so method-returned fixed-array iteration can lower shapes like
+  `wrapper.bucket.view()` and `shelf.buckets[0].view()`.
 - 2026-06-16: lowering now also resolves fixed-size arrays returned by methods for `for` loops, so shapes like
   `value.triple()` on scalar receivers lower through the same single-array-lower plus per-element-extract path.
 - 2026-06-16: lowering now also resolves fixed-size arrays returned by helper calls for `for` loops, so shapes like

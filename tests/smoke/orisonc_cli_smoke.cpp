@@ -1943,6 +1943,14 @@ int main() {
     assert(WIFEXITED(method_array_for_status));
     assert(WEXITSTATUS(method_array_for_status) == 0);
 
+    auto member_receiver_method_array_for_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "local_member_receiver_method_array_for.or";
+    auto member_receiver_method_array_for_status = std::system(
+        (executable.string() + " run " + member_receiver_method_array_for_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(member_receiver_method_array_for_status));
+    assert(WEXITSTATUS(member_receiver_method_array_for_status) == 0);
+
     auto record_method_array_for_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
         "local_record_method_array_for.or";
     auto record_method_array_for_status = std::system(

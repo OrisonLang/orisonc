@@ -589,7 +589,7 @@ auto resolve_member_call(
     LoweringEmissionContext const& context,
     FunctionLoweringState const& state
 ) -> ResolvedMemberCall {
-    auto receiver = infer_member_call_receiver(expression, state);
+    auto receiver = infer_member_call_receiver(expression, context.lowering, state);
     if (receiver.result != MemberCallReceiverInferenceResult::found) {
         return {.receiver = std::move(receiver)};
     }

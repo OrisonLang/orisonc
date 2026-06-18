@@ -168,6 +168,23 @@ int main() {
                   "    var total = 0 as UInt32\n"
                   "    for item in wrapper.view()\n"
                   "        total = total + item\n"
+                  "    0 as UInt32\n"
+                  "\n"
+                  "record Shelf\n"
+                  "    buckets: Array<Bucket, 2>\n"
+                  "\n"
+                  "extend Bucket\n"
+                  "    public function view(this: shared This) -> Array<UInt32, 3>\n"
+                  "        this.values\n"
+                  "\n"
+                  "function sum_member_receiver_method_array_values() -> UInt32\n"
+                  "    var wrapper = Wrapper(Bucket([1, 2, 3]))\n"
+                  "    var shelf = Shelf([Bucket([4, 5, 6]), Bucket([7, 8, 9])])\n"
+                  "    var total = 0 as UInt32\n"
+                  "    for item in wrapper.bucket.view()\n"
+                  "        total = total + item\n"
+                  "    for item in shelf.buckets[0].view()\n"
+                  "        total = total + item\n"
                   "    0 as UInt32\n";
     }
 
@@ -512,6 +529,23 @@ int main() {
     );
     assert(record_method_array_for_ir.find("for.iteration") != std::string::npos);
     assert(record_method_array_for_ir.find("ret i32 0") != std::string::npos);
+
+    auto member_receiver_method_array_for_ir = orison::lowering::emit_function(
+        parse_result.module.functions[22],
+        context.functions.at("sum_member_receiver_method_array_values"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        member_receiver_method_array_for_ir.find("call [3 x i32] @method.Bucket.view(%record.Bucket") !=
+        std::string::npos
+    );
+    assert(member_receiver_method_array_for_ir.find("extractvalue %record.Wrapper") != std::string::npos);
+    assert(member_receiver_method_array_for_ir.find("extractvalue [2 x %record.Bucket]") != std::string::npos);
+    assert(member_receiver_method_array_for_ir.find("for.iteration") != std::string::npos);
+    assert(member_receiver_method_array_for_ir.find("ret i32 0") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

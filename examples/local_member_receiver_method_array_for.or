@@ -1,0 +1,24 @@
+package examples.collections
+
+record Bucket
+    values: Array<UInt32, 3>
+
+record Wrapper
+    bucket: Bucket
+
+record Shelf
+    buckets: Array<Bucket, 2>
+
+extend Bucket
+    public function view(this: shared This) -> Array<UInt32, 3>
+        this.values
+
+function main() -> UInt32
+    var wrapper = Wrapper(Bucket([1, 2, 3]))
+    var shelf = Shelf([Bucket([4, 5, 6]), Bucket([7, 8, 9])])
+    var total = 0 as UInt32
+    for item in wrapper.bucket.view()
+        total = total + item
+    for item in shelf.buckets[0].view()
+        total = total + item
+    0 as UInt32

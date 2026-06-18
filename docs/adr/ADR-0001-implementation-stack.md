@@ -124,10 +124,11 @@ analysis, and lowering components.
   method model; method lookup reports `found`, `not_found`, or `ambiguous` rather than silently selecting among
   duplicate receiver/name matches.
 - Function lowering state keeps source-level type names in a side map for parameters and annotated locals; receiver
-  inference for member-call expressions consumes that map and currently supports direct name receivers only. Direct
-  member-call expressions now lower through explicit receiver arguments for scalar receiver methods, and direct
-  member-call statements now lower through the same receiver-aware path while null-safe member-call expressions remain
-  future work.
+  inference for member-call expressions consumes that map plus lowering-context record/signature metadata, recovering
+  receiver source types from direct names, record member access, fixed-array index access, and supported function or
+  method call returns. Direct member-call expressions now lower through explicit receiver arguments for scalar and
+  supported record receiver methods, and direct member-call statements now lower through the same receiver-aware path
+  while null-safe member-call expressions remain future work.
   Member-call statement diagnostics compose receiver inference with lowered method lookup so unsupported receiver
   shapes, unknown receiver types, unknown methods, ambiguous methods, and non-lowerable targets are diagnosed
   explicitly.
