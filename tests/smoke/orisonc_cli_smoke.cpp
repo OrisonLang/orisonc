@@ -1878,6 +1878,48 @@ int main() {
     assert(emit_output.find("define i32 @main()") != std::string::npos);
     assert(emit_output.find("ret i32 42") != std::string::npos);
 
+    auto local_record_assignment_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_field_assignment.or";
+    auto local_record_assignment_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + local_record_assignment_emit_path.string());
+    assert(
+        local_record_assignment_emit_output.find(
+            "getelementptr %record.Log, ptr %log.addr, i32 0, i32 0"
+        ) != std::string::npos
+    );
+    assert(
+        local_record_assignment_emit_output.find(
+            "getelementptr [2 x %record.UartRegisters], ptr %tmp"
+        ) != std::string::npos
+    );
+    assert(
+        local_record_assignment_emit_output.find(
+            "getelementptr %record.UartRegisters, ptr %tmp"
+        ) != std::string::npos
+    );
+    assert(local_record_assignment_emit_output.find("store i32 8, ptr %tmp") != std::string::npos);
+
+    auto pointer_record_assignment_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "pointer_record_field_assignment.or";
+    auto pointer_record_assignment_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + pointer_record_assignment_emit_path.string());
+    assert(
+        pointer_record_assignment_emit_output.find(
+            "getelementptr %record.Log, ptr %log, i32 0, i32 0"
+        ) != std::string::npos
+    );
+    assert(
+        pointer_record_assignment_emit_output.find(
+            "getelementptr [2 x %record.UartRegisters], ptr %tmp"
+        ) != std::string::npos
+    );
+    assert(
+        pointer_record_assignment_emit_output.find(
+            "getelementptr %record.UartRegisters, ptr %tmp"
+        ) != std::string::npos
+    );
+    assert(pointer_record_assignment_emit_output.find("store i32 8, ptr %tmp") != std::string::npos);
+
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_member_assignment.or",
