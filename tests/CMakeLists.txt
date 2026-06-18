@@ -232,6 +232,22 @@ add_test(
     COMMAND orison_statement_emitter_smoke
 )
 
+add_executable(orison_aggregate_path_smoke
+    smoke/aggregate_path_smoke.cpp
+)
+
+target_link_libraries(orison_aggregate_path_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_aggregate_path_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_aggregate_path_smoke
+    COMMAND orison_aggregate_path_smoke
+)
+
 add_executable(orison_member_call_receiver_smoke
     smoke/member_call_receiver_smoke.cpp
 )

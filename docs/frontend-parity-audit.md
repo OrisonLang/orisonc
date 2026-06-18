@@ -34,7 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 ## Latest update
 
 - 2026-06-17: record/member/index aggregate path collection and LLVM `getelementptr` cursor advancement now live in a
-  shared lowering helper consumed by both `address_of(...)` expression lowering and aggregate assignment lowering.
+  shared lowering helper consumed by both `address_of(...)` expression lowering and aggregate assignment lowering, with
+  direct smoke coverage for path collection, cursor transitions, GEP text, and primary error outcomes.
 - 2026-06-17: source-type recovery for record fields, fixed arrays, pointers, lowered LLVM types, call returns, and
   member-call returns now lives in a shared lowering query component consumed by member-call receiver inference,
   expression emission, statement emission, and function `for` iterable recovery.
