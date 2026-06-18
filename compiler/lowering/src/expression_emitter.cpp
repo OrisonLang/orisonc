@@ -1,4 +1,5 @@
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
@@ -480,21 +481,6 @@ auto lower_address_operand(
     );
 }
 
-auto is_array_llvm_type(std::string_view type) -> bool {
-    return type.starts_with("[");
-}
-
-struct AddressPathStep {
-    enum class Kind {
-        member,
-        index,
-    };
-
-    Kind kind = Kind::member;
-    std::string field_name;
-    syntax::ExpressionSyntax const* index_expression = nullptr;
-};
-
 auto lower_array_literal_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -653,35 +639,13 @@ auto lower_pointer_record_field_address(
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    auto steps = std::vector<AddressPathStep> {};
-    auto const* base_expression = &operand;
-    while (true) {
-        if (base_expression->kind == syntax::ExpressionKind::member_access &&
-            base_expression->left != nullptr) {
-            steps.push_back(AddressPathStep {
-                .kind = AddressPathStep::Kind::member,
-                .field_name = base_expression->text,
-            });
-            base_expression = base_expression->left.get();
-            continue;
-        }
-        if (base_expression->kind == syntax::ExpressionKind::index_access &&
-            base_expression->left != nullptr && base_expression->arguments.size() == 1) {
-            steps.push_back(AddressPathStep {
-                .kind = AddressPathStep::Kind::index,
-                .index_expression = &base_expression->arguments.front(),
-            });
-            base_expression = base_expression->left.get();
-            continue;
-        }
-        break;
-    }
-    std::reverse(steps.begin(), steps.end());
-    if (steps.empty()) {
+    auto path = collect_aggregate_path(operand);
+    if (path.steps.empty() || path.base_expression == nullptr) {
         return std::nullopt;
     }
 
-    auto base_source_type = source_type_name_for_expression(*base_expression, context, session.state);
+    auto const& base_expression = *path.base_expression;
+    auto base_source_type = source_type_name_for_expression(base_expression, context, session.state);
     if (!base_source_type.has_value()) {
         return std::nullopt;
     }
@@ -689,14 +653,14 @@ auto lower_pointer_record_field_address(
     auto current_pointer_value = std::string {};
     auto current_source_type_name = std::string {};
     if (auto record_name = pointer_pointee_source_type_name(*base_source_type)) {
-        auto base_pointer = lower_pointer_operand(*base_expression, context, session, output);
+        auto base_pointer = lower_pointer_operand(base_expression, context, session, output);
         if (!base_pointer.has_value()) {
             return std::nullopt;
         }
         current_pointer_value = std::move(base_pointer->value);
         current_source_type_name = *record_name;
-    } else if (base_expression->kind == syntax::ExpressionKind::name) {
-        auto binding = session.state.mutable_bindings.find(base_expression->text);
+    } else if (base_expression.kind == syntax::ExpressionKind::name) {
+        auto binding = session.state.mutable_bindings.find(base_expression.text);
         if (binding == session.state.mutable_bindings.end()) {
             return std::nullopt;
         }
@@ -706,18 +670,12 @@ auto lower_pointer_record_field_address(
         return std::nullopt;
     }
 
-    auto current_layout = static_cast<LoweredRecordLayout const*>(nullptr);
-    auto current_llvm_type_name = std::string {};
-    auto expect_record_layout = false;
-    if (auto layout = context.lowering.records.find(current_source_type_name);
-        layout != context.lowering.records.end()) {
-        current_layout = &layout->second;
-        current_llvm_type_name = current_layout->llvm_type_name;
-        expect_record_layout = true;
-    } else if (auto llvm_type =
-                   llvm_type_for_source_type_name(current_source_type_name, context.lowering)) {
-        current_llvm_type_name = std::move(*llvm_type);
-    } else {
+    auto cursor = initialize_aggregate_path_cursor(
+        std::move(current_pointer_value),
+        std::move(current_source_type_name),
+        context.lowering
+    );
+    if (!cursor.has_value()) {
         record_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
@@ -726,48 +684,28 @@ auto lower_pointer_record_field_address(
         return std::nullopt;
     }
 
-    for (auto index = std::size_t {0}; index < steps.size(); ++index) {
-        auto const& step = steps[index];
-        if (step.kind == AddressPathStep::Kind::member) {
-            if (!expect_record_layout || current_layout == nullptr) {
-                record_failure(
-                    failures,
-                    ExpressionLoweringFailureReason::unsupported_expression,
-                    "address_of field layout"
-                );
-                return std::nullopt;
-            }
-
-            auto const* field = find_record_field(*current_layout, step.field_name);
-            if (field == nullptr || field->llvm_type.empty() || field->llvm_type == "void") {
-                record_failure(
-                    failures,
-                    ExpressionLoweringFailureReason::unsupported_expression,
-                    "address_of field layout"
-                );
-                return std::nullopt;
-            }
-
+    for (auto const& step : path.steps) {
+        if (step.kind == AggregatePathStepKind::member) {
             auto field_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
-            output << "  " << field_pointer_name << " = getelementptr " << current_llvm_type_name
-                   << ", ptr " << current_pointer_value << ", i32 0, i32 " << field->index << "\n";
-            current_pointer_value = std::move(field_pointer_name);
-            current_source_type_name = field->source_type_name;
-            current_llvm_type_name = field->llvm_type;
-
-            auto nested_layout = context.lowering.records.find(current_source_type_name);
-            if (nested_layout != context.lowering.records.end()) {
-                current_layout = &nested_layout->second;
-                current_llvm_type_name = current_layout->llvm_type_name;
-                expect_record_layout = true;
-            } else {
-                current_layout = nullptr;
-                expect_record_layout = false;
+            auto result = advance_aggregate_path_member(
+                *cursor,
+                step.field_name,
+                context.lowering,
+                std::move(field_pointer_name),
+                output
+            );
+            if (result.error != AggregatePathError::none) {
+                record_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::unsupported_expression,
+                    "address_of field layout"
+                );
+                return std::nullopt;
             }
             continue;
         }
 
-        if (step.index_expression == nullptr || !is_array_llvm_type(current_llvm_type_name)) {
+        if (step.index_expression == nullptr) {
             record_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
@@ -789,44 +727,27 @@ auto lower_pointer_record_field_address(
         }
 
         auto element_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
-        output << "  " << element_pointer_name << " = getelementptr " << current_llvm_type_name
-               << ", ptr " << current_pointer_value << ", i64 0, i64 " << lowered_index->value
-               << "\n";
-        current_pointer_value = std::move(element_pointer_name);
-        auto element_source_type = array_element_source_type_name(current_source_type_name);
-        if (!element_source_type.has_value()) {
+        auto result = advance_aggregate_path_index(
+            *cursor,
+            lowered_index->value,
+            context.lowering,
+            std::move(element_pointer_name),
+            output
+        );
+        if (result.error != AggregatePathError::none) {
             record_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
-                "address_of indexed source type"
+                result.error == AggregatePathError::unsupported_element_source_type
+                    ? "address_of indexed source type"
+                    : "address_of indexed field layout"
             );
             return std::nullopt;
         }
-        current_source_type_name = *element_source_type;
-
-        auto nested_layout = context.lowering.records.find(current_source_type_name);
-        if (nested_layout != context.lowering.records.end()) {
-            current_layout = &nested_layout->second;
-            current_llvm_type_name = current_layout->llvm_type_name;
-            expect_record_layout = true;
-            continue;
-        }
-
-        auto element_llvm_type =
-            llvm_type_for_source_type_name(current_source_type_name, context.lowering);
-        if (!element_llvm_type.has_value()) {
-            current_layout = nullptr;
-            current_llvm_type_name.clear();
-            expect_record_layout = false;
-            continue;
-        }
-        current_layout = nullptr;
-        current_llvm_type_name = *element_llvm_type;
-        expect_record_layout = false;
     }
 
     auto address_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << address_name << " = ptrtoint ptr " << current_pointer_value << " to i64\n";
+    output << "  " << address_name << " = ptrtoint ptr " << cursor->pointer << " to i64\n";
     return LoweredExpression {
         .type = "i64",
         .value = std::move(address_name),

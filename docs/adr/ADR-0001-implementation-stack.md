@@ -127,6 +127,9 @@ analysis, and lowering components.
   LLVM array parsing, record field lookup, lowered source-type mapping, pointer pointee extraction, expression source
   recovery, and function/method return recovery; member-call receiver inference and aggregate/array emission consume
   the same model instead of carrying parallel copies.
+- Aggregate path collection and LLVM `getelementptr` cursor advancement now live in a shared lowering helper for
+  member/index chains over records and fixed arrays; `address_of(...)` and aggregate assignment keep their own
+  diagnostics and index-expression lowering, but no longer duplicate traversal state.
 - Function lowering state keeps source-level type names in a side map for parameters and annotated locals; receiver
   inference for member-call expressions consumes that map plus lowering-context record/signature metadata, recovering
   receiver source types from direct names, record member access, fixed-array index access, and supported function or

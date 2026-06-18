@@ -1,5 +1,6 @@
 #include "orison/lowering/statement_emitter.hpp"
 
+#include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
@@ -19,10 +20,6 @@ namespace {
 
 auto is_aggregate_llvm_type(std::string_view type) -> bool {
     return type.starts_with("%record.") || type.starts_with("[");
-}
-
-auto is_array_llvm_type(std::string_view type) -> bool {
-    return type.starts_with("[");
 }
 
 auto source_type_name_for_initializer(
@@ -45,17 +42,6 @@ auto source_type_name_for_initializer(
 
     return std::nullopt;
 }
-
-struct AssignmentTargetStep {
-    enum class Kind {
-        member,
-        index,
-    };
-
-    Kind kind = Kind::member;
-    std::string field_name;
-    syntax::ExpressionSyntax const* index_expression = nullptr;
-};
 
 struct LoweredAssignmentTarget {
     LoweredType type;
@@ -81,31 +67,9 @@ auto lower_assignment_target(
         };
     }
 
-    auto steps = std::vector<AssignmentTargetStep> {};
-    auto const* base_expression = &target;
-    while (true) {
-        if (base_expression->kind == syntax::ExpressionKind::member_access &&
-            base_expression->left != nullptr) {
-            steps.push_back(AssignmentTargetStep {
-                .kind = AssignmentTargetStep::Kind::member,
-                .field_name = base_expression->text,
-            });
-            base_expression = base_expression->left.get();
-            continue;
-        }
-        if (base_expression->kind == syntax::ExpressionKind::index_access &&
-            base_expression->left != nullptr && base_expression->arguments.size() == 1) {
-            steps.push_back(AssignmentTargetStep {
-                .kind = AssignmentTargetStep::Kind::index,
-                .index_expression = &base_expression->arguments.front(),
-            });
-            base_expression = base_expression->left.get();
-            continue;
-        }
-        break;
-    }
-    std::reverse(steps.begin(), steps.end());
-    if (steps.empty() || base_expression->kind != syntax::ExpressionKind::name) {
+    auto path = collect_aggregate_path(target);
+    if (path.steps.empty() || path.base_expression == nullptr ||
+        path.base_expression->kind != syntax::ExpressionKind::name) {
         diagnostics.error(
             target.line,
             "lowering only supports assignment to mutable local names and aggregate paths"
@@ -113,8 +77,9 @@ auto lower_assignment_target(
         return std::nullopt;
     }
 
-    auto binding = session.state.mutable_bindings.find(base_expression->text);
-    auto source_type = session.state.source_type_names.find(base_expression->text);
+    auto const& base_expression = *path.base_expression;
+    auto binding = session.state.mutable_bindings.find(base_expression.text);
+    auto source_type = session.state.source_type_names.find(base_expression.text);
     if (source_type == session.state.source_type_names.end()) {
         diagnostics.error(
             target.line,
@@ -127,7 +92,7 @@ auto lower_assignment_target(
     auto current_pointer = std::string {};
     if (auto pointee_source_type = pointer_pointee_source_type_name(current_source_type_name)) {
         auto lowered_base = lower_expression(
-            *base_expression,
+            base_expression,
             "ptr",
             IntegerSignedness::not_integer,
             context,
@@ -153,55 +118,34 @@ auto lower_assignment_target(
         current_pointer = binding->second.storage;
     }
 
-    auto current_layout = static_cast<LoweredRecordLayout const*>(nullptr);
-    auto current_llvm_type_name = std::string {};
-    auto expect_record_layout = false;
-    if (auto layout = context.lowering.records.find(current_source_type_name);
-        layout != context.lowering.records.end()) {
-        current_layout = &layout->second;
-        current_llvm_type_name = current_layout->llvm_type_name;
-        expect_record_layout = true;
-    } else if (auto lowered =
-                   lowered_type_for_source_type_name(current_source_type_name, context.lowering)) {
-        current_llvm_type_name = lowered->type;
-    } else {
+    auto cursor = initialize_aggregate_path_cursor(
+        std::move(current_pointer),
+        std::move(current_source_type_name),
+        context.lowering
+    );
+    if (!cursor.has_value()) {
         diagnostics.error(target.line, "lowering aggregate assignment target type is unsupported");
         return std::nullopt;
     }
 
-    for (auto const& step : steps) {
-        if (step.kind == AssignmentTargetStep::Kind::member) {
-            if (!expect_record_layout || current_layout == nullptr) {
-                diagnostics.error(target.line, "lowering aggregate assignment member target is unsupported");
-                return std::nullopt;
-            }
-
-            auto const* field = find_record_field(*current_layout, step.field_name);
-            if (field == nullptr || field->llvm_type.empty() || field->llvm_type == "void") {
-                diagnostics.error(target.line, "lowering aggregate assignment member target is unsupported");
-                return std::nullopt;
-            }
-
+    for (auto const& step : path.steps) {
+        if (step.kind == AggregatePathStepKind::member) {
             auto field_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
-            output << "  " << field_pointer << " = getelementptr " << current_llvm_type_name
-                   << ", ptr " << current_pointer << ", i32 0, i32 " << field->index << "\n";
-            current_pointer = std::move(field_pointer);
-            current_source_type_name = field->source_type_name;
-            current_llvm_type_name = field->llvm_type;
-
-            if (auto layout = context.lowering.records.find(current_source_type_name);
-                layout != context.lowering.records.end()) {
-                current_layout = &layout->second;
-                current_llvm_type_name = current_layout->llvm_type_name;
-                expect_record_layout = true;
-            } else {
-                current_layout = nullptr;
-                expect_record_layout = false;
+            auto result = advance_aggregate_path_member(
+                *cursor,
+                step.field_name,
+                context.lowering,
+                std::move(field_pointer),
+                output
+            );
+            if (result.error != AggregatePathError::none) {
+                diagnostics.error(target.line, "lowering aggregate assignment member target is unsupported");
+                return std::nullopt;
             }
             continue;
         }
 
-        if (step.index_expression == nullptr || !is_array_llvm_type(current_llvm_type_name)) {
+        if (step.index_expression == nullptr) {
             diagnostics.error(target.line, "lowering aggregate assignment index target is unsupported");
             return std::nullopt;
         }
@@ -225,33 +169,29 @@ auto lower_assignment_target(
         }
 
         auto element_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
-        output << "  " << element_pointer << " = getelementptr " << current_llvm_type_name
-               << ", ptr " << current_pointer << ", i64 0, i64 " << lowered_index->value << "\n";
-        current_pointer = std::move(element_pointer);
-        auto element_source_type = array_element_source_type_name(current_source_type_name);
-        if (!element_source_type.has_value()) {
+        auto result = advance_aggregate_path_index(
+            *cursor,
+            lowered_index->value,
+            context.lowering,
+            std::move(element_pointer),
+            output
+        );
+        if (result.error == AggregatePathError::unsupported_element_source_type) {
             diagnostics.error(target.line, "lowering aggregate assignment index source type is unsupported");
             return std::nullopt;
         }
-        current_source_type_name = std::move(*element_source_type);
-
-        if (auto layout = context.lowering.records.find(current_source_type_name);
-            layout != context.lowering.records.end()) {
-            current_layout = &layout->second;
-            current_llvm_type_name = current_layout->llvm_type_name;
-            expect_record_layout = true;
-        } else if (auto lowered =
-                       lowered_type_for_source_type_name(current_source_type_name, context.lowering)) {
-            current_layout = nullptr;
-            current_llvm_type_name = lowered->type;
-            expect_record_layout = false;
-        } else {
-            diagnostics.error(target.line, "lowering aggregate assignment index target type is unsupported");
+        if (result.error != AggregatePathError::none) {
+            diagnostics.error(
+                target.line,
+                result.error == AggregatePathError::expected_array
+                    ? "lowering aggregate assignment index target is unsupported"
+                    : "lowering aggregate assignment index target type is unsupported"
+            );
             return std::nullopt;
         }
     }
 
-    auto lowered_type = lowered_type_for_source_type_name(current_source_type_name, context.lowering);
+    auto lowered_type = lowered_type_for_source_type_name(cursor->source_type_name, context.lowering);
     if (!lowered_type.has_value()) {
         diagnostics.error(target.line, "lowering aggregate assignment target type is unsupported");
         return std::nullopt;
@@ -259,7 +199,7 @@ auto lower_assignment_target(
 
     return LoweredAssignmentTarget {
         .type = std::move(*lowered_type),
-        .pointer = std::move(current_pointer),
+        .pointer = std::move(cursor->pointer),
     };
 }
 
