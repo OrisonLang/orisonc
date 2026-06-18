@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: CLI smoke coverage now builds and executes a retained binary for the focused local array-of-record field
+  assignment example, pinning the compile-link-run path beyond `orisonc run`.
 - 2026-06-18: CLI smoke coverage now also emits object files for the focused local and pointer-backed
   array-of-record field assignment examples, pinning host object generation after the already-pinned user-facing LLVM
   IR path.

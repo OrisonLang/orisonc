@@ -1978,6 +1978,17 @@ int main() {
     assert(WIFEXITED(executable_status));
     assert(WEXITSTATUS(executable_status) == 0);
 
+    auto local_record_assignment_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_local_record_field_assignment_build";
+    auto local_record_assignment_build_command =
+        executable.string() + " --build " + local_record_assignment_emit_path.string() + " -o " +
+        local_record_assignment_executable_path.string();
+    assert(read_command_output(local_record_assignment_build_command).empty());
+    auto local_record_assignment_executable_status =
+        std::system(local_record_assignment_executable_path.string().c_str());
+    assert(WIFEXITED(local_record_assignment_executable_status));
+    assert(WEXITSTATUS(local_record_assignment_executable_status) == 0);
+
     auto run_command = executable.string() + " run " + demo_path.string();
     auto run_status = std::system(run_command.c_str());
     assert(WIFEXITED(run_status));
