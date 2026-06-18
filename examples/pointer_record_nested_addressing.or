@@ -7,10 +7,18 @@ record UartRegisters
 record Log
     entries: Array<UartRegisters, 2>
 
+record Matrix
+    rows: Array<Array<Byte, 4>, 2>
+
 unsafe function pointer_entry_status_address(log: Pointer<Log>, index: UInt64) -> Address
     address_of(log.entries[index].status)
 
+unsafe function pointer_matrix_byte_address(matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Address
+    address_of(matrix.rows[index][inner])
+
 unsafe function main() -> UInt32
     var log = Log([UartRegisters(0 as UInt32, 0 as UInt32), UartRegisters(1 as UInt32, 1 as UInt32)])
+    var matrix = Matrix([[0 as Byte, 1 as Byte, 2 as Byte, 3 as Byte], [4 as Byte, 5 as Byte, 6 as Byte, 7 as Byte]])
     let status: Address = pointer_entry_status_address(Pointer(address_of(log)), 0 as UInt64)
+    let byte: Address = pointer_matrix_byte_address(Pointer(address_of(matrix)), 1 as UInt64, 2 as UInt64)
     0 as UInt32

@@ -90,7 +90,8 @@ Run the pointer-backed nested addressing demo with:
 build/tools/orisonc/orisonc run examples/pointer_record_nested_addressing.or
 ```
 
-It returns `0` after lowering `address_of(pointer.entries[index].status)` through a pointer-backed aggregate path.
+It returns `0` after lowering `address_of(pointer.entries[index].status)` and
+`address_of(pointer.rows[index][inner])` through pointer-backed aggregate paths.
 
 Run the local aggregate reassignment demo with:
 

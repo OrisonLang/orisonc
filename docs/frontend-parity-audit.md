@@ -34,8 +34,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 ## Latest update
 
 - 2026-06-18: checked-in example coverage now includes a small backend demo for pointer-backed nested record and
-  fixed-array addressing, pinning `address_of(log.entries[index].status)` through a `Pointer<Log>` source separately
-  from local record-backed addressing and pointer-backed assignment examples.
+  fixed-array addressing, pinning `address_of(log.entries[index].status)` through a `Pointer<Log>` source and
+  `address_of(matrix.rows[index][inner])` through a `Pointer<Matrix>` source separately from local record-backed
+  addressing and pointer-backed assignment examples.
 - 2026-06-17: record/member/index aggregate path collection and LLVM `getelementptr` cursor advancement now live in a
   shared lowering helper consumed by both `address_of(...)` expression lowering and aggregate assignment lowering, with
   direct smoke coverage for path collection, cursor transitions, GEP text, and primary error outcomes.
