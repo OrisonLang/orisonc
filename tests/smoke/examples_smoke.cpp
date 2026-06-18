@@ -28,7 +28,7 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 18> {
+    constexpr auto backend_examples = std::array<std::string_view, 19> {
         "ffi_fixed_parameters.or",
         "local_helper_array_for.or",
         "local_array_for.or",
@@ -46,6 +46,7 @@ auto main() -> int {
         "local_record_nested_record_assignment.or",
         "minimal.or",
         "nested_pointer_aggregate_assignment.or",
+        "pointer_record_nested_addressing.or",
         "tour_09_ffi_printf.or",
     };
     for (auto name : backend_examples) {

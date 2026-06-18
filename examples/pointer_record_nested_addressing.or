@@ -1,0 +1,16 @@
+package examples.aggregates
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+record Log
+    entries: Array<UartRegisters, 2>
+
+unsafe function pointer_entry_status_address(log: Pointer<Log>, index: UInt64) -> Address
+    address_of(log.entries[index].status)
+
+unsafe function main() -> UInt32
+    var log = Log([UartRegisters(0 as UInt32, 0 as UInt32), UartRegisters(1 as UInt32, 1 as UInt32)])
+    let status: Address = pointer_entry_status_address(Pointer(address_of(log)), 0 as UInt64)
+    0 as UInt32
