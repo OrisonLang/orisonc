@@ -4,6 +4,7 @@
 `ffi_fixed_parameters.or` demonstrates a finite C FFI contract with two explicit `Pointer<Byte>` parameters.
 `nested_pointer_aggregate_assignment.or` demonstrates nested pointer-backed aggregate assignment on records and fixed arrays.
 `pointer_array_nested_assignment.or` demonstrates pointer-backed nested fixed-array assignment.
+`pointer_record_field_assignment.or` demonstrates pointer-backed array-of-record field assignment.
 `pointer_record_nested_addressing.or` demonstrates pointer-backed nested record and fixed-array addressing.
 `local_record_aggregate_reassignment.or` demonstrates local record and fixed-array whole-value reassignment.
 `local_record_nested_addressing.or` demonstrates record-value-backed nested field and index addressing.
@@ -37,6 +38,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `tour_11_concurrency.or` | `async`, `await`, `task`, `thread` | frontend |
 | `nested_pointer_aggregate_assignment.or` | nested pointer-backed aggregate assignment | backend |
 | `pointer_array_nested_assignment.or` | pointer-backed nested fixed-array assignment | backend |
+| `pointer_record_field_assignment.or` | pointer-backed array-of-record field assignment | backend |
 | `pointer_record_nested_addressing.or` | pointer-backed nested record and array addressing | backend |
 | `local_record_aggregate_reassignment.or` | local record and fixed-array reassignment | backend |
 | `local_record_nested_addressing.or` | record-value-backed nested addressing | backend |
@@ -93,6 +95,14 @@ build/tools/orisonc/orisonc run examples/pointer_array_nested_assignment.or
 ```
 
 It returns `0` after lowering `pointer.rows[index][inner] = value` through a pointer-backed aggregate path.
+
+Run the pointer-backed array-of-record field assignment demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/pointer_record_field_assignment.or
+```
+
+It returns `0` after lowering `pointer.entries[index].status = value` through a pointer-backed aggregate path.
 
 Run the pointer-backed nested addressing demo with:
 

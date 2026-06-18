@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: checked-in example coverage now includes a focused backend demo for pointer-backed array-of-record field
+  assignment, pinning `log.entries[index].status = value` through a `Pointer<Log>` source separately from the mixed
+  pointer-backed aggregate assignment demo.
 - 2026-06-18: checked-in example coverage now includes a focused backend demo for pointer-backed nested fixed-array
   assignment, pinning `matrix.rows[index][inner] = value` through a `Pointer<Matrix>` source separately from the mixed
   pointer-backed aggregate assignment example.

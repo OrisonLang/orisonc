@@ -1,0 +1,17 @@
+package examples.aggregates
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+record Log
+    entries: Array<UartRegisters, 2>
+
+unsafe function assign_pointer_log_status(log: Pointer<Log>, index: UInt64) -> Unit
+    log.entries[index].status = 8 as UInt32
+    return
+
+unsafe function main() -> UInt32
+    var log = Log([UartRegisters(0 as UInt32, 0 as UInt32), UartRegisters(0 as UInt32, 0 as UInt32)])
+    assign_pointer_log_status(Pointer(address_of(log)), 1 as UInt64)
+    0 as UInt32
