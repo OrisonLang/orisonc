@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: CLI smoke coverage now also emits object files for the focused local and pointer-backed
+  array-of-record field assignment examples, pinning host object generation after the already-pinned user-facing LLVM
+  IR path.
 - 2026-06-18: CLI smoke coverage now emits LLVM for the focused local and pointer-backed array-of-record field
   assignment examples, pinning the user-facing GEP/store shape for `log.entries[index].status = value` in both
   mutable-local and `Pointer<Log>` paths.

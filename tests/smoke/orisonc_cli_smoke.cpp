@@ -1953,6 +1953,22 @@ int main() {
     assert(read_command_output(object_command).empty());
     assert(std::filesystem::file_size(object_path) > 0);
 
+    auto local_record_assignment_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_local_record_field_assignment.o";
+    auto local_record_assignment_object_command =
+        executable.string() + " --emit-object " + local_record_assignment_emit_path.string() + " -o " +
+        local_record_assignment_object_path.string();
+    assert(read_command_output(local_record_assignment_object_command).empty());
+    assert(std::filesystem::file_size(local_record_assignment_object_path) > 0);
+
+    auto pointer_record_assignment_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_record_field_assignment.o";
+    auto pointer_record_assignment_object_command =
+        executable.string() + " --emit-object " + pointer_record_assignment_emit_path.string() + " -o " +
+        pointer_record_assignment_object_path.string();
+    assert(read_command_output(pointer_record_assignment_object_command).empty());
+    assert(std::filesystem::file_size(pointer_record_assignment_object_path) > 0);
+
     auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
     auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
     auto build_command =
