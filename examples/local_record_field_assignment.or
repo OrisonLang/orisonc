@@ -1,0 +1,17 @@
+package examples.aggregates
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+record Log
+    entries: Array<UartRegisters, 2>
+
+unsafe function assign_local_log_status(index: UInt64) -> Unit
+    var log = Log([UartRegisters(0 as UInt32, 0 as UInt32), UartRegisters(1 as UInt32, 1 as UInt32)])
+    log.entries[index].status = 8 as UInt32
+    return
+
+unsafe function main() -> UInt32
+    assign_local_log_status(1 as UInt64)
+    0 as UInt32

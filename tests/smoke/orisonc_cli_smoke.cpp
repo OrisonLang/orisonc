@@ -2005,6 +2005,14 @@ int main() {
     assert(WIFEXITED(local_aggregate_status));
     assert(WEXITSTATUS(local_aggregate_status) == 0);
 
+    auto local_record_assignment_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_field_assignment.or";
+    auto local_record_assignment_status = std::system(
+        (executable.string() + " run " + local_record_assignment_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(local_record_assignment_status));
+    assert(WEXITSTATUS(local_record_assignment_status) == 0);
+
     auto nested_addressing_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_nested_addressing.or";
     auto nested_addressing_status =
