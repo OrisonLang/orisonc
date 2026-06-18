@@ -123,6 +123,10 @@ analysis, and lowering components.
 - Lowering context retains receiver-qualified method signatures from `implements` and `extend` blocks in a separate
   method model; method lookup reports `found`, `not_found`, or `ambiguous` rather than silently selecting among
   duplicate receiver/name matches.
+- Source-type recovery for lowering now lives in a shared query component covering generic argument splitting, fixed
+  LLVM array parsing, record field lookup, lowered source-type mapping, pointer pointee extraction, expression source
+  recovery, and function/method return recovery; member-call receiver inference and aggregate/array emission consume
+  the same model instead of carrying parallel copies.
 - Function lowering state keeps source-level type names in a side map for parameters and annotated locals; receiver
   inference for member-call expressions consumes that map plus lowering-context record/signature metadata, recovering
   receiver source types from direct names, record member access, fixed-array index access, and supported function or

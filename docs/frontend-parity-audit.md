@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-17: source-type recovery for record fields, fixed arrays, pointers, lowered LLVM types, call returns, and
+  member-call returns now lives in a shared lowering query component consumed by member-call receiver inference,
+  expression emission, statement emission, and function `for` iterable recovery.
 - 2026-06-17: lowering now resolves fixed-size arrays returned by methods on non-generic record receivers with
   supported layouts, so shapes like `wrapper.view()` lower through the same single-array-lower plus
   per-element-extract path.

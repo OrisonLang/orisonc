@@ -248,6 +248,22 @@ add_test(
     COMMAND orison_member_call_receiver_smoke
 )
 
+add_executable(orison_source_type_queries_smoke
+    smoke/source_type_queries_smoke.cpp
+)
+
+target_link_libraries(orison_source_type_queries_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_source_type_queries_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_source_type_queries_smoke
+    COMMAND orison_source_type_queries_smoke
+)
+
 add_executable(orison_branch_binding_scope_smoke
     smoke/branch_binding_scope_smoke.cpp
 )

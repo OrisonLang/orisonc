@@ -6,6 +6,7 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -199,59 +200,12 @@ auto lowered_type_for_source_type_name(std::string_view source_type_name) -> std
     };
 }
 
-auto array_element_source_type_name(std::string_view type_name) -> std::optional<std::string>;
-auto find_record_field(
-    LoweredRecordLayout const& layout,
-    std::string_view field_name
-) -> LoweredRecordField const*;
-
 auto source_type_name_for_expression(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<std::string> {
-    if (expression.kind == syntax::ExpressionKind::name) {
-        auto source_type = state.source_type_names.find(expression.text);
-        if (source_type != state.source_type_names.end()) {
-            return source_type->second;
-        }
-    }
-
-    if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
-        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
-        if (!base_source_type.has_value()) {
-            return std::nullopt;
-        }
-
-        auto layout = context.lowering.records.find(*base_source_type);
-        if (layout == context.lowering.records.end()) {
-            return std::nullopt;
-        }
-
-        auto const* field = find_record_field(layout->second, expression.text);
-        if (field == nullptr || field->source_type_name.empty()) {
-            return std::nullopt;
-        }
-        return field->source_type_name;
-    }
-
-    if (expression.kind == syntax::ExpressionKind::index_access && expression.left != nullptr &&
-        expression.arguments.size() == 1) {
-        auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
-        if (!base_source_type.has_value()) {
-            return std::nullopt;
-        }
-
-        return array_element_source_type_name(*base_source_type);
-    }
-
-    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
-        expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset" &&
-        !expression.arguments.empty()) {
-        return source_type_name_for_expression(expression.arguments.front(), context, state);
-    }
-
-    return std::nullopt;
+    return source_type_name_for_expression(expression, context.lowering, state);
 }
 
 auto pointee_lowered_type_for_pointer_expression(
@@ -526,18 +480,6 @@ auto lower_address_operand(
     );
 }
 
-auto find_record_field(
-    LoweredRecordLayout const& layout,
-    std::string_view field_name
-) -> LoweredRecordField const* {
-    for (auto const& field : layout.fields) {
-        if (field.name == field_name) {
-            return &field;
-        }
-    }
-    return nullptr;
-}
-
 auto is_array_llvm_type(std::string_view type) -> bool {
     return type.starts_with("[");
 }
@@ -552,147 +494,6 @@ struct AddressPathStep {
     std::string field_name;
     syntax::ExpressionSyntax const* index_expression = nullptr;
 };
-
-auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string> {
-    auto arguments = std::vector<std::string> {};
-    auto depth = std::size_t {0};
-    auto start = std::size_t {0};
-    for (auto index = std::size_t {0}; index < text.size(); ++index) {
-        auto const character = text[index];
-        if (character == '<') {
-            ++depth;
-            continue;
-        }
-        if (character == '>') {
-            if (depth > 0) {
-                --depth;
-            }
-            continue;
-        }
-        if (character == ',' && depth == 0) {
-            auto argument = std::string {text.substr(start, index - start)};
-            if (!argument.empty() && argument.front() == ' ') {
-                argument.erase(argument.begin());
-            }
-            if (!argument.empty() && argument.back() == ' ') {
-                argument.pop_back();
-            }
-            arguments.push_back(std::move(argument));
-            start = index + 1;
-        }
-    }
-
-    if (start < text.size()) {
-        auto argument = std::string {text.substr(start)};
-        if (!argument.empty() && argument.front() == ' ') {
-            argument.erase(argument.begin());
-        }
-        if (!argument.empty() && argument.back() == ' ') {
-            argument.pop_back();
-        }
-        arguments.push_back(std::move(argument));
-    }
-    return arguments;
-}
-
-auto array_element_source_type_name(std::string_view type_name) -> std::optional<std::string> {
-    constexpr auto prefix = std::string_view {"Array<"};
-    if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
-        type_name.size() <= prefix.size() + 1) {
-        return std::nullopt;
-    }
-
-    auto arguments = split_top_level_generic_arguments(
-        type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
-    );
-    if (arguments.size() != 2 || arguments[0].empty()) {
-        return std::nullopt;
-    }
-    return arguments[0];
-}
-
-auto llvm_type_for_source_type_name(
-    std::string_view type_name,
-    LoweringContext const& context
-) -> std::optional<std::string> {
-    if (auto lowered = lowered_type_for_source_type_name(type_name)) {
-        return lowered->type;
-    }
-
-    if (auto record = context.records.find(std::string(type_name)); record != context.records.end()) {
-        return record->second.llvm_type_name;
-    }
-
-    constexpr auto prefix = std::string_view {"Array<"};
-    if (type_name.starts_with(prefix) && type_name.ends_with(">") &&
-        type_name.size() > prefix.size() + 1) {
-        auto arguments = split_top_level_generic_arguments(
-            type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
-        );
-        if (arguments.size() == 2 && !arguments[1].empty()) {
-            auto element_type = llvm_type_for_source_type_name(arguments[0], context);
-            if (element_type.has_value()) {
-                return "[" + arguments[1] + " x " + *element_type + "]";
-            }
-        }
-    }
-
-    return std::nullopt;
-}
-
-struct ParsedLlvmArrayType {
-    std::string element_type;
-    std::size_t length = 0;
-};
-
-auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType> {
-    if (!type.starts_with("[") || !type.ends_with("]") || type.size() < 6) {
-        return std::nullopt;
-    }
-
-    auto depth = std::size_t {0};
-    auto separator = std::size_t {0};
-    for (auto index = std::size_t {1}; index + 1 < type.size(); ++index) {
-        auto const character = type[index];
-        if (character == '[') {
-            ++depth;
-            continue;
-        }
-        if (character == ']') {
-            if (depth > 0) {
-                --depth;
-            }
-            continue;
-        }
-        if (depth == 0 && character == 'x' && index > 1 && index + 2 < type.size() &&
-            type[index - 1] == ' ' && type[index + 1] == ' ') {
-            separator = index;
-            break;
-        }
-    }
-    if (separator == 0) {
-        return std::nullopt;
-    }
-
-    auto length_text = std::string {type.substr(1, separator - 2)};
-    auto element_type = std::string {type.substr(separator + 2, type.size() - separator - 3)};
-    if (length_text.empty() || element_type.empty()) {
-        return std::nullopt;
-    }
-
-    auto length = std::size_t {0};
-    for (auto character : length_text) {
-        if (character < '0' || character > '9') {
-            return std::nullopt;
-        }
-        length = (length * 10) + static_cast<std::size_t>(character - '0');
-    }
-
-    return ParsedLlvmArrayType {
-        .element_type = std::move(element_type),
-        .length = length,
-    };
-}
 
 auto lower_array_literal_expression(
     syntax::ExpressionSyntax const& expression,
