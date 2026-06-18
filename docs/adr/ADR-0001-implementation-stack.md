@@ -170,11 +170,12 @@ analysis, and lowering components.
   coverage to array-backed local record fields, local array-of-record fields, nested local arrays, and direct annotated
   mutable local arrays. Immutable aggregate `let` lowering now uses annotated or inferred initializer types before
   falling back to the enclosing return type, so unannotated fixed-array literals with explicit element types can
-  materialize as SSA aggregate values and retain source-type metadata for later indexed use. Whole-value reassignment
-  for those same mutable local aggregate subsets now reuses direct typed aggregate stores, and supported mutable-local
-  plus pointer-backed aggregate field/index assignment now lowers through direct field/element addresses plus typed
-  stores for record fields and fixed-array elements, including nested mixed paths like `pointer.items[index].field =
-  value` and `pointer.rows[index][inner] = value`. Broader aggregate construction/assignment remains future work.
+  materialize as SSA aggregate values and retain source-type metadata for later indexed use, including nested
+  fixed-array literals whose leaf elements carry explicit types. Whole-value reassignment for those same mutable local
+  aggregate subsets now reuses direct typed aggregate stores, and supported mutable-local plus pointer-backed aggregate
+  field/index assignment now lowers through direct field/element addresses plus typed stores for record fields and
+  fixed-array elements, including nested mixed paths like `pointer.items[index].field = value` and
+  `pointer.rows[index][inner] = value`. Broader aggregate construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

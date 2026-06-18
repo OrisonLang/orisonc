@@ -13,6 +13,7 @@
 `local_record_nested_record_assignment.or` demonstrates nested record-field and fixed-array assignment on a local value.
 `local_aggregate_let.or` demonstrates immutable aggregate `let` bindings for records and fixed arrays.
 `local_inferred_array_let.or` demonstrates an immutable fixed-array `let` whose type is inferred from explicit elements.
+`local_inferred_nested_array_let.or` demonstrates a nested immutable fixed-array `let` inferred from explicit elements.
 `local_nested_aggregate_let.or` demonstrates immutable aggregate `let` bindings for nested records and arrays.
 `local_array_for.or` demonstrates non-literal fixed-array iteration over a local array value.
 `local_record_array_for.or` demonstrates non-literal fixed-array iteration over a nested record-backed array.
@@ -49,6 +50,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_record_nested_record_assignment.or` | nested record-field and array assignment | backend |
 | `local_aggregate_let.or` | immutable aggregate `let` bindings | backend |
 | `local_inferred_array_let.or` | inferred immutable fixed-array `let` binding | backend |
+| `local_inferred_nested_array_let.or` | inferred nested immutable fixed-array `let` binding | backend |
 | `local_nested_aggregate_let.or` | immutable nested aggregate `let` bindings | backend |
 | `local_array_for.or` | non-literal fixed-array iteration | backend |
 | `local_record_array_for.or` | nested record-backed fixed-array iteration | backend |
@@ -186,6 +188,14 @@ build/tools/orisonc/orisonc run examples/local_inferred_array_let.or
 ```
 
 It returns `0` after lowering an unannotated fixed-array `let` whose element types are explicit.
+
+Run the inferred nested immutable fixed-array `let` demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_inferred_nested_array_let.or
+```
+
+It returns `0` after lowering an unannotated nested fixed-array `let` whose leaf element types are explicit.
 
 Run the nested immutable aggregate `let` demo with:
 

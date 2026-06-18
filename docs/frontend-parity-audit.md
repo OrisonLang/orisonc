@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: checked-in backend coverage now pins inferred nested immutable fixed-array `let` bindings with explicit
+  leaf element types, exercising recursive array-literal inference plus retained source-type metadata through nested
+  index access.
 - 2026-06-18: immutable `let` lowering now prefers annotated or inferred initializer types over the enclosing return
   fallback, enabling unannotated fixed-array aggregate bindings with explicit element types and preserving inferred
   source type names for later indexed use.
