@@ -80,6 +80,25 @@ void assert_cli_parse_failure(
 }
 
 template <typename SourceLines>
+void assert_cli_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    SourceLines const& lines,
+    std::string_view expected_message
+) {
+    {
+        std::ofstream output(path);
+        for (auto line : lines) {
+            output << line << '\n';
+        }
+    }
+
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+}
+
+template <typename SourceLines>
 void assert_cli_parse_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -1858,6 +1877,33 @@ int main() {
     assert(emit_output.find("; package demo.emit") != std::string::npos);
     assert(emit_output.find("define i32 @main()") != std::string::npos);
     assert(emit_output.find("ret i32 42") != std::string::npos);
+
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_member_assignment.or",
+        cli_module_lines(
+            {
+                "unsafe function main() -> Unit",
+                "    var total: UInt32 = 0 as UInt32",
+                "    total.status = 1 as UInt32",
+                "    return",
+            }
+        ),
+        "lowering aggregate assignment member target is unsupported"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_index_assignment.or",
+        cli_module_lines(
+            {
+                "unsafe function main(index: UInt64) -> Unit",
+                "    var total: UInt32 = 0 as UInt32",
+                "    total[index] = 1 as UInt32",
+                "    return",
+            }
+        ),
+        "lowering aggregate assignment index target is unsupported"
+    );
 
     auto object_path = std::filesystem::temp_directory_path() / "orison_cli_emit_object.o";
     auto object_command =

@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: compiler-app and CLI smoke coverage now pin source-reachable aggregate assignment lowering failures for
+  scalar member and scalar index targets, so user-facing `--emit-llvm` diagnostics stay aligned with the direct
+  statement-emitter diagnostics.
 - 2026-06-18: statement-emitter smoke coverage now pins aggregate assignment diagnostics for missing source-type
   metadata plus scalar member/index targets, so unsupported aggregate assignment shapes fail explicitly instead of
   silently drifting while happy-path local and pointer-backed assignment coverage expands.

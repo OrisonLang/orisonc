@@ -638,6 +638,50 @@ int main() {
         emit_failure.stderr_text.find("lowering does not yet support this return expression") != std::string::npos
     );
 
+    auto emit_scalar_member_assignment_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_scalar_member_assignment_failure.or";
+    write_concurrency_fixture(
+        emit_scalar_member_assignment_failure_path,
+        "demo.emit",
+        {
+            "unsafe function main() -> Unit",
+            "    var total: UInt32 = 0 as UInt32",
+            "    total.status = 1 as UInt32",
+            "    return",
+        }
+    );
+    auto emit_scalar_member_assignment_failure =
+        run_emit_llvm(app, emit_scalar_member_assignment_failure_path);
+    assert(emit_scalar_member_assignment_failure.exit_code == 1);
+    assert(emit_scalar_member_assignment_failure.stdout_text.empty());
+    assert(
+        emit_scalar_member_assignment_failure.stderr_text.find(
+            "lowering aggregate assignment member target is unsupported"
+        ) != std::string::npos
+    );
+
+    auto emit_scalar_index_assignment_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_scalar_index_assignment_failure.or";
+    write_concurrency_fixture(
+        emit_scalar_index_assignment_failure_path,
+        "demo.emit",
+        {
+            "unsafe function main(index: UInt64) -> Unit",
+            "    var total: UInt32 = 0 as UInt32",
+            "    total[index] = 1 as UInt32",
+            "    return",
+        }
+    );
+    auto emit_scalar_index_assignment_failure =
+        run_emit_llvm(app, emit_scalar_index_assignment_failure_path);
+    assert(emit_scalar_index_assignment_failure.exit_code == 1);
+    assert(emit_scalar_index_assignment_failure.stdout_text.empty());
+    assert(
+        emit_scalar_index_assignment_failure.stderr_text.find(
+            "lowering aggregate assignment index target is unsupported"
+        ) != std::string::npos
+    );
+
     auto emit_local_record_address_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_emit_local_record_address.or";
     write_concurrency_fixture(
