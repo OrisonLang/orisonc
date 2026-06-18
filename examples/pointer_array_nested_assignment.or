@@ -1,0 +1,13 @@
+package examples.aggregates
+
+record Matrix
+    rows: Array<Array<Byte, 4>, 2>
+
+unsafe function assign_pointer_matrix_byte(matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Unit
+    matrix.rows[index][inner] = 1 as Byte
+    return
+
+unsafe function main() -> UInt32
+    var matrix = Matrix([[0 as Byte, 0 as Byte, 0 as Byte, 0 as Byte], [0 as Byte, 0 as Byte, 0 as Byte, 0 as Byte]])
+    assign_pointer_matrix_byte(Pointer(address_of(matrix)), 1 as UInt64, 2 as UInt64)
+    0 as UInt32

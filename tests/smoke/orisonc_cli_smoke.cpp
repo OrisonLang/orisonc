@@ -1974,6 +1974,14 @@ int main() {
     assert(WIFEXITED(nested_aggregate_status));
     assert(WEXITSTATUS(nested_aggregate_status) == 0);
 
+    auto pointer_array_assignment_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "pointer_array_nested_assignment.or";
+    auto pointer_array_assignment_status = std::system(
+        (executable.string() + " run " + pointer_array_assignment_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(pointer_array_assignment_status));
+    assert(WEXITSTATUS(pointer_array_assignment_status) == 0);
+
     auto pointer_nested_addressing_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "pointer_record_nested_addressing.or";
     auto pointer_nested_addressing_status = std::system(
