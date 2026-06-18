@@ -1989,6 +1989,17 @@ int main() {
     assert(WIFEXITED(local_record_assignment_executable_status));
     assert(WEXITSTATUS(local_record_assignment_executable_status) == 0);
 
+    auto pointer_record_assignment_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_record_field_assignment_build";
+    auto pointer_record_assignment_build_command =
+        executable.string() + " --build " + pointer_record_assignment_emit_path.string() + " -o " +
+        pointer_record_assignment_executable_path.string();
+    assert(read_command_output(pointer_record_assignment_build_command).empty());
+    auto pointer_record_assignment_executable_status =
+        std::system(pointer_record_assignment_executable_path.string().c_str());
+    assert(WIFEXITED(pointer_record_assignment_executable_status));
+    assert(WEXITSTATUS(pointer_record_assignment_executable_status) == 0);
+
     auto run_command = executable.string() + " run " + demo_path.string();
     auto run_status = std::system(run_command.c_str());
     assert(WIFEXITED(run_status));
