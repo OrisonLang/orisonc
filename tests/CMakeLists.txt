@@ -477,6 +477,29 @@ add_test(
     COMMAND orison_pipeline_smoke
 )
 
+add_executable(orison_canonical_pipeline_smoke
+    smoke/canonical_pipeline_smoke.cpp
+)
+
+target_link_libraries(orison_canonical_pipeline_smoke
+    PRIVATE
+        orison_driver
+)
+
+target_compile_definitions(orison_canonical_pipeline_smoke
+    PRIVATE
+        ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+target_compile_features(orison_canonical_pipeline_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_canonical_pipeline_smoke
+    COMMAND orison_canonical_pipeline_smoke
+)
+
+set_tests_properties(orison_canonical_pipeline_smoke PROPERTIES LABELS "canonical_pipeline")
+
 add_executable(orison_examples_smoke
     smoke/examples_smoke.cpp
 )

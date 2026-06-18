@@ -68,6 +68,12 @@ Use `local_record_field_assignment.or` and `pointer_record_field_assignment.or` 
 coverage. CLI smoke tests currently pin both files through `--emit-llvm`, `--emit-object`, `run`, and retained
 `--build` executable paths.
 
+Run only these canonical pipeline demos with:
+
+```sh
+ctest --test-dir build --output-on-failure -L canonical_pipeline
+```
+
 Run the backend demo with:
 
 ```sh
