@@ -139,8 +139,10 @@ analysis, and lowering components.
 - Direct scalar member-call statements now lower through explicit receiver arguments and the shared call emitter for
   supported scalar receivers; null-safe member-call statements remain future work.
 - Receiver-self method parameters (`this: This`, `shared.This`, `exclusive.This`) are lowered as the concrete receiver
-  type when that receiver has a supported LLVM representation, enabling scalar receiver method definitions while
-  leaving aggregate receiver layout future work.
+  type when that receiver has a supported LLVM representation, enabling scalar receiver method definitions plus
+  non-generic record receiver method definitions for records with supported layouts. Record receiver methods can return
+  fixed-size arrays that participate in `for` iterable recovery; broader aggregate receiver ABI policy remains future
+  work.
 - Raw/MMIO intrinsics now have an initial LLVM backend path for the pointer-proven subset: `raw_read` and
   `volatile_read` emit loads, `raw_write` and `volatile_write` emit stores, `volatile_*` marks the access volatile,
   and `raw_offset` emits `getelementptr` when the source is a known `Pointer<T>`. `Address` operands are converted to

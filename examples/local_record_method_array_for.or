@@ -1,0 +1,18 @@
+package examples.collections
+
+record Bucket
+    values: Array<UInt32, 3>
+
+record Wrapper
+    bucket: Bucket
+
+extend Wrapper
+    public function view(this: shared This) -> Array<UInt32, 3>
+        this.bucket.values
+
+function main() -> UInt32
+    var wrapper = Wrapper(Bucket([1, 2, 3]))
+    var total = 0 as UInt32
+    for item in wrapper.view()
+        total = total + item
+    0 as UInt32

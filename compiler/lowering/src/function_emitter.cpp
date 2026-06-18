@@ -364,6 +364,10 @@ auto source_type_name_for_llvm_type(
     return std::nullopt;
 }
 
+auto is_receiver_self_source_type(std::string_view type_name) -> bool {
+    return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
+}
+
 auto find_record_field(
     LoweredRecordLayout const& layout,
     std::string_view field_name
@@ -1763,10 +1767,14 @@ void emit_function_body(
             .value = llvm_local_value_name(function.parameters[index].name),
             .signedness = signature.parameter_signedness[index],
         });
-        state.source_type_names.emplace(
-            function.parameters[index].name,
-            render_source_type_name(function.parameters[index].type)
-        );
+        auto source_type_name = render_source_type_name(function.parameters[index].type);
+        if (is_receiver_self_source_type(source_type_name)) {
+            if (auto concrete_source_type =
+                    source_type_name_for_llvm_type(signature.parameter_types[index], context)) {
+                source_type_name = std::move(*concrete_source_type);
+            }
+        }
+        state.source_type_names.emplace(function.parameters[index].name, std::move(source_type_name));
     }
     [[maybe_unused]] auto function_scope = DeferredCleanupScope {state};
 

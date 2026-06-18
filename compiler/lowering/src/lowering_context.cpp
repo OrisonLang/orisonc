@@ -23,10 +23,47 @@ auto is_receiver_self_type(syntax::TypeSyntax const& type) -> bool {
         (type.name == "This" || type.name == "shared.This" || type.name == "exclusive.This");
 }
 
+auto contextual_record_type_for(
+    syntax::TypeSyntax const& type,
+    std::unordered_set<std::string> const& record_names
+) -> std::optional<std::string> {
+    if (type.generic_arguments.empty() && record_names.contains(type.name)) {
+        return lowered_record_type_name(type.name);
+    }
+    return std::nullopt;
+}
+
+auto lower_contextual_function_signature(
+    syntax::TypeSyntax const& return_type,
+    std::vector<syntax::ParameterSyntax> const& parameters,
+    std::string symbol_name,
+    std::unordered_set<std::string> const& record_names
+) -> LoweredFunctionSignature {
+    auto signature = lower_function_signature(return_type, parameters, std::move(symbol_name));
+    if (signature.return_type.empty()) {
+        if (auto record_type = contextual_record_type_for(return_type, record_names)) {
+            signature.return_type = std::move(*record_type);
+            signature.return_signedness = IntegerSignedness::not_integer;
+        }
+    }
+
+    for (auto index = std::size_t {0}; index < parameters.size(); ++index) {
+        if (!signature.parameter_types[index].empty()) {
+            continue;
+        }
+        if (auto record_type = contextual_record_type_for(parameters[index].type, record_names)) {
+            signature.parameter_types[index] = std::move(*record_type);
+            signature.parameter_signedness[index] = IntegerSignedness::not_integer;
+        }
+    }
+    return signature;
+}
+
 auto lower_method_signature(
     syntax::TypeSyntax const& receiver_type,
     syntax::FunctionSyntax const& method,
-    std::string symbol_name
+    std::string symbol_name,
+    std::unordered_set<std::string> const& record_names
 ) -> LoweredFunctionSignature {
     auto parameters = method.parameters;
     for (auto& parameter : parameters) {
@@ -34,19 +71,25 @@ auto lower_method_signature(
             parameter.type = receiver_type;
         }
     }
-    return lower_function_signature(method.return_type, parameters, std::move(symbol_name));
+    return lower_contextual_function_signature(
+        method.return_type,
+        parameters,
+        std::move(symbol_name),
+        record_names
+    );
 }
 
 auto collect_method_signature(
     syntax::TypeSyntax const& receiver_type,
     std::string receiver_type_name,
-    syntax::FunctionSyntax const& method
+    syntax::FunctionSyntax const& method,
+    std::unordered_set<std::string> const& record_names
 ) -> LoweredMethodSignature {
     auto symbol_name = lowered_method_symbol_name(receiver_type_name, method.name);
     return LoweredMethodSignature {
         .receiver_type_name = receiver_type_name,
         .method_name = method.name,
-        .signature = lower_method_signature(receiver_type, method, std::move(symbol_name)),
+        .signature = lower_method_signature(receiver_type, method, std::move(symbol_name), record_names),
     };
 }
 
@@ -119,8 +162,12 @@ auto build_lowering_context(
     }
 
     for (auto const& function : module.functions) {
-        auto signature =
-            lower_function_signature(function.return_type, function.parameters, function.name);
+        auto signature = lower_contextual_function_signature(
+            function.return_type,
+            function.parameters,
+            function.name,
+            record_names
+        );
         context.functions.emplace(function.name, std::move(signature));
     }
 
@@ -130,7 +177,8 @@ auto build_lowering_context(
             context.methods.push_back(collect_method_signature(
                 implementation.receiver_type,
                 receiver_type_name,
-                method
+                method,
+                record_names
             ));
         }
     }
@@ -141,7 +189,8 @@ auto build_lowering_context(
             context.methods.push_back(collect_method_signature(
                 extension.receiver_type,
                 receiver_type_name,
-                method
+                method,
+                record_names
             ));
         }
     }

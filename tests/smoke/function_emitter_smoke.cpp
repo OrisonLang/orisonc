@@ -157,6 +157,17 @@ int main() {
                   "    var total = 0 as UInt32\n"
                   "    for item in value.triple()\n"
                   "        total = total + item\n"
+                  "    0 as UInt32\n"
+                  "\n"
+                  "extend Wrapper\n"
+                  "    public function view(this: shared This) -> Array<UInt32, 3>\n"
+                  "        this.bucket.values\n"
+                  "\n"
+                  "function sum_record_method_array_values() -> UInt32\n"
+                  "    var wrapper = Wrapper(Bucket([1, 2, 3]))\n"
+                  "    var total = 0 as UInt32\n"
+                  "    for item in wrapper.view()\n"
+                  "        total = total + item\n"
                   "    0 as UInt32\n";
     }
 
@@ -486,6 +497,21 @@ int main() {
     assert(method_array_for_ir.find("call [3 x i32] @method.UInt32.triple") != std::string::npos);
     assert(method_array_for_ir.find("for.iteration") != std::string::npos);
     assert(method_array_for_ir.find("ret i32 0") != std::string::npos);
+
+    auto record_method_array_for_ir = orison::lowering::emit_function(
+        parse_result.module.functions[21],
+        context.functions.at("sum_record_method_array_values"),
+        context,
+        strings,
+        diagnostics
+    );
+    assert(!diagnostics.has_errors());
+    assert(
+        record_method_array_for_ir.find("call [3 x i32] @method.Wrapper.view(%record.Wrapper") !=
+        std::string::npos
+    );
+    assert(record_method_array_for_ir.find("for.iteration") != std::string::npos);
+    assert(record_method_array_for_ir.find("ret i32 0") != std::string::npos);
 
     auto control_flow_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_06_control_flow.or";
     auto control_flow_source = orison::source::SourceFile::read(control_flow_path);

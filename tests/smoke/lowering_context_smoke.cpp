@@ -199,7 +199,7 @@ int main() {
     assert(context.methods[0].signature.symbol_name == "method.Device.read");
     assert(context.methods[0].signature.return_type == "i32");
     assert(context.methods[0].signature.parameter_types.size() == 2);
-    assert(context.methods[0].signature.parameter_types[0].empty());
+    assert(context.methods[0].signature.parameter_types[0] == "%record.Device");
     assert(context.methods[0].signature.parameter_types[1] == "i32");
     assert(context.methods[1].receiver_type_name == "Box<UInt32>");
     assert(context.methods[1].method_name == "reset");
