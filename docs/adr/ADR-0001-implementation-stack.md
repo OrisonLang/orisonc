@@ -168,11 +168,13 @@ analysis, and lowering components.
   `address_of(local.field)` lowers through the same record-layout metadata from mutable local record storage. Expected
   fixed-array literals now materialize through recursive `insertvalue` as well, extending mutable local aggregate
   coverage to array-backed local record fields, local array-of-record fields, nested local arrays, and direct annotated
-  mutable local arrays. Whole-value reassignment for those same mutable local aggregate subsets now reuses direct typed
-  aggregate stores, and supported mutable-local plus pointer-backed aggregate field/index assignment now lowers through
-  direct field/element addresses plus typed stores for record fields and fixed-array elements, including nested mixed
-  paths like `pointer.items[index].field = value` and `pointer.rows[index][inner] = value`. Immutable aggregate `let`
-  values and broader aggregate construction/assignment remain future work.
+  mutable local arrays. Immutable aggregate `let` lowering now uses annotated or inferred initializer types before
+  falling back to the enclosing return type, so unannotated fixed-array literals with explicit element types can
+  materialize as SSA aggregate values and retain source-type metadata for later indexed use. Whole-value reassignment
+  for those same mutable local aggregate subsets now reuses direct typed aggregate stores, and supported mutable-local
+  plus pointer-backed aggregate field/index assignment now lowers through direct field/element addresses plus typed
+  stores for record fields and fixed-array elements, including nested mixed paths like `pointer.items[index].field =
+  value` and `pointer.rows[index][inner] = value`. Broader aggregate construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

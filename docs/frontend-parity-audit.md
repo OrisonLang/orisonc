@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: immutable `let` lowering now prefers annotated or inferred initializer types over the enclosing return
+  fallback, enabling unannotated fixed-array aggregate bindings with explicit element types and preserving inferred
+  source type names for later indexed use.
 - 2026-06-18: README development workflow now advertises the `canonical_pipeline` CTest label, so contributors can
   discover the focused compiler pipeline smoke path from the main repo entry point.
 - 2026-06-18: added a dedicated `orison_canonical_pipeline_smoke` CTest with the `canonical_pipeline` label so

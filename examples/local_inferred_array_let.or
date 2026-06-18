@@ -1,0 +1,9 @@
+package examples.aggregates
+
+function selected_byte() -> UInt8
+    let bytes = [1 as UInt8, 2 as UInt8, 3 as UInt8, 4 as UInt8]
+    bytes[1 as UInt64]
+
+function main() -> UInt32
+    let value = selected_byte()
+    0 as UInt32

@@ -25,7 +25,8 @@ auto is_aggregate_llvm_type(std::string_view type) -> bool {
 auto source_type_name_for_initializer(
     syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
-    FunctionLoweringState const& state
+    FunctionLoweringState const& state,
+    std::string_view lowered_llvm_type
 ) -> std::optional<std::string> {
     if (expression.kind == syntax::ExpressionKind::name) {
         auto source_type = state.source_type_names.find(expression.text);
@@ -38,6 +39,10 @@ auto source_type_name_for_initializer(
         expression.left->kind == syntax::ExpressionKind::name &&
         context.lowering.records.contains(expression.left->text)) {
         return expression.left->text;
+    }
+
+    if (auto source_type = source_type_name_for_llvm_type(lowered_llvm_type, context.lowering)) {
+        return source_type;
     }
 
     return std::nullopt;
@@ -540,10 +545,28 @@ auto lower_let_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
+    auto type = LoweredType {
+        .type = std::string(expected_llvm_type),
+        .signedness = expected_signedness,
+    };
+    if (!statement.annotated_type.name.empty()) {
+        auto annotated_type = lowered_type_for_source_type_name(
+            render_source_type_name(statement.annotated_type),
+            context.lowering
+        );
+        if (!annotated_type.has_value() || annotated_type->type == "void") {
+            diagnostics.error(statement.line, "lowering does not yet support this let type");
+            return false;
+        }
+        type = std::move(*annotated_type);
+    } else if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
+        type = std::move(*inferred);
+    }
+
     auto lowered = lower_expression(
         statement.expression,
-        expected_llvm_type,
-        expected_signedness,
+        type.type,
+        type.signedness,
         context,
         session,
         output
@@ -573,7 +596,7 @@ auto lower_let_statement(
         session.state.source_type_names[statement.name] =
             render_source_type_name(statement.annotated_type);
     } else if (auto inferred_source_type =
-                   source_type_name_for_initializer(statement.expression, context, session.state)) {
+                   source_type_name_for_initializer(statement.expression, context, session.state, lowered->type)) {
         session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
     return true;
@@ -638,7 +661,7 @@ auto lower_var_statement(
         session.state.source_type_names[statement.name] =
             render_source_type_name(statement.annotated_type);
     } else if (auto inferred_source_type =
-                   source_type_name_for_initializer(statement.expression, context, session.state)) {
+                   source_type_name_for_initializer(statement.expression, context, session.state, lowered->type)) {
         session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
     return true;

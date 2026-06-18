@@ -2024,6 +2024,13 @@ int main() {
     assert(WIFEXITED(immutable_aggregate_status));
     assert(WEXITSTATUS(immutable_aggregate_status) == 0);
 
+    auto inferred_array_let_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_inferred_array_let.or";
+    auto inferred_array_let_status =
+        std::system((executable.string() + " run " + inferred_array_let_demo_path.string()).c_str());
+    assert(WIFEXITED(inferred_array_let_status));
+    assert(WEXITSTATUS(inferred_array_let_status) == 0);
+
     auto array_for_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_array_for.or";
     auto array_for_status = std::system((executable.string() + " run " + array_for_demo_path.string()).c_str());
     assert(WIFEXITED(array_for_status));
