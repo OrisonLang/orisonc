@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: statement-emitter smoke coverage now pins aggregate assignment diagnostics for missing source-type
+  metadata plus scalar member/index targets, so unsupported aggregate assignment shapes fail explicitly instead of
+  silently drifting while happy-path local and pointer-backed assignment coverage expands.
 - 2026-06-18: checked-in example coverage now includes a focused backend demo for local array-of-record field
   assignment, pinning `log.entries[index].status = value` through mutable local record storage separately from the
   pointer-backed aggregate assignment demos.

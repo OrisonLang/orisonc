@@ -307,6 +307,96 @@ int main() {
     );
     assert(output.str().empty());
 
+    auto unsupported_aggregate_state = orison::lowering::FunctionLoweringState {};
+    unsupported_aggregate_state.mutable_bindings.emplace("missing_type", orison::lowering::MutableBinding {
+        .type = "i32",
+        .storage = "%missing_type.addr",
+    });
+    unsupported_aggregate_state.mutable_bindings.emplace("total", orison::lowering::MutableBinding {
+        .type = "i32",
+        .storage = "%total.addr",
+    });
+    unsupported_aggregate_state.source_type_names["total"] = "UInt32";
+    unsupported_aggregate_state.immutable_bindings.emplace("index", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%index",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto unsupported_aggregate_failures = orison::lowering::LoweringFailures {};
+    auto unsupported_aggregate_session = orison::lowering::FunctionLoweringSession {
+        .state = unsupported_aggregate_state,
+        .failures = unsupported_aggregate_failures,
+    };
+
+    auto unknown_aggregate_type_assignment = orison::syntax::StatementSyntax {};
+    unknown_aggregate_type_assignment.kind = orison::syntax::StatementKind::assignment_statement;
+    unknown_aggregate_type_assignment.assignment_target.kind = orison::syntax::ExpressionKind::member_access;
+    unknown_aggregate_type_assignment.assignment_target.text = "status";
+    unknown_aggregate_type_assignment.assignment_target.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    unknown_aggregate_type_assignment.assignment_target.left->kind = orison::syntax::ExpressionKind::name;
+    unknown_aggregate_type_assignment.assignment_target.left->text = "missing_type";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_assignment_statement(
+        unknown_aggregate_type_assignment,
+        context,
+        unsupported_aggregate_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering aggregate assignment target type is unknown"
+    );
+    assert(output.str().empty());
+
+    auto scalar_member_assignment = orison::syntax::StatementSyntax {};
+    scalar_member_assignment.kind = orison::syntax::StatementKind::assignment_statement;
+    scalar_member_assignment.assignment_target.kind = orison::syntax::ExpressionKind::member_access;
+    scalar_member_assignment.assignment_target.text = "status";
+    scalar_member_assignment.assignment_target.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    scalar_member_assignment.assignment_target.left->kind = orison::syntax::ExpressionKind::name;
+    scalar_member_assignment.assignment_target.left->text = "total";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_assignment_statement(
+        scalar_member_assignment,
+        context,
+        unsupported_aggregate_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering aggregate assignment member target is unsupported"
+    );
+    assert(output.str().empty());
+
+    auto scalar_index_assignment = orison::syntax::StatementSyntax {};
+    scalar_index_assignment.kind = orison::syntax::StatementKind::assignment_statement;
+    scalar_index_assignment.assignment_target.kind = orison::syntax::ExpressionKind::index_access;
+    scalar_index_assignment.assignment_target.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    scalar_index_assignment.assignment_target.left->kind = orison::syntax::ExpressionKind::name;
+    scalar_index_assignment.assignment_target.left->text = "total";
+    scalar_index_assignment.assignment_target.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "index",
+    });
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_assignment_statement(
+        scalar_index_assignment,
+        context,
+        unsupported_aggregate_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering aggregate assignment index target is unsupported"
+    );
+    assert(output.str().empty());
+
     auto aggregate_let_state = orison::lowering::FunctionLoweringState {};
     auto aggregate_let_failures = orison::lowering::LoweringFailures {};
     auto aggregate_let_session = orison::lowering::FunctionLoweringSession {
