@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: README development workflow now advertises the `canonical_pipeline` CTest label, so contributors can
+  discover the focused compiler pipeline smoke path from the main repo entry point.
 - 2026-06-18: added a dedicated `orison_canonical_pipeline_smoke` CTest with the `canonical_pipeline` label so
   contributors can quickly run the canonical `minimal.or`, local aggregate assignment, and pointer-backed aggregate
   assignment demos across `--emit-llvm`, `--emit-object`, `run`, and retained `--build` paths.

@@ -91,6 +91,16 @@ The exact layout may change during early implementation.
 - Add or update tests for every meaningful change.
 - Record material design decisions in ADRs.
 
+For a quick compiler pipeline check, run the canonical demo smoke test:
+
+```sh
+ctest --test-dir build --output-on-failure -L canonical_pipeline
+```
+
+This covers `examples/minimal.or`, `examples/local_record_field_assignment.or`, and
+`examples/pointer_record_field_assignment.or` across LLVM IR emission, object emission, `run`, and retained `--build`
+paths.
+
 ## Status
 
 This repository currently captures the initial language design and development conventions needed to begin implementation.
