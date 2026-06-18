@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: examples documentation now identifies `minimal.or`, `local_record_field_assignment.or`, and
+  `pointer_record_field_assignment.or` as the canonical compiler pipeline demos for the currently pinned IR, object,
+  run, and retained build paths.
 - 2026-06-18: CLI smoke coverage now also builds and executes a retained binary for the focused pointer-backed
   array-of-record field assignment example, completing local/pointer parity across `--emit-llvm`, `--emit-object`,
   `run`, and retained `--build` paths.

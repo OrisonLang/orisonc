@@ -60,6 +60,14 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
 The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
 
+## Canonical Compiler Pipeline Demos
+
+Use `minimal.or` for the smallest compile/link/run demonstration.
+
+Use `local_record_field_assignment.or` and `pointer_record_field_assignment.or` for aggregate-assignment pipeline
+coverage. CLI smoke tests currently pin both files through `--emit-llvm`, `--emit-object`, `run`, and retained
+`--build` executable paths.
+
 Run the backend demo with:
 
 ```sh
