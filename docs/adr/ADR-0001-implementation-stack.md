@@ -180,8 +180,9 @@ analysis, and lowering components.
   available for later nested field/index access and branch-local or switch-local whole-value stores that are read after
   the control-flow join, and supported mutable-local plus pointer-backed aggregate
   field/index assignment now lowers through direct field/element addresses plus typed stores for record fields and
-  fixed-array elements, including nested mixed paths like `pointer.items[index].field = value` and
-  `pointer.rows[index][inner] = value`. CLI smoke coverage pins user-facing LLVM extraction shapes for mixed inferred
+  fixed-array elements, including nested mixed paths like `pointer.items[index].field = value`,
+  `pointer.rows[index][inner] = value`, and branch-local nested field stores read after the control-flow join. CLI
+  smoke coverage pins user-facing LLVM extraction shapes for mixed inferred
   immutable aggregate paths in record-field-to-array-index, array-index-to-record-field, and nested
   record-field-to-array-index-to-record-field directions, and now covers LLVM emission, host object emission, direct
   `run`, and retained `--build` execution for all three mixed demos. Broader aggregate construction/assignment
