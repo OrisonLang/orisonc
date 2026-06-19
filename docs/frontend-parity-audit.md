@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: CLI smoke coverage now builds and executes retained binaries for the mixed inferred aggregate demos,
+  completing `--emit-llvm`, `--emit-object`, `run`, and retained `--build` coverage for both metadata-composition
+  directions.
 - 2026-06-18: CLI smoke coverage now emits object files for the mixed inferred aggregate demos after the pinned
   `--emit-llvm` extraction checks, extending record-field-to-array-index and array-index-to-record-field coverage
   through host object generation.

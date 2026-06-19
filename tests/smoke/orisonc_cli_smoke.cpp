@@ -2046,6 +2046,28 @@ int main() {
     assert(WIFEXITED(pointer_record_assignment_executable_status));
     assert(WEXITSTATUS(pointer_record_assignment_executable_status) == 0);
 
+    auto inferred_record_array_let_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_inferred_record_array_let_build";
+    auto inferred_record_array_let_build_command =
+        executable.string() + " --build " + inferred_record_array_let_emit_path.string() + " -o " +
+        inferred_record_array_let_executable_path.string();
+    assert(read_command_output(inferred_record_array_let_build_command).empty());
+    auto inferred_record_array_let_executable_status =
+        std::system(inferred_record_array_let_executable_path.string().c_str());
+    assert(WIFEXITED(inferred_record_array_let_executable_status));
+    assert(WEXITSTATUS(inferred_record_array_let_executable_status) == 0);
+
+    auto inferred_array_record_let_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_inferred_array_record_let_build";
+    auto inferred_array_record_let_build_command =
+        executable.string() + " --build " + inferred_array_record_let_emit_path.string() + " -o " +
+        inferred_array_record_let_executable_path.string();
+    assert(read_command_output(inferred_array_record_let_build_command).empty());
+    auto inferred_array_record_let_executable_status =
+        std::system(inferred_array_record_let_executable_path.string().c_str());
+    assert(WIFEXITED(inferred_array_record_let_executable_status));
+    assert(WEXITSTATUS(inferred_array_record_let_executable_status) == 0);
+
     auto run_command = executable.string() + " run " + demo_path.string();
     auto run_status = std::system(run_command.c_str());
     assert(WIFEXITED(run_status));
