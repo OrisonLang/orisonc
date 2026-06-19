@@ -1,0 +1,13 @@
+package examples.aggregates
+
+record Packet
+    bytes: Array<UInt8, 4>
+    tag: UInt32
+
+function selected_byte() -> UInt8
+    let packet = Packet([1 as UInt8, 2 as UInt8, 3 as UInt8, 4 as UInt8], 9 as UInt32)
+    packet.bytes[2 as UInt64]
+
+function main() -> UInt32
+    let value = selected_byte()
+    0 as UInt32
