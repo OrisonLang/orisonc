@@ -1,0 +1,17 @@
+package examples.aggregates
+
+record Matrix
+    rows: Array<Array<UInt32, 2>, 2>
+
+unsafe function selected_value(flag: Bool) -> UInt32
+    var matrix = Matrix([[1 as UInt32, 2 as UInt32], [3 as UInt32, 4 as UInt32]])
+    switch flag
+        true =>
+            matrix.rows[1 as UInt64][0 as UInt64] = 41 as UInt32
+        false =>
+            matrix.rows[1 as UInt64][0 as UInt64] = 43 as UInt32
+    matrix.rows[1 as UInt64][0 as UInt64]
+
+unsafe function main() -> UInt32
+    let value = selected_value(true)
+    0 as UInt32

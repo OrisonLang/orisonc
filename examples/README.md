@@ -25,6 +25,7 @@
 `local_branch_aggregate_field_assignment.or` demonstrates branch-local nested field assignment on a mutable aggregate.
 `local_switch_aggregate_field_assignment.or` demonstrates switch-local nested field assignment on a mutable aggregate.
 `local_branch_nested_array_assignment.or` demonstrates branch-local nested fixed-array element assignment.
+`local_switch_nested_array_assignment.or` demonstrates switch-local nested fixed-array element assignment.
 `local_branch_inferred_aggregate_let.or` demonstrates branch-local inferred aggregate bindings in final `if` arms.
 `local_nested_aggregate_let.or` demonstrates immutable aggregate `let` bindings for nested records and arrays.
 `local_array_for.or` demonstrates non-literal fixed-array iteration over a local array value.
@@ -74,6 +75,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_branch_aggregate_field_assignment.or` | branch-local mutable aggregate field assignment followed by field/index access | backend |
 | `local_switch_aggregate_field_assignment.or` | switch-local mutable aggregate field assignment followed by field/index access | backend |
 | `local_branch_nested_array_assignment.or` | branch-local nested fixed-array element assignment followed by index access | backend |
+| `local_switch_nested_array_assignment.or` | switch-local nested fixed-array element assignment followed by index access | backend |
 | `local_branch_inferred_aggregate_let.or` | branch-local inferred immutable aggregate `let` bindings | backend |
 | `local_nested_aggregate_let.or` | immutable nested aggregate `let` bindings | backend |
 | `local_array_for.or` | non-literal fixed-array iteration | backend |
@@ -308,6 +310,14 @@ build/tools/orisonc/orisonc run examples/local_branch_nested_array_assignment.or
 ```
 
 It returns `0` after branch-local nested fixed-array element assignment and later nested index access.
+
+Run the switch-local nested fixed-array assignment demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_switch_nested_array_assignment.or
+```
+
+It returns `0` after switch-local nested fixed-array element assignment and later nested index access.
 
 Run the branch-local inferred aggregate `let` demo with:
 

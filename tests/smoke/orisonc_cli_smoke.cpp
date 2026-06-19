@@ -2076,6 +2076,22 @@ int main() {
     assert(branch_nested_array_assignment_emit_output.find("extractvalue [2 x [2 x i32]]") != std::string::npos);
     assert(branch_nested_array_assignment_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
 
+    auto switch_nested_array_assignment_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_switch_nested_array_assignment.or";
+    auto switch_nested_array_assignment_emit_output = read_command_output(
+        executable.string() + " --emit-llvm " + switch_nested_array_assignment_emit_path.string()
+    );
+    assert(switch_nested_array_assignment_emit_output.find("switch i1") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("switch.case.") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("getelementptr %record.Matrix") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("getelementptr [2 x [2 x i32]]") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("getelementptr [2 x i32]") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("store i32 41") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("store i32 43") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("extractvalue %record.Matrix") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("extractvalue [2 x [2 x i32]]") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_member_assignment.or",
@@ -2204,6 +2220,14 @@ int main() {
         branch_nested_array_assignment_object_path.string();
     assert(read_command_output(branch_nested_array_assignment_object_command).empty());
     assert(std::filesystem::file_size(branch_nested_array_assignment_object_path) > 0);
+
+    auto switch_nested_array_assignment_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_switch_nested_array_assignment.o";
+    auto switch_nested_array_assignment_object_command =
+        executable.string() + " --emit-object " + switch_nested_array_assignment_emit_path.string() + " -o " +
+        switch_nested_array_assignment_object_path.string();
+    assert(read_command_output(switch_nested_array_assignment_object_command).empty());
+    assert(std::filesystem::file_size(switch_nested_array_assignment_object_path) > 0);
 
     auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
     auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
@@ -2346,6 +2370,17 @@ int main() {
     assert(WIFEXITED(branch_nested_array_assignment_executable_status));
     assert(WEXITSTATUS(branch_nested_array_assignment_executable_status) == 0);
 
+    auto switch_nested_array_assignment_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_switch_nested_array_assignment_build";
+    auto switch_nested_array_assignment_build_command =
+        executable.string() + " --build " + switch_nested_array_assignment_emit_path.string() + " -o " +
+        switch_nested_array_assignment_executable_path.string();
+    assert(read_command_output(switch_nested_array_assignment_build_command).empty());
+    auto switch_nested_array_assignment_executable_status =
+        std::system(switch_nested_array_assignment_executable_path.string().c_str());
+    assert(WIFEXITED(switch_nested_array_assignment_executable_status));
+    assert(WEXITSTATUS(switch_nested_array_assignment_executable_status) == 0);
+
     auto run_command = executable.string() + " run " + demo_path.string();
     auto run_status = std::system(run_command.c_str());
     assert(WIFEXITED(run_status));
@@ -2473,6 +2508,14 @@ int main() {
     );
     assert(WIFEXITED(branch_nested_array_assignment_status));
     assert(WEXITSTATUS(branch_nested_array_assignment_status) == 0);
+
+    auto switch_nested_array_assignment_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_switch_nested_array_assignment.or";
+    auto switch_nested_array_assignment_status = std::system(
+        (executable.string() + " run " + switch_nested_array_assignment_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(switch_nested_array_assignment_status));
+    assert(WEXITSTATUS(switch_nested_array_assignment_status) == 0);
 
     auto array_for_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_array_for.or";
     auto array_for_status = std::system((executable.string() + " run " + array_for_demo_path.string()).c_str());

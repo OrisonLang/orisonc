@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-19: checked-in backend and CLI coverage now pins switch-local nested fixed-array element assignment on an
+  inferred mutable aggregate followed by post-switch nested index access.
 - 2026-06-19: checked-in backend and CLI coverage now pins branch-local nested fixed-array element assignment on an
   inferred mutable aggregate followed by post-branch nested index access.
 - 2026-06-19: checked-in backend and CLI coverage now pins switch-local nested field assignment on an inferred mutable
