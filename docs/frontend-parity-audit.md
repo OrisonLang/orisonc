@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: checked-in backend coverage now pins nested inferred mixed aggregate extraction through
+  record-field-to-array-index-to-record-field immutable `let` metadata composition.
 - 2026-06-18: CLI smoke coverage now builds and executes retained binaries for the mixed inferred aggregate demos,
   completing `--emit-llvm`, `--emit-object`, `run`, and retained `--build` coverage for both metadata-composition
   directions.
