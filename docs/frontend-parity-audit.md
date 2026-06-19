@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: CLI smoke coverage now pins LLVM branch/aggregate extraction shape, object emission, direct `run`, and
+  retained `--build` execution for branch-local inferred aggregate `let` bindings in final `if` arms.
 - 2026-06-18: checked-in backend coverage now pins branch-local inferred aggregate `let` bindings inside final `if`
   arms, proving branch scopes preserve aggregate source metadata within each arm and restore it afterward.
 - 2026-06-18: CLI smoke coverage now emits an object file and builds plus executes a retained binary for the nested

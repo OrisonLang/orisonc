@@ -174,8 +174,9 @@ analysis, and lowering components.
   record field chains, record array-field element extraction, inferred arrays of records, and fixed-array literals
   whose leaf elements carry explicit types. Checked-in backend coverage now also pins nested inferred mixed extraction
   through record-field-to-array-index-to-record-field immutable metadata composition plus branch-local inferred
-  aggregate bindings inside final `if` arms. Whole-value reassignment for those same mutable local aggregate subsets
-  now reuses direct typed aggregate stores, and supported mutable-local plus pointer-backed aggregate
+  aggregate bindings inside final `if` arms, with CLI coverage for LLVM branch/extraction shape, object emission, direct
+  `run`, and retained `--build` execution. Whole-value reassignment for those same mutable local aggregate subsets now
+  reuses direct typed aggregate stores, and supported mutable-local plus pointer-backed aggregate
   field/index assignment now lowers through direct field/element addresses plus typed stores for record fields and
   fixed-array elements, including nested mixed paths like `pointer.items[index].field = value` and
   `pointer.rows[index][inner] = value`. CLI smoke coverage pins user-facing LLVM extraction shapes for mixed inferred
