@@ -1950,6 +1950,26 @@ int main() {
         ) != std::string::npos
     );
 
+    auto inferred_nested_mixed_let_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_inferred_nested_mixed_let.or";
+    auto inferred_nested_mixed_let_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + inferred_nested_mixed_let_emit_path.string());
+    assert(
+        inferred_nested_mixed_let_emit_output.find(
+            "extractvalue %record.Page"
+        ) != std::string::npos
+    );
+    assert(
+        inferred_nested_mixed_let_emit_output.find(
+            "extractvalue [2 x %record.Entry]"
+        ) != std::string::npos
+    );
+    assert(
+        inferred_nested_mixed_let_emit_output.find(
+            "extractvalue %record.Entry"
+        ) != std::string::npos
+    );
+
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_member_assignment.or",
