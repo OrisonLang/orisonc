@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: checked-in backend coverage now pins immutable record-field extraction from an inferred fixed array of
+  records, proving fixed-array element metadata composes into record field extraction.
 - 2026-06-18: checked-in backend coverage now pins immutable array-field index extraction from an unannotated
   record-constructor `let`, proving constructor-derived metadata composes from record fields into fixed-array elements.
 - 2026-06-18: checked-in backend coverage now pins nested immutable field extraction from an unannotated
