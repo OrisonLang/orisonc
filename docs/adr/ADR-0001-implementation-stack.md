@@ -177,8 +177,8 @@ analysis, and lowering components.
   field/index assignment now lowers through direct field/element addresses plus typed stores for record fields and
   fixed-array elements, including nested mixed paths like `pointer.items[index].field = value` and
   `pointer.rows[index][inner] = value`. CLI smoke coverage pins user-facing LLVM extraction shapes for mixed inferred
-  immutable aggregate paths in both record-field-to-array-index and array-index-to-record-field directions. Broader
-  aggregate construction/assignment remains future work.
+  immutable aggregate paths in both record-field-to-array-index and array-index-to-record-field directions, and now
+  also emits host object files for those same demos. Broader aggregate construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

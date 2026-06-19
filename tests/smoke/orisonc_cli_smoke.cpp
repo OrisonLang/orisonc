@@ -1999,6 +1999,22 @@ int main() {
     assert(read_command_output(pointer_record_assignment_object_command).empty());
     assert(std::filesystem::file_size(pointer_record_assignment_object_path) > 0);
 
+    auto inferred_record_array_let_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_inferred_record_array_let.o";
+    auto inferred_record_array_let_object_command =
+        executable.string() + " --emit-object " + inferred_record_array_let_emit_path.string() + " -o " +
+        inferred_record_array_let_object_path.string();
+    assert(read_command_output(inferred_record_array_let_object_command).empty());
+    assert(std::filesystem::file_size(inferred_record_array_let_object_path) > 0);
+
+    auto inferred_array_record_let_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_inferred_array_record_let.o";
+    auto inferred_array_record_let_object_command =
+        executable.string() + " --emit-object " + inferred_array_record_let_emit_path.string() + " -o " +
+        inferred_array_record_let_object_path.string();
+    assert(read_command_output(inferred_array_record_let_object_command).empty());
+    assert(std::filesystem::file_size(inferred_array_record_let_object_path) > 0);
+
     auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
     auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
     auto build_command =
