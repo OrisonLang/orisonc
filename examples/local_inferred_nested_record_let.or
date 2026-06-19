@@ -1,0 +1,17 @@
+package examples.aggregates
+
+record Registers
+    status: UInt32
+    control: UInt32
+
+record Device
+    registers: Registers
+    enabled: Bool
+
+function selected_status() -> UInt32
+    let device = Device(Registers(7 as UInt32, 1 as UInt32), true)
+    device.registers.status
+
+function main() -> UInt32
+    let value = selected_status()
+    0 as UInt32
