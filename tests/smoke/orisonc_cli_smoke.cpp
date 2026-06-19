@@ -1920,6 +1920,36 @@ int main() {
     );
     assert(pointer_record_assignment_emit_output.find("store i32 8, ptr %tmp") != std::string::npos);
 
+    auto inferred_record_array_let_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_inferred_record_array_let.or";
+    auto inferred_record_array_let_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + inferred_record_array_let_emit_path.string());
+    assert(
+        inferred_record_array_let_emit_output.find(
+            "extractvalue %record.Packet"
+        ) != std::string::npos
+    );
+    assert(
+        inferred_record_array_let_emit_output.find(
+            "extractvalue [4 x i8]"
+        ) != std::string::npos
+    );
+
+    auto inferred_array_record_let_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_inferred_array_record_let.or";
+    auto inferred_array_record_let_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + inferred_array_record_let_emit_path.string());
+    assert(
+        inferred_array_record_let_emit_output.find(
+            "extractvalue [2 x %record.Entry]"
+        ) != std::string::npos
+    );
+    assert(
+        inferred_array_record_let_emit_output.find(
+            "extractvalue %record.Entry"
+        ) != std::string::npos
+    );
+
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_member_assignment.or",
