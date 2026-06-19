@@ -1,0 +1,21 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+    count: UInt32
+
+function selected_status(flag: Bool) -> UInt32
+    var page = Page([Entry(1 as UInt32, 10 as UInt32), Entry(2 as UInt32, 20 as UInt32)], 2 as UInt32)
+    if flag
+        page = Page([Entry(3 as UInt32, 30 as UInt32), Entry(5 as UInt32, 50 as UInt32)], 2 as UInt32)
+    else
+        page = Page([Entry(7 as UInt32, 70 as UInt32), Entry(11 as UInt32, 110 as UInt32)], 2 as UInt32)
+    page.entries[1 as UInt64].status
+
+function main() -> UInt32
+    let value = selected_status(true)
+    0 as UInt32

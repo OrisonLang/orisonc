@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-19: checked-in backend and CLI coverage now pins branch-local whole-value reassignment of an inferred
+  mutable aggregate followed by post-branch nested field/index access.
 - 2026-06-18: checked-in backend and CLI coverage now pins inferred mutable aggregate whole-value reassignment followed
   by nested field/index access, proving `var` source-type metadata survives direct aggregate stores.
 - 2026-06-18: CLI smoke coverage now pins LLVM branch/aggregate extraction shape, object emission, direct `run`, and
