@@ -1,0 +1,27 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+    count: UInt32
+
+extend UInt32
+    public function page(this: shared This) -> Page
+        Page([Entry(this, 30 as UInt32), Entry(5 as UInt32, 50 as UInt32)], 2 as UInt32)
+
+    public function values(this: shared This) -> Array<UInt32, 2>
+        [this, 11 as UInt32]
+
+function selected_status(seed: UInt32) -> UInt32
+    seed.page().entries[1 as UInt64].status
+
+function selected_value(seed: UInt32) -> UInt32
+    seed.values()[1 as UInt64]
+
+function main() -> UInt32
+    let status = selected_status(3 as UInt32)
+    let value = selected_value(7 as UInt32)
+    0 as UInt32

@@ -2103,6 +2103,17 @@ int main() {
     assert(helper_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
     assert(helper_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
 
+    auto method_aggregate_access_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";
+    auto method_aggregate_access_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + method_aggregate_access_emit_path.string());
+    assert(method_aggregate_access_emit_output.find("call %record.Page @method.UInt32.page") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("call [2 x i32] @method.UInt32.values") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_member_assignment.or",
@@ -2247,6 +2258,14 @@ int main() {
         helper_aggregate_access_object_path.string();
     assert(read_command_output(helper_aggregate_access_object_command).empty());
     assert(std::filesystem::file_size(helper_aggregate_access_object_path) > 0);
+
+    auto method_aggregate_access_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_method_aggregate_access.o";
+    auto method_aggregate_access_object_command =
+        executable.string() + " --emit-object " + method_aggregate_access_emit_path.string() + " -o " +
+        method_aggregate_access_object_path.string();
+    assert(read_command_output(method_aggregate_access_object_command).empty());
+    assert(std::filesystem::file_size(method_aggregate_access_object_path) > 0);
 
     auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
     auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
@@ -2411,6 +2430,17 @@ int main() {
     assert(WIFEXITED(helper_aggregate_access_executable_status));
     assert(WEXITSTATUS(helper_aggregate_access_executable_status) == 0);
 
+    auto method_aggregate_access_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_method_aggregate_access_build";
+    auto method_aggregate_access_build_command =
+        executable.string() + " --build " + method_aggregate_access_emit_path.string() + " -o " +
+        method_aggregate_access_executable_path.string();
+    assert(read_command_output(method_aggregate_access_build_command).empty());
+    auto method_aggregate_access_executable_status =
+        std::system(method_aggregate_access_executable_path.string().c_str());
+    assert(WIFEXITED(method_aggregate_access_executable_status));
+    assert(WEXITSTATUS(method_aggregate_access_executable_status) == 0);
+
     auto run_command = executable.string() + " run " + demo_path.string();
     auto run_status = std::system(run_command.c_str());
     assert(WIFEXITED(run_status));
@@ -2554,6 +2584,14 @@ int main() {
     );
     assert(WIFEXITED(helper_aggregate_access_status));
     assert(WEXITSTATUS(helper_aggregate_access_status) == 0);
+
+    auto method_aggregate_access_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";
+    auto method_aggregate_access_status = std::system(
+        (executable.string() + " run " + method_aggregate_access_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(method_aggregate_access_status));
+    assert(WEXITSTATUS(method_aggregate_access_status) == 0);
 
     auto array_for_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_array_for.or";
     auto array_for_status = std::system((executable.string() + " run " + array_for_demo_path.string()).c_str());
