@@ -2035,6 +2035,14 @@ int main() {
     assert(read_command_output(inferred_array_record_let_object_command).empty());
     assert(std::filesystem::file_size(inferred_array_record_let_object_path) > 0);
 
+    auto inferred_nested_mixed_let_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_inferred_nested_mixed_let.o";
+    auto inferred_nested_mixed_let_object_command =
+        executable.string() + " --emit-object " + inferred_nested_mixed_let_emit_path.string() + " -o " +
+        inferred_nested_mixed_let_object_path.string();
+    assert(read_command_output(inferred_nested_mixed_let_object_command).empty());
+    assert(std::filesystem::file_size(inferred_nested_mixed_let_object_path) > 0);
+
     auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
     auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
     auto build_command =
@@ -2087,6 +2095,17 @@ int main() {
         std::system(inferred_array_record_let_executable_path.string().c_str());
     assert(WIFEXITED(inferred_array_record_let_executable_status));
     assert(WEXITSTATUS(inferred_array_record_let_executable_status) == 0);
+
+    auto inferred_nested_mixed_let_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_inferred_nested_mixed_let_build";
+    auto inferred_nested_mixed_let_build_command =
+        executable.string() + " --build " + inferred_nested_mixed_let_emit_path.string() + " -o " +
+        inferred_nested_mixed_let_executable_path.string();
+    assert(read_command_output(inferred_nested_mixed_let_build_command).empty());
+    auto inferred_nested_mixed_let_executable_status =
+        std::system(inferred_nested_mixed_let_executable_path.string().c_str());
+    assert(WIFEXITED(inferred_nested_mixed_let_executable_status));
+    assert(WEXITSTATUS(inferred_nested_mixed_let_executable_status) == 0);
 
     auto run_command = executable.string() + " run " + demo_path.string();
     auto run_status = std::system(run_command.c_str());
