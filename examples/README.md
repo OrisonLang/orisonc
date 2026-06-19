@@ -19,6 +19,7 @@
 `local_inferred_nested_array_let.or` demonstrates a nested immutable fixed-array `let` inferred from explicit elements.
 `local_inferred_array_record_let.or` demonstrates record-field access from an inferred fixed array of records.
 `local_inferred_nested_mixed_let.or` demonstrates record-field access through an inferred record's fixed-array field.
+`local_inferred_aggregate_reassignment.or` demonstrates whole-value reassignment of an inferred mutable aggregate.
 `local_branch_inferred_aggregate_let.or` demonstrates branch-local inferred aggregate bindings in final `if` arms.
 `local_nested_aggregate_let.or` demonstrates immutable aggregate `let` bindings for nested records and arrays.
 `local_array_for.or` demonstrates non-literal fixed-array iteration over a local array value.
@@ -62,6 +63,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_inferred_nested_array_let.or` | inferred nested immutable fixed-array `let` binding | backend |
 | `local_inferred_array_record_let.or` | inferred immutable array-of-record field access | backend |
 | `local_inferred_nested_mixed_let.or` | inferred immutable record-field/array-index/record-field access | backend |
+| `local_inferred_aggregate_reassignment.or` | inferred mutable aggregate reassignment followed by field/index access | backend |
 | `local_branch_inferred_aggregate_let.or` | branch-local inferred immutable aggregate `let` bindings | backend |
 | `local_nested_aggregate_let.or` | immutable nested aggregate `let` bindings | backend |
 | `local_array_for.or` | non-literal fixed-array iteration | backend |
@@ -248,6 +250,14 @@ build/tools/orisonc/orisonc run examples/local_inferred_nested_mixed_let.or
 ```
 
 It returns `0` after lowering an unannotated record with a fixed array of records and extracting a nested field.
+
+Run the inferred mutable aggregate reassignment demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_inferred_aggregate_reassignment.or
+```
+
+It returns `0` after whole-value reassignment of an inferred mutable aggregate and later nested field/index access.
 
 Run the branch-local inferred aggregate `let` demo with:
 
