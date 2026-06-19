@@ -2009,6 +2009,21 @@ int main() {
     );
     assert(branch_aggregate_reassignment_emit_output.find("extractvalue %record.Entry") != std::string::npos);
 
+    auto switch_aggregate_reassignment_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_switch_aggregate_reassignment.or";
+    auto switch_aggregate_reassignment_emit_output = read_command_output(
+        executable.string() + " --emit-llvm " + switch_aggregate_reassignment_emit_path.string()
+    );
+    assert(switch_aggregate_reassignment_emit_output.find("switch i1") != std::string::npos);
+    assert(switch_aggregate_reassignment_emit_output.find("switch.case.") != std::string::npos);
+    assert(switch_aggregate_reassignment_emit_output.find("alloca %record.Page") != std::string::npos);
+    assert(switch_aggregate_reassignment_emit_output.find("store %record.Page") != std::string::npos);
+    assert(switch_aggregate_reassignment_emit_output.find("extractvalue %record.Page") != std::string::npos);
+    assert(
+        switch_aggregate_reassignment_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos
+    );
+    assert(switch_aggregate_reassignment_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_member_assignment.or",
@@ -2105,6 +2120,14 @@ int main() {
         branch_aggregate_reassignment_object_path.string();
     assert(read_command_output(branch_aggregate_reassignment_object_command).empty());
     assert(std::filesystem::file_size(branch_aggregate_reassignment_object_path) > 0);
+
+    auto switch_aggregate_reassignment_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_switch_aggregate_reassignment.o";
+    auto switch_aggregate_reassignment_object_command =
+        executable.string() + " --emit-object " + switch_aggregate_reassignment_emit_path.string() + " -o " +
+        switch_aggregate_reassignment_object_path.string();
+    assert(read_command_output(switch_aggregate_reassignment_object_command).empty());
+    assert(std::filesystem::file_size(switch_aggregate_reassignment_object_path) > 0);
 
     auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
     auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
@@ -2203,6 +2226,17 @@ int main() {
     assert(WIFEXITED(branch_aggregate_reassignment_executable_status));
     assert(WEXITSTATUS(branch_aggregate_reassignment_executable_status) == 0);
 
+    auto switch_aggregate_reassignment_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_switch_aggregate_reassignment_build";
+    auto switch_aggregate_reassignment_build_command =
+        executable.string() + " --build " + switch_aggregate_reassignment_emit_path.string() + " -o " +
+        switch_aggregate_reassignment_executable_path.string();
+    assert(read_command_output(switch_aggregate_reassignment_build_command).empty());
+    auto switch_aggregate_reassignment_executable_status =
+        std::system(switch_aggregate_reassignment_executable_path.string().c_str());
+    assert(WIFEXITED(switch_aggregate_reassignment_executable_status));
+    assert(WEXITSTATUS(switch_aggregate_reassignment_executable_status) == 0);
+
     auto run_command = executable.string() + " run " + demo_path.string();
     auto run_status = std::system(run_command.c_str());
     assert(WIFEXITED(run_status));
@@ -2298,6 +2332,14 @@ int main() {
     );
     assert(WIFEXITED(branch_aggregate_reassignment_status));
     assert(WEXITSTATUS(branch_aggregate_reassignment_status) == 0);
+
+    auto switch_aggregate_reassignment_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_switch_aggregate_reassignment.or";
+    auto switch_aggregate_reassignment_status = std::system(
+        (executable.string() + " run " + switch_aggregate_reassignment_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(switch_aggregate_reassignment_status));
+    assert(WEXITSTATUS(switch_aggregate_reassignment_status) == 0);
 
     auto array_for_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_array_for.or";
     auto array_for_status = std::system((executable.string() + " run " + array_for_demo_path.string()).c_str());

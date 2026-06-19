@@ -177,8 +177,8 @@ analysis, and lowering components.
   aggregate bindings inside final `if` arms, with CLI coverage for LLVM branch/extraction shape, object emission, direct
   `run`, and retained `--build` execution. Whole-value reassignment for those same mutable local aggregate subsets now
   reuses direct typed aggregate stores, including inferred mutable aggregate bindings whose source-type metadata remains
-  available for later nested field/index access and branch-local whole-value stores that are read after the branch, and
-  supported mutable-local plus pointer-backed aggregate
+  available for later nested field/index access and branch-local or switch-local whole-value stores that are read after
+  the control-flow join, and supported mutable-local plus pointer-backed aggregate
   field/index assignment now lowers through direct field/element addresses plus typed stores for record fields and
   fixed-array elements, including nested mixed paths like `pointer.items[index].field = value` and
   `pointer.rows[index][inner] = value`. CLI smoke coverage pins user-facing LLVM extraction shapes for mixed inferred

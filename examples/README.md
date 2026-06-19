@@ -21,6 +21,7 @@
 `local_inferred_nested_mixed_let.or` demonstrates record-field access through an inferred record's fixed-array field.
 `local_inferred_aggregate_reassignment.or` demonstrates whole-value reassignment of an inferred mutable aggregate.
 `local_branch_aggregate_reassignment.or` demonstrates branch-local whole-value reassignment of a mutable aggregate.
+`local_switch_aggregate_reassignment.or` demonstrates switch-local whole-value reassignment of a mutable aggregate.
 `local_branch_inferred_aggregate_let.or` demonstrates branch-local inferred aggregate bindings in final `if` arms.
 `local_nested_aggregate_let.or` demonstrates immutable aggregate `let` bindings for nested records and arrays.
 `local_array_for.or` demonstrates non-literal fixed-array iteration over a local array value.
@@ -66,6 +67,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_inferred_nested_mixed_let.or` | inferred immutable record-field/array-index/record-field access | backend |
 | `local_inferred_aggregate_reassignment.or` | inferred mutable aggregate reassignment followed by field/index access | backend |
 | `local_branch_aggregate_reassignment.or` | branch-local mutable aggregate reassignment followed by field/index access | backend |
+| `local_switch_aggregate_reassignment.or` | switch-local mutable aggregate reassignment followed by field/index access | backend |
 | `local_branch_inferred_aggregate_let.or` | branch-local inferred immutable aggregate `let` bindings | backend |
 | `local_nested_aggregate_let.or` | immutable nested aggregate `let` bindings | backend |
 | `local_array_for.or` | non-literal fixed-array iteration | backend |
@@ -268,6 +270,14 @@ build/tools/orisonc/orisonc run examples/local_branch_aggregate_reassignment.or
 ```
 
 It returns `0` after branch-local whole-value reassignment and later nested field/index access.
+
+Run the switch-local mutable aggregate reassignment demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_switch_aggregate_reassignment.or
+```
+
+It returns `0` after switch-local whole-value reassignment and later nested field/index access.
 
 Run the branch-local inferred aggregate `let` demo with:
 
