@@ -28,11 +28,12 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 24> {
+    constexpr auto backend_examples = std::array<std::string_view, 25> {
         "ffi_fixed_parameters.or",
         "local_helper_array_for.or",
         "local_array_for.or",
         "local_aggregate_let.or",
+        "local_inferred_record_let.or",
         "local_inferred_array_let.or",
         "local_inferred_nested_array_let.or",
         "local_nested_aggregate_let.or",

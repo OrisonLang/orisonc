@@ -169,8 +169,8 @@ analysis, and lowering components.
   fixed-array literals now materialize through recursive `insertvalue` as well, extending mutable local aggregate
   coverage to array-backed local record fields, local array-of-record fields, nested local arrays, and direct annotated
   mutable local arrays. Immutable aggregate `let` lowering now uses annotated or inferred initializer types before
-  falling back to the enclosing return type, so unannotated fixed-array literals with explicit element types can
-  materialize as SSA aggregate values and retain source-type metadata for later indexed use, including nested
+  falling back to the enclosing return type, so unannotated record-constructor and fixed-array literal bindings can
+  materialize as SSA aggregate values and retain source-type metadata for later field or indexed use, including nested
   fixed-array literals whose leaf elements carry explicit types. Whole-value reassignment for those same mutable local
   aggregate subsets now reuses direct typed aggregate stores, and supported mutable-local plus pointer-backed aggregate
   field/index assignment now lowers through direct field/element addresses plus typed stores for record fields and

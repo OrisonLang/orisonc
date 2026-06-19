@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-18: checked-in backend coverage now pins unannotated record-constructor `let` source-type recovery through
+  immutable field extraction, proving constructor-derived source metadata survives beyond aggregate materialization.
 - 2026-06-18: checked-in backend coverage now pins inferred nested immutable fixed-array `let` bindings with explicit
   leaf element types, exercising recursive array-literal inference plus retained source-type metadata through nested
   index access.
