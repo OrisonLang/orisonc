@@ -458,9 +458,12 @@ int main() {
         diagnostics
     );
     assert(!diagnostics.has_errors());
-    assert(nested_record_array_for_ir.find("load %record.Wrapper, ptr %wrapper.addr") != std::string::npos);
-    assert(nested_record_array_for_ir.find("extractvalue %record.Wrapper") != std::string::npos);
-    assert(nested_record_array_for_ir.find("extractvalue %record.Bucket") != std::string::npos);
+    assert(
+        nested_record_array_for_ir.find("getelementptr %record.Wrapper, ptr %wrapper.addr") !=
+        std::string::npos
+    );
+    assert(nested_record_array_for_ir.find("getelementptr %record.Bucket") != std::string::npos);
+    assert(nested_record_array_for_ir.find("load [3 x i32], ptr") != std::string::npos);
     assert(nested_record_array_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
     assert(nested_record_array_for_ir.find("for.iteration") != std::string::npos);
     assert(nested_record_array_for_ir.find("ret i32 0") != std::string::npos);
@@ -473,8 +476,9 @@ int main() {
         diagnostics
     );
     assert(!diagnostics.has_errors());
-    assert(indexed_record_array_for_ir.find("extractvalue %record.Grid") != std::string::npos);
-    assert(indexed_record_array_for_ir.find("extractvalue [2 x [3 x i32]]") != std::string::npos);
+    assert(indexed_record_array_for_ir.find("getelementptr %record.Grid, ptr %grid.addr") != std::string::npos);
+    assert(indexed_record_array_for_ir.find("getelementptr [2 x [3 x i32]]") != std::string::npos);
+    assert(indexed_record_array_for_ir.find("load [3 x i32], ptr") != std::string::npos);
     assert(indexed_record_array_for_ir.find("extractvalue [3 x i32]") != std::string::npos);
     assert(indexed_record_array_for_ir.find("for.iteration") != std::string::npos);
     assert(indexed_record_array_for_ir.find("ret i32 0") != std::string::npos);
@@ -542,8 +546,12 @@ int main() {
         member_receiver_method_array_for_ir.find("call [3 x i32] @method.Bucket.view(%record.Bucket") !=
         std::string::npos
     );
-    assert(member_receiver_method_array_for_ir.find("extractvalue %record.Wrapper") != std::string::npos);
-    assert(member_receiver_method_array_for_ir.find("extractvalue [2 x %record.Bucket]") != std::string::npos);
+    assert(
+        member_receiver_method_array_for_ir.find("getelementptr %record.Wrapper, ptr %wrapper.addr") !=
+        std::string::npos
+    );
+    assert(member_receiver_method_array_for_ir.find("getelementptr [2 x %record.Bucket]") != std::string::npos);
+    assert(member_receiver_method_array_for_ir.find("load %record.Bucket, ptr") != std::string::npos);
     assert(member_receiver_method_array_for_ir.find("for.iteration") != std::string::npos);
     assert(member_receiver_method_array_for_ir.find("ret i32 0") != std::string::npos);
 

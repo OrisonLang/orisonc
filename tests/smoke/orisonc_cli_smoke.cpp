@@ -1988,11 +1988,16 @@ int main() {
     );
     assert(inferred_aggregate_reassignment_emit_output.find("alloca %record.Page") != std::string::npos);
     assert(inferred_aggregate_reassignment_emit_output.find("store %record.Page") != std::string::npos);
-    assert(inferred_aggregate_reassignment_emit_output.find("extractvalue %record.Page") != std::string::npos);
     assert(
-        inferred_aggregate_reassignment_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos
+        inferred_aggregate_reassignment_emit_output.find("getelementptr %record.Page, ptr %page.addr") !=
+        std::string::npos
     );
-    assert(inferred_aggregate_reassignment_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(
+        inferred_aggregate_reassignment_emit_output.find("getelementptr [2 x %record.Entry]") !=
+        std::string::npos
+    );
+    assert(inferred_aggregate_reassignment_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(inferred_aggregate_reassignment_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto branch_aggregate_reassignment_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_branch_aggregate_reassignment.or";
@@ -2003,11 +2008,13 @@ int main() {
     assert(branch_aggregate_reassignment_emit_output.find("if.else.") != std::string::npos);
     assert(branch_aggregate_reassignment_emit_output.find("alloca %record.Page") != std::string::npos);
     assert(branch_aggregate_reassignment_emit_output.find("store %record.Page") != std::string::npos);
-    assert(branch_aggregate_reassignment_emit_output.find("extractvalue %record.Page") != std::string::npos);
     assert(
-        branch_aggregate_reassignment_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos
+        branch_aggregate_reassignment_emit_output.find("getelementptr %record.Page, ptr %page.addr") !=
+        std::string::npos
     );
-    assert(branch_aggregate_reassignment_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(branch_aggregate_reassignment_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(branch_aggregate_reassignment_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(branch_aggregate_reassignment_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto switch_aggregate_reassignment_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_switch_aggregate_reassignment.or";
@@ -2018,11 +2025,38 @@ int main() {
     assert(switch_aggregate_reassignment_emit_output.find("switch.case.") != std::string::npos);
     assert(switch_aggregate_reassignment_emit_output.find("alloca %record.Page") != std::string::npos);
     assert(switch_aggregate_reassignment_emit_output.find("store %record.Page") != std::string::npos);
-    assert(switch_aggregate_reassignment_emit_output.find("extractvalue %record.Page") != std::string::npos);
     assert(
-        switch_aggregate_reassignment_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos
+        switch_aggregate_reassignment_emit_output.find("getelementptr %record.Page, ptr %page.addr") !=
+        std::string::npos
     );
-    assert(switch_aggregate_reassignment_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(switch_aggregate_reassignment_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(switch_aggregate_reassignment_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(switch_aggregate_reassignment_emit_output.find("load i32, ptr") != std::string::npos);
+
+    auto mutable_aggregate_path_read_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_mutable_aggregate_path_read.or";
+    auto mutable_aggregate_path_read_emit_output = read_command_output(
+        executable.string() + " --emit-llvm " + mutable_aggregate_path_read_emit_path.string()
+    );
+    assert(
+        mutable_aggregate_path_read_emit_output.find("define i32 @selected_status(i64 %index)") !=
+        std::string::npos
+    );
+    assert(mutable_aggregate_path_read_emit_output.find("define i32 @selected_code()") != std::string::npos);
+    assert(mutable_aggregate_path_read_emit_output.find("alloca %record.Page") != std::string::npos);
+    assert(
+        mutable_aggregate_path_read_emit_output.find("getelementptr %record.Page, ptr %page.addr") !=
+        std::string::npos
+    );
+    assert(
+        mutable_aggregate_path_read_emit_output.find(
+            "getelementptr [2 x %record.Entry], ptr"
+        ) != std::string::npos
+    );
+    assert(mutable_aggregate_path_read_emit_output.find(", i64 0, i64 %index") != std::string::npos);
+    assert(mutable_aggregate_path_read_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(mutable_aggregate_path_read_emit_output.find("load i32, ptr") != std::string::npos);
+    assert(mutable_aggregate_path_read_emit_output.find("ret i32") != std::string::npos);
 
     auto branch_aggregate_field_assignment_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_branch_aggregate_field_assignment.or";
@@ -2036,11 +2070,7 @@ int main() {
     assert(branch_aggregate_field_assignment_emit_output.find("getelementptr %record.Entry") != std::string::npos);
     assert(branch_aggregate_field_assignment_emit_output.find("store i32 13") != std::string::npos);
     assert(branch_aggregate_field_assignment_emit_output.find("store i32 17") != std::string::npos);
-    assert(branch_aggregate_field_assignment_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(
-        branch_aggregate_field_assignment_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos
-    );
-    assert(branch_aggregate_field_assignment_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(branch_aggregate_field_assignment_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto switch_aggregate_field_assignment_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_switch_aggregate_field_assignment.or";
@@ -2054,11 +2084,7 @@ int main() {
     assert(switch_aggregate_field_assignment_emit_output.find("getelementptr %record.Entry") != std::string::npos);
     assert(switch_aggregate_field_assignment_emit_output.find("store i32 19") != std::string::npos);
     assert(switch_aggregate_field_assignment_emit_output.find("store i32 23") != std::string::npos);
-    assert(switch_aggregate_field_assignment_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(
-        switch_aggregate_field_assignment_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos
-    );
-    assert(switch_aggregate_field_assignment_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(switch_aggregate_field_assignment_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto branch_nested_array_assignment_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_branch_nested_array_assignment.or";
@@ -2072,9 +2098,7 @@ int main() {
     assert(branch_nested_array_assignment_emit_output.find("getelementptr [2 x i32]") != std::string::npos);
     assert(branch_nested_array_assignment_emit_output.find("store i32 31") != std::string::npos);
     assert(branch_nested_array_assignment_emit_output.find("store i32 37") != std::string::npos);
-    assert(branch_nested_array_assignment_emit_output.find("extractvalue %record.Matrix") != std::string::npos);
-    assert(branch_nested_array_assignment_emit_output.find("extractvalue [2 x [2 x i32]]") != std::string::npos);
-    assert(branch_nested_array_assignment_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(branch_nested_array_assignment_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto switch_nested_array_assignment_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_switch_nested_array_assignment.or";
@@ -2088,9 +2112,7 @@ int main() {
     assert(switch_nested_array_assignment_emit_output.find("getelementptr [2 x i32]") != std::string::npos);
     assert(switch_nested_array_assignment_emit_output.find("store i32 41") != std::string::npos);
     assert(switch_nested_array_assignment_emit_output.find("store i32 43") != std::string::npos);
-    assert(switch_nested_array_assignment_emit_output.find("extractvalue %record.Matrix") != std::string::npos);
-    assert(switch_nested_array_assignment_emit_output.find("extractvalue [2 x [2 x i32]]") != std::string::npos);
-    assert(switch_nested_array_assignment_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(switch_nested_array_assignment_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto helper_aggregate_access_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_helper_aggregate_access.or";

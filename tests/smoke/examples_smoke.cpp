@@ -28,7 +28,7 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 53> {
+    constexpr auto backend_examples = std::array<std::string_view, 54> {
         "ffi_aggregate_scalar_parameters.or",
         "ffi_fixed_parameters.or",
         "local_helper_array_for.or",
@@ -44,6 +44,7 @@ auto main() -> int {
         "local_inferred_aggregate_reassignment.or",
         "local_branch_aggregate_reassignment.or",
         "local_switch_aggregate_reassignment.or",
+        "local_mutable_aggregate_path_read.or",
         "local_branch_aggregate_field_assignment.or",
         "local_switch_aggregate_field_assignment.or",
         "local_branch_nested_array_assignment.or",

@@ -1005,6 +1005,151 @@ auto lower_write_intrinsic(
     };
 }
 
+auto lower_mutable_aggregate_path_read(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::member_access &&
+        expression.kind != syntax::ExpressionKind::index_access) {
+        return std::nullopt;
+    }
+
+    auto path = collect_aggregate_path(expression);
+    if (path.steps.empty() || path.base_expression == nullptr ||
+        path.base_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto binding = session.state.mutable_bindings.find(path.base_expression->text);
+    if (binding == session.state.mutable_bindings.end()) {
+        return std::nullopt;
+    }
+
+    auto inferred = inferred_expression_type(expression, context, session.state);
+    if (!inferred.has_value()) {
+        record_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            expression.text
+        );
+        return std::nullopt;
+    }
+    if (inferred->type != expected_llvm_type) {
+        record_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::type_mismatch,
+            expression.text
+        );
+        return std::nullopt;
+    }
+    if (inferred->signedness != expected_signedness) {
+        record_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::signedness_mismatch,
+            expression.text
+        );
+        return std::nullopt;
+    }
+
+    auto base_source_type =
+        source_type_name_for_expression(*path.base_expression, context, session.state);
+    if (!base_source_type.has_value()) {
+        record_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            expression.text
+        );
+        return std::nullopt;
+    }
+
+    auto cursor = initialize_aggregate_path_cursor(
+        binding->second.storage,
+        *base_source_type,
+        context.lowering
+    );
+    if (!cursor.has_value()) {
+        record_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            expression.text
+        );
+        return std::nullopt;
+    }
+
+    for (auto const& step : path.steps) {
+        if (step.kind == AggregatePathStepKind::member) {
+            auto field_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
+            auto result = advance_aggregate_path_member(
+                *cursor,
+                step.field_name,
+                context.lowering,
+                std::move(field_pointer_name),
+                output
+            );
+            if (result.error != AggregatePathError::none) {
+                record_failure(
+                    session.failures,
+                    ExpressionLoweringFailureReason::unsupported_expression,
+                    expression.text
+                );
+                return std::nullopt;
+            }
+            continue;
+        }
+
+        if (step.index_expression == nullptr) {
+            record_failure(
+                session.failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+
+        auto lowered_index = lowered_expression(
+            *step.index_expression,
+            "i64",
+            IntegerSignedness::unsigned_integer,
+            context,
+            session,
+            output
+        );
+        if (!lowered_index.has_value()) {
+            return std::nullopt;
+        }
+
+        auto element_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        auto result = advance_aggregate_path_index(
+            *cursor,
+            lowered_index->value,
+            context.lowering,
+            std::move(element_pointer_name),
+            output
+        );
+        if (result.error != AggregatePathError::none) {
+            record_failure(
+                session.failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                expression.text
+            );
+            return std::nullopt;
+        }
+    }
+
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = load " << expected_llvm_type << ", ptr "
+           << cursor->pointer << "\n";
+    return LoweredExpression {
+        .type = std::string(expected_llvm_type),
+        .value = std::move(temporary_name),
+        .signedness = expected_signedness,
+    };
+}
+
 auto lowered_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -1103,6 +1248,17 @@ auto lowered_expression(
             return std::nullopt;
         }
         return binding->second;
+    }
+
+    if (auto aggregate_path_read = lower_mutable_aggregate_path_read(
+            expression,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        )) {
+        return aggregate_path_read;
     }
 
     if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {

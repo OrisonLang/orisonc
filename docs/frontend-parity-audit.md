@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-20: mutable local aggregate member/index expression reads now reuse storage-derived aggregate paths with
+  direct `getelementptr`/`load` operations instead of loading the whole aggregate and extracting from the value;
+  checked-in backend and CLI coverage pins constant and runtime nested mutable aggregate reads.
 - 2026-06-20: dynamic value-aggregate indices now spill the aggregate value to temporary storage, use `getelementptr`
   with the runtime index, and load the selected element; checked-in backend and CLI coverage now pins dynamic-index
   `while`-built returned record containers plus `for`-built returned fixed-array containers from aggregate-derived

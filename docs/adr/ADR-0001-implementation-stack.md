@@ -194,8 +194,8 @@ analysis, and lowering components.
   loop-body accumulation, guard early-return paths, deferred cleanup replay before early/final returns, plain/member
   call arguments, fixed source-level FFI adapter arguments, returned record/fixed-array containers, returned nested
   record-with-array and fixed-array containers, branch-local returned containers, dynamic-index `while`-built
-  returned containers, `for`-built returned containers, and pointer-backed aggregate reads inside `unsafe` blocks.
-  Broader
+  returned containers, `for`-built returned containers, address-backed reads from mutable aggregate storage, and
+  pointer-backed aggregate reads inside `unsafe` blocks. Broader
   aggregate construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
