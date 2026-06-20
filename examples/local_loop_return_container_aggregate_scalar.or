@@ -1,0 +1,29 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+
+record Pair
+    left: UInt32
+    right: UInt32
+
+function make_pair_while(page: Page) -> Pair
+    var index = 0 as UInt64
+    var total = 0 as UInt32
+    while index < 2 as UInt64
+        total = total + page.entries[0 as UInt64].status
+        index = index + 1 as UInt64
+    Pair(total, page.entries[0 as UInt64].code)
+
+function total(page: Page) -> UInt32
+    let while_pair = make_pair_while(page)
+    while_pair.left + while_pair.right
+
+function main() -> UInt32
+    let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)])
+    let value = total(page)
+    0 as UInt32

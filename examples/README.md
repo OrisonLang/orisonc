@@ -33,6 +33,7 @@
 `local_return_container_aggregate_scalar.or` demonstrates aggregate-derived scalar operands used to build returned containers.
 `local_nested_return_container_aggregate_scalar.or` demonstrates aggregate-derived scalar operands used to build nested returned containers.
 `local_branch_return_container_aggregate_scalar.or` demonstrates branch-local returned containers built from aggregate-derived scalars.
+`local_loop_return_container_aggregate_scalar.or` demonstrates while-built returned containers from aggregate-derived scalars.
 `local_control_flow_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through final control flow.
 `local_loop_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through loop accumulation.
 `local_guard_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through guard early returns.
@@ -98,6 +99,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_return_container_aggregate_scalar.or` | aggregate-derived scalar operands used to build returned containers | backend |
 | `local_nested_return_container_aggregate_scalar.or` | aggregate-derived scalar operands used to build nested returned containers | backend |
 | `local_branch_return_container_aggregate_scalar.or` | branch-local returned containers built from aggregate-derived scalars | backend |
+| `local_loop_return_container_aggregate_scalar.or` | while-built returned containers from aggregate-derived scalars | backend |
 | `local_control_flow_aggregate_scalar.or` | aggregate-derived scalar operands through final control flow | backend |
 | `local_loop_aggregate_scalar.or` | aggregate-derived scalar operands through loop accumulation | backend |
 | `local_guard_aggregate_scalar.or` | aggregate-derived scalar operands through guard early returns | backend |
@@ -404,6 +406,14 @@ build/tools/orisonc/orisonc run examples/local_branch_return_container_aggregate
 ```
 
 It returns `0` after final `if` and `switch` arms build returned containers from aggregate-derived scalars.
+
+Run the aggregate-derived scalar loop return-container demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_loop_return_container_aggregate_scalar.or
+```
+
+It returns `0` after `while` accumulation feeds a returned record container.
 
 Run the aggregate-derived scalar control-flow demo with:
 
