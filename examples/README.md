@@ -29,6 +29,7 @@
 `local_helper_aggregate_access.or` demonstrates field and index access from helper-returned aggregates.
 `local_method_aggregate_access.or` demonstrates field and index access from method-returned aggregates.
 `local_record_method_aggregate_access.or` demonstrates field and index access from record-method-returned aggregates.
+`local_member_receiver_method_aggregate_access.or` demonstrates aggregate access from member/index receiver methods.
 `local_branch_inferred_aggregate_let.or` demonstrates branch-local inferred aggregate bindings in final `if` arms.
 `local_nested_aggregate_let.or` demonstrates immutable aggregate `let` bindings for nested records and arrays.
 `local_array_for.or` demonstrates non-literal fixed-array iteration over a local array value.
@@ -82,6 +83,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_helper_aggregate_access.or` | helper-returned aggregate field/index access | backend |
 | `local_method_aggregate_access.or` | method-returned aggregate field/index access | backend |
 | `local_record_method_aggregate_access.or` | record-method-returned aggregate field/index access | backend |
+| `local_member_receiver_method_aggregate_access.or` | member/index receiver method-returned aggregate access | backend |
 | `local_branch_inferred_aggregate_let.or` | branch-local inferred immutable aggregate `let` bindings | backend |
 | `local_nested_aggregate_let.or` | immutable nested aggregate `let` bindings | backend |
 | `local_array_for.or` | non-literal fixed-array iteration | backend |
@@ -348,6 +350,14 @@ build/tools/orisonc/orisonc run examples/local_record_method_aggregate_access.or
 ```
 
 It returns `0` after field and index access from record-method-returned aggregates.
+
+Run the member/index receiver method-returned aggregate access demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_member_receiver_method_aggregate_access.or
+```
+
+It returns `0` after aggregate access from methods called through member and index receivers.
 
 Run the branch-local inferred aggregate `let` demo with:
 

@@ -1,0 +1,38 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+    count: UInt32
+
+record Bucket
+    seed: UInt32
+
+record Wrapper
+    bucket: Bucket
+
+record Shelf
+    buckets: Array<Bucket, 2>
+
+extend Bucket
+    public function page(this: shared This) -> Page
+        Page([Entry(this.seed, 30 as UInt32), Entry(19 as UInt32, 50 as UInt32)], 2 as UInt32)
+
+    public function values(this: shared This) -> Array<UInt32, 2>
+        [this.seed, 23 as UInt32]
+
+function selected_status(wrapper: Wrapper) -> UInt32
+    wrapper.bucket.page().entries[1 as UInt64].status
+
+function selected_value(shelf: Shelf) -> UInt32
+    shelf.buckets[1 as UInt64].values()[1 as UInt64]
+
+function main() -> UInt32
+    let wrapper = Wrapper(Bucket(7 as UInt32))
+    let shelf = Shelf([Bucket(11 as UInt32), Bucket(13 as UInt32)])
+    let status = selected_status(wrapper)
+    let value = selected_value(shelf)
+    0 as UInt32

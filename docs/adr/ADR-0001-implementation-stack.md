@@ -183,8 +183,8 @@ analysis, and lowering components.
   fixed-array elements, including nested mixed paths like `pointer.items[index].field = value`,
   `pointer.rows[index][inner] = value`, branch-local or switch-local nested field stores read after the control-flow
   join, and branch-local or switch-local nested fixed-array element stores read after the control-flow join. CLI smoke
-  coverage pins user-facing LLVM extraction shapes for helper-returned, scalar-method-returned, and
-  record-method-returned record and fixed-array aggregates plus mixed inferred
+  coverage pins user-facing LLVM extraction shapes for helper-returned, scalar-method-returned, record-method-returned,
+  and member/index-receiver method-returned record and fixed-array aggregates plus mixed inferred
   immutable aggregate paths in record-field-to-array-index, array-index-to-record-field, and nested
   record-field-to-array-index-to-record-field directions, and now covers LLVM emission, host object emission, direct
   `run`, and retained `--build` execution for all three mixed demos. Broader aggregate construction/assignment

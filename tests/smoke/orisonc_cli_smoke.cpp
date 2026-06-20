@@ -2132,6 +2132,40 @@ int main() {
     assert(record_method_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
     assert(record_method_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
 
+    auto member_receiver_method_aggregate_access_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "local_member_receiver_method_aggregate_access.or";
+    auto member_receiver_method_aggregate_access_emit_output = read_command_output(
+        executable.string() + " --emit-llvm " + member_receiver_method_aggregate_access_emit_path.string()
+    );
+    assert(
+        member_receiver_method_aggregate_access_emit_output.find(
+            "call %record.Page @method.Bucket.page(%record.Bucket"
+        ) !=
+        std::string::npos
+    );
+    assert(
+        member_receiver_method_aggregate_access_emit_output.find(
+            "call [2 x i32] @method.Bucket.values(%record.Bucket"
+        ) !=
+        std::string::npos
+    );
+    assert(
+        member_receiver_method_aggregate_access_emit_output.find("extractvalue %record.Wrapper") !=
+        std::string::npos
+    );
+    assert(
+        member_receiver_method_aggregate_access_emit_output.find("extractvalue [2 x %record.Bucket]") !=
+        std::string::npos
+    );
+    assert(member_receiver_method_aggregate_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
+    assert(
+        member_receiver_method_aggregate_access_emit_output.find("extractvalue [2 x %record.Entry]") !=
+        std::string::npos
+    );
+    assert(member_receiver_method_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(member_receiver_method_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_emit_scalar_member_assignment.or",
@@ -2292,6 +2326,14 @@ int main() {
         record_method_aggregate_access_object_path.string();
     assert(read_command_output(record_method_aggregate_access_object_command).empty());
     assert(std::filesystem::file_size(record_method_aggregate_access_object_path) > 0);
+
+    auto member_receiver_method_aggregate_access_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_member_receiver_method_aggregate_access.o";
+    auto member_receiver_method_aggregate_access_object_command =
+        executable.string() + " --emit-object " + member_receiver_method_aggregate_access_emit_path.string() + " -o " +
+        member_receiver_method_aggregate_access_object_path.string();
+    assert(read_command_output(member_receiver_method_aggregate_access_object_command).empty());
+    assert(std::filesystem::file_size(member_receiver_method_aggregate_access_object_path) > 0);
 
     auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
     auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
@@ -2478,6 +2520,17 @@ int main() {
     assert(WIFEXITED(record_method_aggregate_access_executable_status));
     assert(WEXITSTATUS(record_method_aggregate_access_executable_status) == 0);
 
+    auto member_receiver_method_aggregate_access_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_member_receiver_method_aggregate_access_build";
+    auto member_receiver_method_aggregate_access_build_command =
+        executable.string() + " --build " + member_receiver_method_aggregate_access_emit_path.string() + " -o " +
+        member_receiver_method_aggregate_access_executable_path.string();
+    assert(read_command_output(member_receiver_method_aggregate_access_build_command).empty());
+    auto member_receiver_method_aggregate_access_executable_status =
+        std::system(member_receiver_method_aggregate_access_executable_path.string().c_str());
+    assert(WIFEXITED(member_receiver_method_aggregate_access_executable_status));
+    assert(WEXITSTATUS(member_receiver_method_aggregate_access_executable_status) == 0);
+
     auto run_command = executable.string() + " run " + demo_path.string();
     auto run_status = std::system(run_command.c_str());
     assert(WIFEXITED(run_status));
@@ -2637,6 +2690,15 @@ int main() {
     );
     assert(WIFEXITED(record_method_aggregate_access_status));
     assert(WEXITSTATUS(record_method_aggregate_access_status) == 0);
+
+    auto member_receiver_method_aggregate_access_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
+        "local_member_receiver_method_aggregate_access.or";
+    auto member_receiver_method_aggregate_access_status = std::system(
+        (executable.string() + " run " + member_receiver_method_aggregate_access_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(member_receiver_method_aggregate_access_status));
+    assert(WEXITSTATUS(member_receiver_method_aggregate_access_status) == 0);
 
     auto array_for_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_array_for.or";
     auto array_for_status = std::system((executable.string() + " run " + array_for_demo_path.string()).c_str());
