@@ -193,7 +193,8 @@ analysis, and lowering components.
   also pins aggregate-derived scalar arithmetic through final `if`/`switch` expression merges, `while`/`for`
   loop-body accumulation, guard early-return paths, deferred cleanup replay before early/final returns, plain/member
   call arguments, fixed source-level FFI adapter arguments, returned record/fixed-array containers, returned nested
-  record-with-array and fixed-array containers, and pointer-backed aggregate reads inside `unsafe` blocks. Broader
+  record-with-array and fixed-array containers, branch-local returned containers, and pointer-backed aggregate reads
+  inside `unsafe` blocks. Broader
   aggregate construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.

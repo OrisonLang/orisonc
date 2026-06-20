@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-20: checked-in backend and CLI coverage now pins branch-local returned record and fixed-array containers
+  built from aggregate-derived scalar operands through final `if` and `switch` merges.
 - 2026-06-20: checked-in backend and CLI coverage now pins aggregate-derived scalar operands used to construct
   returned nested record-with-array and fixed-array containers.
 - 2026-06-20: checked-in backend and CLI coverage now pins aggregate-derived scalar operands used to construct
