@@ -2197,6 +2197,28 @@ int main() {
     assert(guard_aggregate_scalar_emit_output.find("ret i32") != std::string::npos);
     assert(guard_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
 
+    auto defer_aggregate_scalar_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_defer_aggregate_scalar.or";
+    auto defer_aggregate_scalar_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + defer_aggregate_scalar_emit_path.string());
+    assert(defer_aggregate_scalar_emit_output.find("define i32 @cleanup_total") != std::string::npos);
+    auto first_defer_aggregate_scalar_call =
+        defer_aggregate_scalar_emit_output.find("call void @observe(i32");
+    assert(first_defer_aggregate_scalar_call != std::string::npos);
+    assert(
+        defer_aggregate_scalar_emit_output.find(
+            "call void @observe(i32",
+            first_defer_aggregate_scalar_call + 1
+        ) !=
+        std::string::npos
+    );
+    assert(defer_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("ret i32") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
+
     auto method_aggregate_access_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";
     auto method_aggregate_access_emit_output =
@@ -2437,6 +2459,14 @@ int main() {
     assert(read_command_output(guard_aggregate_scalar_object_command).empty());
     assert(std::filesystem::file_size(guard_aggregate_scalar_object_path) > 0);
 
+    auto defer_aggregate_scalar_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_defer_aggregate_scalar.o";
+    auto defer_aggregate_scalar_object_command =
+        executable.string() + " --emit-object " + defer_aggregate_scalar_emit_path.string() + " -o " +
+        defer_aggregate_scalar_object_path.string();
+    assert(read_command_output(defer_aggregate_scalar_object_command).empty());
+    assert(std::filesystem::file_size(defer_aggregate_scalar_object_path) > 0);
+
     auto method_aggregate_access_object_path =
         std::filesystem::temp_directory_path() / "orison_cli_method_aggregate_access.o";
     auto method_aggregate_access_object_command =
@@ -2668,6 +2698,17 @@ int main() {
     assert(WIFEXITED(guard_aggregate_scalar_executable_status));
     assert(WEXITSTATUS(guard_aggregate_scalar_executable_status) == 0);
 
+    auto defer_aggregate_scalar_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_defer_aggregate_scalar_build";
+    auto defer_aggregate_scalar_build_command =
+        executable.string() + " --build " + defer_aggregate_scalar_emit_path.string() + " -o " +
+        defer_aggregate_scalar_executable_path.string();
+    assert(read_command_output(defer_aggregate_scalar_build_command).empty());
+    auto defer_aggregate_scalar_executable_status =
+        std::system(defer_aggregate_scalar_executable_path.string().c_str());
+    assert(WIFEXITED(defer_aggregate_scalar_executable_status));
+    assert(WEXITSTATUS(defer_aggregate_scalar_executable_status) == 0);
+
     auto method_aggregate_access_executable_path =
         std::filesystem::temp_directory_path() / "orison_cli_method_aggregate_access_build";
     auto method_aggregate_access_build_command =
@@ -2874,6 +2915,13 @@ int main() {
         std::system((executable.string() + " run " + guard_aggregate_scalar_demo_path.string()).c_str());
     assert(WIFEXITED(guard_aggregate_scalar_status));
     assert(WEXITSTATUS(guard_aggregate_scalar_status) == 0);
+
+    auto defer_aggregate_scalar_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_defer_aggregate_scalar.or";
+    auto defer_aggregate_scalar_status =
+        std::system((executable.string() + " run " + defer_aggregate_scalar_demo_path.string()).c_str());
+    assert(WIFEXITED(defer_aggregate_scalar_status));
+    assert(WEXITSTATUS(defer_aggregate_scalar_status) == 0);
 
     auto method_aggregate_access_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";
