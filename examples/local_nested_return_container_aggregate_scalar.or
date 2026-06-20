@@ -1,0 +1,28 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+
+record Snapshot
+    values: Array<UInt32, 2>
+    total: UInt32
+
+function make_snapshot(page: Page) -> Snapshot
+    Snapshot([page.entries[0 as UInt64].status, page.entries[1 as UInt64].code], page.entries[0 as UInt64].code + page.entries[1 as UInt64].status)
+
+function make_matrix(page: Page) -> Array<Array<UInt32, 2>, 2>
+    [[page.entries[0 as UInt64].status, page.entries[0 as UInt64].code], [page.entries[1 as UInt64].status, page.entries[1 as UInt64].code]]
+
+function total(page: Page) -> UInt32
+    let snapshot = make_snapshot(page)
+    let matrix = make_matrix(page)
+    snapshot.values[0 as UInt64] + snapshot.values[1 as UInt64] + snapshot.total + matrix[0 as UInt64][1 as UInt64]
+
+function main() -> UInt32
+    let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)])
+    let value = total(page)
+    0 as UInt32

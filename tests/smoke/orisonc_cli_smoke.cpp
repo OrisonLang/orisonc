@@ -2201,6 +2201,30 @@ int main() {
     assert(return_container_aggregate_scalar_emit_output.find("ret %record.Pair") != std::string::npos);
     assert(return_container_aggregate_scalar_emit_output.find("ret [2 x i32]") != std::string::npos);
 
+    auto nested_return_container_aggregate_scalar_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_nested_return_container_aggregate_scalar.or";
+    auto nested_return_container_aggregate_scalar_emit_output = read_command_output(
+        executable.string() + " --emit-llvm " + nested_return_container_aggregate_scalar_emit_path.string()
+    );
+    assert(
+        nested_return_container_aggregate_scalar_emit_output.find(
+            "define %record.Snapshot @make_snapshot(%record.Page %page)"
+        ) != std::string::npos
+    );
+    assert(
+        nested_return_container_aggregate_scalar_emit_output.find(
+            "define [2 x [2 x i32]] @make_matrix(%record.Page %page)"
+        ) != std::string::npos
+    );
+    assert(nested_return_container_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("insertvalue %record.Snapshot") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("insertvalue [2 x i32]") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("insertvalue [2 x [2 x i32]]") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("ret %record.Snapshot") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("ret [2 x [2 x i32]]") != std::string::npos);
+
     auto control_flow_aggregate_scalar_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_control_flow_aggregate_scalar.or";
     auto control_flow_aggregate_scalar_emit_output = read_command_output(
@@ -2525,6 +2549,14 @@ int main() {
     assert(read_command_output(return_container_aggregate_scalar_object_command).empty());
     assert(std::filesystem::file_size(return_container_aggregate_scalar_object_path) > 0);
 
+    auto nested_return_container_aggregate_scalar_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_nested_return_container_aggregate_scalar.o";
+    auto nested_return_container_aggregate_scalar_object_command =
+        executable.string() + " --emit-object " + nested_return_container_aggregate_scalar_emit_path.string() + " -o " +
+        nested_return_container_aggregate_scalar_object_path.string();
+    assert(read_command_output(nested_return_container_aggregate_scalar_object_command).empty());
+    assert(std::filesystem::file_size(nested_return_container_aggregate_scalar_object_path) > 0);
+
     auto control_flow_aggregate_scalar_object_path =
         std::filesystem::temp_directory_path() / "orison_cli_control_flow_aggregate_scalar.o";
     auto control_flow_aggregate_scalar_object_command =
@@ -2796,6 +2828,17 @@ int main() {
     assert(WIFEXITED(return_container_aggregate_scalar_executable_status));
     assert(WEXITSTATUS(return_container_aggregate_scalar_executable_status) == 0);
 
+    auto nested_return_container_aggregate_scalar_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_nested_return_container_aggregate_scalar_build";
+    auto nested_return_container_aggregate_scalar_build_command =
+        executable.string() + " --build " + nested_return_container_aggregate_scalar_emit_path.string() + " -o " +
+        nested_return_container_aggregate_scalar_executable_path.string();
+    assert(read_command_output(nested_return_container_aggregate_scalar_build_command).empty());
+    auto nested_return_container_aggregate_scalar_executable_status =
+        std::system(nested_return_container_aggregate_scalar_executable_path.string().c_str());
+    assert(WIFEXITED(nested_return_container_aggregate_scalar_executable_status));
+    assert(WEXITSTATUS(nested_return_container_aggregate_scalar_executable_status) == 0);
+
     auto control_flow_aggregate_scalar_executable_path =
         std::filesystem::temp_directory_path() / "orison_cli_control_flow_aggregate_scalar_build";
     auto control_flow_aggregate_scalar_build_command =
@@ -3057,6 +3100,14 @@ int main() {
     );
     assert(WIFEXITED(return_container_aggregate_scalar_status));
     assert(WEXITSTATUS(return_container_aggregate_scalar_status) == 0);
+
+    auto nested_return_container_aggregate_scalar_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_nested_return_container_aggregate_scalar.or";
+    auto nested_return_container_aggregate_scalar_status = std::system(
+        (executable.string() + " run " + nested_return_container_aggregate_scalar_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(nested_return_container_aggregate_scalar_status));
+    assert(WEXITSTATUS(nested_return_container_aggregate_scalar_status) == 0);
 
     auto control_flow_aggregate_scalar_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_control_flow_aggregate_scalar.or";
