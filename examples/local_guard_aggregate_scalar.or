@@ -1,0 +1,22 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+    count: UInt32
+
+function guarded_total(page: Page, values: Array<UInt32, 2>) -> UInt32
+    guard page.count > 0 as UInt32 else
+        return values[0 as UInt64]
+    guard values[1 as UInt64] > 0 as UInt32 else
+        return page.entries[0 as UInt64].status
+    page.entries[1 as UInt64].code + values[1 as UInt64]
+
+function main() -> UInt32
+    let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)], 2 as UInt32)
+    let values = [19 as UInt32, 23 as UInt32]
+    let total = guarded_total(page, values)
+    0 as UInt32
