@@ -1,0 +1,39 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+    count: UInt32
+
+record Reader
+    marker: UInt32
+
+function make_page() -> Page
+    Page([Entry(7 as UInt32, 30 as UInt32), Entry(19 as UInt32, 50 as UInt32)], 2 as UInt32)
+
+function make_values() -> Array<UInt32, 2>
+    [11 as UInt32, 23 as UInt32]
+
+function pick_status(page: Page) -> UInt32
+    page.entries[1 as UInt64].status
+
+function pick_value(values: Array<UInt32, 2>) -> UInt32
+    values[1 as UInt64]
+
+extend Reader
+    public function status_from(this: shared This, page: Page) -> UInt32
+        page.entries[0 as UInt64].status
+
+    public function value_from(this: shared This, values: Array<UInt32, 2>) -> UInt32
+        values[0 as UInt64]
+
+function main() -> UInt32
+    let reader = Reader(3 as UInt32)
+    let status = pick_status(make_page())
+    let value = pick_value(make_values())
+    let method_status = reader.status_from(make_page())
+    let method_value = reader.value_from(make_values())
+    0 as UInt32

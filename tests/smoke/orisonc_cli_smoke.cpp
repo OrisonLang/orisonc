@@ -2103,6 +2103,48 @@ int main() {
     assert(helper_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
     assert(helper_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
 
+    auto aggregate_parameter_access_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_aggregate_parameter_access.or";
+    auto aggregate_parameter_access_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + aggregate_parameter_access_emit_path.string());
+    assert(
+        aggregate_parameter_access_emit_output.find("define i32 @pick_status(%record.Page %page)") !=
+        std::string::npos
+    );
+    assert(
+        aggregate_parameter_access_emit_output.find("define i32 @pick_value([2 x i32] %values)") !=
+        std::string::npos
+    );
+    assert(
+        aggregate_parameter_access_emit_output.find(
+            "define i32 @method.Reader.status_from(%record.Reader %this, %record.Page %page)"
+        ) !=
+        std::string::npos
+    );
+    assert(
+        aggregate_parameter_access_emit_output.find(
+            "define i32 @method.Reader.value_from(%record.Reader %this, [2 x i32] %values)"
+        ) !=
+        std::string::npos
+    );
+    assert(
+        aggregate_parameter_access_emit_output.find("call i32 @pick_status(%record.Page") !=
+        std::string::npos
+    );
+    assert(aggregate_parameter_access_emit_output.find("call i32 @pick_value([2 x i32]") != std::string::npos);
+    assert(
+        aggregate_parameter_access_emit_output.find("call i32 @method.Reader.status_from(%record.Reader") !=
+        std::string::npos
+    );
+    assert(
+        aggregate_parameter_access_emit_output.find("call i32 @method.Reader.value_from(%record.Reader") !=
+        std::string::npos
+    );
+    assert(aggregate_parameter_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+
     auto method_aggregate_access_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";
     auto method_aggregate_access_emit_output =
@@ -2311,6 +2353,14 @@ int main() {
     assert(read_command_output(helper_aggregate_access_object_command).empty());
     assert(std::filesystem::file_size(helper_aggregate_access_object_path) > 0);
 
+    auto aggregate_parameter_access_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_aggregate_parameter_access.o";
+    auto aggregate_parameter_access_object_command =
+        executable.string() + " --emit-object " + aggregate_parameter_access_emit_path.string() + " -o " +
+        aggregate_parameter_access_object_path.string();
+    assert(read_command_output(aggregate_parameter_access_object_command).empty());
+    assert(std::filesystem::file_size(aggregate_parameter_access_object_path) > 0);
+
     auto method_aggregate_access_object_path =
         std::filesystem::temp_directory_path() / "orison_cli_method_aggregate_access.o";
     auto method_aggregate_access_object_command =
@@ -2498,6 +2548,17 @@ int main() {
     assert(WIFEXITED(helper_aggregate_access_executable_status));
     assert(WEXITSTATUS(helper_aggregate_access_executable_status) == 0);
 
+    auto aggregate_parameter_access_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_aggregate_parameter_access_build";
+    auto aggregate_parameter_access_build_command =
+        executable.string() + " --build " + aggregate_parameter_access_emit_path.string() + " -o " +
+        aggregate_parameter_access_executable_path.string();
+    assert(read_command_output(aggregate_parameter_access_build_command).empty());
+    auto aggregate_parameter_access_executable_status =
+        std::system(aggregate_parameter_access_executable_path.string().c_str());
+    assert(WIFEXITED(aggregate_parameter_access_executable_status));
+    assert(WEXITSTATUS(aggregate_parameter_access_executable_status) == 0);
+
     auto method_aggregate_access_executable_path =
         std::filesystem::temp_directory_path() / "orison_cli_method_aggregate_access_build";
     auto method_aggregate_access_build_command =
@@ -2674,6 +2735,14 @@ int main() {
     );
     assert(WIFEXITED(helper_aggregate_access_status));
     assert(WEXITSTATUS(helper_aggregate_access_status) == 0);
+
+    auto aggregate_parameter_access_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_aggregate_parameter_access.or";
+    auto aggregate_parameter_access_status = std::system(
+        (executable.string() + " run " + aggregate_parameter_access_demo_path.string()).c_str()
+    );
+    assert(WIFEXITED(aggregate_parameter_access_status));
+    assert(WEXITSTATUS(aggregate_parameter_access_status) == 0);
 
     auto method_aggregate_access_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";

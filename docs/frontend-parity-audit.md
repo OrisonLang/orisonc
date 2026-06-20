@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-19: checked-in backend and CLI coverage now pins field and index extraction from record and fixed-array
+  aggregate parameters across both plain function and method call boundaries.
 - 2026-06-19: checked-in backend and CLI coverage now pins field and index extraction from method-returned record and
   fixed-array aggregates when the receiver is recovered through member and index access.
 - 2026-06-19: checked-in backend and CLI coverage now pins field and index extraction from record-method-returned
