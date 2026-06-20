@@ -1005,7 +1005,7 @@ auto lower_write_intrinsic(
     };
 }
 
-auto lower_mutable_aggregate_path_read(
+auto lower_addressable_aggregate_path_read(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
@@ -1024,8 +1024,14 @@ auto lower_mutable_aggregate_path_read(
         return std::nullopt;
     }
 
-    auto binding = session.state.mutable_bindings.find(path.base_expression->text);
-    if (binding == session.state.mutable_bindings.end()) {
+    auto storage = std::string {};
+    if (auto binding = session.state.mutable_bindings.find(path.base_expression->text);
+        binding != session.state.mutable_bindings.end()) {
+        storage = binding->second.storage;
+    } else if (auto binding = session.state.addressable_bindings.find(path.base_expression->text);
+               binding != session.state.addressable_bindings.end()) {
+        storage = binding->second.storage;
+    } else {
         return std::nullopt;
     }
 
@@ -1067,7 +1073,7 @@ auto lower_mutable_aggregate_path_read(
     }
 
     auto cursor = initialize_aggregate_path_cursor(
-        binding->second.storage,
+        std::move(storage),
         *base_source_type,
         context.lowering
     );
@@ -1250,7 +1256,7 @@ auto lowered_expression(
         return binding->second;
     }
 
-    if (auto aggregate_path_read = lower_mutable_aggregate_path_read(
+    if (auto aggregate_path_read = lower_addressable_aggregate_path_read(
             expression,
             expected_llvm_type,
             expected_signedness,

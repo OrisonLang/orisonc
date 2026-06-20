@@ -179,6 +179,10 @@ auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
            expression.left == nullptr && expression.right == nullptr && expression.alternate == nullptr;
 }
 
+auto is_aggregate_llvm_type(std::string_view type) -> bool {
+    return type.starts_with("%record.") || type.starts_with("[");
+}
+
 auto infer_unit_expression_type(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -1488,6 +1492,22 @@ void emit_function_body(
             }
         }
         state.source_type_names.emplace(function.parameters[index].name, std::move(source_type_name));
+        if (is_aggregate_llvm_type(signature.parameter_types[index])) {
+            auto storage = next_llvm_local_value_name(
+                function.parameters[index].name + ".addr",
+                state.local_name_counts
+            );
+            output << "  " << storage << " = alloca " << signature.parameter_types[index] << "\n";
+            output << "  store " << signature.parameter_types[index] << " "
+                   << llvm_local_value_name(function.parameters[index].name) << ", ptr " << storage << "\n";
+            state.addressable_bindings.emplace(function.parameters[index].name, AddressableBinding {
+                .type = LoweredType {
+                    .type = signature.parameter_types[index],
+                    .signedness = signature.parameter_signedness[index],
+                },
+                .storage = std::move(storage),
+            });
+        }
     }
     [[maybe_unused]] auto function_scope = DeferredCleanupScope {state};
 

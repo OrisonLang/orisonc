@@ -2162,13 +2162,15 @@ int main() {
         aggregate_parameter_access_emit_output.find("call i32 @method.Reader.value_from(%record.Reader") !=
         std::string::npos
     );
-    assert(aggregate_parameter_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(aggregate_parameter_access_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(aggregate_parameter_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(aggregate_parameter_access_emit_output.find("extractvalue %record.Reader") != std::string::npos);
-    assert(aggregate_parameter_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
-    assert(aggregate_parameter_access_emit_output.find("add i32 %tmp2, %tmp3") != std::string::npos);
-    assert(aggregate_parameter_access_emit_output.find("add i32 %tmp0, %tmp1") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("alloca %record.Page") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("alloca [2 x i32]") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("getelementptr %record.Reader, ptr %this.addr") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("getelementptr [2 x i32], ptr %values.addr") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("load i32, ptr") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("add i32") != std::string::npos);
 
     auto call_argument_aggregate_scalar_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_call_argument_aggregate_scalar.or";
@@ -2186,9 +2188,10 @@ int main() {
     );
     assert(call_argument_aggregate_scalar_emit_output.find("call i32 @combine(i32") != std::string::npos);
     assert(call_argument_aggregate_scalar_emit_output.find("call i32 @method.Sink.mix(%record.Sink") != std::string::npos);
-    assert(call_argument_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(call_argument_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(call_argument_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(call_argument_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(call_argument_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(call_argument_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(call_argument_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
     assert(call_argument_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
 
     auto ffi_aggregate_scalar_emit_path =
@@ -2197,9 +2200,10 @@ int main() {
         read_command_output(executable.string() + " --emit-llvm " + ffi_aggregate_scalar_emit_path.string());
     assert(ffi_aggregate_scalar_emit_output.find("declare i32 @printf(ptr, ...)") != std::string::npos);
     assert(ffi_aggregate_scalar_emit_output.find("define i32 @print_entry(%record.Page %page)") != std::string::npos);
-    assert(ffi_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(ffi_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(ffi_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
     assert(ffi_aggregate_scalar_emit_output.find("call i32 (ptr, ...) @printf(ptr @.str.0, i32") != std::string::npos);
 
     auto return_container_aggregate_scalar_emit_path =
@@ -2215,9 +2219,10 @@ int main() {
         return_container_aggregate_scalar_emit_output.find("define [2 x i32] @make_values(%record.Page %page)") !=
         std::string::npos
     );
-    assert(return_container_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(return_container_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(return_container_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(return_container_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(return_container_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(return_container_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(return_container_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
     assert(return_container_aggregate_scalar_emit_output.find("insertvalue %record.Pair") != std::string::npos);
     assert(return_container_aggregate_scalar_emit_output.find("insertvalue [2 x i32]") != std::string::npos);
     assert(return_container_aggregate_scalar_emit_output.find("ret %record.Pair") != std::string::npos);
@@ -2238,9 +2243,10 @@ int main() {
             "define [2 x [2 x i32]] @make_matrix(%record.Page %page)"
         ) != std::string::npos
     );
-    assert(nested_return_container_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(nested_return_container_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(nested_return_container_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(nested_return_container_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
     assert(nested_return_container_aggregate_scalar_emit_output.find("insertvalue %record.Snapshot") != std::string::npos);
     assert(nested_return_container_aggregate_scalar_emit_output.find("insertvalue [2 x i32]") != std::string::npos);
     assert(nested_return_container_aggregate_scalar_emit_output.find("insertvalue [2 x [2 x i32]]") != std::string::npos);
@@ -2266,8 +2272,9 @@ int main() {
     assert(branch_return_container_aggregate_scalar_emit_output.find("if.else.") != std::string::npos);
     assert(branch_return_container_aggregate_scalar_emit_output.find("switch i32") != std::string::npos);
     assert(branch_return_container_aggregate_scalar_emit_output.find("switch.case.") != std::string::npos);
-    assert(branch_return_container_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(branch_return_container_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
+    assert(branch_return_container_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(branch_return_container_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(branch_return_container_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
     assert(branch_return_container_aggregate_scalar_emit_output.find("insertvalue %record.Pair") != std::string::npos);
     assert(branch_return_container_aggregate_scalar_emit_output.find("insertvalue [2 x i32]") != std::string::npos);
     assert(branch_return_container_aggregate_scalar_emit_output.find("phi %record.Pair") != std::string::npos);
@@ -2294,11 +2301,10 @@ int main() {
     assert(loop_return_container_aggregate_scalar_emit_output.find("for.iteration.") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("for.exit.") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("load i32, ptr %total.addr") != std::string::npos);
-    assert(loop_return_container_aggregate_scalar_emit_output.find("alloca [2 x %record.Entry]") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
-    assert(loop_return_container_aggregate_scalar_emit_output.find("load %record.Entry, ptr") != std::string::npos);
-    assert(loop_return_container_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(loop_return_container_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("insertvalue %record.Pair") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("insertvalue [2 x i32]") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("ret %record.Pair") != std::string::npos);
@@ -2315,10 +2321,11 @@ int main() {
     assert(control_flow_aggregate_scalar_emit_output.find("if.else.") != std::string::npos);
     assert(control_flow_aggregate_scalar_emit_output.find("switch i32") != std::string::npos);
     assert(control_flow_aggregate_scalar_emit_output.find("switch.case.") != std::string::npos);
-    assert(control_flow_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(control_flow_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(control_flow_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(control_flow_aggregate_scalar_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(control_flow_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(control_flow_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(control_flow_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(control_flow_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
+    assert(control_flow_aggregate_scalar_emit_output.find("getelementptr [2 x i32], ptr %values.addr") != std::string::npos);
     assert(control_flow_aggregate_scalar_emit_output.find(" = phi i32 ") != std::string::npos);
     assert(control_flow_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
 
@@ -2331,10 +2338,11 @@ int main() {
     assert(loop_aggregate_scalar_emit_output.find("while.condition.") != std::string::npos);
     assert(loop_aggregate_scalar_emit_output.find("while.body.") != std::string::npos);
     assert(loop_aggregate_scalar_emit_output.find("for.iteration.") != std::string::npos);
-    assert(loop_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(loop_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(loop_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(loop_aggregate_scalar_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(loop_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(loop_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(loop_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(loop_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
+    assert(loop_aggregate_scalar_emit_output.find("getelementptr [2 x i32], ptr %values.addr") != std::string::npos);
     assert(loop_aggregate_scalar_emit_output.find("store i32") != std::string::npos);
     assert(loop_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
 
@@ -2345,10 +2353,11 @@ int main() {
     assert(guard_aggregate_scalar_emit_output.find("define i32 @guarded_total") != std::string::npos);
     assert(guard_aggregate_scalar_emit_output.find("guard.failure.") != std::string::npos);
     assert(guard_aggregate_scalar_emit_output.find("guard.merge.") != std::string::npos);
-    assert(guard_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(guard_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(guard_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(guard_aggregate_scalar_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(guard_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(guard_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(guard_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(guard_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
+    assert(guard_aggregate_scalar_emit_output.find("getelementptr [2 x i32], ptr %values.addr") != std::string::npos);
     assert(guard_aggregate_scalar_emit_output.find("icmp ugt i32") != std::string::npos);
     assert(guard_aggregate_scalar_emit_output.find("ret i32") != std::string::npos);
     assert(guard_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
@@ -2368,10 +2377,11 @@ int main() {
         ) !=
         std::string::npos
     );
-    assert(defer_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(defer_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(defer_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(defer_aggregate_scalar_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
+    assert(defer_aggregate_scalar_emit_output.find("getelementptr [2 x i32], ptr %values.addr") != std::string::npos);
     assert(defer_aggregate_scalar_emit_output.find("ret i32") != std::string::npos);
     assert(defer_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
 
@@ -2436,13 +2446,14 @@ int main() {
         std::string::npos
     );
     assert(
-        member_receiver_method_aggregate_access_emit_output.find("extractvalue %record.Wrapper") !=
+        member_receiver_method_aggregate_access_emit_output.find("getelementptr %record.Wrapper, ptr %wrapper.addr") !=
         std::string::npos
     );
     assert(
-        member_receiver_method_aggregate_access_emit_output.find("extractvalue [2 x %record.Bucket]") !=
+        member_receiver_method_aggregate_access_emit_output.find("getelementptr [2 x %record.Bucket]") !=
         std::string::npos
     );
+    assert(member_receiver_method_aggregate_access_emit_output.find("load %record.Bucket, ptr") != std::string::npos);
     assert(member_receiver_method_aggregate_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
     assert(
         member_receiver_method_aggregate_access_emit_output.find("extractvalue [2 x %record.Entry]") !=

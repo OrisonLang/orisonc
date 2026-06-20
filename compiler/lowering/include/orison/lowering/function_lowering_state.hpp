@@ -18,6 +18,11 @@ struct MutableBinding {
     std::string storage;
 };
 
+struct AddressableBinding {
+    LoweredType type;
+    std::string storage;
+};
+
 struct DeferredCleanupBlock {
     std::size_t line = 0;
     std::vector<syntax::StatementSyntax const*> statements;
@@ -36,6 +41,7 @@ struct LoopTargets {
 struct FunctionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
     std::unordered_map<std::string, MutableBinding> mutable_bindings;
+    std::unordered_map<std::string, AddressableBinding> addressable_bindings;
     std::unordered_map<std::string, std::string> source_type_names;
     std::unordered_map<std::string, std::size_t> local_name_counts;
     std::vector<DeferredCleanupScopeState> defer_cleanup_scopes;

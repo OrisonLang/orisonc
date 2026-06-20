@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-20: aggregate record and fixed-array parameters now receive read-only function-entry storage so member/index
+  reads can reuse address-backed `getelementptr`/`load` paths instead of repeatedly extracting from SSA aggregate
+  values; checked-in CLI coverage pins plain function, method, control-flow, loop, guard, defer, FFI, and returned-container paths.
 - 2026-06-20: mutable local aggregate member/index expression reads now reuse storage-derived aggregate paths with
   direct `getelementptr`/`load` operations instead of loading the whole aggregate and extracting from the value;
   checked-in backend and CLI coverage pins constant and runtime nested mutable aggregate reads.
