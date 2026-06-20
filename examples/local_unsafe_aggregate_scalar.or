@@ -1,0 +1,32 @@
+package examples.aggregates
+
+record UartRegisters
+    status: UInt32
+    control: UInt32
+
+record Log
+    entries: Array<UartRegisters, 2>
+
+unsafe function read_status(log: Pointer<Log>, index: UInt64) -> UInt32
+    let address: Address = address_of(log.entries[index].status)
+    let pointer: Pointer<UInt32> = Pointer(address)
+    raw_read(pointer)
+
+unsafe function read_control(log: Pointer<Log>, index: UInt64) -> UInt32
+    let address: Address = address_of(log.entries[index].control)
+    let pointer: Pointer<UInt32> = Pointer(address)
+    raw_read(pointer)
+
+function combined_block() -> UInt32
+    var log = Log([UartRegisters(7 as UInt32, 11 as UInt32), UartRegisters(13 as UInt32, 17 as UInt32)])
+    var total = 0 as UInt32
+    unsafe
+        let pointer: Pointer<Log> = Pointer(address_of(log))
+        let status = read_status(pointer, 0 as UInt64)
+        let control = read_control(pointer, 1 as UInt64)
+        total = status + control
+    total
+
+function main() -> UInt32
+    let total = combined_block()
+    0 as UInt32

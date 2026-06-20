@@ -32,6 +32,7 @@
 `local_loop_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through loop accumulation.
 `local_guard_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through guard early returns.
 `local_defer_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through deferred cleanup and returns.
+`local_unsafe_aggregate_scalar.or` demonstrates aggregate-derived scalar operands from pointer-backed unsafe reads.
 `local_method_aggregate_access.or` demonstrates field and index access from method-returned aggregates.
 `local_record_method_aggregate_access.or` demonstrates field and index access from record-method-returned aggregates.
 `local_member_receiver_method_aggregate_access.or` demonstrates aggregate access from member/index receiver methods.
@@ -91,6 +92,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_loop_aggregate_scalar.or` | aggregate-derived scalar operands through loop accumulation | backend |
 | `local_guard_aggregate_scalar.or` | aggregate-derived scalar operands through guard early returns | backend |
 | `local_defer_aggregate_scalar.or` | aggregate-derived scalar operands through deferred cleanup and returns | backend |
+| `local_unsafe_aggregate_scalar.or` | aggregate-derived scalar operands from pointer-backed unsafe reads | backend |
 | `local_method_aggregate_access.or` | method-returned aggregate field/index access | backend |
 | `local_record_method_aggregate_access.or` | record-method-returned aggregate field/index access | backend |
 | `local_member_receiver_method_aggregate_access.or` | member/index receiver method-returned aggregate access | backend |
@@ -384,6 +386,14 @@ build/tools/orisonc/orisonc run examples/local_defer_aggregate_scalar.or
 ```
 
 It returns `0` after replaying deferred cleanup that consumes aggregate-derived scalar values before returns.
+
+Run the aggregate-derived scalar unsafe-read demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_unsafe_aggregate_scalar.or
+```
+
+It returns `0` after an `unsafe` block reads pointer-backed aggregate fields and combines the scalar values.
 
 Run the method-returned aggregate access demo with:
 

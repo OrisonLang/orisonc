@@ -2219,6 +2219,19 @@ int main() {
     assert(defer_aggregate_scalar_emit_output.find("ret i32") != std::string::npos);
     assert(defer_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
 
+    auto unsafe_aggregate_scalar_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_unsafe_aggregate_scalar.or";
+    auto unsafe_aggregate_scalar_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + unsafe_aggregate_scalar_emit_path.string());
+    assert(unsafe_aggregate_scalar_emit_output.find("define i32 @read_status") != std::string::npos);
+    assert(unsafe_aggregate_scalar_emit_output.find("define i32 @read_control") != std::string::npos);
+    assert(unsafe_aggregate_scalar_emit_output.find("define i32 @combined_block") != std::string::npos);
+    assert(unsafe_aggregate_scalar_emit_output.find("getelementptr %record.Log") != std::string::npos);
+    assert(unsafe_aggregate_scalar_emit_output.find("getelementptr [2 x %record.UartRegisters]") != std::string::npos);
+    assert(unsafe_aggregate_scalar_emit_output.find("getelementptr %record.UartRegisters") != std::string::npos);
+    assert(unsafe_aggregate_scalar_emit_output.find("load i32, ptr") != std::string::npos);
+    assert(unsafe_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
+
     auto method_aggregate_access_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";
     auto method_aggregate_access_emit_output =
@@ -2467,6 +2480,14 @@ int main() {
     assert(read_command_output(defer_aggregate_scalar_object_command).empty());
     assert(std::filesystem::file_size(defer_aggregate_scalar_object_path) > 0);
 
+    auto unsafe_aggregate_scalar_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_unsafe_aggregate_scalar.o";
+    auto unsafe_aggregate_scalar_object_command =
+        executable.string() + " --emit-object " + unsafe_aggregate_scalar_emit_path.string() + " -o " +
+        unsafe_aggregate_scalar_object_path.string();
+    assert(read_command_output(unsafe_aggregate_scalar_object_command).empty());
+    assert(std::filesystem::file_size(unsafe_aggregate_scalar_object_path) > 0);
+
     auto method_aggregate_access_object_path =
         std::filesystem::temp_directory_path() / "orison_cli_method_aggregate_access.o";
     auto method_aggregate_access_object_command =
@@ -2709,6 +2730,17 @@ int main() {
     assert(WIFEXITED(defer_aggregate_scalar_executable_status));
     assert(WEXITSTATUS(defer_aggregate_scalar_executable_status) == 0);
 
+    auto unsafe_aggregate_scalar_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_unsafe_aggregate_scalar_build";
+    auto unsafe_aggregate_scalar_build_command =
+        executable.string() + " --build " + unsafe_aggregate_scalar_emit_path.string() + " -o " +
+        unsafe_aggregate_scalar_executable_path.string();
+    assert(read_command_output(unsafe_aggregate_scalar_build_command).empty());
+    auto unsafe_aggregate_scalar_executable_status =
+        std::system(unsafe_aggregate_scalar_executable_path.string().c_str());
+    assert(WIFEXITED(unsafe_aggregate_scalar_executable_status));
+    assert(WEXITSTATUS(unsafe_aggregate_scalar_executable_status) == 0);
+
     auto method_aggregate_access_executable_path =
         std::filesystem::temp_directory_path() / "orison_cli_method_aggregate_access_build";
     auto method_aggregate_access_build_command =
@@ -2922,6 +2954,13 @@ int main() {
         std::system((executable.string() + " run " + defer_aggregate_scalar_demo_path.string()).c_str());
     assert(WIFEXITED(defer_aggregate_scalar_status));
     assert(WEXITSTATUS(defer_aggregate_scalar_status) == 0);
+
+    auto unsafe_aggregate_scalar_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_unsafe_aggregate_scalar.or";
+    auto unsafe_aggregate_scalar_status =
+        std::system((executable.string() + " run " + unsafe_aggregate_scalar_demo_path.string()).c_str());
+    assert(WIFEXITED(unsafe_aggregate_scalar_status));
+    assert(WEXITSTATUS(unsafe_aggregate_scalar_status) == 0);
 
     auto method_aggregate_access_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";

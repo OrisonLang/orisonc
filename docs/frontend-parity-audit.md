@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-20: checked-in backend and CLI coverage now pins aggregate-derived scalar values from pointer-backed
+  aggregate `address_of` plus `raw_read` paths inside an `unsafe` block.
 - 2026-06-19: checked-in backend and CLI coverage now pins aggregate-derived scalar values through deferred cleanup
   replay and early/final returns.
 - 2026-06-19: checked-in backend and CLI coverage now pins aggregate-derived scalar guard conditions, guard failure

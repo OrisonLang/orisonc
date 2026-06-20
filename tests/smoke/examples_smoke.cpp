@@ -28,7 +28,7 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 46> {
+    constexpr auto backend_examples = std::array<std::string_view, 47> {
         "ffi_fixed_parameters.or",
         "local_helper_array_for.or",
         "local_array_for.or",
@@ -53,6 +53,7 @@ auto main() -> int {
         "local_loop_aggregate_scalar.or",
         "local_guard_aggregate_scalar.or",
         "local_defer_aggregate_scalar.or",
+        "local_unsafe_aggregate_scalar.or",
         "local_method_aggregate_access.or",
         "local_record_method_aggregate_access.or",
         "local_member_receiver_method_aggregate_access.or",
