@@ -1,0 +1,29 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+
+record Sink
+    base: UInt32
+
+function combine(left: UInt32, right: UInt32) -> UInt32
+    left + right
+
+extend Sink
+    public function mix(this: shared This, left: UInt32, right: UInt32) -> UInt32
+        this.base + left + right
+
+function total(page: Page, sink: Sink) -> UInt32
+    let plain = combine(page.entries[0 as UInt64].status, page.entries[1 as UInt64].code)
+    let method = sink.mix(page.entries[1 as UInt64].status, page.entries[0 as UInt64].code)
+    plain + method
+
+function main() -> UInt32
+    let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)])
+    let sink = Sink(3 as UInt32)
+    let value = total(page, sink)
+    0 as UInt32
