@@ -30,6 +30,7 @@
 `local_helper_aggregate_access.or` demonstrates field and index access from helper-returned aggregates.
 `local_aggregate_parameter_access.or` demonstrates field and index access from aggregate parameters.
 `local_call_argument_aggregate_scalar.or` demonstrates aggregate-derived scalar operands passed as call arguments.
+`local_return_container_aggregate_scalar.or` demonstrates aggregate-derived scalar operands used to build returned containers.
 `local_control_flow_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through final control flow.
 `local_loop_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through loop accumulation.
 `local_guard_aggregate_scalar.or` demonstrates aggregate-derived scalar operands through guard early returns.
@@ -92,6 +93,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_helper_aggregate_access.or` | helper-returned aggregate field/index access | backend |
 | `local_aggregate_parameter_access.or` | aggregate parameter field/index access | backend |
 | `local_call_argument_aggregate_scalar.or` | aggregate-derived scalar operands passed as call arguments | backend |
+| `local_return_container_aggregate_scalar.or` | aggregate-derived scalar operands used to build returned containers | backend |
 | `local_control_flow_aggregate_scalar.or` | aggregate-derived scalar operands through final control flow | backend |
 | `local_loop_aggregate_scalar.or` | aggregate-derived scalar operands through loop accumulation | backend |
 | `local_guard_aggregate_scalar.or` | aggregate-derived scalar operands through guard early returns | backend |
@@ -374,6 +376,14 @@ build/tools/orisonc/orisonc run examples/local_call_argument_aggregate_scalar.or
 ```
 
 It returns `0` after passing aggregate-derived scalar operands directly to plain and member calls.
+
+Run the aggregate-derived scalar return-container demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_return_container_aggregate_scalar.or
+```
+
+It returns `0` after building returned record and fixed-array containers from aggregate-derived scalar operands.
 
 Run the aggregate-derived scalar control-flow demo with:
 

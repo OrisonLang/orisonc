@@ -1,0 +1,28 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+
+record Pair
+    left: UInt32
+    right: UInt32
+
+function make_pair(page: Page) -> Pair
+    Pair(page.entries[0 as UInt64].status, page.entries[1 as UInt64].code)
+
+function make_values(page: Page) -> Array<UInt32, 2>
+    [page.entries[1 as UInt64].status, page.entries[0 as UInt64].code]
+
+function total(page: Page) -> UInt32
+    let pair = make_pair(page)
+    let values = make_values(page)
+    pair.left + pair.right + values[0 as UInt64] + values[1 as UInt64]
+
+function main() -> UInt32
+    let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)])
+    let value = total(page)
+    0 as UInt32
