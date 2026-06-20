@@ -33,9 +33,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
-- 2026-06-20: checked-in backend and CLI coverage now pins while-built returned record containers from
-  aggregate-derived scalar operands; dynamic value-aggregate indices and `for`-built returned containers remain
-  observed lowering gaps.
+- 2026-06-20: dynamic value-aggregate indices now spill the aggregate value to temporary storage, use `getelementptr`
+  with the runtime index, and load the selected element; checked-in backend and CLI coverage now pins dynamic-index
+  `while`-built returned record containers plus `for`-built returned fixed-array containers from aggregate-derived
+  scalar operands.
 - 2026-06-20: checked-in backend and CLI coverage now pins branch-local returned record and fixed-array containers
   built from aggregate-derived scalar operands through final `if` and `switch` merges.
 - 2026-06-20: checked-in backend and CLI coverage now pins aggregate-derived scalar operands used to construct

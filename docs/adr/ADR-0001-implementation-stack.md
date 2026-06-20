@@ -193,8 +193,9 @@ analysis, and lowering components.
   also pins aggregate-derived scalar arithmetic through final `if`/`switch` expression merges, `while`/`for`
   loop-body accumulation, guard early-return paths, deferred cleanup replay before early/final returns, plain/member
   call arguments, fixed source-level FFI adapter arguments, returned record/fixed-array containers, returned nested
-  record-with-array and fixed-array containers, branch-local returned containers, while-built returned containers,
-  and pointer-backed aggregate reads inside `unsafe` blocks. Broader
+  record-with-array and fixed-array containers, branch-local returned containers, dynamic-index `while`-built
+  returned containers, `for`-built returned containers, and pointer-backed aggregate reads inside `unsafe` blocks.
+  Broader
   aggregate construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
@@ -209,5 +210,3 @@ analysis, and lowering components.
 - Replace the provisional external host-link driver with a deliberate cross-platform linker strategy.
 - Generalize C foreign binding lowering so code-complete `orisonc` can dynamically emit declarations and calls for
   arbitrary programmer-declared `foreign "c"` bindings instead of relying on hard-coded lowered LLVM IR shapes.
-- Replace value-aggregate `extractvalue` lowering for dynamic indices with address-based loads or another legal IR
-  strategy so loop variables can index aggregate values before constructing returned containers.

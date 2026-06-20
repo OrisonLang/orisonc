@@ -12,6 +12,7 @@
 #include "orison/lowering/type_lowering.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <optional>
 #include <span>
 #include <sstream>
@@ -150,6 +151,12 @@ auto llvm_integer_comparison_predicate_for(
 
 auto is_integer_llvm_type_impl(std::string_view type) -> bool {
     return type == "i8" || type == "i16" || type == "i32" || type == "i64";
+}
+
+auto is_decimal_integer_text(std::string_view text) -> bool {
+    return !text.empty() && std::ranges::all_of(text, [](char value) {
+        return std::isdigit(static_cast<unsigned char>(value)) != 0;
+    });
 }
 
 auto lowered_expression(
@@ -1235,8 +1242,20 @@ auto lowered_expression(
         }
 
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        output << "  " << temporary_name << " = extractvalue " << lowered_base->type << " "
-               << lowered_base->value << ", " << lowered_index->value << "\n";
+        if (is_decimal_integer_text(lowered_index->value)) {
+            output << "  " << temporary_name << " = extractvalue " << lowered_base->type << " "
+                   << lowered_base->value << ", " << lowered_index->value << "\n";
+        } else {
+            auto storage_name = next_llvm_temporary_name(state.next_temporary_index);
+            auto element_pointer_name = next_llvm_temporary_name(state.next_temporary_index);
+            output << "  " << storage_name << " = alloca " << lowered_base->type << "\n";
+            output << "  store " << lowered_base->type << " " << lowered_base->value << ", ptr "
+                   << storage_name << "\n";
+            output << "  " << element_pointer_name << " = getelementptr " << lowered_base->type
+                   << ", ptr " << storage_name << ", i64 0, i64 " << lowered_index->value << "\n";
+            output << "  " << temporary_name << " = load " << *element_llvm_type << ", ptr "
+                   << element_pointer_name << "\n";
+        }
         return LoweredExpression {
             .type = *element_llvm_type,
             .value = std::move(temporary_name),

@@ -2261,14 +2261,26 @@ int main() {
             "define %record.Pair @make_pair_while(%record.Page %page)"
         ) != std::string::npos
     );
+    assert(
+        loop_return_container_aggregate_scalar_emit_output.find(
+            "define [2 x i32] @make_values_for(%record.Page %page)"
+        ) != std::string::npos
+    );
     assert(loop_return_container_aggregate_scalar_emit_output.find("while.condition.") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("while.body.") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("while.exit.") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("for.iteration.") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("for.exit.") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("load i32, ptr %total.addr") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("alloca [2 x %record.Entry]") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("load %record.Entry, ptr") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("insertvalue %record.Pair") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("insertvalue [2 x i32]") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("ret %record.Pair") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("ret [2 x i32]") != std::string::npos);
 
     auto control_flow_aggregate_scalar_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_control_flow_aggregate_scalar.or";

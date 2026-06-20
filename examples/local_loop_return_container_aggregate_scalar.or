@@ -15,13 +15,20 @@ function make_pair_while(page: Page) -> Pair
     var index = 0 as UInt64
     var total = 0 as UInt32
     while index < 2 as UInt64
-        total = total + page.entries[0 as UInt64].status
+        total = total + page.entries[index].status
         index = index + 1 as UInt64
     Pair(total, page.entries[0 as UInt64].code)
 
+function make_values_for(page: Page) -> Array<UInt32, 2>
+    var total = 0 as UInt32
+    for entry in page.entries
+        total = total + entry.code
+    [total, page.entries[1 as UInt64].status]
+
 function total(page: Page) -> UInt32
     let while_pair = make_pair_while(page)
-    while_pair.left + while_pair.right
+    let for_values = make_values_for(page)
+    while_pair.left + while_pair.right + for_values[0 as UInt64] + for_values[1 as UInt64]
 
 function main() -> UInt32
     let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)])
