@@ -195,7 +195,8 @@ analysis, and lowering components.
   call arguments, fixed source-level FFI adapter arguments, returned record/fixed-array containers, returned nested
   record-with-array and fixed-array containers, branch-local returned containers, dynamic-index `while`-built
   returned containers, `for`-built returned containers, address-backed reads from mutable aggregate storage,
-  address-backed reads from aggregate parameter storage, and pointer-backed aggregate reads inside `unsafe` blocks. Broader
+  address-backed reads from aggregate parameter storage, temporary address-backed reads from helper/method-returned
+  aggregate values, and pointer-backed aggregate reads inside `unsafe` blocks. Broader
   aggregate construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.

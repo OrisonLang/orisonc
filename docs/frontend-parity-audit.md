@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-20: helper-returned and method-returned record/fixed-array aggregate values that are immediately read through
+  member/index paths now store the returned aggregate once and walk the collected path with `getelementptr`/`load`;
+  checked-in CLI coverage pins helper, scalar-method, record-method, and member-receiver method aggregate access.
 - 2026-06-20: aggregate record and fixed-array parameters now receive read-only function-entry storage so member/index
   reads can reuse address-backed `getelementptr`/`load` paths instead of repeatedly extracting from SSA aggregate
   values; checked-in CLI coverage pins plain function, method, control-flow, loop, guard, defer, FFI, and returned-container paths.

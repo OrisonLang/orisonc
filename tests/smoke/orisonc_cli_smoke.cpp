@@ -2120,10 +2120,15 @@ int main() {
         read_command_output(executable.string() + " --emit-llvm " + helper_aggregate_access_emit_path.string());
     assert(helper_aggregate_access_emit_output.find("call %record.Page @make_page()") != std::string::npos);
     assert(helper_aggregate_access_emit_output.find("call [2 x i32] @make_values()") != std::string::npos);
-    assert(helper_aggregate_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(helper_aggregate_access_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(helper_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(helper_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("alloca %record.Page") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("alloca [2 x i32]") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("store %record.Page") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("store [2 x i32]") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("getelementptr %record.Page") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("getelementptr [2 x i32]") != std::string::npos);
+    assert(helper_aggregate_access_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto aggregate_parameter_access_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_aggregate_parameter_access.or";
@@ -2404,10 +2409,13 @@ int main() {
         read_command_output(executable.string() + " --emit-llvm " + method_aggregate_access_emit_path.string());
     assert(method_aggregate_access_emit_output.find("call %record.Page @method.UInt32.page") != std::string::npos);
     assert(method_aggregate_access_emit_output.find("call [2 x i32] @method.UInt32.values") != std::string::npos);
-    assert(method_aggregate_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(method_aggregate_access_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(method_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(method_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("alloca %record.Page") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("alloca [2 x i32]") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("getelementptr %record.Page") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("getelementptr [2 x i32]") != std::string::npos);
+    assert(method_aggregate_access_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto record_method_aggregate_access_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_method_aggregate_access.or";
@@ -2422,10 +2430,13 @@ int main() {
         record_method_aggregate_access_emit_output.find("call [2 x i32] @method.Wrapper.values(%record.Wrapper") !=
         std::string::npos
     );
-    assert(record_method_aggregate_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(record_method_aggregate_access_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(record_method_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(record_method_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(record_method_aggregate_access_emit_output.find("alloca %record.Page") != std::string::npos);
+    assert(record_method_aggregate_access_emit_output.find("alloca [2 x i32]") != std::string::npos);
+    assert(record_method_aggregate_access_emit_output.find("getelementptr %record.Page") != std::string::npos);
+    assert(record_method_aggregate_access_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(record_method_aggregate_access_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(record_method_aggregate_access_emit_output.find("getelementptr [2 x i32]") != std::string::npos);
+    assert(record_method_aggregate_access_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto member_receiver_method_aggregate_access_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" /
@@ -2454,13 +2465,16 @@ int main() {
         std::string::npos
     );
     assert(member_receiver_method_aggregate_access_emit_output.find("load %record.Bucket, ptr") != std::string::npos);
-    assert(member_receiver_method_aggregate_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
+    assert(member_receiver_method_aggregate_access_emit_output.find("alloca %record.Page") != std::string::npos);
+    assert(member_receiver_method_aggregate_access_emit_output.find("alloca [2 x i32]") != std::string::npos);
+    assert(member_receiver_method_aggregate_access_emit_output.find("getelementptr %record.Page") != std::string::npos);
     assert(
-        member_receiver_method_aggregate_access_emit_output.find("extractvalue [2 x %record.Entry]") !=
+        member_receiver_method_aggregate_access_emit_output.find("getelementptr [2 x %record.Entry]") !=
         std::string::npos
     );
-    assert(member_receiver_method_aggregate_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
-    assert(member_receiver_method_aggregate_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(member_receiver_method_aggregate_access_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(member_receiver_method_aggregate_access_emit_output.find("getelementptr [2 x i32]") != std::string::npos);
+    assert(member_receiver_method_aggregate_access_emit_output.find("load i32, ptr") != std::string::npos);
 
     assert_cli_emit_llvm_failure(
         executable,

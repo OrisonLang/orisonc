@@ -1005,36 +1005,17 @@ auto lower_write_intrinsic(
     };
 }
 
-auto lower_addressable_aggregate_path_read(
+auto lower_aggregate_path_read_from_storage(
     syntax::ExpressionSyntax const& expression,
+    AggregatePath const& path,
+    std::string storage,
+    std::string_view base_source_type_name,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    if (expression.kind != syntax::ExpressionKind::member_access &&
-        expression.kind != syntax::ExpressionKind::index_access) {
-        return std::nullopt;
-    }
-
-    auto path = collect_aggregate_path(expression);
-    if (path.steps.empty() || path.base_expression == nullptr ||
-        path.base_expression->kind != syntax::ExpressionKind::name) {
-        return std::nullopt;
-    }
-
-    auto storage = std::string {};
-    if (auto binding = session.state.mutable_bindings.find(path.base_expression->text);
-        binding != session.state.mutable_bindings.end()) {
-        storage = binding->second.storage;
-    } else if (auto binding = session.state.addressable_bindings.find(path.base_expression->text);
-               binding != session.state.addressable_bindings.end()) {
-        storage = binding->second.storage;
-    } else {
-        return std::nullopt;
-    }
-
     auto inferred = inferred_expression_type(expression, context, session.state);
     if (!inferred.has_value()) {
         record_failure(
@@ -1061,20 +1042,9 @@ auto lower_addressable_aggregate_path_read(
         return std::nullopt;
     }
 
-    auto base_source_type =
-        source_type_name_for_expression(*path.base_expression, context, session.state);
-    if (!base_source_type.has_value()) {
-        record_failure(
-            session.failures,
-            ExpressionLoweringFailureReason::unsupported_expression,
-            expression.text
-        );
-        return std::nullopt;
-    }
-
     auto cursor = initialize_aggregate_path_cursor(
         std::move(storage),
-        *base_source_type,
+        std::string(base_source_type_name),
         context.lowering
     );
     if (!cursor.has_value()) {
@@ -1154,6 +1124,120 @@ auto lower_addressable_aggregate_path_read(
         .value = std::move(temporary_name),
         .signedness = expected_signedness,
     };
+}
+
+auto lower_addressable_aggregate_path_read(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::member_access &&
+        expression.kind != syntax::ExpressionKind::index_access) {
+        return std::nullopt;
+    }
+
+    auto path = collect_aggregate_path(expression);
+    if (path.steps.empty() || path.base_expression == nullptr ||
+        path.base_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto storage = std::string {};
+    if (auto binding = session.state.mutable_bindings.find(path.base_expression->text);
+        binding != session.state.mutable_bindings.end()) {
+        storage = binding->second.storage;
+    } else if (auto binding = session.state.addressable_bindings.find(path.base_expression->text);
+               binding != session.state.addressable_bindings.end()) {
+        storage = binding->second.storage;
+    } else {
+        return std::nullopt;
+    }
+
+    auto base_source_type =
+        source_type_name_for_expression(*path.base_expression, context, session.state);
+    if (!base_source_type.has_value()) {
+        record_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            expression.text
+        );
+        return std::nullopt;
+    }
+
+    return lower_aggregate_path_read_from_storage(
+        expression,
+        path,
+        std::move(storage),
+        *base_source_type,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        session,
+        output
+    );
+}
+
+auto lower_temporary_aggregate_path_read(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::member_access &&
+        expression.kind != syntax::ExpressionKind::index_access) {
+        return std::nullopt;
+    }
+
+    auto path = collect_aggregate_path(expression);
+    if (path.steps.empty() || path.base_expression == nullptr ||
+        path.base_expression->kind == syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto base_source_type =
+        source_type_name_for_expression(*path.base_expression, context, session.state);
+    if (!base_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto base_llvm_type = llvm_type_for_source_type_name(*base_source_type, context.lowering);
+    if (!base_llvm_type.has_value() || *base_llvm_type == "void") {
+        return std::nullopt;
+    }
+
+    auto lowered_base = lowered_expression(
+        *path.base_expression,
+        *base_llvm_type,
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_base.has_value()) {
+        return std::nullopt;
+    }
+
+    auto storage = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << storage << " = alloca " << lowered_base->type << "\n";
+    output << "  store " << lowered_base->type << " " << lowered_base->value << ", ptr "
+           << storage << "\n";
+
+    return lower_aggregate_path_read_from_storage(
+        expression,
+        path,
+        std::move(storage),
+        *base_source_type,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        session,
+        output
+    );
 }
 
 auto lowered_expression(
@@ -1257,6 +1341,17 @@ auto lowered_expression(
     }
 
     if (auto aggregate_path_read = lower_addressable_aggregate_path_read(
+            expression,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        )) {
+        return aggregate_path_read;
+    }
+
+    if (auto aggregate_path_read = lower_temporary_aggregate_path_read(
             expression,
             expected_llvm_type,
             expected_signedness,
