@@ -2,6 +2,7 @@
 
 `minimal.or` is the stable backend demo and must compile, link, and run with exit status `0`.
 `ffi_fixed_parameters.or` demonstrates a finite C FFI contract with two explicit `Pointer<Byte>` parameters.
+`ffi_aggregate_scalar_parameters.or` demonstrates a finite C FFI contract with an aggregate-derived scalar parameter.
 `nested_pointer_aggregate_assignment.or` demonstrates nested pointer-backed aggregate assignment on records and fixed arrays.
 `pointer_array_nested_assignment.or` demonstrates pointer-backed nested fixed-array assignment.
 `pointer_record_field_assignment.or` demonstrates pointer-backed array-of-record field assignment.
@@ -52,6 +53,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
 | Example | Demonstrates | Current validation |
 | --- | --- | --- |
+| `ffi_aggregate_scalar_parameters.or` | C FFI with an aggregate-derived scalar fixed parameter | backend |
 | `tour_01_packages_imports.or` | `package`, `import`, `from`, `as`, `type` | frontend |
 | `tour_02_records_choices.or` | visibility, `record`, `choice`, constructors, generics | frontend |
 | `tour_03_interfaces_methods.or` | `interface`, `implements`, `extend`, `this`, `This` | frontend |
@@ -147,6 +149,14 @@ build/tools/orisonc/orisonc run examples/ffi_fixed_parameters.or
 ```
 
 It calls `strcmp` with exactly two statically checked arguments and exits with status `0`.
+
+Run the aggregate-derived scalar FFI demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/ffi_aggregate_scalar_parameters.or
+```
+
+It calls a fixed-parameter `printf` adapter where the value argument comes from an aggregate.
 
 Run the nested aggregate assignment demo with:
 

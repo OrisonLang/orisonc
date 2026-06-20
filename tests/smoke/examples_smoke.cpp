@@ -28,7 +28,8 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 48> {
+    constexpr auto backend_examples = std::array<std::string_view, 49> {
+        "ffi_aggregate_scalar_parameters.or",
         "ffi_fixed_parameters.or",
         "local_helper_array_for.or",
         "local_array_for.or",

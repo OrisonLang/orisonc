@@ -1,0 +1,19 @@
+package examples.ffi.aggregate_scalar_parameters
+
+package foreign "c"
+    function print_status(format: Pointer<Byte>, value: UInt32) -> Int32 as "printf"
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+
+function print_entry(page: Page) -> Int32
+    print_status("status=%u\n", page.entries[1 as UInt64].status)
+
+public function main() -> Int32
+    let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)])
+    let printed = print_entry(page)
+    0 as Int32

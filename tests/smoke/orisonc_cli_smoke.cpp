@@ -2169,6 +2169,17 @@ int main() {
     assert(call_argument_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
     assert(call_argument_aggregate_scalar_emit_output.find("add i32") != std::string::npos);
 
+    auto ffi_aggregate_scalar_emit_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "ffi_aggregate_scalar_parameters.or";
+    auto ffi_aggregate_scalar_emit_output =
+        read_command_output(executable.string() + " --emit-llvm " + ffi_aggregate_scalar_emit_path.string());
+    assert(ffi_aggregate_scalar_emit_output.find("declare i32 @printf(ptr, ...)") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("define i32 @print_entry(%record.Page %page)") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("extractvalue %record.Page") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(ffi_aggregate_scalar_emit_output.find("call i32 (ptr, ...) @printf(ptr @.str.0, i32") != std::string::npos);
+
     auto control_flow_aggregate_scalar_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_control_flow_aggregate_scalar.or";
     auto control_flow_aggregate_scalar_emit_output = read_command_output(
@@ -2477,6 +2488,14 @@ int main() {
     assert(read_command_output(call_argument_aggregate_scalar_object_command).empty());
     assert(std::filesystem::file_size(call_argument_aggregate_scalar_object_path) > 0);
 
+    auto ffi_aggregate_scalar_object_path =
+        std::filesystem::temp_directory_path() / "orison_cli_ffi_aggregate_scalar.o";
+    auto ffi_aggregate_scalar_object_command =
+        executable.string() + " --emit-object " + ffi_aggregate_scalar_emit_path.string() + " -o " +
+        ffi_aggregate_scalar_object_path.string();
+    assert(read_command_output(ffi_aggregate_scalar_object_command).empty());
+    assert(std::filesystem::file_size(ffi_aggregate_scalar_object_path) > 0);
+
     auto control_flow_aggregate_scalar_object_path =
         std::filesystem::temp_directory_path() / "orison_cli_control_flow_aggregate_scalar.o";
     auto control_flow_aggregate_scalar_object_command =
@@ -2726,6 +2745,17 @@ int main() {
     assert(WIFEXITED(call_argument_aggregate_scalar_executable_status));
     assert(WEXITSTATUS(call_argument_aggregate_scalar_executable_status) == 0);
 
+    auto ffi_aggregate_scalar_executable_path =
+        std::filesystem::temp_directory_path() / "orison_cli_ffi_aggregate_scalar_build";
+    auto ffi_aggregate_scalar_build_command =
+        executable.string() + " --build " + ffi_aggregate_scalar_emit_path.string() + " -o " +
+        ffi_aggregate_scalar_executable_path.string();
+    assert(read_command_output(ffi_aggregate_scalar_build_command).empty());
+    auto ffi_aggregate_scalar_executable_status =
+        std::system((ffi_aggregate_scalar_executable_path.string() + " >/dev/null").c_str());
+    assert(WIFEXITED(ffi_aggregate_scalar_executable_status));
+    assert(WEXITSTATUS(ffi_aggregate_scalar_executable_status) == 0);
+
     auto control_flow_aggregate_scalar_executable_path =
         std::filesystem::temp_directory_path() / "orison_cli_control_flow_aggregate_scalar_build";
     auto control_flow_aggregate_scalar_build_command =
@@ -2830,6 +2860,12 @@ int main() {
     auto fixed_ffi_status = std::system((executable.string() + " run " + fixed_ffi_path.string()).c_str());
     assert(WIFEXITED(fixed_ffi_status));
     assert(WEXITSTATUS(fixed_ffi_status) == 0);
+
+    auto ffi_aggregate_scalar_status = std::system(
+        (executable.string() + " run " + ffi_aggregate_scalar_emit_path.string() + " >/dev/null").c_str()
+    );
+    assert(WIFEXITED(ffi_aggregate_scalar_status));
+    assert(WEXITSTATUS(ffi_aggregate_scalar_status) == 0);
 
     auto immutable_aggregate_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_aggregate_let.or";

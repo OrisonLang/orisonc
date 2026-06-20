@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-20: checked-in backend and CLI coverage now pins aggregate-derived scalar operands passed to explicit
+  fixed-parameter source-level C FFI adapter calls.
 - 2026-06-20: checked-in backend and CLI coverage now pins aggregate-derived scalar operands passed directly to
   plain function and member method call arguments.
 - 2026-06-20: checked-in backend and CLI coverage now pins aggregate-derived scalar values from pointer-backed
