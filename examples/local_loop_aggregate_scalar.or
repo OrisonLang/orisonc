@@ -1,0 +1,30 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+    count: UInt32
+
+function sum_while(page: Page, values: Array<UInt32, 2>) -> UInt32
+    var index = 0 as UInt64
+    var total = 0 as UInt32
+    while index < 2 as UInt64
+        total = total + page.entries[0 as UInt64].status + values[1 as UInt64]
+        index = index + 1 as UInt64
+    total
+
+function sum_for(page: Page) -> UInt32
+    var total = 0 as UInt32
+    for entry in page.entries
+        total = total + entry.status
+    total
+
+function main() -> UInt32
+    let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)], 2 as UInt32)
+    let values = [19 as UInt32, 23 as UInt32]
+    let while_total = sum_while(page, values)
+    let for_total = sum_for(page)
+    0 as UInt32

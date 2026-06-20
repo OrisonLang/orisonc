@@ -190,8 +190,8 @@ analysis, and lowering components.
   `run`, and retained `--build` execution for all three mixed demos. Aggregate member/index expression inference now
   recovers lowered scalar types from source-type metadata, and record-field extraction preserves field signedness so
   binary lowering can combine aggregate-derived scalar values with ordinary receiver fields. Checked-in coverage now
-  also pins aggregate-derived scalar arithmetic through final `if` and `switch` expression merges. Broader aggregate
-  construction/assignment remains future work.
+  also pins aggregate-derived scalar arithmetic through final `if`/`switch` expression merges and `while`/`for`
+  loop-body accumulation. Broader aggregate construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
