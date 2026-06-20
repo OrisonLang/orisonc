@@ -1,0 +1,27 @@
+package examples.aggregates
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+record Page
+    entries: Array<Entry, 2>
+    count: UInt32
+
+function choose_if(flag: Bool, page: Page, values: Array<UInt32, 2>) -> UInt32
+    if flag
+        page.entries[0 as UInt64].status + values[0 as UInt64]
+    else
+        page.entries[1 as UInt64].code + values[1 as UInt64]
+
+function choose_switch(selector: UInt32, page: Page, values: Array<UInt32, 2>) -> UInt32
+    switch selector
+        0 as UInt32 => page.entries[0 as UInt64].status + values[0 as UInt64]
+        default => page.entries[1 as UInt64].code + values[1 as UInt64]
+
+function main() -> UInt32
+    let page = Page([Entry(7 as UInt32, 11 as UInt32), Entry(13 as UInt32, 17 as UInt32)], 2 as UInt32)
+    let values = [19 as UInt32, 23 as UInt32]
+    let selected_if = choose_if(true, page, values)
+    let selected_switch = choose_switch(0 as UInt32, page, values)
+    0 as UInt32

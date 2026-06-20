@@ -189,7 +189,8 @@ analysis, and lowering components.
   record-field-to-array-index-to-record-field directions, and now covers LLVM emission, host object emission, direct
   `run`, and retained `--build` execution for all three mixed demos. Aggregate member/index expression inference now
   recovers lowered scalar types from source-type metadata, and record-field extraction preserves field signedness so
-  binary lowering can combine aggregate-derived scalar values with ordinary receiver fields. Broader aggregate
+  binary lowering can combine aggregate-derived scalar values with ordinary receiver fields. Checked-in coverage now
+  also pins aggregate-derived scalar arithmetic through final `if` and `switch` expression merges. Broader aggregate
   construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.

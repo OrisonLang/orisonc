@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-19: checked-in backend and CLI coverage now pins aggregate-derived scalar arithmetic through final `if` and
+  `switch` expression merges.
 - 2026-06-19: aggregate member/index expression lowering now preserves scalar type inference and record-field
   signedness, so binary expressions can combine aggregate-derived values with receiver fields inside methods.
 - 2026-06-19: checked-in backend and CLI coverage now pins field and index extraction from record and fixed-array
