@@ -270,6 +270,16 @@ auto inferred_expression_type(
             : std::optional<LoweredType> {mutable_binding->second.type};
     }
 
+    if ((expression.kind == syntax::ExpressionKind::member_access ||
+         expression.kind == syntax::ExpressionKind::index_access) &&
+        expression.left != nullptr) {
+        auto source_type = source_type_name_for_expression(expression, context, state);
+        if (!source_type.has_value()) {
+            return std::nullopt;
+        }
+        return lowered_type_for_source_type_name(*source_type, context.lowering);
+    }
+
     if (expression.kind == syntax::ExpressionKind::cast) {
         syntax::TypeSyntax target_type {
             .name = expression.text,
@@ -1121,6 +1131,9 @@ auto lowered_expression(
 
         auto base_llvm_type = llvm_type_for_source_type_name(*base_source_type, context.lowering);
         auto field_llvm_type = llvm_type_for_source_type_name(field->source_type_name, context.lowering);
+        auto field_signedness = integer_signedness_for(syntax::TypeSyntax {
+            .name = field->source_type_name,
+        });
         if (!base_llvm_type.has_value() || !field_llvm_type.has_value()) {
             record_failure(
                 failures,
@@ -1148,7 +1161,7 @@ auto lowered_expression(
         return LoweredExpression {
             .type = *field_llvm_type,
             .value = std::move(temporary_name),
-            .signedness = IntegerSignedness::not_integer,
+            .signedness = field_signedness,
         };
     }
 

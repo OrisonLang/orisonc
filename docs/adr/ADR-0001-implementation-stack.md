@@ -185,11 +185,12 @@ analysis, and lowering components.
   join, and branch-local or switch-local nested fixed-array element stores read after the control-flow join. CLI smoke
   coverage pins user-facing LLVM extraction shapes for helper-returned, scalar-method-returned, record-method-returned,
   member/index-receiver method-returned, and function/method parameter record and fixed-array aggregates plus mixed
-  inferred
-  immutable aggregate paths in record-field-to-array-index, array-index-to-record-field, and nested
+  inferred immutable aggregate paths in record-field-to-array-index, array-index-to-record-field, and nested
   record-field-to-array-index-to-record-field directions, and now covers LLVM emission, host object emission, direct
-  `run`, and retained `--build` execution for all three mixed demos. Broader aggregate construction/assignment
-  remains future work.
+  `run`, and retained `--build` execution for all three mixed demos. Aggregate member/index expression inference now
+  recovers lowered scalar types from source-type metadata, and record-field extraction preserves field signedness so
+  binary lowering can combine aggregate-derived scalar values with ordinary receiver fields. Broader aggregate
+  construction/assignment remains future work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;

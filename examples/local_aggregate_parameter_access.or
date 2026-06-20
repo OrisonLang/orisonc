@@ -25,10 +25,10 @@ function pick_value(values: Array<UInt32, 2>) -> UInt32
 
 extend Reader
     public function status_from(this: shared This, page: Page) -> UInt32
-        page.entries[0 as UInt64].status
+        page.entries[0 as UInt64].status + this.marker
 
     public function value_from(this: shared This, values: Array<UInt32, 2>) -> UInt32
-        values[0 as UInt64]
+        values[0 as UInt64] + this.marker
 
 function main() -> UInt32
     let reader = Reader(3 as UInt32)

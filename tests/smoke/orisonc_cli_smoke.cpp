@@ -2143,7 +2143,10 @@ int main() {
     assert(aggregate_parameter_access_emit_output.find("extractvalue %record.Page") != std::string::npos);
     assert(aggregate_parameter_access_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
     assert(aggregate_parameter_access_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("extractvalue %record.Reader") != std::string::npos);
     assert(aggregate_parameter_access_emit_output.find("extractvalue [2 x i32]") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("add i32 %tmp2, %tmp3") != std::string::npos);
+    assert(aggregate_parameter_access_emit_output.find("add i32 %tmp0, %tmp1") != std::string::npos);
 
     auto method_aggregate_access_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_method_aggregate_access.or";

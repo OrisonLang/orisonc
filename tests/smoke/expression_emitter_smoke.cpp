@@ -38,6 +38,9 @@ int main() {
                   "function choose(flag: Bool, left: UInt32, right: UInt32) -> UInt32\n"
                   "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n"
                   "\n"
+                  "function sum_device_log(device: Device, log: Log) -> UInt32\n"
+                  "    device.registers.status + log.entries[1 as UInt64].status\n"
+                  "\n"
                   "extend UInt32\n"
                   "    function scale(this: shared This, amount: UInt32) -> UInt32\n"
                   "        this + amount\n"
@@ -173,7 +176,7 @@ int main() {
     };
     output = {};
     auto member_lowered = orison::lowering::lower_expression(
-        parse_result.module.functions[1].body_statements.front().expression,
+        parse_result.module.functions[2].body_statements.front().expression,
         "i32",
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
@@ -186,6 +189,46 @@ int main() {
     assert(
         output.str() ==
         "  %tmp0 = call i32 @method.UInt32.scale(i32 %value, i32 2)\n"
+    );
+
+    auto aggregate_binary_state = orison::lowering::FunctionLoweringState {};
+    aggregate_binary_state.immutable_bindings.emplace("device", orison::lowering::LoweredExpression {
+        .type = "%record.Device",
+        .value = "%device",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    aggregate_binary_state.immutable_bindings.emplace("log", orison::lowering::LoweredExpression {
+        .type = "%record.Log",
+        .value = "%log",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    aggregate_binary_state.source_type_names.emplace("device", "Device");
+    aggregate_binary_state.source_type_names.emplace("log", "Log");
+    auto aggregate_binary_failures = orison::lowering::LoweringFailures {};
+    auto aggregate_binary_session = orison::lowering::FunctionLoweringSession {
+        .state = aggregate_binary_state,
+        .failures = aggregate_binary_failures,
+    };
+    output = {};
+    auto aggregate_binary_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions[1].body_statements.front().expression,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        aggregate_binary_session,
+        output
+    );
+    assert(aggregate_binary_lowered.has_value());
+    assert(aggregate_binary_lowered->type == "i32");
+    assert(aggregate_binary_lowered->value == "%tmp5");
+    assert(
+        output.str() ==
+        "  %tmp0 = extractvalue %record.Device %device, 0\n"
+        "  %tmp1 = extractvalue %record.UartRegisters %tmp0, 1\n"
+        "  %tmp2 = extractvalue %record.Log %log, 0\n"
+        "  %tmp3 = extractvalue [2 x %record.UartRegisters] %tmp2, 1\n"
+        "  %tmp4 = extractvalue %record.UartRegisters %tmp3, 1\n"
+        "  %tmp5 = add i32 %tmp1, %tmp4\n"
     );
 
     auto missing_member_state = orison::lowering::FunctionLoweringState {};
@@ -201,7 +244,7 @@ int main() {
     };
     output = {};
     auto missing_member_lowered = orison::lowering::lower_expression(
-        parse_result.module.functions[1].body_statements.front().expression,
+        parse_result.module.functions[2].body_statements.front().expression,
         "i32",
         orison::lowering::IntegerSignedness::unsigned_integer,
         context,
