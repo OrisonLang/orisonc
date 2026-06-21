@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-20: immutable record and fixed-array aggregate `let` bindings now retain read-only storage alongside their SSA
+  value so later member/index reads reuse the address-backed aggregate path; checked-in CLI coverage pins inferred
+  record-array, array-record, nested mixed, and branch-local inferred aggregate lets.
 - 2026-06-20: helper-returned and method-returned record/fixed-array aggregate values that are immediately read through
   member/index paths now store the returned aggregate once and walk the collected path with `getelementptr`/`load`;
   checked-in CLI coverage pins helper, scalar-method, record-method, and member-receiver method aggregate access.

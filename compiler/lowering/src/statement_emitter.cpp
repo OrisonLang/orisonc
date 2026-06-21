@@ -592,6 +592,21 @@ auto lower_let_statement(
         .value = std::move(local_name),
         .signedness = lowered->signedness,
     };
+    if (is_aggregate_llvm_type(lowered->type)) {
+        auto storage = next_llvm_local_value_name(
+            statement.name + ".addr",
+            session.state.local_name_counts
+        );
+        output << "  " << storage << " = alloca " << lowered->type << "\n";
+        output << "  store " << lowered->type << " " << lowered->value << ", ptr " << storage << "\n";
+        session.state.addressable_bindings[statement.name] = AddressableBinding {
+            .type = LoweredType {
+                .type = lowered->type,
+                .signedness = lowered->signedness,
+            },
+            .storage = std::move(storage),
+        };
+    }
     if (!statement.annotated_type.name.empty()) {
         session.state.source_type_names[statement.name] =
             render_source_type_name(statement.annotated_type);

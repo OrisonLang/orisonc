@@ -1926,14 +1926,16 @@ int main() {
         read_command_output(executable.string() + " --emit-llvm " + inferred_record_array_let_emit_path.string());
     assert(
         inferred_record_array_let_emit_output.find(
-            "extractvalue %record.Packet"
+            "alloca %record.Packet"
         ) != std::string::npos
     );
     assert(
         inferred_record_array_let_emit_output.find(
-            "extractvalue [4 x i8]"
+            "getelementptr %record.Packet"
         ) != std::string::npos
     );
+    assert(inferred_record_array_let_emit_output.find("getelementptr [4 x i8]") != std::string::npos);
+    assert(inferred_record_array_let_emit_output.find("load i8, ptr") != std::string::npos);
 
     auto inferred_array_record_let_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_inferred_array_record_let.or";
@@ -1941,14 +1943,16 @@ int main() {
         read_command_output(executable.string() + " --emit-llvm " + inferred_array_record_let_emit_path.string());
     assert(
         inferred_array_record_let_emit_output.find(
-            "extractvalue [2 x %record.Entry]"
+            "alloca [2 x %record.Entry]"
         ) != std::string::npos
     );
     assert(
         inferred_array_record_let_emit_output.find(
-            "extractvalue %record.Entry"
+            "getelementptr [2 x %record.Entry]"
         ) != std::string::npos
     );
+    assert(inferred_array_record_let_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(inferred_array_record_let_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto inferred_nested_mixed_let_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_inferred_nested_mixed_let.or";
@@ -1956,19 +1960,21 @@ int main() {
         read_command_output(executable.string() + " --emit-llvm " + inferred_nested_mixed_let_emit_path.string());
     assert(
         inferred_nested_mixed_let_emit_output.find(
-            "extractvalue %record.Page"
+            "alloca %record.Page"
         ) != std::string::npos
     );
     assert(
         inferred_nested_mixed_let_emit_output.find(
-            "extractvalue [2 x %record.Entry]"
+            "getelementptr %record.Page"
         ) != std::string::npos
     );
     assert(
         inferred_nested_mixed_let_emit_output.find(
-            "extractvalue %record.Entry"
+            "getelementptr [2 x %record.Entry]"
         ) != std::string::npos
     );
+    assert(inferred_nested_mixed_let_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(inferred_nested_mixed_let_emit_output.find("load i32, ptr") != std::string::npos);
 
     auto branch_inferred_aggregate_let_emit_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_branch_inferred_aggregate_let.or";
@@ -1976,9 +1982,11 @@ int main() {
         read_command_output(executable.string() + " --emit-llvm " + branch_inferred_aggregate_let_emit_path.string());
     assert(branch_inferred_aggregate_let_emit_output.find("if.then.") != std::string::npos);
     assert(branch_inferred_aggregate_let_emit_output.find("if.else.") != std::string::npos);
-    assert(branch_inferred_aggregate_let_emit_output.find("extractvalue %record.Page") != std::string::npos);
-    assert(branch_inferred_aggregate_let_emit_output.find("extractvalue [2 x %record.Entry]") != std::string::npos);
-    assert(branch_inferred_aggregate_let_emit_output.find("extractvalue %record.Entry") != std::string::npos);
+    assert(branch_inferred_aggregate_let_emit_output.find("alloca %record.Page") != std::string::npos);
+    assert(branch_inferred_aggregate_let_emit_output.find("getelementptr %record.Page") != std::string::npos);
+    assert(branch_inferred_aggregate_let_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
+    assert(branch_inferred_aggregate_let_emit_output.find("getelementptr %record.Entry") != std::string::npos);
+    assert(branch_inferred_aggregate_let_emit_output.find("load i32, ptr") != std::string::npos);
     assert(branch_inferred_aggregate_let_emit_output.find(" = phi i32 ") != std::string::npos);
 
     auto inferred_aggregate_reassignment_emit_path =
