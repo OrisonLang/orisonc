@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: raw and volatile low-level read/write lowering now share LLVM load/store emission helpers, keeping
+  volatile spelling and temporary allocation centralized while preserving intrinsic-specific validation.
 - 2026-06-25: pointer/address conversion emission is centralized inside expression lowering, so `address_of`, generic
   address operands, and `Pointer(...)` construction share the same `ptrtoint`/`inttoptr` instruction shape.
 - 2026-06-25: aggregate assignment target lowering now uses the shared member/index cursor-advancement helpers, keeping

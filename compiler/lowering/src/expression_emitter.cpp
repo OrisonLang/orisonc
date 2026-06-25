@@ -429,6 +429,41 @@ auto lower_pointer_to_address(
     };
 }
 
+auto emit_pointer_load(
+    std::string_view result_type,
+    IntegerSignedness result_signedness,
+    std::string_view pointer_value,
+    bool is_volatile,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> LoweredExpression {
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = load ";
+    if (is_volatile) {
+        output << "volatile ";
+    }
+    output << result_type << ", ptr " << pointer_value << "\n";
+    return LoweredExpression {
+        .type = std::string(result_type),
+        .value = std::move(temporary_name),
+        .signedness = result_signedness,
+    };
+}
+
+void emit_pointer_store(
+    std::string_view value_type,
+    std::string_view value,
+    std::string_view pointer_value,
+    bool is_volatile,
+    std::ostringstream& output
+) {
+    output << "  store ";
+    if (is_volatile) {
+        output << "volatile ";
+    }
+    output << value_type << " " << value << ", ptr " << pointer_value << "\n";
+}
+
 auto lower_pointer_operand(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -927,17 +962,14 @@ auto lower_read_intrinsic(
         return std::nullopt;
     }
 
-    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << temporary_name << " = load ";
-    if (is_volatile) {
-        output << "volatile ";
-    }
-    output << expected_llvm_type << ", ptr " << pointer->value << "\n";
-    return LoweredExpression {
-        .type = std::string(expected_llvm_type),
-        .value = std::move(temporary_name),
-        .signedness = expected_signedness,
-    };
+    return emit_pointer_load(
+        expected_llvm_type,
+        expected_signedness,
+        pointer->value,
+        is_volatile,
+        session,
+        output
+    );
 }
 
 auto lower_write_intrinsic(
@@ -988,11 +1020,7 @@ auto lower_write_intrinsic(
         return std::nullopt;
     }
 
-    output << "  store ";
-    if (is_volatile) {
-        output << "volatile ";
-    }
-    output << value_type->type << " " << value->value << ", ptr " << pointer->value << "\n";
+    emit_pointer_store(value_type->type, value->value, pointer->value, is_volatile, output);
     return LoweredExpression {
         .type = "void",
         .value = "",
