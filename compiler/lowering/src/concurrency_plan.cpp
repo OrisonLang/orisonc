@@ -2,6 +2,7 @@
 
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
+#include "orison/lowering/target_layout.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -177,6 +178,17 @@ auto environment_llvm_type_for(
     return output.str();
 }
 
+auto capture_llvm_types(
+    std::vector<ConcurrencyCapturePlan> const& captures
+) -> std::vector<std::string_view> {
+    auto types = std::vector<std::string_view> {};
+    types.reserve(captures.size());
+    for (auto const& capture : captures) {
+        types.push_back(capture.llvm_type);
+    }
+    return types;
+}
+
 }  // namespace
 
 auto plan_concurrency_expression(
@@ -234,12 +246,12 @@ auto plan_concurrency_expression(
 
     plan.environment_layout = ConcurrencyEnvironmentLayout {
         .llvm_type = environment_llvm_type_for(plan.captures),
-        .size_bytes = 0,
+        .size_bytes = lowered_struct_size_bytes(capture_llvm_types(plan.captures)).value_or(0),
         .fields = plan.captures,
     };
     plan.result_storage = ConcurrencyResultStorageLayout {
         .llvm_type = plan.result_type.type,
-        .size_bytes = 0,
+        .size_bytes = lowered_type_size_bytes(plan.result_type.type).value_or(0),
     };
 
     return plan;

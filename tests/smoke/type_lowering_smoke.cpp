@@ -1,4 +1,5 @@
 #include "orison/lowering/type_lowering.hpp"
+#include "orison/lowering/target_layout.hpp"
 
 #include <cassert>
 #include <string>
@@ -50,5 +51,19 @@ int main() {
         ParameterSyntax {.name = "invalid", .type = TypeSyntax {.name = "Unit"}},
     };
     assert(!orison::lowering::llvm_parameter_types_for(unit_parameter).has_value());
+
+    auto pointer_size = orison::lowering::lowered_type_size_bytes("ptr");
+    assert(pointer_size.has_value());
+    assert(*pointer_size == 8);
+
+    auto array_size = orison::lowering::lowered_type_size_bytes("[4 x i16]");
+    assert(array_size.has_value());
+    assert(*array_size == 8);
+
+    auto padded_struct_size = orison::lowering::lowered_struct_size_bytes({"i8", "i64"});
+    assert(padded_struct_size.has_value());
+    assert(*padded_struct_size == 16);
+
+    assert(!orison::lowering::lowered_type_size_bytes("%Unknown").has_value());
     return 0;
 }
