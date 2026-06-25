@@ -1,5 +1,6 @@
 #include "orison/lowering/statement_emitter.hpp"
 
+#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
@@ -17,10 +18,6 @@
 
 namespace orison::lowering {
 namespace {
-
-auto is_aggregate_llvm_type(std::string_view type) -> bool {
-    return type.starts_with("%record.") || type.starts_with("[");
-}
 
 auto source_type_name_for_initializer(
     syntax::ExpressionSyntax const& expression,
@@ -592,21 +589,12 @@ auto lower_let_statement(
         .value = std::move(local_name),
         .signedness = lowered->signedness,
     };
-    if (is_aggregate_llvm_type(lowered->type)) {
-        auto storage = next_llvm_local_value_name(
-            statement.name + ".addr",
-            session.state.local_name_counts
-        );
-        output << "  " << storage << " = alloca " << lowered->type << "\n";
-        output << "  store " << lowered->type << " " << lowered->value << ", ptr " << storage << "\n";
-        session.state.addressable_bindings[statement.name] = AddressableBinding {
-            .type = LoweredType {
-                .type = lowered->type,
-                .signedness = lowered->signedness,
-            },
-            .storage = std::move(storage),
-        };
-    }
+    bind_addressable_aggregate_value(
+        statement.name,
+        session.state.immutable_bindings.at(statement.name),
+        session,
+        output
+    );
     if (!statement.annotated_type.name.empty()) {
         session.state.source_type_names[statement.name] =
             render_source_type_name(statement.annotated_type);

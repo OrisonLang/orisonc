@@ -1,4 +1,5 @@
 add_library(orison_lowering STATIC
+    src/addressable_binding.cpp
     src/aggregate_path.cpp
     src/call_emitter.cpp
     src/c_abi_adapter.cpp

@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-24: read-only aggregate addressable binding setup now uses a shared lowering helper, keeping parameter,
+  immutable aggregate `let`, and aggregate `for` item storage conventions aligned without changing emitted IR shape.
 - 2026-06-24: aggregate `for` iteration values now become read-only addressable bindings when the element type is a
   lowered record or fixed array; checked-in CLI coverage pins `%record.Entry` loop item storage and field loads inside
   a returned-container `for` body.
