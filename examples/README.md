@@ -61,7 +61,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `ffi_aggregate_scalar_parameters.or` | C FFI with an aggregate-derived scalar fixed parameter | backend |
 | `tour_01_packages_imports.or` | `package`, `import`, `from`, `as`, `type` | backend |
 | `tour_02_records_choices.or` | visibility, `record`, `choice`, constructors, generics | backend |
-| `tour_03_interfaces_methods.or` | `interface`, `implements`, `extend`, `this`, `This` | frontend |
+| `tour_03_interfaces_methods.or` | `interface`, `implements`, `extend`, `this`, `This` | backend |
 | `tour_04_generics_ownership.or` | generics, `where`, `shared`, `exclusive` | frontend |
 | `tour_05_bindings_operators.or` | `let`, `var`, assignment, boolean, ternary, bitwise, shifts | backend |
 | `tour_06_control_flow.or` | `guard`, `else`, `if`, `switch`, `default`, loops, `break`, `continue`, `defer` | backend |

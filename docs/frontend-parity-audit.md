@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: modules with implementation or extension methods no longer require a top-level function before LLVM IR
+  emission, so `tour_03_interfaces_methods.or` is now backend-validated through method body lowering.
 - 2026-06-25: `tour_01_packages_imports.or`, `tour_02_records_choices.or`, `tour_06_control_flow.or`,
   `tour_07_recursion.or`, and `tour_10_unsafe_memory.or` are now backend-validated examples because their existing
   lowering paths emit object code successfully.

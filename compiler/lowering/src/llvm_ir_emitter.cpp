@@ -68,11 +68,6 @@ auto LlvmIrEmitter::emit(
         return result;
     }
 
-    if (module.functions.empty()) {
-        result.diagnostics.error(1, "lowering requires at least one function");
-        return result;
-    }
-
     auto output = std::ostringstream {};
     output << "; Orison LLVM IR scaffold\n";
     if (!module.package_name.empty()) {
