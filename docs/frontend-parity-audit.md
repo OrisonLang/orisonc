@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: accepted ADR-0004 for the initial concurrency runtime lowering contract and added a pinned lowering
+  model for opaque concurrency handles plus spawn/join/await/destroy runtime symbols; `tour_11_concurrency.or` remains
+  frontend-only until thunk, environment, result-storage, and runtime-linking work lands.
 - 2026-06-25: concurrency lowering remains intentionally frontend-only until async/task/thread runtime representation
   is designed; lowering diagnostics now report unsupported `task`, `thread`, and `await` expression shapes directly
   instead of falling back to generic let-binding or expression failures.

@@ -5,6 +5,7 @@ add_library(orison_lowering STATIC
     src/c_abi_adapter.cpp
     src/conditional_emitter.cpp
     src/conditional_plan.cpp
+    src/concurrency_runtime.cpp
     src/control_flow_emitter.cpp
     src/expression_emitter.cpp
     src/function_emitter.cpp

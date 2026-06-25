@@ -83,6 +83,22 @@ add_test(
     COMMAND orison_c_abi_adapter_smoke
 )
 
+add_executable(orison_concurrency_runtime_smoke
+    smoke/concurrency_runtime_smoke.cpp
+)
+
+target_link_libraries(orison_concurrency_runtime_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_concurrency_runtime_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_concurrency_runtime_smoke
+    COMMAND orison_concurrency_runtime_smoke
+)
+
 add_executable(orison_call_emitter_smoke
     smoke/call_emitter_smoke.cpp
 )
