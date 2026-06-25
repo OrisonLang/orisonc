@@ -464,6 +464,38 @@ void emit_pointer_store(
     output << value_type << " " << value << ", ptr " << pointer_value << "\n";
 }
 
+auto emit_address_offset(
+    std::string_view address_value,
+    std::string_view offset_value,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> LoweredExpression {
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = add i64 " << address_value << ", " << offset_value << "\n";
+    return LoweredExpression {
+        .type = "i64",
+        .value = std::move(temporary_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
+auto emit_pointer_offset(
+    LoweredType const& pointee_type,
+    std::string_view pointer_value,
+    std::string_view offset_value,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> LoweredExpression {
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = getelementptr " << pointee_type.type << ", ptr "
+           << pointer_value << ", i64 " << offset_value << "\n";
+    return LoweredExpression {
+        .type = "ptr",
+        .value = std::move(temporary_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 auto lower_pointer_operand(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -893,14 +925,7 @@ auto lower_raw_offset_intrinsic(
             return std::nullopt;
         }
 
-        auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
-        output << "  " << temporary_name << " = add i64 " << address->value << ", " << offset->value
-               << "\n";
-        return LoweredExpression {
-            .type = "i64",
-            .value = std::move(temporary_name),
-            .signedness = IntegerSignedness::not_integer,
-        };
+        return emit_address_offset(address->value, offset->value, session, output);
     }
 
     if (expected_llvm_type != "ptr") {
@@ -928,14 +953,7 @@ auto lower_raw_offset_intrinsic(
         return std::nullopt;
     }
 
-    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << temporary_name << " = getelementptr " << pointee_type->type << ", ptr "
-           << pointer->value << ", i64 " << offset->value << "\n";
-    return LoweredExpression {
-        .type = "ptr",
-        .value = std::move(temporary_name),
-        .signedness = IntegerSignedness::not_integer,
-    };
+    return emit_pointer_offset(*pointee_type, pointer->value, offset->value, session, output);
 }
 
 auto lower_read_intrinsic(
