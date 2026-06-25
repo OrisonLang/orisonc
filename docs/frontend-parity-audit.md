@@ -33,9 +33,12 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: scalar `thread` let-bindings now emit private entry thunks that load captures from the planned
+  environment, lower the final scalar body expression, and store into compiler-owned result storage; spawn calls now
+  pass the thunk pointer instead of `null`.
 - 2026-06-25: scalar `thread` let-bindings now lower the planned capture environment allocation, capture stores, result
-  storage allocation, and `__orison_thread_spawn(..., i64 result_size, ...)` call shape; entry thunks and `.join()`
-  result loads remain deliberately unsupported.
+  storage allocation, and `__orison_thread_spawn(..., i64 result_size, ...)` call shape; `.join()` result loads remain
+  deliberately unsupported.
 - 2026-06-25: concurrency planning now sizes capture environments and result storage through the lowering target
   layout helper; the first scalar `Int64` task/thread plans record 8-byte environments and 8-byte result storage.
 - 2026-06-25: concurrency planning now records concrete LLVM capture-environment type strings, capture field indexes,

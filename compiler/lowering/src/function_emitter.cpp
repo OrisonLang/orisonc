@@ -1526,6 +1526,7 @@ void emit_function_body(
         .state = state,
         .failures = failures,
         .semantics = semantic_result,
+        .enclosing_symbol_name = signature.symbol_name,
     };
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         state.local_name_counts[function.parameters[index].name] = 1;
@@ -1568,6 +1569,9 @@ void emit_function_body(
             output << "  ret void\n";
         }
         output << "}\n";
+        for (auto const& definition : state.pending_function_definitions) {
+            output << "\n" << definition;
+        }
         return;
     }
 
@@ -1823,6 +1827,9 @@ void emit_function_body(
     }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
     output << "}\n";
+    for (auto const& definition : state.pending_function_definitions) {
+        output << "\n" << definition;
+    }
 }
 
 }  // namespace

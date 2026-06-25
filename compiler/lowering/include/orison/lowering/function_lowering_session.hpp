@@ -10,6 +10,7 @@ struct FunctionLoweringSession {
     FunctionLoweringState& state;
     LoweringFailures& failures;
     semantics::SemanticAnalysisResult const* semantics = nullptr;
+    std::string_view enclosing_symbol_name;
 };
 
 }  // namespace orison::lowering

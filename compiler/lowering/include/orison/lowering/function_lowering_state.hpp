@@ -52,8 +52,10 @@ struct FunctionLoweringState {
     std::unordered_map<std::string, std::string> source_type_names;
     std::unordered_map<std::string, std::size_t> local_name_counts;
     std::vector<DeferredCleanupScopeState> defer_cleanup_scopes;
+    std::vector<std::string> pending_function_definitions;
     std::size_t next_temporary_index = 0;
     std::size_t next_block_index = 0;
+    std::size_t next_concurrency_ordinal = 0;
     std::string current_block = "entry";
     std::vector<LoopTargets> loop_targets;
 };

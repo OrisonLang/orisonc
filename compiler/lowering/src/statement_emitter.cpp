@@ -14,6 +14,7 @@
 #include "orison/lowering/source_type_queries.hpp"
 
 #include <span>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -51,6 +52,93 @@ auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::thread;
 }
 
+auto thread_body_result_expression(
+    syntax::ExpressionSyntax const& expression
+) -> syntax::ExpressionSyntax const* {
+    if (expression.nested_statements.empty() ||
+        expression.nested_statements.back() == nullptr) {
+        return nullptr;
+    }
+
+    auto const& final_statement = *expression.nested_statements.back();
+    if (final_statement.kind == syntax::StatementKind::expression_statement ||
+        final_statement.kind == syntax::StatementKind::return_statement) {
+        return &final_statement.expression;
+    }
+    return nullptr;
+}
+
+auto emit_thread_entry_thunk(
+    ConcurrencyExpressionPlan const& plan,
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& parent_session,
+    diagnostics::DiagnosticBag& diagnostics
+) -> std::optional<std::string> {
+    auto const* result_expression = thread_body_result_expression(expression);
+    if (result_expression == nullptr) {
+        diagnostics.error(expression.line, "lowering does not yet support this thread body");
+        return std::nullopt;
+    }
+
+    auto output = std::ostringstream {};
+    output << "define private void @" << plan.thunk_symbol_name
+           << "(ptr %environment, ptr %result_storage) {\n";
+    output << "entry:\n";
+
+    auto thunk_state = FunctionLoweringState {};
+    auto thunk_failures = LoweringFailures {};
+    auto thunk_session = FunctionLoweringSession {
+        .state = thunk_state,
+        .failures = thunk_failures,
+        .semantics = parent_session.semantics,
+        .enclosing_symbol_name = plan.thunk_symbol_name,
+    };
+
+    for (auto const& capture : plan.captures) {
+        auto field_pointer = next_llvm_temporary_name(thunk_state.next_temporary_index);
+        output << "  " << field_pointer << " = getelementptr "
+               << plan.environment_layout.llvm_type
+               << ", ptr %environment, i32 0, i32 " << capture.field_index << "\n";
+        auto loaded_capture = next_llvm_temporary_name(thunk_state.next_temporary_index);
+        output << "  " << loaded_capture << " = load " << capture.llvm_type
+               << ", ptr " << field_pointer << "\n";
+        auto capture_type = lowered_type_for_source_type_name(capture.source_type_name, context.lowering);
+        thunk_state.immutable_bindings[capture.name] = LoweredExpression {
+            .type = capture.llvm_type,
+            .value = std::move(loaded_capture),
+            .signedness = capture_type.has_value()
+                ? capture_type->signedness
+                : IntegerSignedness::not_integer,
+        };
+        thunk_state.source_type_names[capture.name] = capture.source_type_name;
+    }
+
+    auto lowered_result = lower_expression(
+        *result_expression,
+        plan.result_type.type,
+        plan.result_type.signedness,
+        context,
+        thunk_session,
+        output
+    );
+    if (!lowered_result.has_value()) {
+        auto detail = render_expression_lowering_failure(thunk_failures.expression);
+        diagnostics.error(
+            result_expression->line,
+            "lowering does not yet support this thread body result" +
+                (detail.empty() ? std::string {} : ": " + detail)
+        );
+        return std::nullopt;
+    }
+
+    output << "  store " << plan.result_type.type << " " << lowered_result->value
+           << ", ptr %result_storage\n";
+    output << "  ret void\n";
+    output << "}\n";
+    return output.str();
+}
+
 auto lower_thread_let_statement(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
@@ -65,14 +153,25 @@ auto lower_thread_let_statement(
 
     auto plan = plan_concurrency_expression(
         statement.expression,
-        "local",
-        statement.line,
+        session.enclosing_symbol_name,
+        session.state.next_concurrency_ordinal++,
         context,
         session.state,
         *session.semantics
     );
     if (!plan.has_value() || plan->kind != ConcurrencyPlanKind::thread) {
         diagnostics.error(statement.line, "lowering does not yet support this thread expression");
+        return false;
+    }
+
+    auto thunk_definition = emit_thread_entry_thunk(
+        *plan,
+        statement.expression,
+        context,
+        session,
+        diagnostics
+    );
+    if (!thunk_definition.has_value()) {
         return false;
     }
 
@@ -108,7 +207,8 @@ auto lower_thread_let_statement(
     auto runtime_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::spawn_thread);
     output << "  " << handle_name << " = call " << runtime_call.return_type
            << " @" << runtime_call.symbol_name
-           << "(ptr null, ptr " << environment_storage
+           << "(ptr @" << plan->thunk_symbol_name
+           << ", ptr " << environment_storage
            << ", ptr " << result_storage
            << ", i64 " << plan->result_storage.size_bytes
            << ", ptr null)\n";
@@ -123,6 +223,7 @@ auto lower_thread_let_statement(
         .result_storage = std::move(result_storage),
         .result_type = plan->result_type,
     };
+    session.state.pending_function_definitions.push_back(std::move(*thunk_definition));
     return true;
 }
 
