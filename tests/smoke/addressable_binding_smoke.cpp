@@ -1,6 +1,7 @@
 #include "orison/lowering/addressable_binding.hpp"
 
 #include <cassert>
+#include <optional>
 #include <sstream>
 #include <string>
 
@@ -46,6 +47,21 @@ int main() {
     assert(state.addressable_bindings.size() == 1);
     assert(state.addressable_bindings.at("point").type.type == "%record.Point");
     assert(state.addressable_bindings.at("point").storage == "%point.addr");
+    assert(orison::lowering::aggregate_storage_for_name("missing", state) == std::nullopt);
+    auto point_storage = orison::lowering::aggregate_storage_for_name("point", state);
+    assert(point_storage.has_value());
+    assert(*point_storage == "%point.addr");
+
+    state.mutable_bindings["point"] = orison::lowering::MutableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = "%record.Point",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        .storage = "%point.mutable.addr",
+    };
+    auto mutable_point_storage = orison::lowering::aggregate_storage_for_name("point", state);
+    assert(mutable_point_storage.has_value());
+    assert(*mutable_point_storage == "%point.mutable.addr");
 
     output.str({});
     output.clear();

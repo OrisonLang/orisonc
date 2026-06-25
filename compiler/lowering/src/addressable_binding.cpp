@@ -13,6 +13,21 @@ auto is_aggregate_llvm_type(std::string_view type) -> bool {
     return type.starts_with("%record.") || type.starts_with("[");
 }
 
+auto aggregate_storage_for_name(
+    std::string_view name,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto const key = std::string(name);
+    if (auto binding = state.mutable_bindings.find(key); binding != state.mutable_bindings.end()) {
+        return binding->second.storage;
+    }
+    if (auto binding = state.addressable_bindings.find(key);
+        binding != state.addressable_bindings.end()) {
+        return binding->second.storage;
+    }
+    return std::nullopt;
+}
+
 void bind_addressable_aggregate_value(
     std::string_view name,
     LoweredExpression const& lowered,

@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-24: named aggregate path reads now resolve mutable storage and read-only addressable storage through the
+  shared aggregate helper module, preserving mutable-over-read-only precedence while reducing expression-emitter policy.
 - 2026-06-24: temporary aggregate path reads and runtime-index fixed-array value reads now share the aggregate spill
   helper module, preserving emitted IR shape while reducing duplicated alloca/store lowering setup.
 - 2026-06-24: read-only aggregate addressable binding setup now uses a shared lowering helper, keeping parameter,

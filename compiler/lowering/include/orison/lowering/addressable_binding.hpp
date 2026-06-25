@@ -12,6 +12,11 @@ namespace orison::lowering {
 
 auto is_aggregate_llvm_type(std::string_view type) -> bool;
 
+auto aggregate_storage_for_name(
+    std::string_view name,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
+
 void bind_addressable_aggregate_value(
     std::string_view name,
     LoweredExpression const& lowered,

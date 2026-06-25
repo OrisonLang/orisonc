@@ -1146,14 +1146,8 @@ auto lower_addressable_aggregate_path_read(
         return std::nullopt;
     }
 
-    auto storage = std::string {};
-    if (auto binding = session.state.mutable_bindings.find(path.base_expression->text);
-        binding != session.state.mutable_bindings.end()) {
-        storage = binding->second.storage;
-    } else if (auto binding = session.state.addressable_bindings.find(path.base_expression->text);
-               binding != session.state.addressable_bindings.end()) {
-        storage = binding->second.storage;
-    } else {
+    auto storage = aggregate_storage_for_name(path.base_expression->text, session.state);
+    if (!storage.has_value()) {
         return std::nullopt;
     }
 
@@ -1171,7 +1165,7 @@ auto lower_addressable_aggregate_path_read(
     return lower_aggregate_path_read_from_storage(
         expression,
         path,
-        std::move(storage),
+        std::move(*storage),
         *base_source_type,
         expected_llvm_type,
         expected_signedness,
