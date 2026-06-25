@@ -890,6 +890,46 @@ auto lower_address_of_intrinsic(
     return lower_pointer_to_address(binding->second.storage, session, output);
 }
 
+auto lower_pointer_constructor_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    LoweringFailures& failures,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expected_llvm_type != "ptr") {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "Pointer construction"
+        );
+        return std::nullopt;
+    }
+    if (expression.arguments.size() != 1) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "Pointer construction"
+        );
+        return std::nullopt;
+    }
+
+    auto source = lowered_expression(
+        expression.arguments.front(),
+        "i64",
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!source.has_value()) {
+        return std::nullopt;
+    }
+
+    return lower_address_to_pointer(std::move(*source), session, output);
+}
+
 auto lower_raw_offset_intrinsic(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -1806,36 +1846,14 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Pointer") {
-        if (expected_llvm_type != "ptr") {
-            record_failure(
-                failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
-                "Pointer construction"
-            );
-            return std::nullopt;
-        }
-        if (expression.arguments.size() != 1) {
-            record_failure(
-                failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
-                "Pointer construction"
-            );
-            return std::nullopt;
-        }
-
-        auto source = lowered_expression(
-            expression.arguments.front(),
-            "i64",
-            IntegerSignedness::not_integer,
+        return lower_pointer_constructor_expression(
+            expression,
+            expected_llvm_type,
             context,
             session,
+            failures,
             output
         );
-        if (!source.has_value()) {
-            return std::nullopt;
-        }
-
-        return lower_address_to_pointer(std::move(*source), session, output);
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
