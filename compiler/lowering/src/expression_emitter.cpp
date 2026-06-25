@@ -762,6 +762,74 @@ auto resolve_aggregate_address_base(
     };
 }
 
+auto advance_address_of_aggregate_path_step(
+    AggregatePathCursor& cursor,
+    AggregatePathStep const& step,
+    LoweringEmissionContext const& context,
+    LoweringFailures& failures,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> bool {
+    if (step.kind == AggregatePathStepKind::member) {
+        auto result = advance_aggregate_path_member_with_temporary(
+            cursor,
+            step.field_name,
+            context.lowering,
+            session.state.next_temporary_index,
+            output
+        );
+        if (result.error != AggregatePathError::none) {
+            record_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "address_of field layout"
+            );
+            return false;
+        }
+        return true;
+    }
+
+    if (step.index_expression == nullptr) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "address_of indexed field layout"
+        );
+        return false;
+    }
+
+    auto lowered_index = lowered_expression(
+        *step.index_expression,
+        "i64",
+        IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_index.has_value()) {
+        return false;
+    }
+
+    auto result = advance_aggregate_path_index_with_temporary(
+        cursor,
+        lowered_index->value,
+        context.lowering,
+        session.state.next_temporary_index,
+        output
+    );
+    if (result.error != AggregatePathError::none) {
+        record_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            result.error == AggregatePathError::unsupported_element_source_type
+                ? "address_of indexed source type"
+                : "address_of indexed field layout"
+        );
+        return false;
+    }
+    return true;
+}
+
 auto lower_pointer_record_field_address(
     syntax::ExpressionSyntax const& operand,
     LoweringEmissionContext const& context,
@@ -806,61 +874,14 @@ auto lower_pointer_record_field_address(
     }
 
     for (auto const& step : path.steps) {
-        if (step.kind == AggregatePathStepKind::member) {
-            auto result = advance_aggregate_path_member_with_temporary(
+        if (!advance_address_of_aggregate_path_step(
                 *cursor,
-                step.field_name,
-                context.lowering,
-                session.state.next_temporary_index,
+                step,
+                context,
+                failures,
+                session,
                 output
-            );
-            if (result.error != AggregatePathError::none) {
-                record_failure(
-                    failures,
-                    ExpressionLoweringFailureReason::unsupported_expression,
-                    "address_of field layout"
-                );
-                return std::nullopt;
-            }
-            continue;
-        }
-
-        if (step.index_expression == nullptr) {
-            record_failure(
-                failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
-                "address_of indexed field layout"
-            );
-            return std::nullopt;
-        }
-
-        auto lowered_index = lowered_expression(
-            *step.index_expression,
-            "i64",
-            IntegerSignedness::unsigned_integer,
-            context,
-            session,
-            output
-        );
-        if (!lowered_index.has_value()) {
-            return std::nullopt;
-        }
-
-        auto result = advance_aggregate_path_index_with_temporary(
-            *cursor,
-            lowered_index->value,
-            context.lowering,
-            session.state.next_temporary_index,
-            output
-        );
-        if (result.error != AggregatePathError::none) {
-            record_failure(
-                failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
-                result.error == AggregatePathError::unsupported_element_source_type
-                    ? "address_of indexed source type"
-                    : "address_of indexed field layout"
-            );
+            )) {
             return std::nullopt;
         }
     }
