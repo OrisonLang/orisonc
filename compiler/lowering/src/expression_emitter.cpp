@@ -704,12 +704,11 @@ auto lower_pointer_record_field_address(
 
     for (auto const& step : path.steps) {
         if (step.kind == AggregatePathStepKind::member) {
-            auto field_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
-            auto result = advance_aggregate_path_member(
+            auto result = advance_aggregate_path_member_with_temporary(
                 *cursor,
                 step.field_name,
                 context.lowering,
-                std::move(field_pointer_name),
+                session.state.next_temporary_index,
                 output
             );
             if (result.error != AggregatePathError::none) {

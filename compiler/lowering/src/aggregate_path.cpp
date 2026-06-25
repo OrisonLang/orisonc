@@ -1,5 +1,6 @@
 #include "orison/lowering/aggregate_path.hpp"
 
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
 #include <algorithm>
@@ -146,6 +147,23 @@ auto advance_aggregate_path_member(
         return {.error = error};
     }
     return {};
+}
+
+auto advance_aggregate_path_member_with_temporary(
+    AggregatePathCursor& cursor,
+    std::string_view field_name,
+    LoweringContext const& context,
+    std::size_t& next_temporary_index,
+    std::ostream& output
+) -> AggregatePathResult {
+    auto field_pointer_name = next_llvm_temporary_name(next_temporary_index);
+    return advance_aggregate_path_member(
+        cursor,
+        field_name,
+        context,
+        std::move(field_pointer_name),
+        output
+    );
 }
 
 auto advance_aggregate_path_index(

@@ -77,6 +77,14 @@ auto advance_aggregate_path_member(
     std::ostream& output
 ) -> AggregatePathResult;
 
+auto advance_aggregate_path_member_with_temporary(
+    AggregatePathCursor& cursor,
+    std::string_view field_name,
+    LoweringContext const& context,
+    std::size_t& next_temporary_index,
+    std::ostream& output
+) -> AggregatePathResult;
+
 auto advance_aggregate_path_index(
     AggregatePathCursor& cursor,
     std::string index_value,

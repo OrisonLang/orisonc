@@ -207,6 +207,27 @@ int main() {
     );
     assert(missing_field_result.error == orison::lowering::AggregatePathError::unknown_field);
 
+    auto temporary_member_cursor =
+        orison::lowering::initialize_aggregate_path_cursor("%shelf.addr.1", "Shelf", lowering);
+    assert(temporary_member_cursor.has_value());
+    auto next_temporary_index = std::size_t {6};
+    auto temporary_member_output = std::ostringstream {};
+    auto temporary_member_result = orison::lowering::advance_aggregate_path_member_with_temporary(
+        *temporary_member_cursor,
+        "buckets",
+        lowering,
+        next_temporary_index,
+        temporary_member_output
+    );
+    assert(temporary_member_result.error == orison::lowering::AggregatePathError::none);
+    assert(next_temporary_index == 7);
+    assert(temporary_member_cursor->pointer == "%tmp6");
+    assert(temporary_member_cursor->source_type_name == "Array<Bucket, 2>");
+    assert(
+        temporary_member_output.str() ==
+        "  %tmp6 = getelementptr %record.Shelf, ptr %shelf.addr.1, i32 0, i32 0\n"
+    );
+
     auto bad_index_cursor = orison::lowering::initialize_aggregate_path_cursor("%bucket.addr", "Bucket", lowering);
     assert(bad_index_cursor.has_value());
     auto bad_index_result = orison::lowering::advance_aggregate_path_index(
