@@ -880,6 +880,36 @@ int main() {
     assert(emit_pointer_nested_aggregate_assignment.stdout_text.find("store i32 8, ptr %tmp") != std::string::npos);
     assert(emit_pointer_nested_aggregate_assignment.stdout_text.find("store i8 1, ptr %tmp") != std::string::npos);
 
+    auto emit_thread_spawn_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_thread_spawn.or";
+    write_concurrency_fixture(
+        emit_thread_spawn_path,
+        "demo.emit",
+        {
+            "function launch(value: Int64) -> Int64",
+            "    let worker = thread",
+            "        value + 1",
+            "",
+            "    0",
+        }
+    );
+    auto emit_thread_spawn = run_emit_llvm(app, emit_thread_spawn_path);
+    assert(emit_thread_spawn.exit_code == 0);
+    assert(emit_thread_spawn.stderr_text.empty());
+    assert(
+        emit_thread_spawn.stdout_text.find(
+            "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)"
+        ) != std::string::npos
+    );
+    assert(emit_thread_spawn.stdout_text.find("%worker.thread.env = alloca { i64 }") != std::string::npos);
+    assert(emit_thread_spawn.stdout_text.find("store i64 %value, ptr %tmp") != std::string::npos);
+    assert(emit_thread_spawn.stdout_text.find("%worker.thread.result = alloca i64") != std::string::npos);
+    assert(
+        emit_thread_spawn.stdout_text.find(
+            "call ptr @__orison_thread_spawn(ptr null, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr null)"
+        ) != std::string::npos
+    );
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);

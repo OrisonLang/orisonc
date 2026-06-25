@@ -23,6 +23,12 @@ struct AddressableBinding {
     std::string storage;
 };
 
+struct ThreadBinding {
+    std::string handle;
+    std::string result_storage;
+    LoweredType result_type;
+};
+
 struct DeferredCleanupBlock {
     std::size_t line = 0;
     std::vector<syntax::StatementSyntax const*> statements;
@@ -42,6 +48,7 @@ struct FunctionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
     std::unordered_map<std::string, MutableBinding> mutable_bindings;
     std::unordered_map<std::string, AddressableBinding> addressable_bindings;
+    std::unordered_map<std::string, ThreadBinding> thread_bindings;
     std::unordered_map<std::string, std::string> source_type_names;
     std::unordered_map<std::string, std::size_t> local_name_counts;
     std::vector<DeferredCleanupScopeState> defer_cleanup_scopes;

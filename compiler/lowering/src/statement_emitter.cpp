@@ -3,6 +3,8 @@
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/call_emitter.hpp"
+#include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -43,6 +45,85 @@ auto source_type_name_for_initializer(
     }
 
     return std::nullopt;
+}
+
+auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
+    return expression.kind == syntax::ExpressionKind::thread;
+}
+
+auto lower_thread_let_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    if (session.semantics == nullptr) {
+        diagnostics.error(statement.line, "lowering thread expressions requires semantic capture analysis");
+        return false;
+    }
+
+    auto plan = plan_concurrency_expression(
+        statement.expression,
+        "local",
+        statement.line,
+        context,
+        session.state,
+        *session.semantics
+    );
+    if (!plan.has_value() || plan->kind != ConcurrencyPlanKind::thread) {
+        diagnostics.error(statement.line, "lowering does not yet support this thread expression");
+        return false;
+    }
+
+    auto environment_storage = next_llvm_local_value_name(
+        statement.name + ".thread.env",
+        session.state.local_name_counts
+    );
+    output << "  " << environment_storage << " = alloca " << plan->environment_layout.llvm_type << "\n";
+    for (auto const& capture : plan->captures) {
+        if (capture.llvm_type.empty()) {
+            diagnostics.error(statement.line, "lowering does not yet support this thread capture type");
+            return false;
+        }
+        auto captured_value = session.state.immutable_bindings.find(capture.name);
+        if (captured_value == session.state.immutable_bindings.end()) {
+            diagnostics.error(statement.line, "lowering does not yet support this thread capture source");
+            return false;
+        }
+        auto field_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << field_pointer << " = getelementptr " << plan->environment_layout.llvm_type
+               << ", ptr " << environment_storage << ", i32 0, i32 " << capture.field_index << "\n";
+        output << "  store " << capture.llvm_type << " " << captured_value->second.value
+               << ", ptr " << field_pointer << "\n";
+    }
+
+    auto result_storage = next_llvm_local_value_name(
+        statement.name + ".thread.result",
+        session.state.local_name_counts
+    );
+    output << "  " << result_storage << " = alloca " << plan->result_storage.llvm_type << "\n";
+
+    auto handle_name = next_llvm_local_value_name(statement.name, session.state.local_name_counts);
+    auto runtime_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::spawn_thread);
+    output << "  " << handle_name << " = call " << runtime_call.return_type
+           << " @" << runtime_call.symbol_name
+           << "(ptr null, ptr " << environment_storage
+           << ", ptr " << result_storage
+           << ", i64 " << plan->result_storage.size_bytes
+           << ", ptr null)\n";
+
+    session.state.immutable_bindings[statement.name] = LoweredExpression {
+        .type = std::string(concurrency_handle_llvm_type()),
+        .value = handle_name,
+        .signedness = IntegerSignedness::not_integer,
+    };
+    session.state.thread_bindings[statement.name] = ThreadBinding {
+        .handle = std::move(handle_name),
+        .result_storage = std::move(result_storage),
+        .result_type = plan->result_type,
+    };
+    return true;
 }
 
 struct LoweredAssignmentTarget {
@@ -540,6 +621,10 @@ auto lower_let_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
+    if (is_thread_expression(statement.expression)) {
+        return lower_thread_let_statement(statement, context, session, diagnostics, output);
+    }
+
     auto type = LoweredType {
         .type = std::string(expected_llvm_type),
         .signedness = expected_signedness,

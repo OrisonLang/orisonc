@@ -39,11 +39,14 @@ drop/cleanup decisions.
   result type, and semantic captures before any runtime call or thunk IR is emitted.
 - The concurrency plan carries concrete LLVM type strings, field indexes, and target-sized byte counts for capture
   environments plus result storage.
+- Scalar `thread` bindings can now lower their capture environment allocation, result storage allocation, capture
+  stores, and runtime spawn call shape with the planned result byte size. The entry thunk is still passed as `null`
+  until thunk generation lands.
 - `tour_11_concurrency.or` must remain frontend-only until entry thunk generation, capture environment layout, result
   storage, and runtime linking are implemented.
 
 ## Follow-up work
 
-- Thread the planned environment and result-storage sizes into runtime spawn calls.
-- Implement thread spawn/join for scalar transferable results before task scheduling.
+- Generate entry thunks that run thread bodies and write result storage.
+- Implement thread join result loading for scalar transferable results before task scheduling.
 - Define cleanup behavior for abandoned handles and failed spawn paths.

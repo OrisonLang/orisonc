@@ -1,6 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
+#include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/function_emitter.hpp"
@@ -197,6 +198,21 @@ auto concurrency_expression_name(syntax::ExpressionSyntax const& expression) -> 
         return "await";
     }
     return expression.text;
+}
+
+auto is_thread_join_expression(
+    syntax::ExpressionSyntax const& expression,
+    FunctionLoweringState const& state
+) -> bool {
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::member_access ||
+        expression.left->text != "join" ||
+        expression.left->left == nullptr ||
+        expression.left->left->kind != syntax::ExpressionKind::name) {
+        return false;
+    }
+    return state.thread_bindings.contains(expression.left->left->text);
 }
 
 auto infer_unit_expression_type(
@@ -1465,6 +1481,7 @@ void emit_function_body(
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature const& signature,
     EmissionContext const& context,
+    semantics::SemanticAnalysisResult const* semantic_result,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) {
@@ -1508,6 +1525,7 @@ void emit_function_body(
     auto session = FunctionLoweringSession {
         .state = state,
         .failures = failures,
+        .semantics = semantic_result,
     };
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
         state.local_name_counts[function.parameters[index].name] = 1;
@@ -1578,6 +1596,20 @@ void emit_function_body(
             return;
         }
         if (!is_last_statement && statement.kind == syntax::StatementKind::let_binding) {
+            if (statement.expression.kind == syntax::ExpressionKind::thread) {
+                if (!lower_let_statement(
+                        statement,
+                        std::string(concurrency_handle_llvm_type()),
+                        IntegerSignedness::not_integer,
+                        context,
+                        session,
+                        diagnostics,
+                        output
+                    )) {
+                    return;
+                }
+                continue;
+            }
             auto type = infer_unit_binding_type(statement, context, session.state);
             if (!type.has_value()) {
                 if (is_concurrency_expression(statement.expression)) {
@@ -1770,6 +1802,13 @@ void emit_function_body(
         );
     }
     if (!lowered.has_value()) {
+        if (expression != nullptr && is_thread_join_expression(*expression, session.state)) {
+            diagnostics.error(
+                expression->line,
+                "lowering does not yet support thread join expressions"
+            );
+            return;
+        }
         auto detail = render_expression_lowering_failure(failures.expression);
         diagnostics.error(
             expression != nullptr ? expression->line : function.line,
@@ -1803,6 +1842,7 @@ auto emit_function(
     LoweredFunctionSignature const& signature,
     LoweringContext const& lowering_context,
     StringConstantTable const& string_constants,
+    semantics::SemanticAnalysisResult const& semantic_result,
     diagnostics::DiagnosticBag& diagnostics
 ) -> std::string {
     auto output = std::ostringstream {};
@@ -1810,8 +1850,26 @@ auto emit_function(
         .lowering = lowering_context,
         .string_constants = string_constants,
     };
-    emit_function_body(function, signature, context, diagnostics, output);
+    emit_function_body(function, signature, context, &semantic_result, diagnostics, output);
     return output.str();
+}
+
+auto emit_function(
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    LoweringContext const& lowering_context,
+    StringConstantTable const& string_constants,
+    diagnostics::DiagnosticBag& diagnostics
+) -> std::string {
+    auto semantic_result = semantics::SemanticAnalysisResult {};
+    return emit_function(
+        function,
+        signature,
+        lowering_context,
+        string_constants,
+        semantic_result,
+        diagnostics
+    );
 }
 
 }  // namespace orison::lowering
