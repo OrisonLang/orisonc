@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: uninstantiated generic function and method definitions are now accepted as metadata-only during LLVM
+  module emission, so generic-only examples can emit object files before monomorphization exists; this promotes
+  `tour_04_generics_ownership.or` to backend validation without claiming generic body lowering.
 - 2026-06-25: `View<T>` parameters now lower as pointer operands for supported element types, view indexing lowers
   through `getelementptr`/`load`, and hex/binary integer literals normalize to LLVM decimal constants, so
   `tour_08_collections.or` is now backend-validated.

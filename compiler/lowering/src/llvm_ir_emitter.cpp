@@ -48,6 +48,10 @@ auto emit_record_layouts(
     return output.str();
 }
 
+auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) -> bool {
+    return !function.generic_parameters.empty();
+}
+
 }  // namespace
 
 auto LlvmIrEmissionResult::has_errors() const -> bool {
@@ -83,6 +87,9 @@ auto LlvmIrEmitter::emit(
     output << emit_record_layouts(module, context);
     output << emit_module_prelude(string_constants, context.foreign_declarations);
     for (auto const& function : module.functions) {
+        if (is_uninstantiated_generic_function(function)) {
+            continue;
+        }
         auto signature = context.functions.find(function.name);
         if (signature == context.functions.end()) {
             result.diagnostics.error(function.line, "lowering context is missing function signature");
@@ -105,6 +112,9 @@ auto LlvmIrEmitter::emit(
             return false;
         }
         auto const& lowered_method = context.methods[method_index++];
+        if (is_uninstantiated_generic_function(method)) {
+            return true;
+        }
         output << emit_function(
             method,
             lowered_method.signature,

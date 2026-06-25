@@ -28,7 +28,7 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 62> {
+    constexpr auto backend_examples = std::array<std::string_view, 63> {
         "ffi_aggregate_scalar_parameters.or",
         "ffi_fixed_parameters.or",
         "local_helper_array_for.or",
@@ -81,6 +81,7 @@ auto main() -> int {
         "tour_01_packages_imports.or",
         "tour_02_records_choices.or",
         "tour_03_interfaces_methods.or",
+        "tour_04_generics_ownership.or",
         "tour_05_bindings_operators.or",
         "tour_06_control_flow.or",
         "tour_07_recursion.or",
