@@ -1,3 +1,4 @@
+#include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/module_prelude.hpp"
 
 #include <cassert>
@@ -35,5 +36,28 @@ int main() {
         "\n"
     );
     assert(orison::lowering::emit_module_prelude({}, {}).empty());
+
+    using orison::lowering::ConcurrencyRuntimeOperation;
+    auto concurrency_prelude = orison::lowering::emit_module_prelude(
+        {},
+        {},
+        {
+            ConcurrencyRuntimeOperation::spawn_thread,
+            ConcurrencyRuntimeOperation::join_thread,
+            ConcurrencyRuntimeOperation::spawn_thread,
+            ConcurrencyRuntimeOperation::spawn_task,
+            ConcurrencyRuntimeOperation::await_task,
+            ConcurrencyRuntimeOperation::destroy_handle,
+        }
+    );
+    assert(
+        concurrency_prelude ==
+        "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)\n"
+        "declare void @__orison_thread_join(ptr)\n"
+        "declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)\n"
+        "declare void @__orison_task_await(ptr)\n"
+        "declare void @__orison_concurrency_handle_destroy(ptr)\n"
+        "\n"
+    );
     return 0;
 }

@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: module prelude emission can now declare the exact concurrency runtime symbols requested by lowering,
+  deduplicated in first-use order, while ordinary modules still emit no concurrency runtime declarations.
 - 2026-06-25: accepted ADR-0004 for the initial concurrency runtime lowering contract and added a pinned lowering
   model for opaque concurrency handles plus spawn/join/await/destroy runtime symbols; `tour_11_concurrency.or` remains
   frontend-only until thunk, environment, result-storage, and runtime-linking work lands.

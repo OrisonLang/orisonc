@@ -33,12 +33,13 @@ drop/cleanup decisions.
   emission, handle binding, and cleanup scheduling.
 - `.join()` and `await` are synchronization operations first; result materialization remains an ordinary typed load.
 - The runtime can be implemented in C/C++ without knowing Orison source types.
+- Module prelude emission declares only the concurrency runtime symbols requested by lowering and deduplicates them in
+  first-use order.
 - `tour_11_concurrency.or` must remain frontend-only until entry thunk generation, capture environment layout, result
   storage, and runtime linking are implemented.
 
 ## Follow-up work
 
-- Emit module prelude declarations for only the runtime functions used by a module.
 - Add lowering metadata for captured values and result storage layout.
 - Implement thread spawn/join for scalar transferable results before task scheduling.
 - Define cleanup behavior for abandoned handles and failed spawn paths.

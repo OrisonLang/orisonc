@@ -1,12 +1,46 @@
 #include "orison/lowering/module_prelude.hpp"
 
 #include <sstream>
+#include <string>
+#include <vector>
 
 namespace orison::lowering {
+namespace {
+
+auto has_emitted_symbol(
+    std::vector<std::string_view> const& emitted_symbols,
+    std::string_view symbol_name
+) -> bool {
+    for (auto emitted_symbol : emitted_symbols) {
+        if (emitted_symbol == symbol_name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void emit_declaration(
+    std::ostringstream& output,
+    std::string_view return_type,
+    std::string_view symbol_name,
+    std::vector<std::string_view> const& parameter_types
+) {
+    output << "declare " << return_type << " @" << symbol_name << "(";
+    for (auto index = std::size_t {0}; index < parameter_types.size(); ++index) {
+        if (index > 0) {
+            output << ", ";
+        }
+        output << parameter_types[index];
+    }
+    output << ")\n";
+}
+
+}  // namespace
 
 auto emit_module_prelude(
     StringConstantTable const& string_constants,
-    std::vector<LoweredFunctionSignature> const& foreign_declarations
+    std::vector<LoweredFunctionSignature> const& foreign_declarations,
+    std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations
 ) -> std::string {
     auto output = std::ostringstream {};
     for (auto const& constant : string_constants.constants) {
@@ -37,6 +71,24 @@ auto emit_module_prelude(
         output << ")\n";
     }
     if (!foreign_declarations.empty()) {
+        output << "\n";
+    }
+
+    auto emitted_runtime_symbols = std::vector<std::string_view> {};
+    for (auto operation : concurrency_runtime_operations) {
+        auto runtime_call = concurrency_runtime_call(operation);
+        if (has_emitted_symbol(emitted_runtime_symbols, runtime_call.symbol_name)) {
+            continue;
+        }
+        emit_declaration(
+            output,
+            runtime_call.return_type,
+            runtime_call.symbol_name,
+            runtime_call.parameter_types
+        );
+        emitted_runtime_symbols.push_back(runtime_call.symbol_name);
+    }
+    if (!emitted_runtime_symbols.empty()) {
         output << "\n";
     }
     return output.str();
