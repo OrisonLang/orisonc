@@ -180,6 +180,25 @@ auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
            expression.left == nullptr && expression.right == nullptr && expression.alternate == nullptr;
 }
 
+auto is_concurrency_expression(syntax::ExpressionSyntax const& expression) -> bool {
+    return expression.kind == syntax::ExpressionKind::task ||
+           expression.kind == syntax::ExpressionKind::thread ||
+           (expression.kind == syntax::ExpressionKind::unary && expression.text == "await");
+}
+
+auto concurrency_expression_name(syntax::ExpressionSyntax const& expression) -> std::string {
+    if (expression.kind == syntax::ExpressionKind::task) {
+        return "task";
+    }
+    if (expression.kind == syntax::ExpressionKind::thread) {
+        return "thread";
+    }
+    if (expression.kind == syntax::ExpressionKind::unary && expression.text == "await") {
+        return "await";
+    }
+    return expression.text;
+}
+
 auto infer_unit_expression_type(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -1561,7 +1580,15 @@ void emit_function_body(
         if (!is_last_statement && statement.kind == syntax::StatementKind::let_binding) {
             auto type = infer_unit_binding_type(statement, context, session.state);
             if (!type.has_value()) {
-                diagnostics.error(statement.line, "lowering does not yet support this let binding");
+                if (is_concurrency_expression(statement.expression)) {
+                    diagnostics.error(
+                        statement.line,
+                        "lowering does not yet support " +
+                            concurrency_expression_name(statement.expression) + " expressions"
+                    );
+                } else {
+                    diagnostics.error(statement.line, "lowering does not yet support this let binding");
+                }
                 return;
             }
             if (!lower_let_statement(

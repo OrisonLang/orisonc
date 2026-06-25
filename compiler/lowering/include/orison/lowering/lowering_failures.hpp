@@ -16,6 +16,7 @@ enum class ExpressionLoweringFailureReason {
     signedness_mismatch,
     unsupported_cast,
     unsupported_operator,
+    unsupported_concurrency_expression,
     cannot_infer_operand_type,
     branch_type_mismatch,
     unknown_function,

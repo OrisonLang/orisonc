@@ -49,6 +49,9 @@ auto render_expression_lowering_failure(
     case ExpressionLoweringFailureReason::unsupported_operator:
         prefix = "unsupported operator";
         break;
+    case ExpressionLoweringFailureReason::unsupported_concurrency_expression:
+        prefix = "unsupported concurrency expression";
+        break;
     case ExpressionLoweringFailureReason::cannot_infer_operand_type:
         prefix = "cannot infer operand type";
         break;

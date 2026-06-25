@@ -35,6 +35,10 @@ int main() {
         std::pair {ExpressionLoweringFailureReason::signedness_mismatch, "expression signedness mismatch"},
         std::pair {ExpressionLoweringFailureReason::unsupported_cast, "unsupported cast"},
         std::pair {ExpressionLoweringFailureReason::unsupported_operator, "unsupported operator"},
+        std::pair {
+            ExpressionLoweringFailureReason::unsupported_concurrency_expression,
+            "unsupported concurrency expression"
+        },
         std::pair {ExpressionLoweringFailureReason::cannot_infer_operand_type, "cannot infer operand type"},
         std::pair {ExpressionLoweringFailureReason::branch_type_mismatch, "branch type mismatch"},
         std::pair {ExpressionLoweringFailureReason::unknown_function, "unknown lowered function"},

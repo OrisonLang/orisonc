@@ -254,6 +254,12 @@ auto is_write_intrinsic_name(std::string_view name) -> bool {
     return name == "raw_write" || name == "volatile_write";
 }
 
+auto is_concurrency_expression(syntax::ExpressionSyntax const& expression) -> bool {
+    return expression.kind == syntax::ExpressionKind::task ||
+           expression.kind == syntax::ExpressionKind::thread ||
+           (expression.kind == syntax::ExpressionKind::unary && expression.text == "await");
+}
+
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string> {
     constexpr auto prefix = std::string_view {"Pointer<"};
     if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
@@ -2258,7 +2264,9 @@ auto lowered_expression(
 
     record_failure(
         failures,
-        ExpressionLoweringFailureReason::unsupported_expression,
+        is_concurrency_expression(expression)
+            ? ExpressionLoweringFailureReason::unsupported_concurrency_expression
+            : ExpressionLoweringFailureReason::unsupported_expression,
         expression.text
     );
     return std::nullopt;

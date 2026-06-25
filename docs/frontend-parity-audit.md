@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: concurrency lowering remains intentionally frontend-only until async/task/thread runtime representation
+  is designed; lowering diagnostics now report unsupported `task`, `thread`, and `await` expression shapes directly
+  instead of falling back to generic let-binding or expression failures.
 - 2026-06-25: uninstantiated generic function and method definitions are now accepted as metadata-only during LLVM
   module emission, so generic-only examples can emit object files before monomorphization exists; this promotes
   `tour_04_generics_ownership.or` to backend validation without claiming generic body lowering.

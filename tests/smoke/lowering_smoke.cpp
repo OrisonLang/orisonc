@@ -1960,6 +1960,27 @@ void test_reject_unsupported_return_expression() {
     );
 }
 
+void test_reject_thread_expression_with_targeted_diagnostic() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_thread_expression.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function on_thread(value: Int64) -> Int64\n"
+        "    let worker = thread\n"
+        "        value + 1\n"
+        "\n"
+        "    worker.join()\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support thread expressions"
+    );
+}
+
 void test_reject_unsupported_final_if_arm_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_final_if_arm.or";
     auto result = lower_source(
@@ -2797,6 +2818,7 @@ auto main() -> int {
     test_emit_fixed_arity_c_foreign_call();
     test_emit_unsafe_function_identity_return();
     test_reject_unsupported_return_expression();
+    test_reject_thread_expression_with_targeted_diagnostic();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();
