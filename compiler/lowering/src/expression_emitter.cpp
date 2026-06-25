@@ -1118,13 +1118,13 @@ auto lower_aggregate_path_read_from_storage(
     }
 
     auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << temporary_name << " = load " << expected_llvm_type << ", ptr "
-           << cursor->pointer << "\n";
-    return LoweredExpression {
-        .type = std::string(expected_llvm_type),
-        .value = std::move(temporary_name),
-        .signedness = expected_signedness,
-    };
+    return emit_aggregate_path_cursor_load(
+        *cursor,
+        expected_llvm_type,
+        expected_signedness,
+        std::move(temporary_name),
+        output
+    );
 }
 
 auto lower_addressable_aggregate_path_read(

@@ -167,6 +167,23 @@ int main() {
         "  %tmp1 = getelementptr [2 x %record.Bucket], ptr %tmp0, i64 0, i64 1\n"
         "  %tmp2 = getelementptr %record.Bucket, ptr %tmp1, i32 0, i32 0\n"
     );
+    auto loaded_value = orison::lowering::emit_aggregate_path_cursor_load(
+        *cursor,
+        "[3 x i32]",
+        orison::lowering::IntegerSignedness::not_integer,
+        "%tmp3",
+        output
+    );
+    assert(loaded_value.type == "[3 x i32]");
+    assert(loaded_value.value == "%tmp3");
+    assert(loaded_value.signedness == orison::lowering::IntegerSignedness::not_integer);
+    assert(
+        output.str() ==
+        "  %tmp0 = getelementptr %record.Shelf, ptr %shelf.addr, i32 0, i32 0\n"
+        "  %tmp1 = getelementptr [2 x %record.Bucket], ptr %tmp0, i64 0, i64 1\n"
+        "  %tmp2 = getelementptr %record.Bucket, ptr %tmp1, i32 0, i32 0\n"
+        "  %tmp3 = load [3 x i32], ptr %tmp2\n"
+    );
 
     auto scalar_cursor = orison::lowering::initialize_aggregate_path_cursor("%value.addr", "UInt32", lowering);
     assert(scalar_cursor.has_value());

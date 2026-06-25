@@ -175,4 +175,19 @@ auto advance_aggregate_path_index(
     return {};
 }
 
+auto emit_aggregate_path_cursor_load(
+    AggregatePathCursor const& cursor,
+    std::string_view llvm_type,
+    IntegerSignedness signedness,
+    std::string result_name,
+    std::ostream& output
+) -> LoweredExpression {
+    output << "  " << result_name << " = load " << llvm_type << ", ptr " << cursor.pointer << "\n";
+    return LoweredExpression {
+        .type = std::string(llvm_type),
+        .value = std::move(result_name),
+        .signedness = signedness,
+    };
+}
+
 }  // namespace orison::lowering

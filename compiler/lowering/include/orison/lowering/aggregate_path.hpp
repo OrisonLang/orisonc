@@ -1,5 +1,6 @@
 #pragma once
 
+#include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/syntax/module_parser.hpp"
 
@@ -83,5 +84,13 @@ auto advance_aggregate_path_index(
     std::string pointer_name,
     std::ostream& output
 ) -> AggregatePathResult;
+
+auto emit_aggregate_path_cursor_load(
+    AggregatePathCursor const& cursor,
+    std::string_view llvm_type,
+    IntegerSignedness signedness,
+    std::string result_name,
+    std::ostream& output
+) -> LoweredExpression;
 
 }  // namespace orison::lowering
