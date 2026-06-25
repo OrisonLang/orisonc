@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: concurrency planning now records concrete LLVM capture-environment type strings, capture field indexes,
+  and result-storage type strings; byte sizes are intentionally still zero until target data layout sizing lands.
 - 2026-06-25: concurrency lowering now has a planning model for `task` and `thread` expressions that records the
   runtime spawn operation, deterministic thunk symbol, inferred lowered result type, and semantic captures without
   emitting runtime calls or thunk IR yet.

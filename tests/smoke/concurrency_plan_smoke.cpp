@@ -73,6 +73,14 @@ int main() {
     assert(task_plan->captures.front().name == "value");
     assert(task_plan->captures.front().source_type_name == "Int64");
     assert(task_plan->captures.front().llvm_type == "i64");
+    assert(task_plan->captures.front().field_index == 0);
+    assert(task_plan->environment_layout.llvm_type == "{ i64 }");
+    assert(task_plan->environment_layout.size_bytes == 0);
+    assert(task_plan->environment_layout.fields.size() == 1);
+    assert(task_plan->environment_layout.fields.front().name == "value");
+    assert(task_plan->environment_layout.fields.front().field_index == 0);
+    assert(task_plan->result_storage.llvm_type == "i64");
+    assert(task_plan->result_storage.size_bytes == 0);
 
     auto const& thread_expression = parse_result.module.functions[1].body_statements[0].expression;
     auto thread_plan = orison::lowering::plan_concurrency_expression(
@@ -91,6 +99,10 @@ int main() {
     assert(thread_plan->captures.size() == 1);
     assert(thread_plan->captures.front().name == "value");
     assert(thread_plan->captures.front().capture_kind == orison::semantics::ConcurrencyCaptureKind::parameter);
+    assert(thread_plan->captures.front().field_index == 0);
+    assert(thread_plan->environment_layout.llvm_type == "{ i64 }");
+    assert(thread_plan->environment_layout.fields.size() == 1);
+    assert(thread_plan->result_storage.llvm_type == "i64");
 
     auto not_concurrency = orison::syntax::ExpressionSyntax {
         .kind = orison::syntax::ExpressionKind::name,

@@ -23,8 +23,20 @@ struct ConcurrencyCapturePlan {
     std::string name;
     std::string source_type_name;
     std::string llvm_type;
+    std::size_t field_index = 0;
     semantics::ConcurrencyCaptureKind capture_kind =
         semantics::ConcurrencyCaptureKind::parameter;
+};
+
+struct ConcurrencyEnvironmentLayout {
+    std::string llvm_type;
+    std::size_t size_bytes = 0;
+    std::vector<ConcurrencyCapturePlan> fields;
+};
+
+struct ConcurrencyResultStorageLayout {
+    std::string llvm_type;
+    std::size_t size_bytes = 0;
 };
 
 struct ConcurrencyExpressionPlan {
@@ -32,6 +44,8 @@ struct ConcurrencyExpressionPlan {
     ConcurrencyRuntimeOperation spawn_operation = ConcurrencyRuntimeOperation::spawn_task;
     std::string thunk_symbol_name;
     LoweredType result_type;
+    ConcurrencyEnvironmentLayout environment_layout;
+    ConcurrencyResultStorageLayout result_storage;
     std::vector<ConcurrencyCapturePlan> captures;
 };
 

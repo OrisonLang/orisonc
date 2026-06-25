@@ -4,6 +4,7 @@
 #include "orison/lowering/source_type_queries.hpp"
 
 #include <algorithm>
+#include <sstream>
 #include <string_view>
 
 namespace orison::lowering {
@@ -161,6 +162,21 @@ auto is_capture_in_expression_range(
            capture.line <= last_line;
 }
 
+auto environment_llvm_type_for(
+    std::vector<ConcurrencyCapturePlan> const& captures
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "{ ";
+    for (auto index = std::size_t {0}; index < captures.size(); ++index) {
+        if (index > 0) {
+            output << ", ";
+        }
+        output << captures[index].llvm_type;
+    }
+    output << " }";
+    return output.str();
+}
+
 }  // namespace
 
 auto plan_concurrency_expression(
@@ -206,13 +222,25 @@ auto plan_concurrency_expression(
         }
 
         auto lowered_capture_type = lowered_type_for_source_type_name(capture.type_name, context.lowering);
+        auto field_index = plan.captures.size();
         plan.captures.push_back(ConcurrencyCapturePlan {
             .name = capture.name,
             .source_type_name = capture.type_name,
             .llvm_type = lowered_capture_type.has_value() ? lowered_capture_type->type : std::string {},
+            .field_index = field_index,
             .capture_kind = capture.capture_kind,
         });
     }
+
+    plan.environment_layout = ConcurrencyEnvironmentLayout {
+        .llvm_type = environment_llvm_type_for(plan.captures),
+        .size_bytes = 0,
+        .fields = plan.captures,
+    };
+    plan.result_storage = ConcurrencyResultStorageLayout {
+        .llvm_type = plan.result_type.type,
+        .size_bytes = 0,
+    };
 
     return plan;
 }

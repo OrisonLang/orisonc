@@ -37,11 +37,13 @@ drop/cleanup decisions.
   first-use order.
 - Lowering planning records each concurrency expression's operation kind, deterministic thunk symbol, inferred lowered
   result type, and semantic captures before any runtime call or thunk IR is emitted.
+- The concurrency plan carries concrete LLVM type strings and field indexes for capture environments plus result
+  storage type strings; byte sizes remain `0` until target data layout sizing is introduced.
 - `tour_11_concurrency.or` must remain frontend-only until entry thunk generation, capture environment layout, result
   storage, and runtime linking are implemented.
 
 ## Follow-up work
 
-- Add concrete environment and result-storage layout records to the concurrency plan.
+- Add target data layout sizing for planned environment and result-storage records.
 - Implement thread spawn/join for scalar transferable results before task scheduling.
 - Define cleanup behavior for abandoned handles and failed spawn paths.
