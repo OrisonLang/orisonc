@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-24: aggregate `for` iteration values now become read-only addressable bindings when the element type is a
+  lowered record or fixed array; checked-in CLI coverage pins `%record.Entry` loop item storage and field loads inside
+  a returned-container `for` body.
 - 2026-06-20: immutable record and fixed-array aggregate `let` bindings now retain read-only storage alongside their SSA
   value so later member/index reads reuse the address-backed aggregate path; checked-in CLI coverage pins inferred
   record-array, array-record, nested mixed, and branch-local inferred aggregate lets.

@@ -236,6 +236,31 @@ auto infer_unit_binding_type(
     return inferred_type;
 }
 
+void bind_addressable_aggregate_value(
+    std::string_view name,
+    LoweredExpression const& lowered,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) {
+    if (!is_aggregate_llvm_type(lowered.type)) {
+        return;
+    }
+
+    auto storage = next_llvm_local_value_name(
+        std::string(name) + ".addr",
+        session.state.local_name_counts
+    );
+    output << "  " << storage << " = alloca " << lowered.type << "\n";
+    output << "  store " << lowered.type << " " << lowered.value << ", ptr " << storage << "\n";
+    session.state.addressable_bindings[std::string(name)] = AddressableBinding {
+        .type = LoweredType {
+            .type = lowered.type,
+            .signedness = lowered.signedness,
+        },
+        .storage = std::move(storage),
+    };
+}
+
 auto lower_unit_statement_block(
     std::span<syntax::StatementSyntax const*> statements,
     EmissionContext const& context,
@@ -677,10 +702,16 @@ auto lower_unit_for_statement(
                    << lowered_iterable->value << ", " << index << "\n";
             session.state.immutable_bindings[statement.name] = LoweredExpression {
                 .type = element_type->type,
-                .value = std::move(item_name),
+                .value = item_name,
                 .signedness = element_type->signedness,
             };
             session.state.source_type_names[statement.name] = *element_source_type_name;
+            bind_addressable_aggregate_value(
+                statement.name,
+                session.state.immutable_bindings.at(statement.name),
+                session,
+                output
+            );
 
             auto loop_targets = LoopTargets {
                 .break_target = exit_block,
@@ -777,6 +808,16 @@ auto lower_unit_for_statement(
             .value = lowered_item->value,
             .signedness = lowered_item->signedness,
         };
+        if (auto source_type =
+                source_type_name_for_llvm_type(lowered_item->type, context.lowering)) {
+            session.state.source_type_names[statement.name] = std::move(*source_type);
+        }
+        bind_addressable_aggregate_value(
+            statement.name,
+            session.state.immutable_bindings.at(statement.name),
+            session,
+            output
+        );
 
         auto loop_targets = LoopTargets {
             .break_target = exit_block,

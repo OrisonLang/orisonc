@@ -2314,6 +2314,10 @@ int main() {
     assert(loop_return_container_aggregate_scalar_emit_output.find("for.iteration.") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("for.exit.") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("load i32, ptr %total.addr") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("%entry.addr = alloca %record.Entry") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("%entry.addr.1 = alloca %record.Entry") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("store %record.Entry") != std::string::npos);
+    assert(loop_return_container_aggregate_scalar_emit_output.find("getelementptr %record.Entry, ptr %entry.addr") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("getelementptr [2 x %record.Entry]") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("getelementptr %record.Page, ptr %page.addr") != std::string::npos);
     assert(loop_return_container_aggregate_scalar_emit_output.find("getelementptr %record.Entry") != std::string::npos);
