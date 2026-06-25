@@ -93,6 +93,14 @@ auto advance_aggregate_path_index(
     std::ostream& output
 ) -> AggregatePathResult;
 
+auto advance_aggregate_path_index_with_temporary(
+    AggregatePathCursor& cursor,
+    std::string index_value,
+    LoweringContext const& context,
+    std::size_t& next_temporary_index,
+    std::ostream& output
+) -> AggregatePathResult;
+
 auto emit_aggregate_path_cursor_load(
     AggregatePathCursor const& cursor,
     std::string_view llvm_type,

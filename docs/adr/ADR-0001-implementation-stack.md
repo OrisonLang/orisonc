@@ -215,8 +215,9 @@ analysis, and lowering components.
   duplicate path-shape checks before choosing storage-backed or temporary-spill lowering.
   Final aggregate cursor load emission is shared by the aggregate path helper while expression emission still owns
   expected-type validation, index-expression lowering, and diagnostic policy.
-  Member-step temporary naming and cursor advancement are also shared by the aggregate path helper; index steps remain
-  in expression emission because index operands require recursive expression lowering.
+  Member-step temporary naming and cursor advancement are also shared by the aggregate path helper. Index-step temporary
+  naming and cursor advancement are shared too, while index operand lowering remains in expression emission because it
+  requires recursive expression lowering.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

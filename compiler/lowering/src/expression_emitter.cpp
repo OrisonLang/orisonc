@@ -743,12 +743,11 @@ auto lower_pointer_record_field_address(
             return std::nullopt;
         }
 
-        auto element_pointer_name = next_llvm_temporary_name(session.state.next_temporary_index);
-        auto result = advance_aggregate_path_index(
+        auto result = advance_aggregate_path_index_with_temporary(
             *cursor,
             lowered_index->value,
             context.lowering,
-            std::move(element_pointer_name),
+            session.state.next_temporary_index,
             output
         );
         if (result.error != AggregatePathError::none) {

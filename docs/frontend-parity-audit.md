@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-24: aggregate index-step temporary naming and cursor advancement now live in the shared aggregate path helper;
+  expression lowering still owns recursive lowering of the index operand.
 - 2026-06-24: aggregate member-step temporary naming and cursor advancement now live in the shared aggregate path helper;
   index-step handling remains in expression lowering because index operands recursively lower expressions.
 - 2026-06-24: aggregate path cursor load emission now lives in the shared aggregate path helper, while expression

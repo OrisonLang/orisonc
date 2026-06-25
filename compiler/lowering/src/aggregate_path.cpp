@@ -193,6 +193,23 @@ auto advance_aggregate_path_index(
     return {};
 }
 
+auto advance_aggregate_path_index_with_temporary(
+    AggregatePathCursor& cursor,
+    std::string index_value,
+    LoweringContext const& context,
+    std::size_t& next_temporary_index,
+    std::ostream& output
+) -> AggregatePathResult {
+    auto element_pointer_name = next_llvm_temporary_name(next_temporary_index);
+    return advance_aggregate_path_index(
+        cursor,
+        std::move(index_value),
+        context,
+        std::move(element_pointer_name),
+        output
+    );
+}
+
 auto emit_aggregate_path_cursor_load(
     AggregatePathCursor const& cursor,
     std::string_view llvm_type,

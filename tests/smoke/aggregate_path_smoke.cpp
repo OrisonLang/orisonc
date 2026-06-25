@@ -228,6 +228,28 @@ int main() {
         "  %tmp6 = getelementptr %record.Shelf, ptr %shelf.addr.1, i32 0, i32 0\n"
     );
 
+    auto temporary_index_cursor =
+        orison::lowering::initialize_aggregate_path_cursor("%buckets.addr", "Array<Bucket, 2>", lowering);
+    assert(temporary_index_cursor.has_value());
+    auto next_index_temporary_index = std::size_t {7};
+    auto temporary_index_output = std::ostringstream {};
+    auto temporary_index_result = orison::lowering::advance_aggregate_path_index_with_temporary(
+        *temporary_index_cursor,
+        "1",
+        lowering,
+        next_index_temporary_index,
+        temporary_index_output
+    );
+    assert(temporary_index_result.error == orison::lowering::AggregatePathError::none);
+    assert(next_index_temporary_index == 8);
+    assert(temporary_index_cursor->pointer == "%tmp7");
+    assert(temporary_index_cursor->source_type_name == "Bucket");
+    assert(temporary_index_cursor->expects_record_layout);
+    assert(
+        temporary_index_output.str() ==
+        "  %tmp7 = getelementptr [2 x %record.Bucket], ptr %buckets.addr, i64 0, i64 1\n"
+    );
+
     auto bad_index_cursor = orison::lowering::initialize_aggregate_path_cursor("%bucket.addr", "Bucket", lowering);
     assert(bad_index_cursor.has_value());
     auto bad_index_result = orison::lowering::advance_aggregate_path_index(
