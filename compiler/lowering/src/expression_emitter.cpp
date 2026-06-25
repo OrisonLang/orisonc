@@ -1,4 +1,5 @@
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
@@ -1222,15 +1223,15 @@ auto lower_temporary_aggregate_path_read(
         return std::nullopt;
     }
 
-    auto storage = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << storage << " = alloca " << lowered_base->type << "\n";
-    output << "  store " << lowered_base->type << " " << lowered_base->value << ", ptr "
-           << storage << "\n";
+    auto storage = spill_aggregate_value_to_temporary_storage(*lowered_base, session, output);
+    if (!storage.has_value()) {
+        return std::nullopt;
+    }
 
     return lower_aggregate_path_read_from_storage(
         expression,
         path,
-        std::move(storage),
+        std::move(*storage),
         *base_source_type,
         expected_llvm_type,
         expected_signedness,
@@ -1503,13 +1504,14 @@ auto lowered_expression(
             output << "  " << temporary_name << " = extractvalue " << lowered_base->type << " "
                    << lowered_base->value << ", " << lowered_index->value << "\n";
         } else {
-            auto storage_name = next_llvm_temporary_name(state.next_temporary_index);
+            auto storage_name =
+                spill_aggregate_value_to_temporary_storage(*lowered_base, session, output);
+            if (!storage_name.has_value()) {
+                return std::nullopt;
+            }
             auto element_pointer_name = next_llvm_temporary_name(state.next_temporary_index);
-            output << "  " << storage_name << " = alloca " << lowered_base->type << "\n";
-            output << "  store " << lowered_base->type << " " << lowered_base->value << ", ptr "
-                   << storage_name << "\n";
             output << "  " << element_pointer_name << " = getelementptr " << lowered_base->type
-                   << ", ptr " << storage_name << ", i64 0, i64 " << lowered_index->value << "\n";
+                   << ", ptr " << *storage_name << ", i64 0, i64 " << lowered_index->value << "\n";
             output << "  " << temporary_name << " = load " << *element_llvm_type << ", ptr "
                    << element_pointer_name << "\n";
         }

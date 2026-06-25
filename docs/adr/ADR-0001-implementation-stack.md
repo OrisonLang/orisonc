@@ -205,6 +205,8 @@ analysis, and lowering components.
   emitter APIs share these records without assigning representation ownership to state or expression emission.
   Read-only aggregate addressable binding setup is shared through a lowering helper so parameters, immutable aggregate
   `let` bindings, and aggregate `for` items use the same storage/allocation convention.
+  Temporary aggregate path reads and runtime-index fixed-array value reads use the same helper module for their
+  alloca/store spill shape without registering source-visible bindings.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

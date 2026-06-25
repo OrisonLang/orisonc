@@ -4,6 +4,8 @@
 #include "orison/lowering/lowered_value.hpp"
 
 #include <iosfwd>
+#include <optional>
+#include <string>
 #include <string_view>
 
 namespace orison::lowering {
@@ -16,5 +18,11 @@ void bind_addressable_aggregate_value(
     FunctionLoweringSession& session,
     std::ostream& output
 );
+
+auto spill_aggregate_value_to_temporary_storage(
+    LoweredExpression const& lowered,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> std::optional<std::string>;
 
 }  // namespace orison::lowering

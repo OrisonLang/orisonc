@@ -3,6 +3,7 @@
 #include "orison/lowering/llvm_names.hpp"
 
 #include <ostream>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -35,6 +36,21 @@ void bind_addressable_aggregate_value(
         },
         .storage = std::move(storage),
     };
+}
+
+auto spill_aggregate_value_to_temporary_storage(
+    LoweredExpression const& lowered,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> std::optional<std::string> {
+    if (!is_aggregate_llvm_type(lowered.type)) {
+        return std::nullopt;
+    }
+
+    auto storage = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << storage << " = alloca " << lowered.type << "\n";
+    output << "  store " << lowered.type << " " << lowered.value << ", ptr " << storage << "\n";
+    return storage;
 }
 
 }  // namespace orison::lowering
