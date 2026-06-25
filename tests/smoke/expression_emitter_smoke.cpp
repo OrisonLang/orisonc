@@ -46,7 +46,16 @@ int main() {
                   "        this + amount\n"
                   "\n"
                   "function call_method(value: UInt32) -> UInt32\n"
-                  "    value.scale(2 as UInt32)\n";
+                  "    value.scale(2 as UInt32)\n"
+                  "\n"
+                  "function bitwise_or(value: UInt32, mask: UInt32) -> UInt32\n"
+                  "    value bit_or mask\n"
+                  "\n"
+                  "function bitwise_not(value: UInt32) -> UInt32\n"
+                  "    bit_not value\n"
+                  "\n"
+                  "function shift_back(value: UInt32, amount: UInt32) -> UInt32\n"
+                  "    value shift_right amount\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -190,6 +199,66 @@ int main() {
         output.str() ==
         "  %tmp0 = call i32 @method.UInt32.scale(i32 %value, i32 2)\n"
     );
+
+    auto bitwise_state = orison::lowering::FunctionLoweringState {};
+    bitwise_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%value",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    bitwise_state.immutable_bindings.emplace("mask", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%mask",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    bitwise_state.immutable_bindings.emplace("amount", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%amount",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto bitwise_failures = orison::lowering::LoweringFailures {};
+    auto bitwise_session = orison::lowering::FunctionLoweringSession {
+        .state = bitwise_state,
+        .failures = bitwise_failures,
+    };
+    output = {};
+    auto bitwise_or_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions[3].body_statements.front().expression,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        bitwise_session,
+        output
+    );
+    assert(bitwise_or_lowered.has_value());
+    assert(bitwise_or_lowered->value == "%tmp0");
+    assert(output.str() == "  %tmp0 = or i32 %value, %mask\n");
+
+    output = {};
+    auto bitwise_not_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions[4].body_statements.front().expression,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        bitwise_session,
+        output
+    );
+    assert(bitwise_not_lowered.has_value());
+    assert(bitwise_not_lowered->value == "%tmp1");
+    assert(output.str() == "  %tmp1 = xor i32 %value, -1\n");
+
+    output = {};
+    auto shift_back_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions[5].body_statements.front().expression,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        bitwise_session,
+        output
+    );
+    assert(shift_back_lowered.has_value());
+    assert(shift_back_lowered->value == "%tmp2");
+    assert(output.str() == "  %tmp2 = lshr i32 %value, %amount\n");
 
     auto aggregate_binary_state = orison::lowering::FunctionLoweringState {};
     aggregate_binary_state.immutable_bindings.emplace("device", orison::lowering::LoweredExpression {

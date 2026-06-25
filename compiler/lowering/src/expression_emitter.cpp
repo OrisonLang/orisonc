@@ -122,6 +122,21 @@ auto llvm_binary_instruction_for(
     if (operator_text == "/") {
         return signedness == IntegerSignedness::signed_integer ? "sdiv" : "udiv";
     }
+    if (operator_text == "bit_and") {
+        return "and";
+    }
+    if (operator_text == "bit_or") {
+        return "or";
+    }
+    if (operator_text == "bit_xor") {
+        return "xor";
+    }
+    if (operator_text == "shift_left") {
+        return "shl";
+    }
+    if (operator_text == "shift_right") {
+        return signedness == IntegerSignedness::signed_integer ? "ashr" : "lshr";
+    }
     return std::nullopt;
 }
 
@@ -300,6 +315,49 @@ auto inferred_expression_type(
             .type = std::string(*cast_type),
             .signedness = integer_signedness_for(target_type),
         };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::unary && expression.left != nullptr) {
+        if (expression.text == "not") {
+            return LoweredType {
+                .type = "i1",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+        if (expression.text == "bit_not") {
+            auto operand = inferred_expression_type(*expression.left, context, state);
+            if (operand.has_value() && is_integer_llvm_type_impl(operand->type) &&
+                operand->signedness != IntegerSignedness::not_integer) {
+                return operand;
+            }
+        }
+    }
+
+    if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&
+        expression.right != nullptr) {
+        if (expression.text == "and" || expression.text == "or") {
+            return LoweredType {
+                .type = "i1",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+
+        auto left = inferred_expression_type(*expression.left, context, state);
+        auto right = inferred_expression_type(*expression.right, context, state);
+        if (!left.has_value() || !right.has_value() || left->type != right->type ||
+            left->signedness != right->signedness) {
+            return std::nullopt;
+        }
+
+        if (llvm_integer_comparison_predicate_for(expression.text, left->signedness).has_value()) {
+            return LoweredType {
+                .type = "i1",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+        if (llvm_binary_instruction_for(expression.text, left->signedness).has_value()) {
+            return left;
+        }
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
@@ -1680,6 +1738,31 @@ auto lowered_expression(
             .type = "i1",
             .value = std::move(temporary_name),
             .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::unary && expression.text == "bit_not" &&
+        expression.left != nullptr && is_integer_llvm_type_impl(expected_llvm_type) &&
+        expected_signedness != IntegerSignedness::not_integer) {
+        auto operand = lowered_expression(
+            *expression.left,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        );
+        if (!operand.has_value()) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+        output << "  " << temporary_name << " = xor " << operand->type << " " << operand->value
+               << ", -1\n";
+        return LoweredExpression {
+            .type = operand->type,
+            .value = std::move(temporary_name),
+            .signedness = operand->signedness,
         };
     }
 

@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: integer bitwise and shift expressions now lower to LLVM, `bit_not` lowers through an all-bits XOR, and
+  unannotated scalar `let` bindings can infer supported binary/unary initializer types; `tour_05_bindings_operators.or`
+  is now backend-validated.
 - 2026-06-25: `address_of(...)` aggregate path lowering now advances member/index path steps through one local helper
   that keeps index expression lowering and diagnostic mapping together.
 - 2026-06-25: `address_of(...)` aggregate path lowering now resolves pointer-backed and mutable-local base storage
