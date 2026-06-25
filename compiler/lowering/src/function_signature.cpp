@@ -27,6 +27,14 @@ auto lowered_function_type_for(syntax::TypeSyntax const& type) -> std::optional<
         return std::nullopt;
     }
 
+    if ((type.name == "View" || type.name == "shared.View" || type.name == "exclusive.View") &&
+        type.generic_arguments.size() == 1) {
+        auto element_type = lowered_function_type_for(type.generic_arguments[0]);
+        return element_type.has_value() && *element_type != "void"
+            ? std::optional<std::string> {"ptr"}
+            : std::nullopt;
+    }
+
     if (auto lowered_type = llvm_type_for(type); lowered_type.has_value()) {
         return std::string {*lowered_type};
     }

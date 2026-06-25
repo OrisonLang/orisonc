@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstdint>
 #include <optional>
 #include <span>
 #include <sstream>
@@ -40,6 +41,56 @@ void record_failure(
     }
 }
 
+auto digit_value_for_base(char character, int base) -> std::optional<std::uint64_t> {
+    auto value = std::optional<std::uint64_t> {};
+    if (character >= '0' && character <= '9') {
+        value = static_cast<std::uint64_t>(character - '0');
+    } else if (character >= 'a' && character <= 'f') {
+        value = static_cast<std::uint64_t>(character - 'a' + 10);
+    } else if (character >= 'A' && character <= 'F') {
+        value = static_cast<std::uint64_t>(character - 'A' + 10);
+    }
+
+    if (!value.has_value() || *value >= static_cast<std::uint64_t>(base)) {
+        return std::nullopt;
+    }
+    return value;
+}
+
+auto normalized_integer_literal_text(std::string_view text) -> std::optional<std::string> {
+    auto base = 10;
+    auto digits = text;
+    if (digits.starts_with("0x") || digits.starts_with("0X")) {
+        base = 16;
+        digits.remove_prefix(2);
+    } else if (digits.starts_with("0b") || digits.starts_with("0B")) {
+        base = 2;
+        digits.remove_prefix(2);
+    }
+    if (digits.empty()) {
+        return std::nullopt;
+    }
+
+    if (base == 10) {
+        for (auto character : digits) {
+            if (std::isdigit(static_cast<unsigned char>(character)) == 0) {
+                return std::nullopt;
+            }
+        }
+        return std::string {text};
+    }
+
+    auto value = std::uint64_t {0};
+    for (auto character : digits) {
+        auto digit = digit_value_for_base(character, base);
+        if (!digit.has_value()) {
+            return std::nullopt;
+        }
+        value = (value * static_cast<std::uint64_t>(base)) + *digit;
+    }
+    return std::to_string(value);
+}
+
 auto lowered_integer_literal(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -48,10 +99,14 @@ auto lowered_integer_literal(
     if (expression.kind != syntax::ExpressionKind::integer_literal) {
         return std::nullopt;
     }
+    auto value = normalized_integer_literal_text(expression.text);
+    if (!value.has_value()) {
+        return std::nullopt;
+    }
 
     return LoweredExpression {
         .type = std::string(expected_llvm_type),
-        .value = expression.text,
+        .value = std::move(*value),
         .signedness = expected_signedness,
     };
 }
@@ -1608,6 +1663,11 @@ auto lowered_expression(
         }
 
         auto element_source_type = array_element_source_type_name(*base_source_type);
+        auto is_view_index = false;
+        if (!element_source_type.has_value()) {
+            element_source_type = view_element_source_type_name(*base_source_type);
+            is_view_index = element_source_type.has_value();
+        }
         if (!element_source_type.has_value()) {
             record_failure(
                 failures,
@@ -1665,7 +1725,13 @@ auto lowered_expression(
         }
 
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        if (is_decimal_integer_text(lowered_index->value)) {
+        if (is_view_index) {
+            auto element_pointer_name = next_llvm_temporary_name(state.next_temporary_index);
+            output << "  " << element_pointer_name << " = getelementptr " << *element_llvm_type
+                   << ", ptr " << lowered_base->value << ", i64 " << lowered_index->value << "\n";
+            output << "  " << temporary_name << " = load " << *element_llvm_type << ", ptr "
+                   << element_pointer_name << "\n";
+        } else if (is_decimal_integer_text(lowered_index->value)) {
             output << "  " << temporary_name << " = extractvalue " << lowered_base->type << " "
                    << lowered_base->value << ", " << lowered_index->value << "\n";
         } else {

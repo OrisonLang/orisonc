@@ -55,7 +55,13 @@ int main() {
                   "    bit_not value\n"
                   "\n"
                   "function shift_back(value: UInt32, amount: UInt32) -> UInt32\n"
-                  "    value shift_right amount\n";
+                  "    value shift_right amount\n"
+                  "\n"
+                  "function hex_byte() -> Byte\n"
+                  "    0x7F\n"
+                  "\n"
+                  "function binary_byte() -> Byte\n"
+                  "    0b1010\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -259,6 +265,32 @@ int main() {
     assert(shift_back_lowered.has_value());
     assert(shift_back_lowered->value == "%tmp2");
     assert(output.str() == "  %tmp2 = lshr i32 %value, %amount\n");
+
+    output = {};
+    auto hex_byte_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions[6].body_statements.front().expression,
+        "i8",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        bitwise_session,
+        output
+    );
+    assert(hex_byte_lowered.has_value());
+    assert(hex_byte_lowered->value == "127");
+    assert(output.str().empty());
+
+    output = {};
+    auto binary_byte_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions[7].body_statements.front().expression,
+        "i8",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        bitwise_session,
+        output
+    );
+    assert(binary_byte_lowered.has_value());
+    assert(binary_byte_lowered->value == "10");
+    assert(output.str().empty());
 
     auto aggregate_binary_state = orison::lowering::FunctionLoweringState {};
     aggregate_binary_state.immutable_bindings.emplace("device", orison::lowering::LoweredExpression {

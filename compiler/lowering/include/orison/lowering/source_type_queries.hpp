@@ -24,6 +24,8 @@ auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArr
 
 auto array_element_source_type_name(std::string_view type_name) -> std::optional<std::string>;
 
+auto view_element_source_type_name(std::string_view type_name) -> std::optional<std::string>;
+
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string>;
 
 auto source_type_name_for_llvm_type(

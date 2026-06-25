@@ -113,6 +113,29 @@ auto array_element_source_type_name(std::string_view type_name) -> std::optional
     return arguments[0];
 }
 
+auto view_element_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+    auto normalized = type_name;
+    if (normalized.starts_with("shared.")) {
+        normalized.remove_prefix(std::string_view {"shared."}.size());
+    } else if (normalized.starts_with("exclusive.")) {
+        normalized.remove_prefix(std::string_view {"exclusive."}.size());
+    }
+
+    constexpr auto prefix = std::string_view {"View<"};
+    if (!normalized.starts_with(prefix) || !normalized.ends_with(">") ||
+        normalized.size() <= prefix.size() + 1) {
+        return std::nullopt;
+    }
+
+    auto arguments = split_top_level_generic_arguments(
+        normalized.substr(prefix.size(), normalized.size() - prefix.size() - 1)
+    );
+    if (arguments.size() != 1 || arguments[0].empty()) {
+        return std::nullopt;
+    }
+    return arguments[0];
+}
+
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string> {
     constexpr auto prefix = std::string_view {"Pointer<"};
     if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
@@ -186,6 +209,13 @@ auto lowered_type_for_source_type_name(
     constexpr auto pointer_prefix = std::string_view {"Pointer<"};
     if (type_name.starts_with(pointer_prefix) && type_name.ends_with(">") &&
         type_name.size() > pointer_prefix.size() + 1) {
+        return LoweredType {
+            .type = "ptr",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
+    if (view_element_source_type_name(type_name).has_value()) {
         return LoweredType {
             .type = "ptr",
             .signedness = IntegerSignedness::not_integer,
@@ -275,7 +305,10 @@ auto source_type_name_for_expression(
             return std::nullopt;
         }
 
-        return array_element_source_type_name(*base_source_type);
+        auto array_element = array_element_source_type_name(*base_source_type);
+        return array_element.has_value()
+            ? std::move(array_element)
+            : view_element_source_type_name(*base_source_type);
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
