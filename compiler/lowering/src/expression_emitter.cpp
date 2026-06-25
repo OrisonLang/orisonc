@@ -725,6 +725,43 @@ auto lower_record_constructor_expression(
     };
 }
 
+struct AggregateAddressBase {
+    std::string pointer_value;
+    std::string source_type_name;
+};
+
+auto resolve_aggregate_address_base(
+    syntax::ExpressionSyntax const& base_expression,
+    std::string_view base_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<AggregateAddressBase> {
+    if (auto record_name = pointer_pointee_source_type_name(base_source_type)) {
+        auto base_pointer = lower_pointer_operand(base_expression, context, session, output);
+        if (!base_pointer.has_value()) {
+            return std::nullopt;
+        }
+        return AggregateAddressBase {
+            .pointer_value = std::move(base_pointer->value),
+            .source_type_name = std::move(*record_name),
+        };
+    }
+
+    if (base_expression.kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto binding = session.state.mutable_bindings.find(base_expression.text);
+    if (binding == session.state.mutable_bindings.end()) {
+        return std::nullopt;
+    }
+    return AggregateAddressBase {
+        .pointer_value = binding->second.storage,
+        .source_type_name = std::string(base_source_type),
+    };
+}
+
 auto lower_pointer_record_field_address(
     syntax::ExpressionSyntax const& operand,
     LoweringEmissionContext const& context,
@@ -743,29 +780,20 @@ auto lower_pointer_record_field_address(
         return std::nullopt;
     }
 
-    auto current_pointer_value = std::string {};
-    auto current_source_type_name = std::string {};
-    if (auto record_name = pointer_pointee_source_type_name(*base_source_type)) {
-        auto base_pointer = lower_pointer_operand(base_expression, context, session, output);
-        if (!base_pointer.has_value()) {
-            return std::nullopt;
-        }
-        current_pointer_value = std::move(base_pointer->value);
-        current_source_type_name = *record_name;
-    } else if (base_expression.kind == syntax::ExpressionKind::name) {
-        auto binding = session.state.mutable_bindings.find(base_expression.text);
-        if (binding == session.state.mutable_bindings.end()) {
-            return std::nullopt;
-        }
-        current_pointer_value = binding->second.storage;
-        current_source_type_name = *base_source_type;
-    } else {
+    auto base = resolve_aggregate_address_base(
+        base_expression,
+        *base_source_type,
+        context,
+        session,
+        output
+    );
+    if (!base.has_value()) {
         return std::nullopt;
     }
 
     auto cursor = initialize_aggregate_path_cursor(
-        std::move(current_pointer_value),
-        std::move(current_source_type_name),
+        std::move(base->pointer_value),
+        std::move(base->source_type_name),
         context.lowering
     );
     if (!cursor.has_value()) {

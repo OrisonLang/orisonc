@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: `address_of(...)` aggregate path lowering now resolves pointer-backed and mutable-local base storage
+  through a dedicated base helper before walking the shared aggregate cursor path.
 - 2026-06-25: `Pointer(...)` construction lowering now lives behind a dedicated expression helper, keeping constructor
   validation and `Address`-to-pointer conversion out of the main expression dispatcher.
 - 2026-06-25: `raw_offset` lowering now shares local address-offset and pointer-offset emission helpers, keeping
