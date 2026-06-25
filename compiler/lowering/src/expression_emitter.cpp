@@ -415,6 +415,20 @@ auto lower_address_to_pointer(
     };
 }
 
+auto lower_pointer_to_address(
+    std::string pointer_value,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> LoweredExpression {
+    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << temporary_name << " = ptrtoint ptr " << pointer_value << " to i64\n";
+    return LoweredExpression {
+        .type = "i64",
+        .value = std::move(temporary_name),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 auto lower_pointer_operand(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -480,13 +494,7 @@ auto lower_address_operand(
             return std::nullopt;
         }
 
-        auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
-        output << "  " << temporary_name << " = ptrtoint ptr " << pointer->value << " to i64\n";
-        return LoweredExpression {
-            .type = "i64",
-            .value = std::move(temporary_name),
-            .signedness = IntegerSignedness::not_integer,
-        };
+        return lower_pointer_to_address(std::move(pointer->value), session, output);
     }
 
     return lowered_expression(
@@ -762,13 +770,7 @@ auto lower_pointer_record_field_address(
         }
     }
 
-    auto address_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << address_name << " = ptrtoint ptr " << cursor->pointer << " to i64\n";
-    return LoweredExpression {
-        .type = "i64",
-        .value = std::move(address_name),
-        .signedness = IntegerSignedness::not_integer,
-    };
+    return lower_pointer_to_address(cursor->pointer, session, output);
 }
 
 auto lower_address_of_intrinsic(
@@ -818,13 +820,7 @@ auto lower_address_of_intrinsic(
         return std::nullopt;
     }
 
-    auto temporary_name = next_llvm_temporary_name(session.state.next_temporary_index);
-    output << "  " << temporary_name << " = ptrtoint ptr " << binding->second.storage << " to i64\n";
-    return LoweredExpression {
-        .type = "i64",
-        .value = std::move(temporary_name),
-        .signedness = IntegerSignedness::not_integer,
-    };
+    return lower_pointer_to_address(binding->second.storage, session, output);
 }
 
 auto lower_raw_offset_intrinsic(
@@ -1793,13 +1789,7 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        output << "  " << temporary_name << " = inttoptr i64 " << source->value << " to ptr\n";
-        return LoweredExpression {
-            .type = "ptr",
-            .value = std::move(temporary_name),
-            .signedness = IntegerSignedness::not_integer,
-        };
+        return lower_address_to_pointer(std::move(*source), session, output);
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&

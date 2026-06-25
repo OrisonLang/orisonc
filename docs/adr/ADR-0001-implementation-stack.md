@@ -220,6 +220,8 @@ analysis, and lowering components.
   requires recursive expression lowering.
   Aggregate assignment target lowering also uses the shared member/index cursor-advancement helpers while retaining its
   assignment-specific diagnostics.
+  Pointer/address conversion emission is centralized inside expression lowering so `address_of`, generic address
+  operands, and `Pointer(...)` construction share the same `ptrtoint`/`inttoptr` instruction shape.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
