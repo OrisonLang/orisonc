@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: `tour_01_packages_imports.or`, `tour_02_records_choices.or`, `tour_06_control_flow.or`,
+  `tour_07_recursion.or`, and `tour_10_unsafe_memory.or` are now backend-validated examples because their existing
+  lowering paths emit object code successfully.
 - 2026-06-25: integer bitwise and shift expressions now lower to LLVM, `bit_not` lowers through an all-bits XOR, and
   unannotated scalar `let` bindings can infer supported binary/unary initializer types; `tour_05_bindings_operators.or`
   is now backend-validated.

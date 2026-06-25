@@ -59,16 +59,16 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | Example | Demonstrates | Current validation |
 | --- | --- | --- |
 | `ffi_aggregate_scalar_parameters.or` | C FFI with an aggregate-derived scalar fixed parameter | backend |
-| `tour_01_packages_imports.or` | `package`, `import`, `from`, `as`, `type` | frontend |
-| `tour_02_records_choices.or` | visibility, `record`, `choice`, constructors, generics | frontend |
+| `tour_01_packages_imports.or` | `package`, `import`, `from`, `as`, `type` | backend |
+| `tour_02_records_choices.or` | visibility, `record`, `choice`, constructors, generics | backend |
 | `tour_03_interfaces_methods.or` | `interface`, `implements`, `extend`, `this`, `This` | frontend |
 | `tour_04_generics_ownership.or` | generics, `where`, `shared`, `exclusive` | frontend |
 | `tour_05_bindings_operators.or` | `let`, `var`, assignment, boolean, ternary, bitwise, shifts | backend |
-| `tour_06_control_flow.or` | `guard`, `else`, `if`, `switch`, `default`, loops, `break`, `continue`, `defer` | frontend |
-| `tour_07_recursion.or` | recursion, explicit and implicit `return` | frontend |
+| `tour_06_control_flow.or` | `guard`, `else`, `if`, `switch`, `default`, loops, `break`, `continue`, `defer` | backend |
+| `tour_07_recursion.or` | recursion, explicit and implicit `return` | backend |
 | `tour_08_collections.or` | arrays, views, dynamic arrays, indexing | frontend |
 | `tour_09_ffi_printf.or` | C FFI, explicit `library "m"`, and `printf("Hello world from Orison!\\n")` | backend |
-| `tour_10_unsafe_memory.or` | `const`, `unsafe`, pointers, raw and volatile access | frontend |
+| `tour_10_unsafe_memory.or` | `const`, `unsafe`, pointers, raw and volatile access | backend |
 | `tour_11_concurrency.or` | `async`, `await`, `task`, `thread` | frontend |
 | `nested_pointer_aggregate_assignment.or` | nested pointer-backed aggregate assignment | backend |
 | `pointer_array_nested_assignment.or` | pointer-backed nested fixed-array assignment | backend |
