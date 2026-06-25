@@ -132,12 +132,11 @@ auto lower_assignment_target(
 
     for (auto const& step : path.steps) {
         if (step.kind == AggregatePathStepKind::member) {
-            auto field_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
-            auto result = advance_aggregate_path_member(
+            auto result = advance_aggregate_path_member_with_temporary(
                 *cursor,
                 step.field_name,
                 context.lowering,
-                std::move(field_pointer),
+                session.state.next_temporary_index,
                 output
             );
             if (result.error != AggregatePathError::none) {
@@ -170,12 +169,11 @@ auto lower_assignment_target(
             return std::nullopt;
         }
 
-        auto element_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
-        auto result = advance_aggregate_path_index(
+        auto result = advance_aggregate_path_index_with_temporary(
             *cursor,
             lowered_index->value,
             context.lowering,
-            std::move(element_pointer),
+            session.state.next_temporary_index,
             output
         );
         if (result.error == AggregatePathError::unsupported_element_source_type) {

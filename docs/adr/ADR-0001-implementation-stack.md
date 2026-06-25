@@ -218,6 +218,8 @@ analysis, and lowering components.
   Member-step temporary naming and cursor advancement are also shared by the aggregate path helper. Index-step temporary
   naming and cursor advancement are shared too, while index operand lowering remains in expression emission because it
   requires recursive expression lowering.
+  Aggregate assignment target lowering also uses the shared member/index cursor-advancement helpers while retaining its
+  assignment-specific diagnostics.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

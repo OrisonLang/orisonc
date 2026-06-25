@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: aggregate assignment target lowering now uses the shared member/index cursor-advancement helpers, keeping
+  temporary naming centralized while preserving assignment-specific diagnostics.
 - 2026-06-24: storage-backed aggregate path reads now consistently call the shared member/index cursor-advancement
   helpers from expression lowering, keeping temporary naming policy centralized.
 - 2026-06-24: aggregate index-step temporary naming and cursor advancement now live in the shared aggregate path helper;
