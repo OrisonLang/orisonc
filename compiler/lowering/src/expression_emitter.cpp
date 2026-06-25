@@ -1146,14 +1146,12 @@ auto lower_addressable_aggregate_path_read(
         return std::nullopt;
     }
 
-    auto storage = aggregate_storage_for_name(path.base_expression->text, session.state);
+    auto storage = named_aggregate_storage_for_name(path.base_expression->text, session.state);
     if (!storage.has_value()) {
         return std::nullopt;
     }
 
-    auto base_source_type =
-        source_type_name_for_expression(*path.base_expression, context, session.state);
-    if (!base_source_type.has_value()) {
+    if (!storage->source_type_name.has_value()) {
         record_failure(
             session.failures,
             ExpressionLoweringFailureReason::unsupported_expression,
@@ -1165,8 +1163,8 @@ auto lower_addressable_aggregate_path_read(
     return lower_aggregate_path_read_from_storage(
         expression,
         path,
-        std::move(*storage),
-        *base_source_type,
+        std::move(storage->storage),
+        *storage->source_type_name,
         expected_llvm_type,
         expected_signedness,
         context,

@@ -48,9 +48,20 @@ int main() {
     assert(state.addressable_bindings.at("point").type.type == "%record.Point");
     assert(state.addressable_bindings.at("point").storage == "%point.addr");
     assert(orison::lowering::aggregate_storage_for_name("missing", state) == std::nullopt);
+    assert(orison::lowering::named_aggregate_storage_for_name("missing", state) == std::nullopt);
     auto point_storage = orison::lowering::aggregate_storage_for_name("point", state);
     assert(point_storage.has_value());
     assert(*point_storage == "%point.addr");
+    auto point_without_source = orison::lowering::named_aggregate_storage_for_name("point", state);
+    assert(point_without_source.has_value());
+    assert(point_without_source->storage == "%point.addr");
+    assert(!point_without_source->source_type_name.has_value());
+
+    state.source_type_names["point"] = "Point";
+    auto point_with_source = orison::lowering::named_aggregate_storage_for_name("point", state);
+    assert(point_with_source.has_value());
+    assert(point_with_source->storage == "%point.addr");
+    assert(point_with_source->source_type_name == "Point");
 
     state.mutable_bindings["point"] = orison::lowering::MutableBinding {
         .type = orison::lowering::LoweredType {
@@ -62,6 +73,10 @@ int main() {
     auto mutable_point_storage = orison::lowering::aggregate_storage_for_name("point", state);
     assert(mutable_point_storage.has_value());
     assert(*mutable_point_storage == "%point.mutable.addr");
+    auto mutable_point_with_source = orison::lowering::named_aggregate_storage_for_name("point", state);
+    assert(mutable_point_with_source.has_value());
+    assert(mutable_point_with_source->storage == "%point.mutable.addr");
+    assert(mutable_point_with_source->source_type_name == "Point");
 
     output.str({});
     output.clear();

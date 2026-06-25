@@ -28,6 +28,26 @@ auto aggregate_storage_for_name(
     return std::nullopt;
 }
 
+auto named_aggregate_storage_for_name(
+    std::string_view name,
+    FunctionLoweringState const& state
+) -> std::optional<NamedAggregateStorage> {
+    auto storage = aggregate_storage_for_name(name, state);
+    if (!storage.has_value()) {
+        return std::nullopt;
+    }
+
+    auto source_type_name = std::optional<std::string> {};
+    auto const source_type = state.source_type_names.find(std::string(name));
+    if (source_type != state.source_type_names.end()) {
+        source_type_name = source_type->second;
+    }
+    return NamedAggregateStorage {
+        .storage = std::move(*storage),
+        .source_type_name = std::move(source_type_name),
+    };
+}
+
 void bind_addressable_aggregate_value(
     std::string_view name,
     LoweredExpression const& lowered,

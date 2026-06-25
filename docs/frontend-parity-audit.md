@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-24: named aggregate path reads now receive storage plus optional source-type metadata from the shared
+  aggregate resolver, preserving the distinction between non-addressable paths and addressable paths missing metadata.
 - 2026-06-24: named aggregate path reads now resolve mutable storage and read-only addressable storage through the
   shared aggregate helper module, preserving mutable-over-read-only precedence while reducing expression-emitter policy.
 - 2026-06-24: temporary aggregate path reads and runtime-index fixed-array value reads now share the aggregate spill

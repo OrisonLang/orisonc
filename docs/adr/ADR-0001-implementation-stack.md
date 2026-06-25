@@ -209,6 +209,8 @@ analysis, and lowering components.
   alloca/store spill shape without registering source-visible bindings.
   Named aggregate path reads resolve mutable storage and read-only addressable storage through the same helper module,
   keeping binding-map precedence outside expression emission.
+  The same resolver now carries optional source-type metadata for named aggregate bases so expression emission can
+  distinguish non-addressable paths from addressable paths that lack source metadata.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
