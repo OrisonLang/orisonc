@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-24: aggregate path collection now exposes named-base and temporary-base classifiers, removing duplicated
+  path-shape checks from expression lowering while preserving storage-backed versus temporary-spill behavior.
 - 2026-06-24: named aggregate path reads now receive storage plus optional source-type metadata from the shared
   aggregate resolver, preserving the distinction between non-addressable paths and addressable paths missing metadata.
 - 2026-06-24: named aggregate path reads now resolve mutable storage and read-only addressable storage through the

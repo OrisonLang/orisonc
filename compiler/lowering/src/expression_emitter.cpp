@@ -1135,18 +1135,12 @@ auto lower_addressable_aggregate_path_read(
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    if (expression.kind != syntax::ExpressionKind::member_access &&
-        expression.kind != syntax::ExpressionKind::index_access) {
+    auto path = collect_named_aggregate_path(expression);
+    if (!path.has_value()) {
         return std::nullopt;
     }
 
-    auto path = collect_aggregate_path(expression);
-    if (path.steps.empty() || path.base_expression == nullptr ||
-        path.base_expression->kind != syntax::ExpressionKind::name) {
-        return std::nullopt;
-    }
-
-    auto storage = named_aggregate_storage_for_name(path.base_expression->text, session.state);
+    auto storage = named_aggregate_storage_for_name(path->base_expression->text, session.state);
     if (!storage.has_value()) {
         return std::nullopt;
     }
@@ -1162,7 +1156,7 @@ auto lower_addressable_aggregate_path_read(
 
     return lower_aggregate_path_read_from_storage(
         expression,
-        path,
+        *path,
         std::move(storage->storage),
         *storage->source_type_name,
         expected_llvm_type,
@@ -1181,19 +1175,13 @@ auto lower_temporary_aggregate_path_read(
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
-    if (expression.kind != syntax::ExpressionKind::member_access &&
-        expression.kind != syntax::ExpressionKind::index_access) {
-        return std::nullopt;
-    }
-
-    auto path = collect_aggregate_path(expression);
-    if (path.steps.empty() || path.base_expression == nullptr ||
-        path.base_expression->kind == syntax::ExpressionKind::name) {
+    auto path = collect_temporary_aggregate_path(expression);
+    if (!path.has_value()) {
         return std::nullopt;
     }
 
     auto base_source_type =
-        source_type_name_for_expression(*path.base_expression, context, session.state);
+        source_type_name_for_expression(*path->base_expression, context, session.state);
     if (!base_source_type.has_value()) {
         return std::nullopt;
     }
@@ -1204,7 +1192,7 @@ auto lower_temporary_aggregate_path_read(
     }
 
     auto lowered_base = lowered_expression(
-        *path.base_expression,
+        *path->base_expression,
         *base_llvm_type,
         IntegerSignedness::not_integer,
         context,
@@ -1222,7 +1210,7 @@ auto lower_temporary_aggregate_path_read(
 
     return lower_aggregate_path_read_from_storage(
         expression,
-        path,
+        *path,
         std::move(*storage),
         *base_source_type,
         expected_llvm_type,

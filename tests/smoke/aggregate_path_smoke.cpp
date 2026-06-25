@@ -35,6 +35,16 @@ auto index(orison::syntax::ExpressionSyntax left, std::string index_text = "0")
     return expression;
 }
 
+auto call(std::string callee) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::call;
+    auto name = orison::syntax::ExpressionSyntax {};
+    name.kind = orison::syntax::ExpressionKind::name;
+    name.text = std::move(callee);
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(name));
+    return expression;
+}
+
 auto context() -> orison::lowering::LoweringContext {
     auto lowering = orison::lowering::LoweringContext {};
     lowering.records.emplace("Bucket", orison::lowering::LoweredRecordLayout {
@@ -82,6 +92,23 @@ int main() {
     assert(path.steps[1].index_expression->text == "1");
     assert(path.steps[2].kind == orison::lowering::AggregatePathStepKind::member);
     assert(path.steps[2].field_name == "values");
+
+    auto named_path = orison::lowering::collect_named_aggregate_path(target);
+    assert(named_path.has_value());
+    assert(named_path->base_expression != nullptr);
+    assert(named_path->base_expression->text == "shelf");
+    assert(named_path->steps.size() == 3);
+    assert(!orison::lowering::collect_temporary_aggregate_path(target).has_value());
+
+    auto temporary_target = member(call("make_shelf"), "buckets");
+    auto temporary_path = orison::lowering::collect_temporary_aggregate_path(temporary_target);
+    assert(temporary_path.has_value());
+    assert(temporary_path->base_expression != nullptr);
+    assert(temporary_path->base_expression->kind == orison::syntax::ExpressionKind::call);
+    assert(temporary_path->steps.size() == 1);
+    assert(!orison::lowering::collect_named_aggregate_path(temporary_target).has_value());
+    assert(!orison::lowering::collect_named_aggregate_path(name("shelf")).has_value());
+    assert(!orison::lowering::collect_temporary_aggregate_path(name("shelf")).has_value());
 
     auto cursor = orison::lowering::initialize_aggregate_path_cursor("%shelf.addr", "Shelf", lowering);
     assert(cursor.has_value());

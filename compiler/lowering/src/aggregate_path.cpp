@@ -70,6 +70,38 @@ auto collect_aggregate_path(syntax::ExpressionSyntax const& expression) -> Aggre
     return path;
 }
 
+auto collect_named_aggregate_path(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<AggregatePath> {
+    if (expression.kind != syntax::ExpressionKind::member_access &&
+        expression.kind != syntax::ExpressionKind::index_access) {
+        return std::nullopt;
+    }
+
+    auto path = collect_aggregate_path(expression);
+    if (path.steps.empty() || path.base_expression == nullptr ||
+        path.base_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+    return path;
+}
+
+auto collect_temporary_aggregate_path(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<AggregatePath> {
+    if (expression.kind != syntax::ExpressionKind::member_access &&
+        expression.kind != syntax::ExpressionKind::index_access) {
+        return std::nullopt;
+    }
+
+    auto path = collect_aggregate_path(expression);
+    if (path.steps.empty() || path.base_expression == nullptr ||
+        path.base_expression->kind == syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+    return path;
+}
+
 auto initialize_aggregate_path_cursor(
     std::string pointer,
     std::string source_type_name,

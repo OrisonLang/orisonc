@@ -54,6 +54,14 @@ struct AggregatePathResult {
 
 auto collect_aggregate_path(syntax::ExpressionSyntax const& expression) -> AggregatePath;
 
+auto collect_named_aggregate_path(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<AggregatePath>;
+
+auto collect_temporary_aggregate_path(
+    syntax::ExpressionSyntax const& expression
+) -> std::optional<AggregatePath>;
+
 auto initialize_aggregate_path_cursor(
     std::string pointer,
     std::string source_type_name,
