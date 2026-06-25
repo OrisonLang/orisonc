@@ -35,11 +35,13 @@ drop/cleanup decisions.
 - The runtime can be implemented in C/C++ without knowing Orison source types.
 - Module prelude emission declares only the concurrency runtime symbols requested by lowering and deduplicates them in
   first-use order.
+- Lowering planning records each concurrency expression's operation kind, deterministic thunk symbol, inferred lowered
+  result type, and semantic captures before any runtime call or thunk IR is emitted.
 - `tour_11_concurrency.or` must remain frontend-only until entry thunk generation, capture environment layout, result
   storage, and runtime linking are implemented.
 
 ## Follow-up work
 
-- Add lowering metadata for captured values and result storage layout.
+- Add concrete environment and result-storage layout records to the concurrency plan.
 - Implement thread spawn/join for scalar transferable results before task scheduling.
 - Define cleanup behavior for abandoned handles and failed spawn paths.

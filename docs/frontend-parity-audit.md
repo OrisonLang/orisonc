@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: concurrency lowering now has a planning model for `task` and `thread` expressions that records the
+  runtime spawn operation, deterministic thunk symbol, inferred lowered result type, and semantic captures without
+  emitting runtime calls or thunk IR yet.
 - 2026-06-25: module prelude emission can now declare the exact concurrency runtime symbols requested by lowering,
   deduplicated in first-use order, while ordinary modules still emit no concurrency runtime declarations.
 - 2026-06-25: accepted ADR-0004 for the initial concurrency runtime lowering contract and added a pinned lowering
