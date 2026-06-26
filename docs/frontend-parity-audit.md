@@ -36,6 +36,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-26: the pthread-backed concurrency runtime now invokes the optional spawn cleanup callback after entry
   completion and on spawn setup failure; direct ABI smoke coverage pins post-entry cleanup for joined and abandoned
   handles.
+- 2026-06-26: removed the accidental C runtime/test translation units; the concurrency runtime is now C++23 with
+  explicit `extern "C"` ABI exports for generated LLVM calls.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

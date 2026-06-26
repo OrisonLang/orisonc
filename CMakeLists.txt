@@ -4,7 +4,7 @@ project(
     Orison
     VERSION 0.1.0
     DESCRIPTION "Orison systems programming language toolchain"
-    LANGUAGES C CXX
+    LANGUAGES CXX
 )
 
 set(CMAKE_CXX_STANDARD 23)

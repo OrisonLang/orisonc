@@ -33,7 +33,7 @@ drop/cleanup decisions.
 - `thread` and `task` can share most lowering machinery: environment allocation, result storage allocation, thunk
   emission, handle binding, and cleanup scheduling.
 - `.join()` and `await` are synchronization operations first; result materialization remains an ordinary typed load.
-- The runtime can be implemented in C/C++ without knowing Orison source types.
+- The runtime is implemented in C++ while exporting a stable C ABI; it does not know Orison source types.
 - Module prelude emission declares only the concurrency runtime symbols requested by lowering and deduplicates them in
   first-use order.
 - Lowering planning records each concurrency expression's operation kind, deterministic thunk symbol, inferred lowered
