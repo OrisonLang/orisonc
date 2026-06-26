@@ -22,6 +22,7 @@ The initial runtime ABI model is:
 - `__orison_task_spawn(ptr entry, ptr environment, ptr result_storage, i64 result_size, ptr cleanup) -> ptr`
 - `__orison_task_await(ptr handle) -> void`
 - `__orison_concurrency_handle_destroy(ptr handle) -> void`
+- `__orison_concurrency_spawn_failed() -> void`
 
 The compiler will recover the typed result by loading from the explicit result storage after `join` or `await`
 completes. This keeps the runtime ABI finite and untyped while preserving compiler-owned type, ownership, and
@@ -48,9 +49,12 @@ drop/cleanup decisions.
 - Successfully joined scalar thread handles are destroyed immediately after the typed result is loaded.
 - Abandoned scalar thread handles that reach a normal lowered function return without `.join()` are destroyed before the
   return is emitted. The compiler does not materialize a result value for abandoned handles.
+- Scalar thread spawn results are checked for `null` immediately after the runtime call. A null result branches to
+  `__orison_concurrency_spawn_failed()` followed by `unreachable`; only the non-null continuation binds the handle for
+  later join or abandoned-handle cleanup.
 - `tour_11_concurrency.or` must remain frontend-only until async/task lowering, cleanup policy, and runtime linking are
   implemented.
 
 ## Follow-up work
 
-- Define cleanup behavior for failed spawn paths.
+- Apply the same spawn-failure rule to task lowering when task lowering exists.

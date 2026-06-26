@@ -213,6 +213,19 @@ auto lower_thread_let_statement(
            << ", i64 " << plan->result_storage.size_bytes
            << ", ptr null)\n";
 
+    auto const spawn_failure_check = next_llvm_temporary_name(session.state.next_temporary_index);
+    auto const spawn_block_index = next_llvm_block_index(session.state.next_block_index);
+    auto const spawn_failed_block = llvm_block_name(statement.name + ".thread.spawn_failed", spawn_block_index);
+    auto const spawn_ok_block = llvm_block_name(statement.name + ".thread.spawn_ok", spawn_block_index);
+    output << "  " << spawn_failure_check << " = icmp eq ptr " << handle_name << ", null\n";
+    emit_llvm_conditional_branch(output, spawn_failure_check, spawn_failed_block, spawn_ok_block);
+    emit_llvm_block_label(output, spawn_failed_block);
+    auto spawn_failed_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::spawn_failed);
+    output << "  call " << spawn_failed_call.return_type << " @" << spawn_failed_call.symbol_name << "()\n";
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, spawn_ok_block);
+    session.state.current_block = spawn_ok_block;
+
     session.state.immutable_bindings[statement.name] = LoweredExpression {
         .type = std::string(concurrency_handle_llvm_type()),
         .value = handle_name,

@@ -49,5 +49,12 @@ int main() {
     assert(destroy.symbol_name == "__orison_concurrency_handle_destroy");
     assert(destroy.return_type == "void");
     assert(destroy.parameter_types == std::vector<std::string_view>({"ptr"}));
+
+    auto spawn_failed = orison::lowering::concurrency_runtime_call(
+        ConcurrencyRuntimeOperation::spawn_failed
+    );
+    assert(spawn_failed.symbol_name == "__orison_concurrency_spawn_failed");
+    assert(spawn_failed.return_type == "void");
+    assert(spawn_failed.parameter_types.empty());
     return 0;
 }

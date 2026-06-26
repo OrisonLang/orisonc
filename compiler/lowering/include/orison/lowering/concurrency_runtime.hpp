@@ -11,6 +11,7 @@ enum class ConcurrencyRuntimeOperation {
     spawn_task,
     await_task,
     destroy_handle,
+    spawn_failed,
 };
 
 struct ConcurrencyRuntimeCall {

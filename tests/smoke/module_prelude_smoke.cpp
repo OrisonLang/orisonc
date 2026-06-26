@@ -43,6 +43,7 @@ int main() {
         {},
         {
             ConcurrencyRuntimeOperation::spawn_thread,
+            ConcurrencyRuntimeOperation::spawn_failed,
             ConcurrencyRuntimeOperation::join_thread,
             ConcurrencyRuntimeOperation::spawn_thread,
             ConcurrencyRuntimeOperation::spawn_task,
@@ -53,6 +54,7 @@ int main() {
     assert(
         concurrency_prelude ==
         "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)\n"
+        "declare void @__orison_concurrency_spawn_failed()\n"
         "declare void @__orison_thread_join(ptr)\n"
         "declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)\n"
         "declare void @__orison_task_await(ptr)\n"

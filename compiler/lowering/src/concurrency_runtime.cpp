@@ -40,6 +40,12 @@ auto concurrency_runtime_call(
             .return_type = "void",
             .parameter_types = {concurrency_handle_llvm_type()},
         };
+    case ConcurrencyRuntimeOperation::spawn_failed:
+        return ConcurrencyRuntimeCall {
+            .symbol_name = "__orison_concurrency_spawn_failed",
+            .return_type = "void",
+            .parameter_types = {},
+        };
     }
     return {};
 }

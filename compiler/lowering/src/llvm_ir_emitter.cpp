@@ -88,6 +88,7 @@ auto collect_concurrency_runtime_operations(syntax::ExpressionSyntax const& expr
     auto operations = std::vector<ConcurrencyRuntimeOperation> {};
     if (expression.kind == syntax::ExpressionKind::thread) {
         operations.push_back(ConcurrencyRuntimeOperation::spawn_thread);
+        operations.push_back(ConcurrencyRuntimeOperation::spawn_failed);
         operations.push_back(ConcurrencyRuntimeOperation::destroy_handle);
     }
     if (expression.kind == syntax::ExpressionKind::call &&

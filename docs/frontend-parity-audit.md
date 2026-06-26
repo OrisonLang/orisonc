@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: scalar thread spawn lowering now checks the returned handle for `null` and branches to
+  `__orison_concurrency_spawn_failed()` plus `unreachable` before any join or abandoned-handle cleanup can observe the
+  binding.
 - 2026-06-25: abandoned scalar thread handles that reach a normal lowered function return without `.join()` now emit
   `__orison_concurrency_handle_destroy(handle)` before returning, without loading a result value.
 - 2026-06-25: scalar `.join()` cleanup now emits `__orison_concurrency_handle_destroy(handle)` after loading the joined

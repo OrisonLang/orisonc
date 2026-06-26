@@ -908,6 +908,11 @@ int main() {
     );
     assert(
         emit_thread_spawn.stdout_text.find(
+            "declare void @__orison_concurrency_spawn_failed()"
+        ) != std::string::npos
+    );
+    assert(
+        emit_thread_spawn.stdout_text.find(
             "declare void @__orison_concurrency_handle_destroy(ptr)"
         ) != std::string::npos
     );
@@ -917,6 +922,14 @@ int main() {
     assert(
         emit_thread_spawn.stdout_text.find(
             "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr null)"
+        ) != std::string::npos
+    );
+    assert(emit_thread_spawn.stdout_text.find("icmp eq ptr %worker, null") != std::string::npos);
+    assert(
+        emit_thread_spawn.stdout_text.find(
+            "call void @__orison_concurrency_spawn_failed()\n"
+            "  unreachable\n"
+            "worker.thread.spawn_ok.0:"
         ) != std::string::npos
     );
     assert(
@@ -960,10 +973,23 @@ int main() {
             "declare void @__orison_concurrency_handle_destroy(ptr)"
         ) != std::string::npos
     );
+    assert(
+        emit_thread_abandoned.stdout_text.find(
+            "declare void @__orison_concurrency_spawn_failed()"
+        ) != std::string::npos
+    );
     assert(emit_thread_abandoned.stdout_text.find("declare void @__orison_thread_join(ptr)") == std::string::npos);
     assert(
         emit_thread_abandoned.stdout_text.find(
             "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr null)"
+        ) != std::string::npos
+    );
+    assert(emit_thread_abandoned.stdout_text.find("icmp eq ptr %worker, null") != std::string::npos);
+    assert(
+        emit_thread_abandoned.stdout_text.find(
+            "call void @__orison_concurrency_spawn_failed()\n"
+            "  unreachable\n"
+            "worker.thread.spawn_ok.0:"
         ) != std::string::npos
     );
     assert(
