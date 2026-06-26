@@ -1,0 +1,7 @@
+package examples.concurrency_thread
+
+function main() -> UInt32
+    let worker = thread
+        0 as UInt32
+
+    worker.join()

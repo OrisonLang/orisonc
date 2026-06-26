@@ -62,6 +62,8 @@ drop/cleanup decisions.
   unjoined or unawaited handle joins before freeing the opaque handle so compiler-owned stack result/environment storage
   cannot outlive a still-running runtime thread.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
+- `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
+  path.
 
 ## Follow-up work
 
