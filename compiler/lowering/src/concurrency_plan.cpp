@@ -323,13 +323,13 @@ auto plan_concurrency_expression(
 
     plan.environment_layout = ConcurrencyEnvironmentLayout {
         .llvm_type = environment_llvm_type_for(plan.captures),
-        .size_bytes = lowered_struct_size_bytes(capture_llvm_types(plan.captures)).value_or(0),
+        .size_bytes = lowered_struct_size_bytes(capture_llvm_types(plan.captures), context.lowering).value_or(0),
         .fields = plan.captures,
     };
     plan.cleanup = cleanup_plan_for(plan.captures);
     plan.result_storage = ConcurrencyResultStorageLayout {
         .llvm_type = plan.result_type.type,
-        .size_bytes = lowered_type_size_bytes(plan.result_type.type).value_or(0),
+        .size_bytes = lowered_type_size_bytes(plan.result_type.type, context.lowering).value_or(0),
     };
 
     return plan;

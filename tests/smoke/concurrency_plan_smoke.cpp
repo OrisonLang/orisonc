@@ -147,6 +147,8 @@ int main() {
     assert(record_plan->captures.front().name == "payload");
     assert(record_plan->captures.front().source_type_name == "Payload");
     assert(record_plan->captures.front().llvm_type == "%record.Payload");
+    assert(record_plan->environment_layout.llvm_type == "{ %record.Payload }");
+    assert(record_plan->environment_layout.size_bytes == 8);
     assert(record_plan->cleanup.drop_candidates.size() == 1);
     assert(record_plan->cleanup.drop_candidates.front().name == "payload");
     assert(record_plan->cleanup.drop_candidates.front().source_type_name == "Payload");

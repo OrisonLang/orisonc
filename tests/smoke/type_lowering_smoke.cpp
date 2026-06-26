@@ -1,5 +1,6 @@
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/target_layout.hpp"
+#include "orison/lowering/lowering_context.hpp"
 
 #include <cassert>
 #include <string>
@@ -65,5 +66,34 @@ int main() {
     assert(*padded_struct_size == 16);
 
     assert(!orison::lowering::lowered_type_size_bytes("%Unknown").has_value());
+
+    auto context = orison::lowering::LoweringContext {};
+    context.records.emplace("Payload", orison::lowering::LoweredRecordLayout {
+        .name = "Payload",
+        .llvm_type_name = "%record.Payload",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "tag",
+                .source_type_name = "UInt8",
+                .llvm_type = "i8",
+                .index = 0,
+            },
+            orison::lowering::LoweredRecordField {
+                .name = "value",
+                .source_type_name = "Int64",
+                .llvm_type = "i64",
+                .index = 1,
+            },
+        },
+    });
+    auto record_size = orison::lowering::lowered_type_size_bytes("%record.Payload", context);
+    assert(record_size.has_value());
+    assert(*record_size == 16);
+
+    auto record_struct_size = orison::lowering::lowered_struct_size_bytes({"i8", "%record.Payload"}, context);
+    assert(record_struct_size.has_value());
+    assert(*record_struct_size == 24);
+
+    assert(!orison::lowering::lowered_type_size_bytes("%record.Payload").has_value());
     return 0;
 }

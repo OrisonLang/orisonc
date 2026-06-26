@@ -72,6 +72,8 @@ drop/cleanup decisions.
   exists.
 - Concurrency plans now record cleanup drop candidates for non-scalar captured environment fields so future owned-capture
   cleanup lowering has explicit field metadata without changing the runtime ABI.
+- Target layout now resolves named record LLVM types through the lowering context, allowing aggregate capture
+  environments to report concrete byte sizes when their record field layouts are known.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
