@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-26: added `examples/concurrency_task_main.or` as a checked-in runnable scalar task/await demo and promoted it
+  into canonical compile/link/run smoke coverage.
 - 2026-06-25: host linking now includes a minimal pthread-backed concurrency runtime archive that resolves the accepted
   task/thread/await/join/destroy/spawn-failed ABI, allowing scalar task programs to link and execute through
   `orisonc run`.

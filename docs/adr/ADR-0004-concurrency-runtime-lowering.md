@@ -61,6 +61,7 @@ drop/cleanup decisions.
 - A minimal pthread-backed runtime archive now provides the accepted concurrency ABI during host linking. Destroying an
   unjoined or unawaited handle joins before freeing the opaque handle so compiler-owned stack result/environment storage
   cannot outlive a still-running runtime thread.
+- `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 
 ## Follow-up work
 

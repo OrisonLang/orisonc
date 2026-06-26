@@ -100,6 +100,7 @@ void assert_pipeline_demo(
 
 auto main() -> int {
     assert_pipeline_demo("minimal.or", "ret i32 0");
+    assert_pipeline_demo("concurrency_task_main.or", "call ptr @__orison_task_spawn");
     assert_pipeline_demo("local_record_field_assignment.or", "store i32 8, ptr %tmp");
     assert_pipeline_demo("pointer_record_field_assignment.or", "store i32 8, ptr %tmp");
     return 0;

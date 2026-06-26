@@ -53,6 +53,7 @@
 `local_method_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a method.
 `local_record_method_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a record method.
 `local_member_receiver_method_array_for.or` demonstrates method-returned array iteration through member and index receivers.
+`concurrency_task_main.or` demonstrates a runnable `async main` that spawns and awaits a scalar task.
 
 The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
@@ -69,7 +70,8 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `tour_08_collections.or` | arrays, views, dynamic arrays, indexing | backend |
 | `tour_09_ffi_printf.or` | C FFI, explicit `library "m"`, and `printf("Hello world from Orison!\\n")` | backend |
 | `tour_10_unsafe_memory.or` | `const`, `unsafe`, pointers, raw and volatile access | backend |
-| `tour_11_concurrency.or` | `async`, `await`, `task`, `thread` | frontend |
+| `tour_11_concurrency.or` | `async`, `await`, `task`, `thread` | backend |
+| `concurrency_task_main.or` | runnable `async main`, `task`, and `await` | backend |
 | `nested_pointer_aggregate_assignment.or` | nested pointer-backed aggregate assignment | backend |
 | `pointer_array_nested_assignment.or` | pointer-backed nested fixed-array assignment | backend |
 | `pointer_record_field_assignment.or` | pointer-backed array-of-record field assignment | backend |
@@ -143,6 +145,14 @@ Run the backend demo with:
 ```sh
 build/tools/orisonc/orisonc run examples/minimal.or
 ```
+
+Run the concurrency runtime demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/concurrency_task_main.or
+```
+
+It spawns a scalar runtime task, awaits it, and exits with status `0`.
 
 Run the C FFI demo with:
 
