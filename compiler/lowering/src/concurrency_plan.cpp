@@ -61,6 +61,20 @@ auto concurrency_thunk_symbol_name(
     return symbol;
 }
 
+auto concurrency_cleanup_symbol_name(
+    ConcurrencyPlanKind kind,
+    std::string_view enclosing_symbol_name,
+    std::size_t expression_line,
+    std::size_t ordinal
+) -> std::string {
+    auto symbol = kind == ConcurrencyPlanKind::thread
+        ? std::string {"__orison_thread_cleanup."}
+        : std::string {"__orison_task_cleanup."};
+    append_sanitized_symbol_part(symbol, enclosing_symbol_name);
+    symbol += "." + std::to_string(expression_line) + "." + std::to_string(ordinal);
+    return symbol;
+}
+
 auto max_expression_line(syntax::ExpressionSyntax const& expression) -> std::size_t;
 
 auto max_statement_line(syntax::StatementSyntax const& statement) -> std::size_t {
@@ -219,6 +233,12 @@ auto plan_concurrency_expression(
         .kind = kind,
         .spawn_operation = spawn_operation_for(kind),
         .thunk_symbol_name = concurrency_thunk_symbol_name(
+            kind,
+            enclosing_symbol_name,
+            expression.line,
+            ordinal
+        ),
+        .cleanup_symbol_name = concurrency_cleanup_symbol_name(
             kind,
             enclosing_symbol_name,
             expression.line,

@@ -43,6 +43,7 @@ struct ConcurrencyExpressionPlan {
     ConcurrencyPlanKind kind = ConcurrencyPlanKind::task;
     ConcurrencyRuntimeOperation spawn_operation = ConcurrencyRuntimeOperation::spawn_task;
     std::string thunk_symbol_name;
+    std::string cleanup_symbol_name;
     LoweredType result_type;
     ConcurrencyEnvironmentLayout environment_layout;
     ConcurrencyResultStorageLayout result_storage;

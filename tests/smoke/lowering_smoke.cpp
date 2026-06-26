@@ -1983,6 +1983,19 @@ void test_emit_scalar_thread_join_expression() {
             "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.on_thread.4.0"
         ) != std::string::npos
     );
+    assert(
+        result.ir_text.find(
+            ", i64 8, ptr @__orison_thread_cleanup.on_thread.4.0)"
+        ) != std::string::npos
+    );
+    assert(
+        result.ir_text.find(
+            "define private void @__orison_thread_cleanup.on_thread.4.0(ptr %environment) {\n"
+            "entry:\n"
+            "  ret void\n"
+            "}"
+        ) != std::string::npos
+    );
     assert(result.ir_text.find("icmp eq ptr %worker, null") != std::string::npos);
     assert(
         result.ir_text.find(
@@ -2018,6 +2031,11 @@ void test_emit_abandoned_scalar_thread_cleanup() {
     assert(
         result.ir_text.find(
             "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.on_thread.4.0"
+        ) != std::string::npos
+    );
+    assert(
+        result.ir_text.find(
+            ", i64 8, ptr @__orison_thread_cleanup.on_thread.4.0)"
         ) != std::string::npos
     );
     assert(result.ir_text.find("icmp eq ptr %worker, null") != std::string::npos);
@@ -2057,6 +2075,19 @@ void test_emit_scalar_task_await_expression() {
     assert(
         result.ir_text.find(
             "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.on_task.4.0"
+        ) != std::string::npos
+    );
+    assert(
+        result.ir_text.find(
+            ", i64 8, ptr @__orison_task_cleanup.on_task.4.0)"
+        ) != std::string::npos
+    );
+    assert(
+        result.ir_text.find(
+            "define private void @__orison_task_cleanup.on_task.4.0(ptr %environment) {\n"
+            "entry:\n"
+            "  ret void\n"
+            "}"
         ) != std::string::npos
     );
     assert(result.ir_text.find("icmp eq ptr %pending, null") != std::string::npos);

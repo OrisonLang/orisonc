@@ -67,6 +67,9 @@ drop/cleanup decisions.
   completion, and also on spawn setup failure before returning `null`.
 - Direct runtime ABI smoke coverage uses a test-only thread-create failure seam to deterministically verify cleanup on
   spawn setup failure.
+- Lowering now emits deterministic private cleanup thunks for captured task/thread environments and passes those thunks
+  through the runtime cleanup slot; the current thunk body is intentionally empty until owned capture drop lowering
+  exists.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

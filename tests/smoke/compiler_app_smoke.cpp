@@ -921,7 +921,7 @@ int main() {
     assert(emit_thread_spawn.stdout_text.find("%worker.thread.result = alloca i64") != std::string::npos);
     assert(
         emit_thread_spawn.stdout_text.find(
-            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr null)"
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.launch.3.0)"
         ) != std::string::npos
     );
     assert(emit_thread_spawn.stdout_text.find("icmp eq ptr %worker, null") != std::string::npos);
@@ -935,6 +935,11 @@ int main() {
     assert(
         emit_thread_spawn.stdout_text.find(
             "define private void @__orison_thread_thunk.launch.3.0(ptr %environment, ptr %result_storage)"
+        ) != std::string::npos
+    );
+    assert(
+        emit_thread_spawn.stdout_text.find(
+            "define private void @__orison_thread_cleanup.launch.3.0(ptr %environment)"
         ) != std::string::npos
     );
     assert(emit_thread_spawn.stdout_text.find("load i64, ptr %tmp0") != std::string::npos);
@@ -981,7 +986,12 @@ int main() {
     assert(emit_thread_abandoned.stdout_text.find("declare void @__orison_thread_join(ptr)") == std::string::npos);
     assert(
         emit_thread_abandoned.stdout_text.find(
-            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr null)"
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.launch.3.0)"
+        ) != std::string::npos
+    );
+    assert(
+        emit_thread_abandoned.stdout_text.find(
+            "define private void @__orison_thread_cleanup.launch.3.0(ptr %environment)"
         ) != std::string::npos
     );
     assert(emit_thread_abandoned.stdout_text.find("icmp eq ptr %worker, null") != std::string::npos);
@@ -1032,7 +1042,12 @@ int main() {
     );
     assert(
         emit_task_spawn.stdout_text.find(
-            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.launch.3.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr null)"
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.launch.3.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr @__orison_task_cleanup.launch.3.0)"
+        ) != std::string::npos
+    );
+    assert(
+        emit_task_spawn.stdout_text.find(
+            "define private void @__orison_task_cleanup.launch.3.0(ptr %environment)"
         ) != std::string::npos
     );
     assert(emit_task_spawn.stdout_text.find("icmp eq ptr %pending, null") != std::string::npos);

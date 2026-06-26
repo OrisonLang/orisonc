@@ -149,6 +149,15 @@ auto emit_thread_entry_thunk(
     return output.str();
 }
 
+auto emit_thread_cleanup_thunk(ConcurrencyExpressionPlan const& plan) -> std::string {
+    auto output = std::ostringstream {};
+    output << "define private void @" << plan.cleanup_symbol_name << "(ptr %environment) {\n";
+    output << "entry:\n";
+    output << "  ret void\n";
+    output << "}\n";
+    return output.str();
+}
+
 auto lower_thread_let_statement(
     syntax::StatementSyntax const& statement,
     ConcurrencyPlanKind expected_kind,
@@ -194,6 +203,7 @@ auto lower_thread_let_statement(
     if (!thunk_definition.has_value()) {
         return false;
     }
+    auto cleanup_definition = emit_thread_cleanup_thunk(*plan);
 
     auto const binding_prefix = statement.name + "." + std::string(expression_name);
     auto environment_storage = next_llvm_local_value_name(
@@ -232,13 +242,16 @@ auto lower_thread_let_statement(
 
     auto handle_name = next_llvm_local_value_name(statement.name, session.state.local_name_counts);
     auto runtime_call = concurrency_runtime_call(plan->spawn_operation);
+    auto cleanup_pointer = plan->captures.empty()
+        ? std::string {"null"}
+        : "@" + plan->cleanup_symbol_name;
     output << "  " << handle_name << " = call " << runtime_call.return_type
            << " @" << runtime_call.symbol_name
            << "(ptr @" << plan->thunk_symbol_name
            << ", ptr " << environment_storage
            << ", ptr " << result_storage
            << ", i64 " << plan->result_storage.size_bytes
-           << ", ptr null)\n";
+           << ", ptr " << cleanup_pointer << ")\n";
 
     auto const spawn_failure_check = next_llvm_temporary_name(session.state.next_temporary_index);
     auto const spawn_block_index = next_llvm_block_index(session.state.next_block_index);
@@ -271,6 +284,9 @@ auto lower_thread_let_statement(
         session.state.task_binding_order.push_back(statement.name);
     }
     session.state.pending_function_definitions.push_back(std::move(*thunk_definition));
+    if (!plan->captures.empty()) {
+        session.state.pending_function_definitions.push_back(std::move(cleanup_definition));
+    }
     return true;
 }
 
