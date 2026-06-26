@@ -1960,7 +1960,7 @@ void test_reject_unsupported_return_expression() {
     );
 }
 
-void test_reject_thread_join_expression_with_targeted_diagnostic() {
+void test_emit_scalar_thread_join_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_thread_expression.or";
     auto result = lower_source(
         path,
@@ -1973,12 +1973,17 @@ void test_reject_thread_join_expression_with_targeted_diagnostic() {
         "    worker.join()\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
+    assert(!result.has_errors());
+    assert(result.ir_text.find("declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_thread_join(ptr)") != std::string::npos);
     assert(
-        result.diagnostics.entries().front().message ==
-        "lowering does not yet support thread join expressions"
+        result.ir_text.find(
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.on_thread.4.0"
+        ) != std::string::npos
     );
+    assert(result.ir_text.find("call void @__orison_thread_join(ptr %worker)") != std::string::npos);
+    assert(result.ir_text.find("load i64, ptr %worker.thread.result") != std::string::npos);
+    assert(result.ir_text.find("ret i64 %tmp") != std::string::npos);
 }
 
 void test_reject_unsupported_final_if_arm_expression() {
@@ -2818,7 +2823,7 @@ auto main() -> int {
     test_emit_fixed_arity_c_foreign_call();
     test_emit_unsafe_function_identity_return();
     test_reject_unsupported_return_expression();
-    test_reject_thread_join_expression_with_targeted_diagnostic();
+    test_emit_scalar_thread_join_expression();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();

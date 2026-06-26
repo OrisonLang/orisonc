@@ -4,6 +4,7 @@
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
+#include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -480,6 +481,15 @@ auto inferred_expression_type(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::member_access) {
+        if (expression.left->text == "join" &&
+            expression.left->left != nullptr &&
+            expression.left->left->kind == syntax::ExpressionKind::name) {
+            auto thread_binding = state.thread_bindings.find(expression.left->left->text);
+            if (thread_binding != state.thread_bindings.end()) {
+                return thread_binding->second.result_type;
+            }
+        }
+
         auto resolved = resolve_member_call(expression, context, state);
         if (resolved.receiver.result != MemberCallReceiverInferenceResult::found ||
             resolved.method.result != LoweredMethodLookupResult::found ||
@@ -2111,6 +2121,34 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::member_access) {
+        if (expression.left->text == "join" &&
+            expression.left->left != nullptr &&
+            expression.left->left->kind == syntax::ExpressionKind::name) {
+            auto thread_binding = state.thread_bindings.find(expression.left->left->text);
+            if (thread_binding != state.thread_bindings.end()) {
+                if (thread_binding->second.result_type.type != expected_llvm_type) {
+                    record_failure(
+                        failures,
+                        ExpressionLoweringFailureReason::call_return_type_mismatch,
+                        "thread join returns " + thread_binding->second.result_type.type +
+                            ", expected " + std::string(expected_llvm_type)
+                    );
+                    return std::nullopt;
+                }
+                auto join_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::join_thread);
+                output << "  call " << join_call.return_type << " @" << join_call.symbol_name
+                       << "(ptr " << thread_binding->second.handle << ")\n";
+                auto result_name = next_llvm_temporary_name(state.next_temporary_index);
+                output << "  " << result_name << " = load " << thread_binding->second.result_type.type
+                       << ", ptr " << thread_binding->second.result_storage << "\n";
+                return LoweredExpression {
+                    .type = thread_binding->second.result_type.type,
+                    .value = std::move(result_name),
+                    .signedness = thread_binding->second.result_type.signedness,
+                };
+            }
+        }
+
         auto resolved = resolve_member_call(expression, context, state);
         auto const receiver_name = expression.left->left != nullptr ? expression.left->left->text : std::string {};
         auto const target_name = resolved.receiver.receiver_type_name + "." + resolved.receiver.method_name;

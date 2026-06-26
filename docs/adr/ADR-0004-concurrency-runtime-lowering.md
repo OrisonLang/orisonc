@@ -43,10 +43,11 @@ drop/cleanup decisions.
   stores, private entry thunk, and runtime spawn call shape with the planned result byte size. The thunk loads captures
   from the environment, lowers the final scalar body expression, and writes the result into compiler-owned result
   storage.
-- `tour_11_concurrency.or` must remain frontend-only until thread join result loading, async/task lowering, cleanup
-  policy, and runtime linking are implemented.
+- Scalar `.join()` expressions can now lower by calling `__orison_thread_join(handle)` and loading the typed value from
+  compiler-owned result storage.
+- `tour_11_concurrency.or` must remain frontend-only until async/task lowering, cleanup policy, and runtime linking are
+  implemented.
 
 ## Follow-up work
 
-- Implement thread join result loading for scalar transferable results before task scheduling.
-- Define cleanup behavior for abandoned handles and failed spawn paths.
+- Define cleanup behavior for successfully joined handles, abandoned handles, and failed spawn paths.

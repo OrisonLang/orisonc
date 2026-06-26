@@ -89,6 +89,12 @@ auto collect_concurrency_runtime_operations(syntax::ExpressionSyntax const& expr
     if (expression.kind == syntax::ExpressionKind::thread) {
         operations.push_back(ConcurrencyRuntimeOperation::spawn_thread);
     }
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::member_access &&
+        expression.left->text == "join") {
+        operations.push_back(ConcurrencyRuntimeOperation::join_thread);
+    }
     for (auto const& argument : expression.arguments) {
         auto argument_operations = collect_concurrency_runtime_operations(argument);
         operations.insert(operations.end(), argument_operations.begin(), argument_operations.end());
