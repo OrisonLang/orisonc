@@ -43,6 +43,7 @@ struct ConcurrencyCleanupFieldPlan {
     std::string name;
     std::string source_type_name;
     std::string llvm_type;
+    std::string drop_symbol_name;
     std::size_t field_index = 0;
     semantics::ConcurrencyCaptureKind capture_kind =
         semantics::ConcurrencyCaptureKind::parameter;

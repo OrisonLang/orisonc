@@ -78,6 +78,8 @@ drop/cleanup decisions.
   result buffers passed through the runtime ABI.
 - Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
   insertion point for future owned-capture drop emission while still emitting no drops today.
+- Cleanup candidate plans now include deterministic type-specific drop symbol names; cleanup thunks document those
+  planned symbols but do not call them until drop semantics are accepted.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

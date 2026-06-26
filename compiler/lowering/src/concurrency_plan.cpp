@@ -241,6 +241,12 @@ auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bo
     return false;
 }
 
+auto drop_symbol_name_for(std::string_view source_type_name) -> std::string {
+    auto symbol = std::string {"__orison_drop."};
+    append_sanitized_symbol_part(symbol, source_type_name);
+    return symbol;
+}
+
 auto cleanup_plan_for(
     std::vector<ConcurrencyCapturePlan> const& captures
 ) -> ConcurrencyCleanupPlan {
@@ -253,6 +259,7 @@ auto cleanup_plan_for(
             .name = capture.name,
             .source_type_name = capture.source_type_name,
             .llvm_type = capture.llvm_type,
+            .drop_symbol_name = drop_symbol_name_for(capture.source_type_name),
             .field_index = capture.field_index,
             .capture_kind = capture.capture_kind,
         });

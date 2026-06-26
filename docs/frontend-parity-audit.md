@@ -53,6 +53,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `%record.*` result storage and runtime result-size operands.
 - 2026-06-26: cleanup thunks now compute deterministic field addresses for non-scalar cleanup-candidate captures,
   giving future owned-capture drop lowering a concrete insertion point while remaining no-op for drops today.
+- 2026-06-26: cleanup candidate plans now carry deterministic type-specific drop symbol names, surfaced in cleanup
+  thunk comments without emitting drop calls yet.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

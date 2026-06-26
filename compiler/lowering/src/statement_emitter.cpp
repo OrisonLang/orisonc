@@ -158,7 +158,7 @@ auto emit_thread_cleanup_thunk(ConcurrencyExpressionPlan const& plan) -> std::st
         output << "  " << field_pointer << " = getelementptr " << plan.environment_layout.llvm_type
                << ", ptr %environment, i32 0, i32 " << candidate.field_index << "\n";
         output << "  ; cleanup candidate " << candidate.name << ": " << candidate.source_type_name
-               << " field " << candidate.field_index << "\n";
+               << " field " << candidate.field_index << " drop " << candidate.drop_symbol_name << "\n";
     }
     output << "  ret void\n";
     output << "}\n";

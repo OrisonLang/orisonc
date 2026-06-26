@@ -2266,7 +2266,7 @@ void test_emit_record_capture_cleanup_field_address() {
             "define private void @__orison_thread_cleanup.on_thread.12.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
-            "  ; cleanup candidate payload: Payload field 0\n"
+            "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
             "  ret void\n"
             "}"
         ) != std::string::npos
