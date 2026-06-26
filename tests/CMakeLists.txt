@@ -99,6 +99,22 @@ add_test(
     COMMAND orison_concurrency_runtime_smoke
 )
 
+add_executable(orison_concurrency_runtime_abi_smoke
+    smoke/concurrency_runtime_abi_smoke.c
+)
+
+target_link_libraries(orison_concurrency_runtime_abi_smoke
+    PRIVATE
+        orison_runtime_concurrency
+)
+
+target_compile_features(orison_concurrency_runtime_abi_smoke PRIVATE c_std_17)
+
+add_test(
+    NAME orison_concurrency_runtime_abi_smoke
+    COMMAND orison_concurrency_runtime_abi_smoke
+)
+
 add_executable(orison_concurrency_plan_smoke
     smoke/concurrency_plan_smoke.cpp
 )
