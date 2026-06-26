@@ -58,7 +58,11 @@ drop/cleanup decisions.
   compiler-owned result storage, and destroy the handle after the load.
 - `async function` lowering is currently a narrow backend admission rule for scalar task/await bodies; it does not yet
   model a distinct async function ABI, suspension, cancellation, or executor integration.
+- A minimal pthread-backed runtime archive now provides the accepted concurrency ABI during host linking. Destroying an
+  unjoined or unawaited handle joins before freeing the opaque handle so compiler-owned stack result/environment storage
+  cannot outlive a still-running runtime thread.
 
 ## Follow-up work
 
-- Define the real async function ABI, suspension model, cancellation policy, and executor/runtime linking model.
+- Define the real async function ABI, suspension model, cancellation policy, and executor integration model beyond the
+  current pthread-backed execution shim.

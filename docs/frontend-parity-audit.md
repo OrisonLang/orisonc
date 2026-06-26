@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: host linking now includes a minimal pthread-backed concurrency runtime archive that resolves the accepted
+  task/thread/await/join/destroy/spawn-failed ABI, allowing scalar task programs to link and execute through
+  `orisonc run`.
 - 2026-06-25: scalar task lowering now reuses the thread path for capture environments, result storage, entry thunks,
   spawn failure checks, abandoned-handle cleanup, and `await` result loads; `async function` lowering is still a narrow
   scalar backend admission rule rather than a real async ABI or suspension model.

@@ -74,9 +74,13 @@ auto HostLinker::link(
     auto cleanup_error = std::error_code {};
     std::filesystem::remove(output_path, cleanup_error);
     auto argument_storage = std::vector<std::string> {};
-    argument_storage.reserve(4 + libraries.size());
+    argument_storage.reserve(6 + libraries.size());
     argument_storage.push_back(driver);
     argument_storage.push_back(object_path);
+#ifdef ORISON_CONCURRENCY_RUNTIME_ARCHIVE
+    argument_storage.push_back(ORISON_CONCURRENCY_RUNTIME_ARCHIVE);
+    argument_storage.push_back("-pthread");
+#endif
     for (auto const& library : libraries) {
         argument_storage.push_back("-l" + library);
     }

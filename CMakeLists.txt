@@ -15,6 +15,7 @@ option(ORISON_ENABLE_TESTS "Build Orison test targets" ON)
 
 find_package(LLVM REQUIRED CONFIG)
 
+add_subdirectory(runtime)
 add_subdirectory(compiler)
 add_subdirectory(tools)
 

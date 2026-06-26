@@ -1079,6 +1079,24 @@ int main() {
     assert(run_result.stdout_text.empty());
     assert(run_result.stderr_text.empty());
 
+    auto run_concurrency_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_run_concurrency.or";
+    write_concurrency_fixture(
+        run_concurrency_path,
+        "demo.run",
+        {
+            "async function main() -> UInt32",
+            "    let pending = task",
+            "        42 as UInt32",
+            "",
+            "    await pending",
+        }
+    );
+    auto run_concurrency = run_program(app, run_concurrency_path);
+    assert(run_concurrency.exit_code == 42);
+    assert(run_concurrency.stdout_text.empty());
+    assert(run_concurrency.stderr_text.empty());
+
     auto link_failure = run_build(app, emit_path, missing_directory / "output");
     assert(link_failure.exit_code == 1);
     assert(link_failure.stdout_text.empty());

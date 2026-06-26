@@ -18,6 +18,9 @@ target_link_libraries(orison_link
 target_compile_definitions(orison_link
     PRIVATE
         ORISON_HOST_LINK_DRIVER="${ORISON_HOST_LINK_DRIVER}"
+        ORISON_CONCURRENCY_RUNTIME_ARCHIVE="$<TARGET_FILE:orison_runtime_concurrency>"
 )
+
+add_dependencies(orison_link orison_runtime_concurrency)
 
 target_compile_features(orison_link PUBLIC cxx_std_23)
