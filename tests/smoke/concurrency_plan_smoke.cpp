@@ -9,12 +9,16 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 
 int main() {
     auto path = std::filesystem::temp_directory_path() / "orison_concurrency_plan_smoke.or";
     {
         auto output = std::ofstream(path);
         output << "package demo.concurrency\n"
+                  "\n"
+                  "record Payload\n"
+                  "    public value: Int64\n"
                   "\n"
                   "async function compute(value: Int64) -> Int64\n"
                   "    let pending = task\n"
@@ -66,7 +70,8 @@ int main() {
     assert(task_plan.has_value());
     assert(task_plan->kind == orison::lowering::ConcurrencyPlanKind::task);
     assert(task_plan->spawn_operation == orison::lowering::ConcurrencyRuntimeOperation::spawn_task);
-    assert(task_plan->thunk_symbol_name == "__orison_task_thunk.compute.4.0");
+    assert(task_plan->thunk_symbol_name == "__orison_task_thunk.compute.7.0");
+    assert(task_plan->cleanup_symbol_name == "__orison_task_cleanup.compute.7.0");
     assert(task_plan->result_type.type == "i64");
     assert(task_plan->result_type.signedness == orison::lowering::IntegerSignedness::signed_integer);
     assert(task_plan->captures.size() == 1);
@@ -79,6 +84,7 @@ int main() {
     assert(task_plan->environment_layout.fields.size() == 1);
     assert(task_plan->environment_layout.fields.front().name == "value");
     assert(task_plan->environment_layout.fields.front().field_index == 0);
+    assert(task_plan->cleanup.drop_candidates.empty());
     assert(task_plan->result_storage.llvm_type == "i64");
     assert(task_plan->result_storage.size_bytes == 8);
 
@@ -94,7 +100,8 @@ int main() {
     assert(thread_plan.has_value());
     assert(thread_plan->kind == orison::lowering::ConcurrencyPlanKind::thread);
     assert(thread_plan->spawn_operation == orison::lowering::ConcurrencyRuntimeOperation::spawn_thread);
-    assert(thread_plan->thunk_symbol_name == "__orison_thread_thunk.on_thread.10.0");
+    assert(thread_plan->thunk_symbol_name == "__orison_thread_thunk.on_thread.13.0");
+    assert(thread_plan->cleanup_symbol_name == "__orison_thread_cleanup.on_thread.13.0");
     assert(thread_plan->result_type.type == "i64");
     assert(thread_plan->captures.size() == 1);
     assert(thread_plan->captures.front().name == "value");
@@ -103,8 +110,52 @@ int main() {
     assert(thread_plan->environment_layout.llvm_type == "{ i64 }");
     assert(thread_plan->environment_layout.size_bytes == 8);
     assert(thread_plan->environment_layout.fields.size() == 1);
+    assert(thread_plan->cleanup.drop_candidates.empty());
     assert(thread_plan->result_storage.llvm_type == "i64");
     assert(thread_plan->result_storage.size_bytes == 8);
+
+    auto record_thread_expression = orison::syntax::ExpressionSyntax {};
+    record_thread_expression.kind = orison::syntax::ExpressionKind::thread;
+    record_thread_expression.line = 20;
+    auto record_thread_result = std::make_unique<orison::syntax::StatementSyntax>();
+    record_thread_result->kind = orison::syntax::StatementKind::expression_statement;
+    record_thread_result->line = 21;
+    record_thread_result->expression.kind = orison::syntax::ExpressionKind::integer_literal;
+    record_thread_result->expression.line = 21;
+    record_thread_result->expression.text = "1";
+    record_thread_expression.nested_statements.push_back(std::move(record_thread_result));
+
+    auto record_semantics = orison::semantics::SemanticAnalysisResult {};
+    record_semantics.concurrency_captures.push_back(orison::semantics::ConcurrencyCapture {
+        .line = 21,
+        .name = "payload",
+        .type_name = "Payload",
+        .expression_kind = orison::semantics::ConcurrencyExpressionKind::thread,
+        .capture_kind = orison::semantics::ConcurrencyCaptureKind::immutable_outer_local,
+    });
+
+    auto record_plan = orison::lowering::plan_concurrency_expression(
+        record_thread_expression,
+        "record_worker",
+        2,
+        context,
+        state,
+        record_semantics
+    );
+    assert(record_plan.has_value());
+    assert(record_plan->captures.size() == 1);
+    assert(record_plan->captures.front().name == "payload");
+    assert(record_plan->captures.front().source_type_name == "Payload");
+    assert(record_plan->captures.front().llvm_type == "%record.Payload");
+    assert(record_plan->cleanup.drop_candidates.size() == 1);
+    assert(record_plan->cleanup.drop_candidates.front().name == "payload");
+    assert(record_plan->cleanup.drop_candidates.front().source_type_name == "Payload");
+    assert(record_plan->cleanup.drop_candidates.front().llvm_type == "%record.Payload");
+    assert(record_plan->cleanup.drop_candidates.front().field_index == 0);
+    assert(
+        record_plan->cleanup.drop_candidates.front().capture_kind ==
+        orison::semantics::ConcurrencyCaptureKind::immutable_outer_local
+    );
 
     auto not_concurrency = orison::syntax::ExpressionSyntax {
         .kind = orison::syntax::ExpressionKind::name,

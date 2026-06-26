@@ -70,6 +70,8 @@ drop/cleanup decisions.
 - Lowering now emits deterministic private cleanup thunks for captured task/thread environments and passes those thunks
   through the runtime cleanup slot; the current thunk body is intentionally empty until owned capture drop lowering
   exists.
+- Concurrency plans now record cleanup drop candidates for non-scalar captured environment fields so future owned-capture
+  cleanup lowering has explicit field metadata without changing the runtime ABI.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

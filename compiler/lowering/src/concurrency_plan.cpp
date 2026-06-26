@@ -5,6 +5,7 @@
 #include "orison/lowering/target_layout.hpp"
 
 #include <algorithm>
+#include <array>
 #include <sstream>
 #include <string_view>
 
@@ -203,6 +204,62 @@ auto capture_llvm_types(
     return types;
 }
 
+auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
+    constexpr auto scalar_names = std::array<std::string_view, 25> {
+        "Address",
+        "Bool",
+        "Byte",
+        "Char",
+        "Float32",
+        "Float64",
+        "Int8",
+        "Int16",
+        "Int32",
+        "Int64",
+        "Int128",
+        "IntSize",
+        "UInt8",
+        "UInt16",
+        "UInt32",
+        "UInt64",
+        "UInt128",
+        "UIntSize",
+        "Unit",
+        "Pointer",
+        "Pointer<",
+        "View",
+        "View<",
+        "shared.",
+        "exclusive.",
+    };
+
+    for (auto scalar_name : scalar_names) {
+        if (source_type_name == scalar_name || source_type_name.starts_with(scalar_name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto cleanup_plan_for(
+    std::vector<ConcurrencyCapturePlan> const& captures
+) -> ConcurrencyCleanupPlan {
+    auto cleanup = ConcurrencyCleanupPlan {};
+    for (auto const& capture : captures) {
+        if (capture.llvm_type.empty() || is_scalar_or_nonowning_source_type(capture.source_type_name)) {
+            continue;
+        }
+        cleanup.drop_candidates.push_back(ConcurrencyCleanupFieldPlan {
+            .name = capture.name,
+            .source_type_name = capture.source_type_name,
+            .llvm_type = capture.llvm_type,
+            .field_index = capture.field_index,
+            .capture_kind = capture.capture_kind,
+        });
+    }
+    return cleanup;
+}
+
 }  // namespace
 
 auto plan_concurrency_expression(
@@ -269,6 +326,7 @@ auto plan_concurrency_expression(
         .size_bytes = lowered_struct_size_bytes(capture_llvm_types(plan.captures)).value_or(0),
         .fields = plan.captures,
     };
+    plan.cleanup = cleanup_plan_for(plan.captures);
     plan.result_storage = ConcurrencyResultStorageLayout {
         .llvm_type = plan.result_type.type,
         .size_bytes = lowered_type_size_bytes(plan.result_type.type).value_or(0),

@@ -45,6 +45,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   lowering.
 - 2026-06-26: added lowering smoke coverage that no-capture scalar task/thread expressions still pass `ptr null` for
   the runtime cleanup slot and do not emit unnecessary cleanup thunks.
+- 2026-06-26: concurrency planning now records cleanup drop candidates for non-scalar captured environment fields;
+  current cleanup thunk emission remains metadata-only/no-op until owned-capture drop lowering exists.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

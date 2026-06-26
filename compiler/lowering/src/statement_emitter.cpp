@@ -153,6 +153,10 @@ auto emit_thread_cleanup_thunk(ConcurrencyExpressionPlan const& plan) -> std::st
     auto output = std::ostringstream {};
     output << "define private void @" << plan.cleanup_symbol_name << "(ptr %environment) {\n";
     output << "entry:\n";
+    for (auto const& candidate : plan.cleanup.drop_candidates) {
+        output << "  ; cleanup candidate " << candidate.name << ": " << candidate.source_type_name
+               << " field " << candidate.field_index << "\n";
+    }
     output << "  ret void\n";
     output << "}\n";
     return output.str();

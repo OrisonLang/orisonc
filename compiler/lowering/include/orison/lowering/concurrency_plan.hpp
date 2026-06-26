@@ -39,6 +39,19 @@ struct ConcurrencyResultStorageLayout {
     std::size_t size_bytes = 0;
 };
 
+struct ConcurrencyCleanupFieldPlan {
+    std::string name;
+    std::string source_type_name;
+    std::string llvm_type;
+    std::size_t field_index = 0;
+    semantics::ConcurrencyCaptureKind capture_kind =
+        semantics::ConcurrencyCaptureKind::parameter;
+};
+
+struct ConcurrencyCleanupPlan {
+    std::vector<ConcurrencyCleanupFieldPlan> drop_candidates;
+};
+
 struct ConcurrencyExpressionPlan {
     ConcurrencyPlanKind kind = ConcurrencyPlanKind::task;
     ConcurrencyRuntimeOperation spawn_operation = ConcurrencyRuntimeOperation::spawn_task;
@@ -47,6 +60,7 @@ struct ConcurrencyExpressionPlan {
     LoweredType result_type;
     ConcurrencyEnvironmentLayout environment_layout;
     ConcurrencyResultStorageLayout result_storage;
+    ConcurrencyCleanupPlan cleanup;
     std::vector<ConcurrencyCapturePlan> captures;
 };
 
