@@ -49,6 +49,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   current cleanup thunk emission remains metadata-only/no-op until owned-capture drop lowering exists.
 - 2026-06-26: target-layout sizing now resolves named record LLVM types through the lowering context, so aggregate
   capture environments can report concrete byte sizes instead of falling back to zero for known records.
+- 2026-06-26: added lowering smoke coverage for record-returning scalar task/thread bodies, pinning context-sized
+  `%record.*` result storage and runtime result-size operands.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

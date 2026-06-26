@@ -2156,6 +2156,76 @@ void test_emit_no_capture_task_uses_null_cleanup() {
     assert(result.ir_text.find("ret i64 %tmp") != std::string::npos);
 }
 
+void test_emit_record_thread_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_record_thread_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Pair\n"
+        "    public first: Int64\n"
+        "    public second: Int64\n"
+        "\n"
+        "implements Transferable for Pair\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function on_thread() -> Pair\n"
+        "    let worker = thread\n"
+        "        Pair(1, 2)\n"
+        "\n"
+        "    worker.join()\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.Pair = type { i64, i64 }") != std::string::npos);
+    assert(result.ir_text.find("%worker.thread.result = alloca %record.Pair") != std::string::npos);
+    assert(
+        result.ir_text.find(
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.on_thread.12.0"
+        ) != std::string::npos
+    );
+    assert(result.ir_text.find(", i64 16, ptr null)") != std::string::npos);
+    assert(result.ir_text.find("store %record.Pair %tmp1, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load %record.Pair, ptr %worker.thread.result") != std::string::npos);
+    assert(result.ir_text.find("ret %record.Pair %tmp") != std::string::npos);
+}
+
+void test_emit_record_task_result_storage_size() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_record_task_result.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Pair\n"
+        "    public first: Int64\n"
+        "    public second: Int64\n"
+        "\n"
+        "implements Shareable for Pair\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "async function on_task() -> Pair\n"
+        "    let pending = task\n"
+        "        Pair(1, 2)\n"
+        "\n"
+        "    await pending\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.Pair = type { i64, i64 }") != std::string::npos);
+    assert(result.ir_text.find("%pending.task.result = alloca %record.Pair") != std::string::npos);
+    assert(
+        result.ir_text.find(
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.on_task.12.0"
+        ) != std::string::npos
+    );
+    assert(result.ir_text.find(", i64 16, ptr null)") != std::string::npos);
+    assert(result.ir_text.find("store %record.Pair %tmp1, ptr %result_storage") != std::string::npos);
+    assert(result.ir_text.find("load %record.Pair, ptr %pending.task.result") != std::string::npos);
+    assert(result.ir_text.find("ret %record.Pair %tmp") != std::string::npos);
+}
+
 void test_reject_unsupported_final_if_arm_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_final_if_arm.or";
     auto result = lower_source(
@@ -2998,6 +3068,8 @@ auto main() -> int {
     test_emit_scalar_task_await_expression();
     test_emit_no_capture_thread_uses_null_cleanup();
     test_emit_no_capture_task_uses_null_cleanup();
+    test_emit_record_thread_result_storage_size();
+    test_emit_record_task_result_storage_size();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();
