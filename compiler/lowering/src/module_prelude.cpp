@@ -40,7 +40,8 @@ void emit_declaration(
 auto emit_module_prelude(
     StringConstantTable const& string_constants,
     std::vector<LoweredFunctionSignature> const& foreign_declarations,
-    std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations
+    std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations,
+    std::vector<DropPreludeDeclaration> const& drop_declarations
 ) -> std::string {
     auto output = std::ostringstream {};
     for (auto const& constant : string_constants.constants) {
@@ -89,6 +90,21 @@ auto emit_module_prelude(
         emitted_runtime_symbols.push_back(runtime_call.symbol_name);
     }
     if (!emitted_runtime_symbols.empty()) {
+        output << "\n";
+    }
+
+    auto emitted_drop_symbols = std::vector<std::string_view> {};
+    for (auto const& declaration : drop_declarations) {
+        if (!declaration.emit_declaration) {
+            continue;
+        }
+        if (has_emitted_symbol(emitted_drop_symbols, declaration.symbol_name)) {
+            continue;
+        }
+        emit_declaration(output, "void", declaration.symbol_name, {"ptr"});
+        emitted_drop_symbols.push_back(declaration.symbol_name);
+    }
+    if (!emitted_drop_symbols.empty()) {
         output << "\n";
     }
     return output.str();

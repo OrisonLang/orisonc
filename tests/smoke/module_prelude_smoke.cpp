@@ -61,5 +61,34 @@ int main() {
         "declare void @__orison_concurrency_handle_destroy(ptr)\n"
         "\n"
     );
+
+    auto disabled_drop_prelude = orison::lowering::emit_module_prelude(
+        {},
+        {},
+        {},
+        {
+            orison::lowering::DropPreludeDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+            },
+        }
+    );
+    assert(disabled_drop_prelude.empty());
+
+    auto enabled_drop_prelude = orison::lowering::emit_module_prelude(
+        {},
+        {},
+        {},
+        {
+            orison::lowering::DropPreludeDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .emit_declaration = true,
+            },
+            orison::lowering::DropPreludeDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .emit_declaration = true,
+            },
+        }
+    );
+    assert(enabled_drop_prelude == "declare void @__orison_drop.Payload(ptr)\n\n");
     return 0;
 }

@@ -58,6 +58,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-26: added lowering smoke coverage that cleanup candidate drop symbols remain metadata-only today: aggregate
   cleanup thunks may mention planned `__orison_drop.*` symbols in comments, but must not declare or call them until
   drop semantics are accepted.
+- 2026-06-26: module prelude emission now has an explicit disabled-by-default drop declaration seam for future
+  `__orison_drop.<Type>` declarations, with smoke coverage proving planned declarations do not emit unless explicitly
+  enabled.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

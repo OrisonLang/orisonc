@@ -9,10 +9,16 @@
 
 namespace orison::lowering {
 
+struct DropPreludeDeclaration {
+    std::string symbol_name;
+    bool emit_declaration = false;
+};
+
 auto emit_module_prelude(
     StringConstantTable const& string_constants,
     std::vector<LoweredFunctionSignature> const& foreign_declarations,
-    std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations = {}
+    std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations = {},
+    std::vector<DropPreludeDeclaration> const& drop_declarations = {}
 ) -> std::string;
 
 }  // namespace orison::lowering
