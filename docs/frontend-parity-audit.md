@@ -51,6 +51,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   capture environments can report concrete byte sizes instead of falling back to zero for known records.
 - 2026-06-26: added lowering smoke coverage for record-returning scalar task/thread bodies, pinning context-sized
   `%record.*` result storage and runtime result-size operands.
+- 2026-06-26: cleanup thunks now compute deterministic field addresses for non-scalar cleanup-candidate captures,
+  giving future owned-capture drop lowering a concrete insertion point while remaining no-op for drops today.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

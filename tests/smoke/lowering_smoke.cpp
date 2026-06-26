@@ -2226,6 +2226,53 @@ void test_emit_record_task_result_storage_size() {
     assert(result.ir_text.find("ret %record.Pair %tmp") != std::string::npos);
 }
 
+void test_emit_record_capture_cleanup_field_address() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_record_capture_cleanup.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "implements Transferable for Payload\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function on_thread(value: Int64) -> Int64\n"
+        "    let payload: Payload = Payload(value)\n"
+        "    let worker = thread\n"
+        "        payload.value\n"
+        "\n"
+        "    worker.join()\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.Payload = type { i64 }") != std::string::npos);
+    assert(result.ir_text.find("%worker.thread.env = alloca { %record.Payload }") != std::string::npos);
+    assert(result.ir_text.find("store %record.Payload %tmp0, ptr %tmp") != std::string::npos);
+    assert(
+        result.ir_text.find(
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.on_thread.12.0"
+        ) != std::string::npos
+    );
+    assert(
+        result.ir_text.find(
+            ", i64 8, ptr @__orison_thread_cleanup.on_thread.12.0)"
+        ) != std::string::npos
+    );
+    assert(
+        result.ir_text.find(
+            "define private void @__orison_thread_cleanup.on_thread.12.0(ptr %environment) {\n"
+            "entry:\n"
+            "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
+            "  ; cleanup candidate payload: Payload field 0\n"
+            "  ret void\n"
+            "}"
+        ) != std::string::npos
+    );
+}
+
 void test_reject_unsupported_final_if_arm_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_final_if_arm.or";
     auto result = lower_source(
@@ -3070,6 +3117,7 @@ auto main() -> int {
     test_emit_no_capture_task_uses_null_cleanup();
     test_emit_record_thread_result_storage_size();
     test_emit_record_task_result_storage_size();
+    test_emit_record_capture_cleanup_field_address();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();

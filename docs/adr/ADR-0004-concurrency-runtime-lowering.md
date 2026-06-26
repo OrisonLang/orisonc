@@ -76,6 +76,8 @@ drop/cleanup decisions.
   environments to report concrete byte sizes when their record field layouts are known.
 - Scalar task/thread lowering now has smoke coverage for record result storage, including context-sized `%record.*`
   result buffers passed through the runtime ABI.
+- Cleanup thunks now lower cleanup-candidate environment fields to deterministic field addresses, providing the
+  insertion point for future owned-capture drop emission while still emitting no drops today.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
