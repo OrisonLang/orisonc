@@ -2271,6 +2271,8 @@ void test_emit_record_capture_cleanup_field_address() {
             "}"
         ) != std::string::npos
     );
+    assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
 }
 
 void test_reject_unsupported_final_if_arm_expression() {

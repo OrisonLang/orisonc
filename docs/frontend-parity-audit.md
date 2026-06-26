@@ -55,6 +55,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   giving future owned-capture drop lowering a concrete insertion point while remaining no-op for drops today.
 - 2026-06-26: cleanup candidate plans now carry deterministic type-specific drop symbol names, surfaced in cleanup
   thunk comments without emitting drop calls yet.
+- 2026-06-26: added lowering smoke coverage that cleanup candidate drop symbols remain metadata-only today: aggregate
+  cleanup thunks may mention planned `__orison_drop.*` symbols in comments, but must not declare or call them until
+  drop semantics are accepted.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
