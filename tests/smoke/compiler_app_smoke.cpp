@@ -934,6 +934,45 @@ int main() {
         ) != std::string::npos
     );
 
+    auto emit_thread_abandoned_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_thread_abandoned.or";
+    write_concurrency_fixture(
+        emit_thread_abandoned_path,
+        "demo.emit",
+        {
+            "function launch(value: Int64) -> Int64",
+            "    let worker = thread",
+            "        value + 1",
+            "",
+            "    0",
+        }
+    );
+    auto emit_thread_abandoned = run_emit_llvm(app, emit_thread_abandoned_path);
+    assert(emit_thread_abandoned.exit_code == 0);
+    assert(emit_thread_abandoned.stderr_text.empty());
+    assert(
+        emit_thread_abandoned.stdout_text.find(
+            "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)"
+        ) != std::string::npos
+    );
+    assert(
+        emit_thread_abandoned.stdout_text.find(
+            "declare void @__orison_concurrency_handle_destroy(ptr)"
+        ) != std::string::npos
+    );
+    assert(emit_thread_abandoned.stdout_text.find("declare void @__orison_thread_join(ptr)") == std::string::npos);
+    assert(
+        emit_thread_abandoned.stdout_text.find(
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr null)"
+        ) != std::string::npos
+    );
+    assert(
+        emit_thread_abandoned.stdout_text.find(
+            "call void @__orison_concurrency_handle_destroy(ptr %worker)\n"
+            "  ret i64 0"
+        ) != std::string::npos
+    );
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);

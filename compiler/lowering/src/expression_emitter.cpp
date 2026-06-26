@@ -2144,7 +2144,7 @@ auto lowered_expression(
                 auto destroy_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::destroy_handle);
                 output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
                        << "(ptr " << thread_binding->second.handle << ")\n";
-                thread_binding->second.joined = true;
+                thread_binding->second.handle_destroyed = true;
                 return LoweredExpression {
                     .type = thread_binding->second.result_type.type,
                     .value = std::move(result_name),

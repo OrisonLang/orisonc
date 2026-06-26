@@ -223,6 +223,7 @@ auto lower_thread_let_statement(
         .result_storage = std::move(result_storage),
         .result_type = plan->result_type,
     };
+    session.state.thread_binding_order.push_back(statement.name);
     session.state.pending_function_definitions.push_back(std::move(*thunk_definition));
     return true;
 }

@@ -1988,6 +1988,36 @@ void test_emit_scalar_thread_join_expression() {
     assert(result.ir_text.find("ret i64 %tmp") != std::string::npos);
 }
 
+void test_emit_abandoned_scalar_thread_cleanup() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_abandoned_thread_expression.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function on_thread(value: Int64) -> Int64\n"
+        "    let worker = thread\n"
+        "        value + 1\n"
+        "\n"
+        "    0\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_concurrency_handle_destroy(ptr)") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_thread_join(ptr)") == std::string::npos);
+    assert(
+        result.ir_text.find(
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.on_thread.4.0"
+        ) != std::string::npos
+    );
+    assert(
+        result.ir_text.find(
+            "call void @__orison_concurrency_handle_destroy(ptr %worker)\n"
+            "  ret i64 0"
+        ) != std::string::npos
+    );
+}
+
 void test_reject_unsupported_final_if_arm_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_final_if_arm.or";
     auto result = lower_source(
@@ -2826,6 +2856,7 @@ auto main() -> int {
     test_emit_unsafe_function_identity_return();
     test_reject_unsupported_return_expression();
     test_emit_scalar_thread_join_expression();
+    test_emit_abandoned_scalar_thread_cleanup();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();

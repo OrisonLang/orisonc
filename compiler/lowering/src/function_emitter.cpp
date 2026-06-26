@@ -215,6 +215,34 @@ auto is_thread_join_expression(
     return state.thread_bindings.contains(expression.left->left->text);
 }
 
+auto emit_abandoned_thread_handle_cleanup(
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> void {
+    auto destroy_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::destroy_handle);
+    for (auto const& binding_name : session.state.thread_binding_order) {
+        auto binding = session.state.thread_bindings.find(binding_name);
+        if (binding == session.state.thread_bindings.end() ||
+            binding->second.handle_destroyed) {
+            continue;
+        }
+
+        output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
+               << "(ptr " << binding->second.handle << ")\n";
+        binding->second.handle_destroyed = true;
+    }
+}
+
+auto emit_function_return_cleanup(
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    emit_abandoned_thread_handle_cleanup(session, output);
+    return emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output);
+}
+
 auto infer_unit_expression_type(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -948,7 +976,7 @@ auto lower_guard_return_statement(
             diagnostics.error(statement.line, "lowering does not yet support return expressions in Unit guard failure blocks");
             return StatementFlow::failed;
         }
-        if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+        if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
             return StatementFlow::failed;
         }
         output << "  ret void\n";
@@ -978,7 +1006,7 @@ auto lower_guard_return_statement(
         return StatementFlow::failed;
     }
 
-    if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+    if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
         return StatementFlow::failed;
     }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
@@ -1424,7 +1452,7 @@ auto lower_unit_statement(
             diagnostics.error(statement.line, "lowering does not yet support return expressions in Unit functions");
             return StatementFlow::failed;
         }
-        if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+        if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
             return StatementFlow::failed;
         }
         output << "  ret void\n";
@@ -1563,7 +1591,7 @@ void emit_function_body(
         }
 
         if (flow == StatementFlow::falls_through) {
-            if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+            if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
                 return;
             }
             output << "  ret void\n";
@@ -1822,7 +1850,7 @@ void emit_function_body(
         return;
     }
 
-    if (!emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output)) {
+    if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
         return;
     }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
