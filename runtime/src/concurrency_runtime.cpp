@@ -5,6 +5,7 @@
 
 using OrisonConcurrencyEntry = void (*)(void* environment, void* result_storage);
 using OrisonConcurrencyCleanup = void (*)(void* environment);
+using OrisonThreadEntry = void* (*)(void* start);
 
 struct OrisonConcurrencyHandle {
     pthread_t thread;
@@ -17,6 +18,30 @@ struct OrisonConcurrencyStart {
     void* environment;
     void* result_storage;
 };
+
+#ifdef ORISON_RUNTIME_TESTING
+bool force_thread_create_failure = false;
+
+extern "C" auto __orison_runtime_test_force_thread_create_failure(bool force) -> void
+{
+    force_thread_create_failure = force;
+}
+#endif
+
+auto orison_pthread_create(
+    pthread_t* thread,
+    pthread_attr_t const* attributes,
+    OrisonThreadEntry entry,
+    void* start
+) -> int
+{
+#ifdef ORISON_RUNTIME_TESTING
+    if (force_thread_create_failure) {
+        return 1;
+    }
+#endif
+    return pthread_create(thread, attributes, entry, start);
+}
 
 auto orison_concurrency_trampoline(void* raw_start) -> void*
 {
@@ -60,7 +85,7 @@ auto orison_concurrency_spawn(
     start->cleanup = reinterpret_cast<OrisonConcurrencyCleanup>(cleanup);
     start->environment = environment;
     start->result_storage = result_storage;
-    if (pthread_create(&handle->thread, nullptr, orison_concurrency_trampoline, start) != 0) {
+    if (orison_pthread_create(&handle->thread, nullptr, orison_concurrency_trampoline, start) != 0) {
         std::free(handle);
         std::free(start);
         if (cleanup != nullptr) {

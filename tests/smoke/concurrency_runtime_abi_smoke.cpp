@@ -18,6 +18,7 @@ extern "C" auto __orison_task_spawn(
 ) -> void*;
 extern "C" auto __orison_task_await(void* handle) -> void;
 extern "C" auto __orison_concurrency_handle_destroy(void* handle) -> void;
+extern "C" auto __orison_runtime_test_force_thread_create_failure(bool force) -> void;
 
 auto add_one_entry(void* environment, void* result_storage) -> void
 {
@@ -49,6 +50,13 @@ auto cleanup_callback(void* environment) -> void
 {
     auto* state = static_cast<CleanupEnvironment*>(environment);
     assert(state->entry_ran == 1);
+    state->cleanup_ran = 1;
+}
+
+auto cleanup_after_spawn_failure(void* environment) -> void
+{
+    auto* state = static_cast<CleanupEnvironment*>(environment);
+    assert(state->entry_ran == 0);
     state->cleanup_ran = 1;
 }
 
@@ -122,6 +130,24 @@ auto test_cleanup_runs_before_abandoned_destroy_returns() -> void
     assert(environment.cleanup_ran == 1);
 }
 
+auto test_cleanup_runs_on_spawn_setup_failure() -> void
+{
+    CleanupEnvironment environment = {0, 0};
+    __orison_runtime_test_force_thread_create_failure(true);
+    void* handle = __orison_thread_spawn(
+        abi_pointer(cleanup_entry),
+        &environment,
+        nullptr,
+        0,
+        abi_pointer(cleanup_after_spawn_failure)
+    );
+    __orison_runtime_test_force_thread_create_failure(false);
+
+    assert(handle == nullptr);
+    assert(environment.entry_ran == 0);
+    assert(environment.cleanup_ran == 1);
+}
+
 auto main() -> int
 {
     test_thread_join_result_and_destroy();
@@ -129,5 +155,6 @@ auto main() -> int
     test_abandoned_handle_destroy_waits();
     test_cleanup_runs_after_thread_entry();
     test_cleanup_runs_before_abandoned_destroy_returns();
+    test_cleanup_runs_on_spawn_setup_failure();
     return 0;
 }

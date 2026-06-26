@@ -10,3 +10,7 @@ target_link_libraries(orison_runtime_concurrency
 )
 
 target_compile_features(orison_runtime_concurrency PRIVATE cxx_std_23)
+
+if(ORISON_ENABLE_TESTS)
+    target_compile_definitions(orison_runtime_concurrency PRIVATE ORISON_RUNTIME_TESTING)
+endif()

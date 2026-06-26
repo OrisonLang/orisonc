@@ -65,6 +65,8 @@ drop/cleanup decisions.
   synchronization, and abandoned-handle destroy waiting behavior.
 - The runtime now honors the optional spawn cleanup callback by invoking it with the environment pointer after entry
   completion, and also on spawn setup failure before returning `null`.
+- Direct runtime ABI smoke coverage uses a test-only thread-create failure seam to deterministically verify cleanup on
+  spawn setup failure.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
