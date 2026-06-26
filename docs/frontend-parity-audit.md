@@ -43,6 +43,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-26: scalar task/thread lowering now emits deterministic private cleanup thunks for captured environments and
   passes them through the runtime cleanup callback slot; the thunk body is currently a no-op pending owned-capture drop
   lowering.
+- 2026-06-26: added lowering smoke coverage that no-capture scalar task/thread expressions still pass `ptr null` for
+  the runtime cleanup slot and do not emit unnecessary cleanup thunks.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
