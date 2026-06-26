@@ -231,6 +231,17 @@ auto emit_abandoned_thread_handle_cleanup(
                << "(ptr " << binding->second.handle << ")\n";
         binding->second.handle_destroyed = true;
     }
+    for (auto const& binding_name : session.state.task_binding_order) {
+        auto binding = session.state.task_bindings.find(binding_name);
+        if (binding == session.state.task_bindings.end() ||
+            binding->second.handle_destroyed) {
+            continue;
+        }
+
+        output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
+               << "(ptr " << binding->second.handle << ")\n";
+        binding->second.handle_destroyed = true;
+    }
 }
 
 auto emit_function_return_cleanup(
@@ -1513,10 +1524,6 @@ void emit_function_body(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) {
-    if (function.is_async) {
-        diagnostics.error(function.line, "lowering does not yet support async functions");
-        return;
-    }
     if (!function.generic_parameters.empty()) {
         diagnostics.error(function.line, "lowering does not yet support generic functions");
         return;
@@ -1628,7 +1635,8 @@ void emit_function_body(
             return;
         }
         if (!is_last_statement && statement.kind == syntax::StatementKind::let_binding) {
-            if (statement.expression.kind == syntax::ExpressionKind::thread) {
+            if (statement.expression.kind == syntax::ExpressionKind::thread ||
+                statement.expression.kind == syntax::ExpressionKind::task) {
                 if (!lower_let_statement(
                         statement,
                         std::string(concurrency_handle_llvm_type()),

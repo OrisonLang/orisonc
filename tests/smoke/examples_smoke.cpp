@@ -28,7 +28,7 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 63> {
+    constexpr auto backend_examples = std::array<std::string_view, 64> {
         "ffi_aggregate_scalar_parameters.or",
         "ffi_fixed_parameters.or",
         "local_helper_array_for.or",
@@ -92,6 +92,7 @@ auto main() -> int {
         "pointer_record_field_assignment.or",
         "pointer_record_nested_addressing.or",
         "tour_09_ffi_printf.or",
+        "tour_11_concurrency.or",
     };
     for (auto name : backend_examples) {
         auto backend = pipeline.emit_object(examples / name);

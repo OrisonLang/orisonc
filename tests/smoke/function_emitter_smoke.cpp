@@ -1385,6 +1385,13 @@ int main() {
 
     parse_result.module.functions.front().is_async = true;
     diagnostics = {};
+    auto async_expected = std::string {
+        "define i32 @add(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = add i32 %left, %right\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+    };
     assert(
         orison::lowering::emit_function(
             parse_result.module.functions.front(),
@@ -1392,10 +1399,10 @@ int main() {
             context,
             strings,
             diagnostics
-        ).empty()
+        ) ==
+        async_expected
     );
-    assert(diagnostics.has_errors());
-    assert(diagnostics.entries().front().message == "lowering does not yet support async functions");
+    assert(!diagnostics.has_errors());
 
     parse_result.module.functions.front().is_async = false;
     auto unsupported_return = context.functions.at("add");

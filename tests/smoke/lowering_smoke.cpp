@@ -2036,6 +2036,43 @@ void test_emit_abandoned_scalar_thread_cleanup() {
     );
 }
 
+void test_emit_scalar_task_await_expression() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_task_expression.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "async function on_task(value: Int64) -> Int64\n"
+        "    let pending = task\n"
+        "        value + 1\n"
+        "\n"
+        "    await pending\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_concurrency_spawn_failed()") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_task_await(ptr)") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_concurrency_handle_destroy(ptr)") != std::string::npos);
+    assert(
+        result.ir_text.find(
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.on_task.4.0"
+        ) != std::string::npos
+    );
+    assert(result.ir_text.find("icmp eq ptr %pending, null") != std::string::npos);
+    assert(
+        result.ir_text.find(
+            "call void @__orison_concurrency_spawn_failed()\n"
+            "  unreachable\n"
+            "pending.task.spawn_ok.0:"
+        ) != std::string::npos
+    );
+    assert(result.ir_text.find("call void @__orison_task_await(ptr %pending)") != std::string::npos);
+    assert(result.ir_text.find("load i64, ptr %pending.task.result") != std::string::npos);
+    assert(result.ir_text.find("call void @__orison_concurrency_handle_destroy(ptr %pending)") != std::string::npos);
+    assert(result.ir_text.find("ret i64 %tmp") != std::string::npos);
+}
+
 void test_reject_unsupported_final_if_arm_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsupported_final_if_arm.or";
     auto result = lower_source(
@@ -2875,6 +2912,7 @@ auto main() -> int {
     test_reject_unsupported_return_expression();
     test_emit_scalar_thread_join_expression();
     test_emit_abandoned_scalar_thread_cleanup();
+    test_emit_scalar_task_await_expression();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();

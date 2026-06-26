@@ -504,6 +504,16 @@ auto inferred_expression_type(
         };
     }
 
+    if (expression.kind == syntax::ExpressionKind::unary &&
+        expression.text == "await" &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
+        auto task_binding = state.task_bindings.find(expression.left->text);
+        if (task_binding != state.task_bindings.end()) {
+            return task_binding->second.result_type;
+        }
+    }
+
     if (expression.kind == syntax::ExpressionKind::array_literal) {
         if (expression.arguments.empty()) {
             return std::nullopt;
@@ -2244,6 +2254,39 @@ auto lowered_expression(
 
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         return emit_value_call(std::move(temporary_name), method, *arguments, output);
+    }
+
+    if (expression.kind == syntax::ExpressionKind::unary &&
+        expression.text == "await" &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
+        auto task_binding = state.task_bindings.find(expression.left->text);
+        if (task_binding != state.task_bindings.end()) {
+            if (task_binding->second.result_type.type != expected_llvm_type) {
+                record_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::call_return_type_mismatch,
+                    "task await returns " + task_binding->second.result_type.type +
+                        ", expected " + std::string(expected_llvm_type)
+                );
+                return std::nullopt;
+            }
+            auto await_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::await_task);
+            output << "  call " << await_call.return_type << " @" << await_call.symbol_name
+                   << "(ptr " << task_binding->second.handle << ")\n";
+            auto result_name = next_llvm_temporary_name(state.next_temporary_index);
+            output << "  " << result_name << " = load " << task_binding->second.result_type.type
+                   << ", ptr " << task_binding->second.result_storage << "\n";
+            auto destroy_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::destroy_handle);
+            output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
+                   << "(ptr " << task_binding->second.handle << ")\n";
+            task_binding->second.handle_destroyed = true;
+            return LoweredExpression {
+                .type = task_binding->second.result_type.type,
+                .value = std::move(result_name),
+                .signedness = task_binding->second.result_type.signedness,
+            };
+        }
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&

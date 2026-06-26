@@ -52,6 +52,10 @@ auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::thread;
 }
 
+auto is_task_expression(syntax::ExpressionSyntax const& expression) -> bool {
+    return expression.kind == syntax::ExpressionKind::task;
+}
+
 auto thread_body_result_expression(
     syntax::ExpressionSyntax const& expression
 ) -> syntax::ExpressionSyntax const* {
@@ -75,9 +79,15 @@ auto emit_thread_entry_thunk(
     FunctionLoweringSession& parent_session,
     diagnostics::DiagnosticBag& diagnostics
 ) -> std::optional<std::string> {
+    auto const expression_name = plan.kind == ConcurrencyPlanKind::thread
+        ? std::string_view {"thread"}
+        : std::string_view {"task"};
     auto const* result_expression = thread_body_result_expression(expression);
     if (result_expression == nullptr) {
-        diagnostics.error(expression.line, "lowering does not yet support this thread body");
+        diagnostics.error(
+            expression.line,
+            "lowering does not yet support this " + std::string(expression_name) + " body"
+        );
         return std::nullopt;
     }
 
@@ -126,7 +136,7 @@ auto emit_thread_entry_thunk(
         auto detail = render_expression_lowering_failure(thunk_failures.expression);
         diagnostics.error(
             result_expression->line,
-            "lowering does not yet support this thread body result" +
+            "lowering does not yet support this " + std::string(expression_name) + " body result" +
                 (detail.empty() ? std::string {} : ": " + detail)
         );
         return std::nullopt;
@@ -141,13 +151,20 @@ auto emit_thread_entry_thunk(
 
 auto lower_thread_let_statement(
     syntax::StatementSyntax const& statement,
+    ConcurrencyPlanKind expected_kind,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
+    auto const expression_name = expected_kind == ConcurrencyPlanKind::thread
+        ? std::string_view {"thread"}
+        : std::string_view {"task"};
     if (session.semantics == nullptr) {
-        diagnostics.error(statement.line, "lowering thread expressions requires semantic capture analysis");
+        diagnostics.error(
+            statement.line,
+            "lowering " + std::string(expression_name) + " expressions requires semantic capture analysis"
+        );
         return false;
     }
 
@@ -159,8 +176,11 @@ auto lower_thread_let_statement(
         session.state,
         *session.semantics
     );
-    if (!plan.has_value() || plan->kind != ConcurrencyPlanKind::thread) {
-        diagnostics.error(statement.line, "lowering does not yet support this thread expression");
+    if (!plan.has_value() || plan->kind != expected_kind) {
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this " + std::string(expression_name) + " expression"
+        );
         return false;
     }
 
@@ -175,19 +195,26 @@ auto lower_thread_let_statement(
         return false;
     }
 
+    auto const binding_prefix = statement.name + "." + std::string(expression_name);
     auto environment_storage = next_llvm_local_value_name(
-        statement.name + ".thread.env",
+        binding_prefix + ".env",
         session.state.local_name_counts
     );
     output << "  " << environment_storage << " = alloca " << plan->environment_layout.llvm_type << "\n";
     for (auto const& capture : plan->captures) {
         if (capture.llvm_type.empty()) {
-            diagnostics.error(statement.line, "lowering does not yet support this thread capture type");
+            diagnostics.error(
+                statement.line,
+                "lowering does not yet support this " + std::string(expression_name) + " capture type"
+            );
             return false;
         }
         auto captured_value = session.state.immutable_bindings.find(capture.name);
         if (captured_value == session.state.immutable_bindings.end()) {
-            diagnostics.error(statement.line, "lowering does not yet support this thread capture source");
+            diagnostics.error(
+                statement.line,
+                "lowering does not yet support this " + std::string(expression_name) + " capture source"
+            );
             return false;
         }
         auto field_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
@@ -198,13 +225,13 @@ auto lower_thread_let_statement(
     }
 
     auto result_storage = next_llvm_local_value_name(
-        statement.name + ".thread.result",
+        binding_prefix + ".result",
         session.state.local_name_counts
     );
     output << "  " << result_storage << " = alloca " << plan->result_storage.llvm_type << "\n";
 
     auto handle_name = next_llvm_local_value_name(statement.name, session.state.local_name_counts);
-    auto runtime_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::spawn_thread);
+    auto runtime_call = concurrency_runtime_call(plan->spawn_operation);
     output << "  " << handle_name << " = call " << runtime_call.return_type
            << " @" << runtime_call.symbol_name
            << "(ptr @" << plan->thunk_symbol_name
@@ -215,8 +242,8 @@ auto lower_thread_let_statement(
 
     auto const spawn_failure_check = next_llvm_temporary_name(session.state.next_temporary_index);
     auto const spawn_block_index = next_llvm_block_index(session.state.next_block_index);
-    auto const spawn_failed_block = llvm_block_name(statement.name + ".thread.spawn_failed", spawn_block_index);
-    auto const spawn_ok_block = llvm_block_name(statement.name + ".thread.spawn_ok", spawn_block_index);
+    auto const spawn_failed_block = llvm_block_name(binding_prefix + ".spawn_failed", spawn_block_index);
+    auto const spawn_ok_block = llvm_block_name(binding_prefix + ".spawn_ok", spawn_block_index);
     output << "  " << spawn_failure_check << " = icmp eq ptr " << handle_name << ", null\n";
     emit_llvm_conditional_branch(output, spawn_failure_check, spawn_failed_block, spawn_ok_block);
     emit_llvm_block_label(output, spawn_failed_block);
@@ -231,12 +258,18 @@ auto lower_thread_let_statement(
         .value = handle_name,
         .signedness = IntegerSignedness::not_integer,
     };
-    session.state.thread_bindings[statement.name] = ThreadBinding {
+    auto binding = ConcurrencyBinding {
         .handle = std::move(handle_name),
         .result_storage = std::move(result_storage),
         .result_type = plan->result_type,
     };
-    session.state.thread_binding_order.push_back(statement.name);
+    if (expected_kind == ConcurrencyPlanKind::thread) {
+        session.state.thread_bindings[statement.name] = std::move(binding);
+        session.state.thread_binding_order.push_back(statement.name);
+    } else {
+        session.state.task_bindings[statement.name] = std::move(binding);
+        session.state.task_binding_order.push_back(statement.name);
+    }
     session.state.pending_function_definitions.push_back(std::move(*thunk_definition));
     return true;
 }
@@ -737,7 +770,24 @@ auto lower_let_statement(
     std::ostringstream& output
 ) -> bool {
     if (is_thread_expression(statement.expression)) {
-        return lower_thread_let_statement(statement, context, session, diagnostics, output);
+        return lower_thread_let_statement(
+            statement,
+            ConcurrencyPlanKind::thread,
+            context,
+            session,
+            diagnostics,
+            output
+        );
+    }
+    if (is_task_expression(statement.expression)) {
+        return lower_thread_let_statement(
+            statement,
+            ConcurrencyPlanKind::task,
+            context,
+            session,
+            diagnostics,
+            output
+        );
     }
 
     auto type = LoweredType {

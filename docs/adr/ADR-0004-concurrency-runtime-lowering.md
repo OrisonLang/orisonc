@@ -52,9 +52,13 @@ drop/cleanup decisions.
 - Scalar thread spawn results are checked for `null` immediately after the runtime call. A null result branches to
   `__orison_concurrency_spawn_failed()` followed by `unreachable`; only the non-null continuation binds the handle for
   later join or abandoned-handle cleanup.
-- `tour_11_concurrency.or` must remain frontend-only until async/task lowering, cleanup policy, and runtime linking are
-  implemented.
+- Scalar `task` bindings now reuse the thread lowering machinery for capture environment allocation, result storage
+  allocation, entry thunk emission, spawn failure checks, and abandoned-handle cleanup.
+- Scalar `await` expressions for lowered task bindings call `__orison_task_await(handle)`, load the typed result from
+  compiler-owned result storage, and destroy the handle after the load.
+- `async function` lowering is currently a narrow backend admission rule for scalar task/await bodies; it does not yet
+  model a distinct async function ABI, suspension, cancellation, or executor integration.
 
 ## Follow-up work
 
-- Apply the same spawn-failure rule to task lowering when task lowering exists.
+- Define the real async function ABI, suspension model, cancellation policy, and executor/runtime linking model.

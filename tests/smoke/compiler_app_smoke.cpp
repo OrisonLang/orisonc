@@ -999,6 +999,58 @@ int main() {
         ) != std::string::npos
     );
 
+    auto emit_task_spawn_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_task_spawn.or";
+    write_concurrency_fixture(
+        emit_task_spawn_path,
+        "demo.emit",
+        {
+            "async function launch(value: Int64) -> Int64",
+            "    let pending = task",
+            "        value + 1",
+            "",
+            "    await pending",
+        }
+    );
+    auto emit_task_spawn = run_emit_llvm(app, emit_task_spawn_path);
+    assert(emit_task_spawn.exit_code == 0);
+    assert(emit_task_spawn.stderr_text.empty());
+    assert(
+        emit_task_spawn.stdout_text.find(
+            "declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)"
+        ) != std::string::npos
+    );
+    assert(
+        emit_task_spawn.stdout_text.find(
+            "declare void @__orison_concurrency_spawn_failed()"
+        ) != std::string::npos
+    );
+    assert(
+        emit_task_spawn.stdout_text.find(
+            "declare void @__orison_task_await(ptr)"
+        ) != std::string::npos
+    );
+    assert(
+        emit_task_spawn.stdout_text.find(
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.launch.3.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr null)"
+        ) != std::string::npos
+    );
+    assert(emit_task_spawn.stdout_text.find("icmp eq ptr %pending, null") != std::string::npos);
+    assert(
+        emit_task_spawn.stdout_text.find(
+            "call void @__orison_concurrency_spawn_failed()\n"
+            "  unreachable\n"
+            "pending.task.spawn_ok.0:"
+        ) != std::string::npos
+    );
+    assert(emit_task_spawn.stdout_text.find("call void @__orison_task_await(ptr %pending)") != std::string::npos);
+    assert(emit_task_spawn.stdout_text.find("load i64, ptr %pending.task.result") != std::string::npos);
+    assert(
+        emit_task_spawn.stdout_text.find(
+            "call void @__orison_concurrency_handle_destroy(ptr %pending)"
+        ) != std::string::npos
+    );
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);

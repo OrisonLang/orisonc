@@ -91,6 +91,15 @@ auto collect_concurrency_runtime_operations(syntax::ExpressionSyntax const& expr
         operations.push_back(ConcurrencyRuntimeOperation::spawn_failed);
         operations.push_back(ConcurrencyRuntimeOperation::destroy_handle);
     }
+    if (expression.kind == syntax::ExpressionKind::task) {
+        operations.push_back(ConcurrencyRuntimeOperation::spawn_task);
+        operations.push_back(ConcurrencyRuntimeOperation::spawn_failed);
+        operations.push_back(ConcurrencyRuntimeOperation::destroy_handle);
+    }
+    if (expression.kind == syntax::ExpressionKind::unary && expression.text == "await") {
+        operations.push_back(ConcurrencyRuntimeOperation::await_task);
+        operations.push_back(ConcurrencyRuntimeOperation::destroy_handle);
+    }
     if (expression.kind == syntax::ExpressionKind::call &&
         expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::member_access &&

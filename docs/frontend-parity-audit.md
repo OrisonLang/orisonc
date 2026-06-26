@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: scalar task lowering now reuses the thread path for capture environments, result storage, entry thunks,
+  spawn failure checks, abandoned-handle cleanup, and `await` result loads; `async function` lowering is still a narrow
+  scalar backend admission rule rather than a real async ABI or suspension model.
 - 2026-06-25: scalar thread spawn lowering now checks the returned handle for `null` and branches to
   `__orison_concurrency_spawn_failed()` plus `unreachable` before any join or abandoned-handle cleanup can observe the
   binding.
