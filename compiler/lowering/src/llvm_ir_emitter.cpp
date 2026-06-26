@@ -94,6 +94,7 @@ auto collect_concurrency_runtime_operations(syntax::ExpressionSyntax const& expr
         expression.left->kind == syntax::ExpressionKind::member_access &&
         expression.left->text == "join") {
         operations.push_back(ConcurrencyRuntimeOperation::join_thread);
+        operations.push_back(ConcurrencyRuntimeOperation::destroy_handle);
     }
     for (auto const& argument : expression.arguments) {
         auto argument_operations = collect_concurrency_runtime_operations(argument);

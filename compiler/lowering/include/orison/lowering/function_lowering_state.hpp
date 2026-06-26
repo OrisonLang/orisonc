@@ -27,6 +27,7 @@ struct ThreadBinding {
     std::string handle;
     std::string result_storage;
     LoweredType result_type;
+    bool joined = false;
 };
 
 struct DeferredCleanupBlock {

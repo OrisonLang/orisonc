@@ -906,6 +906,11 @@ int main() {
             "declare void @__orison_thread_join(ptr)"
         ) != std::string::npos
     );
+    assert(
+        emit_thread_spawn.stdout_text.find(
+            "declare void @__orison_concurrency_handle_destroy(ptr)"
+        ) != std::string::npos
+    );
     assert(emit_thread_spawn.stdout_text.find("%worker.thread.env = alloca { i64 }") != std::string::npos);
     assert(emit_thread_spawn.stdout_text.find("store i64 %value, ptr %tmp") != std::string::npos);
     assert(emit_thread_spawn.stdout_text.find("%worker.thread.result = alloca i64") != std::string::npos);
@@ -923,6 +928,11 @@ int main() {
     assert(emit_thread_spawn.stdout_text.find("store i64 %tmp2, ptr %result_storage") != std::string::npos);
     assert(emit_thread_spawn.stdout_text.find("call void @__orison_thread_join(ptr %worker)") != std::string::npos);
     assert(emit_thread_spawn.stdout_text.find("load i64, ptr %worker.thread.result") != std::string::npos);
+    assert(
+        emit_thread_spawn.stdout_text.find(
+            "call void @__orison_concurrency_handle_destroy(ptr %worker)"
+        ) != std::string::npos
+    );
 
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);

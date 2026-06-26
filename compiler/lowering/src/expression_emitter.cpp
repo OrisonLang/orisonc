@@ -2141,6 +2141,10 @@ auto lowered_expression(
                 auto result_name = next_llvm_temporary_name(state.next_temporary_index);
                 output << "  " << result_name << " = load " << thread_binding->second.result_type.type
                        << ", ptr " << thread_binding->second.result_storage << "\n";
+                auto destroy_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::destroy_handle);
+                output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
+                       << "(ptr " << thread_binding->second.handle << ")\n";
+                thread_binding->second.joined = true;
                 return LoweredExpression {
                     .type = thread_binding->second.result_type.type,
                     .value = std::move(result_name),

@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-06-25: scalar `.join()` cleanup now emits `__orison_concurrency_handle_destroy(handle)` after loading the joined
+  thread result, making successfully joined handles explicitly released.
 - 2026-06-25: scalar `.join()` expressions for lowered thread bindings now emit `__orison_thread_join(handle)`, load the
   typed result from compiler-owned result storage, and return that value through ordinary expression lowering.
 - 2026-06-25: scalar `thread` let-bindings now emit private entry thunks that load captures from the planned

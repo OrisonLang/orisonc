@@ -45,9 +45,10 @@ drop/cleanup decisions.
   storage.
 - Scalar `.join()` expressions can now lower by calling `__orison_thread_join(handle)` and loading the typed value from
   compiler-owned result storage.
+- Successfully joined scalar thread handles are destroyed immediately after the typed result is loaded.
 - `tour_11_concurrency.or` must remain frontend-only until async/task lowering, cleanup policy, and runtime linking are
   implemented.
 
 ## Follow-up work
 
-- Define cleanup behavior for successfully joined handles, abandoned handles, and failed spawn paths.
+- Define cleanup behavior for abandoned handles and failed spawn paths.
