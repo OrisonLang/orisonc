@@ -12,6 +12,7 @@ typedef struct orison_concurrency_handle {
 
 typedef struct orison_concurrency_start {
     orison_concurrency_entry entry;
+    orison_concurrency_cleanup cleanup;
     void* environment;
     void* result_storage;
 } orison_concurrency_start;
@@ -19,10 +20,14 @@ typedef struct orison_concurrency_start {
 static void* orison_concurrency_trampoline(void* raw_start) {
     orison_concurrency_start* start = (orison_concurrency_start*)raw_start;
     orison_concurrency_entry entry = start->entry;
+    orison_concurrency_cleanup cleanup = start->cleanup;
     void* environment = start->environment;
     void* result_storage = start->result_storage;
     free(start);
     entry(environment, result_storage);
+    if (cleanup != NULL) {
+        cleanup(environment);
+    }
     return NULL;
 }
 
@@ -34,7 +39,6 @@ static void* orison_concurrency_spawn(
     void* cleanup
 ) {
     (void)result_size;
-    (void)cleanup;
 
     orison_concurrency_handle* handle =
         (orison_concurrency_handle*)calloc(1, sizeof(orison_concurrency_handle));
@@ -43,15 +47,22 @@ static void* orison_concurrency_spawn(
     if (handle == NULL || start == NULL) {
         free(handle);
         free(start);
+        if (cleanup != NULL) {
+            ((orison_concurrency_cleanup)cleanup)(environment);
+        }
         return NULL;
     }
 
     start->entry = (orison_concurrency_entry)entry;
+    start->cleanup = (orison_concurrency_cleanup)cleanup;
     start->environment = environment;
     start->result_storage = result_storage;
     if (pthread_create(&handle->thread, NULL, orison_concurrency_trampoline, start) != 0) {
         free(handle);
         free(start);
+        if (cleanup != NULL) {
+            ((orison_concurrency_cleanup)cleanup)(environment);
+        }
         return NULL;
     }
 

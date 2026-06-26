@@ -63,6 +63,8 @@ drop/cleanup decisions.
   cannot outlive a still-running runtime thread.
 - Direct runtime ABI smoke coverage now verifies thread join result transfer, task await result transfer, destroy after
   synchronization, and abandoned-handle destroy waiting behavior.
+- The runtime now honors the optional spawn cleanup callback by invoking it with the environment pointer after entry
+  completion, and also on spawn setup failure before returning `null`.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
