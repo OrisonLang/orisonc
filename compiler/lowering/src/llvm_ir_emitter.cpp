@@ -127,7 +127,7 @@ auto LlvmIrEmitter::emit(
         .lowering = context,
         .string_constants = string_constants,
     };
-    result.planned_drop_declarations = plan_concurrency_drop_declarations(
+    result.planned_drop_declarations = plan_concurrency_planned_drops(
         module,
         emission_context,
         semantic_result

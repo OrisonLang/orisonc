@@ -41,7 +41,7 @@ auto emit_module_prelude(
     StringConstantTable const& string_constants,
     std::vector<LoweredFunctionSignature> const& foreign_declarations,
     std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations,
-    std::vector<PlannedDropDeclaration> const& drop_declarations
+    std::vector<PlannedDropDeclaration> const& planned_drop_declarations
 ) -> std::string {
     auto output = std::ostringstream {};
     for (auto const& constant : string_constants.constants) {
@@ -94,7 +94,7 @@ auto emit_module_prelude(
     }
 
     auto emitted_drop_symbols = std::vector<std::string_view> {};
-    for (auto const& declaration : drop_declarations) {
+    for (auto const& declaration : planned_drop_declarations) {
         if (!declaration.emit_declaration) {
             continue;
         }

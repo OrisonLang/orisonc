@@ -75,7 +75,7 @@ auto plan_concurrency_expression(
     semantics::SemanticAnalysisResult const& semantics
 ) -> std::optional<ConcurrencyExpressionPlan>;
 
-auto plan_concurrency_drop_declarations(
+auto plan_concurrency_planned_drops(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
