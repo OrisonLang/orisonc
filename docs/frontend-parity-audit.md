@@ -67,6 +67,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   drop-declaration discovery, reducing duplicated recursion without changing generated IR.
 - 2026-06-26: added dedicated syntax traversal smoke coverage for assignment targets, switch patterns/cases, nested
   task/thread bodies, `await`, `.join()`, implementation methods, and extension methods.
+- 2026-06-26: planned drop declarations now retain source type and concurrency expression line metadata, giving future
+  diagnostics a precise discovery site without emitting drop declarations or calls.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

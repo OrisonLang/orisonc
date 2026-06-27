@@ -86,6 +86,8 @@ drop/cleanup decisions.
   needed `__orison_drop.<Type>` symbols are discoverable end-to-end without changing emitted IR.
 - Lowering metadata scans now share a syntax traversal helper so runtime-symbol discovery and disabled drop-declaration
   discovery walk expressions consistently.
+- Planned drop declarations now retain the source type and concurrency expression line where the future drop need was
+  discovered, while still emitting no drop ABI by default.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

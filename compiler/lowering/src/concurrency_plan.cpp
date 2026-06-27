@@ -315,6 +315,8 @@ void collect_drop_declarations_from_expression(
             }
             declarations.push_back(DropPreludeDeclaration {
                 .symbol_name = candidate.drop_symbol_name,
+                .source_type_name = candidate.source_type_name,
+                .discovery_line = expression.line,
             });
         }
     }

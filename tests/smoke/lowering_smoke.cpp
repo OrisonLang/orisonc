@@ -2250,6 +2250,8 @@ void test_emit_record_capture_cleanup_field_address() {
     assert(!result.has_errors());
     assert(result.planned_drop_declarations.size() == 1);
     assert(result.planned_drop_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(result.planned_drop_declarations.front().source_type_name == "Payload");
+    assert(result.planned_drop_declarations.front().discovery_line == 12);
     assert(!result.planned_drop_declarations.front().emit_declaration);
     assert(result.ir_text.find("%record.Payload = type { i64 }") != std::string::npos);
     assert(result.ir_text.find("%worker.thread.env = alloca { %record.Payload }") != std::string::npos);
