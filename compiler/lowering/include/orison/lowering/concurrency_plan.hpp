@@ -79,6 +79,6 @@ auto plan_concurrency_drop_declarations(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
-) -> std::vector<DropPreludeDeclaration>;
+) -> std::vector<PlannedDropDeclaration>;
 
 }  // namespace orison::lowering

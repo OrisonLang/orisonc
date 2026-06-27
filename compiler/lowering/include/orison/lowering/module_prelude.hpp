@@ -13,7 +13,7 @@ auto emit_module_prelude(
     StringConstantTable const& string_constants,
     std::vector<LoweredFunctionSignature> const& foreign_declarations,
     std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations = {},
-    std::vector<DropPreludeDeclaration> const& drop_declarations = {}
+    std::vector<PlannedDropDeclaration> const& drop_declarations = {}
 ) -> std::string;
 
 }  // namespace orison::lowering

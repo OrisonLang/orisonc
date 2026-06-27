@@ -14,7 +14,7 @@ namespace orison::lowering {
 struct LlvmIrEmissionResult {
     diagnostics::DiagnosticBag diagnostics;
     std::string ir_text;
-    std::vector<DropPreludeDeclaration> planned_drop_declarations;
+    std::vector<PlannedDropDeclaration> planned_drop_declarations;
 
     auto has_errors() const -> bool;
     auto render(std::string_view path) const -> std::string;

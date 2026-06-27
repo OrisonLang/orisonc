@@ -5,7 +5,7 @@
 
 namespace orison::lowering {
 
-auto format_planned_drop_declaration(DropPreludeDeclaration const& declaration) -> std::string {
+auto format_planned_drop_declaration(PlannedDropDeclaration const& declaration) -> std::string {
     auto output = std::ostringstream {};
     output << "planned drop " << declaration.symbol_name;
     if (!declaration.source_type_name.empty()) {
@@ -21,8 +21,8 @@ auto format_planned_drop_declaration(DropPreludeDeclaration const& declaration) 
 }
 
 auto add_planned_drop_declaration(
-    std::vector<DropPreludeDeclaration>& declarations,
-    DropPreludeDeclaration declaration
+    std::vector<PlannedDropDeclaration>& declarations,
+    PlannedDropDeclaration declaration
 ) -> bool {
     for (auto const& existing_declaration : declarations) {
         if (existing_declaration.symbol_name == declaration.symbol_name) {

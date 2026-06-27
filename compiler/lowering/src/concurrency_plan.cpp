@@ -273,7 +273,7 @@ void collect_drop_declarations_from_expression(
     syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics,
-    std::vector<DropPreludeDeclaration>& declarations
+    std::vector<PlannedDropDeclaration>& declarations
 ) {
     if (is_concurrency_expression(expression)) {
         auto captures = std::vector<ConcurrencyCapturePlan> {};
@@ -299,7 +299,7 @@ void collect_drop_declarations_from_expression(
 
         auto cleanup = cleanup_plan_for(captures);
         for (auto const& candidate : cleanup.drop_candidates) {
-            add_planned_drop_declaration(declarations, DropPreludeDeclaration {
+            add_planned_drop_declaration(declarations, PlannedDropDeclaration {
                 .symbol_name = candidate.drop_symbol_name,
                 .source_type_name = candidate.source_type_name,
                 .discovery_line = expression.line,
@@ -387,8 +387,8 @@ auto plan_concurrency_drop_declarations(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
-) -> std::vector<DropPreludeDeclaration> {
-    auto declarations = std::vector<DropPreludeDeclaration> {};
+) -> std::vector<PlannedDropDeclaration> {
+    auto declarations = std::vector<PlannedDropDeclaration> {};
     walk_module_expressions(module, [&](syntax::ExpressionSyntax const& expression) {
         collect_drop_declarations_from_expression(expression, context, semantics, declarations);
     });
