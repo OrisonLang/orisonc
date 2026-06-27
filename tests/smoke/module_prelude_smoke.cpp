@@ -85,6 +85,25 @@ int main() {
         ) ==
         "planned drop __orison_drop.Payload for Payload discovered at line 12 (metadata only)"
     );
+    auto planned_drops = std::vector<orison::lowering::DropPreludeDeclaration> {};
+    assert(orison::lowering::add_planned_drop_declaration(
+        planned_drops,
+        orison::lowering::DropPreludeDeclaration {
+            .symbol_name = "__orison_drop.Payload",
+            .source_type_name = "Payload",
+            .discovery_line = 12,
+        }
+    ));
+    assert(!orison::lowering::add_planned_drop_declaration(
+        planned_drops,
+        orison::lowering::DropPreludeDeclaration {
+            .symbol_name = "__orison_drop.Payload",
+            .source_type_name = "Payload",
+            .discovery_line = 99,
+        }
+    ));
+    assert(planned_drops.size() == 1);
+    assert(planned_drops.front().discovery_line == 12);
 
     auto enabled_drop_prelude = orison::lowering::emit_module_prelude(
         {},

@@ -75,6 +75,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   per-type symbol discovery, shared discovery lines, and metadata-only IR behavior for more than one capture.
 - 2026-06-26: added same-type aggregate capture coverage proving planned drop declarations dedupe per drop symbol while
   cleanup thunks still retain one cleanup candidate per captured environment field.
+- 2026-06-26: factored planned drop declaration deduplication into a shared helper so future metadata producers can
+  reuse the pinned one-entry-per-drop-symbol behavior.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

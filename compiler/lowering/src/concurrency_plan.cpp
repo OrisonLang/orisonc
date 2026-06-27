@@ -268,18 +268,6 @@ auto cleanup_plan_for(
     return cleanup;
 }
 
-auto has_drop_declaration(
-    std::vector<DropPreludeDeclaration> const& declarations,
-    std::string_view symbol_name
-) -> bool {
-    for (auto const& declaration : declarations) {
-        if (declaration.symbol_name == symbol_name) {
-            return true;
-        }
-    }
-    return false;
-}
-
 void collect_drop_declarations_from_expression(
     syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
@@ -310,10 +298,7 @@ void collect_drop_declarations_from_expression(
 
         auto cleanup = cleanup_plan_for(captures);
         for (auto const& candidate : cleanup.drop_candidates) {
-            if (has_drop_declaration(declarations, candidate.drop_symbol_name)) {
-                continue;
-            }
-            declarations.push_back(DropPreludeDeclaration {
+            add_planned_drop_declaration(declarations, DropPreludeDeclaration {
                 .symbol_name = candidate.drop_symbol_name,
                 .source_type_name = candidate.source_type_name,
                 .discovery_line = expression.line,
