@@ -84,6 +84,8 @@ drop/cleanup decisions.
   planned declarations are disabled by default and current concurrency lowering does not request them.
 - LLVM IR emission now collects cleanup-candidate drop declarations as disabled metadata before prelude emission, so
   needed `__orison_drop.<Type>` symbols are discoverable end-to-end without changing emitted IR.
+- Lowering metadata scans now share a syntax traversal helper so runtime-symbol discovery and disabled drop-declaration
+  discovery walk expressions consistently.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

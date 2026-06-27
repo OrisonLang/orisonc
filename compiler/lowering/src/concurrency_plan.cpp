@@ -2,6 +2,7 @@
 
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
+#include "orison/lowering/syntax_traversal.hpp"
 #include "orison/lowering/target_layout.hpp"
 
 #include <algorithm>
@@ -284,37 +285,6 @@ void collect_drop_declarations_from_expression(
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics,
     std::vector<DropPreludeDeclaration>& declarations
-);
-
-void collect_drop_declarations_from_statement(
-    syntax::StatementSyntax const& statement,
-    LoweringEmissionContext const& context,
-    semantics::SemanticAnalysisResult const& semantics,
-    std::vector<DropPreludeDeclaration>& declarations
-) {
-    collect_drop_declarations_from_expression(statement.expression, context, semantics, declarations);
-    collect_drop_declarations_from_expression(statement.assignment_target, context, semantics, declarations);
-    for (auto const& nested_statement : statement.nested_statements) {
-        collect_drop_declarations_from_statement(nested_statement, context, semantics, declarations);
-    }
-    for (auto const& alternate_statement : statement.alternate_statements) {
-        collect_drop_declarations_from_statement(alternate_statement, context, semantics, declarations);
-    }
-    for (auto const& switch_case : statement.switch_cases) {
-        collect_drop_declarations_from_expression(switch_case.pattern, context, semantics, declarations);
-        for (auto const& case_statement : switch_case.statements) {
-            if (case_statement != nullptr) {
-                collect_drop_declarations_from_statement(*case_statement, context, semantics, declarations);
-            }
-        }
-    }
-}
-
-void collect_drop_declarations_from_expression(
-    syntax::ExpressionSyntax const& expression,
-    LoweringEmissionContext const& context,
-    semantics::SemanticAnalysisResult const& semantics,
-    std::vector<DropPreludeDeclaration>& declarations
 ) {
     if (is_concurrency_expression(expression)) {
         auto captures = std::vector<ConcurrencyCapturePlan> {};
@@ -347,24 +317,6 @@ void collect_drop_declarations_from_expression(
                 .symbol_name = candidate.drop_symbol_name,
             });
         }
-    }
-
-    for (auto const& argument : expression.arguments) {
-        collect_drop_declarations_from_expression(argument, context, semantics, declarations);
-    }
-    for (auto const& nested_statement : expression.nested_statements) {
-        if (nested_statement != nullptr) {
-            collect_drop_declarations_from_statement(*nested_statement, context, semantics, declarations);
-        }
-    }
-    if (expression.left != nullptr) {
-        collect_drop_declarations_from_expression(*expression.left, context, semantics, declarations);
-    }
-    if (expression.right != nullptr) {
-        collect_drop_declarations_from_expression(*expression.right, context, semantics, declarations);
-    }
-    if (expression.alternate != nullptr) {
-        collect_drop_declarations_from_expression(*expression.alternate, context, semantics, declarations);
     }
 }
 
@@ -449,25 +401,9 @@ auto plan_concurrency_drop_declarations(
     semantics::SemanticAnalysisResult const& semantics
 ) -> std::vector<DropPreludeDeclaration> {
     auto declarations = std::vector<DropPreludeDeclaration> {};
-    auto collect_function = [&](syntax::FunctionSyntax const& function) {
-        for (auto const& statement : function.body_statements) {
-            collect_drop_declarations_from_statement(statement, context, semantics, declarations);
-        }
-    };
-
-    for (auto const& function : module.functions) {
-        collect_function(function);
-    }
-    for (auto const& implementation : module.implementations) {
-        for (auto const& method : implementation.methods) {
-            collect_function(method);
-        }
-    }
-    for (auto const& extension : module.extensions) {
-        for (auto const& method : extension.methods) {
-            collect_function(method);
-        }
-    }
+    walk_module_expressions(module, [&](syntax::ExpressionSyntax const& expression) {
+        collect_drop_declarations_from_expression(expression, context, semantics, declarations);
+    });
     return declarations;
 }
 

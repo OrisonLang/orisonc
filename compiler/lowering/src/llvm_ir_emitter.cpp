@@ -6,6 +6,7 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/module_prelude.hpp"
 #include "orison/lowering/string_constants.hpp"
+#include "orison/lowering/syntax_traversal.hpp"
 
 #include <cstddef>
 #include <sstream>
@@ -54,39 +55,10 @@ auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) 
     return !function.generic_parameters.empty();
 }
 
-auto collect_concurrency_runtime_operations(syntax::ExpressionSyntax const& expression)
-    -> std::vector<ConcurrencyRuntimeOperation>;
-
-auto collect_concurrency_runtime_operations(syntax::StatementSyntax const& statement)
-    -> std::vector<ConcurrencyRuntimeOperation> {
-    auto operations = collect_concurrency_runtime_operations(statement.expression);
-    auto assignment_operations = collect_concurrency_runtime_operations(statement.assignment_target);
-    operations.insert(operations.end(), assignment_operations.begin(), assignment_operations.end());
-    for (auto const& nested_statement : statement.nested_statements) {
-        auto nested_operations = collect_concurrency_runtime_operations(nested_statement);
-        operations.insert(operations.end(), nested_operations.begin(), nested_operations.end());
-    }
-    for (auto const& alternate_statement : statement.alternate_statements) {
-        auto alternate_operations = collect_concurrency_runtime_operations(alternate_statement);
-        operations.insert(operations.end(), alternate_operations.begin(), alternate_operations.end());
-    }
-    for (auto const& switch_case : statement.switch_cases) {
-        auto pattern_operations = collect_concurrency_runtime_operations(switch_case.pattern);
-        operations.insert(operations.end(), pattern_operations.begin(), pattern_operations.end());
-        for (auto const& case_statement : switch_case.statements) {
-            if (case_statement == nullptr) {
-                continue;
-            }
-            auto case_operations = collect_concurrency_runtime_operations(*case_statement);
-            operations.insert(operations.end(), case_operations.begin(), case_operations.end());
-        }
-    }
-    return operations;
-}
-
-auto collect_concurrency_runtime_operations(syntax::ExpressionSyntax const& expression)
-    -> std::vector<ConcurrencyRuntimeOperation> {
-    auto operations = std::vector<ConcurrencyRuntimeOperation> {};
+void collect_concurrency_runtime_operations(
+    syntax::ExpressionSyntax const& expression,
+    std::vector<ConcurrencyRuntimeOperation>& operations
+) {
     if (expression.kind == syntax::ExpressionKind::thread) {
         operations.push_back(ConcurrencyRuntimeOperation::spawn_thread);
         operations.push_back(ConcurrencyRuntimeOperation::spawn_failed);
@@ -108,54 +80,14 @@ auto collect_concurrency_runtime_operations(syntax::ExpressionSyntax const& expr
         operations.push_back(ConcurrencyRuntimeOperation::join_thread);
         operations.push_back(ConcurrencyRuntimeOperation::destroy_handle);
     }
-    for (auto const& argument : expression.arguments) {
-        auto argument_operations = collect_concurrency_runtime_operations(argument);
-        operations.insert(operations.end(), argument_operations.begin(), argument_operations.end());
-    }
-    for (auto const& nested_statement : expression.nested_statements) {
-        if (nested_statement == nullptr) {
-            continue;
-        }
-        auto nested_operations = collect_concurrency_runtime_operations(*nested_statement);
-        operations.insert(operations.end(), nested_operations.begin(), nested_operations.end());
-    }
-    if (expression.left != nullptr) {
-        auto left_operations = collect_concurrency_runtime_operations(*expression.left);
-        operations.insert(operations.end(), left_operations.begin(), left_operations.end());
-    }
-    if (expression.right != nullptr) {
-        auto right_operations = collect_concurrency_runtime_operations(*expression.right);
-        operations.insert(operations.end(), right_operations.begin(), right_operations.end());
-    }
-    if (expression.alternate != nullptr) {
-        auto alternate_operations = collect_concurrency_runtime_operations(*expression.alternate);
-        operations.insert(operations.end(), alternate_operations.begin(), alternate_operations.end());
-    }
-    return operations;
 }
 
 auto collect_concurrency_runtime_operations(syntax::ModuleSyntax const& module)
     -> std::vector<ConcurrencyRuntimeOperation> {
     auto operations = std::vector<ConcurrencyRuntimeOperation> {};
-    auto collect_function = [&operations](syntax::FunctionSyntax const& function) {
-        for (auto const& statement : function.body_statements) {
-            auto statement_operations = collect_concurrency_runtime_operations(statement);
-            operations.insert(operations.end(), statement_operations.begin(), statement_operations.end());
-        }
-    };
-    for (auto const& function : module.functions) {
-        collect_function(function);
-    }
-    for (auto const& implementation : module.implementations) {
-        for (auto const& method : implementation.methods) {
-            collect_function(method);
-        }
-    }
-    for (auto const& extension : module.extensions) {
-        for (auto const& method : extension.methods) {
-            collect_function(method);
-        }
-    }
+    walk_module_expressions(module, [&operations](syntax::ExpressionSyntax const& expression) {
+        collect_concurrency_runtime_operations(expression, operations);
+    });
     return operations;
 }
 
