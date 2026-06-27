@@ -7,6 +7,7 @@ int main() {
     using orison::lowering::PlannedDropDeclaration;
     using orison::lowering::add_planned_drop_declaration;
     using orison::lowering::format_planned_drop_declaration;
+    using orison::lowering::format_planned_drop_report;
 
     auto metadata_only = PlannedDropDeclaration {
         .symbol_name = "__orison_drop.Payload",
@@ -54,5 +55,19 @@ int main() {
     ));
     assert(planned_drops.size() == 2);
     assert(planned_drops[1].symbol_name == "__orison_drop.OtherPayload");
+
+    auto report = format_planned_drop_report(planned_drops);
+    assert(report.size() == 2);
+    assert(
+        report[0] ==
+        "planned drop __orison_drop.Payload for Payload discovered at line 12 (metadata only)"
+    );
+    assert(
+        report[1] ==
+        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 20 (metadata only)"
+    );
+
+    auto empty_report = format_planned_drop_report({});
+    assert(empty_report.empty());
     return 0;
 }

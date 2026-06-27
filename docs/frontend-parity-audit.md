@@ -85,6 +85,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   concurrency metadata collection no longer use stale generic drop-declaration wording.
 - 2026-06-27: added dedicated drop metadata smoke coverage for planned-drop formatting and deduplication, keeping
   module prelude smoke focused on declaration emission behavior.
+- 2026-06-27: added a planned-drop reporting seam on lowering results so diagnostics/tooling can inspect formatted
+  drop metadata without changing the normal diagnostic stream or emitted LLVM IR.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

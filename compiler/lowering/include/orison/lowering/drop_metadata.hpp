@@ -15,6 +15,10 @@ struct PlannedDropDeclaration {
 
 auto format_planned_drop_declaration(PlannedDropDeclaration const& declaration) -> std::string;
 
+auto format_planned_drop_report(
+    std::vector<PlannedDropDeclaration> const& declarations
+) -> std::vector<std::string>;
+
 auto add_planned_drop_declaration(
     std::vector<PlannedDropDeclaration>& declarations,
     PlannedDropDeclaration declaration

@@ -20,6 +20,17 @@ auto format_planned_drop_declaration(PlannedDropDeclaration const& declaration) 
     return output.str();
 }
 
+auto format_planned_drop_report(
+    std::vector<PlannedDropDeclaration> const& declarations
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(declarations.size());
+    for (auto const& declaration : declarations) {
+        report.push_back(format_planned_drop_declaration(declaration));
+    }
+    return report;
+}
+
 auto add_planned_drop_declaration(
     std::vector<PlannedDropDeclaration>& declarations,
     PlannedDropDeclaration declaration

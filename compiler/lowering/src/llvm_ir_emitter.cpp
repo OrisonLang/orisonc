@@ -101,6 +101,10 @@ auto LlvmIrEmissionResult::render(std::string_view path) const -> std::string {
     return diagnostics.render(path);
 }
 
+auto LlvmIrEmissionResult::planned_drop_report() const -> std::vector<std::string> {
+    return format_planned_drop_report(planned_drop_declarations);
+}
+
 auto LlvmIrEmitter::emit(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result

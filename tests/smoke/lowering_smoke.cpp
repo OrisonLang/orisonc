@@ -2265,6 +2265,16 @@ void test_emit_record_capture_cleanup_field_address() {
     assert(result.planned_drop_declarations[1].source_type_name == "OtherPayload");
     assert(result.planned_drop_declarations[1].discovery_line == 20);
     assert(!result.planned_drop_declarations[1].emit_declaration);
+    auto report = result.planned_drop_report();
+    assert(report.size() == 2);
+    assert(
+        report[0] ==
+        "planned drop __orison_drop.Payload for Payload discovered at line 20 (metadata only)"
+    );
+    assert(
+        report[1] ==
+        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 20 (metadata only)"
+    );
     assert(result.ir_text.find("%record.Payload = type { i64 }") != std::string::npos);
     assert(result.ir_text.find("%record.OtherPayload = type { i64 }") != std::string::npos);
     assert(
