@@ -2235,49 +2235,71 @@ void test_emit_record_capture_cleanup_field_address() {
         "record Payload\n"
         "    public value: Int64\n"
         "\n"
+        "record OtherPayload\n"
+        "    public value: Int64\n"
+        "\n"
         "implements Transferable for Payload\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "implements Transferable for OtherPayload\n"
         "    function placeholder(this: shared This) -> Unit\n"
         "        return\n"
         "\n"
         "function on_thread(value: Int64) -> Int64\n"
         "    let payload: Payload = Payload(value)\n"
+        "    let other: OtherPayload = OtherPayload(value)\n"
         "    let worker = thread\n"
-        "        payload.value\n"
+        "        payload.value + other.value\n"
         "\n"
         "    worker.join()\n"
     );
 
     assert(!result.has_errors());
-    assert(result.planned_drop_declarations.size() == 1);
-    assert(result.planned_drop_declarations.front().symbol_name == "__orison_drop.Payload");
-    assert(result.planned_drop_declarations.front().source_type_name == "Payload");
-    assert(result.planned_drop_declarations.front().discovery_line == 12);
-    assert(!result.planned_drop_declarations.front().emit_declaration);
+    assert(result.planned_drop_declarations.size() == 2);
+    assert(result.planned_drop_declarations[0].symbol_name == "__orison_drop.Payload");
+    assert(result.planned_drop_declarations[0].source_type_name == "Payload");
+    assert(result.planned_drop_declarations[0].discovery_line == 20);
+    assert(!result.planned_drop_declarations[0].emit_declaration);
+    assert(result.planned_drop_declarations[1].symbol_name == "__orison_drop.OtherPayload");
+    assert(result.planned_drop_declarations[1].source_type_name == "OtherPayload");
+    assert(result.planned_drop_declarations[1].discovery_line == 20);
+    assert(!result.planned_drop_declarations[1].emit_declaration);
     assert(result.ir_text.find("%record.Payload = type { i64 }") != std::string::npos);
-    assert(result.ir_text.find("%worker.thread.env = alloca { %record.Payload }") != std::string::npos);
-    assert(result.ir_text.find("store %record.Payload %tmp0, ptr %tmp") != std::string::npos);
+    assert(result.ir_text.find("%record.OtherPayload = type { i64 }") != std::string::npos);
     assert(
         result.ir_text.find(
-            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.on_thread.12.0"
+            "%worker.thread.env = alloca { %record.Payload, %record.OtherPayload }"
+        ) != std::string::npos
+    );
+    assert(result.ir_text.find("store %record.Payload %tmp0, ptr %tmp2") != std::string::npos);
+    assert(result.ir_text.find("store %record.OtherPayload %tmp1, ptr %tmp3") != std::string::npos);
+    assert(
+        result.ir_text.find(
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.on_thread.20.0"
         ) != std::string::npos
     );
     assert(
         result.ir_text.find(
-            ", i64 8, ptr @__orison_thread_cleanup.on_thread.12.0)"
+            ", i64 8, ptr @__orison_thread_cleanup.on_thread.20.0)"
         ) != std::string::npos
     );
     assert(
         result.ir_text.find(
-            "define private void @__orison_thread_cleanup.on_thread.12.0(ptr %environment) {\n"
+            "define private void @__orison_thread_cleanup.on_thread.20.0(ptr %environment) {\n"
             "entry:\n"
-            "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
+            "  %cleanup.field.0 = getelementptr { %record.Payload, %record.OtherPayload }, ptr %environment, i32 0, i32 0\n"
             "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
+            "  %cleanup.field.1 = getelementptr { %record.Payload, %record.OtherPayload }, ptr %environment, i32 0, i32 1\n"
+            "  ; cleanup candidate other: OtherPayload field 1 drop __orison_drop.OtherPayload\n"
             "  ret void\n"
             "}"
         ) != std::string::npos
     );
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
     assert(result.ir_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_drop.OtherPayload(ptr)") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_drop.OtherPayload(ptr") == std::string::npos);
 }
 
 void test_reject_unsupported_final_if_arm_expression() {
