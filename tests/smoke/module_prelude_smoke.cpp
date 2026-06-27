@@ -1,4 +1,5 @@
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/module_prelude.hpp"
 
 #include <cassert>

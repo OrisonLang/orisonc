@@ -1,5 +1,6 @@
 #include "orison/lowering/concurrency_plan.hpp"
 
+#include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/syntax_traversal.hpp"

@@ -77,6 +77,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup thunks still retain one cleanup candidate per captured environment field.
 - 2026-06-26: factored planned drop declaration deduplication into a shared helper so future metadata producers can
   reuse the pinned one-entry-per-drop-symbol behavior.
+- 2026-06-27: split planned drop metadata types and helpers out of module prelude into a dedicated lowering module so
+  future diagnostics and ownership/drop planning can reuse them without depending on prelude emission.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

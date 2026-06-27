@@ -1,7 +1,7 @@
 #pragma once
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
-#include "orison/lowering/module_prelude.hpp"
+#include "orison/lowering/drop_metadata.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
 

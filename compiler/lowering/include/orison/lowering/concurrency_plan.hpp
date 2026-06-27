@@ -4,7 +4,7 @@
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
-#include "orison/lowering/module_prelude.hpp"
+#include "orison/lowering/drop_metadata.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
 
