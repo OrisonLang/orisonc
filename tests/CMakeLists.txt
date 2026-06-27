@@ -230,6 +230,22 @@ add_test(
     COMMAND orison_module_prelude_smoke
 )
 
+add_executable(orison_drop_metadata_smoke
+    smoke/drop_metadata_smoke.cpp
+)
+
+target_link_libraries(orison_drop_metadata_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_drop_metadata_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_drop_metadata_smoke
+    COMMAND orison_drop_metadata_smoke
+)
+
 add_executable(orison_syntax_traversal_smoke
     smoke/syntax_traversal_smoke.cpp
 )

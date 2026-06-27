@@ -83,6 +83,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   name now that the helper lives in a general lowering metadata module.
 - 2026-06-27: aligned planned-drop local and parameter naming with `PlannedDropDeclaration` so prelude emission and
   concurrency metadata collection no longer use stale generic drop-declaration wording.
+- 2026-06-27: added dedicated drop metadata smoke coverage for planned-drop formatting and deduplication, keeping
+  module prelude smoke focused on declaration emission behavior.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
