@@ -19,6 +19,7 @@ auto main() -> int {
     assert(!ir.has_errors());
     assert(ir.ir_text.find("define i32 @main()") != std::string::npos);
     assert(ir.ir_text.find("ret i32 0") != std::string::npos);
+    assert(ir.planned_drop_report.empty());
 
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());

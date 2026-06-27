@@ -8,6 +8,7 @@
 #include <initializer_list>
 #include <span>
 #include <string_view>
+#include <system_error>
 #include <sys/wait.h>
 
 namespace {
@@ -505,6 +506,17 @@ auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path
     std::array<char const*, 3> argv {
         "orisonc",
         "--emit-llvm",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
+auto run_planned_drops(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--planned-drops",
         path_text.c_str()
     };
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
@@ -1065,6 +1077,46 @@ int main() {
             "call void @__orison_concurrency_handle_destroy(ptr %pending)"
         ) != std::string::npos
     );
+
+    auto planned_drop_report_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_planned_drop_report.or";
+    auto remove_error = std::error_code {};
+    std::filesystem::remove(planned_drop_report_path, remove_error);
+    write_concurrency_fixture(
+        planned_drop_report_path,
+        "demo.emit",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "implements Transferable for Payload",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "function launch(value: Int64) -> Int64",
+            "    let payload: Payload = Payload(value)",
+            "    let worker = thread",
+            "        payload.value",
+            "",
+            "    worker.join()",
+        }
+    );
+    auto planned_drop_emit = run_emit_llvm(app, planned_drop_report_path);
+    assert(planned_drop_emit.exit_code == 0);
+    assert(planned_drop_emit.stderr_text.empty());
+    assert(planned_drop_emit.stdout_text.find("planned drop __orison_drop.Payload") == std::string::npos);
+    assert(planned_drop_emit.stdout_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
+
+    auto planned_drop_report = run_planned_drops(app, planned_drop_report_path);
+    assert(planned_drop_report.exit_code == 0);
+    assert(planned_drop_report.stderr_text.empty());
+    assert(
+        planned_drop_report.stdout_text ==
+        "planned drop __orison_drop.Payload for Payload discovered at line 9 (metadata only)\n"
+    );
+
+    auto empty_planned_drop_report = run_planned_drops(app, emit_path);
+    assert(empty_planned_drop_report.exit_code == 0);
+    assert(empty_planned_drop_report.stdout_text.empty());
+    assert(empty_planned_drop_report.stderr_text.empty());
 
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);

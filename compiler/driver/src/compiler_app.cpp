@@ -17,7 +17,7 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 
 auto usage_text() -> std::string {
     return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
-           "--emit-object <file> -o <output> | --build <file> -o <executable>";
+           "--planned-drops <file> | --emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
 auto render_type(orison::syntax::TypeSyntax const& type) -> std::string {
@@ -227,6 +227,26 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return CompileResult {
             .exit_code = 0,
             .stdout_text = std::move(result.ir_text),
+        };
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--planned-drops") {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = std::move(result.error_text),
+            };
+        }
+
+        auto output = std::ostringstream {};
+        for (auto const& line : result.planned_drop_report) {
+            output << line << '\n';
+        }
+        return CompileResult {
+            .exit_code = 0,
+            .stdout_text = output.str(),
         };
     }
 

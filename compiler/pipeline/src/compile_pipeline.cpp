@@ -75,6 +75,7 @@ auto CompilePipeline::emit_llvm(std::filesystem::path const& source_path) const 
         return result;
     }
     result.ir_text = std::move(emission.ir_text);
+    result.planned_drop_report = emission.planned_drop_report();
     return result;
 }
 
