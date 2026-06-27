@@ -267,6 +267,107 @@ auto cleanup_plan_for(
     return cleanup;
 }
 
+auto has_drop_declaration(
+    std::vector<DropPreludeDeclaration> const& declarations,
+    std::string_view symbol_name
+) -> bool {
+    for (auto const& declaration : declarations) {
+        if (declaration.symbol_name == symbol_name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void collect_drop_declarations_from_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics,
+    std::vector<DropPreludeDeclaration>& declarations
+);
+
+void collect_drop_declarations_from_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics,
+    std::vector<DropPreludeDeclaration>& declarations
+) {
+    collect_drop_declarations_from_expression(statement.expression, context, semantics, declarations);
+    collect_drop_declarations_from_expression(statement.assignment_target, context, semantics, declarations);
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_drop_declarations_from_statement(nested_statement, context, semantics, declarations);
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_drop_declarations_from_statement(alternate_statement, context, semantics, declarations);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        collect_drop_declarations_from_expression(switch_case.pattern, context, semantics, declarations);
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_drop_declarations_from_statement(*case_statement, context, semantics, declarations);
+            }
+        }
+    }
+}
+
+void collect_drop_declarations_from_expression(
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics,
+    std::vector<DropPreludeDeclaration>& declarations
+) {
+    if (is_concurrency_expression(expression)) {
+        auto captures = std::vector<ConcurrencyCapturePlan> {};
+        auto semantic_kind = semantic_kind_for(expression_plan_kind(expression));
+        auto expression_last_line = max_expression_line(expression);
+        for (auto const& capture : semantics.concurrency_captures) {
+            if (!is_capture_in_expression_range(capture, semantic_kind, expression.line, expression_last_line)) {
+                continue;
+            }
+
+            auto lowered_capture_type = lowered_type_for_source_type_name(
+                capture.type_name,
+                context.lowering
+            );
+            captures.push_back(ConcurrencyCapturePlan {
+                .name = capture.name,
+                .source_type_name = capture.type_name,
+                .llvm_type = lowered_capture_type.has_value() ? lowered_capture_type->type : std::string {},
+                .field_index = captures.size(),
+                .capture_kind = capture.capture_kind,
+            });
+        }
+
+        auto cleanup = cleanup_plan_for(captures);
+        for (auto const& candidate : cleanup.drop_candidates) {
+            if (has_drop_declaration(declarations, candidate.drop_symbol_name)) {
+                continue;
+            }
+            declarations.push_back(DropPreludeDeclaration {
+                .symbol_name = candidate.drop_symbol_name,
+            });
+        }
+    }
+
+    for (auto const& argument : expression.arguments) {
+        collect_drop_declarations_from_expression(argument, context, semantics, declarations);
+    }
+    for (auto const& nested_statement : expression.nested_statements) {
+        if (nested_statement != nullptr) {
+            collect_drop_declarations_from_statement(*nested_statement, context, semantics, declarations);
+        }
+    }
+    if (expression.left != nullptr) {
+        collect_drop_declarations_from_expression(*expression.left, context, semantics, declarations);
+    }
+    if (expression.right != nullptr) {
+        collect_drop_declarations_from_expression(*expression.right, context, semantics, declarations);
+    }
+    if (expression.alternate != nullptr) {
+        collect_drop_declarations_from_expression(*expression.alternate, context, semantics, declarations);
+    }
+}
+
 }  // namespace
 
 auto plan_concurrency_expression(
@@ -340,6 +441,34 @@ auto plan_concurrency_expression(
     };
 
     return plan;
+}
+
+auto plan_concurrency_drop_declarations(
+    syntax::ModuleSyntax const& module,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics
+) -> std::vector<DropPreludeDeclaration> {
+    auto declarations = std::vector<DropPreludeDeclaration> {};
+    auto collect_function = [&](syntax::FunctionSyntax const& function) {
+        for (auto const& statement : function.body_statements) {
+            collect_drop_declarations_from_statement(statement, context, semantics, declarations);
+        }
+    };
+
+    for (auto const& function : module.functions) {
+        collect_function(function);
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            collect_function(method);
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            collect_function(method);
+        }
+    }
+    return declarations;
 }
 
 }  // namespace orison::lowering

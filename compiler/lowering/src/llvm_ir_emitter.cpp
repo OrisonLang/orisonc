@@ -1,5 +1,6 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
 
+#include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -190,11 +191,21 @@ auto LlvmIrEmitter::emit(
         return result;
     }
     auto string_constants = collect_string_constants(module);
+    auto emission_context = LoweringEmissionContext {
+        .lowering = context,
+        .string_constants = string_constants,
+    };
+    result.planned_drop_declarations = plan_concurrency_drop_declarations(
+        module,
+        emission_context,
+        semantic_result
+    );
     output << emit_record_layouts(module, context);
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,
-        collect_concurrency_runtime_operations(module)
+        collect_concurrency_runtime_operations(module),
+        result.planned_drop_declarations
     );
     for (auto const& function : module.functions) {
         if (is_uninstantiated_generic_function(function)) {

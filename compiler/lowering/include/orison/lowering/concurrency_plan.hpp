@@ -4,6 +4,7 @@
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
+#include "orison/lowering/module_prelude.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
 
@@ -73,5 +74,11 @@ auto plan_concurrency_expression(
     FunctionLoweringState const& state,
     semantics::SemanticAnalysisResult const& semantics
 ) -> std::optional<ConcurrencyExpressionPlan>;
+
+auto plan_concurrency_drop_declarations(
+    syntax::ModuleSyntax const& module,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics
+) -> std::vector<DropPreludeDeclaration>;
 
 }  // namespace orison::lowering

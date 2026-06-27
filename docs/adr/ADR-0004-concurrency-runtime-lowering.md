@@ -82,6 +82,8 @@ drop/cleanup decisions.
   planned symbols but do not call them until drop semantics are accepted.
 - Module prelude emission has an explicit drop-declaration seam for future `__orison_drop.<Type>` declarations, but
   planned declarations are disabled by default and current concurrency lowering does not request them.
+- LLVM IR emission now collects cleanup-candidate drop declarations as disabled metadata before prelude emission, so
+  needed `__orison_drop.<Type>` symbols are discoverable end-to-end without changing emitted IR.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

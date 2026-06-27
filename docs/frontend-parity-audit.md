@@ -61,6 +61,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-26: module prelude emission now has an explicit disabled-by-default drop declaration seam for future
   `__orison_drop.<Type>` declarations, with smoke coverage proving planned declarations do not emit unless explicitly
   enabled.
+- 2026-06-26: LLVM IR emission now discovers cleanup-candidate drop declarations end-to-end as disabled metadata, and
+  lowering smoke coverage pins both the discovered `__orison_drop.Payload` symbol and the absence of emitted drop ABI.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
