@@ -65,6 +65,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   lowering smoke coverage pins both the discovered `__orison_drop.Payload` symbol and the absence of emitted drop ABI.
 - 2026-06-26: lowering metadata scans now share one syntax traversal helper for runtime-symbol discovery and disabled
   drop-declaration discovery, reducing duplicated recursion without changing generated IR.
+- 2026-06-26: added dedicated syntax traversal smoke coverage for assignment targets, switch patterns/cases, nested
+  task/thread bodies, `await`, `.join()`, implementation methods, and extension methods.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

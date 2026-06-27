@@ -230,6 +230,22 @@ add_test(
     COMMAND orison_module_prelude_smoke
 )
 
+add_executable(orison_syntax_traversal_smoke
+    smoke/syntax_traversal_smoke.cpp
+)
+
+target_link_libraries(orison_syntax_traversal_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_syntax_traversal_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_syntax_traversal_smoke
+    COMMAND orison_syntax_traversal_smoke
+)
+
 add_executable(orison_function_emitter_smoke
     smoke/function_emitter_smoke.cpp
 )
