@@ -17,6 +17,8 @@ struct DropPreludeDeclaration {
     bool emit_declaration = false;
 };
 
+auto format_planned_drop_declaration(DropPreludeDeclaration const& declaration) -> std::string;
+
 auto emit_module_prelude(
     StringConstantTable const& string_constants,
     std::vector<LoweredFunctionSignature> const& foreign_declarations,

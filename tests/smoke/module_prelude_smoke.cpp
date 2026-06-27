@@ -69,10 +69,22 @@ int main() {
         {
             orison::lowering::DropPreludeDeclaration {
                 .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 12,
             },
         }
     );
     assert(disabled_drop_prelude.empty());
+    assert(
+        orison::lowering::format_planned_drop_declaration(
+            orison::lowering::DropPreludeDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 12,
+            }
+        ) ==
+        "planned drop __orison_drop.Payload for Payload discovered at line 12 (metadata only)"
+    );
 
     auto enabled_drop_prelude = orison::lowering::emit_module_prelude(
         {},
@@ -81,14 +93,29 @@ int main() {
         {
             orison::lowering::DropPreludeDeclaration {
                 .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 12,
                 .emit_declaration = true,
             },
             orison::lowering::DropPreludeDeclaration {
                 .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 12,
                 .emit_declaration = true,
             },
         }
     );
     assert(enabled_drop_prelude == "declare void @__orison_drop.Payload(ptr)\n\n");
+    assert(
+        orison::lowering::format_planned_drop_declaration(
+            orison::lowering::DropPreludeDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 12,
+                .emit_declaration = true,
+            }
+        ) ==
+        "planned drop __orison_drop.Payload for Payload discovered at line 12"
+    );
     return 0;
 }

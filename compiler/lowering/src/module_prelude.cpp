@@ -37,6 +37,21 @@ void emit_declaration(
 
 }  // namespace
 
+auto format_planned_drop_declaration(DropPreludeDeclaration const& declaration) -> std::string {
+    auto output = std::ostringstream {};
+    output << "planned drop " << declaration.symbol_name;
+    if (!declaration.source_type_name.empty()) {
+        output << " for " << declaration.source_type_name;
+    }
+    if (declaration.discovery_line > 0) {
+        output << " discovered at line " << declaration.discovery_line;
+    }
+    if (!declaration.emit_declaration) {
+        output << " (metadata only)";
+    }
+    return output.str();
+}
+
 auto emit_module_prelude(
     StringConstantTable const& string_constants,
     std::vector<LoweredFunctionSignature> const& foreign_declarations,
