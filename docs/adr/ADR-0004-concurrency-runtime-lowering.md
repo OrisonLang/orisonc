@@ -93,6 +93,8 @@ drop/cleanup decisions.
   one-entry-per-drop-symbol.
 - Each concurrency cleanup thunk now also carries a metadata-only drop cleanup plan containing the per-field planned
   drop actions for that thunk; cleanup thunk IR still only emits field-address setup and comments, not drop calls.
+- Drop cleanup plans now model drop-call emission eligibility explicitly, but the flag defaults to disabled so generated
+  cleanup thunk IR remains metadata-only until ownership/drop semantics are accepted.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

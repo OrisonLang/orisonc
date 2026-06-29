@@ -53,6 +53,7 @@ struct ConcurrencyCleanupFieldPlan {
 struct ConcurrencyDropCleanupPlan {
     std::string cleanup_symbol_name;
     std::vector<PlannedDropAction> actions;
+    bool emit_drop_calls = false;
 };
 
 struct ConcurrencyCleanupPlan {

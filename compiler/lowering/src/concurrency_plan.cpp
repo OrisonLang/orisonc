@@ -344,7 +344,9 @@ auto format_concurrency_drop_cleanup_plan(
     if (!plan.cleanup_symbol_name.empty()) {
         header << " " << plan.cleanup_symbol_name;
     }
-    header << " actions " << plan.actions.size() << " (metadata only)";
+    header << " actions " << plan.actions.size()
+           << " drop calls " << (plan.emit_drop_calls ? "enabled" : "disabled")
+           << " (metadata only)";
     report.push_back(header.str());
 
     auto action_report = format_planned_drop_action_report(plan.actions);

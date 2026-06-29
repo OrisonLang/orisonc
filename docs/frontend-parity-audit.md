@@ -103,6 +103,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   actions at the thunk boundary while still avoiding emitted drop calls.
 - 2026-06-29: added a focused formatter for concurrency drop cleanup plans so thunk-scoped planned drop metadata can be
   inspected separately from global planned-drop action reports.
+- 2026-06-29: modeled drop-call emission eligibility on concurrency drop cleanup plans, defaulting it to disabled so
+  cleanup thunks remain metadata-only while future owned-drop lowering has an explicit switch.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

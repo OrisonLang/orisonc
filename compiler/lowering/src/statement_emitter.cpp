@@ -161,6 +161,9 @@ auto emit_thread_cleanup_thunk(ConcurrencyExpressionPlan const& plan) -> std::st
                << ", ptr %environment, i32 0, i32 " << candidate.field_index << "\n";
         output << "  ; cleanup candidate " << action.capture_name << ": " << action.source_type_name
                << " field " << action.field_index << " drop " << action.symbol_name << "\n";
+        if (plan.cleanup.drop_cleanup.emit_drop_calls) {
+            output << "  call void @" << action.symbol_name << "(ptr " << field_pointer << ")\n";
+        }
     }
     output << "  ret void\n";
     output << "}\n";
