@@ -1114,7 +1114,18 @@ int main() {
     assert(planned_drop_emit.exit_code == 0);
     assert(planned_drop_emit.stderr_text.empty());
     assert(planned_drop_emit.stdout_text.find("planned drop __orison_drop.Payload") == std::string::npos);
+    assert(
+        planned_drop_emit.stdout_text.find(
+            "define private void @__orison_thread_cleanup.launch.9.0(ptr %environment) {\n"
+            "entry:\n"
+            "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
+            "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
+            "  ret void\n"
+            "}"
+        ) != std::string::npos
+    );
     assert(planned_drop_emit.stdout_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
+    assert(planned_drop_emit.stdout_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
 
     auto planned_drop_report = run_planned_drops(app, planned_drop_report_path);
     assert(planned_drop_report.exit_code == 0);
