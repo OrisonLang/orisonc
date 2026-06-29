@@ -87,6 +87,13 @@ int main() {
     assert(task_plan->cleanup.drop_candidates.empty());
     assert(task_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_task_cleanup.compute.7.0");
     assert(task_plan->cleanup.drop_cleanup.actions.empty());
+    auto empty_drop_cleanup_report =
+        orison::lowering::format_concurrency_drop_cleanup_plan(task_plan->cleanup.drop_cleanup);
+    assert(empty_drop_cleanup_report.size() == 1);
+    assert(
+        empty_drop_cleanup_report.front() ==
+        "drop cleanup plan __orison_task_cleanup.compute.7.0 actions 0 (metadata only)"
+    );
     assert(task_plan->result_storage.llvm_type == "i64");
     assert(task_plan->result_storage.size_bytes == 8);
 
@@ -170,6 +177,18 @@ int main() {
     assert(record_plan->cleanup.drop_cleanup.actions.front().symbol_name == "__orison_drop.Payload");
     assert(record_plan->cleanup.drop_cleanup.actions.front().field_index == 0);
     assert(record_plan->cleanup.drop_cleanup.actions.front().discovery_line == 20);
+    auto record_drop_cleanup_report =
+        orison::lowering::format_concurrency_drop_cleanup_plan(record_plan->cleanup.drop_cleanup);
+    assert(record_drop_cleanup_report.size() == 2);
+    assert(
+        record_drop_cleanup_report[0] ==
+        "drop cleanup plan __orison_thread_cleanup.record_worker.20.2 actions 1 (metadata only)"
+    );
+    assert(
+        record_drop_cleanup_report[1] ==
+        "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
+        "discovered at line 20 (metadata only)"
+    );
 
     auto not_concurrency = orison::syntax::ExpressionSyntax {
         .kind = orison::syntax::ExpressionKind::name,

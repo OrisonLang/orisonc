@@ -335,6 +335,23 @@ void collect_planned_drop_actions_from_expression(
 
 }  // namespace
 
+auto format_concurrency_drop_cleanup_plan(
+    ConcurrencyDropCleanupPlan const& plan
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    auto header = std::ostringstream {};
+    header << "drop cleanup plan";
+    if (!plan.cleanup_symbol_name.empty()) {
+        header << " " << plan.cleanup_symbol_name;
+    }
+    header << " actions " << plan.actions.size() << " (metadata only)";
+    report.push_back(header.str());
+
+    auto action_report = format_planned_drop_action_report(plan.actions);
+    report.insert(report.end(), action_report.begin(), action_report.end());
+    return report;
+}
+
 auto plan_concurrency_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view enclosing_symbol_name,

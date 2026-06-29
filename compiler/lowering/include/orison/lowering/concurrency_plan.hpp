@@ -72,6 +72,10 @@ struct ConcurrencyExpressionPlan {
     std::vector<ConcurrencyCapturePlan> captures;
 };
 
+auto format_concurrency_drop_cleanup_plan(
+    ConcurrencyDropCleanupPlan const& plan
+) -> std::vector<std::string>;
+
 auto plan_concurrency_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view enclosing_symbol_name,
