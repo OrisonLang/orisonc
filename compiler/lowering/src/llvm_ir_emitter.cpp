@@ -105,6 +105,10 @@ auto LlvmIrEmissionResult::planned_drop_report() const -> std::vector<std::strin
     return format_planned_drop_report(planned_drop_declarations);
 }
 
+auto LlvmIrEmissionResult::planned_drop_action_report() const -> std::vector<std::string> {
+    return format_planned_drop_action_report(planned_drop_actions);
+}
+
 auto LlvmIrEmitter::emit(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result

@@ -2267,6 +2267,18 @@ void test_emit_record_capture_cleanup_field_address() {
     assert(result.planned_drop_actions[1].source_type_name == "OtherPayload");
     assert(result.planned_drop_actions[1].field_index == 1);
     assert(result.planned_drop_actions[1].discovery_line == 20);
+    auto action_report = result.planned_drop_action_report();
+    assert(action_report.size() == 2);
+    assert(
+        action_report[0] ==
+        "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
+        "discovered at line 20 (metadata only)"
+    );
+    assert(
+        action_report[1] ==
+        "planned drop action __orison_drop.OtherPayload for capture other: OtherPayload field 1 "
+        "discovered at line 20 (metadata only)"
+    );
     assert(result.planned_drop_declarations.size() == 2);
     assert(result.planned_drop_declarations[0].symbol_name == "__orison_drop.Payload");
     assert(result.planned_drop_declarations[0].source_type_name == "Payload");
@@ -2355,6 +2367,18 @@ void test_emit_same_type_record_capture_drop_metadata_dedupes() {
     assert(result.planned_drop_actions[1].symbol_name == "__orison_drop.Payload");
     assert(result.planned_drop_actions[1].field_index == 1);
     assert(result.planned_drop_actions[1].discovery_line == 13);
+    auto action_report = result.planned_drop_action_report();
+    assert(action_report.size() == 2);
+    assert(
+        action_report[0] ==
+        "planned drop action __orison_drop.Payload for capture left: Payload field 0 "
+        "discovered at line 13 (metadata only)"
+    );
+    assert(
+        action_report[1] ==
+        "planned drop action __orison_drop.Payload for capture right: Payload field 1 "
+        "discovered at line 13 (metadata only)"
+    );
     assert(result.planned_drop_declarations.size() == 1);
     assert(result.planned_drop_declarations.front().symbol_name == "__orison_drop.Payload");
     assert(result.planned_drop_declarations.front().source_type_name == "Payload");

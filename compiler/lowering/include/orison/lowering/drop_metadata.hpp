@@ -23,8 +23,14 @@ struct PlannedDropAction {
 
 auto format_planned_drop_declaration(PlannedDropDeclaration const& declaration) -> std::string;
 
+auto format_planned_drop_action(PlannedDropAction const& action) -> std::string;
+
 auto format_planned_drop_report(
     std::vector<PlannedDropDeclaration> const& declarations
+) -> std::vector<std::string>;
+
+auto format_planned_drop_action_report(
+    std::vector<PlannedDropAction> const& actions
 ) -> std::vector<std::string>;
 
 auto add_planned_drop_declaration(

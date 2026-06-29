@@ -6,6 +6,8 @@
 int main() {
     using orison::lowering::PlannedDropDeclaration;
     using orison::lowering::add_planned_drop_declaration;
+    using orison::lowering::format_planned_drop_action;
+    using orison::lowering::format_planned_drop_action_report;
     using orison::lowering::format_planned_drop_declaration;
     using orison::lowering::format_planned_drop_report;
     using orison::lowering::planned_drop_declaration_for_action;
@@ -71,16 +73,27 @@ int main() {
     auto empty_report = format_planned_drop_report({});
     assert(empty_report.empty());
 
-    auto declaration_from_action = planned_drop_declaration_for_action(orison::lowering::PlannedDropAction {
+    auto action = orison::lowering::PlannedDropAction {
         .capture_name = "payload",
         .source_type_name = "Payload",
         .symbol_name = "__orison_drop.Payload",
         .field_index = 3,
         .discovery_line = 42,
-    });
+    };
+    auto declaration_from_action = planned_drop_declaration_for_action(action);
     assert(declaration_from_action.symbol_name == "__orison_drop.Payload");
     assert(declaration_from_action.source_type_name == "Payload");
     assert(declaration_from_action.discovery_line == 42);
     assert(!declaration_from_action.emit_declaration);
+
+    assert(
+        format_planned_drop_action(action) ==
+        "planned drop action __orison_drop.Payload for capture payload: Payload field 3 "
+        "discovered at line 42 (metadata only)"
+    );
+    auto action_report = format_planned_drop_action_report({action});
+    assert(action_report.size() == 1);
+    assert(action_report.front() == format_planned_drop_action(action));
+    assert(format_planned_drop_action_report({}).empty());
     return 0;
 }
