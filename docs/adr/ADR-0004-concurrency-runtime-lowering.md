@@ -91,6 +91,8 @@ drop/cleanup decisions.
 - Lowering now separates cleanup-site planned drop actions from deduped drop declaration metadata, so each captured
   environment field keeps its own future drop insertion metadata while module prelude declaration planning remains
   one-entry-per-drop-symbol.
+- Each concurrency cleanup thunk now also carries a metadata-only drop cleanup plan containing the per-field planned
+  drop actions for that thunk; cleanup thunk IR still only emits field-address setup and comments, not drop calls.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

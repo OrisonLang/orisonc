@@ -85,6 +85,8 @@ int main() {
     assert(task_plan->environment_layout.fields.front().name == "value");
     assert(task_plan->environment_layout.fields.front().field_index == 0);
     assert(task_plan->cleanup.drop_candidates.empty());
+    assert(task_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_task_cleanup.compute.7.0");
+    assert(task_plan->cleanup.drop_cleanup.actions.empty());
     assert(task_plan->result_storage.llvm_type == "i64");
     assert(task_plan->result_storage.size_bytes == 8);
 
@@ -111,6 +113,8 @@ int main() {
     assert(thread_plan->environment_layout.size_bytes == 8);
     assert(thread_plan->environment_layout.fields.size() == 1);
     assert(thread_plan->cleanup.drop_candidates.empty());
+    assert(thread_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_thread_cleanup.on_thread.13.0");
+    assert(thread_plan->cleanup.drop_cleanup.actions.empty());
     assert(thread_plan->result_storage.llvm_type == "i64");
     assert(thread_plan->result_storage.size_bytes == 8);
 
@@ -159,6 +163,13 @@ int main() {
         record_plan->cleanup.drop_candidates.front().capture_kind ==
         orison::semantics::ConcurrencyCaptureKind::immutable_outer_local
     );
+    assert(record_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_thread_cleanup.record_worker.20.2");
+    assert(record_plan->cleanup.drop_cleanup.actions.size() == 1);
+    assert(record_plan->cleanup.drop_cleanup.actions.front().capture_name == "payload");
+    assert(record_plan->cleanup.drop_cleanup.actions.front().source_type_name == "Payload");
+    assert(record_plan->cleanup.drop_cleanup.actions.front().symbol_name == "__orison_drop.Payload");
+    assert(record_plan->cleanup.drop_cleanup.actions.front().field_index == 0);
+    assert(record_plan->cleanup.drop_cleanup.actions.front().discovery_line == 20);
 
     auto not_concurrency = orison::syntax::ExpressionSyntax {
         .kind = orison::syntax::ExpressionKind::name,

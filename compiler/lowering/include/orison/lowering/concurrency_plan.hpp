@@ -50,8 +50,14 @@ struct ConcurrencyCleanupFieldPlan {
         semantics::ConcurrencyCaptureKind::parameter;
 };
 
+struct ConcurrencyDropCleanupPlan {
+    std::string cleanup_symbol_name;
+    std::vector<PlannedDropAction> actions;
+};
+
 struct ConcurrencyCleanupPlan {
     std::vector<ConcurrencyCleanupFieldPlan> drop_candidates;
+    ConcurrencyDropCleanupPlan drop_cleanup;
 };
 
 struct ConcurrencyExpressionPlan {

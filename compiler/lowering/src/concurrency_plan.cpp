@@ -269,6 +269,34 @@ auto cleanup_plan_for(
     return cleanup;
 }
 
+auto planned_drop_action_for_candidate(
+    ConcurrencyCleanupFieldPlan const& candidate,
+    std::size_t discovery_line
+) -> PlannedDropAction {
+    return PlannedDropAction {
+        .capture_name = candidate.name,
+        .source_type_name = candidate.source_type_name,
+        .symbol_name = candidate.drop_symbol_name,
+        .field_index = candidate.field_index,
+        .discovery_line = discovery_line,
+    };
+}
+
+auto drop_cleanup_plan_for(
+    std::string_view cleanup_symbol_name,
+    std::size_t discovery_line,
+    std::vector<ConcurrencyCleanupFieldPlan> const& candidates
+) -> ConcurrencyDropCleanupPlan {
+    auto plan = ConcurrencyDropCleanupPlan {
+        .cleanup_symbol_name = std::string {cleanup_symbol_name},
+    };
+    plan.actions.reserve(candidates.size());
+    for (auto const& candidate : candidates) {
+        plan.actions.push_back(planned_drop_action_for_candidate(candidate, discovery_line));
+    }
+    return plan;
+}
+
 void collect_planned_drop_actions_from_expression(
     syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
@@ -298,14 +326,9 @@ void collect_planned_drop_actions_from_expression(
         }
 
         auto cleanup = cleanup_plan_for(captures);
-        for (auto const& candidate : cleanup.drop_candidates) {
-            planned_drop_actions.push_back(PlannedDropAction {
-                .capture_name = candidate.name,
-                .source_type_name = candidate.source_type_name,
-                .symbol_name = candidate.drop_symbol_name,
-                .field_index = candidate.field_index,
-                .discovery_line = expression.line,
-            });
+        auto drop_cleanup = drop_cleanup_plan_for({}, expression.line, cleanup.drop_candidates);
+        for (auto const& action : drop_cleanup.actions) {
+            planned_drop_actions.push_back(action);
         }
     }
 }
@@ -377,6 +400,11 @@ auto plan_concurrency_expression(
         .fields = plan.captures,
     };
     plan.cleanup = cleanup_plan_for(plan.captures);
+    plan.cleanup.drop_cleanup = drop_cleanup_plan_for(
+        plan.cleanup_symbol_name,
+        expression.line,
+        plan.cleanup.drop_candidates
+    );
     plan.result_storage = ConcurrencyResultStorageLayout {
         .llvm_type = plan.result_type.type,
         .size_bytes = lowered_type_size_bytes(plan.result_type.type, context.lowering).value_or(0),
