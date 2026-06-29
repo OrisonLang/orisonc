@@ -778,6 +778,12 @@ auto lower_void_member_call_statement(
 
 }  // namespace
 
+auto emit_concurrency_cleanup_thunk(
+    ConcurrencyExpressionPlan const& plan
+) -> std::string {
+    return emit_thread_cleanup_thunk(plan);
+}
+
 auto value_expression_for(
     syntax::StatementSyntax const& statement
 ) -> syntax::ExpressionSyntax const* {

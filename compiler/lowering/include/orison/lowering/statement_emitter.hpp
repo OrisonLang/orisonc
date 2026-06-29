@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
+#include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
@@ -11,6 +12,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -88,6 +90,10 @@ auto emit_deferred_cleanup_to_depth(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool;
+
+auto emit_concurrency_cleanup_thunk(
+    ConcurrencyExpressionPlan const& plan
+) -> std::string;
 
 auto lower_call_statement(
     syntax::StatementSyntax const& statement,
