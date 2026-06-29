@@ -91,6 +91,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   reports while leaving normal compile, run, and LLVM/object emission output unchanged.
 - 2026-06-29: expanded `orisonc --planned-drops` smoke coverage for multiple aggregate captures and same-type capture
   deduplication, matching the lower-level planned-drop metadata guarantees through the CLI inspection path.
+- 2026-06-29: split planned-drop metadata into per-cleanup-site actions plus deduped declaration metadata, preserving
+  metadata-only IR behavior while giving future owned-drop lowering concrete cleanup action records.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

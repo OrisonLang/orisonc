@@ -44,4 +44,12 @@ auto add_planned_drop_declaration(
     return true;
 }
 
+auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> PlannedDropDeclaration {
+    return PlannedDropDeclaration {
+        .symbol_name = action.symbol_name,
+        .source_type_name = action.source_type_name,
+        .discovery_line = action.discovery_line,
+    };
+}
+
 }  // namespace orison::lowering

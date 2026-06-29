@@ -2256,6 +2256,17 @@ void test_emit_record_capture_cleanup_field_address() {
     );
 
     assert(!result.has_errors());
+    assert(result.planned_drop_actions.size() == 2);
+    assert(result.planned_drop_actions[0].capture_name == "payload");
+    assert(result.planned_drop_actions[0].symbol_name == "__orison_drop.Payload");
+    assert(result.planned_drop_actions[0].source_type_name == "Payload");
+    assert(result.planned_drop_actions[0].field_index == 0);
+    assert(result.planned_drop_actions[0].discovery_line == 20);
+    assert(result.planned_drop_actions[1].capture_name == "other");
+    assert(result.planned_drop_actions[1].symbol_name == "__orison_drop.OtherPayload");
+    assert(result.planned_drop_actions[1].source_type_name == "OtherPayload");
+    assert(result.planned_drop_actions[1].field_index == 1);
+    assert(result.planned_drop_actions[1].discovery_line == 20);
     assert(result.planned_drop_declarations.size() == 2);
     assert(result.planned_drop_declarations[0].symbol_name == "__orison_drop.Payload");
     assert(result.planned_drop_declarations[0].source_type_name == "Payload");
@@ -2335,6 +2346,15 @@ void test_emit_same_type_record_capture_drop_metadata_dedupes() {
     );
 
     assert(!result.has_errors());
+    assert(result.planned_drop_actions.size() == 2);
+    assert(result.planned_drop_actions[0].capture_name == "left");
+    assert(result.planned_drop_actions[0].symbol_name == "__orison_drop.Payload");
+    assert(result.planned_drop_actions[0].field_index == 0);
+    assert(result.planned_drop_actions[0].discovery_line == 13);
+    assert(result.planned_drop_actions[1].capture_name == "right");
+    assert(result.planned_drop_actions[1].symbol_name == "__orison_drop.Payload");
+    assert(result.planned_drop_actions[1].field_index == 1);
+    assert(result.planned_drop_actions[1].discovery_line == 13);
     assert(result.planned_drop_declarations.size() == 1);
     assert(result.planned_drop_declarations.front().symbol_name == "__orison_drop.Payload");
     assert(result.planned_drop_declarations.front().source_type_name == "Payload");

@@ -131,11 +131,17 @@ auto LlvmIrEmitter::emit(
         .lowering = context,
         .string_constants = string_constants,
     };
-    result.planned_drop_declarations = plan_concurrency_planned_drops(
+    result.planned_drop_actions = plan_concurrency_planned_drop_actions(
         module,
         emission_context,
         semantic_result
     );
+    for (auto const& action : result.planned_drop_actions) {
+        add_planned_drop_declaration(
+            result.planned_drop_declarations,
+            planned_drop_declaration_for_action(action)
+        );
+    }
     output << emit_record_layouts(module, context);
     output << emit_module_prelude(
         string_constants,

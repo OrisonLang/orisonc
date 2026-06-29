@@ -88,6 +88,9 @@ drop/cleanup decisions.
   discovery walk expressions consistently.
 - Planned drop declarations now retain the source type and concurrency expression line where the future drop need was
   discovered, while still emitting no drop ABI by default.
+- Lowering now separates cleanup-site planned drop actions from deduped drop declaration metadata, so each captured
+  environment field keeps its own future drop insertion metadata while module prelude declaration planning remains
+  one-entry-per-drop-symbol.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

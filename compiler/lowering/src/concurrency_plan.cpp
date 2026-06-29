@@ -269,11 +269,11 @@ auto cleanup_plan_for(
     return cleanup;
 }
 
-void collect_planned_drops_from_expression(
+void collect_planned_drop_actions_from_expression(
     syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics,
-    std::vector<PlannedDropDeclaration>& planned_drops
+    std::vector<PlannedDropAction>& planned_drop_actions
 ) {
     if (is_concurrency_expression(expression)) {
         auto captures = std::vector<ConcurrencyCapturePlan> {};
@@ -299,9 +299,11 @@ void collect_planned_drops_from_expression(
 
         auto cleanup = cleanup_plan_for(captures);
         for (auto const& candidate : cleanup.drop_candidates) {
-            add_planned_drop_declaration(planned_drops, PlannedDropDeclaration {
-                .symbol_name = candidate.drop_symbol_name,
+            planned_drop_actions.push_back(PlannedDropAction {
+                .capture_name = candidate.name,
                 .source_type_name = candidate.source_type_name,
+                .symbol_name = candidate.drop_symbol_name,
+                .field_index = candidate.field_index,
                 .discovery_line = expression.line,
             });
         }
@@ -389,10 +391,22 @@ auto plan_concurrency_planned_drops(
     semantics::SemanticAnalysisResult const& semantics
 ) -> std::vector<PlannedDropDeclaration> {
     auto planned_drops = std::vector<PlannedDropDeclaration> {};
-    walk_module_expressions(module, [&](syntax::ExpressionSyntax const& expression) {
-        collect_planned_drops_from_expression(expression, context, semantics, planned_drops);
-    });
+    for (auto const& action : plan_concurrency_planned_drop_actions(module, context, semantics)) {
+        add_planned_drop_declaration(planned_drops, planned_drop_declaration_for_action(action));
+    }
     return planned_drops;
+}
+
+auto plan_concurrency_planned_drop_actions(
+    syntax::ModuleSyntax const& module,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics
+) -> std::vector<PlannedDropAction> {
+    auto planned_drop_actions = std::vector<PlannedDropAction> {};
+    walk_module_expressions(module, [&](syntax::ExpressionSyntax const& expression) {
+        collect_planned_drop_actions_from_expression(expression, context, semantics, planned_drop_actions);
+    });
+    return planned_drop_actions;
 }
 
 }  // namespace orison::lowering
