@@ -1118,6 +1118,72 @@ int main() {
     assert(empty_planned_drop_report.stdout_text.empty());
     assert(empty_planned_drop_report.stderr_text.empty());
 
+    auto multi_planned_drop_report_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_multi_planned_drop_report.or";
+    remove_error = {};
+    std::filesystem::remove(multi_planned_drop_report_path, remove_error);
+    write_concurrency_fixture(
+        multi_planned_drop_report_path,
+        "demo.emit",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "record OtherPayload",
+            "    public value: Int64",
+            "implements Transferable for Payload",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "implements Transferable for OtherPayload",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "function launch(value: Int64) -> Int64",
+            "    let payload: Payload = Payload(value)",
+            "    let other: OtherPayload = OtherPayload(value)",
+            "    let worker = thread",
+            "        payload.value + other.value",
+            "",
+            "    worker.join()",
+        }
+    );
+    auto multi_planned_drop_report = run_planned_drops(app, multi_planned_drop_report_path);
+    assert(multi_planned_drop_report.exit_code == 0);
+    assert(multi_planned_drop_report.stderr_text.empty());
+    assert(
+        multi_planned_drop_report.stdout_text ==
+        "planned drop __orison_drop.Payload for Payload discovered at line 15 (metadata only)\n"
+        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 15 (metadata only)\n"
+    );
+
+    auto deduped_planned_drop_report_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_deduped_planned_drop_report.or";
+    remove_error = {};
+    std::filesystem::remove(deduped_planned_drop_report_path, remove_error);
+    write_concurrency_fixture(
+        deduped_planned_drop_report_path,
+        "demo.emit",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "implements Transferable for Payload",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "function launch(value: Int64) -> Int64",
+            "    let left: Payload = Payload(value)",
+            "    let right: Payload = Payload(value)",
+            "    let worker = thread",
+            "        left.value + right.value",
+            "",
+            "    worker.join()",
+        }
+    );
+    auto deduped_planned_drop_report = run_planned_drops(app, deduped_planned_drop_report_path);
+    assert(deduped_planned_drop_report.exit_code == 0);
+    assert(deduped_planned_drop_report.stderr_text.empty());
+    assert(
+        deduped_planned_drop_report.stdout_text ==
+        "planned drop __orison_drop.Payload for Payload discovered at line 10 (metadata only)\n"
+    );
+
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
     assert(object_result.exit_code == 0);
