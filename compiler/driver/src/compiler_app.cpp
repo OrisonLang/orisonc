@@ -15,6 +15,14 @@ namespace {
 
 auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> std::string;
 
+auto render_report_lines(std::vector<std::string> const& lines) -> std::string {
+    auto output = std::ostringstream {};
+    for (auto const& line : lines) {
+        output << line << '\n';
+    }
+    return output.str();
+}
+
 auto usage_text() -> std::string {
     return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--planned-drops <file> | --planned-drop-actions <file> | "
@@ -241,13 +249,9 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             };
         }
 
-        auto output = std::ostringstream {};
-        for (auto const& line : result.planned_drop_report) {
-            output << line << '\n';
-        }
         return CompileResult {
             .exit_code = 0,
-            .stdout_text = output.str(),
+            .stdout_text = render_report_lines(result.planned_drop_report),
         };
     }
 
@@ -261,13 +265,9 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             };
         }
 
-        auto output = std::ostringstream {};
-        for (auto const& line : result.planned_drop_action_report) {
-            output << line << '\n';
-        }
         return CompileResult {
             .exit_code = 0,
-            .stdout_text = output.str(),
+            .stdout_text = render_report_lines(result.planned_drop_action_report),
         };
     }
 

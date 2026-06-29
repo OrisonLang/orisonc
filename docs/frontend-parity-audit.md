@@ -97,6 +97,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   can inspect per-capture field actions separately from deduped declaration reports.
 - 2026-06-29: added explicit `orisonc --planned-drop-actions <file>` CLI inspection for per-cleanup-site planned drop
   actions, mirroring `--planned-drops` while preserving normal compilation output.
+- 2026-06-29: shared driver report-line rendering between `--planned-drops` and `--planned-drop-actions`, keeping both
+  explicit inspection commands behaviorally aligned without changing their output.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
