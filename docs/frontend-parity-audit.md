@@ -111,6 +111,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup thunk drop actions metadata-only, with no emitted drop declarations or calls.
 - 2026-06-29: replaced the raw cleanup drop-call flag with an explicit declaration-gated eligibility helper; smoke
   coverage now proves drop calls only enable when every cleanup action has a matching emitted drop declaration.
+- 2026-06-29: added an internal allowlist-based drop declaration producer and combined smoke coverage proving emitted
+  drop declarations and authorized cleanup thunk calls line up for an explicit test payload type.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

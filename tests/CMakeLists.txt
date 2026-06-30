@@ -150,6 +150,22 @@ add_test(
     COMMAND orison_drop_cleanup_emitter_smoke
 )
 
+add_executable(orison_drop_cleanup_abi_smoke
+    smoke/drop_cleanup_abi_smoke.cpp
+)
+
+target_link_libraries(orison_drop_cleanup_abi_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_drop_cleanup_abi_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_drop_cleanup_abi_smoke
+    COMMAND orison_drop_cleanup_abi_smoke
+)
+
 add_executable(orison_call_emitter_smoke
     smoke/call_emitter_smoke.cpp
 )

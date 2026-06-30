@@ -6,6 +6,7 @@
 int main() {
     using orison::lowering::PlannedDropDeclaration;
     using orison::lowering::add_planned_drop_declaration;
+    using orison::lowering::declared_drop_declarations_for_allowed_source_types;
     using orison::lowering::format_planned_drop_action;
     using orison::lowering::format_planned_drop_action_report;
     using orison::lowering::format_planned_drop_declaration;
@@ -95,5 +96,31 @@ int main() {
     assert(action_report.size() == 1);
     assert(action_report.front() == format_planned_drop_action(action));
     assert(format_planned_drop_action_report({}).empty());
+
+    auto declared_test_drops = declared_drop_declarations_for_allowed_source_types(
+        {
+            action,
+            orison::lowering::PlannedDropAction {
+                .capture_name = "payload_again",
+                .source_type_name = "Payload",
+                .symbol_name = "__orison_drop.Payload",
+                .field_index = 4,
+                .discovery_line = 50,
+            },
+            orison::lowering::PlannedDropAction {
+                .capture_name = "other",
+                .source_type_name = "OtherPayload",
+                .symbol_name = "__orison_drop.OtherPayload",
+                .field_index = 5,
+                .discovery_line = 51,
+            },
+        },
+        {"Payload"}
+    );
+    assert(declared_test_drops.size() == 1);
+    assert(declared_test_drops.front().symbol_name == "__orison_drop.Payload");
+    assert(declared_test_drops.front().source_type_name == "Payload");
+    assert(declared_test_drops.front().discovery_line == 42);
+    assert(declared_test_drops.front().emit_declaration);
     return 0;
 }

@@ -1,6 +1,8 @@
 #include "orison/lowering/drop_metadata.hpp"
 
+#include <algorithm>
 #include <sstream>
+#include <string_view>
 #include <utility>
 
 namespace orison::lowering {
@@ -78,6 +80,27 @@ auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> Pla
         .source_type_name = action.source_type_name,
         .discovery_line = action.discovery_line,
     };
+}
+
+auto declared_drop_declarations_for_allowed_source_types(
+    std::vector<PlannedDropAction> const& actions,
+    std::vector<std::string_view> const& allowed_source_type_names
+) -> std::vector<PlannedDropDeclaration> {
+    auto declarations = std::vector<PlannedDropDeclaration> {};
+    for (auto const& action : actions) {
+        auto const allowed = std::find(
+            allowed_source_type_names.begin(),
+            allowed_source_type_names.end(),
+            action.source_type_name
+        ) != allowed_source_type_names.end();
+        if (!allowed) {
+            continue;
+        }
+        auto declaration = planned_drop_declaration_for_action(action);
+        declaration.emit_declaration = true;
+        add_planned_drop_declaration(declarations, std::move(declaration));
+    }
+    return declarations;
 }
 
 }  // namespace orison::lowering

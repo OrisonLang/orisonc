@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace orison::lowering {
@@ -39,5 +40,10 @@ auto add_planned_drop_declaration(
 ) -> bool;
 
 auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> PlannedDropDeclaration;
+
+auto declared_drop_declarations_for_allowed_source_types(
+    std::vector<PlannedDropAction> const& actions,
+    std::vector<std::string_view> const& allowed_source_type_names
+) -> std::vector<PlannedDropDeclaration>;
 
 }  // namespace orison::lowering
