@@ -61,6 +61,11 @@ struct ConcurrencyDropCleanupPlan {
     DropCallEmissionEligibility drop_call_emission = DropCallEmissionEligibility::metadata_only;
 };
 
+struct DropCleanupAuthorizationReport {
+    bool authorized = false;
+    std::vector<PlannedDropAction> missing_declarations;
+};
+
 struct ConcurrencyCleanupPlan {
     std::vector<ConcurrencyCleanupFieldPlan> drop_candidates;
     ConcurrencyDropCleanupPlan drop_cleanup;
@@ -83,6 +88,16 @@ auto format_concurrency_drop_cleanup_plan(
 ) -> std::vector<std::string>;
 
 auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool;
+
+auto plan_drop_cleanup_authorization(
+    ConcurrencyDropCleanupPlan const& plan,
+    std::vector<PlannedDropDeclaration> const& declarations
+) -> DropCleanupAuthorizationReport;
+
+auto format_drop_cleanup_authorization_report(
+    ConcurrencyDropCleanupPlan const& plan,
+    DropCleanupAuthorizationReport const& report
+) -> std::vector<std::string>;
 
 auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,

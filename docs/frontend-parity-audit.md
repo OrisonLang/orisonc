@@ -117,6 +117,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   preserving normal metadata-only output while integration smoke coverage exercises declaration plus cleanup-call IR.
 - 2026-06-30: added negative integration smoke coverage for mixed aggregate cleanup actions, proving a partial
   declaration allowlist may emit one declaration but still does not enable any calls for that cleanup thunk.
+- 2026-06-30: added a drop cleanup authorization report seam that identifies missing emitted drop declarations per
+  cleanup action, giving future diagnostics/tooling an explanation for blocked cleanup-call emission.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

@@ -184,6 +184,23 @@ int main() {
     auto authorized_plan = record_plan->cleanup.drop_cleanup;
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(authorized_plan, {}));
     assert(!orison::lowering::drop_calls_enabled(authorized_plan));
+    auto missing_authorization = orison::lowering::plan_drop_cleanup_authorization(authorized_plan, {});
+    assert(!missing_authorization.authorized);
+    assert(missing_authorization.missing_declarations.size() == 1);
+    assert(missing_authorization.missing_declarations.front().symbol_name == "__orison_drop.Payload");
+    auto missing_authorization_report = orison::lowering::format_drop_cleanup_authorization_report(
+        authorized_plan,
+        missing_authorization
+    );
+    assert(missing_authorization_report.size() == 2);
+    assert(
+        missing_authorization_report[0] ==
+        "drop cleanup authorization __orison_thread_cleanup.record_worker.20.2 blocked missing declarations 1"
+    );
+    assert(
+        missing_authorization_report[1] ==
+        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
+    );
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
         authorized_plan,
         {
@@ -207,6 +224,28 @@ int main() {
         }
     ));
     assert(orison::lowering::drop_calls_enabled(authorized_plan));
+    auto successful_authorization = orison::lowering::plan_drop_cleanup_authorization(
+        authorized_plan,
+        {
+            orison::lowering::PlannedDropDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 20,
+                .emit_declaration = true,
+            },
+        }
+    );
+    assert(successful_authorization.authorized);
+    assert(successful_authorization.missing_declarations.empty());
+    auto successful_authorization_report = orison::lowering::format_drop_cleanup_authorization_report(
+        authorized_plan,
+        successful_authorization
+    );
+    assert(successful_authorization_report.size() == 1);
+    assert(
+        successful_authorization_report.front() ==
+        "drop cleanup authorization __orison_thread_cleanup.record_worker.20.2 authorized"
+    );
     auto authorized_drop_cleanup_report =
         orison::lowering::format_concurrency_drop_cleanup_plan(authorized_plan);
     assert(authorized_drop_cleanup_report.size() == 2);
