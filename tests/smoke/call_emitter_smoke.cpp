@@ -118,6 +118,7 @@ int main() {
     auto member_context = orison::lowering::LoweringEmissionContext {
         .lowering = member_lowering,
         .string_constants = member_string_constants,
+        .options = {},
     };
     auto member_failures = orison::lowering::LoweringFailures {};
     auto member_session = orison::lowering::FunctionLoweringSession {

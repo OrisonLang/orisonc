@@ -117,6 +117,7 @@ int main() {
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
         .string_constants = strings,
+        .options = {},
     };
     auto state = orison::lowering::FunctionLoweringState {};
     state.local_name_counts["input"] = 1;

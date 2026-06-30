@@ -77,6 +77,7 @@ int main() {
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
         .string_constants = strings,
+        .options = {},
     };
     auto state = orison::lowering::FunctionLoweringState {};
     auto failures = orison::lowering::LoweringFailures {};

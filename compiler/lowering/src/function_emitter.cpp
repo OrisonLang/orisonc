@@ -1886,12 +1886,14 @@ auto emit_function(
     LoweringContext const& lowering_context,
     StringConstantTable const& string_constants,
     semantics::SemanticAnalysisResult const& semantic_result,
-    diagnostics::DiagnosticBag& diagnostics
+    diagnostics::DiagnosticBag& diagnostics,
+    LlvmIrEmissionOptions const& options
 ) -> std::string {
     auto output = std::ostringstream {};
     auto context = EmissionContext {
         .lowering = lowering_context,
         .string_constants = string_constants,
+        .options = options,
     };
     emit_function_body(function, signature, context, &semantic_result, diagnostics, output);
     return output.str();
@@ -1902,7 +1904,8 @@ auto emit_function(
     LoweredFunctionSignature const& signature,
     LoweringContext const& lowering_context,
     StringConstantTable const& string_constants,
-    diagnostics::DiagnosticBag& diagnostics
+    diagnostics::DiagnosticBag& diagnostics,
+    LlvmIrEmissionOptions const& options
 ) -> std::string {
     auto semantic_result = semantics::SemanticAnalysisResult {};
     return emit_function(
@@ -1911,7 +1914,8 @@ auto emit_function(
         lowering_context,
         string_constants,
         semantic_result,
-        diagnostics
+        diagnostics,
+        options
     );
 }
 

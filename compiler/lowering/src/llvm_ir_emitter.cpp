@@ -111,7 +111,8 @@ auto LlvmIrEmissionResult::planned_drop_action_report() const -> std::vector<std
 
 auto LlvmIrEmitter::emit(
     syntax::ModuleSyntax const& module,
-    semantics::SemanticAnalysisResult const& semantic_result
+    semantics::SemanticAnalysisResult const& semantic_result,
+    LlvmIrEmissionOptions const& options
 ) const -> LlvmIrEmissionResult {
     auto result = LlvmIrEmissionResult {};
     if (semantic_result.has_errors()) {
@@ -134,16 +135,24 @@ auto LlvmIrEmitter::emit(
     auto emission_context = LoweringEmissionContext {
         .lowering = context,
         .string_constants = string_constants,
+        .options = options,
     };
     result.planned_drop_actions = plan_concurrency_planned_drop_actions(
         module,
         emission_context,
         semantic_result
     );
-    for (auto const& action : result.planned_drop_actions) {
-        add_planned_drop_declaration(
-            result.planned_drop_declarations,
-            planned_drop_declaration_for_action(action)
+    if (options.declared_drop_source_type_allowlist.empty()) {
+        for (auto const& action : result.planned_drop_actions) {
+            add_planned_drop_declaration(
+                result.planned_drop_declarations,
+                planned_drop_declaration_for_action(action)
+            );
+        }
+    } else {
+        result.planned_drop_declarations = declared_drop_declarations_for_allowed_source_types(
+            result.planned_drop_actions,
+            options.declared_drop_source_type_allowlist
         );
     }
     output << emit_record_layouts(module, context);
@@ -168,7 +177,8 @@ auto LlvmIrEmitter::emit(
             context,
             string_constants,
             semantic_result,
-            result.diagnostics
+            result.diagnostics,
+            options
         );
         output << "\n";
     }
@@ -189,7 +199,8 @@ auto LlvmIrEmitter::emit(
             context,
             string_constants,
             semantic_result,
-            result.diagnostics
+            result.diagnostics,
+            options
         );
         output << "\n";
         return !result.has_errors();

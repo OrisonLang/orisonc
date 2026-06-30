@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/lowering_options.hpp"
 #include "orison/lowering/string_constants.hpp"
 
 namespace orison::lowering {
@@ -8,6 +9,7 @@ namespace orison::lowering {
 struct LoweringEmissionContext {
     LoweringContext const& lowering;
     StringConstantTable const& string_constants;
+    LlvmIrEmissionOptions options;
 };
 
 }  // namespace orison::lowering

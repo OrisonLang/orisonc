@@ -2,6 +2,7 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/drop_metadata.hpp"
+#include "orison/lowering/lowering_options.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
 
@@ -27,7 +28,8 @@ class LlvmIrEmitter {
 public:
     auto emit(
         syntax::ModuleSyntax const& module,
-        semantics::SemanticAnalysisResult const& semantic_result
+        semantics::SemanticAnalysisResult const& semantic_result,
+        LlvmIrEmissionOptions const& options = {}
     ) const -> LlvmIrEmissionResult;
 };
 
