@@ -1,7 +1,7 @@
 # ADR-0005: Owned Drop Semantics and ABI Gating
 
 ## Status
-Proposed
+Accepted
 
 ## Context
 

@@ -124,7 +124,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   normal compilation output unchanged while matching the existing planned-drop inspection style.
 - 2026-06-30: made drop cleanup authorization reports cleanup-site aware, so CLI blocker reports now include the actual
   generated cleanup thunk symbol instead of only a module-wide summary.
-- 2026-06-30: added ADR-0005 to pin owned-drop semantics and ABI gating direction: normal lowering remains
+- 2026-06-30: accepted ADR-0005 to pin owned-drop semantics and ABI gating direction: normal lowering remains
   metadata-only until source-level drop semantics and emitted finite declarations are accepted together.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
