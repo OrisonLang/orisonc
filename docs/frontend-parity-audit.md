@@ -113,8 +113,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   coverage now proves drop calls only enable when every cleanup action has a matching emitted drop declaration.
 - 2026-06-29: added an internal allowlist-based drop declaration producer and combined smoke coverage proving emitted
   drop declarations and authorized cleanup thunk calls line up for an explicit test payload type.
-- 2026-06-29: added a test-only LLVM emission option that wires the drop declaration allowlist through module emission,
-  preserving normal metadata-only output while integration smoke coverage exercises declaration plus cleanup-call IR.
+- 2026-06-29: added an explicitly test-only LLVM emission option that wires the drop declaration allowlist through
+  module emission, preserving normal metadata-only output while integration smoke coverage exercises declaration plus
+  cleanup-call IR.
 - 2026-06-30: added negative integration smoke coverage for mixed aggregate cleanup actions, proving a partial
   declaration allowlist may emit one declaration but still does not enable any calls for that cleanup thunk.
 - 2026-06-30: added a drop cleanup authorization report seam that identifies missing emitted drop declarations per

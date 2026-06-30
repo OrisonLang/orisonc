@@ -162,7 +162,7 @@ auto LlvmIrEmitter::emit(
             cleanup.actions.end()
         );
     }
-    if (options.declared_drop_source_type_allowlist.empty()) {
+    if (options.test_only_declared_drop_source_type_allowlist.empty()) {
         for (auto const& action : result.planned_drop_actions) {
             add_planned_drop_declaration(
                 result.planned_drop_declarations,
@@ -172,7 +172,7 @@ auto LlvmIrEmitter::emit(
     } else {
         result.planned_drop_declarations = declared_drop_declarations_for_allowed_source_types(
             result.planned_drop_actions,
-            options.declared_drop_source_type_allowlist
+            options.test_only_declared_drop_source_type_allowlist
         );
     }
     output << emit_record_layouts(module, context);

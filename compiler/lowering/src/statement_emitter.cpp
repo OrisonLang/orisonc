@@ -204,10 +204,10 @@ auto lower_thread_let_statement(
         );
         return false;
     }
-    if (!context.options.declared_drop_source_type_allowlist.empty()) {
+    if (!context.options.test_only_declared_drop_source_type_allowlist.empty()) {
         auto drop_declarations = declared_drop_declarations_for_allowed_source_types(
             plan->cleanup.drop_cleanup.actions,
-            context.options.declared_drop_source_type_allowlist
+            context.options.test_only_declared_drop_source_type_allowlist
         );
         authorize_drop_cleanup_calls_for_declared_abi(plan->cleanup.drop_cleanup, drop_declarations);
     }

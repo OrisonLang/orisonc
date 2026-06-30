@@ -2426,7 +2426,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
         "\n"
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .declared_drop_source_type_allowlist = {"Payload"},
+            .test_only_declared_drop_source_type_allowlist = {"Payload"},
         }
     );
 
@@ -2481,7 +2481,7 @@ void test_reject_partial_record_capture_drop_abi_calls() {
         "\n"
         "    worker.join()\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .declared_drop_source_type_allowlist = {"Payload"},
+            .test_only_declared_drop_source_type_allowlist = {"Payload"},
         }
     );
 
