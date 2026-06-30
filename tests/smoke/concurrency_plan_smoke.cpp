@@ -87,7 +87,7 @@ int main() {
     assert(task_plan->cleanup.drop_candidates.empty());
     assert(task_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_task_cleanup.compute.7.0");
     assert(task_plan->cleanup.drop_cleanup.actions.empty());
-    assert(!task_plan->cleanup.drop_cleanup.emit_drop_calls);
+    assert(!orison::lowering::drop_calls_enabled(task_plan->cleanup.drop_cleanup));
     auto empty_drop_cleanup_report =
         orison::lowering::format_concurrency_drop_cleanup_plan(task_plan->cleanup.drop_cleanup);
     assert(empty_drop_cleanup_report.size() == 1);
@@ -123,7 +123,7 @@ int main() {
     assert(thread_plan->cleanup.drop_candidates.empty());
     assert(thread_plan->cleanup.drop_cleanup.cleanup_symbol_name == "__orison_thread_cleanup.on_thread.13.0");
     assert(thread_plan->cleanup.drop_cleanup.actions.empty());
-    assert(!thread_plan->cleanup.drop_cleanup.emit_drop_calls);
+    assert(!orison::lowering::drop_calls_enabled(thread_plan->cleanup.drop_cleanup));
     assert(thread_plan->result_storage.llvm_type == "i64");
     assert(thread_plan->result_storage.size_bytes == 8);
 
@@ -179,7 +179,40 @@ int main() {
     assert(record_plan->cleanup.drop_cleanup.actions.front().symbol_name == "__orison_drop.Payload");
     assert(record_plan->cleanup.drop_cleanup.actions.front().field_index == 0);
     assert(record_plan->cleanup.drop_cleanup.actions.front().discovery_line == 20);
-    assert(!record_plan->cleanup.drop_cleanup.emit_drop_calls);
+    assert(!orison::lowering::drop_calls_enabled(record_plan->cleanup.drop_cleanup));
+    auto authorized_plan = record_plan->cleanup.drop_cleanup;
+    assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(authorized_plan, {}));
+    assert(!orison::lowering::drop_calls_enabled(authorized_plan));
+    assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
+        authorized_plan,
+        {
+            orison::lowering::PlannedDropDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 20,
+            },
+        }
+    ));
+    assert(!orison::lowering::drop_calls_enabled(authorized_plan));
+    assert(orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
+        authorized_plan,
+        {
+            orison::lowering::PlannedDropDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 20,
+                .emit_declaration = true,
+            },
+        }
+    ));
+    assert(orison::lowering::drop_calls_enabled(authorized_plan));
+    auto authorized_drop_cleanup_report =
+        orison::lowering::format_concurrency_drop_cleanup_plan(authorized_plan);
+    assert(authorized_drop_cleanup_report.size() == 2);
+    assert(
+        authorized_drop_cleanup_report[0] ==
+        "drop cleanup plan __orison_thread_cleanup.record_worker.20.2 actions 1 drop calls enabled"
+    );
     auto record_drop_cleanup_report =
         orison::lowering::format_concurrency_drop_cleanup_plan(record_plan->cleanup.drop_cleanup);
     assert(record_drop_cleanup_report.size() == 2);

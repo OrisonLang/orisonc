@@ -20,6 +20,11 @@ enum class ConcurrencyPlanKind {
     thread,
 };
 
+enum class DropCallEmissionEligibility {
+    metadata_only,
+    declared_drop_abi,
+};
+
 struct ConcurrencyCapturePlan {
     std::string name;
     std::string source_type_name;
@@ -53,7 +58,7 @@ struct ConcurrencyCleanupFieldPlan {
 struct ConcurrencyDropCleanupPlan {
     std::string cleanup_symbol_name;
     std::vector<PlannedDropAction> actions;
-    bool emit_drop_calls = false;
+    DropCallEmissionEligibility drop_call_emission = DropCallEmissionEligibility::metadata_only;
 };
 
 struct ConcurrencyCleanupPlan {
@@ -76,6 +81,13 @@ struct ConcurrencyExpressionPlan {
 auto format_concurrency_drop_cleanup_plan(
     ConcurrencyDropCleanupPlan const& plan
 ) -> std::vector<std::string>;
+
+auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool;
+
+auto authorize_drop_cleanup_calls_for_declared_abi(
+    ConcurrencyDropCleanupPlan& plan,
+    std::vector<PlannedDropDeclaration> const& declarations
+) -> bool;
 
 auto plan_concurrency_expression(
     syntax::ExpressionSyntax const& expression,

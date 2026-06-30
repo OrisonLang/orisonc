@@ -109,6 +109,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   the guarded LLVM call shape without enabling drop calls through normal lowering.
 - 2026-06-29: strengthened CLI `emit-llvm` smoke coverage for aggregate thread captures so normal compilation must keep
   cleanup thunk drop actions metadata-only, with no emitted drop declarations or calls.
+- 2026-06-29: replaced the raw cleanup drop-call flag with an explicit declaration-gated eligibility helper; smoke
+  coverage now proves drop calls only enable when every cleanup action has a matching emitted drop declaration.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

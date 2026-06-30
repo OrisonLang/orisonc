@@ -345,13 +345,46 @@ auto format_concurrency_drop_cleanup_plan(
         header << " " << plan.cleanup_symbol_name;
     }
     header << " actions " << plan.actions.size()
-           << " drop calls " << (plan.emit_drop_calls ? "enabled" : "disabled")
-           << " (metadata only)";
+           << " drop calls " << (drop_calls_enabled(plan) ? "enabled" : "disabled");
+    if (!drop_calls_enabled(plan)) {
+        header << " (metadata only)";
+    }
     report.push_back(header.str());
 
     auto action_report = format_planned_drop_action_report(plan.actions);
     report.insert(report.end(), action_report.begin(), action_report.end());
     return report;
+}
+
+auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool {
+    return plan.drop_call_emission == DropCallEmissionEligibility::declared_drop_abi;
+}
+
+auto authorize_drop_cleanup_calls_for_declared_abi(
+    ConcurrencyDropCleanupPlan& plan,
+    std::vector<PlannedDropDeclaration> const& declarations
+) -> bool {
+    if (plan.actions.empty()) {
+        plan.drop_call_emission = DropCallEmissionEligibility::metadata_only;
+        return false;
+    }
+
+    for (auto const& action : plan.actions) {
+        auto const declaration = std::find_if(
+            declarations.begin(),
+            declarations.end(),
+            [&](PlannedDropDeclaration const& candidate) {
+                return candidate.symbol_name == action.symbol_name && candidate.emit_declaration;
+            }
+        );
+        if (declaration == declarations.end()) {
+            plan.drop_call_emission = DropCallEmissionEligibility::metadata_only;
+            return false;
+        }
+    }
+
+    plan.drop_call_emission = DropCallEmissionEligibility::declared_drop_abi;
+    return true;
 }
 
 auto plan_concurrency_expression(

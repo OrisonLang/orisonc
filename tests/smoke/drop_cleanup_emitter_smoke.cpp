@@ -30,11 +30,21 @@ int main() {
                         .discovery_line = 1,
                     },
                 },
-                .emit_drop_calls = true,
             },
         },
     };
 
+    assert(orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
+        plan.cleanup.drop_cleanup,
+        {
+            orison::lowering::PlannedDropDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 1,
+                .emit_declaration = true,
+            },
+        }
+    ));
     auto enabled = orison::lowering::emit_concurrency_cleanup_thunk(plan);
     assert(
         enabled ==
@@ -47,7 +57,7 @@ int main() {
         "}\n"
     );
 
-    plan.cleanup.drop_cleanup.emit_drop_calls = false;
+    assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(plan.cleanup.drop_cleanup, {}));
     auto disabled = orison::lowering::emit_concurrency_cleanup_thunk(plan);
     assert(disabled.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(disabled.find("; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload") != std::string::npos);
