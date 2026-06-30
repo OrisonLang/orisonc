@@ -533,6 +533,17 @@ auto run_planned_drop_actions(orison::driver::CompilerApp const& app, std::files
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_drop_cleanup_authorization(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--drop-cleanup-authorization",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 auto run_emit_object(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& source_path,
@@ -1142,6 +1153,14 @@ int main() {
         "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
         "discovered at line 9 (metadata only)\n"
     );
+    auto drop_cleanup_authorization = run_drop_cleanup_authorization(app, planned_drop_report_path);
+    assert(drop_cleanup_authorization.exit_code == 0);
+    assert(drop_cleanup_authorization.stderr_text.empty());
+    assert(
+        drop_cleanup_authorization.stdout_text ==
+        "drop cleanup authorization blocked missing declarations 1\n"
+        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 9\n"
+    );
 
     auto empty_planned_drop_report = run_planned_drops(app, emit_path);
     assert(empty_planned_drop_report.exit_code == 0);
@@ -1151,6 +1170,10 @@ int main() {
     assert(empty_planned_drop_actions.exit_code == 0);
     assert(empty_planned_drop_actions.stdout_text.empty());
     assert(empty_planned_drop_actions.stderr_text.empty());
+    auto empty_drop_cleanup_authorization = run_drop_cleanup_authorization(app, emit_path);
+    assert(empty_drop_cleanup_authorization.exit_code == 0);
+    assert(empty_drop_cleanup_authorization.stdout_text.empty());
+    assert(empty_drop_cleanup_authorization.stderr_text.empty());
 
     auto multi_planned_drop_report_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_multi_planned_drop_report.or";
@@ -1196,6 +1219,18 @@ int main() {
         "discovered at line 15 (metadata only)\n"
         "planned drop action __orison_drop.OtherPayload for capture other: OtherPayload field 1 "
         "discovered at line 15 (metadata only)\n"
+    );
+    auto multi_drop_cleanup_authorization =
+        run_drop_cleanup_authorization(app, multi_planned_drop_report_path);
+    assert(multi_drop_cleanup_authorization.exit_code == 0);
+    assert(multi_drop_cleanup_authorization.stderr_text.empty());
+    assert(
+        multi_drop_cleanup_authorization.stdout_text ==
+        "drop cleanup authorization blocked missing declarations 2\n"
+        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 15\n"
+        "missing drop declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 15\n"
     );
 
     auto deduped_planned_drop_report_path =

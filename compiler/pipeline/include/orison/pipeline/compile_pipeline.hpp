@@ -19,6 +19,7 @@ struct CompilePipelineResult {
     std::string object_bytes;
     std::vector<std::string> planned_drop_report;
     std::vector<std::string> planned_drop_action_report;
+    std::vector<std::string> drop_cleanup_authorization_report;
     std::vector<std::string> link_libraries;
     std::string error_text;
 

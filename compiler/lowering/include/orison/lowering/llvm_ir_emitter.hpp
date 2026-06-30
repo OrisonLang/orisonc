@@ -22,6 +22,7 @@ struct LlvmIrEmissionResult {
     auto render(std::string_view path) const -> std::string;
     auto planned_drop_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;
+    auto drop_cleanup_authorization_report() const -> std::vector<std::string>;
 };
 
 class LlvmIrEmitter {

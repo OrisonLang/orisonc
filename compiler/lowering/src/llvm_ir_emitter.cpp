@@ -109,6 +109,17 @@ auto LlvmIrEmissionResult::planned_drop_action_report() const -> std::vector<std
     return format_planned_drop_action_report(planned_drop_actions);
 }
 
+auto LlvmIrEmissionResult::drop_cleanup_authorization_report() const -> std::vector<std::string> {
+    auto plan = ConcurrencyDropCleanupPlan {
+        .actions = planned_drop_actions,
+    };
+    auto authorization = plan_drop_cleanup_authorization(plan, planned_drop_declarations);
+    if (authorization.authorized || authorization.missing_declarations.empty()) {
+        return {};
+    }
+    return format_drop_cleanup_authorization_report(plan, authorization);
+}
+
 auto LlvmIrEmitter::emit(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result,
