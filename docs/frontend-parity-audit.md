@@ -121,6 +121,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup action, giving future diagnostics/tooling an explanation for blocked cleanup-call emission.
 - 2026-06-30: exposed drop cleanup authorization blockers through `orisonc --drop-cleanup-authorization <file>`, keeping
   normal compilation output unchanged while matching the existing planned-drop inspection style.
+- 2026-06-30: made drop cleanup authorization reports cleanup-site aware, so CLI blocker reports now include the actual
+  generated cleanup thunk symbol instead of only a module-wide summary.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

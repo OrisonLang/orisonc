@@ -119,6 +119,12 @@ auto plan_concurrency_planned_drops(
     semantics::SemanticAnalysisResult const& semantics
 ) -> std::vector<PlannedDropDeclaration>;
 
+auto plan_concurrency_drop_cleanups(
+    syntax::ModuleSyntax const& module,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics
+) -> std::vector<ConcurrencyDropCleanupPlan>;
+
 auto plan_concurrency_planned_drop_actions(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,

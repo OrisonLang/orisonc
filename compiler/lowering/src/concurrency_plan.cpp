@@ -301,7 +301,9 @@ void collect_planned_drop_actions_from_expression(
     syntax::ExpressionSyntax const& expression,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics,
-    std::vector<PlannedDropAction>& planned_drop_actions
+    std::string_view enclosing_symbol_name,
+    std::size_t ordinal,
+    std::vector<ConcurrencyDropCleanupPlan>& drop_cleanups
 ) {
     if (is_concurrency_expression(expression)) {
         auto captures = std::vector<ConcurrencyCapturePlan> {};
@@ -326,11 +328,44 @@ void collect_planned_drop_actions_from_expression(
         }
 
         auto cleanup = cleanup_plan_for(captures);
-        auto drop_cleanup = drop_cleanup_plan_for({}, expression.line, cleanup.drop_candidates);
-        for (auto const& action : drop_cleanup.actions) {
-            planned_drop_actions.push_back(action);
+        auto drop_cleanup = drop_cleanup_plan_for(
+            concurrency_cleanup_symbol_name(
+                expression_plan_kind(expression),
+                enclosing_symbol_name,
+                expression.line,
+                ordinal
+            ),
+            expression.line,
+            cleanup.drop_candidates
+        );
+        if (!drop_cleanup.actions.empty()) {
+            drop_cleanups.push_back(std::move(drop_cleanup));
         }
     }
+}
+
+void collect_planned_drop_cleanups_from_function(
+    syntax::FunctionSyntax const& function,
+    std::string_view enclosing_symbol_name,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics,
+    std::vector<ConcurrencyDropCleanupPlan>& drop_cleanups
+) {
+    auto ordinal = std::size_t {0};
+    walk_function_expressions(function, [&](syntax::ExpressionSyntax const& expression) {
+        if (!is_concurrency_expression(expression)) {
+            return;
+        }
+        collect_planned_drop_actions_from_expression(
+            expression,
+            context,
+            semantics,
+            enclosing_symbol_name,
+            ordinal,
+            drop_cleanups
+        );
+        ++ordinal;
+    });
 }
 
 }  // namespace
@@ -521,15 +556,66 @@ auto plan_concurrency_planned_drops(
     return planned_drops;
 }
 
+auto plan_concurrency_drop_cleanups(
+    syntax::ModuleSyntax const& module,
+    LoweringEmissionContext const& context,
+    semantics::SemanticAnalysisResult const& semantics
+) -> std::vector<ConcurrencyDropCleanupPlan> {
+    auto drop_cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
+    for (auto const& function : module.functions) {
+        auto signature = context.lowering.functions.find(function.name);
+        auto symbol_name = signature == context.lowering.functions.end()
+            ? std::string_view {function.name}
+            : std::string_view {signature->second.symbol_name};
+        collect_planned_drop_cleanups_from_function(
+            function,
+            symbol_name,
+            context,
+            semantics,
+            drop_cleanups
+        );
+    }
+
+    auto method_index = std::size_t {0};
+    auto collect_method = [&](syntax::FunctionSyntax const& method) {
+        auto symbol_name = method_index >= context.lowering.methods.size()
+            ? std::string_view {method.name}
+            : std::string_view {context.lowering.methods[method_index].signature.symbol_name};
+        ++method_index;
+        collect_planned_drop_cleanups_from_function(
+            method,
+            symbol_name,
+            context,
+            semantics,
+            drop_cleanups
+        );
+    };
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            collect_method(method);
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            collect_method(method);
+        }
+    }
+    return drop_cleanups;
+}
+
 auto plan_concurrency_planned_drop_actions(
     syntax::ModuleSyntax const& module,
     LoweringEmissionContext const& context,
     semantics::SemanticAnalysisResult const& semantics
 ) -> std::vector<PlannedDropAction> {
     auto planned_drop_actions = std::vector<PlannedDropAction> {};
-    walk_module_expressions(module, [&](syntax::ExpressionSyntax const& expression) {
-        collect_planned_drop_actions_from_expression(expression, context, semantics, planned_drop_actions);
-    });
+    for (auto const& cleanup : plan_concurrency_drop_cleanups(module, context, semantics)) {
+        planned_drop_actions.insert(
+            planned_drop_actions.end(),
+            cleanup.actions.begin(),
+            cleanup.actions.end()
+        );
+    }
     return planned_drop_actions;
 }
 

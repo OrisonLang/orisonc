@@ -110,14 +110,16 @@ auto LlvmIrEmissionResult::planned_drop_action_report() const -> std::vector<std
 }
 
 auto LlvmIrEmissionResult::drop_cleanup_authorization_report() const -> std::vector<std::string> {
-    auto plan = ConcurrencyDropCleanupPlan {
-        .actions = planned_drop_actions,
-    };
-    auto authorization = plan_drop_cleanup_authorization(plan, planned_drop_declarations);
-    if (authorization.authorized || authorization.missing_declarations.empty()) {
-        return {};
+    auto lines = std::vector<std::string> {};
+    for (auto const& cleanup : drop_cleanups) {
+        auto authorization = plan_drop_cleanup_authorization(cleanup, planned_drop_declarations);
+        if (authorization.authorized || authorization.missing_declarations.empty()) {
+            continue;
+        }
+        auto cleanup_lines = format_drop_cleanup_authorization_report(cleanup, authorization);
+        lines.insert(lines.end(), cleanup_lines.begin(), cleanup_lines.end());
     }
-    return format_drop_cleanup_authorization_report(plan, authorization);
+    return lines;
 }
 
 auto LlvmIrEmitter::emit(
@@ -148,11 +150,18 @@ auto LlvmIrEmitter::emit(
         .string_constants = string_constants,
         .options = options,
     };
-    result.planned_drop_actions = plan_concurrency_planned_drop_actions(
+    result.drop_cleanups = plan_concurrency_drop_cleanups(
         module,
         emission_context,
         semantic_result
     );
+    for (auto const& cleanup : result.drop_cleanups) {
+        result.planned_drop_actions.insert(
+            result.planned_drop_actions.end(),
+            cleanup.actions.begin(),
+            cleanup.actions.end()
+        );
+    }
     if (options.declared_drop_source_type_allowlist.empty()) {
         for (auto const& action : result.planned_drop_actions) {
             add_planned_drop_declaration(

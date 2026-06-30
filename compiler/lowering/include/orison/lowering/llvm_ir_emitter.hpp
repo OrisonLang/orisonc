@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
+#include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
@@ -15,6 +16,7 @@ namespace orison::lowering {
 struct LlvmIrEmissionResult {
     diagnostics::DiagnosticBag diagnostics;
     std::string ir_text;
+    std::vector<ConcurrencyDropCleanupPlan> drop_cleanups;
     std::vector<PlannedDropAction> planned_drop_actions;
     std::vector<PlannedDropDeclaration> planned_drop_declarations;
 
