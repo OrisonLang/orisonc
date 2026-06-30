@@ -126,6 +126,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   generated cleanup thunk symbol instead of only a module-wide summary.
 - 2026-06-30: accepted ADR-0005 to pin owned-drop semantics and ABI gating direction: normal lowering remains
   metadata-only until source-level drop semantics and emitted finite declarations are accepted together.
+- 2026-06-30: added a neutral semantic drop model scaffold for future source-derived drop implementations and planned
+  drop sites without adding parser syntax or changing normal lowering behavior.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

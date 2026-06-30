@@ -1,4 +1,5 @@
 add_library(orison_semantics STATIC
+    src/drop_model.cpp
     src/module_semantic_analyzer.cpp
 )
 

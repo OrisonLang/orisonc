@@ -48,6 +48,22 @@ add_test(
     COMMAND orison_semantics_smoke
 )
 
+add_executable(orison_drop_model_smoke
+    smoke/drop_model_smoke.cpp
+)
+
+target_link_libraries(orison_drop_model_smoke
+    PRIVATE
+        orison_semantics
+)
+
+target_compile_features(orison_drop_model_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_drop_model_smoke
+    COMMAND orison_drop_model_smoke
+)
+
 add_executable(orison_lowering_smoke
     smoke/lowering_smoke.cpp
 )
