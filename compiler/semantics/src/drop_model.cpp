@@ -1,11 +1,57 @@
 #include "orison/semantics/drop_model.hpp"
 
+#include "orison/syntax/module_parser.hpp"
+
 #include <algorithm>
 #include <sstream>
 #include <string_view>
 #include <utility>
 
 namespace orison::semantics {
+namespace {
+
+auto render_source_type_name(syntax::TypeSyntax const& type) -> std::string {
+    auto rendered = type.name;
+    if (type.generic_arguments.empty()) {
+        return rendered;
+    }
+    rendered += "<";
+    for (std::size_t index = 0; index < type.generic_arguments.size(); ++index) {
+        if (index > 0) {
+            rendered += ", ";
+        }
+        rendered += render_source_type_name(type.generic_arguments[index]);
+    }
+    rendered += ">";
+    return rendered;
+}
+
+auto is_drop_interface(syntax::TypeSyntax const& type) -> bool {
+    return type.name == "Drop" && type.generic_arguments.empty();
+}
+
+auto has_drop_method(syntax::ImplementationSyntax const& implementation) -> bool {
+    return std::find_if(
+        implementation.methods.begin(),
+        implementation.methods.end(),
+        [](syntax::FunctionSyntax const& method) {
+            return method.name == "drop";
+        }
+    ) != implementation.methods.end();
+}
+
+auto drop_method_line(syntax::ImplementationSyntax const& implementation) -> std::size_t {
+    auto method = std::find_if(
+        implementation.methods.begin(),
+        implementation.methods.end(),
+        [](syntax::FunctionSyntax const& candidate) {
+            return candidate.name == "drop";
+        }
+    );
+    return method == implementation.methods.end() ? 0 : method->line;
+}
+
+}  // namespace
 
 auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string {
     auto symbol = std::string {"__orison_drop."};
@@ -75,6 +121,23 @@ auto collect_source_derived_drop_implementations(
         ));
     }
     return implementations;
+}
+
+auto collect_source_derived_drop_implementation_candidates(
+    syntax::ModuleSyntax const& module
+) -> std::vector<DropImplementationCandidate> {
+    auto candidates = std::vector<DropImplementationCandidate> {};
+    for (auto const& implementation : module.implementations) {
+        if (!is_drop_interface(implementation.interface_type) || !has_drop_method(implementation)) {
+            continue;
+        }
+        candidates.push_back(DropImplementationCandidate {
+            .source_type_name = render_source_type_name(implementation.receiver_type),
+            .declaration_line = drop_method_line(implementation),
+            .body = DropImplementationBodySummary {},
+        });
+    }
+    return candidates;
 }
 
 auto format_drop_implementation(DropImplementation const& implementation) -> std::string {

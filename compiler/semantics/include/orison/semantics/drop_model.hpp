@@ -5,6 +5,10 @@
 #include <string_view>
 #include <vector>
 
+namespace orison::syntax {
+struct ModuleSyntax;
+}
+
 namespace orison::semantics {
 
 enum class DropImplementationOrigin {
@@ -78,6 +82,10 @@ auto source_derived_drop_implementation(
 auto collect_source_derived_drop_implementations(
     std::vector<DropImplementationCandidate> const& candidates
 ) -> std::vector<DropImplementation>;
+
+auto collect_source_derived_drop_implementation_candidates(
+    syntax::ModuleSyntax const& module
+) -> std::vector<DropImplementationCandidate>;
 
 auto format_drop_implementation(DropImplementation const& implementation) -> std::string;
 

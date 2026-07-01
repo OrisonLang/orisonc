@@ -158,6 +158,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   implementation discovery from discovered-but-unproven implementations in analyze-only pipeline results.
 - 2026-07-01: exposed semantic drop diagnostics through `orisonc --semantic-drop-diagnostics <file>` as an explicit
   analyze-only inspection command while keeping normal compile, build, run, and LLVM output unchanged.
+- 2026-07-01: added a pure semantic extractor for source-derived drop implementation candidates from existing parsed
+  `implements Drop for Type` metadata with a `drop` method, leaving finite proof and pipeline wiring as future work.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

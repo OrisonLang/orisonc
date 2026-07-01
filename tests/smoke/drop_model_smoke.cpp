@@ -1,6 +1,9 @@
 #include "orison/semantics/drop_model.hpp"
 
+#include "orison/syntax/module_parser.hpp"
+
 #include <cassert>
+#include <utility>
 
 int main() {
     auto site = orison::semantics::PlannedDropSite {
@@ -173,6 +176,55 @@ int main() {
     assert(collected_implementations[1].abi_symbol_name == "__orison_drop.Resource");
     assert(collected_implementations[1].declaration_line == 22);
     assert(!collected_implementations[1].proven);
+
+    auto module = orison::syntax::ModuleSyntax {};
+    auto drop_implementation = orison::syntax::ImplementationSyntax {};
+    drop_implementation.interface_type.name = "Drop";
+    drop_implementation.receiver_type.name = "Payload";
+    drop_implementation.methods.push_back(orison::syntax::FunctionSyntax {
+        .line = 30,
+        .name = "drop",
+    });
+    module.implementations.push_back(std::move(drop_implementation));
+
+    auto generic_drop_implementation = orison::syntax::ImplementationSyntax {};
+    generic_drop_implementation.interface_type.name = "Drop";
+    generic_drop_implementation.receiver_type.name = "Box";
+    generic_drop_implementation.receiver_type.generic_arguments.push_back(orison::syntax::TypeSyntax {
+        .name = "Payload",
+    });
+    generic_drop_implementation.methods.push_back(orison::syntax::FunctionSyntax {
+        .line = 31,
+        .name = "drop",
+    });
+    module.implementations.push_back(std::move(generic_drop_implementation));
+
+    auto unrelated_implementation = orison::syntax::ImplementationSyntax {};
+    unrelated_implementation.interface_type.name = "Display";
+    unrelated_implementation.receiver_type.name = "Payload";
+    unrelated_implementation.methods.push_back(orison::syntax::FunctionSyntax {
+        .line = 32,
+        .name = "drop",
+    });
+    module.implementations.push_back(std::move(unrelated_implementation));
+
+    auto incomplete_drop_implementation = orison::syntax::ImplementationSyntax {};
+    incomplete_drop_implementation.interface_type.name = "Drop";
+    incomplete_drop_implementation.receiver_type.name = "Resource";
+    incomplete_drop_implementation.methods.push_back(orison::syntax::FunctionSyntax {
+        .line = 33,
+        .name = "release",
+    });
+    module.implementations.push_back(std::move(incomplete_drop_implementation));
+
+    auto source_candidates = orison::semantics::collect_source_derived_drop_implementation_candidates(module);
+    assert(source_candidates.size() == 2);
+    assert(source_candidates[0].source_type_name == "Payload");
+    assert(source_candidates[0].declaration_line == 30);
+    assert(!source_candidates[0].body.finite);
+    assert(source_candidates[1].source_type_name == "Box<Payload>");
+    assert(source_candidates[1].declaration_line == 31);
+    assert(!source_candidates[1].body.finite);
 
     auto resource_site = orison::semantics::PlannedDropSite {
         .source_type_name = "Resource",
