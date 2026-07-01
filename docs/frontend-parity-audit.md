@@ -144,6 +144,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   by source type and ABI symbol for future diagnostics.
 - 2026-06-30: exposed semantic drop-resolution summary lines on the analyze-only pipeline result, while keeping CLI
   output unchanged pending an explicit inspection-command decision.
+- 2026-06-30: added `orisonc --semantic-drop-summary <file>` as an explicit analyze-only inspection command for
+  grouped semantic drop-resolution counts.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
