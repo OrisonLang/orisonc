@@ -11,6 +11,10 @@
 
 namespace orison::pipeline {
 
+struct CompilePipelineOptions {
+    std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
+};
+
 struct CompilePipelineResult {
     std::optional<source::SourceFile> source_file;
     syntax::ParseResult parse_result;
@@ -31,6 +35,10 @@ struct CompilePipelineResult {
 class CompilePipeline {
 public:
     auto analyze(std::filesystem::path const& source_path) const -> CompilePipelineResult;
+    auto analyze(
+        std::filesystem::path const& source_path,
+        CompilePipelineOptions const& options
+    ) const -> CompilePipelineResult;
     auto emit_llvm(std::filesystem::path const& source_path) const -> CompilePipelineResult;
     auto emit_object(std::filesystem::path const& source_path) const -> CompilePipelineResult;
 };

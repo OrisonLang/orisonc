@@ -136,6 +136,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   drop sites missing until source-derived, proven drop implementations exist.
 - 2026-06-30: extended the internal semantic drop implementation representation with origin and finite body-summary
   metadata so future source-derived drop bodies can be modeled without adding source syntax or lowering authorization.
+- 2026-06-30: added an explicitly test-only semantic drop implementation injection path for analyze-only pipeline
+  coverage, proving semantic resolution can report both resolved and missing drop sites without exposing source syntax.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

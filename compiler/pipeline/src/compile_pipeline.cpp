@@ -39,6 +39,13 @@ auto CompilePipelineResult::has_errors() const -> bool {
 }
 
 auto CompilePipeline::analyze(std::filesystem::path const& source_path) const -> CompilePipelineResult {
+    return analyze(source_path, CompilePipelineOptions {});
+}
+
+auto CompilePipeline::analyze(
+    std::filesystem::path const& source_path,
+    CompilePipelineOptions const& options
+) const -> CompilePipelineResult {
     auto result = CompilePipelineResult {};
     result.source_file = source::SourceFile::read(source_path);
     if (!result.source_file.has_value()) {
@@ -63,7 +70,7 @@ auto CompilePipeline::analyze(std::filesystem::path const& source_path) const ->
         semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
     result.semantic_drop_resolution_report = semantics::format_drop_implementation_resolution_report(
         result.semantic_result.planned_drop_sites,
-        {}
+        options.test_only_semantic_drop_implementations
     );
     return result;
 }

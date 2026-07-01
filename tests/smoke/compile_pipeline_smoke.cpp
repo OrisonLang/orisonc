@@ -69,5 +69,53 @@ auto main() -> int {
         semantic_drops.semantic_drop_resolution_report[1] ==
         "missing drop site __orison_drop.Payload for Payload owner local at line 7"
     );
+
+    auto resolved_semantic_drops = pipeline.analyze(
+        semantic_drop_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_semantic_drop_implementations = {
+                orison::semantics::source_derived_drop_implementation(
+                    "Payload",
+                    3,
+                    orison::semantics::DropImplementationBodySummary {
+                        .finite = true,
+                    }
+                ),
+            },
+        }
+    );
+    assert(!resolved_semantic_drops.has_errors());
+    assert(resolved_semantic_drops.semantic_drop_resolution_report.size() == 2);
+    assert(
+        resolved_semantic_drops.semantic_drop_resolution_report[0] ==
+        "resolved drop site __orison_drop.Payload for Payload owner input at line 6"
+    );
+    assert(
+        resolved_semantic_drops.semantic_drop_resolution_report[1] ==
+        "resolved drop site __orison_drop.Payload for Payload owner local at line 7"
+    );
+
+    auto unproven_semantic_drops = pipeline.analyze(
+        semantic_drop_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_semantic_drop_implementations = {
+                orison::semantics::source_derived_drop_implementation(
+                    "Payload",
+                    3,
+                    orison::semantics::DropImplementationBodySummary {}
+                ),
+            },
+        }
+    );
+    assert(!unproven_semantic_drops.has_errors());
+    assert(unproven_semantic_drops.semantic_drop_resolution_report.size() == 2);
+    assert(
+        unproven_semantic_drops.semantic_drop_resolution_report[0] ==
+        "missing drop site __orison_drop.Payload for Payload owner input at line 6"
+    );
+    assert(
+        unproven_semantic_drops.semantic_drop_resolution_report[1] ==
+        "missing drop site __orison_drop.Payload for Payload owner local at line 7"
+    );
     return 0;
 }
