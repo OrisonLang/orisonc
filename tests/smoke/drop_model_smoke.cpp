@@ -103,6 +103,26 @@ int main() {
         "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 12 "
         "semantic-unresolved lowering-blocked semantic drop unresolved"
     );
+    auto unresolved_lowering_authorization = orison::semantics::authorize_drop_lowering(
+        site,
+        {unproven},
+        orison::semantics::SourceDropLoweringGate::enabled
+    );
+    assert(!unresolved_lowering_authorization.semantic_resolved);
+    assert(unresolved_lowering_authorization.source_drop_lowering_enabled);
+    assert(!unresolved_lowering_authorization.authorized);
+    auto disabled_lowering_authorization = orison::semantics::authorize_drop_lowering(site, {proven});
+    assert(disabled_lowering_authorization.semantic_resolved);
+    assert(!disabled_lowering_authorization.source_drop_lowering_enabled);
+    assert(!disabled_lowering_authorization.authorized);
+    auto enabled_lowering_authorization = orison::semantics::authorize_drop_lowering(
+        site,
+        {proven},
+        orison::semantics::SourceDropLoweringGate::enabled
+    );
+    assert(enabled_lowering_authorization.semantic_resolved);
+    assert(enabled_lowering_authorization.source_drop_lowering_enabled);
+    assert(enabled_lowering_authorization.authorized);
     assert(
         orison::semantics::format_drop_lowering_authorization(site, {proven}) ==
         "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 12 "

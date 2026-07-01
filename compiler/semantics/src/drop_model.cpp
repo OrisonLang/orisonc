@@ -324,13 +324,31 @@ auto format_drop_implementation_diagnostic_report(
     return report;
 }
 
+auto authorize_drop_lowering(
+    PlannedDropSite site,
+    std::vector<DropImplementation> const& implementations,
+    SourceDropLoweringGate source_drop_lowering_gate
+) -> DropLoweringAuthorization {
+    auto semantic_resolved = resolve_drop_implementation(site, implementations).resolved;
+    auto source_drop_lowering_enabled = source_drop_lowering_gate == SourceDropLoweringGate::enabled;
+    return DropLoweringAuthorization {
+        .site = std::move(site),
+        .semantic_resolved = semantic_resolved,
+        .source_drop_lowering_enabled = source_drop_lowering_enabled,
+        .authorized = semantic_resolved && source_drop_lowering_enabled,
+    };
+}
+
 auto format_drop_lowering_authorization(
     PlannedDropSite const& site,
     std::vector<DropImplementation> const& implementations
 ) -> std::string {
+    auto authorization = authorize_drop_lowering(site, implementations);
     auto output = std::ostringstream {};
     output << "drop lowering authorization " << format_planned_drop_site(site);
-    if (resolve_drop_implementation(site, implementations).resolved) {
+    if (authorization.authorized) {
+        output << " semantic-resolved lowering-authorized source drop lowering accepted";
+    } else if (authorization.semantic_resolved) {
         output << " semantic-resolved lowering-blocked source drop lowering not accepted";
     } else {
         output << " semantic-unresolved lowering-blocked semantic drop unresolved";

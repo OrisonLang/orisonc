@@ -70,6 +70,18 @@ struct DropImplementationResolutionSummary {
     std::size_t missing_sites = 0;
 };
 
+enum class SourceDropLoweringGate {
+    disabled,
+    enabled,
+};
+
+struct DropLoweringAuthorization {
+    PlannedDropSite site;
+    bool semantic_resolved = false;
+    bool source_drop_lowering_enabled = false;
+    bool authorized = false;
+};
+
 auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string;
 
 auto drop_implementation_origin_name(DropImplementationOrigin origin) -> std::string_view;
@@ -127,6 +139,12 @@ auto format_drop_implementation_diagnostic_report(
     std::vector<PlannedDropSite> const& sites,
     std::vector<DropImplementation> const& implementations
 ) -> std::vector<std::string>;
+
+auto authorize_drop_lowering(
+    PlannedDropSite site,
+    std::vector<DropImplementation> const& implementations,
+    SourceDropLoweringGate source_drop_lowering_gate = SourceDropLoweringGate::disabled
+) -> DropLoweringAuthorization;
 
 auto format_drop_lowering_authorization(
     PlannedDropSite const& site,
