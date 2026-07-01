@@ -217,14 +217,24 @@ int main() {
     });
     module.implementations.push_back(std::move(incomplete_drop_implementation));
 
+    auto conservative_body_summary =
+        orison::semantics::prove_source_derived_drop_implementation_body(module.implementations[0]);
+    assert(!conservative_body_summary.finite);
+    assert(!conservative_body_summary.unsafe_boundary_required);
+    assert(conservative_body_summary.referenced_functions.empty());
+
     auto source_candidates = orison::semantics::collect_source_derived_drop_implementation_candidates(module);
     assert(source_candidates.size() == 2);
     assert(source_candidates[0].source_type_name == "Payload");
     assert(source_candidates[0].declaration_line == 30);
     assert(!source_candidates[0].body.finite);
+    assert(!source_candidates[0].body.unsafe_boundary_required);
+    assert(source_candidates[0].body.referenced_functions.empty());
     assert(source_candidates[1].source_type_name == "Box<Payload>");
     assert(source_candidates[1].declaration_line == 31);
     assert(!source_candidates[1].body.finite);
+    assert(!source_candidates[1].body.unsafe_boundary_required);
+    assert(source_candidates[1].body.referenced_functions.empty());
 
     auto resource_site = orison::semantics::PlannedDropSite {
         .source_type_name = "Resource",

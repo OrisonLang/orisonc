@@ -123,6 +123,13 @@ auto collect_source_derived_drop_implementations(
     return implementations;
 }
 
+auto prove_source_derived_drop_implementation_body(
+    syntax::ImplementationSyntax const& implementation
+) -> DropImplementationBodySummary {
+    (void)implementation;
+    return DropImplementationBodySummary {};
+}
+
 auto collect_source_derived_drop_implementation_candidates(
     syntax::ModuleSyntax const& module
 ) -> std::vector<DropImplementationCandidate> {
@@ -134,7 +141,7 @@ auto collect_source_derived_drop_implementation_candidates(
         candidates.push_back(DropImplementationCandidate {
             .source_type_name = render_source_type_name(implementation.receiver_type),
             .declaration_line = drop_method_line(implementation),
-            .body = DropImplementationBodySummary {},
+            .body = prove_source_derived_drop_implementation_body(implementation),
         });
     }
     return candidates;

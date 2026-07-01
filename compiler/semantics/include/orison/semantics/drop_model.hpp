@@ -6,6 +6,7 @@
 #include <vector>
 
 namespace orison::syntax {
+struct ImplementationSyntax;
 struct ModuleSyntax;
 }
 
@@ -82,6 +83,10 @@ auto source_derived_drop_implementation(
 auto collect_source_derived_drop_implementations(
     std::vector<DropImplementationCandidate> const& candidates
 ) -> std::vector<DropImplementation>;
+
+auto prove_source_derived_drop_implementation_body(
+    syntax::ImplementationSyntax const& implementation
+) -> DropImplementationBodySummary;
 
 auto collect_source_derived_drop_implementation_candidates(
     syntax::ModuleSyntax const& module
