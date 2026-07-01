@@ -163,6 +163,69 @@ auto format_drop_implementation_resolution_report(
     return report;
 }
 
+auto drop_implementation_blocker_reason_name(DropImplementationBlockerReason reason) -> std::string_view {
+    switch (reason) {
+    case DropImplementationBlockerReason::none:
+        return "none";
+    case DropImplementationBlockerReason::no_implementation_discovered:
+        return "no implementation discovered";
+    case DropImplementationBlockerReason::implementation_discovered_but_unproven:
+        return "implementation discovered but unproven";
+    }
+    return "unknown";
+}
+
+auto diagnose_drop_implementation(
+    PlannedDropSite site,
+    std::vector<DropImplementation> const& implementations
+) -> DropImplementationDiagnostic {
+    auto matching_unproven_found = false;
+    for (auto const& implementation : implementations) {
+        if (implementation.source_type_name != site.source_type_name ||
+            implementation.abi_symbol_name != site.abi_symbol_name) {
+            continue;
+        }
+        if (implementation.proven) {
+            return DropImplementationDiagnostic {
+                .site = std::move(site),
+                .resolved = true,
+            };
+        }
+        matching_unproven_found = true;
+    }
+    return DropImplementationDiagnostic {
+        .site = std::move(site),
+        .blocker_reason = matching_unproven_found
+            ? DropImplementationBlockerReason::implementation_discovered_but_unproven
+            : DropImplementationBlockerReason::no_implementation_discovered,
+    };
+}
+
+auto format_drop_implementation_diagnostic(
+    DropImplementationDiagnostic const& diagnostic
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "drop diagnostic " << format_planned_drop_site(diagnostic.site);
+    if (diagnostic.resolved) {
+        output << " resolved";
+    } else {
+        output << " blocked " << drop_implementation_blocker_reason_name(diagnostic.blocker_reason);
+    }
+    return output.str();
+}
+
+auto format_drop_implementation_diagnostic_report(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(sites.size());
+    for (auto const& site : sites) {
+        report.push_back(format_drop_implementation_diagnostic(diagnose_drop_implementation(site, implementations)));
+    }
+    return report;
+}
+
 auto summarize_drop_implementation_resolutions(
     std::vector<PlannedDropSite> const& sites,
     std::vector<DropImplementation> const& implementations

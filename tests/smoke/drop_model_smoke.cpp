@@ -40,6 +40,36 @@ int main() {
     assert(missing_report.size() == 1);
     assert(missing_report.front() == "missing drop site __orison_drop.Payload for Payload owner payload at line 12");
     assert(orison::semantics::format_drop_implementation_resolution_report({}, {}).empty());
+    auto unproven_diagnostic = orison::semantics::diagnose_drop_implementation(site, {unproven});
+    assert(!unproven_diagnostic.resolved);
+    assert(
+        unproven_diagnostic.blocker_reason ==
+        orison::semantics::DropImplementationBlockerReason::implementation_discovered_but_unproven
+    );
+    assert(
+        orison::semantics::format_drop_implementation_diagnostic(unproven_diagnostic) ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 12 blocked "
+        "implementation discovered but unproven"
+    );
+    auto undiscovered_diagnostic = orison::semantics::diagnose_drop_implementation(site, {});
+    assert(!undiscovered_diagnostic.resolved);
+    assert(
+        undiscovered_diagnostic.blocker_reason ==
+        orison::semantics::DropImplementationBlockerReason::no_implementation_discovered
+    );
+    assert(
+        orison::semantics::format_drop_implementation_diagnostic(undiscovered_diagnostic) ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 12 blocked "
+        "no implementation discovered"
+    );
+    auto diagnostic_report = orison::semantics::format_drop_implementation_diagnostic_report({site}, {unproven});
+    assert(diagnostic_report.size() == 1);
+    assert(
+        diagnostic_report.front() ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 12 blocked "
+        "implementation discovered but unproven"
+    );
+    assert(orison::semantics::format_drop_implementation_diagnostic_report({}, {}).empty());
 
     auto proven = unproven;
     proven.proven = true;
@@ -58,6 +88,13 @@ int main() {
     auto resolved_report = orison::semantics::format_drop_implementation_resolution_report({site}, {proven});
     assert(resolved_report.size() == 1);
     assert(resolved_report.front() == "resolved drop site __orison_drop.Payload for Payload owner payload at line 12");
+    auto resolved_diagnostic = orison::semantics::diagnose_drop_implementation(site, {unproven, proven});
+    assert(resolved_diagnostic.resolved);
+    assert(resolved_diagnostic.blocker_reason == orison::semantics::DropImplementationBlockerReason::none);
+    assert(
+        orison::semantics::format_drop_implementation_diagnostic(resolved_diagnostic) ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 12 resolved"
+    );
 
     auto source_derived = orison::semantics::source_derived_drop_implementation(
         "Payload",

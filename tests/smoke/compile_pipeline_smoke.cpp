@@ -17,6 +17,7 @@ auto main() -> int {
     assert(analysis.semantic_planned_drop_report.empty());
     assert(analysis.semantic_drop_implementation_report.empty());
     assert(analysis.semantic_drop_resolution_report.empty());
+    assert(analysis.semantic_drop_diagnostic_report.empty());
     assert(analysis.semantic_drop_resolution_summary_report.empty());
 
     auto ir = pipeline.emit_llvm(source_path);
@@ -71,6 +72,17 @@ auto main() -> int {
         semantic_drops.semantic_drop_resolution_report[1] ==
         "missing drop site __orison_drop.Payload for Payload owner local at line 7"
     );
+    assert(semantic_drops.semantic_drop_diagnostic_report.size() == 2);
+    assert(
+        semantic_drops.semantic_drop_diagnostic_report[0] ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 6 blocked "
+        "no implementation discovered"
+    );
+    assert(
+        semantic_drops.semantic_drop_diagnostic_report[1] ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner local at line 7 blocked "
+        "no implementation discovered"
+    );
     assert(semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
     assert(
         semantic_drops.semantic_drop_resolution_summary_report.front() ==
@@ -106,6 +118,15 @@ auto main() -> int {
     assert(
         resolved_semantic_drops.semantic_drop_resolution_report[1] ==
         "resolved drop site __orison_drop.Payload for Payload owner local at line 7"
+    );
+    assert(resolved_semantic_drops.semantic_drop_diagnostic_report.size() == 2);
+    assert(
+        resolved_semantic_drops.semantic_drop_diagnostic_report[0] ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 6 resolved"
+    );
+    assert(
+        resolved_semantic_drops.semantic_drop_diagnostic_report[1] ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner local at line 7 resolved"
     );
     assert(resolved_semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
     assert(
@@ -175,6 +196,17 @@ auto main() -> int {
     assert(
         unproven_semantic_drops.semantic_drop_resolution_report[1] ==
         "missing drop site __orison_drop.Payload for Payload owner local at line 7"
+    );
+    assert(unproven_semantic_drops.semantic_drop_diagnostic_report.size() == 2);
+    assert(
+        unproven_semantic_drops.semantic_drop_diagnostic_report[0] ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 6 blocked "
+        "implementation discovered but unproven"
+    );
+    assert(
+        unproven_semantic_drops.semantic_drop_diagnostic_report[1] ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner local at line 7 blocked "
+        "implementation discovered but unproven"
     );
 
     auto partial_drop_path =

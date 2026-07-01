@@ -46,6 +46,18 @@ struct DropImplementationResolution {
     bool resolved = false;
 };
 
+enum class DropImplementationBlockerReason {
+    none,
+    no_implementation_discovered,
+    implementation_discovered_but_unproven,
+};
+
+struct DropImplementationDiagnostic {
+    PlannedDropSite site;
+    bool resolved = false;
+    DropImplementationBlockerReason blocker_reason = DropImplementationBlockerReason::none;
+};
+
 struct DropImplementationResolutionSummary {
     std::string source_type_name;
     std::string abi_symbol_name;
@@ -83,6 +95,22 @@ auto format_drop_implementation_resolution(
 ) -> std::string;
 
 auto format_drop_implementation_resolution_report(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations
+) -> std::vector<std::string>;
+
+auto drop_implementation_blocker_reason_name(DropImplementationBlockerReason reason) -> std::string_view;
+
+auto diagnose_drop_implementation(
+    PlannedDropSite site,
+    std::vector<DropImplementation> const& implementations
+) -> DropImplementationDiagnostic;
+
+auto format_drop_implementation_diagnostic(
+    DropImplementationDiagnostic const& diagnostic
+) -> std::string;
+
+auto format_drop_implementation_diagnostic_report(
     std::vector<PlannedDropSite> const& sites,
     std::vector<DropImplementation> const& implementations
 ) -> std::vector<std::string>;
