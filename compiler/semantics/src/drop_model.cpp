@@ -18,6 +18,35 @@ auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string {
     return symbol;
 }
 
+auto drop_implementation_origin_name(DropImplementationOrigin origin) -> std::string_view {
+    switch (origin) {
+    case DropImplementationOrigin::source_derived:
+        return "source-derived";
+    case DropImplementationOrigin::compiler_intrinsic:
+        return "compiler-intrinsic";
+    case DropImplementationOrigin::test_fixture:
+        return "test-fixture";
+    }
+    return "unknown";
+}
+
+auto source_derived_drop_implementation(
+    std::string source_type_name,
+    std::size_t declaration_line,
+    DropImplementationBodySummary body
+) -> DropImplementation {
+    auto symbol_name = drop_abi_symbol_name(source_type_name);
+    auto proven = body.finite;
+    return DropImplementation {
+        .source_type_name = std::move(source_type_name),
+        .abi_symbol_name = std::move(symbol_name),
+        .declaration_line = declaration_line,
+        .proven = proven,
+        .origin = DropImplementationOrigin::source_derived,
+        .body = std::move(body),
+    };
+}
+
 auto format_drop_implementation(DropImplementation const& implementation) -> std::string {
     auto output = std::ostringstream {};
     output << "drop implementation " << implementation.abi_symbol_name;
@@ -26,6 +55,15 @@ auto format_drop_implementation(DropImplementation const& implementation) -> std
     }
     if (implementation.declaration_line > 0) {
         output << " declared at line " << implementation.declaration_line;
+    }
+    output << " origin " << drop_implementation_origin_name(implementation.origin);
+    output << (implementation.body.finite ? " finite" : " non-finite");
+    output << (implementation.body.unsafe_boundary_required ? " unsafe-boundary" : " safe-boundary");
+    if (!implementation.body.referenced_functions.empty()) {
+        output << " references";
+        for (auto const& referenced_function : implementation.body.referenced_functions) {
+            output << " " << referenced_function;
+        }
     }
     output << (implementation.proven ? " (proven)" : " (unproven)");
     return output.str();

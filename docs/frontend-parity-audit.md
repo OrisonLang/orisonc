@@ -134,6 +134,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   drop sites can be inspected without running lowering or enabling LLVM drop declarations/calls.
 - 2026-06-30: added `orisonc --semantic-drop-resolution <file>` as an analyze-only report that marks semantic planned
   drop sites missing until source-derived, proven drop implementations exist.
+- 2026-06-30: extended the internal semantic drop implementation representation with origin and finite body-summary
+  metadata so future source-derived drop bodies can be modeled without adding source syntax or lowering authorization.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

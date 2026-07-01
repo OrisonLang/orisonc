@@ -7,11 +7,25 @@
 
 namespace orison::semantics {
 
+enum class DropImplementationOrigin {
+    source_derived,
+    compiler_intrinsic,
+    test_fixture,
+};
+
+struct DropImplementationBodySummary {
+    bool finite = false;
+    bool unsafe_boundary_required = false;
+    std::vector<std::string> referenced_functions;
+};
+
 struct DropImplementation {
     std::string source_type_name;
     std::string abi_symbol_name;
     std::size_t declaration_line = 0;
     bool proven = false;
+    DropImplementationOrigin origin = DropImplementationOrigin::source_derived;
+    DropImplementationBodySummary body;
 };
 
 struct PlannedDropSite {
@@ -27,6 +41,14 @@ struct DropImplementationResolution {
 };
 
 auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string;
+
+auto drop_implementation_origin_name(DropImplementationOrigin origin) -> std::string_view;
+
+auto source_derived_drop_implementation(
+    std::string source_type_name,
+    std::size_t declaration_line,
+    DropImplementationBodySummary body
+) -> DropImplementation;
 
 auto format_drop_implementation(DropImplementation const& implementation) -> std::string;
 
