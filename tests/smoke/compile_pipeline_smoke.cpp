@@ -89,6 +89,45 @@ auto main() -> int {
         "drop resolution summary __orison_drop.Payload for Payload resolved 0 missing 2"
     );
 
+    auto parsed_drop_path = std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_candidate.or";
+    {
+        std::ofstream source(parsed_drop_path);
+        source << "package demo.parseddrop\n";
+        source << "record Payload\n";
+        source << "    public value: Int64\n";
+        source << "interface Drop\n";
+        source << "    function drop(this: exclusive This) -> Unit\n";
+        source << "implements Drop for Payload\n";
+        source << "    function drop(this: exclusive This) -> Unit\n";
+        source << "        return\n";
+        source << "function read(input: Payload) -> Int64\n";
+        source << "    input.value\n";
+    }
+    auto parsed_drop = pipeline.analyze(parsed_drop_path);
+    assert(!parsed_drop.has_errors());
+    assert(parsed_drop.semantic_planned_drop_report.size() == 1);
+    assert(
+        parsed_drop.semantic_planned_drop_report.front() ==
+        "drop site __orison_drop.Payload for Payload owner input at line 9"
+    );
+    assert(parsed_drop.semantic_drop_implementation_report.size() == 1);
+    assert(
+        parsed_drop.semantic_drop_implementation_report.front() ==
+        "drop implementation __orison_drop.Payload for Payload declared at line 7 origin source-derived non-finite "
+        "safe-boundary (unproven) discovery parsed-candidate-collection"
+    );
+    assert(parsed_drop.semantic_drop_resolution_report.size() == 1);
+    assert(
+        parsed_drop.semantic_drop_resolution_report.front() ==
+        "missing drop site __orison_drop.Payload for Payload owner input at line 9"
+    );
+    assert(parsed_drop.semantic_drop_diagnostic_report.size() == 1);
+    assert(
+        parsed_drop.semantic_drop_diagnostic_report.front() ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 blocked "
+        "implementation discovered but unproven"
+    );
+
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {

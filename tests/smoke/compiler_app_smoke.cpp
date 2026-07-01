@@ -1211,6 +1211,33 @@ int main() {
         "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 8 blocked "
         "no implementation discovered\n"
     );
+
+    auto parsed_drop_candidate_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_parsed_drop_candidate.or";
+    std::filesystem::remove(parsed_drop_candidate_path, remove_error);
+    write_concurrency_fixture(
+        parsed_drop_candidate_path,
+        "demo.parseddrop",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "interface Drop",
+            "    function drop(this: exclusive This) -> Unit",
+            "implements Drop for Payload",
+            "    function drop(this: exclusive This) -> Unit",
+            "        return",
+            "function read(input: Payload) -> Int64",
+            "    input.value",
+        }
+    );
+    auto parsed_drop_candidate_diagnostics = run_semantic_drop_diagnostics(app, parsed_drop_candidate_path);
+    assert(parsed_drop_candidate_diagnostics.exit_code == 0);
+    assert(parsed_drop_candidate_diagnostics.stderr_text.empty());
+    assert(
+        parsed_drop_candidate_diagnostics.stdout_text ==
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 blocked "
+        "implementation discovered but unproven\n"
+    );
     auto semantic_drop_summary = run_semantic_drop_summary(app, planned_drop_report_path);
     assert(semantic_drop_summary.exit_code == 0);
     assert(semantic_drop_summary.stderr_text.empty());

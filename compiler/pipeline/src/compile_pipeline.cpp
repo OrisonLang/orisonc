@@ -77,9 +77,12 @@ auto CompilePipeline::analyze(
         result.error_text = result.semantic_result.render(result.source_file->path().string());
     }
     auto discovered_drop_implementations = std::vector<DiscoveredDropImplementation> {};
+    auto parsed_semantic_drop_implementation_candidates =
+        semantics::collect_source_derived_drop_implementation_candidates(result.parse_result.module);
     discovered_drop_implementations.reserve(
         options.test_only_semantic_drop_implementations.size() +
-        options.test_only_semantic_drop_implementation_candidates.size()
+        options.test_only_semantic_drop_implementation_candidates.size() +
+        parsed_semantic_drop_implementation_candidates.size()
     );
     for (auto const& implementation : options.test_only_semantic_drop_implementations) {
         discovered_drop_implementations.push_back(DiscoveredDropImplementation {
@@ -94,6 +97,15 @@ auto CompilePipeline::analyze(
         discovered_drop_implementations.push_back(DiscoveredDropImplementation {
             .implementation = implementation,
             .discovery = "candidate-collection",
+        });
+    }
+    auto parsed_source_derived_implementations = semantics::collect_source_derived_drop_implementations(
+        parsed_semantic_drop_implementation_candidates
+    );
+    for (auto const& implementation : parsed_source_derived_implementations) {
+        discovered_drop_implementations.push_back(DiscoveredDropImplementation {
+            .implementation = implementation,
+            .discovery = "parsed-candidate-collection",
         });
     }
     auto semantic_drop_implementations = std::vector<semantics::DropImplementation> {};
