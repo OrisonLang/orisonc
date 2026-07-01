@@ -164,6 +164,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   semantic drop diagnostics can distinguish discovered-but-unproven source metadata from undiscovered implementations.
 - 2026-07-01: added a conservative finite-body proof scaffold for parsed source-derived drop implementations; all
   parsed bodies remain unproven until explicit proof rules are accepted and tested.
+- 2026-07-01: added the first narrow parsed drop finite-body proof rule: empty drop bodies and naked-return-only drop
+  bodies are semantically proven finite, still without authorizing LLVM drop declarations or calls.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

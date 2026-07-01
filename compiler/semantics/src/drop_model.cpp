@@ -51,6 +51,15 @@ auto drop_method_line(syntax::ImplementationSyntax const& implementation) -> std
     return method == implementation.methods.end() ? 0 : method->line;
 }
 
+auto is_empty_expression(syntax::ExpressionSyntax const& expression) -> bool {
+    return expression.text.empty() && expression.arguments.empty() && expression.nested_statements.empty() &&
+           !expression.left && !expression.right && !expression.alternate;
+}
+
+auto is_naked_return(syntax::StatementSyntax const& statement) -> bool {
+    return statement.kind == syntax::StatementKind::return_statement && is_empty_expression(statement.expression);
+}
+
 }  // namespace
 
 auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string {
@@ -126,7 +135,26 @@ auto collect_source_derived_drop_implementations(
 auto prove_source_derived_drop_implementation_body(
     syntax::ImplementationSyntax const& implementation
 ) -> DropImplementationBodySummary {
-    (void)implementation;
+    auto method = std::find_if(
+        implementation.methods.begin(),
+        implementation.methods.end(),
+        [](syntax::FunctionSyntax const& candidate) {
+            return candidate.name == "drop";
+        }
+    );
+    if (method == implementation.methods.end()) {
+        return DropImplementationBodySummary {};
+    }
+    if (method->body_statements.empty()) {
+        return DropImplementationBodySummary {
+            .finite = true,
+        };
+    }
+    if (method->body_statements.size() == 1 && is_naked_return(method->body_statements.front())) {
+        return DropImplementationBodySummary {
+            .finite = true,
+        };
+    }
     return DropImplementationBodySummary {};
 }
 

@@ -1235,8 +1235,7 @@ int main() {
     assert(parsed_drop_candidate_diagnostics.stderr_text.empty());
     assert(
         parsed_drop_candidate_diagnostics.stdout_text ==
-        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 blocked "
-        "implementation discovered but unproven\n"
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 resolved\n"
     );
     auto semantic_drop_summary = run_semantic_drop_summary(app, planned_drop_report_path);
     assert(semantic_drop_summary.exit_code == 0);

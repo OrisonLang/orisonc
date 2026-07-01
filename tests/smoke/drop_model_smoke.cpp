@@ -217,24 +217,62 @@ int main() {
     });
     module.implementations.push_back(std::move(incomplete_drop_implementation));
 
-    auto conservative_body_summary =
+    auto nonfinite_drop_implementation = orison::syntax::ImplementationSyntax {};
+    nonfinite_drop_implementation.interface_type.name = "Drop";
+    nonfinite_drop_implementation.receiver_type.name = "Resource";
+    auto nonfinite_drop_method = orison::syntax::FunctionSyntax {
+        .line = 34,
+        .name = "drop",
+    };
+    nonfinite_drop_method.body_statements.push_back(orison::syntax::StatementSyntax {
+        .kind = orison::syntax::StatementKind::let_binding,
+        .line = 35,
+        .name = "scratch",
+    });
+    nonfinite_drop_implementation.methods.push_back(std::move(nonfinite_drop_method));
+    module.implementations.push_back(std::move(nonfinite_drop_implementation));
+
+    auto empty_body_summary =
         orison::semantics::prove_source_derived_drop_implementation_body(module.implementations[0]);
-    assert(!conservative_body_summary.finite);
-    assert(!conservative_body_summary.unsafe_boundary_required);
-    assert(conservative_body_summary.referenced_functions.empty());
+    assert(empty_body_summary.finite);
+    assert(!empty_body_summary.unsafe_boundary_required);
+    assert(empty_body_summary.referenced_functions.empty());
+
+    auto naked_return_implementation = orison::syntax::ImplementationSyntax {};
+    naked_return_implementation.interface_type.name = "Drop";
+    naked_return_implementation.receiver_type.name = "Payload";
+    auto naked_return_method = orison::syntax::FunctionSyntax {
+        .line = 36,
+        .name = "drop",
+    };
+    naked_return_method.body_statements.push_back(orison::syntax::StatementSyntax {
+        .kind = orison::syntax::StatementKind::return_statement,
+        .line = 37,
+    });
+    naked_return_implementation.methods.push_back(std::move(naked_return_method));
+    auto naked_return_body_summary =
+        orison::semantics::prove_source_derived_drop_implementation_body(naked_return_implementation);
+    assert(naked_return_body_summary.finite);
+    assert(!naked_return_body_summary.unsafe_boundary_required);
+    assert(naked_return_body_summary.referenced_functions.empty());
 
     auto source_candidates = orison::semantics::collect_source_derived_drop_implementation_candidates(module);
-    assert(source_candidates.size() == 2);
+    assert(source_candidates.size() == 3);
     assert(source_candidates[0].source_type_name == "Payload");
     assert(source_candidates[0].declaration_line == 30);
-    assert(!source_candidates[0].body.finite);
+    assert(source_candidates[0].body.finite);
     assert(!source_candidates[0].body.unsafe_boundary_required);
     assert(source_candidates[0].body.referenced_functions.empty());
     assert(source_candidates[1].source_type_name == "Box<Payload>");
     assert(source_candidates[1].declaration_line == 31);
-    assert(!source_candidates[1].body.finite);
+    assert(source_candidates[1].body.finite);
     assert(!source_candidates[1].body.unsafe_boundary_required);
     assert(source_candidates[1].body.referenced_functions.empty());
+    assert(source_candidates[2].source_type_name == "Resource");
+    assert(source_candidates[2].declaration_line == 34);
+    assert(!source_candidates[2].body.finite);
+    assert(!source_candidates[2].body.unsafe_boundary_required);
+    assert(source_candidates[2].body.referenced_functions.empty());
 
     auto resource_site = orison::semantics::PlannedDropSite {
         .source_type_name = "Resource",

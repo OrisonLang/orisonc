@@ -113,19 +113,18 @@ auto main() -> int {
     assert(parsed_drop.semantic_drop_implementation_report.size() == 1);
     assert(
         parsed_drop.semantic_drop_implementation_report.front() ==
-        "drop implementation __orison_drop.Payload for Payload declared at line 7 origin source-derived non-finite "
-        "safe-boundary (unproven) discovery parsed-candidate-collection"
+        "drop implementation __orison_drop.Payload for Payload declared at line 7 origin source-derived finite "
+        "safe-boundary (proven) discovery parsed-candidate-collection"
     );
     assert(parsed_drop.semantic_drop_resolution_report.size() == 1);
     assert(
         parsed_drop.semantic_drop_resolution_report.front() ==
-        "missing drop site __orison_drop.Payload for Payload owner input at line 9"
+        "resolved drop site __orison_drop.Payload for Payload owner input at line 9"
     );
     assert(parsed_drop.semantic_drop_diagnostic_report.size() == 1);
     assert(
         parsed_drop.semantic_drop_diagnostic_report.front() ==
-        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 blocked "
-        "implementation discovered but unproven"
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 resolved"
     );
 
     auto resolved_semantic_drops = pipeline.analyze(
