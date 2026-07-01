@@ -1,0 +1,8 @@
+package demo.semanticdrop
+
+record Payload
+    public value: Int64
+
+function read(input: Payload) -> Int64
+    let local: Payload = Payload(1)
+    input.value + local.value

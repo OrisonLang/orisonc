@@ -46,6 +46,15 @@ auto format_planned_drop_site(PlannedDropSite const& site) -> std::string {
     return output.str();
 }
 
+auto format_planned_drop_site_report(std::vector<PlannedDropSite> const& sites) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(sites.size());
+    for (auto const& site : sites) {
+        report.push_back(format_planned_drop_site(site));
+    }
+    return report;
+}
+
 auto resolve_drop_implementation(
     PlannedDropSite site,
     std::vector<DropImplementation> const& implementations

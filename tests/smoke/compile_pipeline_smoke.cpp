@@ -14,6 +14,7 @@ auto main() -> int {
     assert(analysis.source_file.has_value());
     assert(analysis.parse_result.module.package_name == "demo.minimal");
     assert(analysis.parse_result.module.functions.size() == 1);
+    assert(analysis.semantic_planned_drop_report.empty());
 
     auto ir = pipeline.emit_llvm(source_path);
     assert(!ir.has_errors());
@@ -44,5 +45,19 @@ auto main() -> int {
     assert(!libraries.has_errors());
     assert(libraries.link_libraries.size() == 1);
     assert(libraries.link_libraries.front() == "m");
+
+    auto semantic_drop_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "semantic_planned_drop.or";
+    auto semantic_drops = pipeline.analyze(semantic_drop_path);
+    assert(!semantic_drops.has_errors());
+    assert(semantic_drops.semantic_planned_drop_report.size() == 2);
+    assert(
+        semantic_drops.semantic_planned_drop_report[0] ==
+        "drop site __orison_drop.Payload for Payload owner input at line 6"
+    );
+    assert(
+        semantic_drops.semantic_planned_drop_report[1] ==
+        "drop site __orison_drop.Payload for Payload owner local at line 7"
+    );
     return 0;
 }

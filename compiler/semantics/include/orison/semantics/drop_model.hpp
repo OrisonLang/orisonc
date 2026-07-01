@@ -32,6 +32,8 @@ auto format_drop_implementation(DropImplementation const& implementation) -> std
 
 auto format_planned_drop_site(PlannedDropSite const& site) -> std::string;
 
+auto format_planned_drop_site_report(std::vector<PlannedDropSite> const& sites) -> std::vector<std::string>;
+
 auto resolve_drop_implementation(
     PlannedDropSite site,
     std::vector<DropImplementation> const& implementations

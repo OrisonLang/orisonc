@@ -130,6 +130,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   drop sites without adding parser syntax or changing normal lowering behavior.
 - 2026-06-30: semantic analysis now records metadata-only planned drop sites for owned source-declared bindings at
   scope exit, excluding scalar, shared/exclusive, pointer, address, receiver, constant, and concurrency-handle bindings.
+- 2026-06-30: added a semantic planned-drop report path and `orisonc --semantic-planned-drops <file>` so source-derived
+  drop sites can be inspected without running lowering or enabling LLVM drop declarations/calls.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

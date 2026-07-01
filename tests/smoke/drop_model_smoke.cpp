@@ -14,6 +14,10 @@ int main() {
         orison::semantics::format_planned_drop_site(site) ==
         "drop site __orison_drop.Payload for Payload owner payload at line 12"
     );
+    auto site_report = orison::semantics::format_planned_drop_site_report({site});
+    assert(site_report.size() == 1);
+    assert(site_report.front() == "drop site __orison_drop.Payload for Payload owner payload at line 12");
+    assert(orison::semantics::format_planned_drop_site_report({}).empty());
     assert(orison::semantics::drop_abi_symbol_name("Pair<Payload>") == "__orison_drop.Pair_Payload_");
 
     auto unproven = orison::semantics::DropImplementation {

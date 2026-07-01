@@ -522,6 +522,17 @@ auto run_planned_drops(orison::driver::CompilerApp const& app, std::filesystem::
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_semantic_planned_drops(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--semantic-planned-drops",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 auto run_planned_drop_actions(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     auto path_text = path.string();
@@ -1145,6 +1156,13 @@ int main() {
         planned_drop_report.stdout_text ==
         "planned drop __orison_drop.Payload for Payload discovered at line 9 (metadata only)\n"
     );
+    auto semantic_planned_drop_report = run_semantic_planned_drops(app, planned_drop_report_path);
+    assert(semantic_planned_drop_report.exit_code == 0);
+    assert(semantic_planned_drop_report.stderr_text.empty());
+    assert(
+        semantic_planned_drop_report.stdout_text ==
+        "drop site __orison_drop.Payload for Payload owner payload at line 8\n"
+    );
     auto planned_drop_actions = run_planned_drop_actions(app, planned_drop_report_path);
     assert(planned_drop_actions.exit_code == 0);
     assert(planned_drop_actions.stderr_text.empty());
@@ -1166,6 +1184,10 @@ int main() {
     assert(empty_planned_drop_report.exit_code == 0);
     assert(empty_planned_drop_report.stdout_text.empty());
     assert(empty_planned_drop_report.stderr_text.empty());
+    auto empty_semantic_planned_drop_report = run_semantic_planned_drops(app, emit_path);
+    assert(empty_semantic_planned_drop_report.exit_code == 0);
+    assert(empty_semantic_planned_drop_report.stdout_text.empty());
+    assert(empty_semantic_planned_drop_report.stderr_text.empty());
     auto empty_planned_drop_actions = run_planned_drop_actions(app, emit_path);
     assert(empty_planned_drop_actions.exit_code == 0);
     assert(empty_planned_drop_actions.stdout_text.empty());

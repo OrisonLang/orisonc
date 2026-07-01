@@ -59,6 +59,8 @@ auto CompilePipeline::analyze(std::filesystem::path const& source_path) const ->
     if (result.semantic_result.has_errors()) {
         result.error_text = result.semantic_result.render(result.source_file->path().string());
     }
+    result.semantic_planned_drop_report =
+        semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
     return result;
 }
 
