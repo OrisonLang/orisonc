@@ -40,6 +40,13 @@ struct DropImplementationResolution {
     bool resolved = false;
 };
 
+struct DropImplementationResolutionSummary {
+    std::string source_type_name;
+    std::string abi_symbol_name;
+    std::size_t resolved_sites = 0;
+    std::size_t missing_sites = 0;
+};
+
 auto drop_abi_symbol_name(std::string_view source_type_name) -> std::string;
 
 auto drop_implementation_origin_name(DropImplementationOrigin origin) -> std::string_view;
@@ -68,6 +75,19 @@ auto format_drop_implementation_resolution(
 auto format_drop_implementation_resolution_report(
     std::vector<PlannedDropSite> const& sites,
     std::vector<DropImplementation> const& implementations
+) -> std::vector<std::string>;
+
+auto summarize_drop_implementation_resolutions(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations
+) -> std::vector<DropImplementationResolutionSummary>;
+
+auto format_drop_implementation_resolution_summary(
+    DropImplementationResolutionSummary const& summary
+) -> std::string;
+
+auto format_drop_implementation_resolution_summary_report(
+    std::vector<DropImplementationResolutionSummary> const& summaries
 ) -> std::vector<std::string>;
 
 }  // namespace orison::semantics

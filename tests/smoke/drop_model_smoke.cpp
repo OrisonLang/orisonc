@@ -101,5 +101,47 @@ int main() {
         "unsafe-boundary references payload_release audit_drop (proven)"
     );
 
+    auto resource_site = orison::semantics::PlannedDropSite {
+        .source_type_name = "Resource",
+        .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Resource"),
+        .owner_name = "resource",
+        .site_line = 13,
+    };
+    auto second_payload_site = site;
+    second_payload_site.owner_name = "other_payload";
+    second_payload_site.site_line = 14;
+    auto second_resource_site = resource_site;
+    second_resource_site.owner_name = "other_resource";
+    second_resource_site.site_line = 15;
+    auto summaries = orison::semantics::summarize_drop_implementation_resolutions(
+        {site, resource_site, second_payload_site, second_resource_site},
+        {source_derived}
+    );
+    assert(summaries.size() == 2);
+    assert(summaries[0].source_type_name == "Payload");
+    assert(summaries[0].abi_symbol_name == "__orison_drop.Payload");
+    assert(summaries[0].resolved_sites == 2);
+    assert(summaries[0].missing_sites == 0);
+    assert(summaries[1].source_type_name == "Resource");
+    assert(summaries[1].abi_symbol_name == "__orison_drop.Resource");
+    assert(summaries[1].resolved_sites == 0);
+    assert(summaries[1].missing_sites == 2);
+    assert(
+        orison::semantics::format_drop_implementation_resolution_summary(summaries[0]) ==
+        "drop resolution summary __orison_drop.Payload for Payload resolved 2 missing 0"
+    );
+    auto summary_report = orison::semantics::format_drop_implementation_resolution_summary_report(summaries);
+    assert(summary_report.size() == 2);
+    assert(
+        summary_report[0] ==
+        "drop resolution summary __orison_drop.Payload for Payload resolved 2 missing 0"
+    );
+    assert(
+        summary_report[1] ==
+        "drop resolution summary __orison_drop.Resource for Resource resolved 0 missing 2"
+    );
+    assert(orison::semantics::summarize_drop_implementation_resolutions({}, {}).empty());
+    assert(orison::semantics::format_drop_implementation_resolution_summary_report({}).empty());
+
     return 0;
 }

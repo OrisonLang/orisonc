@@ -1,5 +1,6 @@
 #include "orison/semantics/drop_model.hpp"
 
+#include <algorithm>
 #include <sstream>
 #include <string_view>
 #include <utility>
@@ -129,6 +130,62 @@ auto format_drop_implementation_resolution_report(
     report.reserve(sites.size());
     for (auto const& site : sites) {
         report.push_back(format_drop_implementation_resolution(resolve_drop_implementation(site, implementations)));
+    }
+    return report;
+}
+
+auto summarize_drop_implementation_resolutions(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations
+) -> std::vector<DropImplementationResolutionSummary> {
+    auto summaries = std::vector<DropImplementationResolutionSummary> {};
+    for (auto const& site : sites) {
+        auto resolution = resolve_drop_implementation(site, implementations);
+        auto existing = std::find_if(
+            summaries.begin(),
+            summaries.end(),
+            [&site](DropImplementationResolutionSummary const& summary) {
+                return summary.source_type_name == site.source_type_name &&
+                       summary.abi_symbol_name == site.abi_symbol_name;
+            }
+        );
+
+        if (existing == summaries.end()) {
+            summaries.push_back(DropImplementationResolutionSummary {
+                .source_type_name = site.source_type_name,
+                .abi_symbol_name = site.abi_symbol_name,
+            });
+            existing = summaries.end() - 1;
+        }
+
+        if (resolution.resolved) {
+            ++existing->resolved_sites;
+        } else {
+            ++existing->missing_sites;
+        }
+    }
+    return summaries;
+}
+
+auto format_drop_implementation_resolution_summary(
+    DropImplementationResolutionSummary const& summary
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "drop resolution summary " << summary.abi_symbol_name;
+    if (!summary.source_type_name.empty()) {
+        output << " for " << summary.source_type_name;
+    }
+    output << " resolved " << summary.resolved_sites << " missing " << summary.missing_sites;
+    return output.str();
+}
+
+auto format_drop_implementation_resolution_summary_report(
+    std::vector<DropImplementationResolutionSummary> const& summaries
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(summaries.size());
+    for (auto const& summary : summaries) {
+        report.push_back(format_drop_implementation_resolution_summary(summary));
     }
     return report;
 }
