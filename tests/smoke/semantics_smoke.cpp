@@ -12206,6 +12206,53 @@ void test_thread_capture_receiver_this_failure() {
     assert_receiver_capture_diagnostic(path, 5);
 }
 
+void test_owned_binding_planned_drop_sites_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_owned_binding_drop_sites_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.drop",
+        {
+            "record Buffer",
+            "    public count: Int64",
+            "function use_buffer(input: Buffer) -> Int64",
+            "    let local: Buffer = Buffer(1)",
+            "    input.count + local.count",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.planned_drop_sites.size() == 2);
+    assert(
+        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites[0]) ==
+        "drop site __orison_drop.Buffer for Buffer owner input at line 4"
+    );
+    assert(
+        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites[1]) ==
+        "drop site __orison_drop.Buffer for Buffer owner local at line 5"
+    );
+}
+
+void test_trivial_binding_planned_drop_sites_ignored_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_trivial_binding_drop_sites_ignored.or";
+    write_concurrency_fixture(
+        path,
+        "demo.drop",
+        {
+            "record Buffer",
+            "    public count: Int64",
+            "function read_buffer(view: shared Buffer, out: Pointer<Byte>) -> Int64",
+            "    let label: Text = \"buffer\"",
+            "    let total: Int64 = 1",
+            "    total",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.planned_drop_sites.empty());
+}
+
 }  // namespace
 
 int main() {
@@ -12819,5 +12866,7 @@ int main() {
     test_task_capture_mutable_outer_local_failure();
     test_thread_capture_mutable_outer_local_failure();
     test_thread_capture_receiver_this_failure();
+    test_owned_binding_planned_drop_sites_success();
+    test_trivial_binding_planned_drop_sites_ignored_success();
     return 0;
 }

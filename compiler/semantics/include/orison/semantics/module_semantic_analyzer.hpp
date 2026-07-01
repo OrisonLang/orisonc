@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
+#include "orison/semantics/drop_model.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <cstddef>
@@ -32,6 +33,7 @@ struct ConcurrencyCapture {
 struct SemanticAnalysisResult {
     diagnostics::DiagnosticBag diagnostics;
     std::vector<ConcurrencyCapture> concurrency_captures;
+    std::vector<PlannedDropSite> planned_drop_sites;
 
     auto has_errors() const -> bool {
         return diagnostics.has_errors();

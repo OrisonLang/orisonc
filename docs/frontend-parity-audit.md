@@ -128,6 +128,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   metadata-only until source-level drop semantics and emitted finite declarations are accepted together.
 - 2026-06-30: added a neutral semantic drop model scaffold for future source-derived drop implementations and planned
   drop sites without adding parser syntax or changing normal lowering behavior.
+- 2026-06-30: semantic analysis now records metadata-only planned drop sites for owned source-declared bindings at
+  scope exit, excluding scalar, shared/exclusive, pointer, address, receiver, constant, and concurrency-handle bindings.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

@@ -113,6 +113,7 @@ public:
         return SemanticAnalysisResult {
             .diagnostics = std::move(diagnostics_),
             .concurrency_captures = std::move(concurrency_captures),
+            .planned_drop_sites = std::move(planned_drop_sites_),
         };
     }
 
@@ -126,6 +127,7 @@ private:
         bool parameter_binding = false;
         bool module_constant = false;
         std::size_t scope_depth = 0;
+        std::size_t declaration_line = 0;
     };
 
     using ScopeSnapshot = std::vector<std::vector<Binding>>;
@@ -4144,7 +4146,9 @@ private:
                                                                         : render_type_name(parameter.type),
                 false,
                 parameter.name == "this",
-                true
+                true,
+                ValueOriginKind::none,
+                function.line
             );
         }
 
@@ -4629,7 +4633,8 @@ private:
                 statement.kind == syntax::StatementKind::var_binding,
                 false,
                 false,
-                infer_expression_value_origin(statement.expression)
+                infer_expression_value_origin(statement.expression),
+                statement.line
             );
             expected_pointer_type_name_ = saved_expected_pointer_type_name;
             return;
@@ -4993,6 +4998,7 @@ private:
 
     void pop_scope() {
         if (!scope_stack_.empty()) {
+            collect_planned_drop_sites(scope_stack_.back());
             scope_stack_.pop_back();
         }
     }
@@ -5003,7 +5009,8 @@ private:
         bool mutable_binding,
         bool receiver_binding = false,
         bool parameter_binding = false,
-        ValueOriginKind value_origin = ValueOriginKind::none
+        ValueOriginKind value_origin = ValueOriginKind::none,
+        std::size_t declaration_line = 0
     ) {
         if (scope_stack_.empty()) {
             push_scope();
@@ -5017,7 +5024,64 @@ private:
             .receiver_binding = receiver_binding,
             .parameter_binding = parameter_binding,
             .scope_depth = scope_stack_.size() - 1,
+            .declaration_line = declaration_line,
         });
+    }
+
+    auto source_type_base_name(std::string const& type_name) const -> std::string {
+        auto const generic_start = type_name.find('<');
+        if (generic_start == std::string::npos) {
+            return type_name;
+        }
+        return type_name.substr(0, generic_start);
+    }
+
+    auto is_source_declared_nominal_type(std::string const& type_name) const -> bool {
+        auto const base_name = source_type_base_name(type_name);
+        for (auto const& record : module_.records) {
+            if (record.name == base_name) {
+                return true;
+            }
+        }
+        for (auto const& choice : module_.choices) {
+            if (choice.name == base_name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    auto is_owned_drop_candidate_type_name(std::string const& type_name) const -> bool {
+        if (type_name.empty() || type_name == "Unit" || type_name == "Pointer" ||
+            type_name.rfind("Pointer<", 0) == 0 || type_name.rfind("shared.", 0) == 0 ||
+            type_name.rfind("exclusive.", 0) == 0 || is_obviously_safe_capture_type(type_name)) {
+            return false;
+        }
+
+        auto const base_name = source_type_base_name(type_name);
+        if (base_name == "DynamicArray" || base_name == "Box" || base_name == "Maybe" || base_name == "Outcome") {
+            return true;
+        }
+
+        return is_source_declared_nominal_type(type_name);
+    }
+
+    void collect_planned_drop_sites(std::vector<Binding> const& bindings) {
+        for (auto const& binding : bindings) {
+            if (binding.module_constant || binding.receiver_binding ||
+                binding.value_origin == ValueOriginKind::task || binding.value_origin == ValueOriginKind::thread ||
+                binding.value_origin == ValueOriginKind::async_call ||
+                !is_owned_drop_candidate_type_name(binding.type_name)) {
+                continue;
+            }
+
+            planned_drop_sites_.push_back(PlannedDropSite {
+                .source_type_name = binding.type_name,
+                .abi_symbol_name = drop_abi_symbol_name(binding.type_name),
+                .owner_name = binding.name,
+                .site_line = binding.declaration_line,
+            });
+        }
     }
 
     auto find_binding(std::string const& name) const -> Binding const* {
@@ -5127,6 +5191,7 @@ private:
     syntax::ModuleSyntax const& module_;
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
+    std::vector<PlannedDropSite> planned_drop_sites_;
     std::vector<std::string> async_callable_names_;
     std::vector<AsyncMethodSignature> async_method_signatures_;
     std::vector<std::string> unsafe_callable_names_;
