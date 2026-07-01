@@ -170,6 +170,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `__orison_drop.*` declarations or calls in normal LLVM output.
 - 2026-07-01: added an analyze-only semantic drop lowering-authorization report that distinguishes semantic planning
   resolution from blocked LLVM drop emission while source drop lowering remains unaccepted.
+- 2026-07-01: exposed semantic drop lowering authorization through
+  `orisonc --semantic-drop-lowering-authorization <file>` as an explicit analyze-only inspection command.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

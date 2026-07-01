@@ -26,7 +26,8 @@ auto render_report_lines(std::vector<std::string> const& lines) -> std::string {
 auto usage_text() -> std::string {
     return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
-           "--semantic-drop-diagnostics <file> | --semantic-drop-summary <file> | "
+           "--semantic-drop-diagnostics <file> | --semantic-drop-lowering-authorization <file> | "
+           "--semantic-drop-summary <file> | "
            "--planned-drops <file> | --planned-drop-actions <file> | "
            "--drop-cleanup-authorization <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
@@ -303,6 +304,22 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return CompileResult {
             .exit_code = 0,
             .stdout_text = render_report_lines(result.semantic_drop_diagnostic_report),
+        };
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-lowering-authorization") {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.analyze(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = std::move(result.error_text),
+            };
+        }
+
+        return CompileResult {
+            .exit_code = 0,
+            .stdout_text = render_report_lines(result.semantic_drop_lowering_authorization_report),
         };
     }
 
