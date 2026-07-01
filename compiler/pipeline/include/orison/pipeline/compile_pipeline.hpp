@@ -13,6 +13,7 @@ namespace orison::pipeline {
 
 struct CompilePipelineOptions {
     std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
+    std::vector<semantics::DropImplementationCandidate> test_only_semantic_drop_implementation_candidates;
 };
 
 struct CompilePipelineResult {

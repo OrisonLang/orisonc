@@ -66,16 +66,25 @@ auto CompilePipeline::analyze(
     if (result.semantic_result.has_errors()) {
         result.error_text = result.semantic_result.render(result.source_file->path().string());
     }
+    auto semantic_drop_implementations = options.test_only_semantic_drop_implementations;
+    auto source_derived_implementations = semantics::collect_source_derived_drop_implementations(
+        options.test_only_semantic_drop_implementation_candidates
+    );
+    semantic_drop_implementations.insert(
+        semantic_drop_implementations.end(),
+        source_derived_implementations.begin(),
+        source_derived_implementations.end()
+    );
     result.semantic_planned_drop_report =
         semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
     result.semantic_drop_resolution_report = semantics::format_drop_implementation_resolution_report(
         result.semantic_result.planned_drop_sites,
-        options.test_only_semantic_drop_implementations
+        semantic_drop_implementations
     );
     result.semantic_drop_resolution_summary_report = semantics::format_drop_implementation_resolution_summary_report(
         semantics::summarize_drop_implementation_resolutions(
             result.semantic_result.planned_drop_sites,
-            options.test_only_semantic_drop_implementations
+            semantic_drop_implementations
         )
     );
     return result;

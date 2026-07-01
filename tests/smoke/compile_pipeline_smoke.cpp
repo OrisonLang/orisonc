@@ -106,6 +106,41 @@ auto main() -> int {
         "drop resolution summary __orison_drop.Payload for Payload resolved 2 missing 0"
     );
 
+    auto candidate_resolved_semantic_drops = pipeline.analyze(
+        semantic_drop_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_semantic_drop_implementation_candidates = {
+                orison::semantics::DropImplementationCandidate {
+                    .source_type_name = "Payload",
+                    .declaration_line = 3,
+                    .body = orison::semantics::DropImplementationBodySummary {
+                        .finite = true,
+                    },
+                },
+                orison::semantics::DropImplementationCandidate {
+                    .source_type_name = "Payload",
+                    .declaration_line = 4,
+                    .body = orison::semantics::DropImplementationBodySummary {},
+                },
+            },
+        }
+    );
+    assert(!candidate_resolved_semantic_drops.has_errors());
+    assert(candidate_resolved_semantic_drops.semantic_drop_resolution_report.size() == 2);
+    assert(
+        candidate_resolved_semantic_drops.semantic_drop_resolution_report[0] ==
+        "resolved drop site __orison_drop.Payload for Payload owner input at line 6"
+    );
+    assert(
+        candidate_resolved_semantic_drops.semantic_drop_resolution_report[1] ==
+        "resolved drop site __orison_drop.Payload for Payload owner local at line 7"
+    );
+    assert(candidate_resolved_semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
+    assert(
+        candidate_resolved_semantic_drops.semantic_drop_resolution_summary_report.front() ==
+        "drop resolution summary __orison_drop.Payload for Payload resolved 2 missing 0"
+    );
+
     auto unproven_semantic_drops = pipeline.analyze(
         semantic_drop_path,
         orison::pipeline::CompilePipelineOptions {
