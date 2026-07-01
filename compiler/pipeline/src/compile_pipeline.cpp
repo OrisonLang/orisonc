@@ -77,6 +77,10 @@ auto CompilePipeline::analyze(
     );
     result.semantic_planned_drop_report =
         semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
+    result.semantic_drop_implementation_report.reserve(semantic_drop_implementations.size());
+    for (auto const& implementation : semantic_drop_implementations) {
+        result.semantic_drop_implementation_report.push_back(semantics::format_drop_implementation(implementation));
+    }
     result.semantic_drop_resolution_report = semantics::format_drop_implementation_resolution_report(
         result.semantic_result.planned_drop_sites,
         semantic_drop_implementations

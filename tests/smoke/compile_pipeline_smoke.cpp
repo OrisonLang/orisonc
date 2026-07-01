@@ -15,6 +15,7 @@ auto main() -> int {
     assert(analysis.parse_result.module.package_name == "demo.minimal");
     assert(analysis.parse_result.module.functions.size() == 1);
     assert(analysis.semantic_planned_drop_report.empty());
+    assert(analysis.semantic_drop_implementation_report.empty());
     assert(analysis.semantic_drop_resolution_report.empty());
     assert(analysis.semantic_drop_resolution_summary_report.empty());
 
@@ -126,6 +127,12 @@ auto main() -> int {
         }
     );
     assert(!candidate_resolved_semantic_drops.has_errors());
+    assert(candidate_resolved_semantic_drops.semantic_drop_implementation_report.size() == 1);
+    assert(
+        candidate_resolved_semantic_drops.semantic_drop_implementation_report.front() ==
+        "drop implementation __orison_drop.Payload for Payload declared at line 3 origin source-derived finite "
+        "safe-boundary (proven)"
+    );
     assert(candidate_resolved_semantic_drops.semantic_drop_resolution_report.size() == 2);
     assert(
         candidate_resolved_semantic_drops.semantic_drop_resolution_report[0] ==

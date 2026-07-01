@@ -150,6 +150,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   stable first-candidate wins deduplication and finite-body proof preservation.
 - 2026-06-30: threaded source-derived drop implementation candidates through the analyze-only pipeline's test-only
   options so candidate metadata can drive semantic drop resolution without adding syntax or lowering authorization.
+- 2026-06-30: added an analyze-only semantic drop implementation report on pipeline results so diagnostics can inspect
+  the internal implementations considered for resolution.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
