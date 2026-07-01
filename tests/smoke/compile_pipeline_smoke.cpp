@@ -16,6 +16,7 @@ auto main() -> int {
     assert(analysis.parse_result.module.functions.size() == 1);
     assert(analysis.semantic_planned_drop_report.empty());
     assert(analysis.semantic_drop_resolution_report.empty());
+    assert(analysis.semantic_drop_resolution_summary_report.empty());
 
     auto ir = pipeline.emit_llvm(source_path);
     assert(!ir.has_errors());
@@ -69,6 +70,11 @@ auto main() -> int {
         semantic_drops.semantic_drop_resolution_report[1] ==
         "missing drop site __orison_drop.Payload for Payload owner local at line 7"
     );
+    assert(semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
+    assert(
+        semantic_drops.semantic_drop_resolution_summary_report.front() ==
+        "drop resolution summary __orison_drop.Payload for Payload resolved 0 missing 2"
+    );
 
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
@@ -93,6 +99,11 @@ auto main() -> int {
     assert(
         resolved_semantic_drops.semantic_drop_resolution_report[1] ==
         "resolved drop site __orison_drop.Payload for Payload owner local at line 7"
+    );
+    assert(resolved_semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
+    assert(
+        resolved_semantic_drops.semantic_drop_resolution_summary_report.front() ==
+        "drop resolution summary __orison_drop.Payload for Payload resolved 2 missing 0"
     );
 
     auto unproven_semantic_drops = pipeline.analyze(
@@ -151,6 +162,15 @@ auto main() -> int {
     assert(
         partial_semantic_drops.semantic_drop_resolution_report[3] ==
         "missing drop site __orison_drop.Resource for Resource owner local_resource at line 11"
+    );
+    assert(partial_semantic_drops.semantic_drop_resolution_summary_report.size() == 2);
+    assert(
+        partial_semantic_drops.semantic_drop_resolution_summary_report[0] ==
+        "drop resolution summary __orison_drop.Payload for Payload resolved 2 missing 0"
+    );
+    assert(
+        partial_semantic_drops.semantic_drop_resolution_summary_report[1] ==
+        "drop resolution summary __orison_drop.Resource for Resource resolved 0 missing 2"
     );
     return 0;
 }
