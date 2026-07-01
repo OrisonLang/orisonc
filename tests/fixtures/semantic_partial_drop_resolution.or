@@ -1,0 +1,12 @@
+package demo.semanticdrop
+
+record Payload
+    public value: Int64
+
+record Resource
+    public value: Int64
+
+function read(payload: Payload, resource: Resource) -> Int64
+    let local_payload: Payload = Payload(1)
+    let local_resource: Resource = Resource(2)
+    payload.value + resource.value + local_payload.value + local_resource.value

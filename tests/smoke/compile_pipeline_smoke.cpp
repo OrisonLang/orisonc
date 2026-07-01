@@ -117,5 +117,40 @@ auto main() -> int {
         unproven_semantic_drops.semantic_drop_resolution_report[1] ==
         "missing drop site __orison_drop.Payload for Payload owner local at line 7"
     );
+
+    auto partial_drop_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "semantic_partial_drop_resolution.or";
+    auto partial_semantic_drops = pipeline.analyze(
+        partial_drop_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_semantic_drop_implementations = {
+                orison::semantics::source_derived_drop_implementation(
+                    "Payload",
+                    3,
+                    orison::semantics::DropImplementationBodySummary {
+                        .finite = true,
+                    }
+                ),
+            },
+        }
+    );
+    assert(!partial_semantic_drops.has_errors());
+    assert(partial_semantic_drops.semantic_drop_resolution_report.size() == 4);
+    assert(
+        partial_semantic_drops.semantic_drop_resolution_report[0] ==
+        "resolved drop site __orison_drop.Payload for Payload owner payload at line 9"
+    );
+    assert(
+        partial_semantic_drops.semantic_drop_resolution_report[1] ==
+        "missing drop site __orison_drop.Resource for Resource owner resource at line 9"
+    );
+    assert(
+        partial_semantic_drops.semantic_drop_resolution_report[2] ==
+        "resolved drop site __orison_drop.Payload for Payload owner local_payload at line 10"
+    );
+    assert(
+        partial_semantic_drops.semantic_drop_resolution_report[3] ==
+        "missing drop site __orison_drop.Resource for Resource owner local_resource at line 11"
+    );
     return 0;
 }
