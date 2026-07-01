@@ -1237,6 +1237,11 @@ int main() {
         parsed_drop_candidate_diagnostics.stdout_text ==
         "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 resolved\n"
     );
+    auto parsed_drop_candidate_emit = run_emit_llvm(app, parsed_drop_candidate_path);
+    assert(parsed_drop_candidate_emit.exit_code == 0);
+    assert(parsed_drop_candidate_emit.stderr_text.empty());
+    assert(parsed_drop_candidate_emit.stdout_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
+    assert(parsed_drop_candidate_emit.stdout_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
     auto semantic_drop_summary = run_semantic_drop_summary(app, planned_drop_report_path);
     assert(semantic_drop_summary.exit_code == 0);
     assert(semantic_drop_summary.stderr_text.empty());
