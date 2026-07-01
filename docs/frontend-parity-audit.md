@@ -156,6 +156,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   explicit test injection from candidate collection without changing source syntax or resolution behavior.
 - 2026-07-01: added semantic drop diagnostic classification for unresolved planned drop sites, distinguishing missing
   implementation discovery from discovered-but-unproven implementations in analyze-only pipeline results.
+- 2026-07-01: exposed semantic drop diagnostics through `orisonc --semantic-drop-diagnostics <file>` as an explicit
+  analyze-only inspection command while keeping normal compile, build, run, and LLVM output unchanged.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
