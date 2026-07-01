@@ -92,6 +92,12 @@ auto main() -> int {
         }
     );
     assert(!resolved_semantic_drops.has_errors());
+    assert(resolved_semantic_drops.semantic_drop_implementation_report.size() == 1);
+    assert(
+        resolved_semantic_drops.semantic_drop_implementation_report.front() ==
+        "drop implementation __orison_drop.Payload for Payload declared at line 3 origin source-derived finite "
+        "safe-boundary (proven) discovery test-injection"
+    );
     assert(resolved_semantic_drops.semantic_drop_resolution_report.size() == 2);
     assert(
         resolved_semantic_drops.semantic_drop_resolution_report[0] ==
@@ -131,7 +137,7 @@ auto main() -> int {
     assert(
         candidate_resolved_semantic_drops.semantic_drop_implementation_report.front() ==
         "drop implementation __orison_drop.Payload for Payload declared at line 3 origin source-derived finite "
-        "safe-boundary (proven)"
+        "safe-boundary (proven) discovery candidate-collection"
     );
     assert(candidate_resolved_semantic_drops.semantic_drop_resolution_report.size() == 2);
     assert(

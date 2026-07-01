@@ -152,6 +152,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   options so candidate metadata can drive semantic drop resolution without adding syntax or lowering authorization.
 - 2026-06-30: added an analyze-only semantic drop implementation report on pipeline results so diagnostics can inspect
   the internal implementations considered for resolution.
+- 2026-07-01: added analyze-only discovery provenance to semantic drop implementation report lines, distinguishing
+  explicit test injection from candidate collection without changing source syntax or resolution behavior.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
