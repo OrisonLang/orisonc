@@ -48,6 +48,35 @@ auto source_derived_drop_implementation(
     };
 }
 
+auto collect_source_derived_drop_implementations(
+    std::vector<DropImplementationCandidate> const& candidates
+) -> std::vector<DropImplementation> {
+    auto implementations = std::vector<DropImplementation> {};
+    for (auto const& candidate : candidates) {
+        if (candidate.source_type_name.empty()) {
+            continue;
+        }
+        auto symbol_name = drop_abi_symbol_name(candidate.source_type_name);
+        auto existing = std::find_if(
+            implementations.begin(),
+            implementations.end(),
+            [&candidate, &symbol_name](DropImplementation const& implementation) {
+                return implementation.source_type_name == candidate.source_type_name &&
+                       implementation.abi_symbol_name == symbol_name;
+            }
+        );
+        if (existing != implementations.end()) {
+            continue;
+        }
+        implementations.push_back(source_derived_drop_implementation(
+            candidate.source_type_name,
+            candidate.declaration_line,
+            candidate.body
+        ));
+    }
+    return implementations;
+}
+
 auto format_drop_implementation(DropImplementation const& implementation) -> std::string {
     auto output = std::ostringstream {};
     output << "drop implementation " << implementation.abi_symbol_name;

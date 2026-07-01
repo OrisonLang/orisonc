@@ -101,6 +101,42 @@ int main() {
         "unsafe-boundary references payload_release audit_drop (proven)"
     );
 
+    auto collected_implementations = orison::semantics::collect_source_derived_drop_implementations({
+        orison::semantics::DropImplementationCandidate {},
+        orison::semantics::DropImplementationCandidate {
+            .source_type_name = "Payload",
+            .declaration_line = 20,
+            .body = orison::semantics::DropImplementationBodySummary {
+                .finite = true,
+                .referenced_functions = {"payload_release"},
+            },
+        },
+        orison::semantics::DropImplementationCandidate {
+            .source_type_name = "Payload",
+            .declaration_line = 21,
+            .body = orison::semantics::DropImplementationBodySummary {
+                .finite = true,
+                .referenced_functions = {"payload_release_duplicate"},
+            },
+        },
+        orison::semantics::DropImplementationCandidate {
+            .source_type_name = "Resource",
+            .declaration_line = 22,
+            .body = orison::semantics::DropImplementationBodySummary {},
+        },
+    });
+    assert(collected_implementations.size() == 2);
+    assert(collected_implementations[0].source_type_name == "Payload");
+    assert(collected_implementations[0].abi_symbol_name == "__orison_drop.Payload");
+    assert(collected_implementations[0].declaration_line == 20);
+    assert(collected_implementations[0].proven);
+    assert(collected_implementations[0].body.referenced_functions.size() == 1);
+    assert(collected_implementations[0].body.referenced_functions.front() == "payload_release");
+    assert(collected_implementations[1].source_type_name == "Resource");
+    assert(collected_implementations[1].abi_symbol_name == "__orison_drop.Resource");
+    assert(collected_implementations[1].declaration_line == 22);
+    assert(!collected_implementations[1].proven);
+
     auto resource_site = orison::semantics::PlannedDropSite {
         .source_type_name = "Resource",
         .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Resource"),
@@ -115,7 +151,7 @@ int main() {
     second_resource_site.site_line = 15;
     auto summaries = orison::semantics::summarize_drop_implementation_resolutions(
         {site, resource_site, second_payload_site, second_resource_site},
-        {source_derived}
+        collected_implementations
     );
     assert(summaries.size() == 2);
     assert(summaries[0].source_type_name == "Payload");

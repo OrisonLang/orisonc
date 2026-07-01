@@ -28,6 +28,12 @@ struct DropImplementation {
     DropImplementationBodySummary body;
 };
 
+struct DropImplementationCandidate {
+    std::string source_type_name;
+    std::size_t declaration_line = 0;
+    DropImplementationBodySummary body;
+};
+
 struct PlannedDropSite {
     std::string source_type_name;
     std::string abi_symbol_name;
@@ -56,6 +62,10 @@ auto source_derived_drop_implementation(
     std::size_t declaration_line,
     DropImplementationBodySummary body
 ) -> DropImplementation;
+
+auto collect_source_derived_drop_implementations(
+    std::vector<DropImplementationCandidate> const& candidates
+) -> std::vector<DropImplementation>;
 
 auto format_drop_implementation(DropImplementation const& implementation) -> std::string;
 
