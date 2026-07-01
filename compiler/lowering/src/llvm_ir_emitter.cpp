@@ -128,6 +128,7 @@ auto LlvmIrEmitter::emit(
     LlvmIrEmissionOptions const& options
 ) const -> LlvmIrEmissionResult {
     auto result = LlvmIrEmissionResult {};
+    result.semantic_drop_lowering_authorizations = options.semantic_drop_lowering_authorizations;
     if (semantic_result.has_errors()) {
         result.diagnostics.error(1, "cannot lower module with semantic errors");
         return result;

@@ -18,6 +18,7 @@ auto main() -> int {
     assert(analysis.semantic_drop_implementation_report.empty());
     assert(analysis.semantic_drop_resolution_report.empty());
     assert(analysis.semantic_drop_diagnostic_report.empty());
+    assert(analysis.semantic_drop_lowering_authorizations.empty());
     assert(analysis.semantic_drop_lowering_authorization_report.empty());
     assert(analysis.semantic_drop_resolution_summary_report.empty());
 
@@ -25,6 +26,7 @@ auto main() -> int {
     assert(!ir.has_errors());
     assert(ir.ir_text.find("define i32 @main()") != std::string::npos);
     assert(ir.ir_text.find("ret i32 0") != std::string::npos);
+    assert(ir.semantic_drop_lowering_authorizations.empty());
     assert(ir.planned_drop_report.empty());
 
     auto object = pipeline.emit_object(source_path);
@@ -85,6 +87,10 @@ auto main() -> int {
         "no implementation discovered"
     );
     assert(semantic_drops.semantic_drop_lowering_authorization_report.size() == 2);
+    assert(semantic_drops.semantic_drop_lowering_authorizations.size() == 2);
+    assert(!semantic_drops.semantic_drop_lowering_authorizations[0].semantic_resolved);
+    assert(!semantic_drops.semantic_drop_lowering_authorizations[0].source_drop_lowering_enabled);
+    assert(!semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
     assert(
         semantic_drops.semantic_drop_lowering_authorization_report[0] ==
         "drop lowering authorization drop site __orison_drop.Payload for Payload owner input at line 6 "
@@ -134,11 +140,22 @@ auto main() -> int {
         "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 resolved"
     );
     assert(parsed_drop.semantic_drop_lowering_authorization_report.size() == 1);
+    assert(parsed_drop.semantic_drop_lowering_authorizations.size() == 1);
+    assert(parsed_drop.semantic_drop_lowering_authorizations.front().semantic_resolved);
+    assert(!parsed_drop.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
+    assert(!parsed_drop.semantic_drop_lowering_authorizations.front().authorized);
     assert(
         parsed_drop.semantic_drop_lowering_authorization_report.front() ==
         "drop lowering authorization drop site __orison_drop.Payload for Payload owner input at line 9 "
         "semantic-resolved lowering-blocked source drop lowering not accepted"
     );
+    auto parsed_drop_ir = pipeline.emit_llvm(parsed_drop_path);
+    assert(!parsed_drop_ir.has_errors());
+    assert(parsed_drop_ir.semantic_drop_lowering_authorizations.size() == 1);
+    assert(parsed_drop_ir.semantic_drop_lowering_authorizations.front().semantic_resolved);
+    assert(!parsed_drop_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
+    assert(!parsed_drop_ir.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop_ir.ir_text.find("__orison_drop.Payload") == std::string::npos);
 
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
@@ -180,6 +197,10 @@ auto main() -> int {
         "drop diagnostic drop site __orison_drop.Payload for Payload owner local at line 7 resolved"
     );
     assert(resolved_semantic_drops.semantic_drop_lowering_authorization_report.size() == 2);
+    assert(resolved_semantic_drops.semantic_drop_lowering_authorizations.size() == 2);
+    assert(resolved_semantic_drops.semantic_drop_lowering_authorizations[0].semantic_resolved);
+    assert(!resolved_semantic_drops.semantic_drop_lowering_authorizations[0].source_drop_lowering_enabled);
+    assert(!resolved_semantic_drops.semantic_drop_lowering_authorizations[0].authorized);
     assert(
         resolved_semantic_drops.semantic_drop_lowering_authorization_report[0] ==
         "drop lowering authorization drop site __orison_drop.Payload for Payload owner input at line 6 "

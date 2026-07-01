@@ -1,6 +1,7 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
+#include "orison/semantics/drop_model.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -61,6 +62,40 @@ void test_emit_constant_uint32_return() {
         "\n"
     };
     assert(result.ir_text == expected);
+}
+
+void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_semantic_drop_authorization_metadata.or";
+    auto site = orison::semantics::PlannedDropSite {
+        .source_type_name = "Payload",
+        .abi_symbol_name = orison::semantics::drop_abi_symbol_name("Payload"),
+        .owner_name = "payload",
+        .site_line = 12,
+    };
+    auto authorization = orison::semantics::DropLoweringAuthorization {
+        .site = site,
+        .semantic_resolved = true,
+        .source_drop_lowering_enabled = false,
+        .authorized = false,
+    };
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    1 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .semantic_drop_lowering_authorizations = {authorization},
+        }
+    );
+
+    assert(!result.has_errors());
+    assert(result.semantic_drop_lowering_authorizations.size() == 1);
+    assert(result.semantic_drop_lowering_authorizations.front().site.abi_symbol_name == "__orison_drop.Payload");
+    assert(result.semantic_drop_lowering_authorizations.front().semantic_resolved);
+    assert(!result.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
+    assert(!result.semantic_drop_lowering_authorizations.front().authorized);
+    assert(result.ir_text.find("__orison_drop.Payload") == std::string::npos);
 }
 
 void test_emit_let_bound_uint32_return() {
@@ -3298,6 +3333,7 @@ void test_emit_native_object_file() {
 
 auto main() -> int {
     test_emit_constant_uint32_return();
+    test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();
     test_emit_mutable_uint32_while_return();

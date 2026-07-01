@@ -146,10 +146,24 @@ auto authorize_drop_lowering(
     SourceDropLoweringGate source_drop_lowering_gate = SourceDropLoweringGate::disabled
 ) -> DropLoweringAuthorization;
 
+auto authorize_drop_lowerings(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations,
+    SourceDropLoweringGate source_drop_lowering_gate = SourceDropLoweringGate::disabled
+) -> std::vector<DropLoweringAuthorization>;
+
+auto format_drop_lowering_authorization(
+    DropLoweringAuthorization const& authorization
+) -> std::string;
+
 auto format_drop_lowering_authorization(
     PlannedDropSite const& site,
     std::vector<DropImplementation> const& implementations
 ) -> std::string;
+
+auto format_drop_lowering_authorization_report(
+    std::vector<DropLoweringAuthorization> const& authorizations
+) -> std::vector<std::string>;
 
 auto format_drop_lowering_authorization_report(
     std::vector<PlannedDropSite> const& sites,

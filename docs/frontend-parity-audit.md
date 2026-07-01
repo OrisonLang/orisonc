@@ -174,6 +174,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `orisonc --semantic-drop-lowering-authorization <file>` as an explicit analyze-only inspection command.
 - 2026-07-01: added an internal semantic drop lowering authorization transition object requiring both semantic proof
   and an explicit source-drop-lowering gate, with the gate disabled by default.
+- 2026-07-01: threaded structured semantic drop lowering authorizations into the lowering-facing metadata path while
+  leaving the source-drop-lowering gate disabled and generated LLVM IR unchanged.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

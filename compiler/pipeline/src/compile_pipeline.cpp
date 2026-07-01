@@ -127,10 +127,12 @@ auto CompilePipeline::analyze(
         result.semantic_result.planned_drop_sites,
         semantic_drop_implementations
     );
-    result.semantic_drop_lowering_authorization_report = semantics::format_drop_lowering_authorization_report(
+    result.semantic_drop_lowering_authorizations = semantics::authorize_drop_lowerings(
         result.semantic_result.planned_drop_sites,
         semantic_drop_implementations
     );
+    result.semantic_drop_lowering_authorization_report =
+        semantics::format_drop_lowering_authorization_report(result.semantic_drop_lowering_authorizations);
     result.semantic_drop_resolution_summary_report = semantics::format_drop_implementation_resolution_summary_report(
         semantics::summarize_drop_implementation_resolutions(
             result.semantic_result.planned_drop_sites,
@@ -147,12 +149,15 @@ auto CompilePipeline::emit_llvm(std::filesystem::path const& source_path) const 
     }
 
     lowering::LlvmIrEmitter emitter;
-    auto emission = emitter.emit(result.parse_result.module, result.semantic_result);
+    auto emission_options = lowering::LlvmIrEmissionOptions {};
+    emission_options.semantic_drop_lowering_authorizations = result.semantic_drop_lowering_authorizations;
+    auto emission = emitter.emit(result.parse_result.module, result.semantic_result, emission_options);
     if (emission.has_errors()) {
         result.error_text = emission.render(result.source_file->path().string());
         return result;
     }
     result.ir_text = std::move(emission.ir_text);
+    result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
     result.planned_drop_report = emission.planned_drop_report();
     result.planned_drop_action_report = emission.planned_drop_action_report();
     result.drop_cleanup_authorization_report = emission.drop_cleanup_authorization_report();

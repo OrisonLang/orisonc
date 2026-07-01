@@ -340,12 +340,10 @@ auto authorize_drop_lowering(
 }
 
 auto format_drop_lowering_authorization(
-    PlannedDropSite const& site,
-    std::vector<DropImplementation> const& implementations
+    DropLoweringAuthorization const& authorization
 ) -> std::string {
-    auto authorization = authorize_drop_lowering(site, implementations);
     auto output = std::ostringstream {};
-    output << "drop lowering authorization " << format_planned_drop_site(site);
+    output << "drop lowering authorization " << format_planned_drop_site(authorization.site);
     if (authorization.authorized) {
         output << " semantic-resolved lowering-authorized source drop lowering accepted";
     } else if (authorization.semantic_resolved) {
@@ -356,16 +354,42 @@ auto format_drop_lowering_authorization(
     return output.str();
 }
 
+auto authorize_drop_lowerings(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations,
+    SourceDropLoweringGate source_drop_lowering_gate
+) -> std::vector<DropLoweringAuthorization> {
+    auto authorizations = std::vector<DropLoweringAuthorization> {};
+    authorizations.reserve(sites.size());
+    for (auto const& site : sites) {
+        authorizations.push_back(authorize_drop_lowering(site, implementations, source_drop_lowering_gate));
+    }
+    return authorizations;
+}
+
+auto format_drop_lowering_authorization(
+    PlannedDropSite const& site,
+    std::vector<DropImplementation> const& implementations
+) -> std::string {
+    return format_drop_lowering_authorization(authorize_drop_lowering(site, implementations));
+}
+
+auto format_drop_lowering_authorization_report(
+    std::vector<DropLoweringAuthorization> const& authorizations
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(authorizations.size());
+    for (auto const& authorization : authorizations) {
+        report.push_back(format_drop_lowering_authorization(authorization));
+    }
+    return report;
+}
+
 auto format_drop_lowering_authorization_report(
     std::vector<PlannedDropSite> const& sites,
     std::vector<DropImplementation> const& implementations
 ) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    report.reserve(sites.size());
-    for (auto const& site : sites) {
-        report.push_back(format_drop_lowering_authorization(site, implementations));
-    }
-    return report;
+    return format_drop_lowering_authorization_report(authorize_drop_lowerings(sites, implementations));
 }
 
 auto summarize_drop_implementation_resolutions(

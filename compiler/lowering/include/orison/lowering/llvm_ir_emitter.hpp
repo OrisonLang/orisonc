@@ -19,6 +19,7 @@ struct LlvmIrEmissionResult {
     std::vector<ConcurrencyDropCleanupPlan> drop_cleanups;
     std::vector<PlannedDropAction> planned_drop_actions;
     std::vector<PlannedDropDeclaration> planned_drop_declarations;
+    std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;
     auto render(std::string_view path) const -> std::string;
