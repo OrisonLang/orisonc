@@ -35,6 +35,10 @@ int main() {
         orison::semantics::format_drop_implementation_resolution(missing) ==
         "missing drop site __orison_drop.Payload for Payload owner payload at line 12"
     );
+    auto missing_report = orison::semantics::format_drop_implementation_resolution_report({site}, {unproven});
+    assert(missing_report.size() == 1);
+    assert(missing_report.front() == "missing drop site __orison_drop.Payload for Payload owner payload at line 12");
+    assert(orison::semantics::format_drop_implementation_resolution_report({}, {}).empty());
 
     auto proven = unproven;
     proven.proven = true;
@@ -48,6 +52,9 @@ int main() {
         orison::semantics::format_drop_implementation_resolution(resolved) ==
         "resolved drop site __orison_drop.Payload for Payload owner payload at line 12"
     );
+    auto resolved_report = orison::semantics::format_drop_implementation_resolution_report({site}, {proven});
+    assert(resolved_report.size() == 1);
+    assert(resolved_report.front() == "resolved drop site __orison_drop.Payload for Payload owner payload at line 12");
 
     return 0;
 }

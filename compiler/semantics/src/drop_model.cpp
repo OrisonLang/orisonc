@@ -83,4 +83,16 @@ auto format_drop_implementation_resolution(
     return output.str();
 }
 
+auto format_drop_implementation_resolution_report(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(sites.size());
+    for (auto const& site : sites) {
+        report.push_back(format_drop_implementation_resolution(resolve_drop_implementation(site, implementations)));
+    }
+    return report;
+}
+
 }  // namespace orison::semantics

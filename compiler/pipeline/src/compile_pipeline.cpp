@@ -61,6 +61,10 @@ auto CompilePipeline::analyze(std::filesystem::path const& source_path) const ->
     }
     result.semantic_planned_drop_report =
         semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
+    result.semantic_drop_resolution_report = semantics::format_drop_implementation_resolution_report(
+        result.semantic_result.planned_drop_sites,
+        {}
+    );
     return result;
 }
 

@@ -43,4 +43,9 @@ auto format_drop_implementation_resolution(
     DropImplementationResolution const& resolution
 ) -> std::string;
 
+auto format_drop_implementation_resolution_report(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations
+) -> std::vector<std::string>;
+
 }  // namespace orison::semantics

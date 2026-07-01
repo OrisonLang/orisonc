@@ -132,6 +132,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   scope exit, excluding scalar, shared/exclusive, pointer, address, receiver, constant, and concurrency-handle bindings.
 - 2026-06-30: added a semantic planned-drop report path and `orisonc --semantic-planned-drops <file>` so source-derived
   drop sites can be inspected without running lowering or enabling LLVM drop declarations/calls.
+- 2026-06-30: added `orisonc --semantic-drop-resolution <file>` as an analyze-only report that marks semantic planned
+  drop sites missing until source-derived, proven drop implementations exist.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

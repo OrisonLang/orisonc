@@ -15,6 +15,7 @@ auto main() -> int {
     assert(analysis.parse_result.module.package_name == "demo.minimal");
     assert(analysis.parse_result.module.functions.size() == 1);
     assert(analysis.semantic_planned_drop_report.empty());
+    assert(analysis.semantic_drop_resolution_report.empty());
 
     auto ir = pipeline.emit_llvm(source_path);
     assert(!ir.has_errors());
@@ -58,6 +59,15 @@ auto main() -> int {
     assert(
         semantic_drops.semantic_planned_drop_report[1] ==
         "drop site __orison_drop.Payload for Payload owner local at line 7"
+    );
+    assert(semantic_drops.semantic_drop_resolution_report.size() == 2);
+    assert(
+        semantic_drops.semantic_drop_resolution_report[0] ==
+        "missing drop site __orison_drop.Payload for Payload owner input at line 6"
+    );
+    assert(
+        semantic_drops.semantic_drop_resolution_report[1] ==
+        "missing drop site __orison_drop.Payload for Payload owner local at line 7"
     );
     return 0;
 }
