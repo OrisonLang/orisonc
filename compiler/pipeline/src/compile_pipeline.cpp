@@ -127,6 +127,10 @@ auto CompilePipeline::analyze(
         result.semantic_result.planned_drop_sites,
         semantic_drop_implementations
     );
+    result.semantic_drop_lowering_authorization_report = semantics::format_drop_lowering_authorization_report(
+        result.semantic_result.planned_drop_sites,
+        semantic_drop_implementations
+    );
     result.semantic_drop_resolution_summary_report = semantics::format_drop_implementation_resolution_summary_report(
         semantics::summarize_drop_implementation_resolutions(
             result.semantic_result.planned_drop_sites,

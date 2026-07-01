@@ -324,6 +324,32 @@ auto format_drop_implementation_diagnostic_report(
     return report;
 }
 
+auto format_drop_lowering_authorization(
+    PlannedDropSite const& site,
+    std::vector<DropImplementation> const& implementations
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "drop lowering authorization " << format_planned_drop_site(site);
+    if (resolve_drop_implementation(site, implementations).resolved) {
+        output << " semantic-resolved lowering-blocked source drop lowering not accepted";
+    } else {
+        output << " semantic-unresolved lowering-blocked semantic drop unresolved";
+    }
+    return output.str();
+}
+
+auto format_drop_lowering_authorization_report(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(sites.size());
+    for (auto const& site : sites) {
+        report.push_back(format_drop_lowering_authorization(site, implementations));
+    }
+    return report;
+}
+
 auto summarize_drop_implementation_resolutions(
     std::vector<PlannedDropSite> const& sites,
     std::vector<DropImplementation> const& implementations

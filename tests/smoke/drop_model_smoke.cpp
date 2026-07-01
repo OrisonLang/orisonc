@@ -98,6 +98,25 @@ int main() {
         orison::semantics::format_drop_implementation_diagnostic(resolved_diagnostic) ==
         "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 12 resolved"
     );
+    assert(
+        orison::semantics::format_drop_lowering_authorization(site, {unproven}) ==
+        "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 12 "
+        "semantic-unresolved lowering-blocked semantic drop unresolved"
+    );
+    assert(
+        orison::semantics::format_drop_lowering_authorization(site, {proven}) ==
+        "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 12 "
+        "semantic-resolved lowering-blocked source drop lowering not accepted"
+    );
+    auto lowering_authorization_report =
+        orison::semantics::format_drop_lowering_authorization_report({site}, {proven});
+    assert(lowering_authorization_report.size() == 1);
+    assert(
+        lowering_authorization_report.front() ==
+        "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 12 "
+        "semantic-resolved lowering-blocked source drop lowering not accepted"
+    );
+    assert(orison::semantics::format_drop_lowering_authorization_report({}, {}).empty());
 
     auto source_derived = orison::semantics::source_derived_drop_implementation(
         "Payload",

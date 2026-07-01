@@ -18,6 +18,7 @@ auto main() -> int {
     assert(analysis.semantic_drop_implementation_report.empty());
     assert(analysis.semantic_drop_resolution_report.empty());
     assert(analysis.semantic_drop_diagnostic_report.empty());
+    assert(analysis.semantic_drop_lowering_authorization_report.empty());
     assert(analysis.semantic_drop_resolution_summary_report.empty());
 
     auto ir = pipeline.emit_llvm(source_path);
@@ -83,6 +84,12 @@ auto main() -> int {
         "drop diagnostic drop site __orison_drop.Payload for Payload owner local at line 7 blocked "
         "no implementation discovered"
     );
+    assert(semantic_drops.semantic_drop_lowering_authorization_report.size() == 2);
+    assert(
+        semantic_drops.semantic_drop_lowering_authorization_report[0] ==
+        "drop lowering authorization drop site __orison_drop.Payload for Payload owner input at line 6 "
+        "semantic-unresolved lowering-blocked semantic drop unresolved"
+    );
     assert(semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
     assert(
         semantic_drops.semantic_drop_resolution_summary_report.front() ==
@@ -126,6 +133,12 @@ auto main() -> int {
         parsed_drop.semantic_drop_diagnostic_report.front() ==
         "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 resolved"
     );
+    assert(parsed_drop.semantic_drop_lowering_authorization_report.size() == 1);
+    assert(
+        parsed_drop.semantic_drop_lowering_authorization_report.front() ==
+        "drop lowering authorization drop site __orison_drop.Payload for Payload owner input at line 9 "
+        "semantic-resolved lowering-blocked source drop lowering not accepted"
+    );
 
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,
@@ -165,6 +178,12 @@ auto main() -> int {
     assert(
         resolved_semantic_drops.semantic_drop_diagnostic_report[1] ==
         "drop diagnostic drop site __orison_drop.Payload for Payload owner local at line 7 resolved"
+    );
+    assert(resolved_semantic_drops.semantic_drop_lowering_authorization_report.size() == 2);
+    assert(
+        resolved_semantic_drops.semantic_drop_lowering_authorization_report[0] ==
+        "drop lowering authorization drop site __orison_drop.Payload for Payload owner input at line 6 "
+        "semantic-resolved lowering-blocked source drop lowering not accepted"
     );
     assert(resolved_semantic_drops.semantic_drop_resolution_summary_report.size() == 1);
     assert(

@@ -26,6 +26,7 @@ struct CompilePipelineResult {
     std::vector<std::string> semantic_drop_implementation_report;
     std::vector<std::string> semantic_drop_resolution_report;
     std::vector<std::string> semantic_drop_diagnostic_report;
+    std::vector<std::string> semantic_drop_lowering_authorization_report;
     std::vector<std::string> semantic_drop_resolution_summary_report;
     std::vector<std::string> planned_drop_report;
     std::vector<std::string> planned_drop_action_report;

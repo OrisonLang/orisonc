@@ -128,6 +128,16 @@ auto format_drop_implementation_diagnostic_report(
     std::vector<DropImplementation> const& implementations
 ) -> std::vector<std::string>;
 
+auto format_drop_lowering_authorization(
+    PlannedDropSite const& site,
+    std::vector<DropImplementation> const& implementations
+) -> std::string;
+
+auto format_drop_lowering_authorization_report(
+    std::vector<PlannedDropSite> const& sites,
+    std::vector<DropImplementation> const& implementations
+) -> std::vector<std::string>;
+
 auto summarize_drop_implementation_resolutions(
     std::vector<PlannedDropSite> const& sites,
     std::vector<DropImplementation> const& implementations
