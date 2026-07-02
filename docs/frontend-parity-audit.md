@@ -178,6 +178,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   leaving the source-drop-lowering gate disabled and generated LLVM IR unchanged.
 - 2026-07-01: connected semantic drop lowering authorizations to cleanup authorization reports so blocked cleanup thunks
   distinguish disabled semantic/source lowering gates from missing emitted drop ABI declarations.
+- 2026-07-01: added a pure bridge from authorized semantic drop lowering sites to planned drop declarations, preserving
+  disabled-by-default behavior because current source-drop-lowering authorizations remain blocked.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

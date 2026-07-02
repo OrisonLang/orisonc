@@ -1,5 +1,7 @@
 #pragma once
 
+#include "orison/semantics/drop_model.hpp"
+
 #include <cstddef>
 #include <string>
 #include <string_view>
@@ -40,6 +42,14 @@ auto add_planned_drop_declaration(
 ) -> bool;
 
 auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> PlannedDropDeclaration;
+
+auto planned_drop_declaration_for_authorization(
+    semantics::DropLoweringAuthorization const& authorization
+) -> PlannedDropDeclaration;
+
+auto declared_drop_declarations_for_authorized_semantic_drops(
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+) -> std::vector<PlannedDropDeclaration>;
 
 auto declared_drop_declarations_for_allowed_source_types(
     std::vector<PlannedDropAction> const& actions,

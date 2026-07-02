@@ -65,8 +65,10 @@ auto add_planned_drop_declaration(
     std::vector<PlannedDropDeclaration>& declarations,
     PlannedDropDeclaration declaration
 ) -> bool {
-    for (auto const& existing_declaration : declarations) {
+    for (auto& existing_declaration : declarations) {
         if (existing_declaration.symbol_name == declaration.symbol_name) {
+            existing_declaration.emit_declaration =
+                existing_declaration.emit_declaration || declaration.emit_declaration;
             return false;
         }
     }
@@ -80,6 +82,33 @@ auto planned_drop_declaration_for_action(PlannedDropAction const& action) -> Pla
         .source_type_name = action.source_type_name,
         .discovery_line = action.discovery_line,
     };
+}
+
+auto planned_drop_declaration_for_authorization(
+    semantics::DropLoweringAuthorization const& authorization
+) -> PlannedDropDeclaration {
+    return PlannedDropDeclaration {
+        .symbol_name = authorization.site.abi_symbol_name,
+        .source_type_name = authorization.site.source_type_name,
+        .discovery_line = authorization.site.site_line,
+        .emit_declaration = authorization.authorized,
+    };
+}
+
+auto declared_drop_declarations_for_authorized_semantic_drops(
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+) -> std::vector<PlannedDropDeclaration> {
+    auto declarations = std::vector<PlannedDropDeclaration> {};
+    for (auto const& authorization : authorizations) {
+        if (!authorization.authorized) {
+            continue;
+        }
+        add_planned_drop_declaration(
+            declarations,
+            planned_drop_declaration_for_authorization(authorization)
+        );
+    }
+    return declarations;
 }
 
 auto declared_drop_declarations_for_allowed_source_types(

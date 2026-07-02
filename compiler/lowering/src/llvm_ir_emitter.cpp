@@ -177,6 +177,11 @@ auto LlvmIrEmitter::emit(
                 planned_drop_declaration_for_action(action)
             );
         }
+        for (auto declaration : declared_drop_declarations_for_authorized_semantic_drops(
+                 result.semantic_drop_lowering_authorizations
+             )) {
+            add_planned_drop_declaration(result.planned_drop_declarations, std::move(declaration));
+        }
     } else {
         result.planned_drop_declarations = declared_drop_declarations_for_allowed_source_types(
             result.planned_drop_actions,

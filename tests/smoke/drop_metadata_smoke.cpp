@@ -6,11 +6,13 @@
 int main() {
     using orison::lowering::PlannedDropDeclaration;
     using orison::lowering::add_planned_drop_declaration;
+    using orison::lowering::declared_drop_declarations_for_authorized_semantic_drops;
     using orison::lowering::declared_drop_declarations_for_allowed_source_types;
     using orison::lowering::format_planned_drop_action;
     using orison::lowering::format_planned_drop_action_report;
     using orison::lowering::format_planned_drop_declaration;
     using orison::lowering::format_planned_drop_report;
+    using orison::lowering::planned_drop_declaration_for_authorization;
     using orison::lowering::planned_drop_declaration_for_action;
 
     auto metadata_only = PlannedDropDeclaration {
@@ -48,6 +50,21 @@ int main() {
     ));
     assert(planned_drops.size() == 1);
     assert(planned_drops.front().discovery_line == 12);
+    assert(!planned_drops.front().emit_declaration);
+
+    assert(!add_planned_drop_declaration(
+        planned_drops,
+        PlannedDropDeclaration {
+            .symbol_name = "__orison_drop.Payload",
+            .source_type_name = "Payload",
+            .discovery_line = 100,
+            .emit_declaration = true,
+        }
+    ));
+    assert(planned_drops.size() == 1);
+    assert(planned_drops.front().discovery_line == 12);
+    assert(planned_drops.front().emit_declaration);
+    planned_drops.front().emit_declaration = false;
 
     assert(add_planned_drop_declaration(
         planned_drops,
@@ -86,6 +103,55 @@ int main() {
     assert(declaration_from_action.source_type_name == "Payload");
     assert(declaration_from_action.discovery_line == 42);
     assert(!declaration_from_action.emit_declaration);
+
+    auto unresolved_authorization = orison::semantics::DropLoweringAuthorization {
+        .site = orison::semantics::PlannedDropSite {
+            .source_type_name = "Payload",
+            .abi_symbol_name = "__orison_drop.Payload",
+            .owner_name = "payload",
+            .site_line = 7,
+        },
+        .semantic_resolved = false,
+        .source_drop_lowering_enabled = true,
+        .authorized = false,
+    };
+    auto disabled_authorization = unresolved_authorization;
+    disabled_authorization.semantic_resolved = true;
+    disabled_authorization.source_drop_lowering_enabled = false;
+    auto authorized_authorization = disabled_authorization;
+    authorized_authorization.source_drop_lowering_enabled = true;
+    authorized_authorization.authorized = true;
+
+    auto declaration_from_authorization = planned_drop_declaration_for_authorization(authorized_authorization);
+    assert(declaration_from_authorization.symbol_name == "__orison_drop.Payload");
+    assert(declaration_from_authorization.source_type_name == "Payload");
+    assert(declaration_from_authorization.discovery_line == 7);
+    assert(declaration_from_authorization.emit_declaration);
+
+    assert(declared_drop_declarations_for_authorized_semantic_drops({
+        unresolved_authorization,
+        disabled_authorization,
+    }).empty());
+
+    auto semantic_declarations = declared_drop_declarations_for_authorized_semantic_drops({
+        unresolved_authorization,
+        authorized_authorization,
+        orison::semantics::DropLoweringAuthorization {
+            .site = orison::semantics::PlannedDropSite {
+                .source_type_name = "Payload",
+                .abi_symbol_name = "__orison_drop.Payload",
+                .owner_name = "other",
+                .site_line = 9,
+            },
+            .semantic_resolved = true,
+            .source_drop_lowering_enabled = true,
+            .authorized = true,
+        },
+    });
+    assert(semantic_declarations.size() == 1);
+    assert(semantic_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(semantic_declarations.front().discovery_line == 7);
+    assert(semantic_declarations.front().emit_declaration);
 
     assert(
         format_planned_drop_action(action) ==
