@@ -776,12 +776,9 @@ int main() {
     );
     auto emit_scalar_member_assignment_failure =
         run_emit_llvm(app, emit_scalar_member_assignment_failure_path);
-    assert(emit_scalar_member_assignment_failure.exit_code == 1);
-    assert(emit_scalar_member_assignment_failure.stdout_text.empty());
-    assert(
-        emit_scalar_member_assignment_failure.stderr_text.find(
-            "lowering aggregate assignment member target is unsupported"
-        ) != std::string::npos
+    assert_failure_with_no_stdout_contains(
+        emit_scalar_member_assignment_failure,
+        "lowering aggregate assignment member target is unsupported"
     );
 
     auto emit_scalar_index_assignment_failure_path =
@@ -798,12 +795,9 @@ int main() {
     );
     auto emit_scalar_index_assignment_failure =
         run_emit_llvm(app, emit_scalar_index_assignment_failure_path);
-    assert(emit_scalar_index_assignment_failure.exit_code == 1);
-    assert(emit_scalar_index_assignment_failure.stdout_text.empty());
-    assert(
-        emit_scalar_index_assignment_failure.stderr_text.find(
-            "lowering aggregate assignment index target is unsupported"
-        ) != std::string::npos
+    assert_failure_with_no_stdout_contains(
+        emit_scalar_index_assignment_failure,
+        "lowering aggregate assignment index target is unsupported"
     );
 
     auto emit_local_record_address_path =
