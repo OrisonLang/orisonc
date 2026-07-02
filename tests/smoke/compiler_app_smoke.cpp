@@ -1317,6 +1317,17 @@ int main() {
         "semantic readiness __orison_drop.Payload for Payload blocked\n"
         "cleanup readiness __orison_thread_cleanup.launch.9.0 blocked semantic blockers 1 missing declarations 1\n"
     );
+    auto drop_readiness_fixture_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
+    auto fixture_drop_readiness = run_drop_readiness(app, drop_readiness_fixture_path);
+    assert(fixture_drop_readiness.exit_code == 0);
+    assert(fixture_drop_readiness.stderr_text.empty());
+    assert(
+        fixture_drop_readiness.stdout_text ==
+        "drop readiness snapshot semantic authorizations 1 emitted declarations 0 cleanup authorizations 1\n"
+        "semantic readiness __orison_drop.Payload for Payload blocked\n"
+        "cleanup readiness __orison_thread_cleanup.launch.12.0 blocked semantic blockers 1 missing declarations 1\n"
+    );
 
     auto empty_planned_drop_report = run_planned_drops(app, emit_path);
     assert(empty_planned_drop_report.exit_code == 0);
