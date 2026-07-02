@@ -210,6 +210,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   declaration reports; normal sources still report none until drop lowering is accepted.
 - 2026-07-02: added a drop readiness relation report and `orisonc --drop-readiness-relations <file>` to correlate
   cleanup sites with semantic blockers, emitted declarations, and missing declarations without changing normal output.
+- 2026-07-02: factored diagnostics-only driver report command routing through shared analyze/LLVM report helpers to
+  reduce copy/paste across planned-drop, semantic-drop, and drop-readiness inspection commands.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

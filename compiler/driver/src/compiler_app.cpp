@@ -34,6 +34,38 @@ auto usage_text() -> std::string {
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
+auto emit_llvm_report(std::filesystem::path const& source_path, auto report_selector) -> CompileResult {
+    pipeline::CompilePipeline pipeline;
+    auto result = pipeline.emit_llvm(source_path);
+    if (result.has_errors()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = std::move(result.error_text),
+        };
+    }
+
+    return CompileResult {
+        .exit_code = 0,
+        .stdout_text = render_report_lines(report_selector(result)),
+    };
+}
+
+auto analyze_report(std::filesystem::path const& source_path, auto report_selector) -> CompileResult {
+    pipeline::CompilePipeline pipeline;
+    auto result = pipeline.analyze(source_path);
+    if (result.has_errors()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = std::move(result.error_text),
+        };
+    }
+
+    return CompileResult {
+        .exit_code = 0,
+        .stdout_text = render_report_lines(report_selector(result)),
+    };
+}
+
 auto render_type(orison::syntax::TypeSyntax const& type) -> std::string {
     std::string rendered = type.name;
     if (type.generic_arguments.empty()) {
@@ -245,195 +277,75 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--planned-drops") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.planned_drop_report),
-        };
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.planned_drop_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-planned-drops") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.analyze(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.semantic_planned_drop_report),
-        };
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.semantic_planned_drop_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-resolution") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.analyze(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.semantic_drop_resolution_report),
-        };
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.semantic_drop_resolution_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-diagnostics") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.analyze(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.semantic_drop_diagnostic_report),
-        };
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.semantic_drop_diagnostic_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-lowering-authorization") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.analyze(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.semantic_drop_lowering_authorization_report),
-        };
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.semantic_drop_lowering_authorization_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-summary") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.analyze(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.semantic_drop_resolution_summary_report),
-        };
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.semantic_drop_resolution_summary_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--planned-drop-actions") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.planned_drop_action_report),
-        };
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.planned_drop_action_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--emitted-drops") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.emitted_drop_declaration_report),
-        };
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.emitted_drop_declaration_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-cleanup-authorization") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.drop_cleanup_authorization_report),
-        };
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.drop_cleanup_authorization_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.drop_readiness_snapshot_report),
-        };
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.drop_readiness_snapshot_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-summary") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.drop_readiness_summary_report),
-        };
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.drop_readiness_summary_report;
+        });
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-relations") {
-        pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
-        if (result.has_errors()) {
-            return CompileResult {
-                .exit_code = 1,
-                .stderr_text = std::move(result.error_text),
-            };
-        }
-
-        return CompileResult {
-            .exit_code = 0,
-            .stdout_text = render_report_lines(result.drop_readiness_relation_report),
-        };
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.drop_readiness_relation_report;
+        });
     }
 
     if (args.size() == 5 && std::string_view(args[1]) == "--emit-object" &&
