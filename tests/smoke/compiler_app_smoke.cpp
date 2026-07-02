@@ -748,6 +748,14 @@ int main() {
     assert(
         emit_failure.stderr_text.find("lowering does not yet support this return expression") != std::string::npos
     );
+    auto drop_readiness_summary_failure = run_drop_readiness_summary(app, emit_failure_path);
+    assert(drop_readiness_summary_failure.exit_code == 1);
+    assert(drop_readiness_summary_failure.stdout_text.empty());
+    assert(
+        drop_readiness_summary_failure.stderr_text.find(
+            "lowering does not yet support this return expression"
+        ) != std::string::npos
+    );
 
     auto emit_scalar_member_assignment_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_emit_scalar_member_assignment_failure.or";

@@ -196,6 +196,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   emitted declarations, and authorized/blocked cleanup sites for future compact diagnostics.
 - 2026-07-02: exposed `orisonc --drop-readiness-summary` as an explicit diagnostics-only CLI command for the compact
   drop readiness counts while leaving detailed `--drop-readiness` output unchanged.
+- 2026-07-02: added CLI smoke coverage proving `--drop-readiness-summary` propagates lowering failures with no stdout,
+  matching the other diagnostics-only inspection commands.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
