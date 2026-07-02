@@ -80,6 +80,22 @@ auto main() -> int {
         "drop readiness summary semantic authorized 0 blocked 1 emitted declarations 0 cleanup authorized 0 blocked 1"
     );
 
+    auto failed_lowering_path =
+        std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_summary_failure.or";
+    {
+        std::ofstream source(failed_lowering_path);
+        source << "package demo.readinessfailure\n";
+        source << "function same(left: Bool, right: Bool) -> Bool\n";
+        source << "    left == right\n";
+    }
+    auto failed_lowering = pipeline.emit_llvm(failed_lowering_path);
+    assert(failed_lowering.has_errors());
+    assert(
+        failed_lowering.error_text.find("lowering does not yet support this return expression") != std::string::npos
+    );
+    assert(failed_lowering.drop_readiness_snapshot_report.empty());
+    assert(failed_lowering.drop_readiness_summary_report.empty());
+
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());
     assert(!object.object_bytes.empty());

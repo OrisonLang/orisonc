@@ -198,6 +198,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   drop readiness counts while leaving detailed `--drop-readiness` output unchanged.
 - 2026-07-02: added CLI smoke coverage proving `--drop-readiness-summary` propagates lowering failures with no stdout,
   matching the other diagnostics-only inspection commands.
+- 2026-07-02: added pipeline smoke coverage proving drop readiness snapshot and summary reports remain empty when LLVM
+  emission fails before readiness aggregation.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
