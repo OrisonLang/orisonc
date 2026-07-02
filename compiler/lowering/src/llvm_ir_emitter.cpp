@@ -112,8 +112,15 @@ auto LlvmIrEmissionResult::planned_drop_action_report() const -> std::vector<std
 auto LlvmIrEmissionResult::drop_cleanup_authorization_report() const -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     for (auto const& cleanup : drop_cleanups) {
-        auto authorization = plan_drop_cleanup_authorization(cleanup, planned_drop_declarations);
-        if (authorization.authorized || authorization.missing_declarations.empty()) {
+        auto authorization = plan_drop_cleanup_authorization(
+            cleanup,
+            planned_drop_declarations,
+            semantic_drop_lowering_authorizations
+        );
+        if (
+            authorization.authorized ||
+            (authorization.semantic_lowering_blockers.empty() && authorization.missing_declarations.empty())
+        ) {
             continue;
         }
         auto cleanup_lines = format_drop_cleanup_authorization_report(cleanup, authorization);

@@ -195,11 +195,54 @@ int main() {
     assert(missing_authorization_report.size() == 2);
     assert(
         missing_authorization_report[0] ==
-        "drop cleanup authorization __orison_thread_cleanup.record_worker.20.2 blocked missing declarations 1"
+        "drop cleanup authorization __orison_thread_cleanup.record_worker.20.2 blocked "
+        "semantic blockers 0 missing declarations 1"
     );
     assert(
         missing_authorization_report[1] ==
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
+    );
+    auto semantic_blocked_authorization = orison::lowering::plan_drop_cleanup_authorization(
+        authorized_plan,
+        {
+            orison::lowering::PlannedDropDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 20,
+                .emit_declaration = true,
+            },
+        },
+        {
+            orison::semantics::DropLoweringAuthorization {
+                .site = orison::semantics::PlannedDropSite {
+                    .source_type_name = "Payload",
+                    .abi_symbol_name = "__orison_drop.Payload",
+                    .owner_name = "payload",
+                    .site_line = 20,
+                },
+                .semantic_resolved = true,
+                .source_drop_lowering_enabled = false,
+                .authorized = false,
+            },
+        }
+    );
+    assert(!semantic_blocked_authorization.authorized);
+    assert(semantic_blocked_authorization.semantic_lowering_blockers.size() == 1);
+    assert(semantic_blocked_authorization.missing_declarations.empty());
+    auto semantic_blocked_authorization_report = orison::lowering::format_drop_cleanup_authorization_report(
+        authorized_plan,
+        semantic_blocked_authorization
+    );
+    assert(semantic_blocked_authorization_report.size() == 2);
+    assert(
+        semantic_blocked_authorization_report[0] ==
+        "drop cleanup authorization __orison_thread_cleanup.record_worker.20.2 blocked "
+        "semantic blockers 1 missing declarations 0"
+    );
+    assert(
+        semantic_blocked_authorization_report[1] ==
+        "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
     );
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
         authorized_plan,

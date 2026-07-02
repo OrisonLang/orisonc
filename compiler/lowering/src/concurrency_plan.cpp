@@ -399,12 +399,33 @@ auto plan_drop_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations
 ) -> DropCleanupAuthorizationReport {
+    return plan_drop_cleanup_authorization(plan, declarations, {});
+}
+
+auto plan_drop_cleanup_authorization(
+    ConcurrencyDropCleanupPlan const& plan,
+    std::vector<PlannedDropDeclaration> const& declarations,
+    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations
+) -> DropCleanupAuthorizationReport {
     auto report = DropCleanupAuthorizationReport {};
     if (plan.actions.empty()) {
         return report;
     }
 
     for (auto const& action : plan.actions) {
+        auto const semantic_authorization = std::find_if(
+            semantic_authorizations.begin(),
+            semantic_authorizations.end(),
+            [&](semantics::DropLoweringAuthorization const& candidate) {
+                return candidate.site.abi_symbol_name == action.symbol_name &&
+                       candidate.site.source_type_name == action.source_type_name &&
+                       !candidate.authorized;
+            }
+        );
+        if (semantic_authorization != semantic_authorizations.end()) {
+            report.semantic_lowering_blockers.push_back(action);
+        }
+
         auto const declaration = std::find_if(
             declarations.begin(),
             declarations.end(),
@@ -417,7 +438,8 @@ auto plan_drop_cleanup_authorization(
         }
     }
 
-    report.authorized = report.missing_declarations.empty();
+    report.authorized =
+        report.semantic_lowering_blockers.empty() && report.missing_declarations.empty();
     return report;
 }
 
@@ -433,9 +455,26 @@ auto format_drop_cleanup_authorization_report(
     }
     header << (report.authorized ? " authorized" : " blocked");
     if (!report.authorized) {
+        header << " semantic blockers " << report.semantic_lowering_blockers.size();
         header << " missing declarations " << report.missing_declarations.size();
     }
     lines.push_back(header.str());
+
+    for (auto const& blocker : report.semantic_lowering_blockers) {
+        auto line = std::ostringstream {};
+        line << "semantic drop lowering blocked " << blocker.symbol_name;
+        if (!blocker.source_type_name.empty()) {
+            line << " for " << blocker.source_type_name;
+        }
+        if (!blocker.capture_name.empty()) {
+            line << " capture " << blocker.capture_name;
+        }
+        line << " field " << blocker.field_index;
+        if (blocker.discovery_line > 0) {
+            line << " discovered at line " << blocker.discovery_line;
+        }
+        lines.push_back(line.str());
+    }
 
     for (auto const& missing : report.missing_declarations) {
         auto line = std::ostringstream {};

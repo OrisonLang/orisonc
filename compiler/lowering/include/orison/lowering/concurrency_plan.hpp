@@ -63,6 +63,7 @@ struct ConcurrencyDropCleanupPlan {
 
 struct DropCleanupAuthorizationReport {
     bool authorized = false;
+    std::vector<PlannedDropAction> semantic_lowering_blockers;
     std::vector<PlannedDropAction> missing_declarations;
 };
 
@@ -92,6 +93,12 @@ auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool;
 auto plan_drop_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations
+) -> DropCleanupAuthorizationReport;
+
+auto plan_drop_cleanup_authorization(
+    ConcurrencyDropCleanupPlan const& plan,
+    std::vector<PlannedDropDeclaration> const& declarations,
+    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations
 ) -> DropCleanupAuthorizationReport;
 
 auto format_drop_cleanup_authorization_report(

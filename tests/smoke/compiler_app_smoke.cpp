@@ -1291,7 +1291,10 @@ int main() {
     assert(drop_cleanup_authorization.stderr_text.empty());
     assert(
         drop_cleanup_authorization.stdout_text ==
-        "drop cleanup authorization __orison_thread_cleanup.launch.9.0 blocked missing declarations 1\n"
+        "drop cleanup authorization __orison_thread_cleanup.launch.9.0 blocked "
+        "semantic blockers 1 missing declarations 1\n"
+        "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 9\n"
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 9\n"
     );
 
@@ -1380,7 +1383,12 @@ int main() {
     assert(multi_drop_cleanup_authorization.stderr_text.empty());
     assert(
         multi_drop_cleanup_authorization.stdout_text ==
-        "drop cleanup authorization __orison_thread_cleanup.launch.15.0 blocked missing declarations 2\n"
+        "drop cleanup authorization __orison_thread_cleanup.launch.15.0 blocked "
+        "semantic blockers 2 missing declarations 2\n"
+        "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 15\n"
+        "semantic drop lowering blocked __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 15\n"
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 15\n"
         "missing drop declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
