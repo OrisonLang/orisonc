@@ -598,6 +598,25 @@ auto format_drop_readiness_summary(
     return output.str();
 }
 
+auto format_drop_readiness_relation_report(
+    DropReadinessSnapshot const& snapshot
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    for (auto const& cleanup : snapshot.cleanup_authorizations) {
+        auto line = std::ostringstream {};
+        line << "drop readiness relation";
+        if (!cleanup.cleanup_symbol_name.empty()) {
+            line << " " << cleanup.cleanup_symbol_name;
+        }
+        line << (cleanup.authorization.authorized ? " authorized" : " blocked")
+             << " semantic blockers " << cleanup.authorization.semantic_lowering_blockers.size()
+             << " emitted declarations " << snapshot.emitted_declarations.size()
+             << " missing declarations " << cleanup.authorization.missing_declarations.size();
+        lines.push_back(line.str());
+    }
+    return lines;
+}
+
 auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
     std::vector<PlannedDropDeclaration> const& declarations

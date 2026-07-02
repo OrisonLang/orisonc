@@ -632,6 +632,17 @@ auto run_drop_readiness_summary(orison::driver::CompilerApp const& app, std::fil
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_drop_readiness_relations(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--drop-readiness-relations",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 auto run_emit_object(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& source_path,
@@ -771,6 +782,11 @@ int main() {
     auto emitted_drops_failure = run_emitted_drops(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         emitted_drops_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto drop_readiness_relations_failure = run_drop_readiness_relations(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        drop_readiness_relations_failure,
         "lowering does not yet support this return expression"
     );
 
@@ -1359,6 +1375,14 @@ int main() {
         "drop readiness summary semantic authorized 0 blocked 1 emitted declarations 0 "
         "cleanup authorized 0 blocked 1\n"
     );
+    auto drop_readiness_relations = run_drop_readiness_relations(app, planned_drop_report_path);
+    assert(drop_readiness_relations.exit_code == 0);
+    assert(drop_readiness_relations.stderr_text.empty());
+    assert(
+        drop_readiness_relations.stdout_text ==
+        "drop readiness relation __orison_thread_cleanup.launch.9.0 blocked "
+        "semantic blockers 1 emitted declarations 0 missing declarations 1\n"
+    );
     auto drop_readiness_fixture_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
     auto fixture_drop_readiness = run_drop_readiness(app, drop_readiness_fixture_path);
@@ -1377,6 +1401,14 @@ int main() {
         fixture_drop_readiness_summary.stdout_text ==
         "drop readiness summary semantic authorized 0 blocked 1 emitted declarations 0 "
         "cleanup authorized 0 blocked 1\n"
+    );
+    auto fixture_drop_readiness_relations = run_drop_readiness_relations(app, drop_readiness_fixture_path);
+    assert(fixture_drop_readiness_relations.exit_code == 0);
+    assert(fixture_drop_readiness_relations.stderr_text.empty());
+    assert(
+        fixture_drop_readiness_relations.stdout_text ==
+        "drop readiness relation __orison_thread_cleanup.launch.12.0 blocked "
+        "semantic blockers 1 emitted declarations 0 missing declarations 1\n"
     );
 
     auto empty_planned_drop_report = run_planned_drops(app, emit_path);
@@ -1431,6 +1463,10 @@ int main() {
         "cleanup authorized 0 blocked 0\n"
     );
     assert(empty_drop_readiness_summary.stderr_text.empty());
+    auto empty_drop_readiness_relations = run_drop_readiness_relations(app, emit_path);
+    assert(empty_drop_readiness_relations.exit_code == 0);
+    assert(empty_drop_readiness_relations.stdout_text.empty());
+    assert(empty_drop_readiness_relations.stderr_text.empty());
 
     auto multi_planned_drop_report_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_multi_planned_drop_report.or";

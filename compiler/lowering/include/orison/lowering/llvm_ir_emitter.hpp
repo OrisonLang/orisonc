@@ -31,6 +31,7 @@ struct LlvmIrEmissionResult {
     auto drop_readiness_snapshot_report() const -> std::vector<std::string>;
     auto drop_readiness_summary() const -> DropReadinessSummary;
     auto drop_readiness_summary_report() const -> std::vector<std::string>;
+    auto drop_readiness_relation_report() const -> std::vector<std::string>;
 };
 
 class LlvmIrEmitter {

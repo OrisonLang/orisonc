@@ -294,6 +294,13 @@ int main() {
         orison::lowering::format_drop_readiness_summary(readiness_summary) ==
         "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
     );
+    auto readiness_relation_report = orison::lowering::format_drop_readiness_relation_report(readiness_snapshot);
+    assert(readiness_relation_report.size() == 1);
+    assert(
+        readiness_relation_report.front() ==
+        "drop readiness relation __orison_thread_cleanup.record_worker.20.2 authorized "
+        "semantic blockers 0 emitted declarations 1 missing declarations 0"
+    );
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
         authorized_plan,
         {

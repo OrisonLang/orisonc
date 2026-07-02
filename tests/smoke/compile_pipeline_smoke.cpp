@@ -47,6 +47,7 @@ auto main() -> int {
         ir.drop_readiness_summary_report.front() ==
         "drop readiness summary semantic authorized 0 blocked 0 emitted declarations 0 cleanup authorized 0 blocked 0"
     );
+    assert(ir.drop_readiness_relation_report.empty());
 
     auto drop_readiness_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
@@ -79,6 +80,12 @@ auto main() -> int {
         drop_readiness.drop_readiness_summary_report.front() ==
         "drop readiness summary semantic authorized 0 blocked 1 emitted declarations 0 cleanup authorized 0 blocked 1"
     );
+    assert(drop_readiness.drop_readiness_relation_report.size() == 1);
+    assert(
+        drop_readiness.drop_readiness_relation_report.front() ==
+        "drop readiness relation __orison_thread_cleanup.launch.12.0 blocked "
+        "semantic blockers 1 emitted declarations 0 missing declarations 1"
+    );
 
     auto failed_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_summary_failure.or";
@@ -95,6 +102,7 @@ auto main() -> int {
     );
     assert(failed_lowering.drop_readiness_snapshot_report.empty());
     assert(failed_lowering.drop_readiness_summary_report.empty());
+    assert(failed_lowering.drop_readiness_relation_report.empty());
 
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());

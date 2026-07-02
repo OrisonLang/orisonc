@@ -143,6 +143,10 @@ auto format_drop_readiness_summary(
     DropReadinessSummary const& summary
 ) -> std::string;
 
+auto format_drop_readiness_relation_report(
+    DropReadinessSnapshot const& snapshot
+) -> std::vector<std::string>;
+
 auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
     std::vector<PlannedDropDeclaration> const& declarations

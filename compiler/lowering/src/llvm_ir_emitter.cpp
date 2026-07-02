@@ -153,6 +153,10 @@ auto LlvmIrEmissionResult::drop_readiness_summary_report() const -> std::vector<
     return {format_drop_readiness_summary(drop_readiness_summary())};
 }
 
+auto LlvmIrEmissionResult::drop_readiness_relation_report() const -> std::vector<std::string> {
+    return format_drop_readiness_relation_report(drop_readiness_snapshot());
+}
+
 auto LlvmIrEmitter::emit(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result,
