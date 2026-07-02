@@ -50,6 +50,19 @@ auto format_planned_drop_report(
     return report;
 }
 
+auto format_emitted_drop_declaration_report(
+    std::vector<PlannedDropDeclaration> const& declarations
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    for (auto const& declaration : declarations) {
+        if (!declaration.emit_declaration) {
+            continue;
+        }
+        report.push_back(format_planned_drop_declaration(declaration));
+    }
+    return report;
+}
+
 auto format_planned_drop_action_report(
     std::vector<PlannedDropAction> const& actions
 ) -> std::vector<std::string> {

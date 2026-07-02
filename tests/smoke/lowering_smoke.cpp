@@ -2423,6 +2423,7 @@ void test_emit_same_type_record_capture_drop_metadata_dedupes() {
     assert(result.planned_drop_declarations.front().source_type_name == "Payload");
     assert(result.planned_drop_declarations.front().discovery_line == 13);
     assert(!result.planned_drop_declarations.front().emit_declaration);
+    assert(result.emitted_drop_declaration_report().empty());
     assert(result.ir_text.find("%worker.thread.env = alloca { %record.Payload, %record.Payload }") != std::string::npos);
     assert(
         result.ir_text.find(
@@ -2471,6 +2472,9 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
     assert(result.planned_drop_declarations.front().source_type_name == "Payload");
     assert(result.planned_drop_declarations.front().discovery_line == 13);
     assert(result.planned_drop_declarations.front().emit_declaration);
+    auto emitted_report = result.emitted_drop_declaration_report();
+    assert(emitted_report.size() == 1);
+    assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
     assert(
         result.ir_text.find(
@@ -2531,6 +2535,9 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
     assert(result.planned_drop_declarations.front().source_type_name == "Payload");
     assert(result.planned_drop_declarations.front().discovery_line == 13);
     assert(result.planned_drop_declarations.front().emit_declaration);
+    auto emitted_report = result.emitted_drop_declaration_report();
+    assert(emitted_report.size() == 1);
+    assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
     assert(
         result.ir_text.find(
@@ -2659,6 +2666,9 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
     assert(result.planned_drop_declarations[1].source_type_name == "OtherPayload");
     assert(result.planned_drop_declarations[1].discovery_line == 20);
     assert(!result.planned_drop_declarations[1].emit_declaration);
+    auto emitted_report = result.emitted_drop_declaration_report();
+    assert(emitted_report.size() == 1);
+    assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 20");
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
     assert(result.ir_text.find("declare void @__orison_drop.OtherPayload(ptr)") == std::string::npos);
     assert(

@@ -158,6 +158,7 @@ auto CompilePipeline::emit_llvm(std::filesystem::path const& source_path) const 
     }
     result.ir_text = std::move(emission.ir_text);
     result.planned_drop_report = emission.planned_drop_report();
+    result.emitted_drop_declaration_report = emission.emitted_drop_declaration_report();
     result.planned_drop_action_report = emission.planned_drop_action_report();
     result.drop_cleanup_authorization_report = emission.drop_cleanup_authorization_report();
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);

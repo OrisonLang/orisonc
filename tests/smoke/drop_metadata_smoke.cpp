@@ -10,6 +10,7 @@ int main() {
     using orison::lowering::declared_drop_declarations_for_allowed_source_types;
     using orison::lowering::format_planned_drop_action;
     using orison::lowering::format_planned_drop_action_report;
+    using orison::lowering::format_emitted_drop_declaration_report;
     using orison::lowering::format_planned_drop_declaration;
     using orison::lowering::format_planned_drop_report;
     using orison::lowering::planned_drop_declaration_for_authorization;
@@ -90,6 +91,13 @@ int main() {
 
     auto empty_report = format_planned_drop_report({});
     assert(empty_report.empty());
+    auto emitted_report = format_emitted_drop_declaration_report({
+        metadata_only,
+        enabled,
+    });
+    assert(emitted_report.size() == 1);
+    assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 12");
+    assert(format_emitted_drop_declaration_report({metadata_only}).empty());
 
     auto action = orison::lowering::PlannedDropAction {
         .capture_name = "payload",

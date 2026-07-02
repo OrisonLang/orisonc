@@ -28,6 +28,7 @@ auto main() -> int {
     assert(ir.ir_text.find("ret i32 0") != std::string::npos);
     assert(ir.semantic_drop_lowering_authorizations.empty());
     assert(ir.planned_drop_report.empty());
+    assert(ir.emitted_drop_declaration_report.empty());
 
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());

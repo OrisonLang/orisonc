@@ -105,6 +105,10 @@ auto LlvmIrEmissionResult::planned_drop_report() const -> std::vector<std::strin
     return format_planned_drop_report(planned_drop_declarations);
 }
 
+auto LlvmIrEmissionResult::emitted_drop_declaration_report() const -> std::vector<std::string> {
+    return format_emitted_drop_declaration_report(planned_drop_declarations);
+}
+
 auto LlvmIrEmissionResult::planned_drop_action_report() const -> std::vector<std::string> {
     return format_planned_drop_action_report(planned_drop_actions);
 }

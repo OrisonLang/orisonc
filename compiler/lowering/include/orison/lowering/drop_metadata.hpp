@@ -32,6 +32,10 @@ auto format_planned_drop_report(
     std::vector<PlannedDropDeclaration> const& declarations
 ) -> std::vector<std::string>;
 
+auto format_emitted_drop_declaration_report(
+    std::vector<PlannedDropDeclaration> const& declarations
+) -> std::vector<std::string>;
+
 auto format_planned_drop_action_report(
     std::vector<PlannedDropAction> const& actions
 ) -> std::vector<std::string>;
