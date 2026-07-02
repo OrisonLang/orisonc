@@ -30,6 +30,7 @@ auto usage_text() -> std::string {
            "--semantic-drop-summary <file> | "
            "--planned-drops <file> | --planned-drop-actions <file> | "
            "--drop-cleanup-authorization <file> | --drop-readiness <file> | "
+           "--drop-readiness-summary <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
@@ -384,6 +385,22 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return CompileResult {
             .exit_code = 0,
             .stdout_text = render_report_lines(result.drop_readiness_snapshot_report),
+        };
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-summary") {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = std::move(result.error_text),
+            };
+        }
+
+        return CompileResult {
+            .exit_code = 0,
+            .stdout_text = render_report_lines(result.drop_readiness_summary_report),
         };
     }
 

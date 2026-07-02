@@ -194,6 +194,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `CompilePipeline::emit_llvm` readiness snapshot reports.
 - 2026-07-02: added a pure drop readiness summary helper and report that count authorized/blocked semantic drops,
   emitted declarations, and authorized/blocked cleanup sites for future compact diagnostics.
+- 2026-07-02: exposed `orisonc --drop-readiness-summary` as an explicit diagnostics-only CLI command for the compact
+  drop readiness counts while leaving detailed `--drop-readiness` output unchanged.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
