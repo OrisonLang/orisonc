@@ -2488,6 +2488,66 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
     );
 }
 
+void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_semantic_allowed_record_capture_cleanup.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "implements Transferable for Payload\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function on_thread(value: Int64) -> Int64\n"
+        "    let left: Payload = Payload(value)\n"
+        "    let right: Payload = Payload(value)\n"
+        "    let worker = thread\n"
+        "        left.value + right.value\n"
+        "\n"
+        "    worker.join()\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "left",
+                        .site_line = 11,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        }
+    );
+
+    assert(!result.has_errors());
+    assert(result.planned_drop_declarations.size() == 1);
+    assert(result.planned_drop_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(result.planned_drop_declarations.front().source_type_name == "Payload");
+    assert(result.planned_drop_declarations.front().discovery_line == 13);
+    assert(result.planned_drop_declarations.front().emit_declaration);
+    assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
+    assert(
+        result.ir_text.find(
+            "define private void @__orison_thread_cleanup.on_thread.13.0(ptr %environment) {\n"
+            "entry:\n"
+            "  %cleanup.field.0 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 0\n"
+            "  ; cleanup candidate left: Payload field 0 drop __orison_drop.Payload\n"
+            "  call void @__orison_drop.Payload(ptr %cleanup.field.0)\n"
+            "  %cleanup.field.1 = getelementptr { %record.Payload, %record.Payload }, ptr %environment, i32 0, i32 1\n"
+            "  ; cleanup candidate right: Payload field 1 drop __orison_drop.Payload\n"
+            "  call void @__orison_drop.Payload(ptr %cleanup.field.1)\n"
+            "  ret void\n"
+            "}"
+        ) != std::string::npos
+    );
+}
+
 void test_reject_partial_record_capture_drop_abi_calls() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_partial_record_capture_cleanup.or";
     auto result = lower_source(
@@ -2526,6 +2586,79 @@ void test_reject_partial_record_capture_drop_abi_calls() {
     assert(result.planned_drop_declarations.front().source_type_name == "Payload");
     assert(result.planned_drop_declarations.front().discovery_line == 20);
     assert(result.planned_drop_declarations.front().emit_declaration);
+    assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_drop.OtherPayload(ptr)") == std::string::npos);
+    assert(
+        result.ir_text.find(
+            "define private void @__orison_thread_cleanup.on_thread.20.0(ptr %environment) {\n"
+            "entry:\n"
+            "  %cleanup.field.0 = getelementptr { %record.Payload, %record.OtherPayload }, ptr %environment, i32 0, i32 0\n"
+            "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
+            "  %cleanup.field.1 = getelementptr { %record.Payload, %record.OtherPayload }, ptr %environment, i32 0, i32 1\n"
+            "  ; cleanup candidate other: OtherPayload field 1 drop __orison_drop.OtherPayload\n"
+            "  ret void\n"
+            "}"
+        ) != std::string::npos
+    );
+    assert(result.ir_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_drop.OtherPayload(ptr") == std::string::npos);
+}
+
+void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_partial_semantic_record_capture_cleanup.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "record OtherPayload\n"
+        "    public value: Int64\n"
+        "\n"
+        "implements Transferable for Payload\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "implements Transferable for OtherPayload\n"
+        "    function placeholder(this: shared This) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function on_thread(value: Int64) -> Int64\n"
+        "    let payload: Payload = Payload(value)\n"
+        "    let other: OtherPayload = OtherPayload(value)\n"
+        "    let worker = thread\n"
+        "        payload.value + other.value\n"
+        "\n"
+        "    worker.join()\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "payload",
+                        .site_line = 18,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        }
+    );
+
+    assert(!result.has_errors());
+    assert(result.planned_drop_declarations.size() == 2);
+    assert(result.planned_drop_declarations[0].symbol_name == "__orison_drop.Payload");
+    assert(result.planned_drop_declarations[0].source_type_name == "Payload");
+    assert(result.planned_drop_declarations[0].discovery_line == 20);
+    assert(result.planned_drop_declarations[0].emit_declaration);
+    assert(result.planned_drop_declarations[1].symbol_name == "__orison_drop.OtherPayload");
+    assert(result.planned_drop_declarations[1].source_type_name == "OtherPayload");
+    assert(result.planned_drop_declarations[1].discovery_line == 20);
+    assert(!result.planned_drop_declarations[1].emit_declaration);
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
     assert(result.ir_text.find("declare void @__orison_drop.OtherPayload(ptr)") == std::string::npos);
     assert(
@@ -3392,7 +3525,9 @@ auto main() -> int {
     test_emit_record_capture_cleanup_field_address();
     test_emit_same_type_record_capture_drop_metadata_dedupes();
     test_emit_allowed_record_capture_drop_abi_calls();
+    test_emit_semantic_authorized_record_capture_drop_abi_calls();
     test_reject_partial_record_capture_drop_abi_calls();
+    test_reject_partial_semantic_authorized_record_capture_drop_abi_calls();
     test_reject_unsupported_final_if_arm_expression();
     test_reject_unsupported_final_switch_case_expression();
     test_emit_nested_defer_cleanup_defers();
