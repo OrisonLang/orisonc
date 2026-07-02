@@ -284,6 +284,16 @@ int main() {
         readiness_snapshot_report[3] ==
         "cleanup readiness __orison_thread_cleanup.record_worker.20.2 authorized"
     );
+    auto readiness_summary = orison::lowering::summarize_drop_readiness(readiness_snapshot);
+    assert(readiness_summary.semantic_authorized == 1);
+    assert(readiness_summary.semantic_blocked == 0);
+    assert(readiness_summary.emitted_declarations == 1);
+    assert(readiness_summary.cleanup_authorized == 1);
+    assert(readiness_summary.cleanup_blocked == 0);
+    assert(
+        orison::lowering::format_drop_readiness_summary(readiness_summary) ==
+        "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
+    );
     assert(!orison::lowering::authorize_drop_cleanup_calls_for_declared_abi(
         authorized_plan,
         {

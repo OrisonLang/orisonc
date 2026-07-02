@@ -36,6 +36,8 @@ struct CompilePipelineResult {
     std::vector<std::string> drop_cleanup_authorization_report;
     lowering::DropReadinessSnapshot drop_readiness_snapshot;
     std::vector<std::string> drop_readiness_snapshot_report;
+    lowering::DropReadinessSummary drop_readiness_summary;
+    std::vector<std::string> drop_readiness_summary_report;
     std::vector<std::string> link_libraries;
     std::string error_text;
 

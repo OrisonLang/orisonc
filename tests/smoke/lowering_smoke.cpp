@@ -2475,6 +2475,12 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
     assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
+    auto readiness_summary_report = result.drop_readiness_summary_report();
+    assert(readiness_summary_report.size() == 1);
+    assert(
+        readiness_summary_report.front() ==
+        "drop readiness summary semantic authorized 0 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
+    );
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
     auto readiness_report = result.drop_readiness_snapshot_report();
     assert(readiness_report.size() == 3);
@@ -2546,6 +2552,12 @@ void test_emit_semantic_authorized_record_capture_drop_abi_calls() {
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
     assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
+    auto readiness_summary_report = result.drop_readiness_summary_report();
+    assert(readiness_summary_report.size() == 1);
+    assert(
+        readiness_summary_report.front() ==
+        "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
+    );
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
     assert(
         result.ir_text.find(
@@ -2688,6 +2700,12 @@ void test_reject_partial_semantic_authorized_record_capture_drop_abi_calls() {
     auto emitted_report = result.emitted_drop_declaration_report();
     assert(emitted_report.size() == 1);
     assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 20");
+    auto readiness_summary_report = result.drop_readiness_summary_report();
+    assert(readiness_summary_report.size() == 1);
+    assert(
+        readiness_summary_report.front() ==
+        "drop readiness summary semantic authorized 1 blocked 0 emitted declarations 1 cleanup authorized 0 blocked 1"
+    );
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
     assert(result.ir_text.find("declare void @__orison_drop.OtherPayload(ptr)") == std::string::npos);
     assert(

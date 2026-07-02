@@ -563,6 +563,41 @@ auto format_drop_readiness_snapshot_report(
     return lines;
 }
 
+auto summarize_drop_readiness(
+    DropReadinessSnapshot const& snapshot
+) -> DropReadinessSummary {
+    auto summary = DropReadinessSummary {
+        .emitted_declarations = snapshot.emitted_declarations.size(),
+    };
+    for (auto const& authorization : snapshot.semantic_authorizations) {
+        if (authorization.authorized) {
+            ++summary.semantic_authorized;
+        } else {
+            ++summary.semantic_blocked;
+        }
+    }
+    for (auto const& cleanup : snapshot.cleanup_authorizations) {
+        if (cleanup.authorization.authorized) {
+            ++summary.cleanup_authorized;
+        } else {
+            ++summary.cleanup_blocked;
+        }
+    }
+    return summary;
+}
+
+auto format_drop_readiness_summary(
+    DropReadinessSummary const& summary
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "drop readiness summary semantic authorized " << summary.semantic_authorized
+           << " blocked " << summary.semantic_blocked
+           << " emitted declarations " << summary.emitted_declarations
+           << " cleanup authorized " << summary.cleanup_authorized
+           << " blocked " << summary.cleanup_blocked;
+    return output.str();
+}
+
 auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
     std::vector<PlannedDropDeclaration> const& declarations

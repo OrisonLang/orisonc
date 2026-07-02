@@ -78,6 +78,14 @@ struct DropReadinessSnapshot {
     std::vector<DropCleanupReadiness> cleanup_authorizations;
 };
 
+struct DropReadinessSummary {
+    std::size_t semantic_authorized = 0;
+    std::size_t semantic_blocked = 0;
+    std::size_t emitted_declarations = 0;
+    std::size_t cleanup_authorized = 0;
+    std::size_t cleanup_blocked = 0;
+};
+
 struct ConcurrencyCleanupPlan {
     std::vector<ConcurrencyCleanupFieldPlan> drop_candidates;
     ConcurrencyDropCleanupPlan drop_cleanup;
@@ -126,6 +134,14 @@ auto plan_drop_readiness_snapshot(
 auto format_drop_readiness_snapshot_report(
     DropReadinessSnapshot const& snapshot
 ) -> std::vector<std::string>;
+
+auto summarize_drop_readiness(
+    DropReadinessSnapshot const& snapshot
+) -> DropReadinessSummary;
+
+auto format_drop_readiness_summary(
+    DropReadinessSummary const& summary
+) -> std::string;
 
 auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
