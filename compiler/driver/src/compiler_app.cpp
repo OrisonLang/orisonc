@@ -28,7 +28,7 @@ auto usage_text() -> std::string {
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
            "--semantic-drop-diagnostics <file> | --semantic-drop-lowering-authorization <file> | "
            "--semantic-drop-summary <file> | "
-           "--planned-drops <file> | --planned-drop-actions <file> | "
+           "--planned-drops <file> | --planned-drop-actions <file> | --emitted-drops <file> | "
            "--drop-cleanup-authorization <file> | --drop-readiness <file> | "
            "--drop-readiness-summary <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
@@ -353,6 +353,22 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return CompileResult {
             .exit_code = 0,
             .stdout_text = render_report_lines(result.planned_drop_action_report),
+        };
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--emitted-drops") {
+        pipeline::CompilePipeline pipeline;
+        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
+        if (result.has_errors()) {
+            return CompileResult {
+                .exit_code = 1,
+                .stderr_text = std::move(result.error_text),
+            };
+        }
+
+        return CompileResult {
+            .exit_code = 0,
+            .stdout_text = render_report_lines(result.emitted_drop_declaration_report),
         };
     }
 

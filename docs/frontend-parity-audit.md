@@ -206,6 +206,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   diagnostics so failure-shape checks stay consistent.
 - 2026-07-02: routed parse-failure smoke helpers through the same no-stdout failure assertion while keeping
   object-write and host-link failures explicit.
+- 2026-07-02: added `orisonc --emitted-drops <file>` as a diagnostics-only CLI inspection command for emitted drop
+  declaration reports; normal sources still report none until drop lowering is accepted.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

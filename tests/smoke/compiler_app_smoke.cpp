@@ -588,6 +588,17 @@ auto run_planned_drop_actions(orison::driver::CompilerApp const& app, std::files
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_emitted_drops(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--emitted-drops",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 auto run_drop_cleanup_authorization(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     auto path_text = path.string();
@@ -755,6 +766,11 @@ int main() {
     auto drop_readiness_summary_failure = run_drop_readiness_summary(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         drop_readiness_summary_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto emitted_drops_failure = run_emitted_drops(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        emitted_drops_failure,
         "lowering does not yet support this return expression"
     );
 
@@ -1311,6 +1327,10 @@ int main() {
         "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
         "discovered at line 9 (metadata only)\n"
     );
+    auto emitted_drops = run_emitted_drops(app, planned_drop_report_path);
+    assert(emitted_drops.exit_code == 0);
+    assert(emitted_drops.stdout_text.empty());
+    assert(emitted_drops.stderr_text.empty());
     auto drop_cleanup_authorization = run_drop_cleanup_authorization(app, planned_drop_report_path);
     assert(drop_cleanup_authorization.exit_code == 0);
     assert(drop_cleanup_authorization.stderr_text.empty());
@@ -1388,6 +1408,10 @@ int main() {
     assert(empty_planned_drop_actions.exit_code == 0);
     assert(empty_planned_drop_actions.stdout_text.empty());
     assert(empty_planned_drop_actions.stderr_text.empty());
+    auto empty_emitted_drops = run_emitted_drops(app, emit_path);
+    assert(empty_emitted_drops.exit_code == 0);
+    assert(empty_emitted_drops.stdout_text.empty());
+    assert(empty_emitted_drops.stderr_text.empty());
     auto empty_drop_cleanup_authorization = run_drop_cleanup_authorization(app, emit_path);
     assert(empty_drop_cleanup_authorization.exit_code == 0);
     assert(empty_drop_cleanup_authorization.stdout_text.empty());
