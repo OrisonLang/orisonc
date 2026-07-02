@@ -687,6 +687,15 @@ void assert_parse_failure_contains(
     assert(result.stderr_text.find(expected_message) != std::string::npos);
 }
 
+void assert_failure_with_no_stdout_contains(
+    orison::driver::CompileResult const& result,
+    std::string_view expected_message
+) {
+    assert(result.exit_code == 1);
+    assert(result.stdout_text.empty());
+    assert(result.stderr_text.find(expected_message) != std::string::npos);
+}
+
 void assert_parse_failure_contains_without(
     orison::driver::CompileResult const& result,
     std::string_view expected_message,
@@ -743,18 +752,14 @@ int main() {
         }
     );
     auto emit_failure = run_emit_llvm(app, emit_failure_path);
-    assert(emit_failure.exit_code == 1);
-    assert(emit_failure.stdout_text.empty());
-    assert(
-        emit_failure.stderr_text.find("lowering does not yet support this return expression") != std::string::npos
+    assert_failure_with_no_stdout_contains(
+        emit_failure,
+        "lowering does not yet support this return expression"
     );
     auto drop_readiness_summary_failure = run_drop_readiness_summary(app, emit_failure_path);
-    assert(drop_readiness_summary_failure.exit_code == 1);
-    assert(drop_readiness_summary_failure.stdout_text.empty());
-    assert(
-        drop_readiness_summary_failure.stderr_text.find(
-            "lowering does not yet support this return expression"
-        ) != std::string::npos
+    assert_failure_with_no_stdout_contains(
+        drop_readiness_summary_failure,
+        "lowering does not yet support this return expression"
     );
 
     auto emit_scalar_member_assignment_failure_path =
