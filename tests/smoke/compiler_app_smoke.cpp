@@ -489,158 +489,88 @@ void write_concurrency_fixture(
     }
 }
 
-auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
-    -> orison::driver::CompileResult {
+auto run_single_file_command(
+    orison::driver::CompilerApp const& app,
+    std::string_view command,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
     auto path_text = path.string();
     std::array<char const*, 3> argv {
         "orisonc",
-        "--parse",
+        command.data(),
         path_text.c_str()
     };
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
+auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--parse", path);
 }
 
 auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--emit-llvm",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--emit-llvm", path);
 }
 
 auto run_planned_drops(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--planned-drops",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--planned-drops", path);
 }
 
 auto run_semantic_planned_drops(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--semantic-planned-drops",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--semantic-planned-drops", path);
 }
 
 auto run_semantic_drop_resolution(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--semantic-drop-resolution",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--semantic-drop-resolution", path);
 }
 
 auto run_semantic_drop_diagnostics(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--semantic-drop-diagnostics",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--semantic-drop-diagnostics", path);
 }
 
 auto run_semantic_drop_lowering_authorization(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--semantic-drop-lowering-authorization",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--semantic-drop-lowering-authorization", path);
 }
 
 auto run_semantic_drop_summary(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--semantic-drop-summary",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--semantic-drop-summary", path);
 }
 
 auto run_planned_drop_actions(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--planned-drop-actions",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--planned-drop-actions", path);
 }
 
 auto run_emitted_drops(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--emitted-drops",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--emitted-drops", path);
 }
 
 auto run_drop_cleanup_authorization(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--drop-cleanup-authorization",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--drop-cleanup-authorization", path);
 }
 
 auto run_drop_readiness(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--drop-readiness",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--drop-readiness", path);
 }
 
 auto run_drop_readiness_summary(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--drop-readiness-summary",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--drop-readiness-summary", path);
 }
 
 auto run_drop_readiness_relations(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "--drop-readiness-relations",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+    return run_single_file_command(app, "--drop-readiness-relations", path);
 }
 
 auto run_emit_object(
