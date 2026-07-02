@@ -29,6 +29,14 @@ auto main() -> int {
     assert(ir.semantic_drop_lowering_authorizations.empty());
     assert(ir.planned_drop_report.empty());
     assert(ir.emitted_drop_declaration_report.empty());
+    assert(ir.drop_readiness_snapshot.semantic_authorizations.empty());
+    assert(ir.drop_readiness_snapshot.emitted_declarations.empty());
+    assert(ir.drop_readiness_snapshot.cleanup_authorizations.empty());
+    assert(ir.drop_readiness_snapshot_report.size() == 1);
+    assert(
+        ir.drop_readiness_snapshot_report.front() ==
+        "drop readiness snapshot semantic authorizations 0 emitted declarations 0 cleanup authorizations 0"
+    );
 
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());

@@ -133,6 +133,18 @@ auto LlvmIrEmissionResult::drop_cleanup_authorization_report() const -> std::vec
     return lines;
 }
 
+auto LlvmIrEmissionResult::drop_readiness_snapshot() const -> DropReadinessSnapshot {
+    return plan_drop_readiness_snapshot(
+        semantic_drop_lowering_authorizations,
+        planned_drop_declarations,
+        drop_cleanups
+    );
+}
+
+auto LlvmIrEmissionResult::drop_readiness_snapshot_report() const -> std::vector<std::string> {
+    return format_drop_readiness_snapshot_report(drop_readiness_snapshot());
+}
+
 auto LlvmIrEmitter::emit(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result,

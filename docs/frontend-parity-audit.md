@@ -184,6 +184,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   appear from semantic authorization while cleanup calls still require full per-thunk authorization.
 - 2026-07-01: added a lowering/pipeline report seam for emitted drop declarations so tooling can inspect
   source-derived declaration readiness separately from cleanup action readiness.
+- 2026-07-01: added an internal drop readiness snapshot that groups semantic drop authorization, emitted declaration
+  readiness, and cleanup authorization readiness for future diagnostics.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

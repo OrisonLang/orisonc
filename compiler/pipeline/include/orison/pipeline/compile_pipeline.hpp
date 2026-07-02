@@ -1,5 +1,6 @@
 #pragma once
 
+#include "orison/lowering/concurrency_plan.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -33,6 +34,8 @@ struct CompilePipelineResult {
     std::vector<std::string> emitted_drop_declaration_report;
     std::vector<std::string> planned_drop_action_report;
     std::vector<std::string> drop_cleanup_authorization_report;
+    lowering::DropReadinessSnapshot drop_readiness_snapshot;
+    std::vector<std::string> drop_readiness_snapshot_report;
     std::vector<std::string> link_libraries;
     std::string error_text;
 

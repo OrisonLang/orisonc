@@ -494,6 +494,75 @@ auto format_drop_cleanup_authorization_report(
     return lines;
 }
 
+auto plan_drop_readiness_snapshot(
+    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations,
+    std::vector<PlannedDropDeclaration> const& declarations,
+    std::vector<ConcurrencyDropCleanupPlan> const& cleanups
+) -> DropReadinessSnapshot {
+    auto snapshot = DropReadinessSnapshot {
+        .semantic_authorizations = semantic_authorizations,
+    };
+    for (auto const& declaration : declarations) {
+        if (declaration.emit_declaration) {
+            snapshot.emitted_declarations.push_back(declaration);
+        }
+    }
+    snapshot.cleanup_authorizations.reserve(cleanups.size());
+    for (auto const& cleanup : cleanups) {
+        snapshot.cleanup_authorizations.push_back(DropCleanupReadiness {
+            .cleanup_symbol_name = cleanup.cleanup_symbol_name,
+            .authorization = plan_drop_cleanup_authorization(cleanup, declarations, semantic_authorizations),
+        });
+    }
+    return snapshot;
+}
+
+auto format_drop_readiness_snapshot_report(
+    DropReadinessSnapshot const& snapshot
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto header = std::ostringstream {};
+    header << "drop readiness snapshot semantic authorizations " << snapshot.semantic_authorizations.size()
+           << " emitted declarations " << snapshot.emitted_declarations.size()
+           << " cleanup authorizations " << snapshot.cleanup_authorizations.size();
+    lines.push_back(header.str());
+
+    for (auto const& authorization : snapshot.semantic_authorizations) {
+        auto line = std::ostringstream {};
+        line << "semantic readiness " << authorization.site.abi_symbol_name;
+        if (!authorization.site.source_type_name.empty()) {
+            line << " for " << authorization.site.source_type_name;
+        }
+        line << (authorization.authorized ? " authorized" : " blocked");
+        lines.push_back(line.str());
+    }
+
+    for (auto const& declaration : snapshot.emitted_declarations) {
+        auto line = std::ostringstream {};
+        line << "emitted declaration readiness " << declaration.symbol_name;
+        if (!declaration.source_type_name.empty()) {
+            line << " for " << declaration.source_type_name;
+        }
+        lines.push_back(line.str());
+    }
+
+    for (auto const& cleanup : snapshot.cleanup_authorizations) {
+        auto line = std::ostringstream {};
+        line << "cleanup readiness";
+        if (!cleanup.cleanup_symbol_name.empty()) {
+            line << " " << cleanup.cleanup_symbol_name;
+        }
+        line << (cleanup.authorization.authorized ? " authorized" : " blocked");
+        if (!cleanup.authorization.authorized) {
+            line << " semantic blockers " << cleanup.authorization.semantic_lowering_blockers.size()
+                 << " missing declarations " << cleanup.authorization.missing_declarations.size();
+        }
+        lines.push_back(line.str());
+    }
+
+    return lines;
+}
+
 auto authorize_drop_cleanup_calls_for_declared_abi(
     ConcurrencyDropCleanupPlan& plan,
     std::vector<PlannedDropDeclaration> const& declarations

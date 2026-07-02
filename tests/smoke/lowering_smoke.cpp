@@ -2476,6 +2476,14 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
     assert(emitted_report.size() == 1);
     assert(emitted_report.front() == "planned drop __orison_drop.Payload for Payload discovered at line 13");
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
+    auto readiness_report = result.drop_readiness_snapshot_report();
+    assert(readiness_report.size() == 3);
+    assert(
+        readiness_report[0] ==
+        "drop readiness snapshot semantic authorizations 0 emitted declarations 1 cleanup authorizations 1"
+    );
+    assert(readiness_report[1] == "emitted declaration readiness __orison_drop.Payload for Payload");
+    assert(readiness_report[2] == "cleanup readiness __orison_thread_cleanup.on_thread.13.0 authorized");
     assert(
         result.ir_text.find(
             "define private void @__orison_thread_cleanup.on_thread.13.0(ptr %environment) {\n"
@@ -2595,6 +2603,17 @@ void test_reject_partial_record_capture_drop_abi_calls() {
     assert(result.planned_drop_declarations.front().emit_declaration);
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
     assert(result.ir_text.find("declare void @__orison_drop.OtherPayload(ptr)") == std::string::npos);
+    auto readiness_report = result.drop_readiness_snapshot_report();
+    assert(readiness_report.size() == 3);
+    assert(
+        readiness_report[0] ==
+        "drop readiness snapshot semantic authorizations 0 emitted declarations 1 cleanup authorizations 1"
+    );
+    assert(readiness_report[1] == "emitted declaration readiness __orison_drop.Payload for Payload");
+    assert(
+        readiness_report[2] ==
+        "cleanup readiness __orison_thread_cleanup.on_thread.20.0 blocked semantic blockers 0 missing declarations 1"
+    );
     assert(
         result.ir_text.find(
             "define private void @__orison_thread_cleanup.on_thread.20.0(ptr %environment) {\n"

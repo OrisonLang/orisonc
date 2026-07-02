@@ -27,6 +27,8 @@ struct LlvmIrEmissionResult {
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;
     auto drop_cleanup_authorization_report() const -> std::vector<std::string>;
+    auto drop_readiness_snapshot() const -> DropReadinessSnapshot;
+    auto drop_readiness_snapshot_report() const -> std::vector<std::string>;
 };
 
 class LlvmIrEmitter {
