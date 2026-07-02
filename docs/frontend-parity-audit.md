@@ -190,6 +190,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   readiness snapshot while preserving normal compile/run output.
 - 2026-07-01: added `tests/fixtures/drop_readiness.or` as a stable checked-in source for `--drop-readiness` CLI smoke
   coverage instead of relying only on temporary fixtures.
+- 2026-07-02: extended pipeline smoke coverage to pin the checked-in `drop_readiness.or` fixture below the CLI through
+  `CompilePipeline::emit_llvm` readiness snapshot reports.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

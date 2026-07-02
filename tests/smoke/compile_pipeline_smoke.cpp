@@ -38,6 +38,28 @@ auto main() -> int {
         "drop readiness snapshot semantic authorizations 0 emitted declarations 0 cleanup authorizations 0"
     );
 
+    auto drop_readiness_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
+    auto drop_readiness = pipeline.emit_llvm(drop_readiness_path);
+    assert(!drop_readiness.has_errors());
+    assert(drop_readiness.drop_readiness_snapshot.semantic_authorizations.size() == 1);
+    assert(drop_readiness.drop_readiness_snapshot.emitted_declarations.empty());
+    assert(drop_readiness.drop_readiness_snapshot.cleanup_authorizations.size() == 1);
+    assert(drop_readiness.drop_readiness_snapshot_report.size() == 3);
+    assert(
+        drop_readiness.drop_readiness_snapshot_report[0] ==
+        "drop readiness snapshot semantic authorizations 1 emitted declarations 0 cleanup authorizations 1"
+    );
+    assert(
+        drop_readiness.drop_readiness_snapshot_report[1] ==
+        "semantic readiness __orison_drop.Payload for Payload blocked"
+    );
+    assert(
+        drop_readiness.drop_readiness_snapshot_report[2] ==
+        "cleanup readiness __orison_thread_cleanup.launch.12.0 blocked "
+        "semantic blockers 1 missing declarations 1"
+    );
+
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());
     assert(!object.object_bytes.empty());
