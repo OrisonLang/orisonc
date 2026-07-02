@@ -599,6 +599,17 @@ auto run_drop_cleanup_authorization(orison::driver::CompilerApp const& app, std:
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_drop_readiness(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--drop-readiness",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 auto run_emit_object(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& source_path,
@@ -1297,6 +1308,15 @@ int main() {
         "discovered at line 9\n"
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 9\n"
     );
+    auto drop_readiness = run_drop_readiness(app, planned_drop_report_path);
+    assert(drop_readiness.exit_code == 0);
+    assert(drop_readiness.stderr_text.empty());
+    assert(
+        drop_readiness.stdout_text ==
+        "drop readiness snapshot semantic authorizations 1 emitted declarations 0 cleanup authorizations 1\n"
+        "semantic readiness __orison_drop.Payload for Payload blocked\n"
+        "cleanup readiness __orison_thread_cleanup.launch.9.0 blocked semantic blockers 1 missing declarations 1\n"
+    );
 
     auto empty_planned_drop_report = run_planned_drops(app, emit_path);
     assert(empty_planned_drop_report.exit_code == 0);
@@ -1331,6 +1351,13 @@ int main() {
     assert(empty_drop_cleanup_authorization.exit_code == 0);
     assert(empty_drop_cleanup_authorization.stdout_text.empty());
     assert(empty_drop_cleanup_authorization.stderr_text.empty());
+    auto empty_drop_readiness = run_drop_readiness(app, emit_path);
+    assert(empty_drop_readiness.exit_code == 0);
+    assert(
+        empty_drop_readiness.stdout_text ==
+        "drop readiness snapshot semantic authorizations 0 emitted declarations 0 cleanup authorizations 0\n"
+    );
+    assert(empty_drop_readiness.stderr_text.empty());
 
     auto multi_planned_drop_report_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_multi_planned_drop_report.or";
