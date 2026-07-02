@@ -204,6 +204,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   stdout and an expected stderr diagnostic.
 - 2026-07-02: extended the shared driver smoke failure helper to nearby scalar aggregate-assignment lowering
   diagnostics so failure-shape checks stay consistent.
+- 2026-07-02: routed parse-failure smoke helpers through the same no-stdout failure assertion while keeping
+  object-write and host-link failures explicit.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

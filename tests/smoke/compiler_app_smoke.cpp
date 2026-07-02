@@ -666,25 +666,10 @@ auto run_program(orison::driver::CompilerApp const& app, std::filesystem::path c
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
-void assert_wrap_duplicate_parse_failure(orison::driver::CompileResult const& result) {
-    assert(result.exit_code == 1);
-    assert(result.stdout_text.empty());
-    assert(result.stderr_text.find("switch constructor pattern 'Wrap(...)' is duplicated") != std::string::npos);
-}
-
 void assert_parse_success(orison::driver::CompileResult const& result) {
     assert(result.exit_code == 0);
     assert(result.stderr_text.empty());
     assert(result.stdout_text.find("parsed ") != std::string::npos);
-}
-
-void assert_parse_failure_contains(
-    orison::driver::CompileResult const& result,
-    std::string_view expected_message
-) {
-    assert(result.exit_code == 1);
-    assert(result.stdout_text.empty());
-    assert(result.stderr_text.find(expected_message) != std::string::npos);
 }
 
 void assert_failure_with_no_stdout_contains(
@@ -694,6 +679,17 @@ void assert_failure_with_no_stdout_contains(
     assert(result.exit_code == 1);
     assert(result.stdout_text.empty());
     assert(result.stderr_text.find(expected_message) != std::string::npos);
+}
+
+void assert_wrap_duplicate_parse_failure(orison::driver::CompileResult const& result) {
+    assert_failure_with_no_stdout_contains(result, "switch constructor pattern 'Wrap(...)' is duplicated");
+}
+
+void assert_parse_failure_contains(
+    orison::driver::CompileResult const& result,
+    std::string_view expected_message
+) {
+    assert_failure_with_no_stdout_contains(result, expected_message);
 }
 
 void assert_parse_failure_contains_without(
