@@ -1312,6 +1312,10 @@ int main() {
         drop_readiness_relations.stdout_text ==
         "drop readiness relation __orison_thread_cleanup.launch.9.0 blocked "
         "semantic blockers 1 emitted declarations 0 missing declarations 1\n"
+        "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 9\n"
+        "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 9\n"
     );
     auto drop_readiness_fixture_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
@@ -1339,6 +1343,10 @@ int main() {
         fixture_drop_readiness_relations.stdout_text ==
         "drop readiness relation __orison_thread_cleanup.launch.12.0 blocked "
         "semantic blockers 1 emitted declarations 0 missing declarations 1\n"
+        "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12\n"
+        "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12\n"
     );
 
     auto empty_planned_drop_report = run_planned_drops(app, emit_path);

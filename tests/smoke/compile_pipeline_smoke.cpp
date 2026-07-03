@@ -80,11 +80,21 @@ auto main() -> int {
         drop_readiness.drop_readiness_summary_report.front() ==
         "drop readiness summary semantic authorized 0 blocked 1 emitted declarations 0 cleanup authorized 0 blocked 1"
     );
-    assert(drop_readiness.drop_readiness_relation_report.size() == 1);
+    assert(drop_readiness.drop_readiness_relation_report.size() == 3);
     assert(
-        drop_readiness.drop_readiness_relation_report.front() ==
+        drop_readiness.drop_readiness_relation_report[0] ==
         "drop readiness relation __orison_thread_cleanup.launch.12.0 blocked "
         "semantic blockers 1 emitted declarations 0 missing declarations 1"
+    );
+    assert(
+        drop_readiness.drop_readiness_relation_report[1] ==
+        "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12"
+    );
+    assert(
+        drop_readiness.drop_readiness_relation_report[2] ==
+        "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12"
     );
 
     auto failed_lowering_path =

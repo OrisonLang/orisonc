@@ -613,6 +613,32 @@ auto format_drop_readiness_relation_report(
              << " emitted declarations " << snapshot.emitted_declarations.size()
              << " missing declarations " << cleanup.authorization.missing_declarations.size();
         lines.push_back(line.str());
+
+        for (auto const& blocker : cleanup.authorization.semantic_lowering_blockers) {
+            auto detail = std::ostringstream {};
+            detail << "drop readiness relation semantic blocker " << blocker.symbol_name;
+            if (!blocker.source_type_name.empty()) {
+                detail << " for " << blocker.source_type_name;
+            }
+            detail << " capture " << blocker.capture_name << " field " << blocker.field_index;
+            if (blocker.discovery_line != 0) {
+                detail << " discovered at line " << blocker.discovery_line;
+            }
+            lines.push_back(detail.str());
+        }
+
+        for (auto const& missing : cleanup.authorization.missing_declarations) {
+            auto detail = std::ostringstream {};
+            detail << "drop readiness relation missing declaration " << missing.symbol_name;
+            if (!missing.source_type_name.empty()) {
+                detail << " for " << missing.source_type_name;
+            }
+            detail << " capture " << missing.capture_name << " field " << missing.field_index;
+            if (missing.discovery_line != 0) {
+                detail << " discovered at line " << missing.discovery_line;
+            }
+            lines.push_back(detail.str());
+        }
     }
     return lines;
 }

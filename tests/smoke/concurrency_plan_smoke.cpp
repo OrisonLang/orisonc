@@ -244,6 +244,43 @@ int main() {
         "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20"
     );
+    auto semantic_blocked_readiness_snapshot = orison::lowering::plan_drop_readiness_snapshot(
+        {
+            orison::semantics::DropLoweringAuthorization {
+                .site = orison::semantics::PlannedDropSite {
+                    .source_type_name = "Payload",
+                    .abi_symbol_name = "__orison_drop.Payload",
+                    .owner_name = "payload",
+                    .site_line = 20,
+                },
+                .semantic_resolved = true,
+                .source_drop_lowering_enabled = false,
+                .authorized = false,
+            },
+        },
+        {
+            orison::lowering::PlannedDropDeclaration {
+                .symbol_name = "__orison_drop.Payload",
+                .source_type_name = "Payload",
+                .discovery_line = 20,
+                .emit_declaration = true,
+            },
+        },
+        {authorized_plan}
+    );
+    auto semantic_blocked_relation_report =
+        orison::lowering::format_drop_readiness_relation_report(semantic_blocked_readiness_snapshot);
+    assert(semantic_blocked_relation_report.size() == 2);
+    assert(
+        semantic_blocked_relation_report[0] ==
+        "drop readiness relation __orison_thread_cleanup.record_worker.20.2 blocked "
+        "semantic blockers 1 emitted declarations 1 missing declarations 0"
+    );
+    assert(
+        semantic_blocked_relation_report[1] ==
+        "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
+    );
     auto readiness_snapshot = orison::lowering::plan_drop_readiness_snapshot(
         {
             orison::semantics::DropLoweringAuthorization {
