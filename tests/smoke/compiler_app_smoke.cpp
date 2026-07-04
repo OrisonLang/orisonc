@@ -7,9 +7,11 @@
 #include <fstream>
 #include <initializer_list>
 #include <span>
+#include <string>
 #include <string_view>
 #include <system_error>
 #include <sys/wait.h>
+#include <unistd.h>
 
 namespace {
 
@@ -656,6 +658,14 @@ void assert_parse_failure_contains_without(
 }  // namespace
 
 int main() {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root =
+        original_temp_root / ("orison_compiler_app_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
     orison::driver::CompilerApp app;
 
     std::array<char const*, 2> version_argv {"orisonc", "--version"};
@@ -5097,5 +5107,6 @@ int main() {
     );
 
     assert_parse_success(run_parse(app, task_result_success_path));
+    std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
