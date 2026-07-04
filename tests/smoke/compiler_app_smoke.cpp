@@ -1143,33 +1143,14 @@ int main() {
     );
 
     auto planned_drop_report_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_planned_drop_report.or";
-    auto remove_error = std::error_code {};
-    std::filesystem::remove(planned_drop_report_path, remove_error);
-    write_concurrency_fixture(
-        planned_drop_report_path,
-        "demo.emit",
-        {
-            "record Payload",
-            "    public value: Int64",
-            "implements Transferable for Payload",
-            "    function placeholder(this: shared This) -> Unit",
-            "        return",
-            "function launch(value: Int64) -> Int64",
-            "    let payload: Payload = Payload(value)",
-            "    let worker = thread",
-            "        payload.value",
-            "",
-            "    worker.join()",
-        }
-    );
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
     auto planned_drop_emit = run_emit_llvm(app, planned_drop_report_path);
     assert(planned_drop_emit.exit_code == 0);
     assert(planned_drop_emit.stderr_text.empty());
     assert(planned_drop_emit.stdout_text.find("planned drop __orison_drop.Payload") == std::string::npos);
     assert(
         planned_drop_emit.stdout_text.find(
-            "define private void @__orison_thread_cleanup.launch.9.0(ptr %environment) {\n"
+            "define private void @__orison_thread_cleanup.launch.12.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
             "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
@@ -1185,28 +1166,28 @@ int main() {
     assert(planned_drop_report.stderr_text.empty());
     assert(
         planned_drop_report.stdout_text ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 9 (metadata only)\n"
+        "planned drop __orison_drop.Payload for Payload discovered at line 12 (metadata only)\n"
     );
     auto semantic_planned_drop_report = run_semantic_planned_drops(app, planned_drop_report_path);
     assert(semantic_planned_drop_report.exit_code == 0);
     assert(semantic_planned_drop_report.stderr_text.empty());
     assert(
         semantic_planned_drop_report.stdout_text ==
-        "drop site __orison_drop.Payload for Payload owner payload at line 8\n"
+        "drop site __orison_drop.Payload for Payload owner payload at line 11\n"
     );
     auto semantic_drop_resolution = run_semantic_drop_resolution(app, planned_drop_report_path);
     assert(semantic_drop_resolution.exit_code == 0);
     assert(semantic_drop_resolution.stderr_text.empty());
     assert(
         semantic_drop_resolution.stdout_text ==
-        "missing drop site __orison_drop.Payload for Payload owner payload at line 8\n"
+        "missing drop site __orison_drop.Payload for Payload owner payload at line 11\n"
     );
     auto semantic_drop_diagnostics = run_semantic_drop_diagnostics(app, planned_drop_report_path);
     assert(semantic_drop_diagnostics.exit_code == 0);
     assert(semantic_drop_diagnostics.stderr_text.empty());
     assert(
         semantic_drop_diagnostics.stdout_text ==
-        "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 8 blocked "
+        "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 11 blocked "
         "no implementation discovered\n"
     );
     auto semantic_drop_lowering_authorization =
@@ -1215,12 +1196,13 @@ int main() {
     assert(semantic_drop_lowering_authorization.stderr_text.empty());
     assert(
         semantic_drop_lowering_authorization.stdout_text ==
-        "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 8 "
+        "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 11 "
         "semantic-unresolved lowering-blocked semantic drop unresolved\n"
     );
 
     auto parsed_drop_candidate_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_parsed_drop_candidate.or";
+    auto remove_error = std::error_code {};
     std::filesystem::remove(parsed_drop_candidate_path, remove_error);
     write_concurrency_fixture(
         parsed_drop_candidate_path,
@@ -1271,7 +1253,7 @@ int main() {
     assert(
         planned_drop_actions.stdout_text ==
         "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
-        "discovered at line 9 (metadata only)\n"
+        "discovered at line 12 (metadata only)\n"
     );
     auto emitted_drops = run_emitted_drops(app, planned_drop_report_path);
     assert(emitted_drops.exit_code == 0);
@@ -1282,11 +1264,11 @@ int main() {
     assert(drop_cleanup_authorization.stderr_text.empty());
     assert(
         drop_cleanup_authorization.stdout_text ==
-        "drop cleanup authorization __orison_thread_cleanup.launch.9.0 blocked "
+        "drop cleanup authorization __orison_thread_cleanup.launch.12.0 blocked "
         "semantic blockers 1 missing declarations 1\n"
         "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
-        "discovered at line 9\n"
-        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 9\n"
+        "discovered at line 12\n"
+        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 12\n"
     );
     auto drop_readiness = run_drop_readiness(app, planned_drop_report_path);
     assert(drop_readiness.exit_code == 0);
@@ -1295,7 +1277,7 @@ int main() {
         drop_readiness.stdout_text ==
         "drop readiness snapshot semantic authorizations 1 emitted declarations 0 cleanup authorizations 1\n"
         "semantic readiness __orison_drop.Payload for Payload blocked\n"
-        "cleanup readiness __orison_thread_cleanup.launch.9.0 blocked semantic blockers 1 missing declarations 1\n"
+        "cleanup readiness __orison_thread_cleanup.launch.12.0 blocked semantic blockers 1 missing declarations 1\n"
     );
     auto drop_readiness_summary = run_drop_readiness_summary(app, planned_drop_report_path);
     assert(drop_readiness_summary.exit_code == 0);
@@ -1310,37 +1292,6 @@ int main() {
     assert(drop_readiness_relations.stderr_text.empty());
     assert(
         drop_readiness_relations.stdout_text ==
-        "drop readiness relation __orison_thread_cleanup.launch.9.0 blocked "
-        "semantic blockers 1 emitted declarations 0 missing declarations 1\n"
-        "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
-        "discovered at line 9\n"
-        "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
-        "discovered at line 9\n"
-    );
-    auto drop_readiness_fixture_path =
-        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
-    auto fixture_drop_readiness = run_drop_readiness(app, drop_readiness_fixture_path);
-    assert(fixture_drop_readiness.exit_code == 0);
-    assert(fixture_drop_readiness.stderr_text.empty());
-    assert(
-        fixture_drop_readiness.stdout_text ==
-        "drop readiness snapshot semantic authorizations 1 emitted declarations 0 cleanup authorizations 1\n"
-        "semantic readiness __orison_drop.Payload for Payload blocked\n"
-        "cleanup readiness __orison_thread_cleanup.launch.12.0 blocked semantic blockers 1 missing declarations 1\n"
-    );
-    auto fixture_drop_readiness_summary = run_drop_readiness_summary(app, drop_readiness_fixture_path);
-    assert(fixture_drop_readiness_summary.exit_code == 0);
-    assert(fixture_drop_readiness_summary.stderr_text.empty());
-    assert(
-        fixture_drop_readiness_summary.stdout_text ==
-        "drop readiness summary semantic authorized 0 blocked 1 emitted declarations 0 "
-        "cleanup authorized 0 blocked 1\n"
-    );
-    auto fixture_drop_readiness_relations = run_drop_readiness_relations(app, drop_readiness_fixture_path);
-    assert(fixture_drop_readiness_relations.exit_code == 0);
-    assert(fixture_drop_readiness_relations.stderr_text.empty());
-    assert(
-        fixture_drop_readiness_relations.stdout_text ==
         "drop readiness relation __orison_thread_cleanup.launch.12.0 blocked "
         "semantic blockers 1 emitted declarations 0 missing declarations 1\n"
         "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
