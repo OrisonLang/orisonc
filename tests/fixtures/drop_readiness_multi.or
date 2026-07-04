@@ -1,0 +1,23 @@
+package demo.dropreadiness
+
+record Payload
+    public value: Int64
+
+record OtherPayload
+    public value: Int64
+
+implements Transferable for Payload
+    function placeholder(this: shared This) -> Unit
+        return
+
+implements Transferable for OtherPayload
+    function placeholder(this: shared This) -> Unit
+        return
+
+function launch(value: Int64) -> Int64
+    let payload: Payload = Payload(value)
+    let other: OtherPayload = OtherPayload(value)
+    let worker = thread
+        payload.value + other.value
+
+    worker.join()

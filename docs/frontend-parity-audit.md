@@ -216,6 +216,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   for readable call sites.
 - 2026-07-02: expanded drop readiness relation reports with per-symbol semantic blocker and missing declaration detail
   lines so blocked cleanup sites identify the exact capture/type requiring future drop readiness work.
+- 2026-07-03: added `tests/fixtures/drop_readiness_multi.or` so multi-capture blocked readiness relation output is
+  pinned through checked-in pipeline and CLI smoke coverage.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted

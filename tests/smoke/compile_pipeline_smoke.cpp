@@ -97,6 +97,37 @@ auto main() -> int {
         "discovered at line 12"
     );
 
+    auto multi_drop_readiness_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness_multi.or";
+    auto multi_drop_readiness = pipeline.emit_llvm(multi_drop_readiness_path);
+    assert(!multi_drop_readiness.has_errors());
+    assert(multi_drop_readiness.drop_readiness_relation_report.size() == 5);
+    assert(
+        multi_drop_readiness.drop_readiness_relation_report[0] ==
+        "drop readiness relation __orison_thread_cleanup.launch.20.0 blocked "
+        "semantic blockers 2 emitted declarations 0 missing declarations 2"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_relation_report[1] ==
+        "drop readiness relation semantic blocker __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_relation_report[2] ==
+        "drop readiness relation semantic blocker __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_relation_report[3] ==
+        "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_relation_report[4] ==
+        "drop readiness relation missing declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20"
+    );
+
     auto failed_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_summary_failure.or";
     {
