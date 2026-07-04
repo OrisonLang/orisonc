@@ -1425,67 +1425,40 @@ int main() {
     assert(empty_drop_readiness_relations.stdout_text.empty());
     assert(empty_drop_readiness_relations.stderr_text.empty());
 
-    auto multi_planned_drop_report_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_multi_planned_drop_report.or";
-    remove_error = {};
-    std::filesystem::remove(multi_planned_drop_report_path, remove_error);
-    write_concurrency_fixture(
-        multi_planned_drop_report_path,
-        "demo.emit",
-        {
-            "record Payload",
-            "    public value: Int64",
-            "record OtherPayload",
-            "    public value: Int64",
-            "implements Transferable for Payload",
-            "    function placeholder(this: shared This) -> Unit",
-            "        return",
-            "implements Transferable for OtherPayload",
-            "    function placeholder(this: shared This) -> Unit",
-            "        return",
-            "function launch(value: Int64) -> Int64",
-            "    let payload: Payload = Payload(value)",
-            "    let other: OtherPayload = OtherPayload(value)",
-            "    let worker = thread",
-            "        payload.value + other.value",
-            "",
-            "    worker.join()",
-        }
-    );
-    auto multi_planned_drop_report = run_planned_drops(app, multi_planned_drop_report_path);
+    auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);
     assert(multi_planned_drop_report.exit_code == 0);
     assert(multi_planned_drop_report.stderr_text.empty());
     assert(
         multi_planned_drop_report.stdout_text ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 15 (metadata only)\n"
-        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 15 (metadata only)\n"
+        "planned drop __orison_drop.Payload for Payload discovered at line 20 (metadata only)\n"
+        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 20 (metadata only)\n"
     );
-    auto multi_planned_drop_actions = run_planned_drop_actions(app, multi_planned_drop_report_path);
+    auto multi_planned_drop_actions = run_planned_drop_actions(app, multi_drop_readiness_fixture_path);
     assert(multi_planned_drop_actions.exit_code == 0);
     assert(multi_planned_drop_actions.stderr_text.empty());
     assert(
         multi_planned_drop_actions.stdout_text ==
         "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
-        "discovered at line 15 (metadata only)\n"
+        "discovered at line 20 (metadata only)\n"
         "planned drop action __orison_drop.OtherPayload for capture other: OtherPayload field 1 "
-        "discovered at line 15 (metadata only)\n"
+        "discovered at line 20 (metadata only)\n"
     );
     auto multi_drop_cleanup_authorization =
-        run_drop_cleanup_authorization(app, multi_planned_drop_report_path);
+        run_drop_cleanup_authorization(app, multi_drop_readiness_fixture_path);
     assert(multi_drop_cleanup_authorization.exit_code == 0);
     assert(multi_drop_cleanup_authorization.stderr_text.empty());
     assert(
         multi_drop_cleanup_authorization.stdout_text ==
-        "drop cleanup authorization __orison_thread_cleanup.launch.15.0 blocked "
+        "drop cleanup authorization __orison_thread_cleanup.launch.20.0 blocked "
         "semantic blockers 2 missing declarations 2\n"
         "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
-        "discovered at line 15\n"
+        "discovered at line 20\n"
         "semantic drop lowering blocked __orison_drop.OtherPayload for OtherPayload capture other field 1 "
-        "discovered at line 15\n"
+        "discovered at line 20\n"
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 "
-        "discovered at line 15\n"
+        "discovered at line 20\n"
         "missing drop declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
-        "discovered at line 15\n"
+        "discovered at line 20\n"
     );
 
     auto deduped_planned_drop_report_path =
