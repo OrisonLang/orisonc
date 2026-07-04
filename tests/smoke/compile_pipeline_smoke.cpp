@@ -101,6 +101,82 @@ auto main() -> int {
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness_multi.or";
     auto multi_drop_readiness = pipeline.emit_llvm(multi_drop_readiness_path);
     assert(!multi_drop_readiness.has_errors());
+    assert(multi_drop_readiness.planned_drop_report.size() == 2);
+    assert(
+        multi_drop_readiness.planned_drop_report[0] ==
+        "planned drop __orison_drop.Payload for Payload discovered at line 20 (metadata only)"
+    );
+    assert(
+        multi_drop_readiness.planned_drop_report[1] ==
+        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 20 (metadata only)"
+    );
+    assert(multi_drop_readiness.planned_drop_action_report.size() == 2);
+    assert(
+        multi_drop_readiness.planned_drop_action_report[0] ==
+        "planned drop action __orison_drop.Payload for capture payload: Payload field 0 discovered at line 20 "
+        "(metadata only)"
+    );
+    assert(
+        multi_drop_readiness.planned_drop_action_report[1] ==
+        "planned drop action __orison_drop.OtherPayload for capture other: OtherPayload field 1 discovered at line 20 "
+        "(metadata only)"
+    );
+    assert(multi_drop_readiness.drop_cleanup_authorization_report.size() == 5);
+    assert(
+        multi_drop_readiness.drop_cleanup_authorization_report[0] ==
+        "drop cleanup authorization __orison_thread_cleanup.launch.20.0 blocked semantic blockers 2 "
+        "missing declarations 2"
+    );
+    assert(
+        multi_drop_readiness.drop_cleanup_authorization_report[1] ==
+        "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_cleanup_authorization_report[2] ==
+        "semantic drop lowering blocked __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_cleanup_authorization_report[3] ==
+        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_cleanup_authorization_report[4] ==
+        "missing drop declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20"
+    );
+    assert(multi_drop_readiness.drop_readiness_snapshot.semantic_authorizations.size() == 2);
+    assert(multi_drop_readiness.drop_readiness_snapshot.emitted_declarations.empty());
+    assert(multi_drop_readiness.drop_readiness_snapshot.cleanup_authorizations.size() == 1);
+    assert(multi_drop_readiness.drop_readiness_snapshot_report.size() == 4);
+    assert(
+        multi_drop_readiness.drop_readiness_snapshot_report[0] ==
+        "drop readiness snapshot semantic authorizations 2 emitted declarations 0 cleanup authorizations 1"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_snapshot_report[1] ==
+        "semantic readiness __orison_drop.Payload for Payload blocked"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_snapshot_report[2] ==
+        "semantic readiness __orison_drop.OtherPayload for OtherPayload blocked"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_snapshot_report[3] ==
+        "cleanup readiness __orison_thread_cleanup.launch.20.0 blocked "
+        "semantic blockers 2 missing declarations 2"
+    );
+    assert(multi_drop_readiness.drop_readiness_summary.semantic_authorized == 0);
+    assert(multi_drop_readiness.drop_readiness_summary.semantic_blocked == 2);
+    assert(multi_drop_readiness.drop_readiness_summary.emitted_declarations == 0);
+    assert(multi_drop_readiness.drop_readiness_summary.cleanup_authorized == 0);
+    assert(multi_drop_readiness.drop_readiness_summary.cleanup_blocked == 1);
+    assert(multi_drop_readiness.drop_readiness_summary_report.size() == 1);
+    assert(
+        multi_drop_readiness.drop_readiness_summary_report.front() ==
+        "drop readiness summary semantic authorized 0 blocked 2 emitted declarations 0 cleanup authorized 0 blocked 1"
+    );
     assert(multi_drop_readiness.drop_readiness_relation_report.size() == 5);
     assert(
         multi_drop_readiness.drop_readiness_relation_report[0] ==

@@ -220,6 +220,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   pinned through checked-in pipeline and CLI smoke coverage.
 - 2026-07-03: replaced the overlapping temporary multi-drop CLI smoke source with the checked-in
   `drop_readiness_multi.or` fixture for planned-drop, action, and cleanup-authorization report coverage.
+- 2026-07-03: expanded pipeline smoke coverage for `drop_readiness_multi.or` to pin planned-drop, action,
+  cleanup-authorization, readiness snapshot, and readiness summary reports below the CLI.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
