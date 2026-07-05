@@ -236,6 +236,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   extending fixed-temp race protection to the largest generated-fixture smoke binary.
 - 2026-07-04: isolated `orison_lowering_smoke` generated lowering fixtures and object output under a per-process
   `TMPDIR`, matching the parser and semantic smoke isolation pattern.
+- 2026-07-04: isolated `orison_statement_emitter_smoke` under a per-process `TMPDIR`, covering its generated statement
+  lowering fixture.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
