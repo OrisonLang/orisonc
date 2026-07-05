@@ -594,6 +594,29 @@ void test_emit_nested_while_if_control() {
     assert(result.ir_text.find("if.merge.2:\n  br label %if.merge.1\n") != std::string::npos);
 }
 
+void test_emit_nested_while_loop_body() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_nested_while_loop.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var outer = 0 as UInt32\n"
+        "    var inner = 0 as UInt32\n"
+        "    while outer < 2 as UInt32\n"
+        "        while inner < 3 as UInt32\n"
+        "            inner = inner + 1 as UInt32\n"
+        "        outer = outer + 1 as UInt32\n"
+        "    outer + inner\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("while.condition.0:") != std::string::npos);
+    assert(result.ir_text.find("while.condition.1:") != std::string::npos);
+    assert(result.ir_text.find("br i1 %tmp1, label %while.body.0, label %while.exit.0") != std::string::npos);
+    assert(result.ir_text.find("br i1 %tmp3, label %while.body.1, label %while.exit.1") != std::string::npos);
+}
+
 void test_reject_nonterminal_while_loop_control() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_nonterminal_while_control.or";
@@ -635,7 +658,7 @@ void test_reject_unsupported_while_body_statement() {
     assert(
         result.diagnostics.entries().front().message ==
         "lowering while body only supports local bindings, mutable-local assignments, "
-        "call statements, loop control, nested if statements, and unsafe blocks"
+        "call statements, loop control, nested if statements, nested while statements, and unsafe blocks"
     );
 }
 
@@ -3620,6 +3643,7 @@ auto main() -> int {
     test_emit_conditional_while_continue_and_break();
     test_emit_terminating_while_if_else();
     test_emit_nested_while_if_control();
+    test_emit_nested_while_loop_body();
     test_reject_nonterminal_while_loop_control();
     test_reject_unsupported_while_body_statement();
     test_emit_scalar_extension_method_definition();

@@ -227,6 +227,11 @@ auto lower_while_body_statement(
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_while_body_if(statement, context, session, diagnostics, output);
     }
+    if (statement.kind == syntax::StatementKind::while_statement) {
+        return lower_while_statement(statement, context, session, diagnostics, output)
+            ? StatementFlow::falls_through
+            : StatementFlow::failed;
+    }
     if (statement.kind == syntax::StatementKind::unsafe_statement) {
         return lower_while_body_unsafe(statement, context, session, diagnostics, output);
     }
@@ -234,7 +239,7 @@ auto lower_while_body_statement(
     diagnostics.error(
         statement.line,
         "lowering while body only supports local bindings, mutable-local assignments, "
-        "call statements, loop control, nested if statements, and unsafe blocks"
+        "call statements, loop control, nested if statements, nested while statements, and unsafe blocks"
     );
     return StatementFlow::failed;
 }
