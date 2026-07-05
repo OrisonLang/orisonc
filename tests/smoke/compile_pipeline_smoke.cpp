@@ -4,8 +4,17 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <unistd.h>
 
 auto main() -> int {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root =
+        original_temp_root / ("orison_pipeline_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
     orison::pipeline::CompilePipeline pipeline;
     auto source_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
 
@@ -522,5 +531,6 @@ auto main() -> int {
         partial_semantic_drops.semantic_drop_resolution_summary_report[1] ==
         "drop resolution summary __orison_drop.Resource for Resource resolved 0 missing 2"
     );
+    std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

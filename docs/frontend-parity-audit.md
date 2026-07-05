@@ -226,6 +226,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   checked-in `drop_readiness.or` fixture and removed redundant fixture-only readiness assertions.
 - 2026-07-03: isolated `orison_driver_smoke` generated temp files under a per-process `TMPDIR`, preventing direct
   binary and CTest wrapper invocations from deleting or overwriting each other's fixed temp filenames.
+- 2026-07-04: isolated `orison_pipeline_smoke` generated temp files under a per-process `TMPDIR` as well, removing
+  the same direct binary versus CTest wrapper race for pipeline smoke fixtures.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
