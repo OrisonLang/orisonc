@@ -51,6 +51,19 @@ auto method_call(orison::syntax::ExpressionSyntax receiver, std::string method_n
     return expression;
 }
 
+auto ternary(
+    orison::syntax::ExpressionSyntax condition,
+    orison::syntax::ExpressionSyntax then_expression,
+    orison::syntax::ExpressionSyntax else_expression
+) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::ternary;
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(condition));
+    expression.right = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(then_expression));
+    expression.alternate = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(else_expression));
+    return expression;
+}
+
 }  // namespace
 
 int main() {
@@ -99,6 +112,8 @@ int main() {
     auto state = orison::lowering::FunctionLoweringState {};
     state.source_type_names["wrapper"] = "Wrapper";
     state.source_type_names["buckets"] = "Array<Bucket, 2>";
+    state.source_type_names["left_values"] = "Array<UInt32, 3>";
+    state.source_type_names["right_values"] = "Array<UInt32, 3>";
 
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");
@@ -137,6 +152,20 @@ int main() {
             context,
             state
         ) == "Array<UInt32, 3>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            ternary(name("flag"), name("left_values"), name("right_values")),
+            context,
+            state
+        ) == "Array<UInt32, 3>"
+    );
+    assert(
+        !orison::lowering::source_type_name_for_expression(
+            ternary(name("flag"), name("wrapper"), name("right_values")),
+            context,
+            state
+        ).has_value()
     );
 
     return 0;

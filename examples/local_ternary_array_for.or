@@ -1,0 +1,9 @@
+package examples.collections
+
+function main() -> UInt32
+    let left: Array<UInt32, 3> = [1, 2, 3]
+    let right: Array<UInt32, 3> = [4, 5, 6]
+    var total = 0 as UInt32
+    for item in true ? left : right
+        total = total + item
+    0 as UInt32

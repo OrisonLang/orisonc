@@ -49,6 +49,7 @@
 `local_record_array_for.or` demonstrates non-literal fixed-array iteration over a nested record-backed array.
 `local_record_index_for.or` demonstrates non-literal fixed-array iteration over an indexed nested array source.
 `local_record_index_field_for.or` demonstrates non-literal fixed-array iteration over an array in an indexed record field.
+`local_ternary_array_for.or` demonstrates fixed-array iteration over a ternary-selected array.
 `local_helper_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a helper function.
 `local_method_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a method.
 `local_record_method_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a record method.
@@ -120,6 +121,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_record_array_for.or` | nested record-backed fixed-array iteration | backend |
 | `local_record_index_for.or` | indexed nested fixed-array iteration | backend |
 | `local_record_index_field_for.or` | indexed record-field fixed-array iteration | backend |
+| `local_ternary_array_for.or` | ternary-selected fixed-array iteration | backend |
 | `local_helper_array_for.or` | helper-returned fixed-array iteration | backend |
 | `local_method_array_for.or` | method-returned fixed-array iteration | backend |
 | `local_record_method_array_for.or` | record-method-returned fixed-array iteration | backend |

@@ -311,6 +311,17 @@ auto source_type_name_for_expression(
             : view_element_source_type_name(*base_source_type);
     }
 
+    if (expression.kind == syntax::ExpressionKind::ternary && expression.right != nullptr &&
+        expression.alternate != nullptr) {
+        auto then_source_type = source_type_name_for_expression(*expression.right, context, state);
+        auto else_source_type = source_type_name_for_expression(*expression.alternate, context, state);
+        if (!then_source_type.has_value() || !else_source_type.has_value() ||
+            *then_source_type != *else_source_type) {
+            return std::nullopt;
+        }
+        return then_source_type;
+    }
+
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "raw_offset" &&
         !expression.arguments.empty()) {
