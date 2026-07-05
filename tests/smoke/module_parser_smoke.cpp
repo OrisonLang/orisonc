@@ -2,8 +2,11 @@
 #include "orison/syntax/module_parser.hpp"
 
 #include <cassert>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <string>
+#include <unistd.h>
 
 namespace {
 
@@ -2171,6 +2174,14 @@ void test_defer_statement_failure() {
 }  // namespace
 
 int main() {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root =
+        original_temp_root / ("orison_module_parser_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
     test_parse_success();
     test_constant_success();
     test_constant_failure();
@@ -2242,5 +2253,6 @@ int main() {
     test_while_statement_failure();
     test_for_statement_failure();
     test_defer_statement_failure();
+    std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
