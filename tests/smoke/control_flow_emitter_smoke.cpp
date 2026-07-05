@@ -9,10 +9,21 @@
 #include "orison/syntax/module_parser.hpp"
 
 #include <cassert>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <string>
+#include <unistd.h>
 
 int main() {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root =
+        original_temp_root / ("orison_control_flow_emitter_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
     auto path = std::filesystem::temp_directory_path() / "orison_control_flow_emitter_smoke.or";
     {
         auto output = std::ofstream(path);
@@ -122,5 +133,6 @@ int main() {
         "invalid final if shape: a final if requires non-empty then and else arms"
     );
     std::filesystem::remove(path);
+    std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
