@@ -4176,6 +4176,20 @@ int main() {
             "    return consume(flag ? raw_offset(base, 1) : raw_offset(other, 1))",
         }
     );
+    assert_cli_parse_success(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_call_address_offset_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Registers",
+            "    status: UInt32",
+            "unsafe function consume(ptr: Pointer<UInt32>) -> UInt32",
+            "    return raw_read(ptr)",
+            "unsafe function demo() -> UInt32",
+            "    var regs = Registers(1 as UInt32)",
+            "    return consume(raw_offset(Pointer(address_of(regs.status)), 1 as UInt64))",
+        }
+    );
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_pointer_method_ternary_rawoffset_type.or",
