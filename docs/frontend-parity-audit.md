@@ -240,6 +240,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   lowering fixture.
 - 2026-07-04: isolated `orison_function_emitter_smoke` generated function-lowering fixtures under a per-process
   `TMPDIR`.
+- 2026-07-05: isolated `orison_expression_emitter_smoke` under a per-process `TMPDIR`, covering its generated
+  expression lowering fixture.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
