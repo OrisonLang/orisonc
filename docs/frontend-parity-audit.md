@@ -56,6 +56,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   the recovered `Pointer<T>` pointee through direct offset chains without requiring an intermediate annotated binding.
 - 2026-07-05: direct function-call arguments now have regression coverage for
   `raw_offset(Pointer(address_of(value)), n)`, ensuring pointee metadata survives into expected `Pointer<T>` parameters.
+- 2026-07-05: receiver-aware member-call arguments now have matching regression coverage for
+  `raw_offset(Pointer(address_of(value)), n)`, ensuring the explicit receiver path preserves expected pointer pointees.
 - 2026-06-26: the pthread-backed concurrency runtime now invokes the optional spawn cleanup callback after entry
   completion and on spawn setup failure; direct ABI smoke coverage pins post-entry cleanup for joined and abandoned
   handles.

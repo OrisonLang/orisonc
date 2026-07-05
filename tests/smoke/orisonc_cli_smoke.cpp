@@ -4221,6 +4221,23 @@ int main() {
     );
     assert_cli_parse_success(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_method_address_offset_success.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Registers",
+            "    status: UInt32",
+            "record Device",
+            "    status: UInt32",
+            "extend Device",
+            "    function consume(this: shared This, ptr: Pointer<UInt32>) -> UInt32",
+            "        return 1 as UInt32",
+            "unsafe function demo(device: Device) -> UInt32",
+            "    var regs = Registers(1 as UInt32)",
+            "    return device.consume(raw_offset(Pointer(address_of(regs.status)), 1 as UInt64))",
+        }
+    );
+    assert_cli_parse_success(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_pointer_final_ternary_rawoffset_success.or",
         std::vector<std::string_view> {
             "package demo.cli",
