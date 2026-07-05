@@ -52,6 +52,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-05: shared source-type queries now recover `Pointer<T>` from the bounded `Pointer(address_of(value))`
   constructor shape when the addressed value has a known source type, preserving pointee metadata for inferred unsafe
   intrinsic bindings.
+- 2026-07-05: source-type recovery now pins the composed `raw_offset(Pointer(address_of(value)), n)` path, preserving
+  the recovered `Pointer<T>` pointee through direct offset chains without requiring an intermediate annotated binding.
 - 2026-06-26: the pthread-backed concurrency runtime now invokes the optional spawn cleanup callback after entry
   completion and on spawn setup failure; direct ABI smoke coverage pins post-entry cleanup for joined and abandoned
   handles.

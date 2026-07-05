@@ -48,6 +48,17 @@ auto call(std::string function_name, orison::syntax::ExpressionSyntax argument)
     return expression;
 }
 
+auto call(
+    std::string function_name,
+    orison::syntax::ExpressionSyntax first_argument,
+    orison::syntax::ExpressionSyntax second_argument
+) -> orison::syntax::ExpressionSyntax {
+    auto expression = call(std::move(function_name));
+    expression.arguments.push_back(std::move(first_argument));
+    expression.arguments.push_back(std::move(second_argument));
+    return expression;
+}
+
 auto cast(orison::syntax::ExpressionSyntax operand, std::string type_name) -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
     expression.kind = orison::syntax::ExpressionKind::cast;
@@ -292,6 +303,17 @@ int main() {
     assert(
         orison::lowering::source_type_name_for_expression(
             call("Pointer", call("address_of", member(name("wrapper"), "bucket"))),
+            context,
+            state
+        ) == "Pointer<Bucket>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            call(
+                "raw_offset",
+                call("Pointer", call("address_of", member(name("wrapper"), "bucket"))),
+                cast(integer_literal("1"), "UInt64")
+            ),
             context,
             state
         ) == "Pointer<Bucket>"
