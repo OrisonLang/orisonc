@@ -706,6 +706,22 @@ add_test(
     COMMAND orison_lexer_smoke
 )
 
+add_executable(orison_smoke_temp_isolation_guard
+    smoke/temp_isolation_guard_smoke.cpp
+)
+
+target_compile_definitions(orison_smoke_temp_isolation_guard
+    PRIVATE
+        ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+target_compile_features(orison_smoke_temp_isolation_guard PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_smoke_temp_isolation_guard
+    COMMAND orison_smoke_temp_isolation_guard
+)
+
 add_executable(orisonc_cli_smoke
     smoke/orisonc_cli_smoke.cpp
 )

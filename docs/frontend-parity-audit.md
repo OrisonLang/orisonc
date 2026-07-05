@@ -253,6 +253,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   object/executable outputs plus driver-created temporary link artifacts.
 - 2026-07-05: isolated `orison_concurrency_plan_smoke` under a per-process `TMPDIR`, covering its generated
   concurrency-planning fixture.
+- 2026-07-05: added `orison_smoke_temp_isolation_guard` so CTest now fails if any smoke source uses
+  `std::filesystem::temp_directory_path()` without first setting `TMPDIR`.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
