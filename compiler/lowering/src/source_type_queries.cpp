@@ -280,6 +280,34 @@ auto source_type_name_for_expression(
         }
     }
 
+    if (expression.kind == syntax::ExpressionKind::cast && !expression.text.empty()) {
+        return lowered_type_for_source_type_name(expression.text, context).has_value()
+            ? std::optional<std::string> {expression.text}
+            : std::nullopt;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::array_literal) {
+        if (expression.arguments.empty()) {
+            return std::nullopt;
+        }
+
+        auto element_source_type = source_type_name_for_expression(expression.arguments.front(), context, state);
+        if (!element_source_type.has_value()) {
+            return std::nullopt;
+        }
+
+        for (auto index = std::size_t {1}; index < expression.arguments.size(); ++index) {
+            auto next_element_source_type =
+                source_type_name_for_expression(expression.arguments[index], context, state);
+            if (!next_element_source_type.has_value() || *next_element_source_type != *element_source_type) {
+                return std::nullopt;
+            }
+        }
+
+        return std::string {"Array<"} + *element_source_type + ", " +
+               std::to_string(expression.arguments.size()) + ">";
+    }
+
     if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
         auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
         if (!base_source_type.has_value()) {

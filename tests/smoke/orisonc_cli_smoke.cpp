@@ -3362,6 +3362,13 @@ int main() {
     assert(WIFEXITED(ternary_array_for_status));
     assert(WEXITSTATUS(ternary_array_for_status) == 0);
 
+    auto ternary_array_literal_for_demo_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_ternary_array_literal_for.or";
+    auto ternary_array_literal_for_status =
+        std::system((executable.string() + " run " + ternary_array_literal_for_demo_path.string()).c_str());
+    assert(WIFEXITED(ternary_array_literal_for_status));
+    assert(WEXITSTATUS(ternary_array_literal_for_status) == 0);
+
     auto nested_array_for_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_record_array_for.or";
     auto nested_array_for_status = std::system(

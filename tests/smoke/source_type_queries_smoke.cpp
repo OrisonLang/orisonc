@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace {
 
@@ -38,6 +39,39 @@ auto call(std::string function_name) -> orison::syntax::ExpressionSyntax {
     expression.kind = orison::syntax::ExpressionKind::call;
     expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(name(std::move(function_name)));
     return expression;
+}
+
+auto cast(orison::syntax::ExpressionSyntax operand, std::string type_name) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::cast;
+    expression.text = std::move(type_name);
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(operand));
+    return expression;
+}
+
+auto integer_literal(std::string text) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::integer_literal;
+    expression.text = std::move(text);
+    return expression;
+}
+
+auto array_literal(std::vector<orison::syntax::ExpressionSyntax> elements)
+    -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::array_literal;
+    expression.arguments = std::move(elements);
+    return expression;
+}
+
+auto array_literal(
+    orison::syntax::ExpressionSyntax first,
+    orison::syntax::ExpressionSyntax second
+) -> orison::syntax::ExpressionSyntax {
+    auto elements = std::vector<orison::syntax::ExpressionSyntax> {};
+    elements.push_back(std::move(first));
+    elements.push_back(std::move(second));
+    return array_literal(std::move(elements));
 }
 
 auto method_call(orison::syntax::ExpressionSyntax receiver, std::string method_name)
@@ -148,6 +182,20 @@ int main() {
     assert(orison::lowering::source_type_name_for_expression(call("make_bucket"), context, state) == "Bucket");
     assert(
         orison::lowering::source_type_name_for_expression(
+            cast(integer_literal("1"), "UInt32"),
+            context,
+            state
+        ) == "UInt32"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            array_literal(cast(integer_literal("1"), "UInt32"), cast(integer_literal("2"), "UInt32")),
+            context,
+            state
+        ) == "Array<UInt32, 2>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
             method_call(member(name("wrapper"), "bucket"), "view"),
             context,
             state
@@ -159,6 +207,24 @@ int main() {
             context,
             state
         ) == "Array<UInt32, 3>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            ternary(
+                name("flag"),
+                array_literal(cast(integer_literal("1"), "UInt32"), cast(integer_literal("2"), "UInt32")),
+                array_literal(cast(integer_literal("3"), "UInt32"), cast(integer_literal("4"), "UInt32"))
+            ),
+            context,
+            state
+        ) == "Array<UInt32, 2>"
+    );
+    assert(
+        !orison::lowering::source_type_name_for_expression(
+            array_literal(cast(integer_literal("1"), "UInt32"), cast(integer_literal("2"), "UInt64")),
+            context,
+            state
+        ).has_value()
     );
     assert(
         !orison::lowering::source_type_name_for_expression(

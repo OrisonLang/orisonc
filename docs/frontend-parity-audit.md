@@ -29,13 +29,16 @@ This file tracks which source-language frontend slices are reflected in the curr
   non-generic record/fixed-array subset, aggregate assignment beyond the currently supported mutable-local and
   pointer-backed record/fixed-array field and index targets, and iterable lowering beyond array literals plus named
   fixed-size arrays recovered from local names, nested record-backed array fields, index-derived array sources,
-  indexed record-field array sources, ternary-selected fixed-size arrays whose branches share a source type, plus
-  helper-returned and scalar/record-method-returned array sources
+  indexed record-field array sources, ternary-selected fixed-size arrays and explicitly typed array literals whose
+  branches share a source type, plus helper-returned and scalar/record-method-returned array sources
 
 ## Latest update
 
 - 2026-07-05: source-type recovery now propagates through ternary expressions when both branches have the same source
   type, allowing fixed-array `for` iterables selected by `?:`; `local_ternary_array_for.or` pins backend validation.
+- 2026-07-05: source-type recovery now recognizes lowerable explicit casts and homogeneous explicitly typed array
+  literals, enabling ternary-selected fixed-array literal `for` iterables; `local_ternary_array_literal_for.or` pins
+  backend validation.
 - 2026-06-26: the pthread-backed concurrency runtime now invokes the optional spawn cleanup callback after entry
   completion and on spawn setup failure; direct ABI smoke coverage pins post-entry cleanup for joined and abandoned
   handles.

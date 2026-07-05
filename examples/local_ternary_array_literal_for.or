@@ -1,0 +1,7 @@
+package examples.collections
+
+function main() -> UInt32
+    var total = 0 as UInt32
+    for item in true ? [1 as UInt32, 2 as UInt32, 3 as UInt32] : [4 as UInt32, 5 as UInt32, 6 as UInt32]
+        total = total + item
+    0 as UInt32
