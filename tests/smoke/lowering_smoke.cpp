@@ -3295,6 +3295,10 @@ void test_emit_raw_mmio_intrinsics() {
         "unsafe function entry_status_address(log: Pointer<Log>, index: UInt64) -> Address\n"
         "    address_of(log.entries[index].status)\n"
         "\n"
+        "unsafe function read_entry_status_pointer(log: Pointer<Log>, index: UInt64) -> UInt32\n"
+        "    let pointer = Pointer(address_of(log.entries[index].status))\n"
+        "    raw_read(pointer)\n"
+        "\n"
         "unsafe function matrix_byte_address(matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Address\n"
         "    address_of(matrix.rows[index][inner])\n"
         "\n"
@@ -3404,6 +3408,11 @@ void test_emit_raw_mmio_intrinsics() {
         result.ir_text.find("getelementptr [2 x %record.UartRegisters], ptr %tmp") !=
         std::string::npos
     );
+    assert(
+        result.ir_text.find("define i32 @read_entry_status_pointer(ptr %log, i64 %index)") !=
+        std::string::npos
+    );
+    assert(result.ir_text.find("load i32, ptr %pointer") != std::string::npos);
     assert(
         result.ir_text.find("define i64 @matrix_byte_address(ptr %matrix, i64 %index, i64 %inner)") !=
         std::string::npos

@@ -251,6 +251,8 @@ int main() {
     auto state = orison::lowering::FunctionLoweringState {};
     state.source_type_names["wrapper"] = "Wrapper";
     state.source_type_names["buckets"] = "Array<Bucket, 2>";
+    state.source_type_names["bucket_array_pointer"] = "Pointer<Array<Bucket, 2>>";
+    state.source_type_names["wrapper_pointer"] = "Pointer<Wrapper>";
     state.source_type_names["left_values"] = "Array<UInt32, 3>";
     state.source_type_names["right_values"] = "Array<UInt32, 3>";
 
@@ -284,6 +286,7 @@ int main() {
         ) == "Bucket"
     );
     assert(orison::lowering::source_type_name_for_expression(index(name("buckets")), context, state) == "Bucket");
+    assert(orison::lowering::source_type_name_for_expression(index(name("bucket_array_pointer")), context, state) == "Bucket");
     assert(orison::lowering::source_type_name_for_expression(call("make_bucket"), context, state) == "Bucket");
     assert(
         orison::lowering::source_type_name_for_expression(
@@ -306,6 +309,13 @@ int main() {
             context,
             state
         ) == "Pointer<Bucket>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            call("Pointer", call("address_of", member(member(name("wrapper_pointer"), "bucket"), "values"))),
+            context,
+            state
+        ) == "Pointer<Array<UInt32, 3>>"
     );
     assert(
         orison::lowering::source_type_name_for_expression(

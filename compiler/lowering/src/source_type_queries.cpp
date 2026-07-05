@@ -315,7 +315,8 @@ auto source_type_name_for_expression(
             return std::nullopt;
         }
 
-        auto layout = context.records.find(*base_source_type);
+        auto record_source_type = pointer_pointee_source_type_name(*base_source_type);
+        auto layout = context.records.find(record_source_type.value_or(*base_source_type));
         if (layout == context.records.end()) {
             return std::nullopt;
         }
@@ -334,10 +335,11 @@ auto source_type_name_for_expression(
             return std::nullopt;
         }
 
-        auto array_element = array_element_source_type_name(*base_source_type);
+        auto indexed_source_type = pointer_pointee_source_type_name(*base_source_type);
+        auto array_element = array_element_source_type_name(indexed_source_type.value_or(*base_source_type));
         return array_element.has_value()
             ? std::move(array_element)
-            : view_element_source_type_name(*base_source_type);
+            : view_element_source_type_name(indexed_source_type.value_or(*base_source_type));
     }
 
     if (expression.kind == syntax::ExpressionKind::ternary && expression.right != nullptr &&
