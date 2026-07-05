@@ -47,6 +47,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   lowering.
 - 2026-07-05: initializer source-type recovery now lives in the shared source-query component instead of as a private
   statement-emitter helper, so expression and binding metadata recovery share one API.
+- 2026-07-05: shared source-type queries now recover value-producing final `if`/`switch` statement result types when
+  all branches resolve to the same source type, including branch-local inferred aggregate bindings.
 - 2026-06-26: the pthread-backed concurrency runtime now invokes the optional spawn cleanup callback after entry
   completion and on spawn setup failure; direct ABI smoke coverage pins post-entry cleanup for joined and abandoned
   handles.

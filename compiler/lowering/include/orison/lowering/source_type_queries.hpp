@@ -61,4 +61,22 @@ auto source_type_name_for_initializer(
     std::string_view lowered_llvm_type
 ) -> std::optional<std::string>;
 
+auto source_type_name_for_value_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
+
+auto source_type_name_for_value_statement_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
+
+auto source_type_name_for_value_statement_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
+
 }  // namespace orison::lowering

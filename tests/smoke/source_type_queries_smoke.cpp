@@ -80,6 +80,87 @@ auto array_literal(
     return array_literal(std::move(elements));
 }
 
+auto expression_statement(orison::syntax::ExpressionSyntax expression) -> orison::syntax::StatementSyntax {
+    auto statement = orison::syntax::StatementSyntax {};
+    statement.kind = orison::syntax::StatementKind::expression_statement;
+    statement.expression = std::move(expression);
+    return statement;
+}
+
+auto let_statement(std::string name, orison::syntax::ExpressionSyntax expression)
+    -> orison::syntax::StatementSyntax {
+    auto statement = orison::syntax::StatementSyntax {};
+    statement.kind = orison::syntax::StatementKind::let_binding;
+    statement.name = std::move(name);
+    statement.expression = std::move(expression);
+    return statement;
+}
+
+auto two_statement_block(
+    orison::syntax::StatementSyntax first,
+    orison::syntax::StatementSyntax second
+) -> std::vector<orison::syntax::StatementSyntax> {
+    auto statements = std::vector<orison::syntax::StatementSyntax> {};
+    statements.push_back(std::move(first));
+    statements.push_back(std::move(second));
+    return statements;
+}
+
+auto one_statement_block(orison::syntax::StatementSyntax statement)
+    -> std::vector<orison::syntax::StatementSyntax> {
+    auto statements = std::vector<orison::syntax::StatementSyntax> {};
+    statements.push_back(std::move(statement));
+    return statements;
+}
+
+auto if_statement(
+    std::vector<orison::syntax::StatementSyntax> then_statements,
+    std::vector<orison::syntax::StatementSyntax> else_statements
+) -> orison::syntax::StatementSyntax {
+    auto statement = orison::syntax::StatementSyntax {};
+    statement.kind = orison::syntax::StatementKind::if_statement;
+    statement.expression = name("flag");
+    statement.nested_statements = std::move(then_statements);
+    statement.alternate_statements = std::move(else_statements);
+    return statement;
+}
+
+auto switch_statement(
+    std::vector<orison::syntax::StatementSyntax> first_case,
+    std::vector<orison::syntax::StatementSyntax> second_case
+) -> orison::syntax::StatementSyntax {
+    auto first_case_pointers = std::vector<std::unique_ptr<orison::syntax::StatementSyntax>> {};
+    first_case_pointers.reserve(first_case.size());
+    for (auto& case_statement : first_case) {
+        first_case_pointers.push_back(
+            std::make_unique<orison::syntax::StatementSyntax>(std::move(case_statement))
+        );
+    }
+
+    auto second_case_pointers = std::vector<std::unique_ptr<orison::syntax::StatementSyntax>> {};
+    second_case_pointers.reserve(second_case.size());
+    for (auto& case_statement : second_case) {
+        second_case_pointers.push_back(
+            std::make_unique<orison::syntax::StatementSyntax>(std::move(case_statement))
+        );
+    }
+
+    auto statement = orison::syntax::StatementSyntax {};
+    statement.kind = orison::syntax::StatementKind::switch_statement;
+    statement.expression = name("selector");
+    statement.switch_cases.push_back(orison::syntax::SwitchCaseSyntax {
+        .is_default = false,
+        .pattern = integer_literal("0"),
+        .statements = std::move(first_case_pointers),
+    });
+    statement.switch_cases.push_back(orison::syntax::SwitchCaseSyntax {
+        .is_default = true,
+        .pattern = {},
+        .statements = std::move(second_case_pointers),
+    });
+    return statement;
+}
+
 auto method_call(orison::syntax::ExpressionSyntax receiver, std::string method_name)
     -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
@@ -231,6 +312,42 @@ int main() {
             state,
             "i32"
         ) == "UInt32"
+    );
+    assert(
+        orison::lowering::source_type_name_for_value_statement(
+            if_statement(
+                two_statement_block(
+                    let_statement("bucket", record_constructor("Bucket")),
+                    expression_statement(member(name("bucket"), "values"))
+                ),
+                two_statement_block(
+                    let_statement("bucket", record_constructor("Bucket")),
+                    expression_statement(member(name("bucket"), "values"))
+                )
+            ),
+            context,
+            state
+        ) == "Array<UInt32, 3>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_value_statement(
+            switch_statement(
+                one_statement_block(expression_statement(name("left_values"))),
+                one_statement_block(expression_statement(name("right_values")))
+            ),
+            context,
+            state
+        ) == "Array<UInt32, 3>"
+    );
+    assert(
+        !orison::lowering::source_type_name_for_value_statement(
+            if_statement(
+                one_statement_block(expression_statement(name("wrapper"))),
+                one_statement_block(expression_statement(name("right_values")))
+            ),
+            context,
+            state
+        ).has_value()
     );
     assert(
         orison::lowering::source_type_name_for_expression(

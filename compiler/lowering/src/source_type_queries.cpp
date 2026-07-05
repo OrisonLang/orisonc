@@ -1,5 +1,6 @@
 #include "orison/lowering/source_type_queries.hpp"
 
+#include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <utility>
@@ -403,6 +404,116 @@ auto source_type_name_for_initializer(
     }
 
     return source_type_name_for_llvm_type(lowered_llvm_type, context);
+}
+
+auto source_type_name_for_value_statement_pointer_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (statements.empty()) {
+        return std::nullopt;
+    }
+
+    auto local_state = state;
+    for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
+        auto const* statement = statements[index];
+        if (statement == nullptr) {
+            return std::nullopt;
+        }
+        if (statement->kind != syntax::StatementKind::let_binding &&
+            statement->kind != syntax::StatementKind::var_binding) {
+            return std::nullopt;
+        }
+
+        if (!statement->annotated_type.name.empty()) {
+            local_state.source_type_names[statement->name] = render_source_type_name(statement->annotated_type);
+            continue;
+        }
+
+        auto initializer_source_type =
+            source_type_name_for_expression(statement->expression, context, local_state);
+        if (!initializer_source_type.has_value()) {
+            return std::nullopt;
+        }
+        local_state.source_type_names[statement->name] = std::move(*initializer_source_type);
+    }
+
+    auto const* final_statement = statements.back();
+    if (final_statement == nullptr) {
+        return std::nullopt;
+    }
+    return source_type_name_for_value_statement(*final_statement, context, local_state);
+}
+
+auto source_type_name_for_value_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (statement.kind == syntax::StatementKind::expression_statement ||
+        statement.kind == syntax::StatementKind::return_statement) {
+        return source_type_name_for_expression(statement.expression, context, state);
+    }
+
+    if (statement.kind == syntax::StatementKind::if_statement) {
+        auto then_source_type =
+            source_type_name_for_value_statement_block(statement.nested_statements, context, state);
+        auto else_source_type =
+            source_type_name_for_value_statement_block(statement.alternate_statements, context, state);
+        if (!then_source_type.has_value() || !else_source_type.has_value() ||
+            *then_source_type != *else_source_type) {
+            return std::nullopt;
+        }
+        return then_source_type;
+    }
+
+    if (statement.kind == syntax::StatementKind::switch_statement) {
+        auto result = std::optional<std::string> {};
+        for (auto const& switch_case : statement.switch_cases) {
+            auto case_source_type =
+                source_type_name_for_value_statement_block(switch_case.statements, context, state);
+            if (!case_source_type.has_value()) {
+                return std::nullopt;
+            }
+            if (!result.has_value()) {
+                result = std::move(case_source_type);
+                continue;
+            }
+            if (*result != *case_source_type) {
+                return std::nullopt;
+            }
+        }
+        return result;
+    }
+
+    return std::nullopt;
+}
+
+auto source_type_name_for_value_statement_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
+    statement_pointers.reserve(statements.size());
+    for (auto const& statement : statements) {
+        statement_pointers.push_back(&statement);
+    }
+    return source_type_name_for_value_statement_pointer_block(statement_pointers, context, state);
+}
+
+auto source_type_name_for_value_statement_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
+    statement_pointers.reserve(statements.size());
+    for (auto const& statement : statements) {
+        statement_pointers.push_back(statement.get());
+    }
+    return source_type_name_for_value_statement_pointer_block(statement_pointers, context, state);
 }
 
 }  // namespace orison::lowering
