@@ -2,11 +2,22 @@
 
 #include <array>
 #include <cassert>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <string_view>
+#include <unistd.h>
 
 auto main() -> int {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root =
+        original_temp_root / ("orison_examples_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     constexpr auto frontend_examples = std::array<std::string_view, 11> {
         "tour_01_packages_imports.or",
@@ -131,5 +142,6 @@ auto main() -> int {
     assert(
         wrong_arity.error_text.find("function 'strcmp' expects 2 arguments but received 1") != std::string::npos
     );
+    std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
