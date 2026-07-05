@@ -3311,6 +3311,14 @@ void test_emit_raw_mmio_intrinsics() {
         "    let pointer = Pointer(address_of(log.entries[index].status))\n"
         "    volatile_write(pointer, value)\n"
         "\n"
+        "unsafe function read_entry_status_offset(log: Pointer<Log>, index: UInt64) -> UInt32\n"
+        "    let pointer = raw_offset(Pointer(address_of(log.entries[index].status)), 1 as UInt64)\n"
+        "    raw_read(pointer)\n"
+        "\n"
+        "unsafe function volatile_write_entry_status_offset(log: Pointer<Log>, index: UInt64, value: UInt32) -> Unit\n"
+        "    let pointer = raw_offset(Pointer(address_of(log.entries[index].status)), 1 as UInt64)\n"
+        "    volatile_write(pointer, value)\n"
+        "\n"
         "unsafe function matrix_byte_address(matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Address\n"
         "    address_of(matrix.rows[index][inner])\n"
         "\n"
@@ -3440,6 +3448,15 @@ void test_emit_raw_mmio_intrinsics() {
         std::string::npos
     );
     assert(result.ir_text.find("store volatile i32 %value, ptr") != std::string::npos);
+    assert(
+        result.ir_text.find("define i32 @read_entry_status_offset(ptr %log, i64 %index)") !=
+        std::string::npos
+    );
+    assert(result.ir_text.find("getelementptr i32, ptr") != std::string::npos);
+    assert(
+        result.ir_text.find("define void @volatile_write_entry_status_offset(ptr %log, i64 %index, i32 %value)") !=
+        std::string::npos
+    );
     assert(
         result.ir_text.find("define i64 @matrix_byte_address(ptr %matrix, i64 %index, i64 %inner)") !=
         std::string::npos
