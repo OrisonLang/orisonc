@@ -49,6 +49,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   statement-emitter helper, so expression and binding metadata recovery share one API.
 - 2026-07-05: shared source-type queries now recover value-producing final `if`/`switch` statement result types when
   all branches resolve to the same source type, including branch-local inferred aggregate bindings.
+- 2026-07-05: shared source-type queries now recover `Pointer<T>` from the bounded `Pointer(address_of(value))`
+  constructor shape when the addressed value has a known source type, preserving pointee metadata for inferred unsafe
+  intrinsic bindings.
 - 2026-06-26: the pthread-backed concurrency runtime now invokes the optional spawn cleanup callback after entry
   completion and on spawn setup failure; direct ABI smoke coverage pins post-entry cleanup for joined and abandoned
   handles.

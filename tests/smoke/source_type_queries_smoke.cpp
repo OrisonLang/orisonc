@@ -41,6 +41,13 @@ auto call(std::string function_name) -> orison::syntax::ExpressionSyntax {
     return expression;
 }
 
+auto call(std::string function_name, orison::syntax::ExpressionSyntax argument)
+    -> orison::syntax::ExpressionSyntax {
+    auto expression = call(std::move(function_name));
+    expression.arguments.push_back(std::move(argument));
+    return expression;
+}
+
 auto cast(orison::syntax::ExpressionSyntax operand, std::string type_name) -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
     expression.kind = orison::syntax::ExpressionKind::cast;
@@ -282,6 +289,13 @@ int main() {
         ) == "Array<UInt32, 2>"
     );
     assert(orison::lowering::source_type_name_for_expression(record_constructor("Bucket"), context, state) == "Bucket");
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            call("Pointer", call("address_of", member(name("wrapper"), "bucket"))),
+            context,
+            state
+        ) == "Pointer<Bucket>"
+    );
     assert(
         orison::lowering::source_type_name_for_expression(
             array_literal(record_constructor("Bucket"), record_constructor("Bucket")),
