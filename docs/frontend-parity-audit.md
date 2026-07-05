@@ -251,6 +251,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-05: isolated `orison_lexer_smoke` under a per-process `TMPDIR`, covering its generated keyword/token fixture.
 - 2026-07-05: isolated `orison_canonical_pipeline_smoke` under a per-process `TMPDIR`, covering retained
   object/executable outputs plus driver-created temporary link artifacts.
+- 2026-07-05: isolated `orison_concurrency_plan_smoke` under a per-process `TMPDIR`, covering its generated
+  concurrency-planning fixture.
 - 2026-06-26: added direct runtime ABI smoke coverage for pthread-backed thread join, task await, destroy-after-sync,
   and abandoned-handle destroy waiting behavior.
 - 2026-06-26: added `examples/concurrency_thread_main.or` as a checked-in runnable scalar thread/join demo and promoted
