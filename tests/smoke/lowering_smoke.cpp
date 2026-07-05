@@ -7,10 +7,12 @@
 #include "orison/syntax/module_parser.hpp"
 
 #include <cassert>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <string_view>
+#include <unistd.h>
 
 namespace {
 
@@ -3512,6 +3514,14 @@ void test_emit_native_object_file() {
 }  // namespace
 
 auto main() -> int {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root =
+        original_temp_root / ("orison_lowering_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
     test_emit_constant_uint32_return();
     test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();
@@ -3589,5 +3599,6 @@ auto main() -> int {
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();
+    std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
