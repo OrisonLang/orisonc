@@ -42,6 +42,10 @@ auto source_type_name_for_initializer(
         return expression.left->text;
     }
 
+    if (auto source_type = source_type_name_for_expression(expression, context.lowering, state)) {
+        return source_type;
+    }
+
     if (auto source_type = source_type_name_for_llvm_type(lowered_llvm_type, context.lowering)) {
         return source_type;
     }
