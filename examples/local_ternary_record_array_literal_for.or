@@ -1,0 +1,11 @@
+package examples.collections
+
+record Entry
+    status: UInt32
+    code: UInt32
+
+function main() -> UInt32
+    var total = 0 as UInt32
+    for item in true ? [Entry(1 as UInt32, 10 as UInt32), Entry(2 as UInt32, 20 as UInt32)] : [Entry(3 as UInt32, 30 as UInt32), Entry(4 as UInt32, 40 as UInt32)]
+        total = total + item.status
+    0 as UInt32

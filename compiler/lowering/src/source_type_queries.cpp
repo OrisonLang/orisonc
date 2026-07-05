@@ -358,6 +358,10 @@ auto source_type_name_for_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
+        if (context.records.contains(expression.left->text)) {
+            return expression.left->text;
+        }
+
         auto function = context.functions.find(expression.left->text);
         if (function == context.functions.end() || function->second.return_type.empty() ||
             function->second.return_type == "void") {

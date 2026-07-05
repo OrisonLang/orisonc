@@ -39,7 +39,7 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 68> {
+    constexpr auto backend_examples = std::array<std::string_view, 69> {
         "concurrency_task_main.or",
         "concurrency_thread_main.or",
         "ffi_aggregate_scalar_parameters.or",
@@ -47,6 +47,7 @@ auto main() -> int {
         "local_helper_array_for.or",
         "local_ternary_array_for.or",
         "local_ternary_array_literal_for.or",
+        "local_ternary_record_array_literal_for.or",
         "local_array_for.or",
         "local_aggregate_let.or",
         "local_inferred_record_let.or",

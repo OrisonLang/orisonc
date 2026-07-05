@@ -56,6 +56,12 @@ auto integer_literal(std::string text) -> orison::syntax::ExpressionSyntax {
     return expression;
 }
 
+auto record_constructor(std::string record_name) -> orison::syntax::ExpressionSyntax {
+    auto expression = call(std::move(record_name));
+    expression.arguments.push_back(cast(integer_literal("1"), "UInt32"));
+    return expression;
+}
+
 auto array_literal(std::vector<orison::syntax::ExpressionSyntax> elements)
     -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
@@ -193,6 +199,14 @@ int main() {
             context,
             state
         ) == "Array<UInt32, 2>"
+    );
+    assert(orison::lowering::source_type_name_for_expression(record_constructor("Bucket"), context, state) == "Bucket");
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            array_literal(record_constructor("Bucket"), record_constructor("Bucket")),
+            context,
+            state
+        ) == "Array<Bucket, 2>"
     );
     assert(
         orison::lowering::source_type_name_for_expression(
