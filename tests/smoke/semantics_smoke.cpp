@@ -10,6 +10,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <cstdlib>
+#include <unistd.h>
 
 namespace {
 
@@ -12256,6 +12258,14 @@ void test_trivial_binding_planned_drop_sites_ignored_success() {
 }  // namespace
 
 int main() {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root =
+        original_temp_root / ("orison_semantics_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
     test_await_inside_async_function_success();
     test_await_async_call_value_success();
     test_await_outside_async_function_failure();
@@ -12868,5 +12878,6 @@ int main() {
     test_thread_capture_receiver_this_failure();
     test_owned_binding_planned_drop_sites_success();
     test_trivial_binding_planned_drop_sites_ignored_success();
+    std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
