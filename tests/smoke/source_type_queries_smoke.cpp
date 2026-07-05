@@ -209,6 +209,30 @@ int main() {
         ) == "Array<Bucket, 2>"
     );
     assert(
+        orison::lowering::source_type_name_for_initializer(
+            name("wrapper"),
+            context,
+            state,
+            "%record.Wrapper"
+        ) == "Wrapper"
+    );
+    assert(
+        orison::lowering::source_type_name_for_initializer(
+            cast(integer_literal("1"), "UInt32"),
+            context,
+            state,
+            "i32"
+        ) == "UInt32"
+    );
+    assert(
+        orison::lowering::source_type_name_for_initializer(
+            integer_literal("1"),
+            context,
+            state,
+            "i32"
+        ) == "UInt32"
+    );
+    assert(
         orison::lowering::source_type_name_for_expression(
             method_call(member(name("wrapper"), "bucket"), "view"),
             context,

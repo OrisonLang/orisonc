@@ -23,36 +23,6 @@
 namespace orison::lowering {
 namespace {
 
-auto source_type_name_for_initializer(
-    syntax::ExpressionSyntax const& expression,
-    LoweringEmissionContext const& context,
-    FunctionLoweringState const& state,
-    std::string_view lowered_llvm_type
-) -> std::optional<std::string> {
-    if (expression.kind == syntax::ExpressionKind::name) {
-        auto source_type = state.source_type_names.find(expression.text);
-        if (source_type != state.source_type_names.end()) {
-            return source_type->second;
-        }
-    }
-
-    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
-        expression.left->kind == syntax::ExpressionKind::name &&
-        context.lowering.records.contains(expression.left->text)) {
-        return expression.left->text;
-    }
-
-    if (auto source_type = source_type_name_for_expression(expression, context.lowering, state)) {
-        return source_type;
-    }
-
-    if (auto source_type = source_type_name_for_llvm_type(lowered_llvm_type, context.lowering)) {
-        return source_type;
-    }
-
-    return std::nullopt;
-}
-
 auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::thread;
 }
@@ -898,7 +868,12 @@ auto lower_let_statement(
         session.state.source_type_names[statement.name] =
             render_source_type_name(statement.annotated_type);
     } else if (auto inferred_source_type =
-                   source_type_name_for_initializer(statement.expression, context, session.state, lowered->type)) {
+                   source_type_name_for_initializer(
+                       statement.expression,
+                       context.lowering,
+                       session.state,
+                       lowered->type
+                   )) {
         session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
     return true;
@@ -963,7 +938,12 @@ auto lower_var_statement(
         session.state.source_type_names[statement.name] =
             render_source_type_name(statement.annotated_type);
     } else if (auto inferred_source_type =
-                   source_type_name_for_initializer(statement.expression, context, session.state, lowered->type)) {
+                   source_type_name_for_initializer(
+                       statement.expression,
+                       context.lowering,
+                       session.state,
+                       lowered->type
+                   )) {
         session.state.source_type_names[statement.name] = std::move(*inferred_source_type);
     }
     return true;

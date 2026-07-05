@@ -45,6 +45,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-05: inferred `let`/`var` initializer metadata now delegates to shared expression source-type recovery before
   falling back to LLVM type reconstruction, preserving pointee-aware `raw_offset` bindings for later unsafe intrinsic
   lowering.
+- 2026-07-05: initializer source-type recovery now lives in the shared source-query component instead of as a private
+  statement-emitter helper, so expression and binding metadata recovery share one API.
 - 2026-06-26: the pthread-backed concurrency runtime now invokes the optional spawn cleanup callback after entry
   completion and on spawn setup failure; direct ABI smoke coverage pins post-entry cleanup for joined and abandoned
   handles.

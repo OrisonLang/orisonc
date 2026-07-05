@@ -392,4 +392,17 @@ auto source_type_name_for_expression(
     return std::nullopt;
 }
 
+auto source_type_name_for_initializer(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state,
+    std::string_view lowered_llvm_type
+) -> std::optional<std::string> {
+    if (auto source_type = source_type_name_for_expression(expression, context, state)) {
+        return source_type;
+    }
+
+    return source_type_name_for_llvm_type(lowered_llvm_type, context);
+}
+
 }  // namespace orison::lowering
