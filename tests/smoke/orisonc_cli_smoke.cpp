@@ -1,11 +1,13 @@
 #include <array>
 #include <cassert>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <string>
 #include <string_view>
 #include <sys/wait.h>
+#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -1774,6 +1776,14 @@ void assert_cli_nested_final_ternary_low_level_parse_cases(
 }  // namespace
 
 int main() {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root =
+        original_temp_root / ("orisonc_cli_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
     auto path = std::filesystem::temp_directory_path() / "orison_cli_smoke.or";
     {
         std::ofstream output(path);
@@ -5335,5 +5345,6 @@ int main() {
         maybe_array_payload_block_runtime_constant_lines("thread"),
         "constant initializer cannot use thread expression"
     );
+    std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
