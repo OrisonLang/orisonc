@@ -102,6 +102,8 @@ analysis, and lowering components.
   and dedicated lowering source file while keeping the binding-scope behavior unchanged.
 - Repeat loop lowering now also uses a header-templated body callback, removing its `std::function` wrapper and
   dedicated lowering source while preserving existing repeat block, condition, and loop-target emission.
+- While loop lowering now uses a header-templated body callback as well, removing its `std::function` wrapper and
+  dedicated lowering source while preserving condition, branch, and loop-target emission.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.
