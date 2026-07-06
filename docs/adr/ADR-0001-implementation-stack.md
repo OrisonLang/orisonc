@@ -77,7 +77,8 @@ analysis, and lowering components.
 - LLVM `while`, `repeat`, and `for` bodies now also accept nested `unsafe` blocks, reusing the existing cleanup
   replay path so `defer` blocks inside `unsafe` continue to run before `break` and `continue`; `while` bodies also
   dispatch nested `while` loops through the shared while lowering path and nested `repeat` loops through the same
-  while-body statement dispatcher.
+  while-body statement dispatcher. Nested `for` loops in while bodies support the same array-literal and fixed-size
+  array iterable subset as top-level Unit `for` lowering.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.
