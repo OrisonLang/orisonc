@@ -25,6 +25,7 @@ add_library(orison_lowering STATIC
     src/merge_emitter.cpp
     src/merge_plan.cpp
     src/module_prelude.cpp
+    src/repeat_loop_lowering.cpp
     src/source_type_queries.cpp
     src/statement_emitter.cpp
     src/string_constants.cpp

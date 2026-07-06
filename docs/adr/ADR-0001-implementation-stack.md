@@ -256,6 +256,8 @@ analysis, and lowering components.
   keeping array-literal and fixed-array iterable CFG setup consistent.
   Non-callback-specific `for` block planning compiles out of line so the header keeps only the callable-dependent loop
   orchestration.
+  Repeat loop block planning and loop-target construction also compile out of line while repeat body orchestration
+  remains templated.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
