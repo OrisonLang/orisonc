@@ -1,11 +1,11 @@
 #pragma once
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
+#include "orison/lowering/deferred_cleanup.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
-#include "orison/lowering/statement_emitter.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <optional>

@@ -262,6 +262,8 @@ analysis, and lowering components.
   remains templated.
   Common non-value statement dispatch now keeps concrete built-in statement lowering out of line while preserving
   templated caller-provided binding inference and nested repeat/for/unsafe callbacks.
+  Deferred cleanup scope and replay declarations now live behind a narrow cleanup header so shared statement-body
+  traversal no longer depends on the full statement-emitter API.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

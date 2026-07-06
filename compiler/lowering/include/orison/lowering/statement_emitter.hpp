@@ -2,6 +2,7 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/deferred_cleanup.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
@@ -17,23 +18,6 @@
 #include <vector>
 
 namespace orison::lowering {
-
-class DeferredCleanupScope {
-public:
-    explicit DeferredCleanupScope(FunctionLoweringState& state);
-    ~DeferredCleanupScope() noexcept;
-
-    DeferredCleanupScope(DeferredCleanupScope const&) = delete;
-    auto operator=(DeferredCleanupScope const&) -> DeferredCleanupScope& = delete;
-    DeferredCleanupScope(DeferredCleanupScope&&) = delete;
-    auto operator=(DeferredCleanupScope&&) -> DeferredCleanupScope& = delete;
-
-    auto cleanup_depth() const -> std::size_t;
-
-private:
-    FunctionLoweringState& state_;
-    std::size_t cleanup_depth_ = 0;
-};
 
 using FinalControlFlowLowerer = std::optional<LoweredExpression> (*)(
     syntax::StatementSyntax const& statement,
@@ -81,14 +65,6 @@ auto record_deferred_cleanup(
     syntax::StatementSyntax const& statement,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics
-) -> bool;
-
-auto emit_deferred_cleanup_to_depth(
-    std::size_t target_depth,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
 ) -> bool;
 
 auto emit_concurrency_cleanup_thunk(
