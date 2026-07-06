@@ -8,6 +8,7 @@ add_library(orison_lowering STATIC
     src/concurrency_plan.cpp
     src/concurrency_runtime.cpp
     src/control_flow_emitter.cpp
+    src/deferred_cleanup.cpp
     src/drop_metadata.cpp
     src/expression_emitter.cpp
     src/for_loop_lowering.cpp
