@@ -1,6 +1,5 @@
 #include "orison/lowering/while_emitter.hpp"
 
-#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
@@ -10,12 +9,10 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/statement_emitter.hpp"
-#include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace orison::lowering {
