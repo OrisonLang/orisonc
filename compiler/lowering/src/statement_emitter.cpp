@@ -500,6 +500,33 @@ auto lower_prefix_statement(
     return false;
 }
 
+auto emit_value_block_deferred_cleanup(
+    DeferredCleanupScope const& defer_scope,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    DeferredCleanupBlockLowerer lower_cleanup_block
+) -> bool {
+    if (lower_cleanup_block == nullptr) {
+        return emit_deferred_cleanup_to_depth(
+            defer_scope.cleanup_depth(),
+            context,
+            session,
+            diagnostics,
+            output
+        );
+    }
+    return emit_deferred_cleanup_to_depth_with_block_lowerer(
+        defer_scope.cleanup_depth(),
+        context,
+        session,
+        diagnostics,
+        output,
+        lower_cleanup_block
+    );
+}
+
 auto lower_value_statement_block(
     std::span<syntax::StatementSyntax const* const> statements,
     std::string_view expected_llvm_type,
@@ -550,17 +577,14 @@ auto lower_value_statement_block(
         if (!lowered.has_value()) {
             return std::nullopt;
         }
-        auto const cleanup_ok = lower_cleanup_block == nullptr
-            ? emit_deferred_cleanup_to_depth(defer_scope.cleanup_depth(), context, session, diagnostics, output)
-            : emit_deferred_cleanup_to_depth_with_block_lowerer(
-                  defer_scope.cleanup_depth(),
-                  context,
-                  session,
-                  diagnostics,
-                  output,
-                  lower_cleanup_block
-              );
-        if (!cleanup_ok) {
+        if (!emit_value_block_deferred_cleanup(
+                defer_scope,
+                context,
+                session,
+                diagnostics,
+                output,
+                lower_cleanup_block
+            )) {
             return std::nullopt;
         }
         return lowered;
@@ -581,17 +605,14 @@ auto lower_value_statement_block(
     if (!lowered.has_value()) {
         return std::nullopt;
     }
-    auto const cleanup_ok = lower_cleanup_block == nullptr
-        ? emit_deferred_cleanup_to_depth(defer_scope.cleanup_depth(), context, session, diagnostics, output)
-        : emit_deferred_cleanup_to_depth_with_block_lowerer(
-              defer_scope.cleanup_depth(),
-              context,
-              session,
-              diagnostics,
-              output,
-              lower_cleanup_block
-          );
-    if (!cleanup_ok) {
+    if (!emit_value_block_deferred_cleanup(
+            defer_scope,
+            context,
+            session,
+            diagnostics,
+            output,
+            lower_cleanup_block
+        )) {
         return std::nullopt;
     }
     return lowered;
@@ -1297,17 +1318,14 @@ auto lower_value_statement_block(
         if (!lowered.has_value()) {
             return std::nullopt;
         }
-        auto const cleanup_ok = lower_cleanup_block == nullptr
-            ? emit_deferred_cleanup_to_depth(defer_scope.cleanup_depth(), context, session, diagnostics, output)
-            : emit_deferred_cleanup_to_depth_with_block_lowerer(
-                  defer_scope.cleanup_depth(),
-                  context,
-                  session,
-                  diagnostics,
-                  output,
-                  lower_cleanup_block
-              );
-        if (!cleanup_ok) {
+        if (!emit_value_block_deferred_cleanup(
+                defer_scope,
+                context,
+                session,
+                diagnostics,
+                output,
+                lower_cleanup_block
+            )) {
             return std::nullopt;
         }
         return lowered;
@@ -1328,17 +1346,14 @@ auto lower_value_statement_block(
     if (!lowered.has_value()) {
         return std::nullopt;
     }
-    auto const cleanup_ok = lower_cleanup_block == nullptr
-        ? emit_deferred_cleanup_to_depth(defer_scope.cleanup_depth(), context, session, diagnostics, output)
-        : emit_deferred_cleanup_to_depth_with_block_lowerer(
-              defer_scope.cleanup_depth(),
-              context,
-              session,
-              diagnostics,
-              output,
-              lower_cleanup_block
-          );
-    if (!cleanup_ok) {
+    if (!emit_value_block_deferred_cleanup(
+            defer_scope,
+            context,
+            session,
+            diagnostics,
+            output,
+            lower_cleanup_block
+        )) {
         return std::nullopt;
     }
     return lowered;

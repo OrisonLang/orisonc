@@ -270,6 +270,8 @@ analysis, and lowering components.
   callers keep using the compatibility Unit cleanup adapter during migration.
   Final value-producing control-flow lowering now passes the Unit cleanup block adapter explicitly when lowering
   nested value blocks.
+  Value statement-block cleanup replay now centralizes explicit-callback versus compatibility-adapter dispatch in one
+  local helper.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
