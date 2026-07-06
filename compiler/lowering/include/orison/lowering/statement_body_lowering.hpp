@@ -25,7 +25,8 @@ auto lower_common_builtin_nonvalue_statement(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> std::optional<StatementFlow>;
 
 template <typename LowerStatement>
@@ -36,6 +37,7 @@ auto lower_nonvalue_statement_block(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
+    DeferredCleanupBlockLowerer lower_cleanup_block,
     LowerStatement&& lower_statement
 ) -> StatementFlow {
     auto flow = StatementFlow::falls_through;
@@ -57,12 +59,13 @@ auto lower_nonvalue_statement_block(
         }
     }
     if (flow == StatementFlow::falls_through &&
-        !emit_deferred_cleanup_to_depth(
+        !emit_deferred_cleanup_to_depth_with_block_lowerer(
             defer_scope.cleanup_depth(),
             context,
             session,
             diagnostics,
-            output
+            output,
+            lower_cleanup_block
         )) {
         return StatementFlow::failed;
     }
@@ -76,6 +79,7 @@ auto lower_common_nonvalue_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
+    DeferredCleanupBlockLowerer lower_cleanup_block,
     InferBindingType&& infer_binding_type,
     std::string_view unsupported_let_diagnostic,
     std::string_view unsupported_var_diagnostic,
@@ -97,7 +101,8 @@ auto lower_common_nonvalue_statement(
             context,
             session,
             diagnostics,
-            output
+            output,
+            lower_cleanup_block
         )) {
         return builtin;
     }

@@ -273,6 +273,8 @@ analysis, and lowering components.
   Value statement-block cleanup replay now routes directly through the caller-provided cleanup callback.
   Statement emitter smoke coverage now exercises the explicit value-block cleanup callback overload for no-cleanup
   value blocks.
+  Non-value statement-block traversal, common built-in statement dispatch, and loop-control lowering now thread the
+  cleanup block lowerer explicitly while preserving the existing Unit cleanup adapter behavior at current call sites.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

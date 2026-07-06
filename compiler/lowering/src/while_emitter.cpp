@@ -4,6 +4,7 @@
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/for_loop_lowering.hpp"
+#include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
@@ -221,6 +222,7 @@ auto lower_while_body_statement(
         session,
         diagnostics,
         output,
+        lower_unit_deferred_cleanup_block,
         inferred_loop_binding_type,
         "lowering does not yet support this while let type",
         "lowering does not yet support this while var type",
@@ -271,6 +273,7 @@ auto lower_while_body_block(
         session,
         diagnostics,
         output,
+        lower_unit_deferred_cleanup_block,
         [&](syntax::StatementSyntax const& statement, bool is_last_statement) {
             (void)is_last_statement;
             return lower_while_body_statement(statement, context, session, diagnostics, output);

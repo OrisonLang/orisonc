@@ -294,6 +294,7 @@ auto lower_unit_statement_block(
         session,
         diagnostics,
         output,
+        lower_unit_deferred_cleanup_block,
         [&](syntax::StatementSyntax const& statement, bool is_last_statement) {
             return lower_unit_statement(statement, is_last_statement, context, session, diagnostics, output);
         }
@@ -329,6 +330,7 @@ auto lower_unit_statement_block(
         session,
         diagnostics,
         output,
+        lower_unit_deferred_cleanup_block,
         [&](syntax::StatementSyntax const& statement, bool is_last_statement) {
             return lower_unit_statement(statement, is_last_statement, context, session, diagnostics, output);
         }
@@ -1038,6 +1040,7 @@ auto lower_unit_statement(
         session,
         diagnostics,
         output,
+        lower_unit_deferred_cleanup_block,
         infer_unit_binding_type,
         "lowering does not yet support this Unit let binding",
         "lowering does not yet support this Unit var binding",

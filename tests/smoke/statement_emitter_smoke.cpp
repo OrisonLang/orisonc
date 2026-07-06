@@ -1,4 +1,5 @@
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -879,7 +880,8 @@ int main() {
         context,
         loop_session,
         diagnostics,
-        output
+        output,
+        orison::lowering::lower_unit_deferred_cleanup_block
     ));
     assert(output.str() == "  br label %while.exit.0\n");
 
@@ -892,7 +894,8 @@ int main() {
         context,
         loop_session,
         diagnostics,
-        output
+        output,
+        orison::lowering::lower_unit_deferred_cleanup_block
     ));
     assert(output.str() == "  br label %while.condition.0\n");
 

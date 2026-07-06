@@ -1161,7 +1161,8 @@ auto lower_loop_control_statement(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> bool {
     if (statement.kind != syntax::StatementKind::break_statement &&
         statement.kind != syntax::StatementKind::continue_statement) {
@@ -1177,7 +1178,14 @@ auto lower_loop_control_statement(
     auto const& target = statement.kind == syntax::StatementKind::break_statement
         ? targets.break_target
         : targets.continue_target;
-    if (!emit_deferred_cleanup_to_depth(targets.defer_cleanup_depth, context, session, diagnostics, output)) {
+    if (!emit_deferred_cleanup_to_depth_with_block_lowerer(
+            targets.defer_cleanup_depth,
+            context,
+            session,
+            diagnostics,
+            output,
+            lower_cleanup_block
+        )) {
         return false;
     }
     emit_llvm_branch(output, target);

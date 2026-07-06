@@ -84,7 +84,8 @@ auto lower_loop_control_statement(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> bool;
 
 auto lower_value_statement_block(

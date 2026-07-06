@@ -13,7 +13,8 @@ auto lower_common_builtin_nonvalue_statement(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> std::optional<StatementFlow> {
     if (statement.kind == syntax::StatementKind::let_binding) {
         if (!binding_type.has_value()) {
@@ -65,7 +66,14 @@ auto lower_common_builtin_nonvalue_statement(
     }
     if (statement.kind == syntax::StatementKind::break_statement ||
         statement.kind == syntax::StatementKind::continue_statement) {
-        return lower_loop_control_statement(statement, context, session, diagnostics, output)
+        return lower_loop_control_statement(
+            statement,
+            context,
+            session,
+            diagnostics,
+            output,
+            lower_cleanup_block
+        )
             ? StatementFlow::terminated
             : StatementFlow::failed;
     }
