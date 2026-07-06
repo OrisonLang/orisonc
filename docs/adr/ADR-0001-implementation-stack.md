@@ -272,6 +272,8 @@ analysis, and lowering components.
   nested value blocks.
   Value statement-block cleanup replay now centralizes explicit-callback versus compatibility-adapter dispatch in one
   local helper.
+  Statement emitter smoke coverage now exercises the explicit value-block cleanup callback overload for no-cleanup
+  value blocks.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

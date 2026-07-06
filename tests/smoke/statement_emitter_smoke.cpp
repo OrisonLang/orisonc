@@ -32,6 +32,16 @@ auto reject_control_flow(
     return std::nullopt;
 }
 
+auto reject_cleanup_block(
+    std::vector<orison::syntax::StatementSyntax const*> const&,
+    orison::lowering::LoweringEmissionContext const&,
+    orison::lowering::FunctionLoweringSession&,
+    orison::diagnostics::DiagnosticBag&,
+    std::ostringstream&
+) -> orison::lowering::StatementFlow {
+    return orison::lowering::StatementFlow::failed;
+}
+
 }  // namespace
 
 int main() {
@@ -605,7 +615,8 @@ int main() {
         block_session,
         diagnostics,
         output,
-        reject_control_flow
+        reject_control_flow,
+        reject_cleanup_block
     );
     assert(block_value.has_value());
     assert(block_value->value == "%value");
@@ -627,7 +638,8 @@ int main() {
         block_session,
         diagnostics,
         output,
-        reject_control_flow
+        reject_control_flow,
+        reject_cleanup_block
     );
     assert(pointer_block_value.has_value());
     assert(pointer_block_value->value == "%input");
