@@ -11,6 +11,7 @@
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/type_lowering.hpp"
+#include "orison/lowering/while_loop_lowering.hpp"
 
 #include <optional>
 #include <string>
@@ -339,65 +340,16 @@ auto lower_while_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    if (statement.kind != syntax::StatementKind::while_statement) {
-        diagnostics.error(statement.line, "while lowering requires a while statement");
-        return false;
-    }
-    if (statement.nested_statements.empty()) {
-        diagnostics.error(statement.line, "while lowering requires a non-empty body");
-        return false;
-    }
-    auto const block_index = next_llvm_block_index(session.state.next_block_index);
-    auto const condition_block = llvm_block_name("while.condition", block_index);
-    auto const body_block = llvm_block_name("while.body", block_index);
-    auto const exit_block = llvm_block_name("while.exit", block_index);
-
-    emit_llvm_branch(output, condition_block);
-    emit_llvm_block_label(output, condition_block);
-    session.state.current_block = condition_block;
-
-    auto condition = lower_expression(
-        statement.expression,
-        "i1",
-        IntegerSignedness::not_integer,
+    return lower_while_loop_statement(
+        statement,
         context,
         session,
-        output
-    );
-    if (!condition.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
-        diagnostics.error(
-            statement.line,
-            "lowering does not yet support this while condition" +
-                (detail.empty() ? std::string {} : ": " + detail)
-        );
-        return false;
-    }
-    emit_llvm_conditional_branch(output, condition->value, body_block, exit_block);
-
-    emit_llvm_block_label(output, body_block);
-    session.state.current_block = body_block;
-    auto loop_scope = LoopTargetScope {
-        session.state,
-        LoopTargets {
-            .break_target = exit_block,
-            .continue_target = condition_block,
-            .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
-        },
-    };
-    auto body_scope = BranchBindingScope(session.state);
-    auto body_flow =
-        lower_while_body_block(statement.nested_statements, context, session, diagnostics, output);
-    if (body_flow == StatementFlow::failed) {
-        return false;
-    }
-    if (body_flow == StatementFlow::falls_through) {
-        emit_llvm_branch(output, condition_block);
-    }
-
-    emit_llvm_block_label(output, exit_block);
-    session.state.current_block = exit_block;
-    return true;
+        diagnostics,
+        output,
+        [&]() {
+            return lower_while_body_block(statement.nested_statements, context, session, diagnostics, output);
+        }
+    ) != StatementFlow::failed;
 }
 
 }  // namespace orison::lowering
