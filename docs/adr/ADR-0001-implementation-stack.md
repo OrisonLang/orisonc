@@ -260,6 +260,8 @@ analysis, and lowering components.
   remains templated.
   While loop block planning and loop-target construction follow the same split while condition/body orchestration
   remains templated.
+  Common non-value statement dispatch now keeps concrete built-in statement lowering out of line while preserving
+  templated caller-provided binding inference and nested repeat/for/unsafe callbacks.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
