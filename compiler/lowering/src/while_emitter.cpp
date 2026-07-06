@@ -9,6 +9,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
+#include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unsafe_block_lowering.hpp"
@@ -304,32 +305,27 @@ auto lower_while_body_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto flow = StatementFlow::falls_through;
-    DeferredCleanupScope defer_scope(session.state);
+    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
+    statement_pointers.reserve(statements.size());
     for (auto const& statement : statements) {
-        if (flow == StatementFlow::terminated) {
-            diagnostics.error(
-                statement.line,
-                "lowering does not support statements after terminating loop control"
-            );
-            return StatementFlow::failed;
-        }
-        flow = lower_while_body_statement(statement, context, session, diagnostics, output);
-        if (flow == StatementFlow::failed) {
-            return flow;
-        }
+        statement_pointers.push_back(&statement);
     }
-    if (flow == StatementFlow::falls_through &&
-        !emit_deferred_cleanup_to_depth(
-            defer_scope.cleanup_depth(),
-            context,
-            session,
-            diagnostics,
-            output
-        )) {
-        return StatementFlow::failed;
-    }
-    return flow;
+
+    return lower_nonvalue_statement_block(
+        std::span<syntax::StatementSyntax const* const> {
+            statement_pointers.data(),
+            statement_pointers.size(),
+        },
+        "lowering does not support statements after terminating loop control",
+        context,
+        session,
+        diagnostics,
+        output,
+        [&](syntax::StatementSyntax const& statement, bool is_last_statement) {
+            (void)is_last_statement;
+            return lower_while_body_statement(statement, context, session, diagnostics, output);
+        }
+    );
 }
 
 }  // namespace

@@ -15,6 +15,7 @@
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
+#include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
@@ -294,38 +295,17 @@ auto lower_unit_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto flow = StatementFlow::falls_through;
-    DeferredCleanupScope defer_scope(session.state);
-    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
-        auto const* statement = statements[index];
-        if (statement == nullptr) {
-            return StatementFlow::failed;
+    return lower_nonvalue_statement_block(
+        statements,
+        "lowering does not yet support statements after a terminating Unit statement",
+        context,
+        session,
+        diagnostics,
+        output,
+        [&](syntax::StatementSyntax const& statement, bool is_last_statement) {
+            return lower_unit_statement(statement, is_last_statement, context, session, diagnostics, output);
         }
-        if (flow == StatementFlow::terminated) {
-            diagnostics.error(
-                statement->line,
-                "lowering does not yet support statements after a terminating Unit statement"
-            );
-            return StatementFlow::failed;
-        }
-
-        auto const is_last_statement = index + 1 == statements.size();
-        flow = lower_unit_statement(*statement, is_last_statement, context, session, diagnostics, output);
-        if (flow == StatementFlow::failed) {
-            return StatementFlow::failed;
-        }
-    }
-    if (flow == StatementFlow::falls_through &&
-        !emit_deferred_cleanup_to_depth(
-            defer_scope.cleanup_depth(),
-            context,
-            session,
-            diagnostics,
-            output
-        )) {
-        return StatementFlow::failed;
-    }
-    return flow;
+    );
 }
 
 auto lower_unit_statement_block(
@@ -350,38 +330,17 @@ auto lower_unit_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto flow = StatementFlow::falls_through;
-    DeferredCleanupScope defer_scope(session.state);
-    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
-        auto const* statement = statements[index];
-        if (statement == nullptr) {
-            return StatementFlow::failed;
+    return lower_nonvalue_statement_block(
+        std::span<syntax::StatementSyntax const* const> {statements.data(), statements.size()},
+        "lowering does not yet support statements after a terminating Unit statement",
+        context,
+        session,
+        diagnostics,
+        output,
+        [&](syntax::StatementSyntax const& statement, bool is_last_statement) {
+            return lower_unit_statement(statement, is_last_statement, context, session, diagnostics, output);
         }
-        if (flow == StatementFlow::terminated) {
-            diagnostics.error(
-                statement->line,
-                "lowering does not yet support statements after a terminating Unit statement"
-            );
-            return StatementFlow::failed;
-        }
-
-        auto const is_last_statement = index + 1 == statements.size();
-        flow = lower_unit_statement(*statement, is_last_statement, context, session, diagnostics, output);
-        if (flow == StatementFlow::failed) {
-            return StatementFlow::failed;
-        }
-    }
-    if (flow == StatementFlow::falls_through &&
-        !emit_deferred_cleanup_to_depth(
-            defer_scope.cleanup_depth(),
-            context,
-            session,
-            diagnostics,
-            output
-        )) {
-        return StatementFlow::failed;
-    }
-    return flow;
+    );
 }
 
 auto lower_unit_statement_block(

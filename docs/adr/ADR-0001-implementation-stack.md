@@ -90,6 +90,8 @@ analysis, and lowering components.
   scoping, and branch emission are centralized while the existing while-body dispatcher remains caller-provided.
 - Unsafe block lowering now has a shared binding-scope helper used by Unit function bodies and while bodies while
   each caller still supplies its own nested statement lowering callback.
+- Non-value statement-block traversal is shared for Unit function bodies and while bodies: the common helper owns
+  defer-scope replay and post-termination checks while callers retain statement-kind dispatch policy.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.
