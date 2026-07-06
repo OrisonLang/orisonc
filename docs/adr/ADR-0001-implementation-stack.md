@@ -252,6 +252,8 @@ analysis, and lowering components.
   operands, and `Pointer(...)` construction share the same `ptrtoint`/`inttoptr` instruction shape.
   For loop lowering now uses header-templated body and element-type callbacks, removing the dedicated lowering source
   while preserving array-literal and fixed-array iterable lowering for Unit and nested while bodies.
+  The templated `for` lowering paths now share one local block-plan helper for exit and iteration block naming,
+  keeping array-literal and fixed-array iterable CFG setup consistent.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

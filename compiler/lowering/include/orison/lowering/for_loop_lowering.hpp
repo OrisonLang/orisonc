@@ -15,6 +15,7 @@
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/syntax/module_parser.hpp"
 
+#include <cstddef>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -22,6 +23,31 @@
 #include <vector>
 
 namespace orison::lowering {
+
+struct ForLoopBlockPlan {
+    std::string exit_block;
+    std::vector<std::string> iteration_blocks;
+};
+
+inline auto plan_for_loop_blocks(FunctionLoweringState& state, std::size_t iteration_count)
+    -> ForLoopBlockPlan {
+    auto const block_index = next_llvm_block_index(state.next_block_index);
+    auto plan = ForLoopBlockPlan {
+        .exit_block = llvm_block_name("for.exit", block_index),
+        .iteration_blocks = {},
+    };
+    plan.iteration_blocks.reserve(iteration_count);
+    for (auto index = std::size_t {0}; index < iteration_count; ++index) {
+        plan.iteration_blocks.push_back(llvm_block_name("for.iteration", block_index, index));
+    }
+    return plan;
+}
+
+inline auto next_for_iteration_target(ForLoopBlockPlan const& plan, std::size_t index)
+    -> std::string const& {
+    return index + 1 < plan.iteration_blocks.size() ? plan.iteration_blocks[index + 1]
+                                                    : plan.exit_block;
+}
 
 template <typename LowerBody>
 auto lower_fixed_array_for_statement(
@@ -96,28 +122,21 @@ auto lower_fixed_array_for_statement(
         return StatementFlow::failed;
     }
 
-    auto const block_index = next_llvm_block_index(session.state.next_block_index);
-    auto const exit_block = llvm_block_name("for.exit", block_index);
-    auto iteration_blocks = std::vector<std::string> {};
-    iteration_blocks.reserve(array_type->length);
-    for (auto index = std::size_t {0}; index < array_type->length; ++index) {
-        iteration_blocks.push_back(llvm_block_name("for.iteration", block_index, index));
-    }
-
-    if (iteration_blocks.empty()) {
-        emit_llvm_branch(output, exit_block);
-        emit_llvm_block_label(output, exit_block);
-        session.state.current_block = exit_block;
+    auto block_plan = plan_for_loop_blocks(session.state, array_type->length);
+    if (block_plan.iteration_blocks.empty()) {
+        emit_llvm_branch(output, block_plan.exit_block);
+        emit_llvm_block_label(output, block_plan.exit_block);
+        session.state.current_block = block_plan.exit_block;
         return StatementFlow::falls_through;
     }
 
     auto loop_scope = BranchBindingScope(session.state);
-    emit_llvm_branch(output, iteration_blocks.front());
+    emit_llvm_branch(output, block_plan.iteration_blocks.front());
 
     for (auto index = std::size_t {0}; index < array_type->length; ++index) {
         loop_scope.reset();
-        emit_llvm_block_label(output, iteration_blocks[index]);
-        session.state.current_block = iteration_blocks[index];
+        emit_llvm_block_label(output, block_plan.iteration_blocks[index]);
+        session.state.current_block = block_plan.iteration_blocks[index];
 
         auto item_name = next_llvm_temporary_name(session.state.next_temporary_index);
         output << "  " << item_name << " = extractvalue " << lowered_iterable->type << " "
@@ -136,8 +155,8 @@ auto lower_fixed_array_for_statement(
         );
 
         auto loop_targets = LoopTargets {
-            .break_target = exit_block,
-            .continue_target = index + 1 < array_type->length ? iteration_blocks[index + 1] : exit_block,
+            .break_target = block_plan.exit_block,
+            .continue_target = next_for_iteration_target(block_plan, index),
             .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
         };
         [[maybe_unused]] auto target_scope = LoopTargetScope {session.state, std::move(loop_targets)};
@@ -146,13 +165,12 @@ auto lower_fixed_array_for_statement(
             return StatementFlow::failed;
         }
         if (body_flow == StatementFlow::falls_through) {
-            emit_llvm_branch(output, index + 1 < array_type->length ? iteration_blocks[index + 1]
-                                                                    : exit_block);
+            emit_llvm_branch(output, next_for_iteration_target(block_plan, index));
         }
     }
 
-    emit_llvm_block_label(output, exit_block);
-    session.state.current_block = exit_block;
+    emit_llvm_block_label(output, block_plan.exit_block);
+    session.state.current_block = block_plan.exit_block;
     return StatementFlow::falls_through;
 }
 
@@ -188,28 +206,21 @@ auto lower_array_literal_for_statement(
         };
     }
 
-    auto const block_index = next_llvm_block_index(session.state.next_block_index);
-    auto const exit_block = llvm_block_name("for.exit", block_index);
-    auto iteration_blocks = std::vector<std::string> {};
-    iteration_blocks.reserve(statement.expression.arguments.size());
-    for (auto index = std::size_t {0}; index < statement.expression.arguments.size(); ++index) {
-        iteration_blocks.push_back(llvm_block_name("for.iteration", block_index, index));
-    }
-
-    if (iteration_blocks.empty()) {
-        emit_llvm_branch(output, exit_block);
-        emit_llvm_block_label(output, exit_block);
-        session.state.current_block = exit_block;
+    auto block_plan = plan_for_loop_blocks(session.state, statement.expression.arguments.size());
+    if (block_plan.iteration_blocks.empty()) {
+        emit_llvm_branch(output, block_plan.exit_block);
+        emit_llvm_block_label(output, block_plan.exit_block);
+        session.state.current_block = block_plan.exit_block;
         return StatementFlow::falls_through;
     }
 
     auto loop_scope = BranchBindingScope(session.state);
-    emit_llvm_branch(output, iteration_blocks.front());
+    emit_llvm_branch(output, block_plan.iteration_blocks.front());
 
     for (auto index = std::size_t {0}; index < statement.expression.arguments.size(); ++index) {
         loop_scope.reset();
-        emit_llvm_block_label(output, iteration_blocks[index]);
-        session.state.current_block = iteration_blocks[index];
+        emit_llvm_block_label(output, block_plan.iteration_blocks[index]);
+        session.state.current_block = block_plan.iteration_blocks[index];
 
         auto lowered_item = lower_expression(
             statement.expression.arguments[index],
@@ -245,10 +256,8 @@ auto lower_array_literal_for_statement(
         );
 
         auto loop_targets = LoopTargets {
-            .break_target = exit_block,
-            .continue_target = index + 1 < statement.expression.arguments.size()
-                ? iteration_blocks[index + 1]
-                : exit_block,
+            .break_target = block_plan.exit_block,
+            .continue_target = next_for_iteration_target(block_plan, index),
             .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
         };
         [[maybe_unused]] auto target_scope = LoopTargetScope {session.state, std::move(loop_targets)};
@@ -257,17 +266,12 @@ auto lower_array_literal_for_statement(
             return StatementFlow::failed;
         }
         if (body_flow == StatementFlow::falls_through) {
-            emit_llvm_branch(
-                output,
-                index + 1 < statement.expression.arguments.size()
-                    ? iteration_blocks[index + 1]
-                    : exit_block
-            );
+            emit_llvm_branch(output, next_for_iteration_target(block_plan, index));
         }
     }
 
-    emit_llvm_block_label(output, exit_block);
-    session.state.current_block = exit_block;
+    emit_llvm_block_label(output, block_plan.exit_block);
+    session.state.current_block = block_plan.exit_block;
     return StatementFlow::falls_through;
 }
 
