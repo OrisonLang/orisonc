@@ -1451,6 +1451,16 @@ auto emit_deferred_cleanup_to_depth(
     );
 }
 
+auto lower_unit_deferred_cleanup_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
+    return lower_unit_statement_block(statements, context, session, diagnostics, output);
+}
+
 auto emit_function(
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature const& signature,

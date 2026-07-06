@@ -3,6 +3,7 @@
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
+#include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -174,7 +175,8 @@ auto lower_final_if_statement(
                     arm.session,
                     arm.diagnostics,
                     arm.output,
-                    lower_nested_final_control_flow
+                    lower_nested_final_control_flow,
+                    lower_unit_deferred_cleanup_block
                 );
             },
             .between_arms = [](void* opaque) {
@@ -190,7 +192,8 @@ auto lower_final_if_statement(
                     arm.session,
                     arm.diagnostics,
                     arm.output,
-                    lower_nested_final_control_flow
+                    lower_nested_final_control_flow,
+                    lower_unit_deferred_cleanup_block
                 );
             },
         }
@@ -316,7 +319,8 @@ auto lower_final_switch_statement(
                     current.session,
                     current.diagnostics,
                     current.output,
-                    lower_nested_final_control_flow
+                    lower_nested_final_control_flow,
+                    lower_unit_deferred_cleanup_block
                 );
             },
         }
