@@ -24,6 +24,16 @@ using BindingTypeInferer = std::function<std::optional<LoweredType>(
     LoweringEmissionContext const& context,
     FunctionLoweringState const& state
 )>;
+using NestedStatementLowerer = std::function<StatementFlow(syntax::StatementSyntax const& statement)>;
+
+struct CommonNonValueStatementPolicy {
+    BindingTypeInferer infer_binding_type;
+    std::string_view unsupported_let_diagnostic;
+    std::string_view unsupported_var_diagnostic;
+    NestedStatementLowerer lower_repeat;
+    NestedStatementLowerer lower_for;
+    NestedStatementLowerer lower_unsafe;
+};
 
 auto lower_nonvalue_statement_block(
     std::span<syntax::StatementSyntax const* const> statements,
@@ -41,9 +51,7 @@ auto lower_common_nonvalue_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    BindingTypeInferer infer_binding_type,
-    std::string_view unsupported_let_diagnostic,
-    std::string_view unsupported_var_diagnostic
+    CommonNonValueStatementPolicy const& policy
 ) -> std::optional<StatementFlow>;
 
 }  // namespace orison::lowering

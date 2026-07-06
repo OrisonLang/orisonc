@@ -221,9 +221,20 @@ auto lower_while_body_statement(
         session,
         diagnostics,
         output,
-        inferred_loop_binding_type,
-        "lowering does not yet support this while let type",
-        "lowering does not yet support this while var type"
+        CommonNonValueStatementPolicy {
+            .infer_binding_type = inferred_loop_binding_type,
+            .unsupported_let_diagnostic = "lowering does not yet support this while let type",
+            .unsupported_var_diagnostic = "lowering does not yet support this while var type",
+            .lower_repeat = [&](syntax::StatementSyntax const& nested_statement) {
+                return lower_while_body_repeat(nested_statement, context, session, diagnostics, output);
+            },
+            .lower_for = [&](syntax::StatementSyntax const& nested_statement) {
+                return lower_while_body_for(nested_statement, context, session, diagnostics, output);
+            },
+            .lower_unsafe = [&](syntax::StatementSyntax const& nested_statement) {
+                return lower_while_body_unsafe(nested_statement, context, session, diagnostics, output);
+            },
+        }
     );
     if (common_flow.has_value()) {
         return *common_flow;
@@ -231,16 +242,6 @@ auto lower_while_body_statement(
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_while_body_if(statement, context, session, diagnostics, output);
     }
-    if (statement.kind == syntax::StatementKind::repeat_statement) {
-        return lower_while_body_repeat(statement, context, session, diagnostics, output);
-    }
-    if (statement.kind == syntax::StatementKind::for_statement) {
-        return lower_while_body_for(statement, context, session, diagnostics, output);
-    }
-    if (statement.kind == syntax::StatementKind::unsafe_statement) {
-        return lower_while_body_unsafe(statement, context, session, diagnostics, output);
-    }
-
     diagnostics.error(
         statement.line,
         "lowering while body only supports local bindings, mutable-local assignments, "

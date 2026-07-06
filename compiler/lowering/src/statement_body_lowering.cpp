@@ -54,14 +54,12 @@ auto lower_common_nonvalue_statement(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    BindingTypeInferer infer_binding_type,
-    std::string_view unsupported_let_diagnostic,
-    std::string_view unsupported_var_diagnostic
+    CommonNonValueStatementPolicy const& policy
 ) -> std::optional<StatementFlow> {
     if (statement.kind == syntax::StatementKind::let_binding) {
-        auto type = infer_binding_type(statement, context, session.state);
+        auto type = policy.infer_binding_type(statement, context, session.state);
         if (!type.has_value()) {
-            diagnostics.error(statement.line, std::string(unsupported_let_diagnostic));
+            diagnostics.error(statement.line, std::string(policy.unsupported_let_diagnostic));
             return StatementFlow::failed;
         }
         return lower_let_statement(
@@ -76,9 +74,9 @@ auto lower_common_nonvalue_statement(
           : StatementFlow::failed;
     }
     if (statement.kind == syntax::StatementKind::var_binding) {
-        auto type = infer_binding_type(statement, context, session.state);
+        auto type = policy.infer_binding_type(statement, context, session.state);
         if (!type.has_value()) {
-            diagnostics.error(statement.line, std::string(unsupported_var_diagnostic));
+            diagnostics.error(statement.line, std::string(policy.unsupported_var_diagnostic));
             return StatementFlow::failed;
         }
         return lower_var_statement(
@@ -118,6 +116,15 @@ auto lower_common_nonvalue_statement(
         return lower_while_statement(statement, context, session, diagnostics, output)
             ? StatementFlow::falls_through
             : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::repeat_statement && policy.lower_repeat) {
+        return policy.lower_repeat(statement);
+    }
+    if (statement.kind == syntax::StatementKind::for_statement && policy.lower_for) {
+        return policy.lower_for(statement);
+    }
+    if (statement.kind == syntax::StatementKind::unsafe_statement && policy.lower_unsafe) {
+        return policy.lower_unsafe(statement);
     }
     return std::nullopt;
 }

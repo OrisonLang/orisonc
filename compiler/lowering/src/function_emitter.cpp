@@ -1086,9 +1086,20 @@ auto lower_unit_statement(
         session,
         diagnostics,
         output,
-        infer_unit_binding_type,
-        "lowering does not yet support this Unit let binding",
-        "lowering does not yet support this Unit var binding"
+        CommonNonValueStatementPolicy {
+            .infer_binding_type = infer_unit_binding_type,
+            .unsupported_let_diagnostic = "lowering does not yet support this Unit let binding",
+            .unsupported_var_diagnostic = "lowering does not yet support this Unit var binding",
+            .lower_repeat = [&](syntax::StatementSyntax const& nested_statement) {
+                return lower_unit_repeat_statement(nested_statement, context, session, diagnostics, output);
+            },
+            .lower_for = [&](syntax::StatementSyntax const& nested_statement) {
+                return lower_unit_for_statement(nested_statement, context, session, diagnostics, output);
+            },
+            .lower_unsafe = [&](syntax::StatementSyntax const& nested_statement) {
+                return lower_unit_unsafe_statement(nested_statement, context, session, diagnostics, output);
+            },
+        }
     );
     if (common_flow.has_value()) {
         return *common_flow;
@@ -1112,15 +1123,6 @@ auto lower_unit_statement(
     }
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_unit_if_statement(statement, context, session, diagnostics, output);
-    }
-    if (statement.kind == syntax::StatementKind::repeat_statement) {
-        return lower_unit_repeat_statement(statement, context, session, diagnostics, output);
-    }
-    if (statement.kind == syntax::StatementKind::for_statement) {
-        return lower_unit_for_statement(statement, context, session, diagnostics, output);
-    }
-    if (statement.kind == syntax::StatementKind::unsafe_statement) {
-        return lower_unit_unsafe_statement(statement, context, session, diagnostics, output);
     }
     (void)is_last_statement;
 

@@ -94,6 +94,8 @@ analysis, and lowering components.
   defer-scope replay and post-termination checks while callers retain statement-kind dispatch policy.
 - Common non-value statement handlers for local bindings, assignment, calls, defers, loop control, and nested `while`
   now share one helper with caller-provided binding type inference and diagnostics.
+- Nested `repeat`, `for`, and `unsafe` dispatch in non-value statement bodies now flows through the same common
+  helper using caller-provided callbacks, leaving Unit-only return/guard/switch/if behavior local.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.
