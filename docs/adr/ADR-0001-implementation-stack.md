@@ -79,6 +79,8 @@ analysis, and lowering components.
   dispatch nested `while` loops through the shared while lowering path and nested `repeat` loops through the same
   while-body statement dispatcher. Nested `for` loops in while bodies support the same array-literal and fixed-size
   array iterable subset as top-level Unit `for` lowering.
+- Loop statement-flow classification and loop-target stack scoping now live in shared lowering support, so function
+  body and while-body emitters no longer carry duplicate loop-control infrastructure.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.

@@ -7,6 +7,7 @@
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -18,30 +19,6 @@
 
 namespace orison::lowering {
 namespace {
-
-enum class StatementFlow {
-    falls_through,
-    terminated,
-    failed,
-};
-
-class LoopTargetScope {
-public:
-    LoopTargetScope(FunctionLoweringState& state, LoopTargets targets)
-        : state_(state) {
-        state_.loop_targets.push_back(std::move(targets));
-    }
-
-    ~LoopTargetScope() {
-        state_.loop_targets.pop_back();
-    }
-
-    LoopTargetScope(LoopTargetScope const&) = delete;
-    auto operator=(LoopTargetScope const&) -> LoopTargetScope& = delete;
-
-private:
-    FunctionLoweringState& state_;
-};
 
 auto lower_while_body_block(
     std::vector<syntax::StatementSyntax> const& statements,
