@@ -2,10 +2,13 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
+#include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
+#include "orison/syntax/module_parser.hpp"
 
 #include <cstddef>
 #include <sstream>
+#include <vector>
 
 namespace orison::lowering {
 
@@ -32,6 +35,23 @@ auto emit_deferred_cleanup_to_depth(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
+) -> bool;
+
+using DeferredCleanupBlockLowerer = StatementFlow (*)(
+    std::vector<syntax::StatementSyntax const*> const& statements,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+);
+
+auto emit_deferred_cleanup_to_depth_with_block_lowerer(
+    std::size_t target_depth,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> bool;
 
 }  // namespace orison::lowering

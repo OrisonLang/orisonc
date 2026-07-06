@@ -264,8 +264,8 @@ analysis, and lowering components.
   templated caller-provided binding inference and nested repeat/for/unsafe callbacks.
   Deferred cleanup scope and replay declarations now live behind a narrow cleanup header so shared statement-body
   traversal no longer depends on the full statement-emitter API.
-  Deferred cleanup scope RAII implementation also lives behind that cleanup boundary; replay emission remains with
-  function emission until Unit block cleanup lowering has a narrower callback surface.
+  Deferred cleanup scope RAII and replay iteration also live behind that cleanup boundary; function emission keeps only
+  the Unit block-lowering adapter for cleanup replay.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
