@@ -11,6 +11,7 @@
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/type_lowering.hpp"
+#include "orison/lowering/unsafe_block_lowering.hpp"
 #include "orison/lowering/while_loop_lowering.hpp"
 
 #include <optional>
@@ -184,9 +185,9 @@ auto lower_while_body_unsafe(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    [[maybe_unused]] auto binding_scope = BranchBindingScope(session.state);
-    auto flow = lower_while_body_block(statement.nested_statements, context, session, diagnostics, output);
-    return flow;
+    return lower_unsafe_block(session, [&]() {
+        return lower_while_body_block(statement.nested_statements, context, session, diagnostics, output);
+    });
 }
 
 auto inferred_loop_binding_type(

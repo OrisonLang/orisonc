@@ -88,6 +88,8 @@ analysis, and lowering components.
   condition lowering, and diagnostics live in one helper while callers supply the body-lowering callback.
 - `while` lowering now follows the same helper split: common block construction, condition lowering, loop target
   scoping, and branch emission are centralized while the existing while-body dispatcher remains caller-provided.
+- Unsafe block lowering now has a shared binding-scope helper used by Unit function bodies and while bodies while
+  each caller still supplies its own nested statement lowering callback.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.

@@ -20,6 +20,7 @@
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/switch_plan.hpp"
 #include "orison/lowering/type_lowering.hpp"
+#include "orison/lowering/unsafe_block_lowering.hpp"
 #include "orison/lowering/while_emitter.hpp"
 
 #include <optional>
@@ -634,12 +635,9 @@ auto lower_unit_unsafe_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    [[maybe_unused]] auto binding_scope = BranchBindingScope(session.state);
-    auto flow = lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
-    if (flow == StatementFlow::failed) {
-        return StatementFlow::failed;
-    }
-    return flow;
+    return lower_unsafe_block(session, [&]() {
+        return lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
+    });
 }
 
 auto lower_unit_defer_statement(
