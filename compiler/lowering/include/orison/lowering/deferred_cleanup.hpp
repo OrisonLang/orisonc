@@ -29,14 +29,6 @@ private:
     std::size_t cleanup_depth_ = 0;
 };
 
-auto emit_deferred_cleanup_to_depth(
-    std::size_t target_depth,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
-) -> bool;
-
 using DeferredCleanupBlockLowerer = StatementFlow (*)(
     std::vector<syntax::StatementSyntax const*> const& statements,
     LoweringEmissionContext const& context,

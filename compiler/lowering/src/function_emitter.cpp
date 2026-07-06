@@ -224,7 +224,14 @@ auto emit_function_return_cleanup(
     std::ostringstream& output
 ) -> bool {
     emit_abandoned_thread_handle_cleanup(session, output);
-    return emit_deferred_cleanup_to_depth(0, context, session, diagnostics, output);
+    return emit_deferred_cleanup_to_depth_with_block_lowerer(
+        0,
+        context,
+        session,
+        diagnostics,
+        output,
+        lower_unit_deferred_cleanup_block
+    );
 }
 
 auto infer_unit_expression_type(
@@ -718,12 +725,13 @@ auto lower_guard_statement_block(
         }
     }
     if (flow == StatementFlow::falls_through &&
-        !emit_deferred_cleanup_to_depth(
+        !emit_deferred_cleanup_to_depth_with_block_lowerer(
             defer_scope.cleanup_depth(),
             context,
             session,
             diagnostics,
-            output
+            output,
+            lower_unit_deferred_cleanup_block
         )) {
         return StatementFlow::failed;
     }
@@ -1436,23 +1444,6 @@ void emit_function_body(
 }
 
 }  // namespace
-
-auto emit_deferred_cleanup_to_depth(
-    std::size_t target_depth,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
-) -> bool {
-    return emit_deferred_cleanup_to_depth_with_block_lowerer(
-        target_depth,
-        context,
-        session,
-        diagnostics,
-        output,
-        lower_unit_statement_block
-    );
-}
 
 auto lower_unit_deferred_cleanup_block(
     std::vector<syntax::StatementSyntax const*> const& statements,
