@@ -95,17 +95,6 @@ auto lower_value_statement_block(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    FinalControlFlowLowerer lower_final_control_flow
-) -> std::optional<LoweredExpression>;
-
-auto lower_value_statement_block(
-    std::vector<syntax::StatementSyntax> const& statements,
-    std::string_view expected_llvm_type,
-    IntegerSignedness expected_signedness,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
     DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> std::optional<LoweredExpression>;
@@ -118,30 +107,8 @@ auto lower_value_statement_block(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    FinalControlFlowLowerer lower_final_control_flow
-) -> std::optional<LoweredExpression>;
-
-auto lower_value_statement_block(
-    std::vector<syntax::StatementSyntax const*> const& statements,
-    std::string_view expected_llvm_type,
-    IntegerSignedness expected_signedness,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
     DeferredCleanupBlockLowerer lower_cleanup_block
-) -> std::optional<LoweredExpression>;
-
-auto lower_value_statement_block(
-    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
-    std::string_view expected_llvm_type,
-    IntegerSignedness expected_signedness,
-    LoweringEmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output,
-    FinalControlFlowLowerer lower_final_control_flow
 ) -> std::optional<LoweredExpression>;
 
 auto lower_value_statement_block(

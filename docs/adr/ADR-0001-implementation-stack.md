@@ -266,12 +266,11 @@ analysis, and lowering components.
   traversal no longer depends on the full statement-emitter API.
   Deferred cleanup scope RAII and replay iteration also live behind that cleanup boundary; function emission keeps only
   the Unit block-lowering adapter for cleanup replay.
-  Value statement-block lowering now exposes overloads that accept an explicit cleanup block lowerer, while existing
-  callers keep using the compatibility Unit cleanup adapter during migration.
+  Value statement-block lowering now requires callers to pass an explicit cleanup block lowerer instead of relying on
+  compatibility overloads that selected the Unit cleanup adapter implicitly.
   Final value-producing control-flow lowering now passes the Unit cleanup block adapter explicitly when lowering
   nested value blocks.
-  Value statement-block cleanup replay now centralizes explicit-callback versus compatibility-adapter dispatch in one
-  local helper.
+  Value statement-block cleanup replay now routes directly through the caller-provided cleanup callback.
   Statement emitter smoke coverage now exercises the explicit value-block cleanup callback overload for no-cleanup
   value blocks.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
