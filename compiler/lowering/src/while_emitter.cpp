@@ -10,7 +10,6 @@
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
-#include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unsafe_block_lowering.hpp"
 #include "orison/lowering/while_loop_lowering.hpp"
@@ -216,69 +215,21 @@ auto lower_while_body_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    if (statement.kind == syntax::StatementKind::let_binding) {
-        auto type = inferred_loop_binding_type(statement, context, session.state);
-        if (!type.has_value()) {
-            diagnostics.error(statement.line, "lowering does not yet support this while let type");
-            return StatementFlow::failed;
-        }
-        return lower_let_statement(
-            statement,
-            type->type,
-            type->signedness,
-            context,
-            session,
-            diagnostics,
-            output
-        ) ? StatementFlow::falls_through
-          : StatementFlow::failed;
-    }
-    if (statement.kind == syntax::StatementKind::var_binding) {
-        auto type = inferred_loop_binding_type(statement, context, session.state);
-        if (!type.has_value()) {
-            diagnostics.error(statement.line, "lowering does not yet support this while var type");
-            return StatementFlow::failed;
-        }
-        return lower_var_statement(
-            statement,
-            type->type,
-            type->signedness,
-            context,
-            session,
-            diagnostics,
-            output
-        ) ? StatementFlow::falls_through
-          : StatementFlow::failed;
-    }
-    if (statement.kind == syntax::StatementKind::assignment_statement) {
-        return lower_assignment_statement(statement, context, session, diagnostics, output)
-            ? StatementFlow::falls_through
-            : StatementFlow::failed;
-    }
-    if (statement.kind == syntax::StatementKind::expression_statement &&
-        statement.expression.kind == syntax::ExpressionKind::call) {
-        return lower_call_statement(statement, context, session, diagnostics, output)
-            ? StatementFlow::falls_through
-            : StatementFlow::failed;
-    }
-    if (statement.kind == syntax::StatementKind::defer_statement) {
-        return record_deferred_cleanup(statement, session, diagnostics)
-            ? StatementFlow::falls_through
-            : StatementFlow::failed;
-    }
-    if (statement.kind == syntax::StatementKind::break_statement ||
-        statement.kind == syntax::StatementKind::continue_statement) {
-        return lower_loop_control_statement(statement, context, session, diagnostics, output)
-            ? StatementFlow::terminated
-            : StatementFlow::failed;
+    auto common_flow = lower_common_nonvalue_statement(
+        statement,
+        context,
+        session,
+        diagnostics,
+        output,
+        inferred_loop_binding_type,
+        "lowering does not yet support this while let type",
+        "lowering does not yet support this while var type"
+    );
+    if (common_flow.has_value()) {
+        return *common_flow;
     }
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_while_body_if(statement, context, session, diagnostics, output);
-    }
-    if (statement.kind == syntax::StatementKind::while_statement) {
-        return lower_while_statement(statement, context, session, diagnostics, output)
-            ? StatementFlow::falls_through
-            : StatementFlow::failed;
     }
     if (statement.kind == syntax::StatementKind::repeat_statement) {
         return lower_while_body_repeat(statement, context, session, diagnostics, output);

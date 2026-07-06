@@ -119,14 +119,6 @@ auto lower_unit_unsafe_statement(
     std::ostringstream& output
 ) -> StatementFlow;
 
-auto lower_unit_defer_statement(
-    syntax::StatementSyntax const& statement,
-    EmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
-) -> StatementFlow;
-
 auto lower_guard_statement(
     syntax::StatementSyntax const& statement,
     std::string_view return_llvm_type,
@@ -597,21 +589,6 @@ auto lower_unit_unsafe_statement(
     return lower_unsafe_block(session, [&]() {
         return lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
     });
-}
-
-auto lower_unit_defer_statement(
-    syntax::StatementSyntax const& statement,
-    EmissionContext const& context,
-    FunctionLoweringSession& session,
-    diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
-) -> StatementFlow {
-    if (!record_deferred_cleanup(statement, session, diagnostics)) {
-        return StatementFlow::failed;
-    }
-    (void)context;
-    (void)output;
-    return StatementFlow::falls_through;
 }
 
 auto emit_deferred_cleanup_to_depth_impl(
@@ -1103,49 +1080,18 @@ auto lower_unit_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    if (statement.kind == syntax::StatementKind::let_binding) {
-        auto type = infer_unit_binding_type(statement, context, session.state);
-        if (!type.has_value()) {
-            diagnostics.error(statement.line, "lowering does not yet support this Unit let binding");
-            return StatementFlow::failed;
-        }
-        if (!lower_let_statement(
-                statement,
-                type->type,
-                type->signedness,
-                context,
-                session,
-                diagnostics,
-                output
-            )) {
-            return StatementFlow::failed;
-        }
-        return StatementFlow::falls_through;
-    }
-    if (statement.kind == syntax::StatementKind::var_binding) {
-        auto type = infer_unit_binding_type(statement, context, session.state);
-        if (!type.has_value()) {
-            diagnostics.error(statement.line, "lowering does not yet support this Unit var binding");
-            return StatementFlow::failed;
-        }
-        if (!lower_var_statement(
-                statement,
-                type->type,
-                type->signedness,
-                context,
-                session,
-                diagnostics,
-                output
-            )) {
-            return StatementFlow::failed;
-        }
-        return StatementFlow::falls_through;
-    }
-    if (statement.kind == syntax::StatementKind::assignment_statement) {
-        if (!lower_assignment_statement(statement, context, session, diagnostics, output)) {
-            return StatementFlow::failed;
-        }
-        return StatementFlow::falls_through;
+    auto common_flow = lower_common_nonvalue_statement(
+        statement,
+        context,
+        session,
+        diagnostics,
+        output,
+        infer_unit_binding_type,
+        "lowering does not yet support this Unit let binding",
+        "lowering does not yet support this Unit var binding"
+    );
+    if (common_flow.has_value()) {
+        return *common_flow;
     }
     if (statement.kind == syntax::StatementKind::return_statement) {
         if (!is_empty_expression(statement.expression)) {
@@ -1158,13 +1104,6 @@ auto lower_unit_statement(
         output << "  ret void\n";
         return StatementFlow::terminated;
     }
-    if (statement.kind == syntax::StatementKind::break_statement ||
-        statement.kind == syntax::StatementKind::continue_statement) {
-        if (!lower_loop_control_statement(statement, context, session, diagnostics, output)) {
-            return StatementFlow::failed;
-        }
-        return StatementFlow::terminated;
-    }
     if (statement.kind == syntax::StatementKind::switch_statement) {
         return lower_unit_switch_statement(statement, context, session, diagnostics, output);
     }
@@ -1173,12 +1112,6 @@ auto lower_unit_statement(
     }
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_unit_if_statement(statement, context, session, diagnostics, output);
-    }
-    if (statement.kind == syntax::StatementKind::while_statement) {
-        if (!lower_while_statement(statement, context, session, diagnostics, output)) {
-            return StatementFlow::failed;
-        }
-        return StatementFlow::falls_through;
     }
     if (statement.kind == syntax::StatementKind::repeat_statement) {
         return lower_unit_repeat_statement(statement, context, session, diagnostics, output);
@@ -1189,17 +1122,7 @@ auto lower_unit_statement(
     if (statement.kind == syntax::StatementKind::unsafe_statement) {
         return lower_unit_unsafe_statement(statement, context, session, diagnostics, output);
     }
-    if (statement.kind == syntax::StatementKind::defer_statement) {
-        (void)is_last_statement;
-        return lower_unit_defer_statement(statement, context, session, diagnostics, output);
-    }
-    if (statement.kind == syntax::StatementKind::expression_statement &&
-        statement.expression.kind == syntax::ExpressionKind::call) {
-        if (!lower_call_statement(statement, context, session, diagnostics, output)) {
-            return StatementFlow::failed;
-        }
-        return StatementFlow::falls_through;
-    }
+    (void)is_last_statement;
 
     diagnostics.error(statement.line, "lowering does not yet support this statement");
     return StatementFlow::failed;
