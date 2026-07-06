@@ -84,6 +84,8 @@ analysis, and lowering components.
 - Current `for` lowering now lives behind shared loop lowering support with caller-provided type inference and body
   emission, reducing duplication between Unit function-body and while-body array-literal and fixed-size array iterable
   loop paths.
+- `repeat` lowering now follows the same shared-helper direction: common block construction, loop target scoping,
+  condition lowering, and diagnostics live in one helper while callers supply the body-lowering callback.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.
