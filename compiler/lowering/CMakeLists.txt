@@ -10,7 +10,6 @@ add_library(orison_lowering STATIC
     src/control_flow_emitter.cpp
     src/drop_metadata.cpp
     src/expression_emitter.cpp
-    src/for_loop_lowering.cpp
     src/function_emitter.cpp
     src/function_signature.cpp
     src/branch_binding_scope.cpp

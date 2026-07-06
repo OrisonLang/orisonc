@@ -250,6 +250,8 @@ analysis, and lowering components.
   assignment-specific diagnostics.
   Pointer/address conversion emission is centralized inside expression lowering so `address_of`, generic address
   operands, and `Pointer(...)` construction share the same `ptrtoint`/`inttoptr` instruction shape.
+  For loop lowering now uses header-templated body and element-type callbacks, removing the dedicated lowering source
+  while preserving array-literal and fixed-array iterable lowering for Unit and nested while bodies.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.
