@@ -1086,19 +1086,17 @@ auto lower_unit_statement(
         session,
         diagnostics,
         output,
-        CommonNonValueStatementPolicy {
-            .infer_binding_type = infer_unit_binding_type,
-            .unsupported_let_diagnostic = "lowering does not yet support this Unit let binding",
-            .unsupported_var_diagnostic = "lowering does not yet support this Unit var binding",
-            .lower_repeat = [&](syntax::StatementSyntax const& nested_statement) {
-                return lower_unit_repeat_statement(nested_statement, context, session, diagnostics, output);
-            },
-            .lower_for = [&](syntax::StatementSyntax const& nested_statement) {
-                return lower_unit_for_statement(nested_statement, context, session, diagnostics, output);
-            },
-            .lower_unsafe = [&](syntax::StatementSyntax const& nested_statement) {
-                return lower_unit_unsafe_statement(nested_statement, context, session, diagnostics, output);
-            },
+        infer_unit_binding_type,
+        "lowering does not yet support this Unit let binding",
+        "lowering does not yet support this Unit var binding",
+        [&](syntax::StatementSyntax const& nested_statement) {
+            return lower_unit_repeat_statement(nested_statement, context, session, diagnostics, output);
+        },
+        [&](syntax::StatementSyntax const& nested_statement) {
+            return lower_unit_for_statement(nested_statement, context, session, diagnostics, output);
+        },
+        [&](syntax::StatementSyntax const& nested_statement) {
+            return lower_unit_unsafe_statement(nested_statement, context, session, diagnostics, output);
         }
     );
     if (common_flow.has_value()) {

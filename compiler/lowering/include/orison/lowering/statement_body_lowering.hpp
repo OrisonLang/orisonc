@@ -5,36 +5,20 @@
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
+#include "orison/lowering/statement_emitter.hpp"
+#include "orison/lowering/while_emitter.hpp"
 #include "orison/syntax/module_parser.hpp"
 
-#include <functional>
 #include <optional>
 #include <span>
 #include <sstream>
+#include <string>
 #include <string_view>
+#include <utility>
 
 namespace orison::lowering {
 
-using NonValueStatementLowerer = std::function<StatementFlow(
-    syntax::StatementSyntax const& statement,
-    bool is_last_statement
-)>;
-using BindingTypeInferer = std::function<std::optional<LoweredType>(
-    syntax::StatementSyntax const& statement,
-    LoweringEmissionContext const& context,
-    FunctionLoweringState const& state
-)>;
-using NestedStatementLowerer = std::function<StatementFlow(syntax::StatementSyntax const& statement)>;
-
-struct CommonNonValueStatementPolicy {
-    BindingTypeInferer infer_binding_type;
-    std::string_view unsupported_let_diagnostic;
-    std::string_view unsupported_var_diagnostic;
-    NestedStatementLowerer lower_repeat;
-    NestedStatementLowerer lower_for;
-    NestedStatementLowerer lower_unsafe;
-};
-
+template <typename LowerStatement>
 auto lower_nonvalue_statement_block(
     std::span<syntax::StatementSyntax const* const> statements,
     std::string_view terminated_statement_diagnostic,
@@ -42,16 +26,124 @@ auto lower_nonvalue_statement_block(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    NonValueStatementLowerer lower_statement
-) -> StatementFlow;
+    LowerStatement&& lower_statement
+) -> StatementFlow {
+    auto flow = StatementFlow::falls_through;
+    DeferredCleanupScope defer_scope(session.state);
+    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
+        auto const* statement = statements[index];
+        if (statement == nullptr) {
+            return StatementFlow::failed;
+        }
+        if (flow == StatementFlow::terminated) {
+            diagnostics.error(statement->line, std::string(terminated_statement_diagnostic));
+            return StatementFlow::failed;
+        }
 
+        auto const is_last_statement = index + 1 == statements.size();
+        flow = std::forward<LowerStatement>(lower_statement)(*statement, is_last_statement);
+        if (flow == StatementFlow::failed) {
+            return StatementFlow::failed;
+        }
+    }
+    if (flow == StatementFlow::falls_through &&
+        !emit_deferred_cleanup_to_depth(
+            defer_scope.cleanup_depth(),
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return StatementFlow::failed;
+    }
+    return flow;
+}
+
+template <typename InferBindingType, typename LowerRepeat, typename LowerFor, typename LowerUnsafe>
 auto lower_common_nonvalue_statement(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    CommonNonValueStatementPolicy const& policy
-) -> std::optional<StatementFlow>;
+    InferBindingType&& infer_binding_type,
+    std::string_view unsupported_let_diagnostic,
+    std::string_view unsupported_var_diagnostic,
+    LowerRepeat&& lower_repeat,
+    LowerFor&& lower_for,
+    LowerUnsafe&& lower_unsafe
+) -> std::optional<StatementFlow> {
+    if (statement.kind == syntax::StatementKind::let_binding) {
+        auto type = std::forward<InferBindingType>(infer_binding_type)(statement, context, session.state);
+        if (!type.has_value()) {
+            diagnostics.error(statement.line, std::string(unsupported_let_diagnostic));
+            return StatementFlow::failed;
+        }
+        return lower_let_statement(
+            statement,
+            type->type,
+            type->signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        ) ? StatementFlow::falls_through
+          : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::var_binding) {
+        auto type = std::forward<InferBindingType>(infer_binding_type)(statement, context, session.state);
+        if (!type.has_value()) {
+            diagnostics.error(statement.line, std::string(unsupported_var_diagnostic));
+            return StatementFlow::failed;
+        }
+        return lower_var_statement(
+            statement,
+            type->type,
+            type->signedness,
+            context,
+            session,
+            diagnostics,
+            output
+        ) ? StatementFlow::falls_through
+          : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::assignment_statement) {
+        return lower_assignment_statement(statement, context, session, diagnostics, output)
+            ? StatementFlow::falls_through
+            : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::expression_statement &&
+        statement.expression.kind == syntax::ExpressionKind::call) {
+        return lower_call_statement(statement, context, session, diagnostics, output)
+            ? StatementFlow::falls_through
+            : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::defer_statement) {
+        return record_deferred_cleanup(statement, session, diagnostics)
+            ? StatementFlow::falls_through
+            : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::break_statement ||
+        statement.kind == syntax::StatementKind::continue_statement) {
+        return lower_loop_control_statement(statement, context, session, diagnostics, output)
+            ? StatementFlow::terminated
+            : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::while_statement) {
+        return lower_while_statement(statement, context, session, diagnostics, output)
+            ? StatementFlow::falls_through
+            : StatementFlow::failed;
+    }
+    if (statement.kind == syntax::StatementKind::repeat_statement) {
+        return std::forward<LowerRepeat>(lower_repeat)(statement);
+    }
+    if (statement.kind == syntax::StatementKind::for_statement) {
+        return std::forward<LowerFor>(lower_for)(statement);
+    }
+    if (statement.kind == syntax::StatementKind::unsafe_statement) {
+        return std::forward<LowerUnsafe>(lower_unsafe)(statement);
+    }
+    return std::nullopt;
+}
 
 }  // namespace orison::lowering

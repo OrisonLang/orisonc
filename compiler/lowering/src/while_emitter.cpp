@@ -221,19 +221,17 @@ auto lower_while_body_statement(
         session,
         diagnostics,
         output,
-        CommonNonValueStatementPolicy {
-            .infer_binding_type = inferred_loop_binding_type,
-            .unsupported_let_diagnostic = "lowering does not yet support this while let type",
-            .unsupported_var_diagnostic = "lowering does not yet support this while var type",
-            .lower_repeat = [&](syntax::StatementSyntax const& nested_statement) {
-                return lower_while_body_repeat(nested_statement, context, session, diagnostics, output);
-            },
-            .lower_for = [&](syntax::StatementSyntax const& nested_statement) {
-                return lower_while_body_for(nested_statement, context, session, diagnostics, output);
-            },
-            .lower_unsafe = [&](syntax::StatementSyntax const& nested_statement) {
-                return lower_while_body_unsafe(nested_statement, context, session, diagnostics, output);
-            },
+        inferred_loop_binding_type,
+        "lowering does not yet support this while let type",
+        "lowering does not yet support this while var type",
+        [&](syntax::StatementSyntax const& nested_statement) {
+            return lower_while_body_repeat(nested_statement, context, session, diagnostics, output);
+        },
+        [&](syntax::StatementSyntax const& nested_statement) {
+            return lower_while_body_for(nested_statement, context, session, diagnostics, output);
+        },
+        [&](syntax::StatementSyntax const& nested_statement) {
+            return lower_while_body_unsafe(nested_statement, context, session, diagnostics, output);
         }
     );
     if (common_flow.has_value()) {
