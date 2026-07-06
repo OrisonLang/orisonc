@@ -33,7 +33,6 @@ add_library(orison_lowering STATIC
     src/switch_plan.cpp
     src/target_layout.cpp
     src/type_lowering.cpp
-    src/unsafe_block_lowering.cpp
     src/while_emitter.cpp
     src/while_loop_lowering.cpp
 )

@@ -98,6 +98,8 @@ analysis, and lowering components.
   helper using caller-provided callbacks, leaving Unit-only return/guard/switch/if behavior local.
 - The shared non-value statement-body helpers are header-templated to avoid `std::function` type erasure and the
   extra out-of-line lowering component on this hot dispatch path.
+- Unsafe block lowering now uses the same header-templated callback style, removing its `std::function` body wrapper
+  and dedicated lowering source file while keeping the binding-scope behavior unchanged.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.
