@@ -81,6 +81,9 @@ analysis, and lowering components.
   array iterable subset as top-level Unit `for` lowering.
 - Loop statement-flow classification and loop-target stack scoping now live in shared lowering support, so function
   body and while-body emitters no longer carry duplicate loop-control infrastructure.
+- Fixed-size array iterable `for` lowering now lives behind shared loop lowering support with caller-provided body
+  emission, reducing duplication between Unit function-body and while-body loop paths while leaving array-literal
+  `for` iteration local to each emitter.
 - `guard ... else` now lowers as an explicit early-exit branch in both void and non-void function bodies; failure
   blocks can emit direct `return` statements, and non-void statement-level `if` bodies can now lower early-return
   branches before a later final expression or final control-flow statement.
