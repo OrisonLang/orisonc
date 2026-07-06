@@ -508,7 +508,8 @@ auto lower_value_statement_block(
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
-    FinalControlFlowLowerer lower_final_control_flow
+    FinalControlFlowLowerer lower_final_control_flow,
+    DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> std::optional<LoweredExpression> {
     if (statements.empty()) {
         return std::nullopt;
@@ -549,13 +550,17 @@ auto lower_value_statement_block(
         if (!lowered.has_value()) {
             return std::nullopt;
         }
-        if (!emit_deferred_cleanup_to_depth(
-                defer_scope.cleanup_depth(),
-                context,
-                session,
-                diagnostics,
-                output
-            )) {
+        auto const cleanup_ok = lower_cleanup_block == nullptr
+            ? emit_deferred_cleanup_to_depth(defer_scope.cleanup_depth(), context, session, diagnostics, output)
+            : emit_deferred_cleanup_to_depth_with_block_lowerer(
+                  defer_scope.cleanup_depth(),
+                  context,
+                  session,
+                  diagnostics,
+                  output,
+                  lower_cleanup_block
+              );
+        if (!cleanup_ok) {
             return std::nullopt;
         }
         return lowered;
@@ -576,13 +581,17 @@ auto lower_value_statement_block(
     if (!lowered.has_value()) {
         return std::nullopt;
     }
-    if (!emit_deferred_cleanup_to_depth(
-            defer_scope.cleanup_depth(),
-            context,
-            session,
-            diagnostics,
-            output
-        )) {
+    auto const cleanup_ok = lower_cleanup_block == nullptr
+        ? emit_deferred_cleanup_to_depth(defer_scope.cleanup_depth(), context, session, diagnostics, output)
+        : emit_deferred_cleanup_to_depth_with_block_lowerer(
+              defer_scope.cleanup_depth(),
+              context,
+              session,
+              diagnostics,
+              output,
+              lower_cleanup_block
+          );
+    if (!cleanup_ok) {
         return std::nullopt;
     }
     return lowered;
@@ -1173,6 +1182,30 @@ auto lower_value_statement_block(
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow
 ) -> std::optional<LoweredExpression> {
+    return lower_value_statement_block(
+        statements,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        session,
+        diagnostics,
+        output,
+        lower_final_control_flow,
+        nullptr
+    );
+}
+
+auto lower_value_statement_block(
+    std::vector<syntax::StatementSyntax> const& statements,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    FinalControlFlowLowerer lower_final_control_flow,
+    DeferredCleanupBlockLowerer lower_cleanup_block
+) -> std::optional<LoweredExpression> {
     auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
     statement_pointers.reserve(statements.size());
     for (auto const& statement : statements) {
@@ -1186,7 +1219,8 @@ auto lower_value_statement_block(
         session,
         diagnostics,
         output,
-        lower_final_control_flow
+        lower_final_control_flow,
+        lower_cleanup_block
     );
 }
 
@@ -1199,6 +1233,30 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow
+) -> std::optional<LoweredExpression> {
+    return lower_value_statement_block(
+        statements,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        session,
+        diagnostics,
+        output,
+        lower_final_control_flow,
+        nullptr
+    );
+}
+
+auto lower_value_statement_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    FinalControlFlowLowerer lower_final_control_flow,
+    DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> std::optional<LoweredExpression> {
     if (statements.empty()) {
         return std::nullopt;
@@ -1239,13 +1297,17 @@ auto lower_value_statement_block(
         if (!lowered.has_value()) {
             return std::nullopt;
         }
-        if (!emit_deferred_cleanup_to_depth(
-                defer_scope.cleanup_depth(),
-                context,
-                session,
-                diagnostics,
-                output
-            )) {
+        auto const cleanup_ok = lower_cleanup_block == nullptr
+            ? emit_deferred_cleanup_to_depth(defer_scope.cleanup_depth(), context, session, diagnostics, output)
+            : emit_deferred_cleanup_to_depth_with_block_lowerer(
+                  defer_scope.cleanup_depth(),
+                  context,
+                  session,
+                  diagnostics,
+                  output,
+                  lower_cleanup_block
+              );
+        if (!cleanup_ok) {
             return std::nullopt;
         }
         return lowered;
@@ -1266,13 +1328,17 @@ auto lower_value_statement_block(
     if (!lowered.has_value()) {
         return std::nullopt;
     }
-    if (!emit_deferred_cleanup_to_depth(
-            defer_scope.cleanup_depth(),
-            context,
-            session,
-            diagnostics,
-            output
-        )) {
+    auto const cleanup_ok = lower_cleanup_block == nullptr
+        ? emit_deferred_cleanup_to_depth(defer_scope.cleanup_depth(), context, session, diagnostics, output)
+        : emit_deferred_cleanup_to_depth_with_block_lowerer(
+              defer_scope.cleanup_depth(),
+              context,
+              session,
+              diagnostics,
+              output,
+              lower_cleanup_block
+          );
+    if (!cleanup_ok) {
         return std::nullopt;
     }
     return lowered;
@@ -1288,6 +1354,30 @@ auto lower_value_statement_block(
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow
 ) -> std::optional<LoweredExpression> {
+    return lower_value_statement_block(
+        statements,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        session,
+        diagnostics,
+        output,
+        lower_final_control_flow,
+        nullptr
+    );
+}
+
+auto lower_value_statement_block(
+    std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    FinalControlFlowLowerer lower_final_control_flow,
+    DeferredCleanupBlockLowerer lower_cleanup_block
+) -> std::optional<LoweredExpression> {
     auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
     statement_pointers.reserve(statements.size());
     for (auto const& statement : statements) {
@@ -1301,7 +1391,8 @@ auto lower_value_statement_block(
         session,
         diagnostics,
         output,
-        lower_final_control_flow
+        lower_final_control_flow,
+        lower_cleanup_block
     );
 }
 
