@@ -4,6 +4,7 @@
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
+#include "orison/lowering/concurrency_cleanup.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
@@ -2151,10 +2152,7 @@ auto lowered_expression(
                 auto result_name = next_llvm_temporary_name(state.next_temporary_index);
                 output << "  " << result_name << " = load " << thread_binding->second.result_type.type
                        << ", ptr " << thread_binding->second.result_storage << "\n";
-                auto destroy_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::destroy_handle);
-                output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
-                       << "(ptr " << thread_binding->second.handle << ")\n";
-                thread_binding->second.handle_destroyed = true;
+                emit_concurrency_handle_destroy(thread_binding->second, output);
                 return LoweredExpression {
                     .type = thread_binding->second.result_type.type,
                     .value = std::move(result_name),
@@ -2277,10 +2275,7 @@ auto lowered_expression(
             auto result_name = next_llvm_temporary_name(state.next_temporary_index);
             output << "  " << result_name << " = load " << task_binding->second.result_type.type
                    << ", ptr " << task_binding->second.result_storage << "\n";
-            auto destroy_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::destroy_handle);
-            output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
-                   << "(ptr " << task_binding->second.handle << ")\n";
-            task_binding->second.handle_destroyed = true;
+            emit_concurrency_handle_destroy(task_binding->second, output);
             return LoweredExpression {
                 .type = task_binding->second.result_type.type,
                 .value = std::move(result_name),

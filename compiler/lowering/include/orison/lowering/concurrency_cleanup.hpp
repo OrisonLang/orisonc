@@ -6,6 +6,11 @@
 
 namespace orison::lowering {
 
+auto emit_concurrency_handle_destroy(
+    ConcurrencyBinding& binding,
+    std::ostringstream& output
+) -> void;
+
 auto emit_abandoned_concurrency_handle_cleanup(
     FunctionLoweringSession& session,
     std::ostringstream& output
