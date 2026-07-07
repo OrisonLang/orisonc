@@ -70,6 +70,16 @@ auto render_expression_lowering_failure(
     return append_lowering_detail(std::move(prefix), failure.detail);
 }
 
+auto render_expression_lowering_failure(
+    ExpressionLoweringFailureReason reason,
+    std::string detail
+) -> std::string {
+    return render_expression_lowering_failure(ExpressionLoweringFailure {
+        .reason = reason,
+        .detail = std::move(detail),
+    });
+}
+
 auto render_control_flow_lowering_failure(
     ControlFlowLoweringFailure const& failure
 ) -> std::string {

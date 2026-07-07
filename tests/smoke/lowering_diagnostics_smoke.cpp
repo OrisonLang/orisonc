@@ -54,9 +54,7 @@ int main() {
     };
     for (auto const& [reason, expected] : expression_cases) {
         assert(
-            orison::lowering::render_expression_lowering_failure(
-                ExpressionLoweringFailure {.reason = reason}
-            ) == expected
+            orison::lowering::render_expression_lowering_failure(reason) == expected
         );
     }
     assert(
@@ -65,6 +63,12 @@ int main() {
                 .reason = ExpressionLoweringFailureReason::unknown_name,
                 .detail = "value",
             }
+        ) == "unknown lowered name: value"
+    );
+    assert(
+        orison::lowering::render_expression_lowering_failure(
+            ExpressionLoweringFailureReason::unknown_name,
+            "value"
         ) == "unknown lowered name: value"
     );
 

@@ -150,6 +150,8 @@ analysis, and lowering components.
   when a fresh expression or final-control-flow lowering attempt starts.
 - Control-flow failure rendering also accepts a bare reason/detail pair for planning failures that have not been
   recorded into a session failure slot, avoiding ad hoc temporary failure objects in emitters.
+- Expression failure rendering exposes the same bare reason/detail API for consistency with control-flow diagnostics;
+  emitters still prefer rendering recorded session failures when a lowering attempt has populated one.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
 - Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately
