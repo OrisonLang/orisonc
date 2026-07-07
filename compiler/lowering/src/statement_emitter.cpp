@@ -500,8 +500,7 @@ auto lower_void_call_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering call statement failed" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering call statement failed", detail)
         );
         return false;
     }
@@ -627,8 +626,7 @@ auto lower_void_member_call_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering member call statement failed" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering member call statement failed", detail)
         );
         return false;
     }
@@ -909,8 +907,7 @@ auto lower_call_statement(
             auto detail = render_expression_lowering_failure(session.failures.expression);
             diagnostics.error(
                 statement.line,
-                "lowering does not yet support this call statement" +
-                    (detail.empty() ? std::string {} : ": " + detail)
+                append_lowering_detail("lowering does not yet support this call statement", detail)
             );
             return false;
         }
@@ -939,8 +936,7 @@ auto lower_call_statement(
                 auto detail = render_expression_lowering_failure(session.failures.expression);
                 diagnostics.error(
                     statement.line,
-                    "lowering does not yet support this call statement" +
-                        (detail.empty() ? std::string {} : ": " + detail)
+                    append_lowering_detail("lowering does not yet support this call statement", detail)
                 );
                 return false;
             }
@@ -978,8 +974,7 @@ auto lower_call_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this call statement" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this call statement", detail)
         );
         return false;
     }

@@ -75,8 +75,7 @@ auto lower_repeat_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this repeat condition" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this repeat condition", detail)
         );
         return StatementFlow::failed;
     }

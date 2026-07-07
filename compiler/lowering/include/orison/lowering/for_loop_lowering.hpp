@@ -102,8 +102,10 @@ auto lower_fixed_array_for_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.expression.line,
-            "lowering for statements currently requires a fixed-size array iterable" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail(
+                "lowering for statements currently requires a fixed-size array iterable",
+                detail
+            )
         );
         return StatementFlow::failed;
     }
@@ -220,8 +222,7 @@ auto lower_array_literal_for_statement(
             auto detail = render_expression_lowering_failure(session.failures.expression);
             diagnostics.error(
                 statement.expression.arguments[index].line,
-                "lowering does not yet support this for iterable element" +
-                    (detail.empty() ? std::string {} : ": " + detail)
+                append_lowering_detail("lowering does not yet support this for iterable element", detail)
             );
             return StatementFlow::failed;
         }

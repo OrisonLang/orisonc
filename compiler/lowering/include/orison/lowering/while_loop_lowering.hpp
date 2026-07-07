@@ -64,8 +64,7 @@ auto lower_while_loop_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this while condition" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this while condition", detail)
         );
         return StatementFlow::failed;
     }

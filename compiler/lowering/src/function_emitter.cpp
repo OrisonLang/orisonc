@@ -351,8 +351,7 @@ auto lower_unit_if_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this Unit if condition" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this Unit if condition", detail)
         );
         return StatementFlow::failed;
     }
@@ -430,8 +429,7 @@ auto lower_unit_switch_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this Unit switch subject" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this Unit switch subject", detail)
         );
         return StatementFlow::failed;
     }
@@ -444,8 +442,7 @@ auto lower_unit_switch_statement(
         });
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this Unit switch statement" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this Unit switch statement", detail)
         );
         return StatementFlow::failed;
     }
@@ -611,8 +608,7 @@ auto lower_guard_return_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this guard failure return" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this guard failure return", detail)
         );
         return StatementFlow::failed;
     }
@@ -782,8 +778,7 @@ auto lower_guard_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this guard condition" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this guard condition", detail)
         );
         return StatementFlow::failed;
     }
@@ -839,8 +834,7 @@ auto lower_nonvoid_if_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this non-void if condition" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this non-void if condition", detail)
         );
         return StatementFlow::failed;
     }
@@ -935,8 +929,7 @@ auto lower_nonvoid_switch_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this non-void switch subject" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this non-void switch subject", detail)
         );
         return StatementFlow::failed;
     }
@@ -949,8 +942,7 @@ auto lower_nonvoid_switch_statement(
         });
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this non-void switch statement" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this non-void switch statement", detail)
         );
         return StatementFlow::failed;
     }
@@ -1364,8 +1356,7 @@ void emit_function_body(
         auto detail = render_control_flow_lowering_failure(failures.control_flow);
         diagnostics.error(
             final_statement_line,
-            "lowering does not yet support this final control-flow statement" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this final control-flow statement", detail)
         );
         return;
     }
@@ -1400,8 +1391,7 @@ void emit_function_body(
         auto detail = render_expression_lowering_failure(failures.expression);
         diagnostics.error(
             expression != nullptr ? expression->line : function.line,
-            "lowering does not yet support this return expression" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this return expression", detail)
         );
         return;
     }
