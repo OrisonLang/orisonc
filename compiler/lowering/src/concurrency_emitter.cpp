@@ -142,6 +142,29 @@ auto emit_concurrency_spawn(
            << ", ptr " << cleanup_pointer << ")\n";
 }
 
+auto emit_concurrency_capture_environment_stores(
+    ConcurrencyExpressionPlan const& plan,
+    std::string_view environment_storage,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> ConcurrencyCaptureStoreEmissionResult {
+    for (auto const& capture : plan.captures) {
+        if (capture.llvm_type.empty()) {
+            return ConcurrencyCaptureStoreEmissionResult::unsupported_capture_type;
+        }
+        auto captured_value = state.immutable_bindings.find(capture.name);
+        if (captured_value == state.immutable_bindings.end()) {
+            return ConcurrencyCaptureStoreEmissionResult::missing_capture_source;
+        }
+        auto field_pointer = next_llvm_temporary_name(state.next_temporary_index);
+        output << "  " << field_pointer << " = getelementptr " << plan.environment_layout.llvm_type
+               << ", ptr " << environment_storage << ", i32 0, i32 " << capture.field_index << "\n";
+        output << "  store " << capture.llvm_type << " " << captured_value->second.value
+               << ", ptr " << field_pointer << "\n";
+    }
+    return ConcurrencyCaptureStoreEmissionResult::emitted;
+}
+
 auto emit_concurrency_entry_thunk(
     ConcurrencyExpressionPlan const& plan,
     syntax::ExpressionSyntax const& expression,

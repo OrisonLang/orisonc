@@ -298,6 +298,8 @@ analysis, and lowering components.
   storage, result storage, spawn failure CFG, and binding registration.
   Join/await result-type compatibility and mismatch failure recording now live with the concurrency completion
   emitters, while expression lowering still owns join/await syntax recognition and binding lookup.
+  Concurrency environment capture store emission now lives under `concurrency_emitter`; statement lowering still owns
+  environment allocation and maps narrow emission statuses to statement diagnostics.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

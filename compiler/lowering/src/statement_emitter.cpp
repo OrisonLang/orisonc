@@ -97,27 +97,25 @@ auto lower_thread_let_statement(
         session.state.local_name_counts
     );
     output << "  " << environment_storage << " = alloca " << plan->environment_layout.llvm_type << "\n";
-    for (auto const& capture : plan->captures) {
-        if (capture.llvm_type.empty()) {
-            diagnostics.error(
-                statement.line,
-                "lowering does not yet support this " + std::string(expression_name) + " capture type"
-            );
-            return false;
-        }
-        auto captured_value = session.state.immutable_bindings.find(capture.name);
-        if (captured_value == session.state.immutable_bindings.end()) {
-            diagnostics.error(
-                statement.line,
-                "lowering does not yet support this " + std::string(expression_name) + " capture source"
-            );
-            return false;
-        }
-        auto field_pointer = next_llvm_temporary_name(session.state.next_temporary_index);
-        output << "  " << field_pointer << " = getelementptr " << plan->environment_layout.llvm_type
-               << ", ptr " << environment_storage << ", i32 0, i32 " << capture.field_index << "\n";
-        output << "  store " << capture.llvm_type << " " << captured_value->second.value
-               << ", ptr " << field_pointer << "\n";
+    auto capture_store_result = emit_concurrency_capture_environment_stores(
+        *plan,
+        environment_storage,
+        session.state,
+        output
+    );
+    if (capture_store_result == ConcurrencyCaptureStoreEmissionResult::unsupported_capture_type) {
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this " + std::string(expression_name) + " capture type"
+        );
+        return false;
+    }
+    if (capture_store_result == ConcurrencyCaptureStoreEmissionResult::missing_capture_source) {
+        diagnostics.error(
+            statement.line,
+            "lowering does not yet support this " + std::string(expression_name) + " capture source"
+        );
+        return false;
     }
 
     auto result_storage = next_llvm_local_value_name(

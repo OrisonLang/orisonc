@@ -17,6 +17,70 @@
 
 namespace {
 
+auto scalar_capture_plan(std::string llvm_type = "i64") -> orison::lowering::ConcurrencyExpressionPlan {
+    return orison::lowering::ConcurrencyExpressionPlan {
+        .environment_layout = orison::lowering::ConcurrencyEnvironmentLayout {
+            .llvm_type = "{ i64 }",
+        },
+        .captures = {
+            orison::lowering::ConcurrencyCapturePlan {
+                .name = "value",
+                .source_type_name = "Int64",
+                .llvm_type = std::move(llvm_type),
+                .field_index = 0,
+            },
+        },
+    };
+}
+
+auto test_capture_environment_store_emitter() -> void {
+    auto state = orison::lowering::FunctionLoweringState {};
+    state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {
+        .type = "i64",
+        .value = "%value",
+        .signedness = orison::lowering::IntegerSignedness::signed_integer,
+    });
+    auto output = std::ostringstream {};
+    auto plan = scalar_capture_plan();
+    auto result = orison::lowering::emit_concurrency_capture_environment_stores(
+        plan,
+        "%worker.thread.env",
+        state,
+        output
+    );
+    assert(result == orison::lowering::ConcurrencyCaptureStoreEmissionResult::emitted);
+    assert(
+        output.str() ==
+        "  %tmp0 = getelementptr { i64 }, ptr %worker.thread.env, i32 0, i32 0\n"
+        "  store i64 %value, ptr %tmp0\n"
+    );
+    assert(state.next_temporary_index == 1);
+
+    auto unsupported_plan = scalar_capture_plan("");
+    auto unsupported_output = std::ostringstream {};
+    auto unsupported_result = orison::lowering::emit_concurrency_capture_environment_stores(
+        unsupported_plan,
+        "%worker.thread.env",
+        state,
+        unsupported_output
+    );
+    assert(unsupported_result == orison::lowering::ConcurrencyCaptureStoreEmissionResult::unsupported_capture_type);
+    assert(unsupported_output.str().empty());
+    assert(state.next_temporary_index == 1);
+
+    auto missing_state = orison::lowering::FunctionLoweringState {};
+    auto missing_output = std::ostringstream {};
+    auto missing_result = orison::lowering::emit_concurrency_capture_environment_stores(
+        plan,
+        "%worker.thread.env",
+        missing_state,
+        missing_output
+    );
+    assert(missing_result == orison::lowering::ConcurrencyCaptureStoreEmissionResult::missing_capture_source);
+    assert(missing_output.str().empty());
+    assert(missing_state.next_temporary_index == 0);
+}
+
 auto test_result_completion_emitters() -> void {
     auto state = orison::lowering::FunctionLoweringState {};
     auto thread_binding = orison::lowering::ConcurrencyBinding {
@@ -175,6 +239,7 @@ auto test_abandoned_handle_cleanup() -> void {
 }  // namespace
 
 int main() {
+    test_capture_environment_store_emitter();
     test_result_completion_emitters();
     test_abandoned_handle_cleanup();
 

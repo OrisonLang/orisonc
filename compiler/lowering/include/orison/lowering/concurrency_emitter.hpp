@@ -14,6 +14,12 @@ namespace orison::lowering {
 
 struct ConcurrencyExpressionPlan;
 
+enum class ConcurrencyCaptureStoreEmissionResult {
+    emitted,
+    unsupported_capture_type,
+    missing_capture_source,
+};
+
 auto emit_concurrency_handle_destroy(
     ConcurrencyBinding& binding,
     std::ostringstream& output
@@ -52,6 +58,13 @@ auto emit_concurrency_spawn(
     std::string_view result_storage,
     std::ostringstream& output
 ) -> void;
+
+auto emit_concurrency_capture_environment_stores(
+    ConcurrencyExpressionPlan const& plan,
+    std::string_view environment_storage,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> ConcurrencyCaptureStoreEmissionResult;
 
 auto emit_concurrency_entry_thunk(
     ConcurrencyExpressionPlan const& plan,
