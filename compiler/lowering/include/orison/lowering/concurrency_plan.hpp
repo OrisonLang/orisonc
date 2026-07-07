@@ -86,6 +86,12 @@ struct DropReadinessSummary {
     std::size_t cleanup_blocked = 0;
 };
 
+struct DropReadinessBlockerSummary {
+    std::size_t blocked_cleanups = 0;
+    std::vector<PlannedDropAction> semantic_lowering_blockers;
+    std::vector<PlannedDropAction> missing_declarations;
+};
+
 struct ConcurrencyCleanupPlan {
     std::vector<ConcurrencyCleanupFieldPlan> drop_candidates;
     ConcurrencyDropCleanupPlan drop_cleanup;
@@ -142,6 +148,14 @@ auto summarize_drop_readiness(
 auto format_drop_readiness_summary(
     DropReadinessSummary const& summary
 ) -> std::string;
+
+auto summarize_drop_readiness_blockers(
+    DropReadinessSnapshot const& snapshot
+) -> DropReadinessBlockerSummary;
+
+auto format_drop_readiness_blocker_report(
+    DropReadinessBlockerSummary const& summary
+) -> std::vector<std::string>;
 
 auto format_drop_readiness_relation_report(
     DropReadinessSnapshot const& snapshot

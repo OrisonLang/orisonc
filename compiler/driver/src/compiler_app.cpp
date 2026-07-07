@@ -31,6 +31,7 @@ auto usage_text() -> std::string {
            "--planned-drops <file> | --planned-drop-actions <file> | --emitted-drops <file> | "
            "--drop-cleanup-authorization <file> | --drop-readiness <file> | "
            "--drop-readiness-summary <file> | --drop-readiness-relations <file> | "
+           "--drop-readiness-blockers <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
@@ -345,6 +346,12 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-relations") {
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
             return result.drop_readiness_relation_report;
+        });
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--drop-readiness-blockers") {
+        return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.drop_readiness_blocker_report;
         });
     }
 

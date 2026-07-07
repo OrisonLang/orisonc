@@ -575,6 +575,11 @@ auto run_drop_readiness_relations(orison::driver::CompilerApp const& app, std::f
     return run_single_file_command(app, "--drop-readiness-relations", path);
 }
 
+auto run_drop_readiness_blockers(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--drop-readiness-blockers", path);
+}
+
 auto run_emit_object(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& source_path,
@@ -1309,6 +1314,17 @@ int main() {
         "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 12\n"
     );
+    auto drop_readiness_blockers = run_drop_readiness_blockers(app, planned_drop_report_path);
+    assert(drop_readiness_blockers.exit_code == 0);
+    assert(drop_readiness_blockers.stderr_text.empty());
+    assert(
+        drop_readiness_blockers.stdout_text ==
+        "drop readiness blockers cleanups 1 semantic blockers 1 missing declarations 1\n"
+        "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12\n"
+        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12\n"
+    );
     auto multi_drop_readiness_fixture_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness_multi.or";
     auto multi_fixture_drop_readiness_relations =
@@ -1326,6 +1342,22 @@ int main() {
         "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20\n"
         "drop readiness relation missing declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20\n"
+    );
+    auto multi_fixture_drop_readiness_blockers =
+        run_drop_readiness_blockers(app, multi_drop_readiness_fixture_path);
+    assert(multi_fixture_drop_readiness_blockers.exit_code == 0);
+    assert(multi_fixture_drop_readiness_blockers.stderr_text.empty());
+    assert(
+        multi_fixture_drop_readiness_blockers.stdout_text ==
+        "drop readiness blockers cleanups 1 semantic blockers 2 missing declarations 2\n"
+        "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20\n"
+        "drop readiness blocker semantic __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20\n"
+        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20\n"
+        "drop readiness blocker missing declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20\n"
     );
 
@@ -1385,6 +1417,13 @@ int main() {
     assert(empty_drop_readiness_relations.exit_code == 0);
     assert(empty_drop_readiness_relations.stdout_text.empty());
     assert(empty_drop_readiness_relations.stderr_text.empty());
+    auto empty_drop_readiness_blockers = run_drop_readiness_blockers(app, emit_path);
+    assert(empty_drop_readiness_blockers.exit_code == 0);
+    assert(
+        empty_drop_readiness_blockers.stdout_text ==
+        "drop readiness blockers cleanups 0 semantic blockers 0 missing declarations 0\n"
+    );
+    assert(empty_drop_readiness_blockers.stderr_text.empty());
 
     auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);
     assert(multi_planned_drop_report.exit_code == 0);

@@ -598,6 +598,68 @@ auto format_drop_readiness_summary(
     return output.str();
 }
 
+auto summarize_drop_readiness_blockers(
+    DropReadinessSnapshot const& snapshot
+) -> DropReadinessBlockerSummary {
+    auto summary = DropReadinessBlockerSummary {};
+    for (auto const& cleanup : snapshot.cleanup_authorizations) {
+        if (cleanup.authorization.authorized) {
+            continue;
+        }
+        ++summary.blocked_cleanups;
+        summary.semantic_lowering_blockers.insert(
+            summary.semantic_lowering_blockers.end(),
+            cleanup.authorization.semantic_lowering_blockers.begin(),
+            cleanup.authorization.semantic_lowering_blockers.end()
+        );
+        summary.missing_declarations.insert(
+            summary.missing_declarations.end(),
+            cleanup.authorization.missing_declarations.begin(),
+            cleanup.authorization.missing_declarations.end()
+        );
+    }
+    return summary;
+}
+
+auto format_drop_readiness_blocker_report(
+    DropReadinessBlockerSummary const& summary
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto header = std::ostringstream {};
+    header << "drop readiness blockers cleanups " << summary.blocked_cleanups
+           << " semantic blockers " << summary.semantic_lowering_blockers.size()
+           << " missing declarations " << summary.missing_declarations.size();
+    lines.push_back(header.str());
+
+    for (auto const& blocker : summary.semantic_lowering_blockers) {
+        auto detail = std::ostringstream {};
+        detail << "drop readiness blocker semantic " << blocker.symbol_name;
+        if (!blocker.source_type_name.empty()) {
+            detail << " for " << blocker.source_type_name;
+        }
+        detail << " capture " << blocker.capture_name << " field " << blocker.field_index;
+        if (blocker.discovery_line != 0) {
+            detail << " discovered at line " << blocker.discovery_line;
+        }
+        lines.push_back(detail.str());
+    }
+
+    for (auto const& missing : summary.missing_declarations) {
+        auto detail = std::ostringstream {};
+        detail << "drop readiness blocker missing declaration " << missing.symbol_name;
+        if (!missing.source_type_name.empty()) {
+            detail << " for " << missing.source_type_name;
+        }
+        detail << " capture " << missing.capture_name << " field " << missing.field_index;
+        if (missing.discovery_line != 0) {
+            detail << " discovered at line " << missing.discovery_line;
+        }
+        lines.push_back(detail.str());
+    }
+
+    return lines;
+}
+
 auto format_drop_readiness_relation_report(
     DropReadinessSnapshot const& snapshot
 ) -> std::vector<std::string> {

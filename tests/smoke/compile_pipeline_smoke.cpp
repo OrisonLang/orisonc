@@ -57,6 +57,14 @@ auto main() -> int {
         "drop readiness summary semantic authorized 0 blocked 0 emitted declarations 0 cleanup authorized 0 blocked 0"
     );
     assert(ir.drop_readiness_relation_report.empty());
+    assert(ir.drop_readiness_blocker_summary.blocked_cleanups == 0);
+    assert(ir.drop_readiness_blocker_summary.semantic_lowering_blockers.empty());
+    assert(ir.drop_readiness_blocker_summary.missing_declarations.empty());
+    assert(ir.drop_readiness_blocker_report.size() == 1);
+    assert(
+        ir.drop_readiness_blocker_report.front() ==
+        "drop readiness blockers cleanups 0 semantic blockers 0 missing declarations 0"
+    );
 
     auto drop_readiness_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
@@ -103,6 +111,24 @@ auto main() -> int {
     assert(
         drop_readiness.drop_readiness_relation_report[2] ==
         "drop readiness relation missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12"
+    );
+    assert(drop_readiness.drop_readiness_blocker_summary.blocked_cleanups == 1);
+    assert(drop_readiness.drop_readiness_blocker_summary.semantic_lowering_blockers.size() == 1);
+    assert(drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 1);
+    assert(drop_readiness.drop_readiness_blocker_report.size() == 3);
+    assert(
+        drop_readiness.drop_readiness_blocker_report[0] ==
+        "drop readiness blockers cleanups 1 semantic blockers 1 missing declarations 1"
+    );
+    assert(
+        drop_readiness.drop_readiness_blocker_report[1] ==
+        "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12"
+    );
+    assert(
+        drop_readiness.drop_readiness_blocker_report[2] ==
+        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
 
@@ -212,6 +238,34 @@ auto main() -> int {
         "drop readiness relation missing declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20"
     );
+    assert(multi_drop_readiness.drop_readiness_blocker_summary.blocked_cleanups == 1);
+    assert(multi_drop_readiness.drop_readiness_blocker_summary.semantic_lowering_blockers.size() == 2);
+    assert(multi_drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 2);
+    assert(multi_drop_readiness.drop_readiness_blocker_report.size() == 5);
+    assert(
+        multi_drop_readiness.drop_readiness_blocker_report[0] ==
+        "drop readiness blockers cleanups 1 semantic blockers 2 missing declarations 2"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_blocker_report[1] ==
+        "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_blocker_report[2] ==
+        "drop readiness blocker semantic __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_blocker_report[3] ==
+        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_blocker_report[4] ==
+        "drop readiness blocker missing declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20"
+    );
 
     auto failed_lowering_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_summary_failure.or";
@@ -229,6 +283,7 @@ auto main() -> int {
     assert(failed_lowering.drop_readiness_snapshot_report.empty());
     assert(failed_lowering.drop_readiness_summary_report.empty());
     assert(failed_lowering.drop_readiness_relation_report.empty());
+    assert(failed_lowering.drop_readiness_blocker_report.empty());
 
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());

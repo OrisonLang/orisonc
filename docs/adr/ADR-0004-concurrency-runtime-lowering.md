@@ -96,6 +96,9 @@ drop/cleanup decisions.
 - Drop cleanup plans now model drop-call emission eligibility explicitly. Cleanup thunk calls can only be authorized by
   matching every planned drop action to an enabled planned drop declaration, and the default path remains metadata-only
   until ownership/drop semantics are accepted.
+- Drop readiness reporting now includes a compact blocker report derived from the same snapshot as the readiness summary
+  and relation reports, listing blocked cleanup count plus semantic-lowering and missing-declaration blockers without
+  changing normal lowering behavior.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

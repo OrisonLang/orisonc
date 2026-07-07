@@ -166,6 +166,10 @@ auto CompilePipeline::emit_llvm(std::filesystem::path const& source_path) const 
     result.drop_readiness_summary = emission.drop_readiness_summary();
     result.drop_readiness_summary_report = emission.drop_readiness_summary_report();
     result.drop_readiness_relation_report = emission.drop_readiness_relation_report();
+    result.drop_readiness_blocker_summary =
+        lowering::summarize_drop_readiness_blockers(result.drop_readiness_snapshot);
+    result.drop_readiness_blocker_report =
+        lowering::format_drop_readiness_blocker_report(result.drop_readiness_blocker_summary);
     result.semantic_drop_lowering_authorizations = std::move(emission.semantic_drop_lowering_authorizations);
     return result;
 }
