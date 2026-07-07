@@ -84,6 +84,13 @@ auto register_concurrency_binding(
     FunctionLoweringState& state
 ) -> void;
 
+auto queue_concurrency_function_definitions(
+    ConcurrencyExpressionPlan const& plan,
+    std::string entry_thunk_definition,
+    std::string cleanup_definition,
+    FunctionLoweringState& state
+) -> void;
+
 auto emit_concurrency_entry_thunk(
     ConcurrencyExpressionPlan const& plan,
     syntax::ExpressionSyntax const& expression,

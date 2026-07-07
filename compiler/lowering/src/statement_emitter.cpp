@@ -147,10 +147,12 @@ auto lower_thread_let_statement(
         plan->result_type,
         session.state
     );
-    session.state.pending_function_definitions.push_back(std::move(*thunk_definition));
-    if (!plan->captures.empty()) {
-        session.state.pending_function_definitions.push_back(std::move(cleanup_definition));
-    }
+    queue_concurrency_function_definitions(
+        *plan,
+        std::move(*thunk_definition),
+        std::move(cleanup_definition),
+        session.state
+    );
     return true;
 }
 

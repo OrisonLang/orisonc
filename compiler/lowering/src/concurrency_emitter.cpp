@@ -209,6 +209,18 @@ auto register_concurrency_binding(
     state.task_binding_order.push_back(binding_name);
 }
 
+auto queue_concurrency_function_definitions(
+    ConcurrencyExpressionPlan const& plan,
+    std::string entry_thunk_definition,
+    std::string cleanup_definition,
+    FunctionLoweringState& state
+) -> void {
+    state.pending_function_definitions.push_back(std::move(entry_thunk_definition));
+    if (!plan.captures.empty()) {
+        state.pending_function_definitions.push_back(std::move(cleanup_definition));
+    }
+}
+
 auto emit_concurrency_entry_thunk(
     ConcurrencyExpressionPlan const& plan,
     syntax::ExpressionSyntax const& expression,

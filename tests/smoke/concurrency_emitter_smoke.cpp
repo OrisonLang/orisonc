@@ -148,6 +148,30 @@ auto test_register_concurrency_binding() -> void {
     assert(state.task_bindings.at("pending").result_type.signedness == orison::lowering::IntegerSignedness::not_integer);
 }
 
+auto test_queue_concurrency_function_definitions() -> void {
+    auto state = orison::lowering::FunctionLoweringState {};
+    auto captured_plan = scalar_capture_plan();
+    orison::lowering::queue_concurrency_function_definitions(
+        captured_plan,
+        "define private void @entry() {}\n",
+        "define private void @cleanup() {}\n",
+        state
+    );
+    assert(state.pending_function_definitions.size() == 2);
+    assert(state.pending_function_definitions[0] == "define private void @entry() {}\n");
+    assert(state.pending_function_definitions[1] == "define private void @cleanup() {}\n");
+
+    auto empty_capture_plan = orison::lowering::ConcurrencyExpressionPlan {};
+    orison::lowering::queue_concurrency_function_definitions(
+        empty_capture_plan,
+        "define private void @entry.no_capture() {}\n",
+        "define private void @cleanup.no_capture() {}\n",
+        state
+    );
+    assert(state.pending_function_definitions.size() == 3);
+    assert(state.pending_function_definitions[2] == "define private void @entry.no_capture() {}\n");
+}
+
 auto test_result_completion_emitters() -> void {
     auto state = orison::lowering::FunctionLoweringState {};
     auto thread_binding = orison::lowering::ConcurrencyBinding {
@@ -309,6 +333,7 @@ int main() {
     test_capture_environment_store_emitter();
     test_spawn_failure_check_emitter();
     test_register_concurrency_binding();
+    test_queue_concurrency_function_definitions();
     test_result_completion_emitters();
     test_abandoned_handle_cleanup();
 
