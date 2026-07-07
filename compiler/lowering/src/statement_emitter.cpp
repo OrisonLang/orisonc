@@ -201,10 +201,12 @@ auto lower_assignment_target(
             output
         );
         if (!lowered_base.has_value()) {
-            auto detail = render_expression_lowering_failure(session.failures.expression);
             diagnostics.error(
                 target.line,
-                append_lowering_detail("lowering aggregate assignment target failed", detail)
+                append_expression_lowering_failure(
+                    "lowering aggregate assignment target failed",
+                    session.failures.expression
+                )
             );
             return std::nullopt;
         }
@@ -258,10 +260,12 @@ auto lower_assignment_target(
             output
         );
         if (!lowered_index.has_value()) {
-            auto detail = render_expression_lowering_failure(session.failures.expression);
             diagnostics.error(
                 target.line,
-                append_lowering_detail("lowering aggregate assignment index failed", detail)
+                append_expression_lowering_failure(
+                    "lowering aggregate assignment index failed",
+                    session.failures.expression
+                )
             );
             return std::nullopt;
         }
@@ -479,8 +483,13 @@ auto lower_void_call_statement(
                 std::to_string(function.parameter_types.size()) + " arguments, got " +
                 std::to_string(statement.expression.arguments.size())
         );
-        auto detail = render_expression_lowering_failure(session.failures.expression);
-        diagnostics.error(statement.line, "lowering call statement failed: " + detail);
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering call statement failed",
+                session.failures.expression
+            )
+        );
         return false;
     }
 
@@ -497,10 +506,12 @@ auto lower_void_call_statement(
             ExpressionLoweringFailureReason::call_argument_failure,
             function_name
         );
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering call statement failed", detail)
+            append_expression_lowering_failure(
+                "lowering call statement failed",
+                session.failures.expression
+            )
         );
         return false;
     }
@@ -601,8 +612,13 @@ auto lower_void_member_call_statement(
             target_name + " expects " + std::to_string(expected_argument_count) +
                 " arguments, got " + std::to_string(statement.expression.arguments.size())
         );
-        auto detail = render_expression_lowering_failure(session.failures.expression);
-        diagnostics.error(statement.line, "lowering member call statement failed: " + detail);
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering member call statement failed",
+                session.failures.expression
+            )
+        );
         return false;
     }
 
@@ -623,10 +639,12 @@ auto lower_void_member_call_statement(
             ExpressionLoweringFailureReason::call_argument_failure,
             target_name
         );
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering member call statement failed", detail)
+            append_expression_lowering_failure(
+                "lowering member call statement failed",
+                session.failures.expression
+            )
         );
         return false;
     }
@@ -704,10 +722,12 @@ auto lower_let_statement(
         output
     );
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this let initializer", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this let initializer",
+                session.failures.expression
+            )
         );
         return false;
     }
@@ -780,10 +800,12 @@ auto lower_var_statement(
         output
     );
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this var initializer", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this var initializer",
+                session.failures.expression
+            )
         );
         return false;
     }
@@ -840,10 +862,12 @@ auto lower_assignment_statement(
         output
     );
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this assignment value", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this assignment value",
+                session.failures.expression
+            )
         );
         return false;
     }
@@ -904,10 +928,12 @@ auto lower_call_statement(
             output
         );
         if (!lowered.has_value()) {
-            auto detail = render_expression_lowering_failure(session.failures.expression);
             diagnostics.error(
                 statement.line,
-                append_lowering_detail("lowering does not yet support this call statement", detail)
+                append_expression_lowering_failure(
+                    "lowering does not yet support this call statement",
+                    session.failures.expression
+                )
             );
             return false;
         }
@@ -933,10 +959,12 @@ auto lower_call_statement(
                 output
             );
             if (!lowered.has_value()) {
-                auto detail = render_expression_lowering_failure(session.failures.expression);
                 diagnostics.error(
                     statement.line,
-                    append_lowering_detail("lowering does not yet support this call statement", detail)
+                    append_expression_lowering_failure(
+                        "lowering does not yet support this call statement",
+                        session.failures.expression
+                    )
                 );
                 return false;
             }
@@ -971,10 +999,12 @@ auto lower_call_statement(
         output
     );
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this call statement", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this call statement",
+                session.failures.expression
+            )
         );
         return false;
     }
