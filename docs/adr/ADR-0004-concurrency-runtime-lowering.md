@@ -106,7 +106,8 @@ drop/cleanup decisions.
   lowering cleanup actions. It traces cleanup action source type/capture metadata back to semantic owner/drop-site
   status and emitted-declaration status without changing generated IR.
   The source-correlation formatter lives in a dedicated pipeline report component so compile orchestration does not own
-  report matching and rendering policy.
+  report matching and rendering policy, and direct smoke coverage pins its matching behavior independently from the
+  full compile pipeline.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
