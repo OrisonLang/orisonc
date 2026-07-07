@@ -1,4 +1,6 @@
-#include "orison/lowering/statement_emitter.hpp"
+#include "orison/lowering/concurrency_emitter.hpp"
+#include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/drop_metadata.hpp"
 
 #include <cassert>
 #include <string>

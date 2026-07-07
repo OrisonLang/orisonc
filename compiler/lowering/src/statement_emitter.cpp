@@ -125,27 +125,6 @@ auto emit_thread_entry_thunk(
     return output.str();
 }
 
-auto emit_thread_cleanup_thunk(ConcurrencyExpressionPlan const& plan) -> std::string {
-    auto output = std::ostringstream {};
-    output << "define private void @" << plan.cleanup_symbol_name << "(ptr %environment) {\n";
-    output << "entry:\n";
-    for (auto index = std::size_t {0}; index < plan.cleanup.drop_candidates.size(); ++index) {
-        auto const& candidate = plan.cleanup.drop_candidates[index];
-        auto const& action = plan.cleanup.drop_cleanup.actions[index];
-        auto field_pointer = "%cleanup.field." + std::to_string(candidate.field_index);
-        output << "  " << field_pointer << " = getelementptr " << plan.environment_layout.llvm_type
-               << ", ptr %environment, i32 0, i32 " << candidate.field_index << "\n";
-        output << "  ; cleanup candidate " << action.capture_name << ": " << action.source_type_name
-               << " field " << action.field_index << " drop " << action.symbol_name << "\n";
-        if (drop_calls_enabled(plan.cleanup.drop_cleanup)) {
-            output << "  call void @" << action.symbol_name << "(ptr " << field_pointer << ")\n";
-        }
-    }
-    output << "  ret void\n";
-    output << "}\n";
-    return output.str();
-}
-
 auto lower_thread_let_statement(
     syntax::StatementSyntax const& statement,
     ConcurrencyPlanKind expected_kind,
@@ -203,7 +182,7 @@ auto lower_thread_let_statement(
     if (!thunk_definition.has_value()) {
         return false;
     }
-    auto cleanup_definition = emit_thread_cleanup_thunk(*plan);
+    auto cleanup_definition = emit_concurrency_cleanup_thunk(*plan);
 
     auto const binding_prefix = statement.name + "." + std::string(expression_name);
     auto environment_storage = next_llvm_local_value_name(
@@ -775,12 +754,6 @@ auto lower_void_member_call_statement(
 }
 
 }  // namespace
-
-auto emit_concurrency_cleanup_thunk(
-    ConcurrencyExpressionPlan const& plan
-) -> std::string {
-    return emit_thread_cleanup_thunk(plan);
-}
 
 auto value_expression_for(
     syntax::StatementSyntax const& statement

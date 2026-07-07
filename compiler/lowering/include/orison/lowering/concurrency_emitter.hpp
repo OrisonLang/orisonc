@@ -44,6 +44,10 @@ auto emit_concurrency_spawn(
     std::ostringstream& output
 ) -> void;
 
+auto emit_concurrency_cleanup_thunk(
+    ConcurrencyExpressionPlan const& plan
+) -> std::string;
+
 auto emit_abandoned_concurrency_handle_cleanup(
     FunctionLoweringSession& session,
     std::ostringstream& output

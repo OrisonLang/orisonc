@@ -67,10 +67,6 @@ auto record_deferred_cleanup(
     diagnostics::DiagnosticBag& diagnostics
 ) -> bool;
 
-auto emit_concurrency_cleanup_thunk(
-    ConcurrencyExpressionPlan const& plan
-) -> std::string;
-
 auto lower_call_statement(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
