@@ -155,6 +155,25 @@ add_test(
     COMMAND orison_concurrency_plan_smoke
 )
 
+add_executable(orison_concurrency_emitter_smoke
+    smoke/concurrency_emitter_smoke.cpp
+)
+
+target_link_libraries(orison_concurrency_emitter_smoke
+    PRIVATE
+        orison_lowering
+        orison_semantics
+        orison_source
+        orison_syntax
+)
+
+target_compile_features(orison_concurrency_emitter_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_concurrency_emitter_smoke
+    COMMAND orison_concurrency_emitter_smoke
+)
+
 add_executable(orison_drop_cleanup_emitter_smoke
     smoke/drop_cleanup_emitter_smoke.cpp
 )
