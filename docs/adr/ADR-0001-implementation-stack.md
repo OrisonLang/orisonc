@@ -281,6 +281,8 @@ analysis, and lowering components.
   block lowerer parameter.
   The Unit cleanup-block adapter is declared from a narrow cleanup-specific header so while/control-flow lowering and
   statement smoke tests no longer include the full function-emitter API only to replay deferred cleanup.
+  Abandoned concurrency-handle cleanup is now emitted from a dedicated lowering component instead of a function-emitter
+  local helper.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

@@ -1,6 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
+#include "orison/lowering/concurrency_cleanup.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
@@ -189,42 +190,13 @@ auto is_thread_join_expression(
     return state.thread_bindings.contains(expression.left->left->text);
 }
 
-auto emit_abandoned_thread_handle_cleanup(
-    FunctionLoweringSession& session,
-    std::ostringstream& output
-) -> void {
-    auto destroy_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::destroy_handle);
-    for (auto const& binding_name : session.state.thread_binding_order) {
-        auto binding = session.state.thread_bindings.find(binding_name);
-        if (binding == session.state.thread_bindings.end() ||
-            binding->second.handle_destroyed) {
-            continue;
-        }
-
-        output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
-               << "(ptr " << binding->second.handle << ")\n";
-        binding->second.handle_destroyed = true;
-    }
-    for (auto const& binding_name : session.state.task_binding_order) {
-        auto binding = session.state.task_bindings.find(binding_name);
-        if (binding == session.state.task_bindings.end() ||
-            binding->second.handle_destroyed) {
-            continue;
-        }
-
-        output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
-               << "(ptr " << binding->second.handle << ")\n";
-        binding->second.handle_destroyed = true;
-    }
-}
-
 auto emit_function_return_cleanup(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
-    emit_abandoned_thread_handle_cleanup(session, output);
+    emit_abandoned_concurrency_handle_cleanup(session, output);
     return emit_deferred_cleanup_to_depth(
         0,
         context,
