@@ -159,6 +159,8 @@ analysis, and lowering components.
   Loop and concurrency emission follow the same policy for expression-failure diagnostics.
 - Control-flow lowering asks the diagnostics component for nested expression-failure detail text instead of calling
   expression failure renderers directly, keeping renderer use inside diagnostics and tests.
+- Exact failure renderer declarations live in a separate low-level rendering header; the primary diagnostics header
+  exposes the emitter-facing composition/detail API.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
 - Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately
