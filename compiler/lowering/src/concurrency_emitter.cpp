@@ -182,6 +182,33 @@ auto emit_concurrency_capture_environment_stores(
     return ConcurrencyCaptureStoreEmissionResult::emitted;
 }
 
+auto register_concurrency_binding(
+    ConcurrencyPlanKind kind,
+    std::string const& binding_name,
+    std::string handle_name,
+    std::string result_storage,
+    LoweredType result_type,
+    FunctionLoweringState& state
+) -> void {
+    state.immutable_bindings[binding_name] = LoweredExpression {
+        .type = std::string(concurrency_handle_llvm_type()),
+        .value = handle_name,
+        .signedness = IntegerSignedness::not_integer,
+    };
+    auto binding = ConcurrencyBinding {
+        .handle = std::move(handle_name),
+        .result_storage = std::move(result_storage),
+        .result_type = std::move(result_type),
+    };
+    if (kind == ConcurrencyPlanKind::thread) {
+        state.thread_bindings[binding_name] = std::move(binding);
+        state.thread_binding_order.push_back(binding_name);
+        return;
+    }
+    state.task_bindings[binding_name] = std::move(binding);
+    state.task_binding_order.push_back(binding_name);
+}
+
 auto emit_concurrency_entry_thunk(
     ConcurrencyExpressionPlan const& plan,
     syntax::ExpressionSyntax const& expression,

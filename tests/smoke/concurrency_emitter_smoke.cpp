@@ -13,6 +13,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <vector>
 #include <unistd.h>
 
 namespace {
@@ -101,6 +102,50 @@ auto test_spawn_failure_check_emitter() -> void {
         "worker.thread.spawn_ok.0:\n"
     );
     assert(state.next_temporary_index == 1);
+}
+
+auto test_register_concurrency_binding() -> void {
+    auto state = orison::lowering::FunctionLoweringState {};
+    orison::lowering::register_concurrency_binding(
+        orison::lowering::ConcurrencyPlanKind::thread,
+        "worker",
+        "%worker",
+        "%worker.thread.result",
+        orison::lowering::LoweredType {
+            .type = "i64",
+            .signedness = orison::lowering::IntegerSignedness::signed_integer,
+        },
+        state
+    );
+    assert(state.immutable_bindings.at("worker").type == "ptr");
+    assert(state.immutable_bindings.at("worker").value == "%worker");
+    assert(state.immutable_bindings.at("worker").signedness == orison::lowering::IntegerSignedness::not_integer);
+    assert(state.thread_binding_order == std::vector<std::string>({"worker"}));
+    assert(state.thread_bindings.at("worker").handle == "%worker");
+    assert(state.thread_bindings.at("worker").result_storage == "%worker.thread.result");
+    assert(state.thread_bindings.at("worker").result_type.type == "i64");
+    assert(state.thread_bindings.at("worker").result_type.signedness == orison::lowering::IntegerSignedness::signed_integer);
+    assert(state.task_bindings.empty());
+    assert(state.task_binding_order.empty());
+
+    orison::lowering::register_concurrency_binding(
+        orison::lowering::ConcurrencyPlanKind::task,
+        "pending",
+        "%pending",
+        "%pending.task.result",
+        orison::lowering::LoweredType {
+            .type = "i1",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        state
+    );
+    assert(state.immutable_bindings.at("pending").type == "ptr");
+    assert(state.immutable_bindings.at("pending").value == "%pending");
+    assert(state.task_binding_order == std::vector<std::string>({"pending"}));
+    assert(state.task_bindings.at("pending").handle == "%pending");
+    assert(state.task_bindings.at("pending").result_storage == "%pending.task.result");
+    assert(state.task_bindings.at("pending").result_type.type == "i1");
+    assert(state.task_bindings.at("pending").result_type.signedness == orison::lowering::IntegerSignedness::not_integer);
 }
 
 auto test_result_completion_emitters() -> void {
@@ -263,6 +308,7 @@ auto test_abandoned_handle_cleanup() -> void {
 int main() {
     test_capture_environment_store_emitter();
     test_spawn_failure_check_emitter();
+    test_register_concurrency_binding();
     test_result_completion_emitters();
     test_abandoned_handle_cleanup();
 

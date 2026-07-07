@@ -139,23 +139,14 @@ auto lower_thread_let_statement(
     );
     session.state.current_block = spawn_ok_block;
 
-    session.state.immutable_bindings[statement.name] = LoweredExpression {
-        .type = std::string(concurrency_handle_llvm_type()),
-        .value = handle_name,
-        .signedness = IntegerSignedness::not_integer,
-    };
-    auto binding = ConcurrencyBinding {
-        .handle = std::move(handle_name),
-        .result_storage = std::move(result_storage),
-        .result_type = plan->result_type,
-    };
-    if (expected_kind == ConcurrencyPlanKind::thread) {
-        session.state.thread_bindings[statement.name] = std::move(binding);
-        session.state.thread_binding_order.push_back(statement.name);
-    } else {
-        session.state.task_bindings[statement.name] = std::move(binding);
-        session.state.task_binding_order.push_back(statement.name);
-    }
+    register_concurrency_binding(
+        expected_kind,
+        statement.name,
+        std::move(handle_name),
+        std::move(result_storage),
+        plan->result_type,
+        session.state
+    );
     session.state.pending_function_definitions.push_back(std::move(*thunk_definition));
     if (!plan->captures.empty()) {
         session.state.pending_function_definitions.push_back(std::move(cleanup_definition));
