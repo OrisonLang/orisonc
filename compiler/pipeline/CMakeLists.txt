@@ -1,5 +1,6 @@
 add_library(orison_pipeline STATIC
     src/compile_pipeline.cpp
+    src/drop_readiness_source_correlation_report.cpp
 )
 
 target_include_directories(orison_pipeline
