@@ -269,12 +269,11 @@ auto emit_concurrency_entry_thunk(
         output
     );
     if (!lowered_result.has_value()) {
-        auto detail = render_expression_lowering_failure(thunk_failures.expression);
         diagnostics.error(
             result_expression->line,
-            append_lowering_detail(
+            append_expression_lowering_failure(
                 "lowering does not yet support this " + std::string(expression_name) + " body result",
-                detail
+                thunk_failures.expression
             )
         );
         return std::nullopt;

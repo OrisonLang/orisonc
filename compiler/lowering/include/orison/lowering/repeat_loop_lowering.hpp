@@ -72,10 +72,12 @@ auto lower_repeat_statement(
         output
     );
     if (!condition.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this repeat condition", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this repeat condition",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }

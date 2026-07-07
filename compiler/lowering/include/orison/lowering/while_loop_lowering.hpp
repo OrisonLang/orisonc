@@ -61,10 +61,12 @@ auto lower_while_loop_statement(
         output
     );
     if (!condition.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this while condition", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this while condition",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }

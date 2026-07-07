@@ -51,10 +51,12 @@ auto lower_while_body_if(
         output
     );
     if (!condition.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this while-body if condition", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this while-body if condition",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }

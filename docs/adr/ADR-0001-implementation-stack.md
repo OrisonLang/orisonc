@@ -156,6 +156,7 @@ analysis, and lowering components.
   message while delegating failure rendering and empty-detail handling to the diagnostics component.
   Function and statement emission use those helpers for recorded expression/control-flow failures rather than
   carrying local render-then-append boilerplate.
+  Loop and concurrency emission follow the same policy for expression-failure diagnostics.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
 - Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately

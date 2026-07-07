@@ -99,12 +99,11 @@ auto lower_fixed_array_for_statement(
         output
     );
     if (!lowered_iterable.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.expression.line,
-            append_lowering_detail(
+            append_expression_lowering_failure(
                 "lowering for statements currently requires a fixed-size array iterable",
-                detail
+                session.failures.expression
             )
         );
         return StatementFlow::failed;
@@ -219,10 +218,12 @@ auto lower_array_literal_for_statement(
             output
         );
         if (!lowered_item.has_value()) {
-            auto detail = render_expression_lowering_failure(session.failures.expression);
             diagnostics.error(
                 statement.expression.arguments[index].line,
-                append_lowering_detail("lowering does not yet support this for iterable element", detail)
+                append_expression_lowering_failure(
+                    "lowering does not yet support this for iterable element",
+                    session.failures.expression
+                )
             );
             return StatementFlow::failed;
         }
