@@ -437,9 +437,7 @@ auto lower_unit_switch_statement(
     auto block_index = next_llvm_block_index(session.state.next_block_index);
     auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
     if (!planning.plan.has_value()) {
-        auto detail = render_control_flow_lowering_failure(ControlFlowLoweringFailure {
-            .reason = planning.failure,
-        });
+        auto detail = render_control_flow_lowering_failure(planning.failure);
         diagnostics.error(
             statement.line,
             append_lowering_detail("lowering does not yet support this Unit switch statement", detail)
@@ -937,9 +935,7 @@ auto lower_nonvoid_switch_statement(
     auto block_index = next_llvm_block_index(session.state.next_block_index);
     auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
     if (!planning.plan.has_value()) {
-        auto detail = render_control_flow_lowering_failure(ControlFlowLoweringFailure {
-            .reason = planning.failure,
-        });
+        auto detail = render_control_flow_lowering_failure(planning.failure);
         diagnostics.error(
             statement.line,
             append_lowering_detail("lowering does not yet support this non-void switch statement", detail)

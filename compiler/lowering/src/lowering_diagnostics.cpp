@@ -117,4 +117,14 @@ auto render_control_flow_lowering_failure(
     return append_lowering_detail(std::move(prefix), failure.detail);
 }
 
+auto render_control_flow_lowering_failure(
+    ControlFlowLoweringFailureReason reason,
+    std::string detail
+) -> std::string {
+    return render_control_flow_lowering_failure(ControlFlowLoweringFailure {
+        .reason = reason,
+        .detail = std::move(detail),
+    });
+}
+
 }  // namespace orison::lowering

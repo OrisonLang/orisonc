@@ -97,6 +97,12 @@ int main() {
             }
         ) == "if condition lowering failed: unknown lowered name: flag"
     );
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(
+            ControlFlowLoweringFailureReason::unsupported_switch_pattern,
+            "case label"
+        ) == "switch pattern lowering failed: case label"
+    );
 
     auto failures = LoweringFailures {};
     assert(orison::lowering::record_expression_lowering_failure(

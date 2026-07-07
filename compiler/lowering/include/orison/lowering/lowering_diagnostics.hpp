@@ -19,4 +19,9 @@ auto render_control_flow_lowering_failure(
     ControlFlowLoweringFailure const& failure
 ) -> std::string;
 
+auto render_control_flow_lowering_failure(
+    ControlFlowLoweringFailureReason reason,
+    std::string detail = {}
+) -> std::string;
+
 }  // namespace orison::lowering
