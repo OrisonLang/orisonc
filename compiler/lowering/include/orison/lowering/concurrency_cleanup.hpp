@@ -29,6 +29,10 @@ auto emit_task_await_result(
     std::ostringstream& output
 ) -> LoweredExpression;
 
+auto emit_concurrency_spawn_failed(
+    std::ostringstream& output
+) -> void;
+
 auto emit_abandoned_concurrency_handle_cleanup(
     FunctionLoweringSession& session,
     std::ostringstream& output

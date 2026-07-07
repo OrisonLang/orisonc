@@ -287,6 +287,7 @@ analysis, and lowering components.
   Join/await result loading now shares the same helper that destroys the completed concurrency handle.
   Join/await runtime-call emission now lives with concurrency result completion helpers instead of inline expression
   lowering.
+  Spawn-failure runtime-call emission now also lives behind the concurrency cleanup helper boundary.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

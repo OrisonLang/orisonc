@@ -3,6 +3,7 @@
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/call_emitter.hpp"
+#include "orison/lowering/concurrency_cleanup.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/drop_metadata.hpp"
@@ -259,8 +260,7 @@ auto lower_thread_let_statement(
     output << "  " << spawn_failure_check << " = icmp eq ptr " << handle_name << ", null\n";
     emit_llvm_conditional_branch(output, spawn_failure_check, spawn_failed_block, spawn_ok_block);
     emit_llvm_block_label(output, spawn_failed_block);
-    auto spawn_failed_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::spawn_failed);
-    output << "  call " << spawn_failed_call.return_type << " @" << spawn_failed_call.symbol_name << "()\n";
+    emit_concurrency_spawn_failed(output);
     emit_llvm_unreachable(output);
     emit_llvm_block_label(output, spawn_ok_block);
     session.state.current_block = spawn_ok_block;

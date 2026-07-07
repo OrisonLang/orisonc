@@ -55,6 +55,14 @@ auto emit_task_await_result(
     return emit_concurrency_result_load_and_destroy(binding, state, output);
 }
 
+auto emit_concurrency_spawn_failed(
+    std::ostringstream& output
+) -> void {
+    auto spawn_failed_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::spawn_failed);
+    output << "  call " << spawn_failed_call.return_type << " @"
+           << spawn_failed_call.symbol_name << "()\n";
+}
+
 auto emit_abandoned_concurrency_handle_cleanup(
     FunctionLoweringSession& session,
     std::ostringstream& output
