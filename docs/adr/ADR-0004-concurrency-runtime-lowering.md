@@ -107,7 +107,8 @@ drop/cleanup decisions.
   status and emitted-declaration status without changing generated IR.
   The source-correlation formatter lives in a dedicated pipeline report component so compile orchestration does not own
   report matching and rendering policy, and direct smoke coverage pins its matching behavior independently from the
-  full compile pipeline.
+  full compile pipeline. Pipeline smoke coverage now verifies report wiring rather than duplicating exact formatter
+  matching cases.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
