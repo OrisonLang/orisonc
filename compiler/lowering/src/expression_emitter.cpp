@@ -2322,7 +2322,7 @@ auto lower_expression(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     auto& failures = session.failures;
-    failures.expression = {};
+    reset_expression_lowering_failure(failures);
     return lowered_expression(
         expression,
         expected_llvm_type,

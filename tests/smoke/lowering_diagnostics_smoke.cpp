@@ -111,6 +111,16 @@ int main() {
     ));
     assert(failures.expression.reason == ExpressionLoweringFailureReason::unknown_name);
     assert(failures.expression.detail == "first");
+    orison::lowering::reset_expression_lowering_failure(failures);
+    assert(failures.expression.reason == ExpressionLoweringFailureReason::none);
+    assert(failures.expression.detail.empty());
+    assert(orison::lowering::record_expression_lowering_failure(
+        failures,
+        ExpressionLoweringFailureReason::unknown_function,
+        "after reset"
+    ));
+    assert(failures.expression.reason == ExpressionLoweringFailureReason::unknown_function);
+    assert(failures.expression.detail == "after reset");
 
     assert(orison::lowering::record_control_flow_lowering_failure(
         failures,
@@ -124,5 +134,15 @@ int main() {
     ));
     assert(failures.control_flow.reason == ControlFlowLoweringFailureReason::if_condition_failure);
     assert(failures.control_flow.detail == "first control");
+    orison::lowering::reset_control_flow_lowering_failure(failures);
+    assert(failures.control_flow.reason == ControlFlowLoweringFailureReason::none);
+    assert(failures.control_flow.detail.empty());
+    assert(orison::lowering::record_control_flow_lowering_failure(
+        failures,
+        ControlFlowLoweringFailureReason::switch_case_failure,
+        "after reset control"
+    ));
+    assert(failures.control_flow.reason == ControlFlowLoweringFailureReason::switch_case_failure);
+    assert(failures.control_flow.detail == "after reset control");
     return 0;
 }

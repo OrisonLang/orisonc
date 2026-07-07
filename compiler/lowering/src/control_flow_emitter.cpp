@@ -354,7 +354,7 @@ auto lower_final_control_flow_statement(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     auto& failures = session.failures;
-    failures.control_flow = {};
+    reset_control_flow_lowering_failure(failures);
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_final_if_statement(
             statement,

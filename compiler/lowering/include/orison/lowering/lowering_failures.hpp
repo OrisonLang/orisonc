@@ -57,6 +57,14 @@ struct LoweringFailures {
     ControlFlowLoweringFailure control_flow;
 };
 
+inline auto reset_expression_lowering_failure(LoweringFailures& failures) -> void {
+    failures.expression = {};
+}
+
+inline auto reset_control_flow_lowering_failure(LoweringFailures& failures) -> void {
+    failures.control_flow = {};
+}
+
 inline auto record_expression_lowering_failure(
     LoweringFailures& failures,
     ExpressionLoweringFailureReason reason,

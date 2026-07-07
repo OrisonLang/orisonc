@@ -146,6 +146,8 @@ analysis, and lowering components.
   conditional `": detail"` formatting.
 - First-failure recording for expression/control-flow lowering lives in the neutral failure model, so emitters share
   the same "record only first failure" policy.
+- Failure reset lifecycle helpers also live in the neutral failure model, keeping emitter entry points explicit about
+  when a fresh expression or final-control-flow lowering attempt starts.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
 - Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately
