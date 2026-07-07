@@ -5,6 +5,7 @@
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"

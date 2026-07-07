@@ -1,4 +1,5 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/lowering_failure_rendering.hpp"
 #include "orison/lowering/lowering_failures.hpp"
 

@@ -9,6 +9,7 @@
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"

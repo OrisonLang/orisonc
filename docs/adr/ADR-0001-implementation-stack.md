@@ -161,6 +161,8 @@ analysis, and lowering components.
   expression failure renderers directly, keeping renderer use inside diagnostics and tests.
 - Exact failure renderer declarations live in a separate low-level rendering header; the primary diagnostics header
   exposes the emitter-facing composition/detail API.
+- Failure record/reset lifecycle helpers live in a separate lifecycle header, leaving the failure model header as
+  data-only for code that only needs the structured failure records.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
 - Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately

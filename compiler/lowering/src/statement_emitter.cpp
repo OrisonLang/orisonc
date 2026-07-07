@@ -11,6 +11,7 @@
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
+#include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
