@@ -33,6 +33,28 @@ auto emit_concurrency_result_load_and_destroy(
     };
 }
 
+auto emit_thread_join_result(
+    ConcurrencyBinding& binding,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> LoweredExpression {
+    auto join_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::join_thread);
+    output << "  call " << join_call.return_type << " @" << join_call.symbol_name
+           << "(ptr " << binding.handle << ")\n";
+    return emit_concurrency_result_load_and_destroy(binding, state, output);
+}
+
+auto emit_task_await_result(
+    ConcurrencyBinding& binding,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> LoweredExpression {
+    auto await_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::await_task);
+    output << "  call " << await_call.return_type << " @" << await_call.symbol_name
+           << "(ptr " << binding.handle << ")\n";
+    return emit_concurrency_result_load_and_destroy(binding, state, output);
+}
+
 auto emit_abandoned_concurrency_handle_cleanup(
     FunctionLoweringSession& session,
     std::ostringstream& output

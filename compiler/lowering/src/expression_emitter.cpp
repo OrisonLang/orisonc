@@ -2146,10 +2146,7 @@ auto lowered_expression(
                     );
                     return std::nullopt;
                 }
-                auto join_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::join_thread);
-                output << "  call " << join_call.return_type << " @" << join_call.symbol_name
-                       << "(ptr " << thread_binding->second.handle << ")\n";
-                return emit_concurrency_result_load_and_destroy(thread_binding->second, state, output);
+                return emit_thread_join_result(thread_binding->second, state, output);
             }
         }
 
@@ -2261,10 +2258,7 @@ auto lowered_expression(
                 );
                 return std::nullopt;
             }
-            auto await_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::await_task);
-            output << "  call " << await_call.return_type << " @" << await_call.symbol_name
-                   << "(ptr " << task_binding->second.handle << ")\n";
-            return emit_concurrency_result_load_and_destroy(task_binding->second, state, output);
+            return emit_task_await_result(task_binding->second, state, output);
         }
     }
 
