@@ -8,6 +8,31 @@ auto append_lowering_detail(std::string prefix, std::string const& detail) -> st
     return detail.empty() ? prefix : prefix + ": " + detail;
 }
 
+auto append_expression_lowering_failure(
+    std::string prefix,
+    ExpressionLoweringFailure const& failure
+) -> std::string {
+    return append_lowering_detail(std::move(prefix), render_expression_lowering_failure(failure));
+}
+
+auto append_control_flow_lowering_failure(
+    std::string prefix,
+    ControlFlowLoweringFailure const& failure
+) -> std::string {
+    return append_lowering_detail(std::move(prefix), render_control_flow_lowering_failure(failure));
+}
+
+auto append_control_flow_lowering_failure(
+    std::string prefix,
+    ControlFlowLoweringFailureReason reason,
+    std::string detail
+) -> std::string {
+    return append_lowering_detail(
+        std::move(prefix),
+        render_control_flow_lowering_failure(reason, std::move(detail))
+    );
+}
+
 auto render_expression_lowering_failure(
     ExpressionLoweringFailure const& failure
 ) -> std::string {

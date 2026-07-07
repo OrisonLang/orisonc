@@ -20,6 +20,22 @@ int main() {
         orison::lowering::append_lowering_detail("lowering failed", "unknown lowered name: value") ==
         "lowering failed: unknown lowered name: value"
     );
+    assert(
+        orison::lowering::append_expression_lowering_failure(
+            "lowering failed",
+            ExpressionLoweringFailure {
+                .reason = ExpressionLoweringFailureReason::unknown_name,
+                .detail = "value",
+            }
+        ) == "lowering failed: unknown lowered name: value"
+    );
+    assert(
+        orison::lowering::append_control_flow_lowering_failure(
+            "lowering failed",
+            ControlFlowLoweringFailureReason::unsupported_switch_pattern,
+            "case label"
+        ) == "lowering failed: switch pattern lowering failed: case label"
+    );
 
     auto expression_cases = std::array {
         std::pair {ExpressionLoweringFailureReason::unsupported_expression, "unsupported expression"},

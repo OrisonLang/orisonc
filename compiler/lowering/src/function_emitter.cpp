@@ -348,10 +348,12 @@ auto lower_unit_if_statement(
         output
     );
     if (!condition.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this Unit if condition", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this Unit if condition",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }
@@ -426,10 +428,12 @@ auto lower_unit_switch_statement(
         output
     );
     if (!subject.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this Unit switch subject", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this Unit switch subject",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }
@@ -437,10 +441,12 @@ auto lower_unit_switch_statement(
     auto block_index = next_llvm_block_index(session.state.next_block_index);
     auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
     if (!planning.plan.has_value()) {
-        auto detail = render_control_flow_lowering_failure(planning.failure);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this Unit switch statement", detail)
+            append_control_flow_lowering_failure(
+                "lowering does not yet support this Unit switch statement",
+                planning.failure
+            )
         );
         return StatementFlow::failed;
     }
@@ -603,10 +609,12 @@ auto lower_guard_return_statement(
         output
     );
     if (!lowered.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this guard failure return", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this guard failure return",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }
@@ -773,10 +781,12 @@ auto lower_guard_statement(
         output
     );
     if (!condition.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this guard condition", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this guard condition",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }
@@ -829,10 +839,12 @@ auto lower_nonvoid_if_statement(
         output
     );
     if (!condition.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this non-void if condition", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this non-void if condition",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }
@@ -924,10 +936,12 @@ auto lower_nonvoid_switch_statement(
         output
     );
     if (!subject.has_value()) {
-        auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this non-void switch subject", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this non-void switch subject",
+                session.failures.expression
+            )
         );
         return StatementFlow::failed;
     }
@@ -935,10 +949,12 @@ auto lower_nonvoid_switch_statement(
     auto block_index = next_llvm_block_index(session.state.next_block_index);
     auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
     if (!planning.plan.has_value()) {
-        auto detail = render_control_flow_lowering_failure(planning.failure);
         diagnostics.error(
             statement.line,
-            append_lowering_detail("lowering does not yet support this non-void switch statement", detail)
+            append_control_flow_lowering_failure(
+                "lowering does not yet support this non-void switch statement",
+                planning.failure
+            )
         );
         return StatementFlow::failed;
     }
@@ -1349,10 +1365,12 @@ void emit_function_body(
     }
 
     if (attempted_final_control_flow && !lowered_final_statement.has_value()) {
-        auto detail = render_control_flow_lowering_failure(failures.control_flow);
         diagnostics.error(
             final_statement_line,
-            append_lowering_detail("lowering does not yet support this final control-flow statement", detail)
+            append_control_flow_lowering_failure(
+                "lowering does not yet support this final control-flow statement",
+                failures.control_flow
+            )
         );
         return;
     }
@@ -1384,10 +1402,12 @@ void emit_function_body(
             );
             return;
         }
-        auto detail = render_expression_lowering_failure(failures.expression);
         diagnostics.error(
             expression != nullptr ? expression->line : function.line,
-            append_lowering_detail("lowering does not yet support this return expression", detail)
+            append_expression_lowering_failure(
+                "lowering does not yet support this return expression",
+                failures.expression
+            )
         );
         return;
     }

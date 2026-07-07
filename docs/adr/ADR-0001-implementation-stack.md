@@ -152,6 +152,8 @@ analysis, and lowering components.
   recorded into a session failure slot, avoiding ad hoc temporary failure objects in emitters.
 - Expression failure rendering exposes the same bare reason/detail API for consistency with control-flow diagnostics;
   emitters still prefer rendering recorded session failures when a lowering attempt has populated one.
+- Lowering diagnostics also expose prefix-plus-failure composition helpers, so emitters can keep the local diagnostic
+  message while delegating failure rendering and empty-detail handling to the diagnostics component.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
 - Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately
