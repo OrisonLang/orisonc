@@ -24,19 +24,6 @@ namespace {
 
 using EmissionContext = LoweringEmissionContext;
 
-void record_control_flow_failure(
-    LoweringFailures& failures,
-    ControlFlowLoweringFailureReason reason,
-    std::string detail = {}
-) {
-    if (failures.control_flow.reason == ControlFlowLoweringFailureReason::none) {
-        failures.control_flow = {
-            .reason = reason,
-            .detail = std::move(detail),
-        };
-    }
-}
-
 auto expression_failure_detail(LoweringFailures const& failures) -> std::string {
     return render_expression_lowering_failure(failures.expression);
 }
@@ -108,7 +95,7 @@ auto lower_final_if_statement(
     auto& failures = session.failures;
     if (statement.kind != syntax::StatementKind::if_statement || statement.nested_statements.empty() ||
         statement.alternate_statements.empty()) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::invalid_if_shape,
             "a final if requires non-empty then and else arms"
@@ -125,7 +112,7 @@ auto lower_final_if_statement(
         output
     );
     if (!condition.has_value()) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_condition_failure,
             expression_failure_detail(failures)
@@ -199,7 +186,7 @@ auto lower_final_if_statement(
         }
     );
     if (result.failure == ConditionalEmissionFailure::then_arm) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_then_arm_failure,
             expression_failure_detail(failures)
@@ -207,7 +194,7 @@ auto lower_final_if_statement(
         return std::nullopt;
     }
     if (result.failure == ConditionalEmissionFailure::else_arm) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_else_arm_failure,
             expression_failure_detail(failures)
@@ -216,7 +203,7 @@ auto lower_final_if_statement(
     }
     if (result.failure == ConditionalEmissionFailure::branch_mismatch) {
         auto const& mismatch = *result.mismatch;
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_branch_type_mismatch,
             mismatch.expected.type + " versus " + mismatch.actual.type
@@ -238,7 +225,7 @@ auto lower_final_switch_statement(
     auto& state = session.state;
     auto& failures = session.failures;
     if (statement.kind != syntax::StatementKind::switch_statement || statement.switch_cases.empty()) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::invalid_switch_shape,
             "a final switch requires at least one case"
@@ -249,7 +236,7 @@ auto lower_final_switch_statement(
     auto subject_type = infer_expression_type(statement.expression, context, state);
     if (!subject_type.has_value() ||
         (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_subject_type_failure
         );
@@ -264,7 +251,7 @@ auto lower_final_switch_statement(
         output
     );
     if (!subject.has_value()) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_subject_failure,
             expression_failure_detail(failures)
@@ -275,7 +262,7 @@ auto lower_final_switch_statement(
     auto block_index = next_llvm_block_index(state.next_block_index);
     auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
     if (!planning.plan.has_value()) {
-        record_control_flow_failure(failures, planning.failure);
+        record_control_flow_lowering_failure(failures, planning.failure);
         return std::nullopt;
     }
     auto const& plan = *planning.plan;
@@ -326,7 +313,7 @@ auto lower_final_switch_statement(
         }
     );
     if (result.failure == SwitchEmissionFailure::case_failure) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_case_failure,
             expression_failure_detail(failures)
@@ -334,7 +321,7 @@ auto lower_final_switch_statement(
         return std::nullopt;
     }
     if (result.failure == SwitchEmissionFailure::empty_cases) {
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::invalid_switch_shape,
             "a final switch requires a value-producing case"
@@ -345,7 +332,7 @@ auto lower_final_switch_statement(
         auto detail = result.mismatch.has_value()
             ? result.mismatch->expected.type + " versus " + result.mismatch->actual.type
             : std::string {};
-        record_control_flow_failure(
+        record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_case_type_mismatch,
             std::move(detail)

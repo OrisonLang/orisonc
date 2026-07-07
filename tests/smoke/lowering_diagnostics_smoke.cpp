@@ -11,6 +11,7 @@ int main() {
     using orison::lowering::ControlFlowLoweringFailureReason;
     using orison::lowering::ExpressionLoweringFailure;
     using orison::lowering::ExpressionLoweringFailureReason;
+    using orison::lowering::LoweringFailures;
 
     assert(orison::lowering::render_expression_lowering_failure({}).empty());
     assert(orison::lowering::render_control_flow_lowering_failure({}).empty());
@@ -96,5 +97,32 @@ int main() {
             }
         ) == "if condition lowering failed: unknown lowered name: flag"
     );
+
+    auto failures = LoweringFailures {};
+    assert(orison::lowering::record_expression_lowering_failure(
+        failures,
+        ExpressionLoweringFailureReason::unknown_name,
+        "first"
+    ));
+    assert(!orison::lowering::record_expression_lowering_failure(
+        failures,
+        ExpressionLoweringFailureReason::unknown_function,
+        "second"
+    ));
+    assert(failures.expression.reason == ExpressionLoweringFailureReason::unknown_name);
+    assert(failures.expression.detail == "first");
+
+    assert(orison::lowering::record_control_flow_lowering_failure(
+        failures,
+        ControlFlowLoweringFailureReason::if_condition_failure,
+        "first control"
+    ));
+    assert(!orison::lowering::record_control_flow_lowering_failure(
+        failures,
+        ControlFlowLoweringFailureReason::switch_case_failure,
+        "second control"
+    ));
+    assert(failures.control_flow.reason == ControlFlowLoweringFailureReason::if_condition_failure);
+    assert(failures.control_flow.detail == "first control");
     return 0;
 }

@@ -472,12 +472,13 @@ auto lower_void_call_statement(
     std::ostringstream& output
 ) -> bool {
     if (function.parameter_types.size() != statement.expression.arguments.size()) {
-        session.failures.expression = ExpressionLoweringFailure {
-            .reason = ExpressionLoweringFailureReason::call_arity_mismatch,
-            .detail = function_name + " expects " +
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::call_arity_mismatch,
+            function_name + " expects " +
                 std::to_string(function.parameter_types.size()) + " arguments, got " +
-                std::to_string(statement.expression.arguments.size()),
-        };
+                std::to_string(statement.expression.arguments.size())
+        );
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(statement.line, "lowering call statement failed: " + detail);
         return false;
@@ -491,12 +492,11 @@ auto lower_void_call_statement(
         output
     );
     if (!arguments.has_value()) {
-        if (session.failures.expression.reason == ExpressionLoweringFailureReason::none) {
-            session.failures.expression = ExpressionLoweringFailure {
-                .reason = ExpressionLoweringFailureReason::call_argument_failure,
-                .detail = function_name,
-            };
-        }
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::call_argument_failure,
+            function_name
+        );
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
@@ -595,11 +595,12 @@ auto lower_void_member_call_statement(
         ? std::size_t {0}
         : function.parameter_types.size() - 1;
     if (expected_argument_count != statement.expression.arguments.size()) {
-        session.failures.expression = ExpressionLoweringFailure {
-            .reason = ExpressionLoweringFailureReason::call_arity_mismatch,
-            .detail = target_name + " expects " + std::to_string(expected_argument_count) +
-                " arguments, got " + std::to_string(statement.expression.arguments.size()),
-        };
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::call_arity_mismatch,
+            target_name + " expects " + std::to_string(expected_argument_count) +
+                " arguments, got " + std::to_string(statement.expression.arguments.size())
+        );
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(statement.line, "lowering member call statement failed: " + detail);
         return false;
@@ -617,12 +618,11 @@ auto lower_void_member_call_statement(
         output
     );
     if (!arguments.has_value()) {
-        if (session.failures.expression.reason == ExpressionLoweringFailureReason::none) {
-            session.failures.expression = ExpressionLoweringFailure {
-                .reason = ExpressionLoweringFailureReason::call_argument_failure,
-                .detail = target_name,
-            };
-        }
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::call_argument_failure,
+            target_name
+        );
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,

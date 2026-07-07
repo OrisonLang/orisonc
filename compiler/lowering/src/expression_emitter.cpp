@@ -30,19 +30,6 @@ namespace {
 
 using EmissionContext = LoweringEmissionContext;
 
-void record_failure(
-    LoweringFailures& failures,
-    ExpressionLoweringFailureReason reason,
-    std::string detail
-) {
-    if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
-        failures.expression = ExpressionLoweringFailure {
-            .reason = reason,
-            .detail = std::move(detail),
-        };
-    }
-}
-
 auto digit_value_for_base(char character, int base) -> std::optional<std::uint64_t> {
     auto value = std::optional<std::uint64_t> {};
     if (character >= '0' && character <= '9') {
@@ -728,7 +715,7 @@ auto lower_array_literal_expression(
 
     auto array_type = parse_llvm_array_type(expected_llvm_type);
     if (!array_type.has_value()) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::type_mismatch,
             "array literal expected LLVM array type " + std::string(expected_llvm_type)
@@ -736,7 +723,7 @@ auto lower_array_literal_expression(
         return std::nullopt;
     }
     if (expression.arguments.size() != array_type->length) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "array literal element count"
@@ -802,7 +789,7 @@ auto lower_record_constructor_expression(
         return std::nullopt;
     }
     if (layout->second.llvm_type_name != expected_llvm_type) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::type_mismatch,
             expression.left->text + " has LLVM type " + layout->second.llvm_type_name +
@@ -811,7 +798,7 @@ auto lower_record_constructor_expression(
         return std::nullopt;
     }
     if (layout->second.fields.size() != expression.arguments.size()) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::call_arity_mismatch,
             expression.left->text + " expects " + std::to_string(layout->second.fields.size()) +
@@ -831,7 +818,7 @@ auto lower_record_constructor_expression(
     for (auto index = std::size_t {0}; index < layout->second.fields.size(); ++index) {
         auto const& field = layout->second.fields[index];
         if (field.llvm_type.empty() || field.llvm_type == "void") {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 "record constructor field layout"
@@ -919,7 +906,7 @@ auto advance_address_of_aggregate_path_step(
             output
         );
         if (result.error != AggregatePathError::none) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 "address_of field layout"
@@ -930,7 +917,7 @@ auto advance_address_of_aggregate_path_step(
     }
 
     if (step.index_expression == nullptr) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "address_of indexed field layout"
@@ -958,7 +945,7 @@ auto advance_address_of_aggregate_path_step(
         output
     );
     if (result.error != AggregatePathError::none) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             result.error == AggregatePathError::unsupported_element_source_type
@@ -1005,7 +992,7 @@ auto lower_pointer_record_field_address(
         context.lowering
     );
     if (!cursor.has_value()) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "address_of field source record layout"
@@ -1038,7 +1025,7 @@ auto lower_address_of_intrinsic(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (expected_llvm_type != "i64" || expression.arguments.size() != 1) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "address_of"
@@ -1058,7 +1045,7 @@ auto lower_address_of_intrinsic(
     }
 
     if (operand.kind != syntax::ExpressionKind::name) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "address_of currently only lowers mutable local names and aggregate fields"
@@ -1068,7 +1055,7 @@ auto lower_address_of_intrinsic(
 
     auto binding = session.state.mutable_bindings.find(operand.text);
     if (binding == session.state.mutable_bindings.end()) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "address_of currently only lowers mutable local names and aggregate fields"
@@ -1088,7 +1075,7 @@ auto lower_pointer_constructor_expression(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (expected_llvm_type != "ptr") {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "Pointer construction"
@@ -1096,7 +1083,7 @@ auto lower_pointer_constructor_expression(
         return std::nullopt;
     }
     if (expression.arguments.size() != 1) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "Pointer construction"
@@ -1128,7 +1115,7 @@ auto lower_raw_offset_intrinsic(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (expression.arguments.size() != 2) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "raw_offset"
@@ -1158,7 +1145,7 @@ auto lower_raw_offset_intrinsic(
     }
 
     if (expected_llvm_type != "ptr") {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::type_mismatch,
             "raw_offset expected ptr or i64 result"
@@ -1169,7 +1156,7 @@ auto lower_raw_offset_intrinsic(
     auto pointee_type =
         pointee_lowered_type_for_pointer_expression(expression.arguments.front(), context, session.state);
     if (!pointee_type.has_value()) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "raw_offset requires a known Pointer<T> source"
@@ -1196,7 +1183,7 @@ auto lower_read_intrinsic(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (expected_llvm_type == "void" || expression.arguments.size() != 1) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             is_volatile ? "volatile_read" : "raw_read"
@@ -1229,7 +1216,7 @@ auto lower_write_intrinsic(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (expected_llvm_type != "void" || expression.arguments.size() != 2) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             is_volatile ? "volatile_write" : "raw_write"
@@ -1243,7 +1230,7 @@ auto lower_write_intrinsic(
         value_type = inferred_expression_type(expression.arguments[1], context, session.state);
     }
     if (!value_type.has_value() || value_type->type.empty() || value_type->type == "void") {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::cannot_infer_operand_type,
             is_volatile ? "volatile_write value" : "raw_write value"
@@ -1288,7 +1275,7 @@ auto lower_aggregate_path_read_from_storage(
 ) -> std::optional<LoweredExpression> {
     auto inferred = inferred_expression_type(expression, context, session.state);
     if (!inferred.has_value()) {
-        record_failure(
+        record_expression_lowering_failure(
             session.failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             expression.text
@@ -1296,7 +1283,7 @@ auto lower_aggregate_path_read_from_storage(
         return std::nullopt;
     }
     if (inferred->type != expected_llvm_type) {
-        record_failure(
+        record_expression_lowering_failure(
             session.failures,
             ExpressionLoweringFailureReason::type_mismatch,
             expression.text
@@ -1304,7 +1291,7 @@ auto lower_aggregate_path_read_from_storage(
         return std::nullopt;
     }
     if (inferred->signedness != expected_signedness) {
-        record_failure(
+        record_expression_lowering_failure(
             session.failures,
             ExpressionLoweringFailureReason::signedness_mismatch,
             expression.text
@@ -1318,7 +1305,7 @@ auto lower_aggregate_path_read_from_storage(
         context.lowering
     );
     if (!cursor.has_value()) {
-        record_failure(
+        record_expression_lowering_failure(
             session.failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             expression.text
@@ -1336,7 +1323,7 @@ auto lower_aggregate_path_read_from_storage(
                 output
             );
             if (result.error != AggregatePathError::none) {
-                record_failure(
+                record_expression_lowering_failure(
                     session.failures,
                     ExpressionLoweringFailureReason::unsupported_expression,
                     expression.text
@@ -1347,7 +1334,7 @@ auto lower_aggregate_path_read_from_storage(
         }
 
         if (step.index_expression == nullptr) {
-            record_failure(
+            record_expression_lowering_failure(
                 session.failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1375,7 +1362,7 @@ auto lower_aggregate_path_read_from_storage(
             output
         );
         if (result.error != AggregatePathError::none) {
-            record_failure(
+            record_expression_lowering_failure(
                 session.failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1413,7 +1400,7 @@ auto lower_addressable_aggregate_path_read(
     }
 
     if (!storage->source_type_name.has_value()) {
-        record_failure(
+        record_expression_lowering_failure(
             session.failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             expression.text
@@ -1520,7 +1507,7 @@ auto lowered_expression(
     if (expression.kind == syntax::ExpressionKind::string_literal && expected_llvm_type == "ptr") {
         auto const* constant = context.string_constants.find(expression.text);
         if (constant == nullptr) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::missing_string_constant,
                 expression.text
@@ -1539,11 +1526,11 @@ auto lowered_expression(
         if (binding == state.immutable_bindings.end()) {
             auto mutable_binding = state.mutable_bindings.find(expression.text);
             if (mutable_binding == state.mutable_bindings.end()) {
-                record_failure(failures, ExpressionLoweringFailureReason::unknown_name, expression.text);
+                record_expression_lowering_failure(failures, ExpressionLoweringFailureReason::unknown_name, expression.text);
                 return std::nullopt;
             }
             if (mutable_binding->second.type.type != expected_llvm_type) {
-                record_failure(
+                record_expression_lowering_failure(
                     failures,
                     ExpressionLoweringFailureReason::type_mismatch,
                     expression.text + " has LLVM type " + mutable_binding->second.type.type +
@@ -1552,7 +1539,7 @@ auto lowered_expression(
                 return std::nullopt;
             }
             if (mutable_binding->second.type.signedness != expected_signedness) {
-                record_failure(
+                record_expression_lowering_failure(
                     failures,
                     ExpressionLoweringFailureReason::signedness_mismatch,
                     expression.text
@@ -1569,7 +1556,7 @@ auto lowered_expression(
             };
         }
         if (binding->second.type != expected_llvm_type) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::type_mismatch,
                 expression.text + " has LLVM type " + binding->second.type +
@@ -1578,7 +1565,7 @@ auto lowered_expression(
             return std::nullopt;
         }
         if (binding->second.signedness != expected_signedness) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::signedness_mismatch,
                 expression.text
@@ -1613,7 +1600,7 @@ auto lowered_expression(
     if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
         auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
         if (!base_source_type.has_value()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1623,7 +1610,7 @@ auto lowered_expression(
 
         auto layout = context.lowering.records.find(*base_source_type);
         if (layout == context.lowering.records.end()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1633,7 +1620,7 @@ auto lowered_expression(
 
         auto const* field = find_record_field(layout->second, expression.text);
         if (field == nullptr || field->source_type_name.empty()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1647,7 +1634,7 @@ auto lowered_expression(
             .name = field->source_type_name,
         });
         if (!base_llvm_type.has_value() || !field_llvm_type.has_value()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1681,7 +1668,7 @@ auto lowered_expression(
         expression.arguments.size() == 1) {
         auto base_source_type = source_type_name_for_expression(*expression.left, context, state);
         if (!base_source_type.has_value()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1696,7 +1683,7 @@ auto lowered_expression(
             is_view_index = element_source_type.has_value();
         }
         if (!element_source_type.has_value()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1710,7 +1697,7 @@ auto lowered_expression(
             .name = *element_source_type,
         });
         if (!base_llvm_type.has_value() || !element_llvm_type.has_value()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 expression.text
@@ -1719,7 +1706,7 @@ auto lowered_expression(
         }
 
         if (*element_llvm_type != expected_llvm_type || element_signedness != expected_signedness) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::type_mismatch,
                 expression.text
@@ -1786,7 +1773,7 @@ auto lowered_expression(
         };
         auto cast_type = llvm_type_for(target_type);
         if (!cast_type.has_value() || *cast_type != expected_llvm_type) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_cast,
                 expression.text
@@ -1802,7 +1789,7 @@ auto lowered_expression(
         }
         auto lowered_float = lowered_float_literal(*expression.left, expected_llvm_type);
         if (!lowered_float.has_value()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_cast,
                 expression.text
@@ -1927,7 +1914,7 @@ auto lowered_expression(
             }
         );
         if (result.failure == ConditionalEmissionFailure::branch_mismatch) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::branch_type_mismatch,
                 "ternary branches"
@@ -1977,7 +1964,7 @@ auto lowered_expression(
             }
             if (!operand_type.has_value() || !is_integer_llvm_type_impl(operand_type->type) ||
                 operand_type->signedness == IntegerSignedness::not_integer) {
-                record_failure(
+                record_expression_lowering_failure(
                     failures,
                     ExpressionLoweringFailureReason::cannot_infer_operand_type,
                     expression.text
@@ -2021,7 +2008,7 @@ auto lowered_expression(
 
         auto instruction = llvm_binary_instruction_for(expression.text, expected_signedness);
         if (!instruction.has_value()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_operator,
                 expression.text
@@ -2061,7 +2048,7 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
-        record_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
             "null-safe member call lowering is not yet supported"
@@ -2151,7 +2138,7 @@ auto lowered_expression(
         auto const receiver_name = expression.left->left != nullptr ? expression.left->left->text : std::string {};
         auto const target_name = resolved.receiver.receiver_type_name + "." + resolved.receiver.method_name;
         if (resolved.receiver.result == MemberCallReceiverInferenceResult::unsupported_shape) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 "member call receiver shape"
@@ -2159,7 +2146,7 @@ auto lowered_expression(
             return std::nullopt;
         }
         if (resolved.receiver.result == MemberCallReceiverInferenceResult::not_found) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unknown_member_call_receiver,
                 receiver_name
@@ -2167,7 +2154,7 @@ auto lowered_expression(
             return std::nullopt;
         }
         if (resolved.method.result == LoweredMethodLookupResult::not_found) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unknown_member_call_target,
                 target_name
@@ -2175,7 +2162,7 @@ auto lowered_expression(
             return std::nullopt;
         }
         if (resolved.method.result == LoweredMethodLookupResult::ambiguous) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::ambiguous_member_call_target,
                 target_name
@@ -2184,7 +2171,7 @@ auto lowered_expression(
         }
         if (resolved.method.method == nullptr ||
             !has_supported_function_signature_types(resolved.method.method->signature)) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
                 "member call target is not lowerable: " + target_name
@@ -2194,7 +2181,7 @@ auto lowered_expression(
 
         auto const& method = resolved.method.method->signature;
         if (method.return_type != expected_llvm_type) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::call_return_type_mismatch,
                 target_name + " returns " + method.return_type + ", expected " +
@@ -2205,7 +2192,7 @@ auto lowered_expression(
 
         auto const expected_argument_count = method.parameter_types.size() - 1;
         if (expected_argument_count != expression.arguments.size()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::call_arity_mismatch,
                 target_name + " expects " + std::to_string(expected_argument_count) +
@@ -2227,7 +2214,7 @@ auto lowered_expression(
         );
         if (!arguments.has_value()) {
             if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
-                record_failure(
+                record_expression_lowering_failure(
                     failures,
                     ExpressionLoweringFailureReason::call_argument_failure,
                     target_name
@@ -2271,7 +2258,7 @@ auto lowered_expression(
 
         auto function = context.lowering.functions.find(expression.left->text);
         if (function == context.lowering.functions.end()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unknown_function,
                 expression.left->text
@@ -2279,7 +2266,7 @@ auto lowered_expression(
             return std::nullopt;
         }
         if (function->second.return_type != expected_llvm_type) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::call_return_type_mismatch,
                 expression.left->text + " returns " + function->second.return_type +
@@ -2288,7 +2275,7 @@ auto lowered_expression(
             return std::nullopt;
         }
         if (function->second.parameter_types.size() != expression.arguments.size()) {
-            record_failure(
+            record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::call_arity_mismatch,
                 expression.left->text + " expects " +
@@ -2301,7 +2288,7 @@ auto lowered_expression(
         auto arguments = lower_call_arguments(expression, function->second, context, session, output);
         if (!arguments.has_value()) {
             if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
-                record_failure(
+                record_expression_lowering_failure(
                     failures,
                     ExpressionLoweringFailureReason::call_argument_failure,
                     expression.left->text
@@ -2314,7 +2301,7 @@ auto lowered_expression(
         return emit_value_call(std::move(temporary_name), function->second, *arguments, output);
     }
 
-    record_failure(
+    record_expression_lowering_failure(
         failures,
         is_concurrency_expression(expression)
             ? ExpressionLoweringFailureReason::unsupported_concurrency_expression

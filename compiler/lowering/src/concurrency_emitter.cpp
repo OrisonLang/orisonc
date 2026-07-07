@@ -30,19 +30,6 @@ auto thread_body_result_expression(
     return nullptr;
 }
 
-void record_expression_failure(
-    LoweringFailures& failures,
-    ExpressionLoweringFailureReason reason,
-    std::string detail
-) {
-    if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
-        failures.expression = ExpressionLoweringFailure {
-            .reason = reason,
-            .detail = std::move(detail),
-        };
-    }
-}
-
 }  // namespace
 
 auto emit_concurrency_handle_destroy(
@@ -79,7 +66,7 @@ auto emit_thread_join_result(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (binding.result_type.type != expected_llvm_type) {
-        record_expression_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::call_return_type_mismatch,
             "thread join returns " + binding.result_type.type +
@@ -101,7 +88,7 @@ auto emit_task_await_result(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression> {
     if (binding.result_type.type != expected_llvm_type) {
-        record_expression_failure(
+        record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::call_return_type_mismatch,
             "task await returns " + binding.result_type.type +

@@ -144,6 +144,8 @@ analysis, and lowering components.
   control-flow, and function emitters consume one stable text policy without owning diagnostic wording.
   Prefix/detail diagnostic composition now also lives in that diagnostics component so emitters do not duplicate
   conditional `": detail"` formatting.
+- First-failure recording for expression/control-flow lowering lives in the neutral failure model, so emitters share
+  the same "record only first failure" policy.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
 - Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately
