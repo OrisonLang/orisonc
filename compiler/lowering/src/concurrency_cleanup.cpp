@@ -1,6 +1,9 @@
 #include "orison/lowering/concurrency_cleanup.hpp"
 
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/llvm_names.hpp"
+
+#include <utility>
 
 namespace orison::lowering {
 
@@ -12,6 +15,22 @@ auto emit_concurrency_handle_destroy(
     output << "  call " << destroy_call.return_type << " @" << destroy_call.symbol_name
            << "(ptr " << binding.handle << ")\n";
     binding.handle_destroyed = true;
+}
+
+auto emit_concurrency_result_load_and_destroy(
+    ConcurrencyBinding& binding,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> LoweredExpression {
+    auto result_name = next_llvm_temporary_name(state.next_temporary_index);
+    output << "  " << result_name << " = load " << binding.result_type.type
+           << ", ptr " << binding.result_storage << "\n";
+    emit_concurrency_handle_destroy(binding, output);
+    return LoweredExpression {
+        .type = binding.result_type.type,
+        .value = std::move(result_name),
+        .signedness = binding.result_type.signedness,
+    };
 }
 
 auto emit_abandoned_concurrency_handle_cleanup(

@@ -284,6 +284,7 @@ analysis, and lowering components.
   Abandoned concurrency-handle cleanup is now emitted from a dedicated lowering component instead of a function-emitter
   local helper.
   Join/await handle destruction and abandoned handle destruction now share the same concurrency cleanup emitter helper.
+  Join/await result loading now shares the same helper that destroys the completed concurrency handle.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

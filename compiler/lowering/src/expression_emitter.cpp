@@ -2149,15 +2149,7 @@ auto lowered_expression(
                 auto join_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::join_thread);
                 output << "  call " << join_call.return_type << " @" << join_call.symbol_name
                        << "(ptr " << thread_binding->second.handle << ")\n";
-                auto result_name = next_llvm_temporary_name(state.next_temporary_index);
-                output << "  " << result_name << " = load " << thread_binding->second.result_type.type
-                       << ", ptr " << thread_binding->second.result_storage << "\n";
-                emit_concurrency_handle_destroy(thread_binding->second, output);
-                return LoweredExpression {
-                    .type = thread_binding->second.result_type.type,
-                    .value = std::move(result_name),
-                    .signedness = thread_binding->second.result_type.signedness,
-                };
+                return emit_concurrency_result_load_and_destroy(thread_binding->second, state, output);
             }
         }
 
@@ -2272,15 +2264,7 @@ auto lowered_expression(
             auto await_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::await_task);
             output << "  call " << await_call.return_type << " @" << await_call.symbol_name
                    << "(ptr " << task_binding->second.handle << ")\n";
-            auto result_name = next_llvm_temporary_name(state.next_temporary_index);
-            output << "  " << result_name << " = load " << task_binding->second.result_type.type
-                   << ", ptr " << task_binding->second.result_storage << "\n";
-            emit_concurrency_handle_destroy(task_binding->second, output);
-            return LoweredExpression {
-                .type = task_binding->second.result_type.type,
-                .value = std::move(result_name),
-                .signedness = task_binding->second.result_type.signedness,
-            };
+            return emit_concurrency_result_load_and_destroy(task_binding->second, state, output);
         }
     }
 

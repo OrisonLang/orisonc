@@ -11,6 +11,12 @@ auto emit_concurrency_handle_destroy(
     std::ostringstream& output
 ) -> void;
 
+auto emit_concurrency_result_load_and_destroy(
+    ConcurrencyBinding& binding,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> LoweredExpression;
+
 auto emit_abandoned_concurrency_handle_cleanup(
     FunctionLoweringSession& session,
     std::ostringstream& output
