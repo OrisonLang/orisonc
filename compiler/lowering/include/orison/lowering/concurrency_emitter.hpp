@@ -27,15 +27,19 @@ auto emit_concurrency_result_load_and_destroy(
 
 auto emit_thread_join_result(
     ConcurrencyBinding& binding,
+    std::string_view expected_llvm_type,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     std::ostringstream& output
-) -> LoweredExpression;
+) -> std::optional<LoweredExpression>;
 
 auto emit_task_await_result(
     ConcurrencyBinding& binding,
+    std::string_view expected_llvm_type,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     std::ostringstream& output
-) -> LoweredExpression;
+) -> std::optional<LoweredExpression>;
 
 auto emit_concurrency_spawn_failed(
     std::ostringstream& output

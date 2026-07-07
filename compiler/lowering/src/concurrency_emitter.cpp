@@ -29,6 +29,19 @@ auto thread_body_result_expression(
     return nullptr;
 }
 
+void record_expression_failure(
+    LoweringFailures& failures,
+    ExpressionLoweringFailureReason reason,
+    std::string detail
+) {
+    if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
+        failures.expression = ExpressionLoweringFailure {
+            .reason = reason,
+            .detail = std::move(detail),
+        };
+    }
+}
+
 }  // namespace
 
 auto emit_concurrency_handle_destroy(
@@ -59,9 +72,20 @@ auto emit_concurrency_result_load_and_destroy(
 
 auto emit_thread_join_result(
     ConcurrencyBinding& binding,
+    std::string_view expected_llvm_type,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     std::ostringstream& output
-) -> LoweredExpression {
+) -> std::optional<LoweredExpression> {
+    if (binding.result_type.type != expected_llvm_type) {
+        record_expression_failure(
+            failures,
+            ExpressionLoweringFailureReason::call_return_type_mismatch,
+            "thread join returns " + binding.result_type.type +
+                ", expected " + std::string(expected_llvm_type)
+        );
+        return std::nullopt;
+    }
     auto join_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::join_thread);
     output << "  call " << join_call.return_type << " @" << join_call.symbol_name
            << "(ptr " << binding.handle << ")\n";
@@ -70,9 +94,20 @@ auto emit_thread_join_result(
 
 auto emit_task_await_result(
     ConcurrencyBinding& binding,
+    std::string_view expected_llvm_type,
     FunctionLoweringState& state,
+    LoweringFailures& failures,
     std::ostringstream& output
-) -> LoweredExpression {
+) -> std::optional<LoweredExpression> {
+    if (binding.result_type.type != expected_llvm_type) {
+        record_expression_failure(
+            failures,
+            ExpressionLoweringFailureReason::call_return_type_mismatch,
+            "task await returns " + binding.result_type.type +
+                ", expected " + std::string(expected_llvm_type)
+        );
+        return std::nullopt;
+    }
     auto await_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::await_task);
     output << "  call " << await_call.return_type << " @" << await_call.symbol_name
            << "(ptr " << binding.handle << ")\n";

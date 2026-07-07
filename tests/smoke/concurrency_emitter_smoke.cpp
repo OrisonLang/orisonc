@@ -28,11 +28,15 @@ auto test_result_completion_emitters() -> void {
         },
     };
     auto thread_output = std::ostringstream {};
+    auto thread_failures = orison::lowering::LoweringFailures {};
     auto thread_result = orison::lowering::emit_thread_join_result(
         thread_binding,
+        "i64",
         state,
+        thread_failures,
         thread_output
     );
+    assert(thread_result.has_value());
     assert(
         thread_output.str() ==
         "  call void @__orison_thread_join(ptr %worker)\n"
@@ -40,9 +44,31 @@ auto test_result_completion_emitters() -> void {
         "  call void @__orison_concurrency_handle_destroy(ptr %worker)\n"
     );
     assert(thread_binding.handle_destroyed);
-    assert(thread_result.type == "i64");
-    assert(thread_result.value == "%tmp0");
-    assert(thread_result.signedness == orison::lowering::IntegerSignedness::signed_integer);
+    assert(thread_result->type == "i64");
+    assert(thread_result->value == "%tmp0");
+    assert(thread_result->signedness == orison::lowering::IntegerSignedness::signed_integer);
+    assert(thread_failures.expression.reason == orison::lowering::ExpressionLoweringFailureReason::none);
+    assert(state.next_temporary_index == 1);
+
+    auto mismatched_thread_binding = thread_binding;
+    mismatched_thread_binding.handle_destroyed = false;
+    auto mismatched_thread_output = std::ostringstream {};
+    auto mismatched_thread_failures = orison::lowering::LoweringFailures {};
+    auto mismatched_thread_result = orison::lowering::emit_thread_join_result(
+        mismatched_thread_binding,
+        "i32",
+        state,
+        mismatched_thread_failures,
+        mismatched_thread_output
+    );
+    assert(!mismatched_thread_result.has_value());
+    assert(mismatched_thread_output.str().empty());
+    assert(!mismatched_thread_binding.handle_destroyed);
+    assert(
+        mismatched_thread_failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::call_return_type_mismatch
+    );
+    assert(mismatched_thread_failures.expression.detail == "thread join returns i64, expected i32");
     assert(state.next_temporary_index == 1);
 
     auto task_binding = orison::lowering::ConcurrencyBinding {
@@ -54,11 +80,15 @@ auto test_result_completion_emitters() -> void {
         },
     };
     auto task_output = std::ostringstream {};
+    auto task_failures = orison::lowering::LoweringFailures {};
     auto task_result = orison::lowering::emit_task_await_result(
         task_binding,
+        "i1",
         state,
+        task_failures,
         task_output
     );
+    assert(task_result.has_value());
     assert(
         task_output.str() ==
         "  call void @__orison_task_await(ptr %pending)\n"
@@ -66,9 +96,31 @@ auto test_result_completion_emitters() -> void {
         "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
     );
     assert(task_binding.handle_destroyed);
-    assert(task_result.type == "i1");
-    assert(task_result.value == "%tmp1");
-    assert(task_result.signedness == orison::lowering::IntegerSignedness::not_integer);
+    assert(task_result->type == "i1");
+    assert(task_result->value == "%tmp1");
+    assert(task_result->signedness == orison::lowering::IntegerSignedness::not_integer);
+    assert(task_failures.expression.reason == orison::lowering::ExpressionLoweringFailureReason::none);
+    assert(state.next_temporary_index == 2);
+
+    auto mismatched_task_binding = task_binding;
+    mismatched_task_binding.handle_destroyed = false;
+    auto mismatched_task_output = std::ostringstream {};
+    auto mismatched_task_failures = orison::lowering::LoweringFailures {};
+    auto mismatched_task_result = orison::lowering::emit_task_await_result(
+        mismatched_task_binding,
+        "i64",
+        state,
+        mismatched_task_failures,
+        mismatched_task_output
+    );
+    assert(!mismatched_task_result.has_value());
+    assert(mismatched_task_output.str().empty());
+    assert(!mismatched_task_binding.handle_destroyed);
+    assert(
+        mismatched_task_failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::call_return_type_mismatch
+    );
+    assert(mismatched_task_failures.expression.detail == "task await returns i1, expected i64");
     assert(state.next_temporary_index == 2);
 }
 

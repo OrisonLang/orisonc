@@ -2137,16 +2137,13 @@ auto lowered_expression(
             expression.left->left->kind == syntax::ExpressionKind::name) {
             auto thread_binding = state.thread_bindings.find(expression.left->left->text);
             if (thread_binding != state.thread_bindings.end()) {
-                if (thread_binding->second.result_type.type != expected_llvm_type) {
-                    record_failure(
-                        failures,
-                        ExpressionLoweringFailureReason::call_return_type_mismatch,
-                        "thread join returns " + thread_binding->second.result_type.type +
-                            ", expected " + std::string(expected_llvm_type)
-                    );
-                    return std::nullopt;
-                }
-                return emit_thread_join_result(thread_binding->second, state, output);
+                return emit_thread_join_result(
+                    thread_binding->second,
+                    expected_llvm_type,
+                    state,
+                    failures,
+                    output
+                );
             }
         }
 
@@ -2249,16 +2246,13 @@ auto lowered_expression(
         expression.left->kind == syntax::ExpressionKind::name) {
         auto task_binding = state.task_bindings.find(expression.left->text);
         if (task_binding != state.task_bindings.end()) {
-            if (task_binding->second.result_type.type != expected_llvm_type) {
-                record_failure(
-                    failures,
-                    ExpressionLoweringFailureReason::call_return_type_mismatch,
-                    "task await returns " + task_binding->second.result_type.type +
-                        ", expected " + std::string(expected_llvm_type)
-                );
-                return std::nullopt;
-            }
-            return emit_task_await_result(task_binding->second, state, output);
+            return emit_task_await_result(
+                task_binding->second,
+                expected_llvm_type,
+                state,
+                failures,
+                output
+            );
         }
     }
 
