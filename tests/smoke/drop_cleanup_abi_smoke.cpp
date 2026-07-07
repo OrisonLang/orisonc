@@ -1,12 +1,14 @@
-#include "orison/lowering/module_prelude.hpp"
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/drop_metadata.hpp"
+#include "orison/lowering/module_prelude.hpp"
 
 #include <cassert>
 
-int main() {
-    auto plan = orison::lowering::ConcurrencyExpressionPlan {
+namespace {
+
+auto cleanup_plan() -> orison::lowering::ConcurrencyExpressionPlan {
+    return orison::lowering::ConcurrencyExpressionPlan {
         .cleanup_symbol_name = "__orison_thread_cleanup.allowed.1.0",
         .environment_layout = orison::lowering::ConcurrencyEnvironmentLayout {
             .llvm_type = "{ %record.DropTestPayload }",
@@ -35,6 +37,12 @@ int main() {
             },
         },
     };
+}
+
+}  // namespace
+
+int main() {
+    auto plan = cleanup_plan();
 
     auto declarations = orison::lowering::declared_drop_declarations_for_allowed_source_types(
         plan.cleanup.drop_cleanup.actions,
@@ -71,5 +79,51 @@ int main() {
         plan.cleanup.drop_cleanup,
         denied
     ));
+
+    auto allowlist_plan = cleanup_plan();
+    assert(orison::lowering::apply_drop_cleanup_authorization_options(
+        allowlist_plan.cleanup.drop_cleanup,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_declared_drop_source_type_allowlist = {"DropTestPayload"},
+        }
+    ));
+    assert(orison::lowering::drop_calls_enabled(allowlist_plan.cleanup.drop_cleanup));
+
+    auto denied_allowlist_plan = cleanup_plan();
+    assert(!orison::lowering::apply_drop_cleanup_authorization_options(
+        denied_allowlist_plan.cleanup.drop_cleanup,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_declared_drop_source_type_allowlist = {"OtherPayload"},
+        }
+    ));
+    assert(!orison::lowering::drop_calls_enabled(denied_allowlist_plan.cleanup.drop_cleanup));
+
+    auto semantic_plan = cleanup_plan();
+    assert(orison::lowering::apply_drop_cleanup_authorization_options(
+        semantic_plan.cleanup.drop_cleanup,
+        orison::lowering::LlvmIrEmissionOptions {
+            .semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "DropTestPayload",
+                        .abi_symbol_name = "__orison_drop.DropTestPayload",
+                        .owner_name = "payload",
+                        .site_line = 1,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        }
+    ));
+    assert(orison::lowering::drop_calls_enabled(semantic_plan.cleanup.drop_cleanup));
+
+    auto default_plan = cleanup_plan();
+    assert(!orison::lowering::apply_drop_cleanup_authorization_options(
+        default_plan.cleanup.drop_cleanup,
+        orison::lowering::LlvmIrEmissionOptions {}
+    ));
+    assert(!orison::lowering::drop_calls_enabled(default_plan.cleanup.drop_cleanup));
     return 0;
 }

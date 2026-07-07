@@ -306,6 +306,8 @@ analysis, and lowering components.
   names and result storage names after successful spawn CFG emission.
   Pending concurrency function-definition queuing now lives under `concurrency_emitter`; statement lowering still
   decides when successful spawn lowering has reached the queuing point.
+  Drop cleanup authorization option application now lives with concurrency drop cleanup planning; statement lowering
+  no longer knows the allowlist-vs-semantic-authorization declaration mapping.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

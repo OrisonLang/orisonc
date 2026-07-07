@@ -654,6 +654,26 @@ auto authorize_drop_cleanup_calls_for_declared_abi(
     return report.authorized;
 }
 
+auto apply_drop_cleanup_authorization_options(
+    ConcurrencyDropCleanupPlan& plan,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    if (!options.test_only_declared_drop_source_type_allowlist.empty()) {
+        auto declarations = declared_drop_declarations_for_allowed_source_types(
+            plan.actions,
+            options.test_only_declared_drop_source_type_allowlist
+        );
+        return authorize_drop_cleanup_calls_for_declared_abi(plan, declarations);
+    }
+    if (!options.semantic_drop_lowering_authorizations.empty()) {
+        auto declarations = declared_drop_declarations_for_authorized_semantic_drops(
+            options.semantic_drop_lowering_authorizations
+        );
+        return authorize_drop_cleanup_calls_for_declared_abi(plan, declarations);
+    }
+    return drop_calls_enabled(plan);
+}
+
 auto plan_concurrency_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view enclosing_symbol_name,

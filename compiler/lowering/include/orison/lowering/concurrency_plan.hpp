@@ -152,6 +152,11 @@ auto authorize_drop_cleanup_calls_for_declared_abi(
     std::vector<PlannedDropDeclaration> const& declarations
 ) -> bool;
 
+auto apply_drop_cleanup_authorization_options(
+    ConcurrencyDropCleanupPlan& plan,
+    LlvmIrEmissionOptions const& options
+) -> bool;
+
 auto plan_concurrency_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view enclosing_symbol_name,

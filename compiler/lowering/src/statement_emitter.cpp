@@ -6,7 +6,6 @@
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
-#include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -66,18 +65,7 @@ auto lower_thread_let_statement(
         );
         return false;
     }
-    if (!context.options.test_only_declared_drop_source_type_allowlist.empty()) {
-        auto drop_declarations = declared_drop_declarations_for_allowed_source_types(
-            plan->cleanup.drop_cleanup.actions,
-            context.options.test_only_declared_drop_source_type_allowlist
-        );
-        authorize_drop_cleanup_calls_for_declared_abi(plan->cleanup.drop_cleanup, drop_declarations);
-    } else if (!context.options.semantic_drop_lowering_authorizations.empty()) {
-        auto drop_declarations = declared_drop_declarations_for_authorized_semantic_drops(
-            context.options.semantic_drop_lowering_authorizations
-        );
-        authorize_drop_cleanup_calls_for_declared_abi(plan->cleanup.drop_cleanup, drop_declarations);
-    }
+    apply_drop_cleanup_authorization_options(plan->cleanup.drop_cleanup, context.options);
 
     auto thunk_definition = emit_concurrency_entry_thunk(
         *plan,
