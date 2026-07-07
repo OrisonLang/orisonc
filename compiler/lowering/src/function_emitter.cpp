@@ -21,6 +21,7 @@
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/switch_plan.hpp"
 #include "orison/lowering/type_lowering.hpp"
+#include "orison/lowering/unit_deferred_cleanup.hpp"
 #include "orison/lowering/unsafe_block_lowering.hpp"
 #include "orison/lowering/while_emitter.hpp"
 

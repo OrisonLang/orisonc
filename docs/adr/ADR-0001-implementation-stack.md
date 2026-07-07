@@ -279,6 +279,8 @@ analysis, and lowering components.
   adapter; all current cleanup replay call sites now choose the cleanup-block lowerer explicitly.
   The explicit cleanup replay API now uses the canonical `emit_deferred_cleanup_to_depth` name with a required cleanup
   block lowerer parameter.
+  The Unit cleanup-block adapter is declared from a narrow cleanup-specific header so while/control-flow lowering and
+  statement smoke tests no longer include the full function-emitter API only to replay deferred cleanup.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

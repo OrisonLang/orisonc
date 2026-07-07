@@ -3,7 +3,6 @@
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
-#include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -12,6 +11,7 @@
 #include "orison/lowering/switch_emitter.hpp"
 #include "orison/lowering/switch_plan.hpp"
 #include "orison/lowering/type_lowering.hpp"
+#include "orison/lowering/unit_deferred_cleanup.hpp"
 
 #include <optional>
 #include <sstream>

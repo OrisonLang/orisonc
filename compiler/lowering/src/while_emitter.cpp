@@ -4,7 +4,6 @@
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/for_loop_lowering.hpp"
-#include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
@@ -13,6 +12,7 @@
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unsafe_block_lowering.hpp"
+#include "orison/lowering/unit_deferred_cleanup.hpp"
 #include "orison/lowering/while_loop_lowering.hpp"
 
 #include <optional>

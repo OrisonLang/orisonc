@@ -1,11 +1,11 @@
 #include "orison/lowering/expression_emitter.hpp"
-#include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
+#include "orison/lowering/unit_deferred_cleanup.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
 
