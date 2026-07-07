@@ -4,7 +4,7 @@
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/conditional_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
-#include "orison/lowering/concurrency_cleanup.hpp"
+#include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/member_call_receiver.hpp"

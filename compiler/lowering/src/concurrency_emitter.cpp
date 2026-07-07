@@ -1,4 +1,4 @@
-#include "orison/lowering/concurrency_cleanup.hpp"
+#include "orison/lowering/concurrency_emitter.hpp"
 
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"

@@ -290,6 +290,8 @@ analysis, and lowering components.
   Spawn-failure runtime-call emission now also lives behind the concurrency cleanup helper boundary.
   Spawn runtime-call emission now lives with the other concurrency operation emitters; statement lowering still owns
   capture storage, result storage, failure CFG labels, and binding registration.
+  The broadened concurrency operation emission boundary is named `concurrency_emitter` instead of
+  `concurrency_cleanup`.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

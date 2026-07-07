@@ -1,7 +1,7 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
-#include "orison/lowering/concurrency_cleanup.hpp"
+#include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/conditional_plan.hpp"
