@@ -59,11 +59,14 @@ auto main() -> int {
     assert(ir.drop_readiness_relation_report.empty());
     assert(ir.drop_readiness_blocker_summary.blocked_cleanups == 0);
     assert(ir.drop_readiness_blocker_summary.semantic_lowering_blockers.empty());
+    assert(ir.drop_readiness_blocker_summary.semantic_unresolved_blockers.empty());
+    assert(ir.drop_readiness_blocker_summary.source_drop_lowering_blockers.empty());
     assert(ir.drop_readiness_blocker_summary.missing_declarations.empty());
     assert(ir.drop_readiness_blocker_report.size() == 1);
     assert(
         ir.drop_readiness_blocker_report.front() ==
-        "drop readiness blockers cleanups 0 semantic blockers 0 missing declarations 0"
+        "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
+        "source lowering blocked 0 missing declarations 0"
     );
 
     auto drop_readiness_path =
@@ -115,11 +118,14 @@ auto main() -> int {
     );
     assert(drop_readiness.drop_readiness_blocker_summary.blocked_cleanups == 1);
     assert(drop_readiness.drop_readiness_blocker_summary.semantic_lowering_blockers.size() == 1);
+    assert(drop_readiness.drop_readiness_blocker_summary.semantic_unresolved_blockers.size() == 1);
+    assert(drop_readiness.drop_readiness_blocker_summary.source_drop_lowering_blockers.empty());
     assert(drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 1);
-    assert(drop_readiness.drop_readiness_blocker_report.size() == 3);
+    assert(drop_readiness.drop_readiness_blocker_report.size() == 4);
     assert(
         drop_readiness.drop_readiness_blocker_report[0] ==
-        "drop readiness blockers cleanups 1 semantic blockers 1 missing declarations 1"
+        "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 1 "
+        "source lowering blocked 0 missing declarations 1"
     );
     assert(
         drop_readiness.drop_readiness_blocker_report[1] ==
@@ -128,6 +134,11 @@ auto main() -> int {
     );
     assert(
         drop_readiness.drop_readiness_blocker_report[2] ==
+        "drop readiness blocker semantic unresolved __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12"
+    );
+    assert(
+        drop_readiness.drop_readiness_blocker_report[3] ==
         "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 12"
     );
@@ -156,7 +167,7 @@ auto main() -> int {
         "planned drop action __orison_drop.OtherPayload for capture other: OtherPayload field 1 discovered at line 20 "
         "(metadata only)"
     );
-    assert(multi_drop_readiness.drop_cleanup_authorization_report.size() == 5);
+    assert(multi_drop_readiness.drop_cleanup_authorization_report.size() == 7);
     assert(
         multi_drop_readiness.drop_cleanup_authorization_report[0] ==
         "drop cleanup authorization __orison_thread_cleanup.launch.20.0 blocked semantic blockers 2 "
@@ -174,10 +185,19 @@ auto main() -> int {
     );
     assert(
         multi_drop_readiness.drop_cleanup_authorization_report[3] ==
-        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
+        "semantic drop unresolved __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
     );
     assert(
         multi_drop_readiness.drop_cleanup_authorization_report[4] ==
+        "semantic drop unresolved __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_cleanup_authorization_report[5] ==
+        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_cleanup_authorization_report[6] ==
         "missing drop declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20"
     );
@@ -240,11 +260,14 @@ auto main() -> int {
     );
     assert(multi_drop_readiness.drop_readiness_blocker_summary.blocked_cleanups == 1);
     assert(multi_drop_readiness.drop_readiness_blocker_summary.semantic_lowering_blockers.size() == 2);
+    assert(multi_drop_readiness.drop_readiness_blocker_summary.semantic_unresolved_blockers.size() == 2);
+    assert(multi_drop_readiness.drop_readiness_blocker_summary.source_drop_lowering_blockers.empty());
     assert(multi_drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 2);
-    assert(multi_drop_readiness.drop_readiness_blocker_report.size() == 5);
+    assert(multi_drop_readiness.drop_readiness_blocker_report.size() == 7);
     assert(
         multi_drop_readiness.drop_readiness_blocker_report[0] ==
-        "drop readiness blockers cleanups 1 semantic blockers 2 missing declarations 2"
+        "drop readiness blockers cleanups 1 semantic blockers 2 semantic unresolved 2 "
+        "source lowering blocked 0 missing declarations 2"
     );
     assert(
         multi_drop_readiness.drop_readiness_blocker_report[1] ==
@@ -258,11 +281,21 @@ auto main() -> int {
     );
     assert(
         multi_drop_readiness.drop_readiness_blocker_report[3] ==
-        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "drop readiness blocker semantic unresolved __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20"
     );
     assert(
         multi_drop_readiness.drop_readiness_blocker_report[4] ==
+        "drop readiness blocker semantic unresolved __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_blocker_report[5] ==
+        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
+    );
+    assert(
+        multi_drop_readiness.drop_readiness_blocker_report[6] ==
         "drop readiness blocker missing declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20"
     );
@@ -412,6 +445,62 @@ auto main() -> int {
     assert(!parsed_drop_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
     assert(!parsed_drop_ir.semantic_drop_lowering_authorizations.front().authorized);
     assert(parsed_drop_ir.ir_text.find("__orison_drop.Payload") == std::string::npos);
+
+    auto parsed_drop_readiness_path =
+        std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";
+    {
+        std::ofstream source(parsed_drop_readiness_path);
+        source << "package demo.parseddropreadiness\n";
+        source << "record Payload\n";
+        source << "    public value: Int64\n";
+        source << "interface Drop\n";
+        source << "    function drop(this: exclusive This) -> Unit\n";
+        source << "implements Transferable for Payload\n";
+        source << "    function placeholder(this: shared This) -> Unit\n";
+        source << "        return\n";
+        source << "implements Drop for Payload\n";
+        source << "    function drop(this: exclusive This) -> Unit\n";
+        source << "        return\n";
+        source << "function launch(value: Int64) -> Int64\n";
+        source << "    let payload: Payload = Payload(value)\n";
+        source << "    let worker = thread\n";
+        source << "        payload.value\n";
+        source << "\n";
+        source << "    worker.join()\n";
+    }
+    auto parsed_drop_readiness = pipeline.emit_llvm(parsed_drop_readiness_path);
+    assert(!parsed_drop_readiness.has_errors());
+    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.size() == 1);
+    assert(parsed_drop_readiness.semantic_drop_lowering_authorizations.front().semantic_resolved);
+    assert(!parsed_drop_readiness.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
+    assert(!parsed_drop_readiness.semantic_drop_lowering_authorizations.front().authorized);
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.blocked_cleanups == 1);
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.semantic_lowering_blockers.size() == 1);
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.semantic_unresolved_blockers.empty());
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.source_drop_lowering_blockers.size() == 1);
+    assert(parsed_drop_readiness.drop_readiness_blocker_summary.missing_declarations.size() == 1);
+    assert(parsed_drop_readiness.drop_readiness_blocker_report.size() == 4);
+    assert(
+        parsed_drop_readiness.drop_readiness_blocker_report[0] ==
+        "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 0 "
+        "source lowering blocked 1 missing declarations 1"
+    );
+    assert(
+        parsed_drop_readiness.drop_readiness_blocker_report[1] ==
+        "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 14"
+    );
+    assert(
+        parsed_drop_readiness.drop_readiness_blocker_report[2] ==
+        "drop readiness blocker source lowering not accepted __orison_drop.Payload for Payload capture payload "
+        "field 0 discovered at line 14"
+    );
+    assert(
+        parsed_drop_readiness.drop_readiness_blocker_report[3] ==
+        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 14"
+    );
+    assert(parsed_drop_readiness.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
 
     auto resolved_semantic_drops = pipeline.analyze(
         semantic_drop_path,

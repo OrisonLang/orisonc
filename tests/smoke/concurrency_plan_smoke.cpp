@@ -239,12 +239,14 @@ int main() {
     );
     assert(!semantic_blocked_authorization.authorized);
     assert(semantic_blocked_authorization.semantic_lowering_blockers.size() == 1);
+    assert(semantic_blocked_authorization.semantic_unresolved_blockers.empty());
+    assert(semantic_blocked_authorization.source_drop_lowering_blockers.size() == 1);
     assert(semantic_blocked_authorization.missing_declarations.empty());
     auto semantic_blocked_authorization_report = orison::lowering::format_drop_cleanup_authorization_report(
         authorized_plan,
         semantic_blocked_authorization
     );
-    assert(semantic_blocked_authorization_report.size() == 2);
+    assert(semantic_blocked_authorization_report.size() == 3);
     assert(
         semantic_blocked_authorization_report[0] ==
         "drop cleanup authorization __orison_thread_cleanup.record_worker.20.2 blocked "
@@ -253,6 +255,11 @@ int main() {
     assert(
         semantic_blocked_authorization_report[1] ==
         "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20"
+    );
+    assert(
+        semantic_blocked_authorization_report[2] ==
+        "source drop lowering not accepted __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20"
     );
     auto semantic_blocked_readiness_snapshot = orison::lowering::plan_drop_readiness_snapshot(

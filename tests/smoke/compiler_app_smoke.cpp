@@ -1255,6 +1255,47 @@ int main() {
     assert(parsed_drop_candidate_emit.stderr_text.empty());
     assert(parsed_drop_candidate_emit.stdout_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
     assert(parsed_drop_candidate_emit.stdout_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
+
+    auto parsed_drop_readiness_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_parsed_drop_readiness.or";
+    std::filesystem::remove(parsed_drop_readiness_path, remove_error);
+    write_concurrency_fixture(
+        parsed_drop_readiness_path,
+        "demo.parseddropreadiness",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "interface Drop",
+            "    function drop(this: exclusive This) -> Unit",
+            "implements Transferable for Payload",
+            "    function placeholder(this: shared This) -> Unit",
+            "        return",
+            "implements Drop for Payload",
+            "    function drop(this: exclusive This) -> Unit",
+            "        return",
+            "function launch(value: Int64) -> Int64",
+            "    let payload: Payload = Payload(value)",
+            "    let worker = thread",
+            "        payload.value",
+            "",
+            "    worker.join()",
+        }
+    );
+    auto parsed_drop_readiness_blockers = run_drop_readiness_blockers(app, parsed_drop_readiness_path);
+    assert(parsed_drop_readiness_blockers.exit_code == 0);
+    assert(parsed_drop_readiness_blockers.stderr_text.empty());
+    assert(
+        parsed_drop_readiness_blockers.stdout_text ==
+        "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 0 "
+        "source lowering blocked 1 missing declarations 1\n"
+        "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 14\n"
+        "drop readiness blocker source lowering not accepted __orison_drop.Payload for Payload capture payload "
+        "field 0 discovered at line 14\n"
+        "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 14\n"
+    );
+
     auto semantic_drop_summary = run_semantic_drop_summary(app, planned_drop_report_path);
     assert(semantic_drop_summary.exit_code == 0);
     assert(semantic_drop_summary.stderr_text.empty());
@@ -1283,6 +1324,7 @@ int main() {
         "semantic blockers 1 missing declarations 1\n"
         "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 12\n"
+        "semantic drop unresolved __orison_drop.Payload for Payload capture payload field 0 discovered at line 12\n"
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 12\n"
     );
     auto drop_readiness = run_drop_readiness(app, planned_drop_report_path);
@@ -1319,8 +1361,11 @@ int main() {
     assert(drop_readiness_blockers.stderr_text.empty());
     assert(
         drop_readiness_blockers.stdout_text ==
-        "drop readiness blockers cleanups 1 semantic blockers 1 missing declarations 1\n"
+        "drop readiness blockers cleanups 1 semantic blockers 1 semantic unresolved 1 "
+        "source lowering blocked 0 missing declarations 1\n"
         "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 12\n"
+        "drop readiness blocker semantic unresolved __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 12\n"
         "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 12\n"
@@ -1350,10 +1395,15 @@ int main() {
     assert(multi_fixture_drop_readiness_blockers.stderr_text.empty());
     assert(
         multi_fixture_drop_readiness_blockers.stdout_text ==
-        "drop readiness blockers cleanups 1 semantic blockers 2 missing declarations 2\n"
+        "drop readiness blockers cleanups 1 semantic blockers 2 semantic unresolved 2 "
+        "source lowering blocked 0 missing declarations 2\n"
         "drop readiness blocker semantic __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20\n"
         "drop readiness blocker semantic __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20\n"
+        "drop readiness blocker semantic unresolved __orison_drop.Payload for Payload capture payload field 0 "
+        "discovered at line 20\n"
+        "drop readiness blocker semantic unresolved __orison_drop.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20\n"
         "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20\n"
@@ -1421,7 +1471,8 @@ int main() {
     assert(empty_drop_readiness_blockers.exit_code == 0);
     assert(
         empty_drop_readiness_blockers.stdout_text ==
-        "drop readiness blockers cleanups 0 semantic blockers 0 missing declarations 0\n"
+        "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
+        "source lowering blocked 0 missing declarations 0\n"
     );
     assert(empty_drop_readiness_blockers.stderr_text.empty());
 
@@ -1454,6 +1505,9 @@ int main() {
         "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20\n"
         "semantic drop lowering blocked __orison_drop.OtherPayload for OtherPayload capture other field 1 "
+        "discovered at line 20\n"
+        "semantic drop unresolved __orison_drop.Payload for Payload capture payload field 0 discovered at line 20\n"
+        "semantic drop unresolved __orison_drop.OtherPayload for OtherPayload capture other field 1 "
         "discovered at line 20\n"
         "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 20\n"

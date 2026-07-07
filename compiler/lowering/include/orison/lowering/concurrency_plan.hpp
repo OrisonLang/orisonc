@@ -64,6 +64,8 @@ struct ConcurrencyDropCleanupPlan {
 struct DropCleanupAuthorizationReport {
     bool authorized = false;
     std::vector<PlannedDropAction> semantic_lowering_blockers;
+    std::vector<PlannedDropAction> semantic_unresolved_blockers;
+    std::vector<PlannedDropAction> source_drop_lowering_blockers;
     std::vector<PlannedDropAction> missing_declarations;
 };
 
@@ -89,6 +91,8 @@ struct DropReadinessSummary {
 struct DropReadinessBlockerSummary {
     std::size_t blocked_cleanups = 0;
     std::vector<PlannedDropAction> semantic_lowering_blockers;
+    std::vector<PlannedDropAction> semantic_unresolved_blockers;
+    std::vector<PlannedDropAction> source_drop_lowering_blockers;
     std::vector<PlannedDropAction> missing_declarations;
 };
 
