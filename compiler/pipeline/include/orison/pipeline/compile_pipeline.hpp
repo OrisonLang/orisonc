@@ -41,6 +41,7 @@ struct CompilePipelineResult {
     std::vector<std::string> drop_readiness_relation_report;
     lowering::DropReadinessBlockerSummary drop_readiness_blocker_summary;
     std::vector<std::string> drop_readiness_blocker_report;
+    std::vector<std::string> drop_readiness_source_correlation_report;
     std::vector<std::string> link_libraries;
     std::string error_text;
 

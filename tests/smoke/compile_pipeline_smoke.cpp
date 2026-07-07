@@ -68,6 +68,11 @@ auto main() -> int {
         "drop readiness blockers cleanups 0 semantic blockers 0 semantic unresolved 0 "
         "source lowering blocked 0 missing declarations 0"
     );
+    assert(ir.drop_readiness_source_correlation_report.size() == 1);
+    assert(
+        ir.drop_readiness_source_correlation_report.front() ==
+        "drop readiness source correlations actions 0 semantic sites 0"
+    );
 
     auto drop_readiness_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
@@ -141,6 +146,17 @@ auto main() -> int {
         drop_readiness.drop_readiness_blocker_report[3] ==
         "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 12"
+    );
+    assert(drop_readiness.drop_readiness_source_correlation_report.size() == 2);
+    assert(
+        drop_readiness.drop_readiness_source_correlation_report[0] ==
+        "drop readiness source correlations actions 1 semantic sites 1"
+    );
+    assert(
+        drop_readiness.drop_readiness_source_correlation_report[1] ==
+        "drop readiness source correlation __orison_thread_cleanup.launch.12.0 __orison_drop.Payload for Payload "
+        "capture payload field 0 action line 12 semantic owner payload site line 11 semantic unresolved "
+        "source lowering not accepted declaration missing"
     );
 
     auto multi_drop_readiness_path =
@@ -499,6 +515,17 @@ auto main() -> int {
         parsed_drop_readiness.drop_readiness_blocker_report[3] ==
         "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 14"
+    );
+    assert(parsed_drop_readiness.drop_readiness_source_correlation_report.size() == 2);
+    assert(
+        parsed_drop_readiness.drop_readiness_source_correlation_report[0] ==
+        "drop readiness source correlations actions 1 semantic sites 1"
+    );
+    assert(
+        parsed_drop_readiness.drop_readiness_source_correlation_report[1] ==
+        "drop readiness source correlation __orison_thread_cleanup.launch.14.0 __orison_drop.Payload for Payload "
+        "capture payload field 0 action line 14 semantic owner payload site line 13 semantic resolved "
+        "source lowering not accepted declaration missing"
     );
     assert(parsed_drop_readiness.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
 

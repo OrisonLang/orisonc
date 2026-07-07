@@ -102,6 +102,9 @@ drop/cleanup decisions.
 - Drop cleanup authorization reports now split semantic-lowering blockers into unresolved semantic drops versus
   source-drop-lowering-not-accepted blockers. This lets parsed/proven source-derived drop candidates reduce the
   semantic uncertainty in reports while normal lowering still emits no drop declarations or calls.
+- Drop readiness source-correlation reporting is pipeline-owned because it combines semantic planned-drop sites with
+  lowering cleanup actions. It traces cleanup action source type/capture metadata back to semantic owner/drop-site
+  status and emitted-declaration status without changing generated IR.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.

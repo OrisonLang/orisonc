@@ -580,6 +580,11 @@ auto run_drop_readiness_blockers(orison::driver::CompilerApp const& app, std::fi
     return run_single_file_command(app, "--drop-readiness-blockers", path);
 }
 
+auto run_drop_readiness_source_correlations(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--drop-readiness-source-correlations", path);
+}
+
 auto run_emit_object(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& source_path,
@@ -1295,6 +1300,17 @@ int main() {
         "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 14\n"
     );
+    auto parsed_drop_readiness_source =
+        run_drop_readiness_source_correlations(app, parsed_drop_readiness_path);
+    assert(parsed_drop_readiness_source.exit_code == 0);
+    assert(parsed_drop_readiness_source.stderr_text.empty());
+    assert(
+        parsed_drop_readiness_source.stdout_text ==
+        "drop readiness source correlations actions 1 semantic sites 1\n"
+        "drop readiness source correlation __orison_thread_cleanup.launch.14.0 __orison_drop.Payload for Payload "
+        "capture payload field 0 action line 14 semantic owner payload site line 13 semantic resolved "
+        "source lowering not accepted declaration missing\n"
+    );
 
     auto semantic_drop_summary = run_semantic_drop_summary(app, planned_drop_report_path);
     assert(semantic_drop_summary.exit_code == 0);
@@ -1369,6 +1385,16 @@ int main() {
         "discovered at line 12\n"
         "drop readiness blocker missing declaration __orison_drop.Payload for Payload capture payload field 0 "
         "discovered at line 12\n"
+    );
+    auto drop_readiness_source = run_drop_readiness_source_correlations(app, planned_drop_report_path);
+    assert(drop_readiness_source.exit_code == 0);
+    assert(drop_readiness_source.stderr_text.empty());
+    assert(
+        drop_readiness_source.stdout_text ==
+        "drop readiness source correlations actions 1 semantic sites 1\n"
+        "drop readiness source correlation __orison_thread_cleanup.launch.12.0 __orison_drop.Payload for Payload "
+        "capture payload field 0 action line 12 semantic owner payload site line 11 semantic unresolved "
+        "source lowering not accepted declaration missing\n"
     );
     auto multi_drop_readiness_fixture_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness_multi.or";
@@ -1475,6 +1501,13 @@ int main() {
         "source lowering blocked 0 missing declarations 0\n"
     );
     assert(empty_drop_readiness_blockers.stderr_text.empty());
+    auto empty_drop_readiness_source = run_drop_readiness_source_correlations(app, emit_path);
+    assert(empty_drop_readiness_source.exit_code == 0);
+    assert(
+        empty_drop_readiness_source.stdout_text ==
+        "drop readiness source correlations actions 0 semantic sites 0\n"
+    );
+    assert(empty_drop_readiness_source.stderr_text.empty());
 
     auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);
     assert(multi_planned_drop_report.exit_code == 0);
