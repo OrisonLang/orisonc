@@ -204,8 +204,7 @@ auto lower_assignment_target(
             auto detail = render_expression_lowering_failure(session.failures.expression);
             diagnostics.error(
                 target.line,
-                "lowering aggregate assignment target failed" +
-                    (detail.empty() ? std::string {} : ": " + detail)
+                append_lowering_detail("lowering aggregate assignment target failed", detail)
             );
             return std::nullopt;
         }
@@ -262,8 +261,7 @@ auto lower_assignment_target(
             auto detail = render_expression_lowering_failure(session.failures.expression);
             diagnostics.error(
                 target.line,
-                "lowering aggregate assignment index failed" +
-                    (detail.empty() ? std::string {} : ": " + detail)
+                append_lowering_detail("lowering aggregate assignment index failed", detail)
             );
             return std::nullopt;
         }
@@ -711,8 +709,7 @@ auto lower_let_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this let initializer" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this let initializer", detail)
         );
         return false;
     }
@@ -788,8 +785,7 @@ auto lower_var_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this var initializer" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this var initializer", detail)
         );
         return false;
     }
@@ -849,8 +845,7 @@ auto lower_assignment_statement(
         auto detail = render_expression_lowering_failure(session.failures.expression);
         diagnostics.error(
             statement.line,
-            "lowering does not yet support this assignment value" +
-                (detail.empty() ? std::string {} : ": " + detail)
+            append_lowering_detail("lowering does not yet support this assignment value", detail)
         );
         return false;
     }

@@ -4,13 +4,9 @@
 #include <utility>
 
 namespace orison::lowering {
-namespace {
-
-auto with_detail(std::string prefix, std::string const& detail) -> std::string {
+auto append_lowering_detail(std::string prefix, std::string const& detail) -> std::string {
     return detail.empty() ? prefix : prefix + ": " + detail;
 }
-
-}  // namespace
 
 auto render_expression_lowering_failure(
     ExpressionLoweringFailure const& failure
@@ -71,7 +67,7 @@ auto render_expression_lowering_failure(
         prefix = "call argument lowering failed";
         break;
     }
-    return with_detail(std::move(prefix), failure.detail);
+    return append_lowering_detail(std::move(prefix), failure.detail);
 }
 
 auto render_control_flow_lowering_failure(
@@ -118,7 +114,7 @@ auto render_control_flow_lowering_failure(
         prefix = "switch case type mismatch";
         break;
     }
-    return with_detail(std::move(prefix), failure.detail);
+    return append_lowering_detail(std::move(prefix), failure.detail);
 }
 
 }  // namespace orison::lowering

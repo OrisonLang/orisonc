@@ -142,6 +142,8 @@ analysis, and lowering components.
   failure details.
 - Lowering failure rendering lives in a dedicated diagnostics component over the neutral failure records; expression,
   control-flow, and function emitters consume one stable text policy without owning diagnostic wording.
+  Prefix/detail diagnostic composition now also lives in that diagnostics component so emitters do not duplicate
+  conditional `": detail"` formatting.
 - Mutable function emission state and lowering failures are passed as separate objects; `FunctionLoweringState` cannot
   accumulate diagnostic policy or failure lifecycle concerns as new statement and backend lowering is added.
 - Expression and control-flow emitters receive a non-owning `FunctionLoweringSession` that references the separately

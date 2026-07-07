@@ -14,6 +14,11 @@ int main() {
 
     assert(orison::lowering::render_expression_lowering_failure({}).empty());
     assert(orison::lowering::render_control_flow_lowering_failure({}).empty());
+    assert(orison::lowering::append_lowering_detail("lowering failed", "") == "lowering failed");
+    assert(
+        orison::lowering::append_lowering_detail("lowering failed", "unknown lowered name: value") ==
+        "lowering failed: unknown lowered name: value"
+    );
 
     auto expression_cases = std::array {
         std::pair {ExpressionLoweringFailureReason::unsupported_expression, "unsupported expression"},

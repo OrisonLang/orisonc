@@ -6,6 +6,11 @@
 
 namespace orison::lowering {
 
+auto append_lowering_detail(
+    std::string prefix,
+    std::string const& detail
+) -> std::string;
+
 auto render_expression_lowering_failure(
     ExpressionLoweringFailure const& failure
 ) -> std::string;
