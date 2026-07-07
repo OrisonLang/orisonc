@@ -37,7 +37,7 @@ using DeferredCleanupBlockLowerer = StatementFlow (*)(
     std::ostringstream& output
 );
 
-auto emit_deferred_cleanup_to_depth_with_block_lowerer(
+auto emit_deferred_cleanup_to_depth(
     std::size_t target_depth,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,

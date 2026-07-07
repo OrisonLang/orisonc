@@ -59,7 +59,7 @@ auto lower_nonvalue_statement_block(
         }
     }
     if (flow == StatementFlow::falls_through &&
-        !emit_deferred_cleanup_to_depth_with_block_lowerer(
+        !emit_deferred_cleanup_to_depth(
             defer_scope.cleanup_depth(),
             context,
             session,

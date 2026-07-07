@@ -16,7 +16,7 @@ auto DeferredCleanupScope::cleanup_depth() const -> std::size_t {
     return cleanup_depth_;
 }
 
-auto emit_deferred_cleanup_to_depth_with_block_lowerer(
+auto emit_deferred_cleanup_to_depth(
     std::size_t target_depth,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,

@@ -508,7 +508,7 @@ auto emit_value_block_deferred_cleanup(
     std::ostringstream& output,
     DeferredCleanupBlockLowerer lower_cleanup_block
 ) -> bool {
-    return emit_deferred_cleanup_to_depth_with_block_lowerer(
+    return emit_deferred_cleanup_to_depth(
         defer_scope.cleanup_depth(),
         context,
         session,
@@ -1178,7 +1178,7 @@ auto lower_loop_control_statement(
     auto const& target = statement.kind == syntax::StatementKind::break_statement
         ? targets.break_target
         : targets.continue_target;
-    if (!emit_deferred_cleanup_to_depth_with_block_lowerer(
+    if (!emit_deferred_cleanup_to_depth(
             targets.defer_cleanup_depth,
             context,
             session,
