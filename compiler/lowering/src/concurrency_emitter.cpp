@@ -3,6 +3,7 @@
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
+#include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/source_type_queries.hpp"
@@ -120,6 +121,22 @@ auto emit_concurrency_spawn_failed(
     auto spawn_failed_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::spawn_failed);
     output << "  call " << spawn_failed_call.return_type << " @"
            << spawn_failed_call.symbol_name << "()\n";
+}
+
+auto emit_concurrency_spawn_failure_check(
+    std::string_view handle_name,
+    std::string_view spawn_failed_block,
+    std::string_view spawn_ok_block,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> void {
+    auto const spawn_failure_check = next_llvm_temporary_name(state.next_temporary_index);
+    output << "  " << spawn_failure_check << " = icmp eq ptr " << handle_name << ", null\n";
+    emit_llvm_conditional_branch(output, spawn_failure_check, spawn_failed_block, spawn_ok_block);
+    emit_llvm_block_label(output, spawn_failed_block);
+    emit_concurrency_spawn_failed(output);
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, spawn_ok_block);
 }
 
 auto emit_concurrency_spawn(

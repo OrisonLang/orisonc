@@ -127,16 +127,16 @@ auto lower_thread_let_statement(
     auto handle_name = next_llvm_local_value_name(statement.name, session.state.local_name_counts);
     emit_concurrency_spawn(*plan, handle_name, environment_storage, result_storage, output);
 
-    auto const spawn_failure_check = next_llvm_temporary_name(session.state.next_temporary_index);
     auto const spawn_block_index = next_llvm_block_index(session.state.next_block_index);
     auto const spawn_failed_block = llvm_block_name(binding_prefix + ".spawn_failed", spawn_block_index);
     auto const spawn_ok_block = llvm_block_name(binding_prefix + ".spawn_ok", spawn_block_index);
-    output << "  " << spawn_failure_check << " = icmp eq ptr " << handle_name << ", null\n";
-    emit_llvm_conditional_branch(output, spawn_failure_check, spawn_failed_block, spawn_ok_block);
-    emit_llvm_block_label(output, spawn_failed_block);
-    emit_concurrency_spawn_failed(output);
-    emit_llvm_unreachable(output);
-    emit_llvm_block_label(output, spawn_ok_block);
+    emit_concurrency_spawn_failure_check(
+        handle_name,
+        spawn_failed_block,
+        spawn_ok_block,
+        session.state,
+        output
+    );
     session.state.current_block = spawn_ok_block;
 
     session.state.immutable_bindings[statement.name] = LoweredExpression {

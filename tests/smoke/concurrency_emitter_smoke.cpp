@@ -81,6 +81,28 @@ auto test_capture_environment_store_emitter() -> void {
     assert(missing_state.next_temporary_index == 0);
 }
 
+auto test_spawn_failure_check_emitter() -> void {
+    auto state = orison::lowering::FunctionLoweringState {};
+    auto output = std::ostringstream {};
+    orison::lowering::emit_concurrency_spawn_failure_check(
+        "%worker",
+        "worker.thread.spawn_failed.0",
+        "worker.thread.spawn_ok.0",
+        state,
+        output
+    );
+    assert(
+        output.str() ==
+        "  %tmp0 = icmp eq ptr %worker, null\n"
+        "  br i1 %tmp0, label %worker.thread.spawn_failed.0, label %worker.thread.spawn_ok.0\n"
+        "worker.thread.spawn_failed.0:\n"
+        "  call void @__orison_concurrency_spawn_failed()\n"
+        "  unreachable\n"
+        "worker.thread.spawn_ok.0:\n"
+    );
+    assert(state.next_temporary_index == 1);
+}
+
 auto test_result_completion_emitters() -> void {
     auto state = orison::lowering::FunctionLoweringState {};
     auto thread_binding = orison::lowering::ConcurrencyBinding {
@@ -240,6 +262,7 @@ auto test_abandoned_handle_cleanup() -> void {
 
 int main() {
     test_capture_environment_store_emitter();
+    test_spawn_failure_check_emitter();
     test_result_completion_emitters();
     test_abandoned_handle_cleanup();
 

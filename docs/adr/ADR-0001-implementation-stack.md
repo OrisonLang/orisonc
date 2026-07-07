@@ -300,6 +300,8 @@ analysis, and lowering components.
   emitters, while expression lowering still owns join/await syntax recognition and binding lookup.
   Concurrency environment capture store emission now lives under `concurrency_emitter`; statement lowering still owns
   environment allocation and maps narrow emission statuses to statement diagnostics.
+  Spawn failure branch emission now lives under `concurrency_emitter` with caller-provided block labels; statement
+  lowering still owns block naming and current-block state.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

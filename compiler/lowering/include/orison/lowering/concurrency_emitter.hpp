@@ -51,6 +51,14 @@ auto emit_concurrency_spawn_failed(
     std::ostringstream& output
 ) -> void;
 
+auto emit_concurrency_spawn_failure_check(
+    std::string_view handle_name,
+    std::string_view spawn_failed_block,
+    std::string_view spawn_ok_block,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> void;
+
 auto emit_concurrency_spawn(
     ConcurrencyExpressionPlan const& plan,
     std::string_view handle_name,
