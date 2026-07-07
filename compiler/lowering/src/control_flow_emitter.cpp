@@ -24,10 +24,6 @@ namespace {
 
 using EmissionContext = LoweringEmissionContext;
 
-auto expression_failure_detail(LoweringFailures const& failures) -> std::string {
-    return render_expression_lowering_failure(failures.expression);
-}
-
 auto lower_final_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -115,7 +111,7 @@ auto lower_final_if_statement(
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_condition_failure,
-            expression_failure_detail(failures)
+            expression_lowering_failure_detail(failures.expression)
         );
         return std::nullopt;
     }
@@ -189,7 +185,7 @@ auto lower_final_if_statement(
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_then_arm_failure,
-            expression_failure_detail(failures)
+            expression_lowering_failure_detail(failures.expression)
         );
         return std::nullopt;
     }
@@ -197,7 +193,7 @@ auto lower_final_if_statement(
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_else_arm_failure,
-            expression_failure_detail(failures)
+            expression_lowering_failure_detail(failures.expression)
         );
         return std::nullopt;
     }
@@ -254,7 +250,7 @@ auto lower_final_switch_statement(
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_subject_failure,
-            expression_failure_detail(failures)
+            expression_lowering_failure_detail(failures.expression)
         );
         return std::nullopt;
     }
@@ -316,7 +312,7 @@ auto lower_final_switch_statement(
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_case_failure,
-            expression_failure_detail(failures)
+            expression_lowering_failure_detail(failures.expression)
         );
         return std::nullopt;
     }

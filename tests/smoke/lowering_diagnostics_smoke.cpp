@@ -30,6 +30,14 @@ int main() {
         ) == "lowering failed: unknown lowered name: value"
     );
     assert(
+        orison::lowering::expression_lowering_failure_detail(
+            ExpressionLoweringFailure {
+                .reason = ExpressionLoweringFailureReason::unknown_name,
+                .detail = "value",
+            }
+        ) == "unknown lowered name: value"
+    );
+    assert(
         orison::lowering::append_control_flow_lowering_failure(
             "lowering failed",
             ControlFlowLoweringFailureReason::unsupported_switch_pattern,

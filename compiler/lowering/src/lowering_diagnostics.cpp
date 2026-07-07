@@ -33,6 +33,12 @@ auto append_control_flow_lowering_failure(
     );
 }
 
+auto expression_lowering_failure_detail(
+    ExpressionLoweringFailure const& failure
+) -> std::string {
+    return render_expression_lowering_failure(failure);
+}
+
 auto render_expression_lowering_failure(
     ExpressionLoweringFailure const& failure
 ) -> std::string {

@@ -27,6 +27,10 @@ auto append_control_flow_lowering_failure(
     std::string detail = {}
 ) -> std::string;
 
+auto expression_lowering_failure_detail(
+    ExpressionLoweringFailure const& failure
+) -> std::string;
+
 auto render_expression_lowering_failure(
     ExpressionLoweringFailure const& failure
 ) -> std::string;
