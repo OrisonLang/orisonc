@@ -1,5 +1,6 @@
 #include "orison/lowering/concurrency_cleanup.hpp"
 
+#include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/llvm_names.hpp"
 
@@ -61,6 +62,26 @@ auto emit_concurrency_spawn_failed(
     auto spawn_failed_call = concurrency_runtime_call(ConcurrencyRuntimeOperation::spawn_failed);
     output << "  call " << spawn_failed_call.return_type << " @"
            << spawn_failed_call.symbol_name << "()\n";
+}
+
+auto emit_concurrency_spawn(
+    ConcurrencyExpressionPlan const& plan,
+    std::string_view handle_name,
+    std::string_view environment_storage,
+    std::string_view result_storage,
+    std::ostringstream& output
+) -> void {
+    auto runtime_call = concurrency_runtime_call(plan.spawn_operation);
+    auto cleanup_pointer = plan.captures.empty()
+        ? std::string {"null"}
+        : "@" + plan.cleanup_symbol_name;
+    output << "  " << handle_name << " = call " << runtime_call.return_type
+           << " @" << runtime_call.symbol_name
+           << "(ptr @" << plan.thunk_symbol_name
+           << ", ptr " << environment_storage
+           << ", ptr " << result_storage
+           << ", i64 " << plan.result_storage.size_bytes
+           << ", ptr " << cleanup_pointer << ")\n";
 }
 
 auto emit_abandoned_concurrency_handle_cleanup(

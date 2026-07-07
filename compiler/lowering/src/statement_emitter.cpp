@@ -241,17 +241,7 @@ auto lower_thread_let_statement(
     output << "  " << result_storage << " = alloca " << plan->result_storage.llvm_type << "\n";
 
     auto handle_name = next_llvm_local_value_name(statement.name, session.state.local_name_counts);
-    auto runtime_call = concurrency_runtime_call(plan->spawn_operation);
-    auto cleanup_pointer = plan->captures.empty()
-        ? std::string {"null"}
-        : "@" + plan->cleanup_symbol_name;
-    output << "  " << handle_name << " = call " << runtime_call.return_type
-           << " @" << runtime_call.symbol_name
-           << "(ptr @" << plan->thunk_symbol_name
-           << ", ptr " << environment_storage
-           << ", ptr " << result_storage
-           << ", i64 " << plan->result_storage.size_bytes
-           << ", ptr " << cleanup_pointer << ")\n";
+    emit_concurrency_spawn(*plan, handle_name, environment_storage, result_storage, output);
 
     auto const spawn_failure_check = next_llvm_temporary_name(session.state.next_temporary_index);
     auto const spawn_block_index = next_llvm_block_index(session.state.next_block_index);

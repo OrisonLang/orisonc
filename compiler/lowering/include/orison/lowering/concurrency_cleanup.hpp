@@ -3,8 +3,11 @@
 #include "orison/lowering/function_lowering_session.hpp"
 
 #include <sstream>
+#include <string_view>
 
 namespace orison::lowering {
+
+struct ConcurrencyExpressionPlan;
 
 auto emit_concurrency_handle_destroy(
     ConcurrencyBinding& binding,
@@ -30,6 +33,14 @@ auto emit_task_await_result(
 ) -> LoweredExpression;
 
 auto emit_concurrency_spawn_failed(
+    std::ostringstream& output
+) -> void;
+
+auto emit_concurrency_spawn(
+    ConcurrencyExpressionPlan const& plan,
+    std::string_view handle_name,
+    std::string_view environment_storage,
+    std::string_view result_storage,
     std::ostringstream& output
 ) -> void;
 
