@@ -11,10 +11,121 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <unistd.h>
 
+namespace {
+
+auto test_result_completion_emitters() -> void {
+    auto state = orison::lowering::FunctionLoweringState {};
+    auto thread_binding = orison::lowering::ConcurrencyBinding {
+        .handle = "%worker",
+        .result_storage = "%worker.thread.result",
+        .result_type = orison::lowering::LoweredType {
+            .type = "i64",
+            .signedness = orison::lowering::IntegerSignedness::signed_integer,
+        },
+    };
+    auto thread_output = std::ostringstream {};
+    auto thread_result = orison::lowering::emit_thread_join_result(
+        thread_binding,
+        state,
+        thread_output
+    );
+    assert(
+        thread_output.str() ==
+        "  call void @__orison_thread_join(ptr %worker)\n"
+        "  %tmp0 = load i64, ptr %worker.thread.result\n"
+        "  call void @__orison_concurrency_handle_destroy(ptr %worker)\n"
+    );
+    assert(thread_binding.handle_destroyed);
+    assert(thread_result.type == "i64");
+    assert(thread_result.value == "%tmp0");
+    assert(thread_result.signedness == orison::lowering::IntegerSignedness::signed_integer);
+    assert(state.next_temporary_index == 1);
+
+    auto task_binding = orison::lowering::ConcurrencyBinding {
+        .handle = "%pending",
+        .result_storage = "%pending.task.result",
+        .result_type = orison::lowering::LoweredType {
+            .type = "i1",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+    };
+    auto task_output = std::ostringstream {};
+    auto task_result = orison::lowering::emit_task_await_result(
+        task_binding,
+        state,
+        task_output
+    );
+    assert(
+        task_output.str() ==
+        "  call void @__orison_task_await(ptr %pending)\n"
+        "  %tmp1 = load i1, ptr %pending.task.result\n"
+        "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+    );
+    assert(task_binding.handle_destroyed);
+    assert(task_result.type == "i1");
+    assert(task_result.value == "%tmp1");
+    assert(task_result.signedness == orison::lowering::IntegerSignedness::not_integer);
+    assert(state.next_temporary_index == 2);
+}
+
+auto test_abandoned_handle_cleanup() -> void {
+    auto state = orison::lowering::FunctionLoweringState {};
+    state.thread_bindings.emplace("joined", orison::lowering::ConcurrencyBinding {
+        .handle = "%joined",
+        .result_storage = "%joined.result",
+        .result_type = orison::lowering::LoweredType {
+            .type = "i64",
+            .signedness = orison::lowering::IntegerSignedness::signed_integer,
+        },
+        .handle_destroyed = true,
+    });
+    state.thread_bindings.emplace("worker", orison::lowering::ConcurrencyBinding {
+        .handle = "%worker",
+        .result_storage = "%worker.result",
+        .result_type = orison::lowering::LoweredType {
+            .type = "i64",
+            .signedness = orison::lowering::IntegerSignedness::signed_integer,
+        },
+    });
+    state.task_bindings.emplace("pending", orison::lowering::ConcurrencyBinding {
+        .handle = "%pending",
+        .result_storage = "%pending.result",
+        .result_type = orison::lowering::LoweredType {
+            .type = "i1",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+    });
+    state.thread_binding_order = {"joined", "worker"};
+    state.task_binding_order = {"missing", "pending"};
+
+    auto failures = orison::lowering::LoweringFailures {};
+    auto session = orison::lowering::FunctionLoweringSession {
+        .state = state,
+        .failures = failures,
+    };
+    auto output = std::ostringstream {};
+    orison::lowering::emit_abandoned_concurrency_handle_cleanup(session, output);
+
+    assert(
+        output.str() ==
+        "  call void @__orison_concurrency_handle_destroy(ptr %worker)\n"
+        "  call void @__orison_concurrency_handle_destroy(ptr %pending)\n"
+    );
+    assert(state.thread_bindings.at("joined").handle_destroyed);
+    assert(state.thread_bindings.at("worker").handle_destroyed);
+    assert(state.task_bindings.at("pending").handle_destroyed);
+}
+
+}  // namespace
+
 int main() {
+    test_result_completion_emitters();
+    test_abandoned_handle_cleanup();
+
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root =
         original_temp_root / ("orison_concurrency_emitter_smoke_" + std::to_string(static_cast<long long>(::getpid())));
