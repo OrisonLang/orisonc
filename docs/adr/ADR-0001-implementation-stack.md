@@ -294,6 +294,8 @@ analysis, and lowering components.
   `concurrency_cleanup`.
   Concurrency cleanup thunk emission now lives under `concurrency_emitter` instead of the general statement-emitter
   API.
+  Concurrency entry thunk emission now also lives under `concurrency_emitter`; statement lowering keeps capture
+  storage, result storage, spawn failure CFG, and binding registration.
 - Development builds may use the platform's monolithic shared LLVM target when component archives are unavailable;
   release packaging must use a static LLVM distribution to preserve statically linked tool executables.
 - Future ADRs should define the lowering pipeline, incremental compilation architecture, and runtime boundary.

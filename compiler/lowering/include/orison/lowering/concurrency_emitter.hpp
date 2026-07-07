@@ -1,8 +1,13 @@
 #pragma once
 
+#include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
+#include "orison/lowering/lowering_emission_context.hpp"
+#include "orison/syntax/module_parser.hpp"
 
+#include <optional>
 #include <sstream>
+#include <string>
 #include <string_view>
 
 namespace orison::lowering {
@@ -43,6 +48,14 @@ auto emit_concurrency_spawn(
     std::string_view result_storage,
     std::ostringstream& output
 ) -> void;
+
+auto emit_concurrency_entry_thunk(
+    ConcurrencyExpressionPlan const& plan,
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& parent_session,
+    diagnostics::DiagnosticBag& diagnostics
+) -> std::optional<std::string>;
 
 auto emit_concurrency_cleanup_thunk(
     ConcurrencyExpressionPlan const& plan
