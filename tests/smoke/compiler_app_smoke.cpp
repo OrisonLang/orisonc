@@ -969,62 +969,29 @@ int main() {
         }
     );
     auto emit_thread_spawn = run_emit_llvm(app, emit_thread_spawn_path);
-    assert(emit_thread_spawn.exit_code == 0);
-    assert(emit_thread_spawn.stderr_text.empty());
-    assert(
-        emit_thread_spawn.stdout_text.find(
-            "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_spawn.stdout_text.find(
-            "declare void @__orison_thread_join(ptr)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_spawn.stdout_text.find(
-            "declare void @__orison_concurrency_spawn_failed()"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_spawn.stdout_text.find(
-            "declare void @__orison_concurrency_handle_destroy(ptr)"
-        ) != std::string::npos
-    );
-    assert(emit_thread_spawn.stdout_text.find("%worker.thread.env = alloca { i64 }") != std::string::npos);
-    assert(emit_thread_spawn.stdout_text.find("store i64 %value, ptr %tmp") != std::string::npos);
-    assert(emit_thread_spawn.stdout_text.find("%worker.thread.result = alloca i64") != std::string::npos);
-    assert(
-        emit_thread_spawn.stdout_text.find(
-            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.launch.3.0)"
-        ) != std::string::npos
-    );
-    assert(emit_thread_spawn.stdout_text.find("icmp eq ptr %worker, null") != std::string::npos);
-    assert(
-        emit_thread_spawn.stdout_text.find(
+    assert_success_with_stdout_contains(
+        emit_thread_spawn,
+        {
+            "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)",
+            "declare void @__orison_thread_join(ptr)",
+            "declare void @__orison_concurrency_spawn_failed()",
+            "declare void @__orison_concurrency_handle_destroy(ptr)",
+            "%worker.thread.env = alloca { i64 }",
+            "store i64 %value, ptr %tmp",
+            "%worker.thread.result = alloca i64",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.launch.3.0)",
+            "icmp eq ptr %worker, null",
             "call void @__orison_concurrency_spawn_failed()\n"
             "  unreachable\n"
-            "worker.thread.spawn_ok.0:"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_spawn.stdout_text.find(
-            "define private void @__orison_thread_thunk.launch.3.0(ptr %environment, ptr %result_storage)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_spawn.stdout_text.find(
-            "define private void @__orison_thread_cleanup.launch.3.0(ptr %environment)"
-        ) != std::string::npos
-    );
-    assert(emit_thread_spawn.stdout_text.find("load i64, ptr %tmp0") != std::string::npos);
-    assert(emit_thread_spawn.stdout_text.find("store i64 %tmp2, ptr %result_storage") != std::string::npos);
-    assert(emit_thread_spawn.stdout_text.find("call void @__orison_thread_join(ptr %worker)") != std::string::npos);
-    assert(emit_thread_spawn.stdout_text.find("load i64, ptr %worker.thread.result") != std::string::npos);
-    assert(
-        emit_thread_spawn.stdout_text.find(
-            "call void @__orison_concurrency_handle_destroy(ptr %worker)"
-        ) != std::string::npos
+            "worker.thread.spawn_ok.0:",
+            "define private void @__orison_thread_thunk.launch.3.0(ptr %environment, ptr %result_storage)",
+            "define private void @__orison_thread_cleanup.launch.3.0(ptr %environment)",
+            "load i64, ptr %tmp0",
+            "store i64 %tmp2, ptr %result_storage",
+            "call void @__orison_thread_join(ptr %worker)",
+            "load i64, ptr %worker.thread.result",
+            "call void @__orison_concurrency_handle_destroy(ptr %worker)",
+        }
     );
 
     auto emit_thread_abandoned_path =
@@ -1041,48 +1008,23 @@ int main() {
         }
     );
     auto emit_thread_abandoned = run_emit_llvm(app, emit_thread_abandoned_path);
-    assert(emit_thread_abandoned.exit_code == 0);
-    assert(emit_thread_abandoned.stderr_text.empty());
-    assert(
-        emit_thread_abandoned.stdout_text.find(
-            "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_abandoned.stdout_text.find(
-            "declare void @__orison_concurrency_handle_destroy(ptr)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_abandoned.stdout_text.find(
-            "declare void @__orison_concurrency_spawn_failed()"
-        ) != std::string::npos
-    );
-    assert(emit_thread_abandoned.stdout_text.find("declare void @__orison_thread_join(ptr)") == std::string::npos);
-    assert(
-        emit_thread_abandoned.stdout_text.find(
-            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.launch.3.0)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_abandoned.stdout_text.find(
-            "define private void @__orison_thread_cleanup.launch.3.0(ptr %environment)"
-        ) != std::string::npos
-    );
-    assert(emit_thread_abandoned.stdout_text.find("icmp eq ptr %worker, null") != std::string::npos);
-    assert(
-        emit_thread_abandoned.stdout_text.find(
+    assert_success_with_stdout_contains(
+        emit_thread_abandoned,
+        {
+            "declare ptr @__orison_thread_spawn(ptr, ptr, ptr, i64, ptr)",
+            "declare void @__orison_concurrency_handle_destroy(ptr)",
+            "declare void @__orison_concurrency_spawn_failed()",
+            "call ptr @__orison_thread_spawn(ptr @__orison_thread_thunk.launch.3.0, ptr %worker.thread.env, ptr %worker.thread.result, i64 8, ptr @__orison_thread_cleanup.launch.3.0)",
+            "define private void @__orison_thread_cleanup.launch.3.0(ptr %environment)",
+            "icmp eq ptr %worker, null",
             "call void @__orison_concurrency_spawn_failed()\n"
             "  unreachable\n"
-            "worker.thread.spawn_ok.0:"
-        ) != std::string::npos
-    );
-    assert(
-        emit_thread_abandoned.stdout_text.find(
+            "worker.thread.spawn_ok.0:",
             "call void @__orison_concurrency_handle_destroy(ptr %worker)\n"
-            "  ret i64 0"
-        ) != std::string::npos
+            "  ret i64 0",
+        }
     );
+    assert(emit_thread_abandoned.stdout_text.find("declare void @__orison_thread_join(ptr)") == std::string::npos);
 
     auto emit_task_spawn_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_emit_task_spawn.or";
@@ -1098,47 +1040,22 @@ int main() {
         }
     );
     auto emit_task_spawn = run_emit_llvm(app, emit_task_spawn_path);
-    assert(emit_task_spawn.exit_code == 0);
-    assert(emit_task_spawn.stderr_text.empty());
-    assert(
-        emit_task_spawn.stdout_text.find(
-            "declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_task_spawn.stdout_text.find(
-            "declare void @__orison_concurrency_spawn_failed()"
-        ) != std::string::npos
-    );
-    assert(
-        emit_task_spawn.stdout_text.find(
-            "declare void @__orison_task_await(ptr)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_task_spawn.stdout_text.find(
-            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.launch.3.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr @__orison_task_cleanup.launch.3.0)"
-        ) != std::string::npos
-    );
-    assert(
-        emit_task_spawn.stdout_text.find(
-            "define private void @__orison_task_cleanup.launch.3.0(ptr %environment)"
-        ) != std::string::npos
-    );
-    assert(emit_task_spawn.stdout_text.find("icmp eq ptr %pending, null") != std::string::npos);
-    assert(
-        emit_task_spawn.stdout_text.find(
+    assert_success_with_stdout_contains(
+        emit_task_spawn,
+        {
+            "declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)",
+            "declare void @__orison_concurrency_spawn_failed()",
+            "declare void @__orison_task_await(ptr)",
+            "call ptr @__orison_task_spawn(ptr @__orison_task_thunk.launch.3.0, ptr %pending.task.env, ptr %pending.task.result, i64 8, ptr @__orison_task_cleanup.launch.3.0)",
+            "define private void @__orison_task_cleanup.launch.3.0(ptr %environment)",
+            "icmp eq ptr %pending, null",
             "call void @__orison_concurrency_spawn_failed()\n"
             "  unreachable\n"
-            "pending.task.spawn_ok.0:"
-        ) != std::string::npos
-    );
-    assert(emit_task_spawn.stdout_text.find("call void @__orison_task_await(ptr %pending)") != std::string::npos);
-    assert(emit_task_spawn.stdout_text.find("load i64, ptr %pending.task.result") != std::string::npos);
-    assert(
-        emit_task_spawn.stdout_text.find(
-            "call void @__orison_concurrency_handle_destroy(ptr %pending)"
-        ) != std::string::npos
+            "pending.task.spawn_ok.0:",
+            "call void @__orison_task_await(ptr %pending)",
+            "load i64, ptr %pending.task.result",
+            "call void @__orison_concurrency_handle_destroy(ptr %pending)",
+        }
     );
 
     auto planned_drop_report_path =
