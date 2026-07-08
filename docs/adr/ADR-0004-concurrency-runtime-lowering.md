@@ -116,6 +116,9 @@ drop/cleanup decisions.
 - Direct smoke coverage now pins drop cleanup authorization report formatting independently from the full compile
   pipeline, including unresolved semantic blockers, source-lowering gates, authorized cleanups, and multi-action blocked
   cleanups. Pipeline smoke verifies cleanup authorization reporting is wired and populated from fixture metadata.
+- Direct smoke coverage now pins drop readiness snapshot and summary report formatting independently from the full
+  compile pipeline, including empty, blocked, authorized, and mixed readiness states. Pipeline smoke verifies snapshot
+  and summary reporting are wired to fixture metadata and aggregate counts.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
