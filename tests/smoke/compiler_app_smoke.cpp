@@ -810,17 +810,12 @@ int main() {
         }
     );
     auto emit_local_record_address = run_emit_llvm(app, emit_local_record_address_path);
-    assert(emit_local_record_address.exit_code == 0);
-    assert(emit_local_record_address.stderr_text.empty());
-    assert(
-        emit_local_record_address.stdout_text.find(
-            "%tmp0 = insertvalue %record.Registers undef, i32 0, 0"
-        ) != std::string::npos
-    );
-    assert(
-        emit_local_record_address.stdout_text.find(
-            "getelementptr %record.Registers, ptr %regs.addr, i32 0, i32 1"
-        ) != std::string::npos
+    assert_success_with_stdout_contains(
+        emit_local_record_address,
+        {
+            "%tmp0 = insertvalue %record.Registers undef, i32 0, 0",
+            "getelementptr %record.Registers, ptr %regs.addr, i32 0, i32 1",
+        }
     );
 
     auto emit_local_array_address_path =
@@ -837,17 +832,12 @@ int main() {
         }
     );
     auto emit_local_array_address = run_emit_llvm(app, emit_local_array_address_path);
-    assert(emit_local_array_address.exit_code == 0);
-    assert(emit_local_array_address.stderr_text.empty());
-    assert(
-        emit_local_array_address.stdout_text.find(
-            "%tmp0 = insertvalue [4 x i8] undef, i8 1, 0"
-        ) != std::string::npos
-    );
-    assert(
-        emit_local_array_address.stdout_text.find(
-            "getelementptr [4 x i8], ptr %tmp5, i64 0, i64 %index"
-        ) != std::string::npos
+    assert_success_with_stdout_contains(
+        emit_local_array_address,
+        {
+            "%tmp0 = insertvalue [4 x i8] undef, i8 1, 0",
+            "getelementptr [4 x i8], ptr %tmp5, i64 0, i64 %index",
+        }
     );
 
     auto emit_aggregate_assignment_path =
@@ -868,17 +858,12 @@ int main() {
         }
     );
     auto emit_aggregate_assignment = run_emit_llvm(app, emit_aggregate_assignment_path);
-    assert(emit_aggregate_assignment.exit_code == 0);
-    assert(emit_aggregate_assignment.stderr_text.empty());
-    assert(
-        emit_aggregate_assignment.stdout_text.find(
-            "store %record.Registers %tmp"
-        ) != std::string::npos
-    );
-    assert(
-        emit_aggregate_assignment.stdout_text.find(
-            "store [4 x i8] %tmp"
-        ) != std::string::npos
+    assert_success_with_stdout_contains(
+        emit_aggregate_assignment,
+        {
+            "store %record.Registers %tmp",
+            "store [4 x i8] %tmp",
+        }
     );
 
     auto emit_aggregate_element_assignment_path =
@@ -899,17 +884,12 @@ int main() {
         }
     );
     auto emit_aggregate_element_assignment = run_emit_llvm(app, emit_aggregate_element_assignment_path);
-    assert(emit_aggregate_element_assignment.exit_code == 0);
-    assert(emit_aggregate_element_assignment.stderr_text.empty());
-    assert(
-        emit_aggregate_element_assignment.stdout_text.find(
-            "store i32 4, ptr %tmp"
-        ) != std::string::npos
-    );
-    assert(
-        emit_aggregate_element_assignment.stdout_text.find(
-            "store i8 9, ptr %tmp"
-        ) != std::string::npos
+    assert_success_with_stdout_contains(
+        emit_aggregate_element_assignment,
+        {
+            "store i32 4, ptr %tmp",
+            "store i8 9, ptr %tmp",
+        }
     );
 
     auto emit_pointer_aggregate_assignment_path =
@@ -930,20 +910,15 @@ int main() {
         }
     );
     auto emit_pointer_aggregate_assignment = run_emit_llvm(app, emit_pointer_aggregate_assignment_path);
-    assert(emit_pointer_aggregate_assignment.exit_code == 0);
-    assert(emit_pointer_aggregate_assignment.stderr_text.empty());
-    assert(
-        emit_pointer_aggregate_assignment.stdout_text.find(
-            "getelementptr %record.Registers, ptr %regs, i32 0, i32 1"
-        ) != std::string::npos
+    assert_success_with_stdout_contains(
+        emit_pointer_aggregate_assignment,
+        {
+            "getelementptr %record.Registers, ptr %regs, i32 0, i32 1",
+            "getelementptr %record.Buffer, ptr %buffer, i32 0, i32 0",
+            "store i32 4, ptr %tmp",
+            "store i8 7, ptr %tmp",
+        }
     );
-    assert(
-        emit_pointer_aggregate_assignment.stdout_text.find(
-            "getelementptr %record.Buffer, ptr %buffer, i32 0, i32 0"
-        ) != std::string::npos
-    );
-    assert(emit_pointer_aggregate_assignment.stdout_text.find("store i32 4, ptr %tmp") != std::string::npos);
-    assert(emit_pointer_aggregate_assignment.stdout_text.find("store i8 7, ptr %tmp") != std::string::npos);
 
     auto emit_pointer_nested_aggregate_assignment_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_emit_pointer_nested_aggregate_assignment.or";
@@ -968,30 +943,17 @@ int main() {
     );
     auto emit_pointer_nested_aggregate_assignment =
         run_emit_llvm(app, emit_pointer_nested_aggregate_assignment_path);
-    assert(emit_pointer_nested_aggregate_assignment.exit_code == 0);
-    assert(emit_pointer_nested_aggregate_assignment.stderr_text.empty());
-    assert(
-        emit_pointer_nested_aggregate_assignment.stdout_text.find(
-            "getelementptr %record.Log, ptr %log, i32 0, i32 0"
-        ) != std::string::npos
+    assert_success_with_stdout_contains(
+        emit_pointer_nested_aggregate_assignment,
+        {
+            "getelementptr %record.Log, ptr %log, i32 0, i32 0",
+            "getelementptr [2 x %record.Registers], ptr %tmp",
+            "getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0",
+            "getelementptr [2 x [4 x i8]], ptr %tmp",
+            "store i32 8, ptr %tmp",
+            "store i8 1, ptr %tmp",
+        }
     );
-    assert(
-        emit_pointer_nested_aggregate_assignment.stdout_text.find(
-            "getelementptr [2 x %record.Registers], ptr %tmp"
-        ) != std::string::npos
-    );
-    assert(
-        emit_pointer_nested_aggregate_assignment.stdout_text.find(
-            "getelementptr %record.Matrix, ptr %matrix, i32 0, i32 0"
-        ) != std::string::npos
-    );
-    assert(
-        emit_pointer_nested_aggregate_assignment.stdout_text.find(
-            "getelementptr [2 x [4 x i8]], ptr %tmp"
-        ) != std::string::npos
-    );
-    assert(emit_pointer_nested_aggregate_assignment.stdout_text.find("store i32 8, ptr %tmp") != std::string::npos);
-    assert(emit_pointer_nested_aggregate_assignment.stdout_text.find("store i8 1, ptr %tmp") != std::string::npos);
 
     auto emit_thread_spawn_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_emit_thread_spawn.or";
