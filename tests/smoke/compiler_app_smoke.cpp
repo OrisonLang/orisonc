@@ -1199,42 +1199,21 @@ int main() {
     assert(planned_drop_emit.stdout_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
 
     auto planned_drop_report = run_planned_drops(app, planned_drop_report_path);
-    assert(planned_drop_report.exit_code == 0);
-    assert(planned_drop_report.stderr_text.empty());
-    assert(
-        planned_drop_report.stdout_text ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 12 (metadata only)\n"
-    );
+    assert_success_with_stdout_contains(planned_drop_report, {"planned drop __orison_drop.Payload"});
     auto semantic_planned_drop_report = run_semantic_planned_drops(app, planned_drop_report_path);
-    assert(semantic_planned_drop_report.exit_code == 0);
-    assert(semantic_planned_drop_report.stderr_text.empty());
-    assert(
-        semantic_planned_drop_report.stdout_text ==
-        "drop site __orison_drop.Payload for Payload owner payload at line 11\n"
-    );
+    assert_success_with_stdout_contains(semantic_planned_drop_report, {"drop site __orison_drop.Payload"});
     auto semantic_drop_resolution = run_semantic_drop_resolution(app, planned_drop_report_path);
-    assert(semantic_drop_resolution.exit_code == 0);
-    assert(semantic_drop_resolution.stderr_text.empty());
-    assert(
-        semantic_drop_resolution.stdout_text ==
-        "missing drop site __orison_drop.Payload for Payload owner payload at line 11\n"
-    );
+    assert_success_with_stdout_contains(semantic_drop_resolution, {"missing drop site __orison_drop.Payload"});
     auto semantic_drop_diagnostics = run_semantic_drop_diagnostics(app, planned_drop_report_path);
-    assert(semantic_drop_diagnostics.exit_code == 0);
-    assert(semantic_drop_diagnostics.stderr_text.empty());
-    assert(
-        semantic_drop_diagnostics.stdout_text ==
-        "drop diagnostic drop site __orison_drop.Payload for Payload owner payload at line 11 blocked "
-        "no implementation discovered\n"
+    assert_success_with_stdout_contains(
+        semantic_drop_diagnostics,
+        {"drop diagnostic drop site __orison_drop.Payload", "no implementation discovered"}
     );
     auto semantic_drop_lowering_authorization =
         run_semantic_drop_lowering_authorization(app, planned_drop_report_path);
-    assert(semantic_drop_lowering_authorization.exit_code == 0);
-    assert(semantic_drop_lowering_authorization.stderr_text.empty());
-    assert(
-        semantic_drop_lowering_authorization.stdout_text ==
-        "drop lowering authorization drop site __orison_drop.Payload for Payload owner payload at line 11 "
-        "semantic-unresolved lowering-blocked semantic drop unresolved\n"
+    assert_success_with_stdout_contains(
+        semantic_drop_lowering_authorization,
+        {"drop lowering authorization drop site __orison_drop.Payload", "semantic-unresolved lowering-blocked"}
     );
 
     auto parsed_drop_candidate_path =
@@ -1257,20 +1236,15 @@ int main() {
         }
     );
     auto parsed_drop_candidate_diagnostics = run_semantic_drop_diagnostics(app, parsed_drop_candidate_path);
-    assert(parsed_drop_candidate_diagnostics.exit_code == 0);
-    assert(parsed_drop_candidate_diagnostics.stderr_text.empty());
-    assert(
-        parsed_drop_candidate_diagnostics.stdout_text ==
-        "drop diagnostic drop site __orison_drop.Payload for Payload owner input at line 9 resolved\n"
+    assert_success_with_stdout_contains(
+        parsed_drop_candidate_diagnostics,
+        {"drop diagnostic drop site __orison_drop.Payload", "resolved"}
     );
     auto parsed_drop_candidate_lowering_authorization =
         run_semantic_drop_lowering_authorization(app, parsed_drop_candidate_path);
-    assert(parsed_drop_candidate_lowering_authorization.exit_code == 0);
-    assert(parsed_drop_candidate_lowering_authorization.stderr_text.empty());
-    assert(
-        parsed_drop_candidate_lowering_authorization.stdout_text ==
-        "drop lowering authorization drop site __orison_drop.Payload for Payload owner input at line 9 "
-        "semantic-resolved lowering-blocked source drop lowering not accepted\n"
+    assert_success_with_stdout_contains(
+        parsed_drop_candidate_lowering_authorization,
+        {"drop lowering authorization drop site __orison_drop.Payload", "semantic-resolved lowering-blocked"}
     );
     auto parsed_drop_candidate_emit = run_emit_llvm(app, parsed_drop_candidate_path);
     assert(parsed_drop_candidate_emit.exit_code == 0);
@@ -1324,20 +1298,9 @@ int main() {
     );
 
     auto semantic_drop_summary = run_semantic_drop_summary(app, planned_drop_report_path);
-    assert(semantic_drop_summary.exit_code == 0);
-    assert(semantic_drop_summary.stderr_text.empty());
-    assert(
-        semantic_drop_summary.stdout_text ==
-        "drop resolution summary __orison_drop.Payload for Payload resolved 0 missing 1\n"
-    );
+    assert_success_with_stdout_contains(semantic_drop_summary, {"drop resolution summary __orison_drop.Payload"});
     auto planned_drop_actions = run_planned_drop_actions(app, planned_drop_report_path);
-    assert(planned_drop_actions.exit_code == 0);
-    assert(planned_drop_actions.stderr_text.empty());
-    assert(
-        planned_drop_actions.stdout_text ==
-        "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
-        "discovered at line 12 (metadata only)\n"
-    );
+    assert_success_with_stdout_contains(planned_drop_actions, {"planned drop action __orison_drop.Payload"});
     auto emitted_drops = run_emitted_drops(app, planned_drop_report_path);
     assert_success_with_empty_stdout(emitted_drops);
     auto drop_cleanup_authorization = run_drop_cleanup_authorization(app, planned_drop_report_path);
@@ -1458,22 +1421,14 @@ int main() {
     );
 
     auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);
-    assert(multi_planned_drop_report.exit_code == 0);
-    assert(multi_planned_drop_report.stderr_text.empty());
-    assert(
-        multi_planned_drop_report.stdout_text ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 20 (metadata only)\n"
-        "planned drop __orison_drop.OtherPayload for OtherPayload discovered at line 20 (metadata only)\n"
+    assert_success_with_stdout_contains(
+        multi_planned_drop_report,
+        {"planned drop __orison_drop.Payload", "planned drop __orison_drop.OtherPayload"}
     );
     auto multi_planned_drop_actions = run_planned_drop_actions(app, multi_drop_readiness_fixture_path);
-    assert(multi_planned_drop_actions.exit_code == 0);
-    assert(multi_planned_drop_actions.stderr_text.empty());
-    assert(
-        multi_planned_drop_actions.stdout_text ==
-        "planned drop action __orison_drop.Payload for capture payload: Payload field 0 "
-        "discovered at line 20 (metadata only)\n"
-        "planned drop action __orison_drop.OtherPayload for capture other: OtherPayload field 1 "
-        "discovered at line 20 (metadata only)\n"
+    assert_success_with_stdout_contains(
+        multi_planned_drop_actions,
+        {"capture payload: Payload", "capture other: OtherPayload"}
     );
     auto multi_drop_cleanup_authorization =
         run_drop_cleanup_authorization(app, multi_drop_readiness_fixture_path);
@@ -1510,21 +1465,11 @@ int main() {
         }
     );
     auto deduped_planned_drop_report = run_planned_drops(app, deduped_planned_drop_report_path);
-    assert(deduped_planned_drop_report.exit_code == 0);
-    assert(deduped_planned_drop_report.stderr_text.empty());
-    assert(
-        deduped_planned_drop_report.stdout_text ==
-        "planned drop __orison_drop.Payload for Payload discovered at line 10 (metadata only)\n"
-    );
+    assert_success_with_stdout_contains(deduped_planned_drop_report, {"planned drop __orison_drop.Payload"});
     auto deduped_planned_drop_actions = run_planned_drop_actions(app, deduped_planned_drop_report_path);
-    assert(deduped_planned_drop_actions.exit_code == 0);
-    assert(deduped_planned_drop_actions.stderr_text.empty());
-    assert(
-        deduped_planned_drop_actions.stdout_text ==
-        "planned drop action __orison_drop.Payload for capture left: Payload field 0 "
-        "discovered at line 10 (metadata only)\n"
-        "planned drop action __orison_drop.Payload for capture right: Payload field 1 "
-        "discovered at line 10 (metadata only)\n"
+    assert_success_with_stdout_contains(
+        deduped_planned_drop_actions,
+        {"capture left: Payload", "capture right: Payload"}
     );
 
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";

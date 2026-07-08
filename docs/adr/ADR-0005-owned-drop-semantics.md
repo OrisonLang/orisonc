@@ -31,6 +31,9 @@ inventing semantics outside the spec/tour.
 
 - Planned drop metadata, per-cleanup-site actions, declaration reports, and authorization reports are valid scaffolding
   for future diagnostics and lowering.
+- Direct formatter smoke tests own exact planned-drop metadata and semantic-drop report rendering. Pipeline and driver
+  smoke tests should verify report wiring, counts, and representative symbols rather than duplicating formatter
+  strings.
 - Normal `orisonc --emit-llvm`, object emission, build, and run output must remain metadata-only for planned drops until
   this ADR is superseded by accepted source semantics.
 - Future source-level drop work must define how a type becomes droppable, where drop bodies live, which values own
