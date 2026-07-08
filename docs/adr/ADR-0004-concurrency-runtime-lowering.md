@@ -119,6 +119,8 @@ drop/cleanup decisions.
 - Direct smoke coverage now pins drop readiness snapshot and summary report formatting independently from the full
   compile pipeline, including empty, blocked, authorized, and mixed readiness states. Pipeline smoke verifies snapshot
   and summary reporting are wired to fixture metadata and aggregate counts.
+- Driver smoke now treats drop-readiness and drop-cleanup report commands as CLI wiring checks, asserting successful
+  command execution plus representative report fragments while dedicated formatter smokes own exact rendering.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
