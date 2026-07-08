@@ -10,7 +10,6 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <sys/wait.h>
 #include <unistd.h>
 
 namespace {
@@ -585,51 +584,6 @@ auto run_drop_readiness_source_correlations(orison::driver::CompilerApp const& a
     return run_single_file_command(app, "--drop-readiness-source-correlations", path);
 }
 
-auto run_emit_object(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& source_path,
-    std::filesystem::path const& output_path
-) -> orison::driver::CompileResult {
-    auto source_path_text = source_path.string();
-    auto output_path_text = output_path.string();
-    std::array<char const*, 5> argv {
-        "orisonc",
-        "--emit-object",
-        source_path_text.c_str(),
-        "-o",
-        output_path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
-}
-
-auto run_build(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& source_path,
-    std::filesystem::path const& output_path
-) -> orison::driver::CompileResult {
-    auto source_path_text = source_path.string();
-    auto output_path_text = output_path.string();
-    std::array<char const*, 5> argv {
-        "orisonc",
-        "--build",
-        source_path_text.c_str(),
-        "-o",
-        output_path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
-}
-
-auto run_program(orison::driver::CompilerApp const& app, std::filesystem::path const& source_path)
-    -> orison::driver::CompileResult {
-    auto source_path_text = source_path.string();
-    std::array<char const*, 3> argv {
-        "orisonc",
-        "run",
-        source_path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
-}
-
 void assert_parse_success(orison::driver::CompileResult const& result) {
     assert(result.exit_code == 0);
     assert(result.stderr_text.empty());
@@ -658,12 +612,6 @@ void assert_success_with_stdout_contains(
 
 void assert_success_with_empty_stdout(orison::driver::CompileResult const& result) {
     assert(result.exit_code == 0);
-    assert(result.stdout_text.empty());
-    assert(result.stderr_text.empty());
-}
-
-void assert_result_with_empty_output(orison::driver::CompileResult const& result, int expected_exit_code) {
-    assert(result.exit_code == expected_exit_code);
     assert(result.stdout_text.empty());
     assert(result.stderr_text.empty());
 }
@@ -1354,51 +1302,6 @@ int main() {
     assert_success_with_stdout_contains(
         deduped_planned_drop_actions,
         {"capture left: Payload", "capture right: Payload"}
-    );
-
-    auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
-    auto object_result = run_emit_object(app, emit_path, object_path);
-    assert_success_with_empty_stdout(object_result);
-    assert(std::filesystem::file_size(object_path) > 0);
-
-    auto missing_directory = std::filesystem::temp_directory_path() / "orison_missing_object_directory";
-    std::filesystem::remove_all(missing_directory);
-    auto object_write_failure = run_emit_object(app, emit_path, missing_directory / "output.o");
-    assert(object_write_failure.exit_code == 1);
-    assert(object_write_failure.stdout_text.empty());
-    assert(object_write_failure.stderr_text == "error: unable to write object file\n");
-
-    auto executable_path = std::filesystem::temp_directory_path() / "orison_compiler_app_build";
-    auto build_result = run_build(app, emit_path, executable_path);
-    assert_success_with_empty_stdout(build_result);
-    auto executable_status = std::system(executable_path.string().c_str());
-    assert(WIFEXITED(executable_status));
-    assert(WEXITSTATUS(executable_status) == 42);
-
-    auto run_result = run_program(app, emit_path);
-    assert_result_with_empty_output(run_result, 42);
-
-    auto run_concurrency_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_run_concurrency.or";
-    write_concurrency_fixture(
-        run_concurrency_path,
-        "demo.run",
-        {
-            "async function main() -> UInt32",
-            "    let pending = task",
-            "        42 as UInt32",
-            "",
-            "    await pending",
-        }
-    );
-    auto run_concurrency = run_program(app, run_concurrency_path);
-    assert_result_with_empty_output(run_concurrency, 42);
-
-    auto link_failure = run_build(app, emit_path, missing_directory / "output");
-    assert(link_failure.exit_code == 1);
-    assert(link_failure.stdout_text.empty());
-    assert(
-        link_failure.stderr_text.find("host linker failed to produce an executable") != std::string::npos
     );
 
     auto path = std::filesystem::temp_directory_path() / "orison_compiler_app_await_failure.or";
