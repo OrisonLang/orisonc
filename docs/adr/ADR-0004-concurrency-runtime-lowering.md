@@ -110,6 +110,9 @@ drop/cleanup decisions.
   report matching and rendering policy, and direct smoke coverage pins its matching behavior independently from the
   full compile pipeline. Pipeline smoke coverage now verifies report wiring rather than duplicating exact formatter
   matching cases.
+- Direct smoke coverage now pins drop readiness relation report formatting independently from the full compile
+  pipeline, including empty, blocked, authorized, and multi-action cleanup states. Pipeline smoke verifies the relation
+  report is wired and populated from fixture metadata without duplicating the exact formatter contract.
 - `examples/concurrency_task_main.or` is the checked-in runnable smoke source for the current scalar task runtime path.
 - `examples/concurrency_thread_main.or` is the checked-in runnable smoke source for the current scalar thread runtime
   path.
