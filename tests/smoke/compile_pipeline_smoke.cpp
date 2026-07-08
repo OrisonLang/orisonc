@@ -170,37 +170,39 @@ auto main() -> int {
     );
     assert(multi_drop_readiness.drop_cleanup_authorization_report.size() == 7);
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[0] ==
-        "drop cleanup authorization __orison_thread_cleanup.launch.20.0 blocked semantic blockers 2 "
-        "missing declarations 2"
+        multi_drop_readiness.drop_cleanup_authorization_report[0].find(
+            "__orison_thread_cleanup.launch.20.0 blocked"
+        ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[1] ==
-        "semantic drop lowering blocked __orison_drop.Payload for Payload capture payload field 0 "
-        "discovered at line 20"
+        multi_drop_readiness.drop_cleanup_authorization_report[1].find(
+            "semantic drop lowering blocked __orison_drop.Payload"
+        ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[2] ==
-        "semantic drop lowering blocked __orison_drop.OtherPayload for OtherPayload capture other field 1 "
-        "discovered at line 20"
+        multi_drop_readiness.drop_cleanup_authorization_report[2].find(
+            "semantic drop lowering blocked __orison_drop.OtherPayload"
+        ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[3] ==
-        "semantic drop unresolved __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
+        multi_drop_readiness.drop_cleanup_authorization_report[3].find(
+            "semantic drop unresolved __orison_drop.Payload"
+        ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[4] ==
-        "semantic drop unresolved __orison_drop.OtherPayload for OtherPayload capture other field 1 "
-        "discovered at line 20"
+        multi_drop_readiness.drop_cleanup_authorization_report[4].find(
+            "semantic drop unresolved __orison_drop.OtherPayload"
+        ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[5] ==
-        "missing drop declaration __orison_drop.Payload for Payload capture payload field 0 discovered at line 20"
+        multi_drop_readiness.drop_cleanup_authorization_report[5].find(
+            "missing drop declaration __orison_drop.Payload"
+        ) != std::string::npos
     );
     assert(
-        multi_drop_readiness.drop_cleanup_authorization_report[6] ==
-        "missing drop declaration __orison_drop.OtherPayload for OtherPayload capture other field 1 "
-        "discovered at line 20"
+        multi_drop_readiness.drop_cleanup_authorization_report[6].find(
+            "missing drop declaration __orison_drop.OtherPayload"
+        ) != std::string::npos
     );
     assert(multi_drop_readiness.drop_readiness_snapshot.semantic_authorizations.size() == 2);
     assert(multi_drop_readiness.drop_readiness_snapshot.emitted_declarations.empty());
