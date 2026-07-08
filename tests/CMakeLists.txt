@@ -67,6 +67,22 @@ add_test(
     COMMAND orison_driver_unsafe_diagnostics_smoke
 )
 
+add_executable(orison_driver_pointer_address_diagnostics_smoke
+    smoke/driver_pointer_address_diagnostics_smoke.cpp
+)
+
+target_link_libraries(orison_driver_pointer_address_diagnostics_smoke
+    PRIVATE
+        orison_driver
+)
+
+target_compile_features(orison_driver_pointer_address_diagnostics_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_driver_pointer_address_diagnostics_smoke
+    COMMAND orison_driver_pointer_address_diagnostics_smoke
+)
+
 add_executable(orison_module_parser_smoke
     smoke/module_parser_smoke.cpp
 )
