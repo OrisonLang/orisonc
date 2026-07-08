@@ -662,6 +662,12 @@ void assert_success_with_empty_stdout(orison::driver::CompileResult const& resul
     assert(result.stderr_text.empty());
 }
 
+void assert_result_with_empty_output(orison::driver::CompileResult const& result, int expected_exit_code) {
+    assert(result.exit_code == expected_exit_code);
+    assert(result.stdout_text.empty());
+    assert(result.stderr_text.empty());
+}
+
 void assert_wrap_duplicate_parse_failure(orison::driver::CompileResult const& result) {
     assert_failure_with_no_stdout_contains(result, "switch constructor pattern 'Wrap(...)' is duplicated");
 }
@@ -1061,19 +1067,18 @@ int main() {
     auto planned_drop_report_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
     auto planned_drop_emit = run_emit_llvm(app, planned_drop_report_path);
-    assert(planned_drop_emit.exit_code == 0);
-    assert(planned_drop_emit.stderr_text.empty());
-    assert(planned_drop_emit.stdout_text.find("planned drop __orison_drop.Payload") == std::string::npos);
-    assert(
-        planned_drop_emit.stdout_text.find(
+    assert_success_with_stdout_contains(
+        planned_drop_emit,
+        {
             "define private void @__orison_thread_cleanup.launch.12.0(ptr %environment) {\n"
             "entry:\n"
             "  %cleanup.field.0 = getelementptr { %record.Payload }, ptr %environment, i32 0, i32 0\n"
             "  ; cleanup candidate payload: Payload field 0 drop __orison_drop.Payload\n"
             "  ret void\n"
-            "}"
-        ) != std::string::npos
+            "}",
+        }
     );
+    assert(planned_drop_emit.stdout_text.find("planned drop __orison_drop.Payload") == std::string::npos);
     assert(planned_drop_emit.stdout_text.find("declare void @__orison_drop.Payload(ptr)") == std::string::npos);
     assert(planned_drop_emit.stdout_text.find("call void @__orison_drop.Payload(ptr") == std::string::npos);
 
@@ -1353,9 +1358,7 @@ int main() {
 
     auto object_path = std::filesystem::temp_directory_path() / "orison_compiler_app_emit_object.o";
     auto object_result = run_emit_object(app, emit_path, object_path);
-    assert(object_result.exit_code == 0);
-    assert(object_result.stdout_text.empty());
-    assert(object_result.stderr_text.empty());
+    assert_success_with_empty_stdout(object_result);
     assert(std::filesystem::file_size(object_path) > 0);
 
     auto missing_directory = std::filesystem::temp_directory_path() / "orison_missing_object_directory";
@@ -1367,17 +1370,13 @@ int main() {
 
     auto executable_path = std::filesystem::temp_directory_path() / "orison_compiler_app_build";
     auto build_result = run_build(app, emit_path, executable_path);
-    assert(build_result.exit_code == 0);
-    assert(build_result.stdout_text.empty());
-    assert(build_result.stderr_text.empty());
+    assert_success_with_empty_stdout(build_result);
     auto executable_status = std::system(executable_path.string().c_str());
     assert(WIFEXITED(executable_status));
     assert(WEXITSTATUS(executable_status) == 42);
 
     auto run_result = run_program(app, emit_path);
-    assert(run_result.exit_code == 42);
-    assert(run_result.stdout_text.empty());
-    assert(run_result.stderr_text.empty());
+    assert_result_with_empty_output(run_result, 42);
 
     auto run_concurrency_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_run_concurrency.or";
@@ -1393,9 +1392,7 @@ int main() {
         }
     );
     auto run_concurrency = run_program(app, run_concurrency_path);
-    assert(run_concurrency.exit_code == 42);
-    assert(run_concurrency.stdout_text.empty());
-    assert(run_concurrency.stderr_text.empty());
+    assert_result_with_empty_output(run_concurrency, 42);
 
     auto link_failure = run_build(app, emit_path, missing_directory / "output");
     assert(link_failure.exit_code == 1);
