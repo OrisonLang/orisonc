@@ -145,7 +145,7 @@ auto main() -> int {
     auto link_failure = run_build(app, scalar_path, missing_directory / "output");
     assert(link_failure.exit_code == 1);
     assert(link_failure.stdout_text.empty());
-    assert(link_failure.stderr_text.find("host linker failed to produce an executable") != std::string::npos);
+    assert(link_failure.stderr_text.find("output directory does not exist") != std::string::npos);
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

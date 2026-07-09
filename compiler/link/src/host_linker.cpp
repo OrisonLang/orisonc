@@ -52,6 +52,35 @@ auto HostLinker::link(
     std::vector<std::string> const& libraries
 ) const -> HostLinkResult {
     auto result = HostLinkResult {};
+    auto output_parent = output_path.parent_path();
+    if (!output_parent.empty()) {
+        auto status_error = std::error_code {};
+        auto parent_exists = std::filesystem::exists(output_parent, status_error);
+        if (status_error) {
+            result.diagnostics.error(
+                1,
+                "unable to inspect output directory '" + output_parent.string() + "': " + status_error.message()
+            );
+            return result;
+        }
+        if (!parent_exists) {
+            result.diagnostics.error(1, "output directory does not exist: " + output_parent.string());
+            return result;
+        }
+        auto directory_error = std::error_code {};
+        if (!std::filesystem::is_directory(output_parent, directory_error)) {
+            if (directory_error) {
+                result.diagnostics.error(
+                    1,
+                    "unable to inspect output directory '" + output_parent.string() + "': " + directory_error.message()
+                );
+            } else {
+                result.diagnostics.error(1, "output path parent is not a directory: " + output_parent.string());
+            }
+            return result;
+        }
+    }
+
     auto temporary_object = TemporaryObject(temporary_object_path());
     auto object_output = std::ofstream(
         temporary_object.path(),
