@@ -80,6 +80,29 @@ auto HostLinker::link(
             return result;
         }
     }
+    auto output_status_error = std::error_code {};
+    auto output_exists = std::filesystem::exists(output_path, output_status_error);
+    if (output_status_error) {
+        result.diagnostics.error(
+            1,
+            "unable to inspect output path '" + output_path.string() + "': " + output_status_error.message()
+        );
+        return result;
+    }
+    if (output_exists) {
+        auto output_directory_error = std::error_code {};
+        if (std::filesystem::is_directory(output_path, output_directory_error)) {
+            result.diagnostics.error(1, "output path is a directory: " + output_path.string());
+            return result;
+        }
+        if (output_directory_error) {
+            result.diagnostics.error(
+                1,
+                "unable to inspect output path '" + output_path.string() + "': " + output_directory_error.message()
+            );
+            return result;
+        }
+    }
 
     auto temporary_object = TemporaryObject(temporary_object_path());
     auto object_output = std::ofstream(
@@ -100,8 +123,17 @@ auto HostLinker::link(
     auto driver = std::string(ORISON_HOST_LINK_DRIVER);
     auto object_path = temporary_object.path().string();
     auto output_path_text = output_path.string();
-    auto cleanup_error = std::error_code {};
-    std::filesystem::remove(output_path, cleanup_error);
+    if (output_exists) {
+        auto remove_error = std::error_code {};
+        std::filesystem::remove(output_path, remove_error);
+        if (remove_error) {
+            result.diagnostics.error(
+                1,
+                "unable to replace output path '" + output_path.string() + "': " + remove_error.message()
+            );
+            return result;
+        }
+    }
     auto argument_storage = std::vector<std::string> {};
     argument_storage.reserve(6 + libraries.size());
     argument_storage.push_back(driver);

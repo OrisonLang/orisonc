@@ -147,6 +147,23 @@ auto main() -> int {
     assert(link_failure.stdout_text.empty());
     assert(link_failure.stderr_text.find("output directory does not exist") != std::string::npos);
 
+    auto file_parent_path = smoke_temp_root / "orison_file_parent";
+    {
+        auto file_parent = std::ofstream(file_parent_path);
+        file_parent << "not a directory\n";
+    }
+    auto file_parent_failure = run_build(app, scalar_path, file_parent_path / "output");
+    assert(file_parent_failure.exit_code == 1);
+    assert(file_parent_failure.stdout_text.empty());
+    assert(file_parent_failure.stderr_text.find("output path parent is not a directory") != std::string::npos);
+
+    auto directory_output_path = smoke_temp_root / "orison_directory_output";
+    std::filesystem::create_directory(directory_output_path);
+    auto directory_output_failure = run_build(app, scalar_path, directory_output_path);
+    assert(directory_output_failure.exit_code == 1);
+    assert(directory_output_failure.stdout_text.empty());
+    assert(directory_output_failure.stderr_text.find("output path is a directory") != std::string::npos);
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
