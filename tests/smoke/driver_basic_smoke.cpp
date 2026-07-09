@@ -58,7 +58,7 @@ void assert_failure_with_no_stdout_contains(
 int main() {
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root =
-        original_temp_root / ("orison_compiler_app_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+        original_temp_root / ("orison_driver_basic_smoke_" + std::to_string(static_cast<long long>(::getpid())));
     std::filesystem::remove_all(smoke_temp_root);
     std::filesystem::create_directories(smoke_temp_root);
     auto smoke_temp_root_text = smoke_temp_root.string();

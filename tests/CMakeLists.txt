@@ -1,5 +1,5 @@
 add_executable(orison_driver_smoke
-    smoke/compiler_app_smoke.cpp
+    smoke/driver_basic_smoke.cpp
 )
 
 target_link_libraries(orison_driver_smoke
