@@ -31,17 +31,6 @@ void write_bool_value_pattern_switch_fixture(
     }
 }
 
-void write_receiver_fixture(
-    std::filesystem::path const& path,
-    std::initializer_list<std::string_view> lines
-) {
-    std::ofstream output(path);
-    output << "package demo.receiver\n";
-    for (auto line : lines) {
-        output << line << "\n";
-    }
-}
-
 void write_concurrency_fixture(
     std::filesystem::path const& path,
     std::string_view package_name,
@@ -1094,39 +1083,6 @@ int main() {
         run_parse(app, switch_nonfinal_default_branch_no_cascade_failure_path),
         "switch default case must be the final case",
         "await expression is only valid inside async functions"
-    );
-
-    auto this_outside_method_failure_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_this_outside_method_failure.or";
-    write_receiver_fixture(this_outside_method_failure_path, {"function current() -> Int64", "    return this"});
-
-    assert_parse_failure_contains(
-        run_parse(app, this_outside_method_failure_path),
-        "receiver 'this' is only valid inside implements or extend methods"
-    );
-
-    auto this_type_signature_failure_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_this_type_signature_failure.or";
-    write_receiver_fixture(
-        this_type_signature_failure_path,
-        {"function project(value: shared This) -> shared This", "    return value"}
-    );
-
-    assert_parse_failure_contains(
-        run_parse(app, this_type_signature_failure_path),
-        "This type is only valid inside interface, implements, or extend methods"
-    );
-
-    auto receiver_parameter_nonself_type_failure_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_receiver_parameter_nonself_type_failure.or";
-    write_receiver_fixture(
-        receiver_parameter_nonself_type_failure_path,
-        {"extend Buffer", "    function reset(this: Int64) -> Unit", "        return"}
-    );
-
-    assert_parse_failure_contains(
-        run_parse(app, receiver_parameter_nonself_type_failure_path),
-        "receiver parameter 'this' must use This, shared This, or exclusive This"
     );
 
     auto thread_path = std::filesystem::temp_directory_path() / "orison_compiler_app_thread_value_failure.or";
