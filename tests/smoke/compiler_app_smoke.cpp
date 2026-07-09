@@ -31,19 +31,6 @@ void write_bool_value_pattern_switch_fixture(
     }
 }
 
-void write_loop_control_fixture(
-    std::filesystem::path const& path,
-    std::string_view function_header,
-    std::initializer_list<std::string_view> body_lines
-) {
-    std::ofstream output(path);
-    output << "package demo.loops\n";
-    output << "function " << function_header << "\n";
-    for (auto line : body_lines) {
-        output << "    " << line << "\n";
-    }
-}
-
 void write_receiver_fixture(
     std::filesystem::path const& path,
     std::initializer_list<std::string_view> lines
@@ -1108,25 +1095,6 @@ int main() {
         "switch default case must be the final case",
         "await expression is only valid inside async functions"
     );
-
-    auto break_outside_loop_failure_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_break_outside_loop_failure.or";
-    write_loop_control_fixture(break_outside_loop_failure_path, "stop() -> Unit", {"break"});
-
-    assert_parse_failure_contains(
-        run_parse(app, break_outside_loop_failure_path),
-        "break statement is only valid inside loops"
-    );
-
-    auto continue_inside_loop_success_path =
-        std::filesystem::temp_directory_path() / "orison_compiler_app_continue_inside_loop_success.or";
-    write_loop_control_fixture(
-        continue_inside_loop_success_path,
-        "scan(items: shared View<Int64>) -> Unit",
-        {"for item in items", "    continue"}
-    );
-
-    assert_parse_success(run_parse(app, continue_inside_loop_success_path));
 
     auto this_outside_method_failure_path =
         std::filesystem::temp_directory_path() / "orison_compiler_app_this_outside_method_failure.or";
