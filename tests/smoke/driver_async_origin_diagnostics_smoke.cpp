@@ -127,6 +127,46 @@ auto main() -> int {
         "await cannot be used with thread values; use .join() instead"
     );
 
+    auto switch_thread_origin_path = std::filesystem::temp_directory_path() / "switch_thread_origin_failure.or";
+    write_fixture(
+        switch_thread_origin_path,
+        "demo.await",
+        {
+            "async function fetch(flag: Bool) -> Int64",
+            "    var worker = thread",
+            "        1",
+            "    switch flag",
+            "        true => worker = thread",
+            "            2",
+            "        false => worker = thread",
+            "            3",
+            "    return await worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, switch_thread_origin_path),
+        "await cannot be used with thread values; use .join() instead"
+    );
+
+    auto repeat_thread_origin_path = std::filesystem::temp_directory_path() / "repeat_thread_origin_failure.or";
+    write_fixture(
+        repeat_thread_origin_path,
+        "demo.await",
+        {
+            "async function fetch(flag: Bool) -> Int64",
+            "    var worker = 0",
+            "    repeat",
+            "        worker = thread",
+            "            2",
+            "    while flag",
+            "    return await worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, repeat_thread_origin_path),
+        "await cannot be used with thread values; use .join() instead"
+    );
+
     auto if_async_origin_path = std::filesystem::temp_directory_path() / "if_async_origin_success.or";
     write_fixture(
         if_async_origin_path,
@@ -177,6 +217,25 @@ auto main() -> int {
     );
     assert_parse_success(run_parse(app, for_async_origin_path));
 
+    auto for_thread_origin_path = std::filesystem::temp_directory_path() / "for_thread_origin_failure.or";
+    write_fixture(
+        for_thread_origin_path,
+        "demo.await",
+        {
+            "async function fetch(items: shared View<Int64>) -> Int64",
+            "    var worker = thread",
+            "        1",
+            "    for item in items",
+            "        worker = thread",
+            "            2",
+            "    return await worker",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, for_thread_origin_path),
+        "await cannot be used with thread values; use .join() instead"
+    );
+
     auto guard_async_origin_path = std::filesystem::temp_directory_path() / "guard_async_origin_success.or";
     write_fixture(
         guard_async_origin_path,
@@ -194,6 +253,26 @@ auto main() -> int {
         }
     );
     assert_parse_success(run_parse(app, guard_async_origin_path));
+
+    auto guard_async_missing_origin_path = std::filesystem::temp_directory_path() / "guard_async_origin_failure.or";
+    write_fixture(
+        guard_async_missing_origin_path,
+        "demo.await",
+        {
+            "async function request(url: Text) -> Outcome<Text, IOError>",
+            "    return fetch_remote(url)",
+            "async function fetch(flag: Bool, url: Text) -> Outcome<Text, IOError>",
+            "    var pending = 0",
+            "    guard flag else",
+            "        pending = request(url)",
+            "        return await request(url)",
+            "    return await pending",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, guard_async_missing_origin_path),
+        "await expression currently requires a task value or declared async call result"
+    );
 
     return 0;
 }
