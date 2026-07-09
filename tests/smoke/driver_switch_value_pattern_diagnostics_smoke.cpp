@@ -216,5 +216,17 @@ auto main() -> int {
         "switch is missing boolean value pattern 'false'"
     );
 
+    auto switch_nonfinal_default_branch_no_cascade_failure_path =
+        std::filesystem::temp_directory_path() / "switch_nonfinal_default_branch_no_cascade_failure.or";
+    write_bool_value_pattern_switch_fixture(
+        switch_nonfinal_default_branch_no_cascade_failure_path,
+        {"default => await flag", "true => 1"}
+    );
+    assert_parse_failure_contains_without(
+        run_parse(app, switch_nonfinal_default_branch_no_cascade_failure_path),
+        "switch default case must be the final case",
+        "await expression is only valid inside async functions"
+    );
+
     return 0;
 }

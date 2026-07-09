@@ -13,23 +13,6 @@
 
 namespace {
 
-void write_bool_value_pattern_switch_fixture(
-    std::filesystem::path const& path,
-    std::initializer_list<std::string_view> arms,
-    bool include_default = false
-) {
-    std::ofstream output(path);
-    output << "package demo.switches\n";
-    output << "function classify(flag: Bool) -> Int64\n";
-    output << "    switch flag\n";
-    for (auto arm : arms) {
-        output << "        " << arm << "\n";
-    }
-    if (include_default) {
-        output << "        default => 2\n";
-    }
-}
-
 void write_concurrency_fixture(
     std::filesystem::path const& path,
     std::string_view package_name,
@@ -56,20 +39,9 @@ auto run_single_file_command(
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
-auto run_parse(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
-    -> orison::driver::CompileResult {
-    return run_single_file_command(app, "--parse", path);
-}
-
 auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     return run_single_file_command(app, "--emit-llvm", path);
-}
-
-void assert_parse_success(orison::driver::CompileResult const& result) {
-    assert(result.exit_code == 0);
-    assert(result.stderr_text.empty());
-    assert(result.stdout_text.find("parsed ") != std::string::npos);
 }
 
 void assert_failure_with_no_stdout_contains(
@@ -90,22 +62,6 @@ void assert_success_with_stdout_contains(
     for (auto expected_fragment : expected_fragments) {
         assert(result.stdout_text.find(expected_fragment) != std::string::npos);
     }
-}
-
-void assert_parse_failure_contains(
-    orison::driver::CompileResult const& result,
-    std::string_view expected_message
-) {
-    assert_failure_with_no_stdout_contains(result, expected_message);
-}
-
-void assert_parse_failure_contains_without(
-    orison::driver::CompileResult const& result,
-    std::string_view expected_message,
-    std::string_view unexpected_message
-) {
-    assert_parse_failure_contains(result, expected_message);
-    assert(result.stderr_text.find(unexpected_message) == std::string::npos);
 }
 
 }  // namespace
@@ -467,20 +423,6 @@ int main() {
             "load i64, ptr %pending.task.result",
             "call void @__orison_concurrency_handle_destroy(ptr %pending)",
         }
-    );
-
-    auto switch_nonfinal_default_branch_no_cascade_failure_path =
-        std::filesystem::temp_directory_path() /
-        "orison_compiler_app_switch_nonfinal_default_branch_no_cascade_failure.or";
-    write_bool_value_pattern_switch_fixture(
-        switch_nonfinal_default_branch_no_cascade_failure_path,
-        {"default => await flag", "true => 1"}
-    );
-
-    assert_parse_failure_contains_without(
-        run_parse(app, switch_nonfinal_default_branch_no_cascade_failure_path),
-        "switch default case must be the final case",
-        "await expression is only valid inside async functions"
     );
 
     std::filesystem::remove_all(smoke_temp_root);
