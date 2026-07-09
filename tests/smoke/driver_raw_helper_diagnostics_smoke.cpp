@@ -260,6 +260,133 @@ auto main() -> int {
         "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
     );
 
+    auto raw_write_generic_helper_returned_pointer_same_width_success_path =
+        std::filesystem::temp_directory_path() / "raw_write_generic_helper_returned_pointer_same_width_success.or";
+    write_fixture(
+        raw_write_generic_helper_returned_pointer_same_width_success_path,
+        "demo.unsafe",
+        {
+            "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>",
+            "    return base",
+            "unsafe function write_word(base: Pointer<Int32>, value: UInt32) -> Unit",
+            "    raw_write(id_ptr(base), value)",
+        }
+    );
+    assert_parse_success(run_parse(app, raw_write_generic_helper_returned_pointer_same_width_success_path));
+
+    auto raw_write_generic_helper_returned_pointer_mismatch_failure_path =
+        std::filesystem::temp_directory_path() / "raw_write_generic_helper_returned_pointer_mismatch_failure.or";
+    write_fixture(
+        raw_write_generic_helper_returned_pointer_mismatch_failure_path,
+        "demo.unsafe",
+        {
+            "unsafe function id_ptr<T>(base: Pointer<T>) -> Pointer<T>",
+            "    return base",
+            "unsafe function write_word(base: Pointer<Byte>, value: UInt32) -> Unit",
+            "    raw_write(id_ptr(base), value)",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_generic_helper_returned_pointer_mismatch_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
+
+    auto raw_write_generic_receiver_method_pointer_same_width_success_path =
+        std::filesystem::temp_directory_path() / "raw_write_generic_receiver_method_pointer_same_width_success.or";
+    write_fixture(
+        raw_write_generic_receiver_method_pointer_same_width_success_path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    id: Int64",
+            "extend Device<T>",
+            "    function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>",
+            "        return base",
+            "unsafe function write_word(device: Device<Int32>, base: Pointer<Int32>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr(base), value)",
+        }
+    );
+    assert_parse_success(run_parse(app, raw_write_generic_receiver_method_pointer_same_width_success_path));
+
+    auto raw_write_generic_receiver_method_pointer_mismatch_failure_path =
+        std::filesystem::temp_directory_path() / "raw_write_generic_receiver_method_pointer_mismatch_failure.or";
+    write_fixture(
+        raw_write_generic_receiver_method_pointer_mismatch_failure_path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    id: Int64",
+            "extend Device<T>",
+            "    function ptr(this: shared This, base: Pointer<T>) -> Pointer<T>",
+            "        return base",
+            "unsafe function write_word(device: Device<Byte>, base: Pointer<Byte>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr(base), value)",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_generic_receiver_method_pointer_mismatch_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
+
+    auto raw_write_generic_record_pointer_field_same_width_success_path =
+        std::filesystem::temp_directory_path() / "raw_write_generic_record_pointer_field_same_width_success.or";
+    write_fixture(
+        raw_write_generic_record_pointer_field_same_width_success_path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    ptr: Pointer<T>",
+            "unsafe function write_word(device: Device<Int32>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr, value)",
+        }
+    );
+    assert_parse_success(run_parse(app, raw_write_generic_record_pointer_field_same_width_success_path));
+
+    auto raw_write_generic_record_pointer_field_mismatch_failure_path =
+        std::filesystem::temp_directory_path() / "raw_write_generic_record_pointer_field_mismatch_failure.or";
+    write_fixture(
+        raw_write_generic_record_pointer_field_mismatch_failure_path,
+        "demo.unsafe",
+        {
+            "record Device<T>",
+            "    ptr: Pointer<T>",
+            "unsafe function write_word(device: Device<Byte>, value: UInt32) -> Unit",
+            "    raw_write(device.ptr, value)",
+        }
+    );
+    assert_parse_failure_contains(
+        run_parse(app, raw_write_generic_record_pointer_field_mismatch_failure_path),
+        "raw_write value type 'UInt32' does not match pointer element type 'Byte'"
+    );
+
+    auto raw_write_generic_record_scalar_field_same_width_success_path =
+        std::filesystem::temp_directory_path() / "raw_write_generic_record_scalar_field_same_width_success.or";
+    write_fixture(
+        raw_write_generic_record_scalar_field_same_width_success_path,
+        "demo.unsafe",
+        {
+            "record Box<T>",
+            "    value: T",
+            "unsafe function write_word(box: Box<Int32>, out: Pointer<UInt32>) -> Unit",
+            "    raw_write(out, box.value)",
+        }
+    );
+    assert_parse_success(run_parse(app, raw_write_generic_record_scalar_field_same_width_success_path));
+
+    auto address_return_generic_record_field_success_path =
+        std::filesystem::temp_directory_path() / "address_return_generic_record_field_success.or";
+    write_fixture(
+        address_return_generic_record_field_success_path,
+        "demo.unsafe",
+        {
+            "record Box<T>",
+            "    value: T",
+            "function read_base(box: Box<Address>) -> Address",
+            "    return box.value",
+        }
+    );
+    assert_parse_success(run_parse(app, address_return_generic_record_field_success_path));
+
     auto member_field_address_pointer_constructor_success_path =
         std::filesystem::temp_directory_path() / "member_field_address_pointer_constructor_success.or";
     write_fixture(
