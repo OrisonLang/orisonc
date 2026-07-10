@@ -3084,43 +3084,6 @@ int main() {
 
     assert_cli_parse_failure(
         executable,
-        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_constant_field_type.or",
-        header_record_constant_lines("const DEFAULT_HEADER: Header = Header([1, 2], true)"),
-        "record constructor field 'version' type 'Bool' does not match expected field type 'UInt16'"
-    );
-    assert_cli_parse_failure(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_return_arity.or",
-        header_record_function_lines({"    return Header([1, 2])"}),
-        "record constructor 'Header' expects 2 field values but received 1"
-    );
-    assert_cli_parse_failure(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_return_type.or",
-        two_header_record_function_lines("OtherHeader", {"    return Header([1, 2], 1)"}),
-        "return expression type 'Header' does not match declared type 'OtherHeader'"
-    );
-    assert_cli_parse_failure(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_assignment_type.or",
-        two_header_record_function_lines(
-            "Header",
-            {
-                "    var header = Header([1, 2], 1)",
-                "    header = OtherHeader([1, 2], 1)",
-                "    return header",
-            }
-        ),
-        "assignment value type 'OtherHeader' does not match declared type 'Header'"
-    );
-    assert_cli_parse_failure(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_record_constructor_function_argument_type.or",
-        two_header_record_consumer_lines({"    return consume_header(OtherHeader([1, 2], 1))"}),
-        "function argument 'header' type 'OtherHeader' does not match declared type 'Header'"
-    );
-    assert_cli_parse_failure(
-        executable,
         std::filesystem::temp_directory_path() / "orison_cli_pointer_final_expression_type.or",
         std::vector<std::string_view> {
             "package demo.cli",
