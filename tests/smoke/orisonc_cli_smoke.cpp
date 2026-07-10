@@ -1775,7 +1775,6 @@ void assert_cli_nested_final_ternary_low_level_parse_cases(
 
 }  // namespace
 
-#ifndef ORISONC_CLI_SMOKE_HELPERS_ONLY
 int main() {
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root =
@@ -3778,4 +3777,3 @@ int main() {
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
-#endif

@@ -1,6 +1,4 @@
-#define ORISONC_CLI_SMOKE_HELPERS_ONLY
-#include "orisonc_cli_smoke.cpp"
-#undef ORISONC_CLI_SMOKE_HELPERS_ONLY
+#include "aggregate_field_cli_fixtures.hpp"
 
 int main() {
     auto original_temp_root = std::filesystem::temp_directory_path();
