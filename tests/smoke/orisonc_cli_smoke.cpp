@@ -3082,6 +3082,9 @@ int main() {
     assert(WIFEXITED(member_receiver_method_aggregate_access_executable_status));
     assert(WEXITSTATUS(member_receiver_method_aggregate_access_executable_status) == 0);
 
+    // Moved to orison_driver_aggregate_field_cli_smoke; keep disabled here until shared
+    // CLI fixture helpers are factored out of this monolithic smoke.
+#if ORISON_INCLUDE_LEGACY_AGGREGATE_FIELD_CLI_BLOCK
     assert_cli_parse_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_record_choice_ternary_field_type.or",
@@ -3770,6 +3773,7 @@ int main() {
             "        Holder(Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]))"
         )
     );
+#endif
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
