@@ -796,6 +796,35 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(output.str() == "  call void @method.UInt32.reset(i32 %device)\n");
 
+    auto null_safe_known_member_call_statement = orison::syntax::StatementSyntax {};
+    null_safe_known_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    null_safe_known_member_call_statement.line = 10;
+    null_safe_known_member_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    null_safe_known_member_call_statement.expression.left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_known_member_call_statement.expression.left->kind =
+        orison::syntax::ExpressionKind::null_safe_member_access;
+    null_safe_known_member_call_statement.expression.left->text = "reset";
+    null_safe_known_member_call_statement.expression.left->left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_known_member_call_statement.expression.left->left->kind =
+        orison::syntax::ExpressionKind::name;
+    null_safe_known_member_call_statement.expression.left->left->text = "device";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        null_safe_known_member_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering null-safe member call statements is not yet supported: UInt32.reset"
+    );
+    assert(output.str().empty());
+
     auto null_safe_member_call_statement = orison::syntax::StatementSyntax {};
     null_safe_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
     null_safe_member_call_statement.line = 10;
@@ -821,7 +850,7 @@ int main() {
     ));
     assert(
         diagnostics.entries().front().message ==
-        "lowering null-safe member call statements is not yet supported"
+        "lowering member call target is unknown: Device.observe"
     );
     assert(output.str().empty());
 

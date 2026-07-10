@@ -892,9 +892,15 @@ auto lower_call_statement(
     }
     if (statement.expression.left != nullptr &&
         statement.expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+        auto resolved = resolve_member_call(statement.expression, context, session.state);
+        auto function = diagnose_member_call_statement(statement, resolved, diagnostics);
+        if (function == nullptr) {
+            return false;
+        }
+
         diagnostics.error(
             statement.line,
-            "lowering null-safe member call statements is not yet supported"
+            "lowering null-safe member call statements is not yet supported: " + member_call_target_name(resolved)
         );
         return false;
     }

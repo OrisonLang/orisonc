@@ -218,6 +218,39 @@ int main() {
         "  %tmp0 = call i32 @method.UInt32.scale(i32 %value, i32 2)\n"
     );
 
+    auto null_safe_member_call = orison::syntax::ExpressionSyntax {};
+    null_safe_member_call.kind = orison::syntax::ExpressionKind::call;
+    null_safe_member_call.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_member_call.left->kind = orison::syntax::ExpressionKind::null_safe_member_access;
+    null_safe_member_call.left->text = "scale";
+    null_safe_member_call.left->left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_member_call.left->left->kind = orison::syntax::ExpressionKind::name;
+    null_safe_member_call.left->left->text = "value";
+    null_safe_member_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::integer_literal,
+        .text = "2",
+    });
+    output = {};
+    auto null_safe_member_lowered = orison::lowering::lower_expression(
+        null_safe_member_call,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        context,
+        member_session,
+        output
+    );
+    assert(!null_safe_member_lowered.has_value());
+    assert(
+        member_session.failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::unsupported_expression
+    );
+    assert(
+        orison::lowering::render_expression_lowering_failure(
+            member_session.failures.expression
+        ) == "unsupported expression: null-safe member call lowering is not yet supported: UInt32.scale"
+    );
+    assert(output.str().empty());
+
     auto bitwise_state = orison::lowering::FunctionLoweringState {};
     bitwise_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {
         .type = "i32",

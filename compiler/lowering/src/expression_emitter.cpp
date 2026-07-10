@@ -2049,10 +2049,56 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+        auto resolved = resolve_member_call(expression, context, state);
+        auto const receiver_name = expression.left->left != nullptr ? expression.left->left->text : std::string {};
+        if (resolved.receiver.result == MemberCallReceiverInferenceResult::unsupported_shape) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "member call receiver shape"
+            );
+            return std::nullopt;
+        }
+        if (resolved.receiver.result == MemberCallReceiverInferenceResult::not_found) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unknown_member_call_receiver,
+                receiver_name
+            );
+            return std::nullopt;
+        }
+
+        auto const target_name = resolved.receiver.receiver_type_name + "." + resolved.receiver.method_name;
+        if (resolved.method.result == LoweredMethodLookupResult::not_found) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unknown_member_call_target,
+                target_name
+            );
+            return std::nullopt;
+        }
+        if (resolved.method.result == LoweredMethodLookupResult::ambiguous) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::ambiguous_member_call_target,
+                target_name
+            );
+            return std::nullopt;
+        }
+        if (resolved.method.method == nullptr ||
+            !has_supported_function_signature_types(resolved.method.method->signature)) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "member call target is not lowerable: " + target_name
+            );
+            return std::nullopt;
+        }
+
         record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_expression,
-            "null-safe member call lowering is not yet supported"
+            "null-safe member call lowering is not yet supported: " + target_name
         );
         return std::nullopt;
     }
