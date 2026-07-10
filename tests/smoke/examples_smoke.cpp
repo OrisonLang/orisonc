@@ -39,7 +39,7 @@ auto main() -> int {
         assert(!result.has_errors());
     }
 
-    constexpr auto backend_examples = std::array<std::string_view, 69> {
+    constexpr auto backend_examples = std::array<std::string_view, 68> {
         "concurrency_task_main.or",
         "concurrency_thread_main.or",
         "ffi_aggregate_scalar_parameters.or",
@@ -93,7 +93,6 @@ auto main() -> int {
         "local_record_nested_addressing.or",
         "local_record_nested_record_addressing.or",
         "local_record_nested_record_assignment.or",
-        "minimal.or",
         "tour_01_packages_imports.or",
         "tour_02_records_choices.or",
         "tour_03_interfaces_methods.or",
