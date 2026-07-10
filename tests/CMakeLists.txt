@@ -120,6 +120,22 @@ add_test(
     COMMAND orison_driver_array_cli_run_smoke
 )
 
+add_executable(orison_driver_pointer_record_cli_run_smoke
+    smoke/driver_pointer_record_cli_run_smoke.cpp
+)
+
+target_compile_definitions(orison_driver_pointer_record_cli_run_smoke
+    PRIVATE
+        ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+target_compile_features(orison_driver_pointer_record_cli_run_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_driver_pointer_record_cli_run_smoke
+    COMMAND orison_driver_pointer_record_cli_run_smoke
+)
+
 add_executable(orison_driver_drop_report_cli_smoke
     smoke/driver_drop_report_cli_smoke.cpp
 )
