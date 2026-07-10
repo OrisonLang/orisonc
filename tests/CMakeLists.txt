@@ -147,6 +147,17 @@ add_test(
     COMMAND orison_driver_choice_constructor_cli_smoke
 )
 
+add_executable(orison_driver_final_expression_cli_smoke
+    smoke/driver_final_expression_cli_smoke.cpp
+)
+
+target_compile_features(orison_driver_final_expression_cli_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_driver_final_expression_cli_smoke
+    COMMAND orison_driver_final_expression_cli_smoke
+)
+
 add_executable(orison_driver_drop_report_cli_smoke
     smoke/driver_drop_report_cli_smoke.cpp
 )
