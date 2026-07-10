@@ -12,6 +12,11 @@
 
 namespace {
 
+struct PipelineDemo {
+    std::string_view name;
+    std::string_view required_ir_text;
+};
+
 auto run_driver(std::array<char const*, 3> const& args) -> orison::driver::CompileResult {
     orison::driver::CompilerApp app;
     return app.run(std::span<char const* const>(args.data(), args.size()));
@@ -109,10 +114,15 @@ auto main() -> int {
     auto smoke_temp_root_text = smoke_temp_root.string();
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
-    assert_pipeline_demo("concurrency_task_main.or", "call ptr @__orison_task_spawn");
-    assert_pipeline_demo("concurrency_thread_main.or", "call ptr @__orison_thread_spawn");
-    assert_pipeline_demo("local_record_field_assignment.or", "store i32 8, ptr %tmp");
-    assert_pipeline_demo("pointer_record_field_assignment.or", "store i32 8, ptr %tmp");
+    constexpr auto backend_demos = std::array<PipelineDemo, 4> {
+        PipelineDemo {"concurrency_task_main.or", "call ptr @__orison_task_spawn"},
+        PipelineDemo {"concurrency_thread_main.or", "call ptr @__orison_thread_spawn"},
+        PipelineDemo {"local_record_field_assignment.or", "store i32 8, ptr %tmp"},
+        PipelineDemo {"pointer_record_field_assignment.or", "store i32 8, ptr %tmp"},
+    };
+    for (auto const& demo : backend_demos) {
+        assert_pipeline_demo(demo.name, demo.required_ir_text);
+    }
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
