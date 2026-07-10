@@ -22,6 +22,34 @@ auto run_minimal(orison::driver::CompilerApp const& app, std::filesystem::path c
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto emit_minimal_llvm(orison::driver::CompilerApp const& app, std::filesystem::path const& source_path)
+    -> orison::driver::CompileResult {
+    auto source_path_text = source_path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "--emit-llvm",
+        source_path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
+auto emit_minimal_object(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& object_path
+) -> orison::driver::CompileResult {
+    auto source_path_text = source_path.string();
+    auto object_path_text = object_path.string();
+    std::array<char const*, 5> argv {
+        "orisonc",
+        "--emit-object",
+        source_path_text.c_str(),
+        "-o",
+        object_path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 auto build_minimal(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& source_path,
@@ -62,6 +90,16 @@ auto main() -> int {
 
     auto run_result = run_minimal(app, minimal_source);
     assert_success_without_output(run_result);
+
+    auto llvm_result = emit_minimal_llvm(app, minimal_source);
+    assert(llvm_result.exit_code == 0);
+    assert(llvm_result.stderr_text.empty());
+    assert(llvm_result.stdout_text.find("ret i32 0") != std::string::npos);
+
+    auto object_path = smoke_temp_root / "minimal.o";
+    auto object_result = emit_minimal_object(app, minimal_source, object_path);
+    assert_success_without_output(object_result);
+    assert(std::filesystem::file_size(object_path) > 0);
 
     auto executable_path = smoke_temp_root / "minimal";
     auto build_result = build_minimal(app, minimal_source, executable_path);
