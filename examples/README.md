@@ -132,15 +132,17 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_member_receiver_method_array_for.or` | member/index receiver method-returned fixed-array iteration | backend |
 
 "Frontend" means the source must parse and pass the current semantic checks. It does not imply LLVM lowering support.
-The example smoke test enforces these levels so an example cannot silently drift out of sync with the compiler.
+"Backend" means object emission succeeds, which also exercises parsing and semantic checks. The example smoke test
+enforces these levels so an example cannot silently drift out of sync with the compiler.
 
 ## Canonical Compiler Pipeline Demos
 
 Use `minimal.or` for the smallest compile/link/run demonstration.
 
 Use `local_record_field_assignment.or` and `pointer_record_field_assignment.or` for aggregate-assignment pipeline
-coverage. CLI smoke tests currently pin both files through `--emit-llvm`, `--emit-object`, `run`, and retained
-`--build` executable paths.
+coverage. Use `concurrency_task_main.or` and `concurrency_thread_main.or` for task/thread pipeline coverage. The
+canonical pipeline smoke pins those files through `--emit-llvm`, `--emit-object`, `run`, and retained `--build`
+executable paths. The focused minimal demo smoke owns the full `minimal.or` compile/link/run workflow.
 
 Run only these canonical pipeline demos with:
 

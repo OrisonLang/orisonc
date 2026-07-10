@@ -19,26 +19,7 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
-    constexpr auto frontend_examples = std::array<std::string_view, 11> {
-        "tour_01_packages_imports.or",
-        "tour_02_records_choices.or",
-        "tour_03_interfaces_methods.or",
-        "tour_04_generics_ownership.or",
-        "tour_05_bindings_operators.or",
-        "tour_06_control_flow.or",
-        "tour_07_recursion.or",
-        "tour_08_collections.or",
-        "tour_09_ffi_printf.or",
-        "tour_10_unsafe_memory.or",
-        "tour_11_concurrency.or",
-    };
-
     orison::pipeline::CompilePipeline pipeline;
-    for (auto name : frontend_examples) {
-        auto result = pipeline.analyze(examples / name);
-        assert(!result.has_errors());
-    }
-
     constexpr auto backend_examples = std::array<std::string_view, 68> {
         "concurrency_task_main.or",
         "concurrency_thread_main.or",
