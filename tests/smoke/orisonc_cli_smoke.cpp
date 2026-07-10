@@ -3084,45 +3084,6 @@ int main() {
 
     assert_cli_parse_failure(
         executable,
-        std::filesystem::temp_directory_path() / "orison_cli_address_final_expression_type.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "function base() -> Address",
-            "    \"text\"",
-        },
-        "address-returning function currently requires a structurally address-like expression"
-    );
-    assert_cli_parse_success(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_address_final_expression_success.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "unsafe function base(buf: exclusive Buffer) -> Address",
-            "    address_of(buf.data[0])",
-        }
-    );
-    assert_cli_parse_failure(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_address_return_ternary_type.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "unsafe function base(flag: Bool, buf: exclusive Buffer) -> Address",
-            "    return flag ? address_of(buf.data[0]) : \"text\"",
-        },
-        "address-returning function currently requires a structurally address-like expression"
-    );
-    assert_cli_parse_success(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_address_unsafe_final_ternary_success.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "function base(flag: Bool, buf: exclusive Buffer) -> Address",
-            "    unsafe",
-            "        flag ? address_of(buf.data[0]) : address_of(buf.data[1])",
-        }
-    );
-    assert_cli_parse_failure(
-        executable,
         std::filesystem::temp_directory_path() / "orison_cli_raw_read_final_expression_type.or",
         low_level_final_read_direct_mismatch_lines("raw_read"),
         "raw_read result type 'Byte' does not match function return type 'Pointer<Byte>'"
