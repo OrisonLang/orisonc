@@ -124,6 +124,21 @@ auto main() -> int {
     assert(WIFEXITED(executable_status));
     assert(WEXITSTATUS(executable_status) == 42);
 
+    auto replacement_path = smoke_temp_root / "artifact_replacement.or";
+    write_fixture(
+        replacement_path,
+        "demo.replacement",
+        {
+            "function main() -> UInt32",
+            "    7 as UInt32",
+        }
+    );
+    auto replacement_result = run_build(app, replacement_path, executable_path);
+    assert_success_with_empty_stdout(replacement_result);
+    auto replacement_status = std::system(executable_path.string().c_str());
+    assert(WIFEXITED(replacement_status));
+    assert(WEXITSTATUS(replacement_status) == 7);
+
     auto run_result = run_program(app, scalar_path);
     assert_result_with_empty_output(run_result, 42);
 
