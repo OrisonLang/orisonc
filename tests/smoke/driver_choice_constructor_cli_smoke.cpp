@@ -1,0 +1,217 @@
+#include <array>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <initializer_list>
+#include <string>
+#include <string_view>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <vector>
+
+namespace {
+
+auto read_failing_command_output(std::string const& command) -> std::string {
+    std::array<char, 256> buffer {};
+    std::string output;
+
+    FILE* pipe = popen((command + " 2>&1").c_str(), "r");
+    assert(pipe != nullptr);
+
+    while (std::fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+        output += buffer.data();
+    }
+
+    auto status = pclose(pipe);
+    assert(status != 0);
+    return output;
+}
+
+template <typename SourceLines>
+void assert_cli_parse_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    SourceLines const& lines,
+    std::string_view expected_message
+) {
+    {
+        std::ofstream output(path);
+        for (auto line : lines) {
+            output << line << '\n';
+        }
+    }
+
+    auto command = executable.string() + " --parse " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+}
+
+auto status_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return {
+        "package demo.cli",
+        "choice Status",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        initializer,
+    };
+}
+
+auto maybe_choice_constant_lines_with_declarations(
+    std::string_view initializer,
+    std::initializer_list<std::string_view> declarations
+) -> std::vector<std::string_view> {
+    std::vector<std::string_view> lines {
+        "package demo.cli",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+    };
+    lines.insert(lines.end(), declarations.begin(), declarations.end());
+    lines.push_back(initializer);
+    return lines;
+}
+
+auto maybe_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return maybe_choice_constant_lines_with_declarations(initializer, {});
+}
+
+auto boxed_maybe_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return maybe_choice_constant_lines_with_declarations(
+        initializer,
+        {"choice Boxed<T>", "    Wrap(inner: T)"}
+    );
+}
+
+auto maybe_result_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return maybe_choice_constant_lines_with_declarations(
+        initializer,
+        {"choice Result<T>", "    Ok(value: T)", "    Error(message: Text)"}
+    );
+}
+
+auto boxed_maybe_result_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
+    return maybe_choice_constant_lines_with_declarations(
+        initializer,
+        {
+            "choice Boxed<T>",
+            "    Wrap(inner: T)",
+            "choice Result<T>",
+            "    Ok(value: T)",
+            "    Error(message: Text)",
+        }
+    );
+}
+
+}  // namespace
+
+auto main() -> int {
+    auto original_temp_root = std::filesystem::temp_directory_path();
+    auto smoke_temp_root = original_temp_root /
+        ("orison_driver_choice_constructor_cli_smoke_" + std::to_string(static_cast<long long>(::getpid())));
+    std::filesystem::remove_all(smoke_temp_root);
+    std::filesystem::create_directories(smoke_temp_root);
+    auto smoke_temp_root_text = smoke_temp_root.string();
+    assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
+
+    auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
+
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_unknown_choice_constant.or",
+        maybe_choice_constant_lines("const DEFAULT_VALUE: Maybe<UInt32> = Missing(1)"),
+        "choice constructor 'Missing' does not match any declared choice variant for constant type 'Maybe<UInt32>'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_wrong_choice_constant.or",
+        maybe_result_choice_constant_lines("const DEFAULT_VALUE: Maybe<UInt32> = Error(\"missing\")"),
+        "choice constructor 'Error' does not belong to declared constant type 'Maybe<UInt32>'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_choice_constant_arity.or",
+        status_choice_constant_lines("const DEFAULT_STATUS: Status = Ready()"),
+        "choice constructor 'Ready' expects 1 payload value but received 0"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_zero_payload_choice_constant_arity.or",
+        status_choice_constant_lines("const DEFAULT_STATUS: Status = Empty(1)"),
+        "choice constructor 'Empty' expects 0 payload values but received 1"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_nested_zero_payload_choice_constant_arity.or",
+        boxed_maybe_choice_constant_lines("const DEFAULT_VALUE: Boxed<Maybe<UInt32>> = Wrap(Empty(1))"),
+        "choice constructor 'Empty' expects 0 payload values but received 1"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_nested_wrong_choice_constant.or",
+        boxed_maybe_result_choice_constant_lines(
+            "const DEFAULT_VALUE: Boxed<Maybe<UInt32>> = Wrap(Error(\"missing\"))"
+        ),
+        "choice constructor 'Error' does not belong to declared constant type 'Maybe<UInt32>'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_nested_unknown_choice_constant.or",
+        boxed_maybe_choice_constant_lines("const DEFAULT_VALUE: Boxed<Maybe<UInt32>> = Wrap(Missing(1))"),
+        "choice constructor 'Missing' does not match any declared choice variant for constant type 'Maybe<UInt32>'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_choice_constant_payload.or",
+        status_choice_constant_lines("const DEFAULT_STATUS: Status = Ready(true)"),
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_choice_constant_repeated_payload_type.or",
+        maybe_choice_constant_lines_with_declarations(
+            "const DEFAULT_VALUE: Both<Header> = Pair(Header([1, 2], 1), OtherHeader([1, 2], 1))",
+            {
+                "record Header",
+                "    magic: Array<UInt32, 2>",
+                "    version: UInt16",
+                "record OtherHeader",
+                "    magic: Array<UInt32, 2>",
+                "    version: UInt16",
+                "choice Both<T>",
+                "    Pair(left: T, right: T)",
+            }
+        ),
+        "choice constructor payload type 'OtherHeader' does not match expected payload type 'Header'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_choice_return_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> Maybe<UInt32>",
+            "    return Some(true)",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_choice_final_expression_payload_type.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function demo() -> Maybe<UInt32>",
+            "    Some(true)",
+        },
+        "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
+    );
+
+    std::filesystem::remove_all(smoke_temp_root);
+    return 0;
+}
