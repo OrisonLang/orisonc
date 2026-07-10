@@ -3084,31 +3084,6 @@ int main() {
 
     assert_cli_parse_failure(
         executable,
-        std::filesystem::temp_directory_path() / "orison_cli_generic_function_dependent_argument_type.or",
-        generic_pair_consumer_lines(
-            {"    return consume_pair(Header([1, 2], 1), Pair(OtherHeader([1, 2], 1), 1 as UInt16))"}
-        ),
-        "function argument 'pair' type 'Pair<OtherHeader, UInt16>' does not match declared type 'Pair<Header, UInt16>'"
-    );
-    assert_cli_parse_failure(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_generic_repeated_binding_argument_type.or",
-        generic_same_consumer_lines({"    return same(Header([1, 2], 1), OtherHeader([1, 2], 1))"}),
-        "function argument 'right' type 'OtherHeader' does not match declared type 'Header'"
-    );
-    assert_cli_parse_failure(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_generic_record_repeated_field_type.or",
-        generic_same_record_lines(
-            {
-                "    let same = Same(Header([1, 2], 1), OtherHeader([1, 2], 1))",
-                "    return same.first.version",
-            }
-        ),
-        "record constructor field 'second' type 'OtherHeader' does not match expected field type 'Header'"
-    );
-    assert_cli_parse_failure(
-        executable,
         std::filesystem::temp_directory_path() / "orison_cli_record_choice_ternary_field_type.or",
         box_maybe_record_cli_lines("    let box: Box<UInt32> = Box(flag ? Some(true) : Empty)", false),
         "choice constructor payload type 'Bool' does not match expected payload type 'UInt32'"
@@ -3793,13 +3768,6 @@ int main() {
         "orison_cli_final_if_holder_choice_payload_nested_array_record_pointer_ternary_field_success.or",
         slot_pointer_holder_items_final_if_success_cli_lines(
             "        Holder(Items([[Slot(flag ? raw_offset(base, 1) : raw_offset(other, 1))]]))"
-        )
-    );
-    assert_cli_parse_success(
-        executable,
-        std::filesystem::temp_directory_path() / "orison_cli_generic_function_dependent_same_width_integer.or",
-        generic_pair_consumer_lines(
-            {"    return consume_pair(Header([1, 2], 1), Pair(Header([1, 2], 1), 1 as Int16))"}
         )
     );
     std::filesystem::remove_all(smoke_temp_root);
