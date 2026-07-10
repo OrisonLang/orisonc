@@ -235,6 +235,17 @@ add_test(
     COMMAND orison_driver_address_cli_smoke
 )
 
+add_executable(orison_driver_raw_value_cli_smoke
+    smoke/driver_raw_value_cli_smoke.cpp
+)
+
+target_compile_features(orison_driver_raw_value_cli_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_driver_raw_value_cli_smoke
+    COMMAND orison_driver_raw_value_cli_smoke
+)
+
 add_executable(orison_driver_drop_report_cli_smoke
     smoke/driver_drop_report_cli_smoke.cpp
 )
