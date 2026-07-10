@@ -56,6 +56,22 @@ add_test(
     COMMAND orison_minimal_demo_smoke
 )
 
+add_executable(orison_driver_ffi_cli_smoke
+    smoke/driver_ffi_cli_smoke.cpp
+)
+
+target_compile_definitions(orison_driver_ffi_cli_smoke
+    PRIVATE
+        ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+)
+
+target_compile_features(orison_driver_ffi_cli_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_driver_ffi_cli_smoke
+    COMMAND orison_driver_ffi_cli_smoke
+)
+
 add_executable(orison_driver_drop_report_cli_smoke
     smoke/driver_drop_report_cli_smoke.cpp
 )

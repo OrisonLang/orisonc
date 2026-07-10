@@ -3082,24 +3082,6 @@ int main() {
     assert(WIFEXITED(member_receiver_method_aggregate_access_executable_status));
     assert(WEXITSTATUS(member_receiver_method_aggregate_access_executable_status) == 0);
 
-    auto ffi_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_09_ffi_printf.or";
-    auto ffi_output = read_command_output_with_exit_code(
-        executable.string() + " run " + ffi_demo_path.string(),
-        25
-    );
-    assert(ffi_output == "Hello world from Orison!\n");
-
-    auto fixed_ffi_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "ffi_fixed_parameters.or";
-    auto fixed_ffi_status = std::system((executable.string() + " run " + fixed_ffi_path.string()).c_str());
-    assert(WIFEXITED(fixed_ffi_status));
-    assert(WEXITSTATUS(fixed_ffi_status) == 0);
-
-    auto ffi_aggregate_scalar_status = std::system(
-        (executable.string() + " run " + ffi_aggregate_scalar_emit_path.string() + " >/dev/null").c_str()
-    );
-    assert(WIFEXITED(ffi_aggregate_scalar_status));
-    assert(WEXITSTATUS(ffi_aggregate_scalar_status) == 0);
-
     auto immutable_aggregate_demo_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_aggregate_let.or";
     auto immutable_aggregate_status =
