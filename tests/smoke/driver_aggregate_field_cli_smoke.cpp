@@ -1,6 +1,6 @@
-#define main orisonc_cli_smoke_original_main
+#define ORISONC_CLI_SMOKE_HELPERS_ONLY
 #include "orisonc_cli_smoke.cpp"
-#undef main
+#undef ORISONC_CLI_SMOKE_HELPERS_ONLY
 
 int main() {
     auto original_temp_root = std::filesystem::temp_directory_path();
