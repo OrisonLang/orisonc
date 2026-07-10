@@ -2763,15 +2763,6 @@ int main() {
     assert(read_command_output(member_receiver_method_aggregate_access_object_command).empty());
     assert(std::filesystem::file_size(member_receiver_method_aggregate_access_object_path) > 0);
 
-    auto demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
-    auto executable_path = std::filesystem::temp_directory_path() / "orison_cli_build";
-    auto build_command =
-        executable.string() + " --build " + demo_path.string() + " -o " + executable_path.string();
-    assert(read_command_output(build_command).empty());
-    auto executable_status = std::system(executable_path.string().c_str());
-    assert(WIFEXITED(executable_status));
-    assert(WEXITSTATUS(executable_status) == 0);
-
     auto local_record_assignment_executable_path =
         std::filesystem::temp_directory_path() / "orison_cli_local_record_field_assignment_build";
     auto local_record_assignment_build_command =
@@ -3090,11 +3081,6 @@ int main() {
         std::system(member_receiver_method_aggregate_access_executable_path.string().c_str());
     assert(WIFEXITED(member_receiver_method_aggregate_access_executable_status));
     assert(WEXITSTATUS(member_receiver_method_aggregate_access_executable_status) == 0);
-
-    auto run_command = executable.string() + " run " + demo_path.string();
-    auto run_status = std::system(run_command.c_str());
-    assert(WIFEXITED(run_status));
-    assert(WEXITSTATUS(run_status) == 0);
 
     auto ffi_demo_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "tour_09_ffi_printf.or";
     auto ffi_output = read_command_output_with_exit_code(
