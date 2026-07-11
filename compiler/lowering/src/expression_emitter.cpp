@@ -11,6 +11,7 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/maybe_value_emitter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -1520,6 +1521,36 @@ auto lowered_expression(
             .value = "@" + constant->name,
             .signedness = IntegerSignedness::not_integer,
         };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::name && expression.text == "Empty") {
+        if (auto maybe_abi = maybe_value_abi_for_llvm_type(expected_llvm_type, context.lowering)) {
+            return emit_empty_maybe_value(*maybe_abi, state.next_temporary_index, output);
+        }
+    }
+
+    if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Some") {
+        auto maybe_abi = maybe_value_abi_for_llvm_type(expected_llvm_type, context.lowering);
+        if (maybe_abi.has_value() && expression.arguments.size() == 1) {
+            auto payload = lowered_expression(
+                expression.arguments.front(),
+                maybe_abi->payload_llvm_type,
+                signedness_for_expected_array_element(
+                    expression.arguments.front(),
+                    maybe_abi->payload_llvm_type,
+                    context,
+                    state
+                ),
+                context,
+                session,
+                output
+            );
+            if (!payload.has_value()) {
+                return std::nullopt;
+            }
+            return emit_some_maybe_value(*maybe_abi, *payload, state.next_temporary_index, output);
+        }
     }
 
     if (expression.kind == syntax::ExpressionKind::name) {

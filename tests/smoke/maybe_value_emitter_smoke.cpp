@@ -38,6 +38,20 @@ int main() {
     assert(array_abi->llvm_type == "{ i1, [3 x i32] }");
     assert(array_abi->payload_llvm_type == "[3 x i32]");
 
+    auto scalar_llvm_abi = orison::lowering::maybe_value_abi_for_llvm_type("{ i1, i32 }", context);
+    assert(scalar_llvm_abi.has_value());
+    assert(scalar_llvm_abi->source_type_name == "Maybe<UInt32>");
+    assert(scalar_llvm_abi->payload_source_type_name == "UInt32");
+    assert(scalar_llvm_abi->llvm_type == "{ i1, i32 }");
+    assert(scalar_llvm_abi->payload_llvm_type == "i32");
+
+    auto record_llvm_abi = orison::lowering::maybe_value_abi_for_llvm_type("{ i1, %record.Bucket }", context);
+    assert(record_llvm_abi.has_value());
+    assert(record_llvm_abi->source_type_name == "Maybe<Bucket>");
+    assert(record_llvm_abi->payload_llvm_type == "%record.Bucket");
+
+    assert(!orison::lowering::maybe_value_abi_for_llvm_type("i32", context).has_value());
+
     auto next_temporary_index = std::size_t {0};
     auto empty_output = std::ostringstream {};
     auto empty = orison::lowering::emit_empty_maybe_value(

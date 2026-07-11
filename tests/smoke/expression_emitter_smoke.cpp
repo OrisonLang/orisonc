@@ -137,6 +137,66 @@ int main() {
         "  %tmp2 = phi i32 [%tmp0, %ternary.then.0], [%tmp1, %ternary.else.0]\n"
     );
 
+    auto maybe_state = orison::lowering::FunctionLoweringState {};
+    maybe_state.immutable_bindings.emplace("left", orison::lowering::LoweredExpression {
+        .type = "i32",
+        .value = "%left",
+        .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+    });
+    auto maybe_failures = orison::lowering::LoweringFailures {};
+    auto maybe_session = orison::lowering::FunctionLoweringSession {
+        .state = maybe_state,
+        .failures = maybe_failures,
+    };
+
+    output = {};
+    auto empty_maybe = orison::lowering::lower_expression(
+        orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "Empty",
+        },
+        "{ i1, i32 }",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        maybe_session,
+        output
+    );
+    assert(empty_maybe.has_value());
+    assert(empty_maybe->type == "{ i1, i32 }");
+    assert(empty_maybe->value == "%tmp0");
+    assert(output.str() == "  %tmp0 = insertvalue { i1, i32 } undef, i1 false, 0\n");
+
+    auto some_maybe_expression = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "Some",
+            }
+        ),
+    };
+    some_maybe_expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "left",
+    });
+    output = {};
+    auto some_maybe = orison::lowering::lower_expression(
+        some_maybe_expression,
+        "{ i1, i32 }",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        maybe_session,
+        output
+    );
+    assert(some_maybe.has_value());
+    assert(some_maybe->type == "{ i1, i32 }");
+    assert(some_maybe->value == "%tmp2");
+    assert(
+        output.str() ==
+        "  %tmp1 = insertvalue { i1, i32 } undef, i1 true, 0\n"
+        "  %tmp2 = insertvalue { i1, i32 } %tmp1, i32 %left, 1\n"
+    );
+
     auto unknown = orison::syntax::ExpressionSyntax {
         .kind = orison::syntax::ExpressionKind::name,
         .text = "missing",

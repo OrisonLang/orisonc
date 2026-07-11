@@ -23,9 +23,27 @@ auto maybe_value_abi_for_source_type(
     LoweringContext const& context
 ) -> std::optional<MaybeValueAbi>;
 
+auto maybe_value_abi_for_llvm_type(
+    std::string_view llvm_type,
+    LoweringContext const& context
+) -> std::optional<MaybeValueAbi>;
+
+auto emit_empty_maybe_value(
+    MaybeValueAbi const& abi,
+    std::size_t& next_temporary_index,
+    std::ostringstream& output
+) -> LoweredExpression;
+
 auto emit_empty_maybe_value(
     std::string_view source_type_name,
     LoweringContext const& context,
+    std::size_t& next_temporary_index,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression>;
+
+auto emit_some_maybe_value(
+    MaybeValueAbi const& abi,
+    LoweredExpression const& payload,
     std::size_t& next_temporary_index,
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
