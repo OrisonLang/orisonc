@@ -310,6 +310,22 @@ add_test(
     COMMAND orison_driver_aggregate_lowering_smoke
 )
 
+add_executable(orison_driver_null_safe_lowering_smoke
+    smoke/driver_null_safe_lowering_smoke.cpp
+)
+
+target_link_libraries(orison_driver_null_safe_lowering_smoke
+    PRIVATE
+        orison_driver
+)
+
+target_compile_features(orison_driver_null_safe_lowering_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_driver_null_safe_lowering_smoke
+    COMMAND orison_driver_null_safe_lowering_smoke
+)
+
 add_executable(orison_driver_concurrency_lowering_smoke
     smoke/driver_concurrency_lowering_smoke.cpp
 )

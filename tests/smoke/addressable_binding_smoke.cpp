@@ -17,6 +17,7 @@ int main() {
     assert(!orison::lowering::is_aggregate_llvm_type("i32"));
     assert(orison::lowering::is_aggregate_llvm_type("%record.Point"));
     assert(orison::lowering::is_aggregate_llvm_type("[2 x i32]"));
+    assert(orison::lowering::is_aggregate_llvm_type("{ i1, i32 }"));
 
     orison::lowering::bind_addressable_aggregate_value(
         "scalar",

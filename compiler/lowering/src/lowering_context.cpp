@@ -122,6 +122,12 @@ auto llvm_field_type_for(
             return "[" + type.generic_arguments[1].name + " x " + element_type + "]";
         }
     }
+    if (type.name == "Maybe" && type.generic_arguments.size() == 1) {
+        auto payload_type = llvm_field_type_for(type.generic_arguments[0], record_names);
+        if (!payload_type.empty() && payload_type != "void") {
+            return "{ i1, " + payload_type + " }";
+        }
+    }
     return {};
 }
 

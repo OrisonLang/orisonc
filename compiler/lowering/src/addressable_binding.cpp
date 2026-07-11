@@ -10,7 +10,7 @@
 namespace orison::lowering {
 
 auto is_aggregate_llvm_type(std::string_view type) -> bool {
-    return type.starts_with("%record.") || type.starts_with("[");
+    return type.starts_with("%record.") || type.starts_with("[") || type.starts_with("{");
 }
 
 auto aggregate_storage_for_name(
