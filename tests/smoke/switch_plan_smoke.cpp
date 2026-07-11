@@ -106,5 +106,33 @@ int main() {
     assert(no_default_result.plan.has_value());
     assert(!no_default_result.plan->has_default);
     assert(no_default_result.plan->default_block == "switch.unreachable.2");
+
+    auto maybe_cases = std::vector<orison::syntax::SwitchCaseSyntax> {};
+    auto maybe_some = orison::syntax::SwitchCaseSyntax {};
+    maybe_some.pattern.kind = orison::syntax::ExpressionKind::call;
+    maybe_some.pattern.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    maybe_some.pattern.left->kind = orison::syntax::ExpressionKind::name;
+    maybe_some.pattern.left->text = "Some";
+    maybe_cases.push_back(std::move(maybe_some));
+
+    auto maybe_empty = orison::syntax::SwitchCaseSyntax {};
+    maybe_empty.pattern.kind = orison::syntax::ExpressionKind::name;
+    maybe_empty.pattern.text = "Empty";
+    maybe_cases.push_back(std::move(maybe_empty));
+
+    auto maybe_result = orison::lowering::plan_switch(
+        maybe_cases,
+        orison::lowering::LoweredType {
+            .type = "{ i1, i32 }",
+        },
+        4
+    );
+    assert(maybe_result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
+    assert(maybe_result.plan.has_value());
+    assert(maybe_result.plan->cases.size() == 2);
+    assert(maybe_result.plan->cases[0].pattern->type == "i1");
+    assert(maybe_result.plan->cases[0].pattern->value == "true");
+    assert(maybe_result.plan->cases[1].pattern->type == "i1");
+    assert(maybe_result.plan->cases[1].pattern->value == "false");
     return 0;
 }

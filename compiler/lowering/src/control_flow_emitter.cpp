@@ -45,6 +45,32 @@ auto lower_final_switch_statement(
     std::ostringstream& output
 ) -> std::optional<LoweredExpression>;
 
+auto is_maybe_switch_subject(LoweredType const& type) -> bool {
+    return type.type.starts_with("{ i1,");
+}
+
+auto is_supported_switch_subject(LoweredType const& type) -> bool {
+    return type.type == "i1" || is_integer_llvm_type(type.type) || is_maybe_switch_subject(type);
+}
+
+auto switch_subject_for_emit(
+    LoweredExpression subject,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> LoweredExpression {
+    if (!subject.type.starts_with("{ i1,")) {
+        return subject;
+    }
+
+    auto tag = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << tag << " = extractvalue " << subject.type << " " << subject.value << ", 0\n";
+    return LoweredExpression {
+        .type = "i1",
+        .value = std::move(tag),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 auto lower_nested_final_control_flow(
     syntax::StatementSyntax const& statement,
     std::string_view expected_llvm_type,
@@ -231,8 +257,7 @@ auto lower_final_switch_statement(
     }
 
     auto subject_type = infer_expression_type(statement.expression, context, state);
-    if (!subject_type.has_value() ||
-        (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type)) {
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_subject_type_failure
@@ -255,6 +280,7 @@ auto lower_final_switch_statement(
         );
         return std::nullopt;
     }
+    auto switch_subject = switch_subject_for_emit(std::move(*subject), session, output);
 
     auto block_index = next_llvm_block_index(state.next_block_index);
     auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
@@ -285,7 +311,7 @@ auto lower_final_switch_statement(
     };
     auto result = emit_switch_value(
         plan,
-        *subject,
+        switch_subject,
         state,
         output,
         SwitchLoweringCallbacks {

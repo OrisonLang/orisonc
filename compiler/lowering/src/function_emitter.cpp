@@ -237,6 +237,32 @@ auto infer_unit_expression_type(
     return std::nullopt;
 }
 
+auto is_maybe_switch_subject(LoweredType const& type) -> bool {
+    return type.type.starts_with("{ i1,");
+}
+
+auto is_supported_switch_subject(LoweredType const& type) -> bool {
+    return type.type == "i1" || is_integer_llvm_type(type.type) || is_maybe_switch_subject(type);
+}
+
+auto switch_subject_for_emit(
+    LoweredExpression subject,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> LoweredExpression {
+    if (!subject.type.starts_with("{ i1,")) {
+        return subject;
+    }
+
+    auto tag = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << tag << " = extractvalue " << subject.type << " " << subject.value << ", 0\n";
+    return LoweredExpression {
+        .type = "i1",
+        .value = std::move(tag),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 auto is_receiver_self_source_type(std::string_view type_name) -> bool {
     return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
 }
@@ -413,8 +439,7 @@ auto lower_unit_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
-    if (!subject_type.has_value() ||
-        (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type)) {
         diagnostics.error(statement.line, "lowering does not yet support this Unit switch subject");
         return StatementFlow::failed;
     }
@@ -437,6 +462,7 @@ auto lower_unit_switch_statement(
         );
         return StatementFlow::failed;
     }
+    auto switch_subject = switch_subject_for_emit(std::move(*subject), session, output);
 
     auto block_index = next_llvm_block_index(session.state.next_block_index);
     auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
@@ -463,7 +489,7 @@ auto lower_unit_switch_statement(
             });
         }
     }
-    emit_llvm_switch(output, subject->type, subject->value, plan.default_block, switch_targets);
+    emit_llvm_switch(output, switch_subject.type, switch_subject.value, plan.default_block, switch_targets);
 
     auto all_cases_terminated = true;
     for (auto const& planned_case : plan.cases) {
@@ -921,8 +947,7 @@ auto lower_nonvoid_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
-    if (!subject_type.has_value() ||
-        (subject_type->type != "i1" && !is_integer_llvm_type(subject_type->type))) {
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type)) {
         diagnostics.error(statement.line, "lowering does not yet support this non-void switch subject");
         return StatementFlow::failed;
     }
@@ -945,6 +970,7 @@ auto lower_nonvoid_switch_statement(
         );
         return StatementFlow::failed;
     }
+    auto switch_subject = switch_subject_for_emit(std::move(*subject), session, output);
 
     auto block_index = next_llvm_block_index(session.state.next_block_index);
     auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
@@ -971,7 +997,7 @@ auto lower_nonvoid_switch_statement(
             });
         }
     }
-    emit_llvm_switch(output, subject->type, subject->value, plan.default_block, switch_targets);
+    emit_llvm_switch(output, switch_subject.type, switch_subject.value, plan.default_block, switch_targets);
 
     auto all_cases_terminated = true;
     for (auto const& planned_case : plan.cases) {

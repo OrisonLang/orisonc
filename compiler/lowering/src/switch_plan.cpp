@@ -13,6 +13,26 @@ auto lower_switch_pattern(
     syntax::ExpressionSyntax const& pattern,
     LoweredType const& subject_type
 ) -> std::optional<LoweredExpression> {
+    auto const maybe_subject = subject_type.type.starts_with("{ i1,");
+    if (maybe_subject && pattern.kind == syntax::ExpressionKind::name && pattern.text == "Empty") {
+        return LoweredExpression {
+            .type = "i1",
+            .value = "false",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+    if (maybe_subject &&
+        pattern.kind == syntax::ExpressionKind::call &&
+        pattern.left != nullptr &&
+        pattern.left->kind == syntax::ExpressionKind::name &&
+        pattern.left->text == "Some") {
+        return LoweredExpression {
+            .type = "i1",
+            .value = "true",
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+
     if (auto literal = lower_integer_literal(pattern, subject_type.type, subject_type.signedness)) {
         return literal;
     }
