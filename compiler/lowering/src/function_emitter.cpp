@@ -414,7 +414,7 @@ auto lower_unit_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
-    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type)) {
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context)) {
         diagnostics.error(statement.line, "lowering does not yet support this Unit switch subject");
         return StatementFlow::failed;
     }
@@ -438,10 +438,10 @@ auto lower_unit_switch_statement(
         return StatementFlow::failed;
     }
     auto original_subject = *subject;
-    auto switch_subject = switch_subject_for_emit(std::move(*subject), session, output);
+    auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
 
     auto block_index = next_llvm_block_index(session.state.next_block_index);
-    auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
+    auto planning = plan_switch(statement.switch_cases, *subject_type, context.lowering, block_index);
     if (!planning.plan.has_value()) {
         diagnostics.error(
             statement.line,
@@ -924,7 +924,7 @@ auto lower_nonvoid_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
-    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type)) {
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context)) {
         diagnostics.error(statement.line, "lowering does not yet support this non-void switch subject");
         return StatementFlow::failed;
     }
@@ -948,10 +948,10 @@ auto lower_nonvoid_switch_statement(
         return StatementFlow::failed;
     }
     auto original_subject = *subject;
-    auto switch_subject = switch_subject_for_emit(std::move(*subject), session, output);
+    auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
 
     auto block_index = next_llvm_block_index(session.state.next_block_index);
-    auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
+    auto planning = plan_switch(statement.switch_cases, *subject_type, context.lowering, block_index);
     if (!planning.plan.has_value()) {
         diagnostics.error(
             statement.line,

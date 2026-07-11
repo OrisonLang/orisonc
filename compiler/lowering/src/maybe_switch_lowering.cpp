@@ -49,25 +49,35 @@ auto is_maybe_switch_subject(LoweredType const& type) -> bool {
     return type.type.starts_with("{ i1,");
 }
 
-auto is_supported_switch_subject(LoweredType const& type) -> bool {
-    return type.type == "i1" || is_integer_llvm_type(type.type) || is_maybe_switch_subject(type);
+auto is_supported_switch_subject(
+    LoweredType const& type,
+    LoweringEmissionContext const& context
+) -> bool {
+    return type.type == "i1" ||
+           is_integer_llvm_type(type.type) ||
+           is_maybe_switch_subject(type) ||
+           find_lowered_choice_layout_by_llvm_type(context.lowering, type.type) != nullptr;
 }
 
 auto switch_subject_for_emit(
     LoweredExpression subject,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostream& output
 ) -> LoweredExpression {
-    if (!subject.type.starts_with("{ i1,")) {
+    if (!subject.type.starts_with("{ i1,") &&
+        find_lowered_choice_layout_by_llvm_type(context.lowering, subject.type) == nullptr) {
         return subject;
     }
 
     auto tag = next_llvm_temporary_name(session.state.next_temporary_index);
     output << "  " << tag << " = extractvalue " << subject.type << " " << subject.value << ", 0\n";
     return LoweredExpression {
-        .type = "i1",
+        .type = subject.type.starts_with("{ i1,") ? "i1" : "i32",
         .value = std::move(tag),
-        .signedness = IntegerSignedness::not_integer,
+        .signedness = subject.type.starts_with("{ i1,")
+            ? IntegerSignedness::not_integer
+            : IntegerSignedness::unsigned_integer,
     };
 }
 

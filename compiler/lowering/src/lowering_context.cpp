@@ -404,4 +404,22 @@ auto lowered_record_type_name(std::string_view record_name) -> std::string {
     return type_name;
 }
 
+auto find_lowered_choice_layout_by_llvm_type(
+    LoweringContext const& context,
+    std::string_view llvm_type
+) -> LoweredChoiceLayout const* {
+    auto const* match = static_cast<LoweredChoiceLayout const*>(nullptr);
+    for (auto const& [choice_name, layout] : context.choices) {
+        (void)choice_name;
+        if (layout.llvm_type_name != llvm_type) {
+            continue;
+        }
+        if (match != nullptr) {
+            return nullptr;
+        }
+        match = &layout;
+    }
+    return match;
+}
+
 }  // namespace orison::lowering

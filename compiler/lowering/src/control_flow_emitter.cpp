@@ -232,7 +232,7 @@ auto lower_final_switch_statement(
     }
 
     auto subject_type = infer_expression_type(statement.expression, context, state);
-    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type)) {
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context)) {
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_subject_type_failure
@@ -256,10 +256,10 @@ auto lower_final_switch_statement(
         return std::nullopt;
     }
     auto original_subject = *subject;
-    auto switch_subject = switch_subject_for_emit(std::move(*subject), session, output);
+    auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
 
     auto block_index = next_llvm_block_index(state.next_block_index);
-    auto planning = plan_switch(statement.switch_cases, *subject_type, block_index);
+    auto planning = plan_switch(statement.switch_cases, *subject_type, context.lowering, block_index);
     if (!planning.plan.has_value()) {
         record_control_flow_lowering_failure(failures, planning.failure);
         return std::nullopt;

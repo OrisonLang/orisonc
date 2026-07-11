@@ -11,10 +11,14 @@ namespace orison::lowering {
 
 auto is_maybe_switch_subject(LoweredType const& type) -> bool;
 
-auto is_supported_switch_subject(LoweredType const& type) -> bool;
+auto is_supported_switch_subject(
+    LoweredType const& type,
+    LoweringEmissionContext const& context
+) -> bool;
 
 auto switch_subject_for_emit(
     LoweredExpression subject,
+    LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostream& output
 ) -> LoweredExpression;

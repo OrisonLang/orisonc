@@ -85,6 +85,23 @@ void assert_cli_emit_llvm_success(
     }
 }
 
+template <typename SourceLines>
+void assert_cli_run_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    SourceLines const& lines
+) {
+    {
+        std::ofstream output(path);
+        for (auto line : lines) {
+            output << line << '\n';
+        }
+    }
+
+    auto command = executable.string() + " run " + path.string();
+    (void)read_successful_command_output(command);
+}
+
 auto status_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -174,6 +191,38 @@ auto main() -> int {
             "i32 7, 1",
             "ret { i32, i32 }",
         }
+    );
+    auto scalar_choice_switch_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice Status",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "function make_status() -> Status",
+        "    Ready(7 as UInt32)",
+        "function classify_status() -> UInt32",
+        "    switch make_status()",
+        "        Ready(code) => 1 as UInt32",
+        "        Empty => 0 as UInt32",
+        "function main() -> UInt32",
+        "    return classify_status() - 1 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_choice_switch_emit.or",
+        scalar_choice_switch_lines,
+        {
+            "define i32 @classify_status()",
+            "extractvalue { i32, i32 }",
+            "switch i32",
+            "i32 0, label %switch.case",
+            "i32 1, label %switch.case",
+            "ret i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_choice_switch_run.or",
+        scalar_choice_switch_lines
     );
 
     assert_cli_parse_failure(

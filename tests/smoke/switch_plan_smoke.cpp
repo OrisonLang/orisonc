@@ -6,11 +6,14 @@
 #include <vector>
 
 int main() {
+    auto context = orison::lowering::LoweringContext {};
+
     auto empty_result = orison::lowering::plan_switch(
         {},
         orison::lowering::LoweredType {
             .type = "i1",
         },
+        context,
         0
     );
     assert(!empty_result.plan.has_value());
@@ -43,6 +46,7 @@ int main() {
             .type = "i32",
             .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
         },
+        context,
         3
     );
     assert(result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
@@ -68,6 +72,7 @@ int main() {
         orison::lowering::LoweredType {
             .type = "i1",
         },
+        context,
         0
     );
     assert(!duplicate_result.plan.has_value());
@@ -85,6 +90,7 @@ int main() {
             .type = "i32",
             .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
         },
+        context,
         1
     );
     assert(!unsupported_result.plan.has_value());
@@ -101,6 +107,7 @@ int main() {
         orison::lowering::LoweredType {
             .type = "i1",
         },
+        context,
         2
     );
     assert(no_default_result.plan.has_value());
@@ -125,6 +132,7 @@ int main() {
         orison::lowering::LoweredType {
             .type = "{ i1, i32 }",
         },
+        context,
         4
     );
     assert(maybe_result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
@@ -134,5 +142,59 @@ int main() {
     assert(maybe_result.plan->cases[0].pattern->value == "true");
     assert(maybe_result.plan->cases[1].pattern->type == "i1");
     assert(maybe_result.plan->cases[1].pattern->value == "false");
+
+    auto choice_context = orison::lowering::LoweringContext {};
+    choice_context.choices.emplace("Status", orison::lowering::LoweredChoiceLayout {
+        .name = "Status",
+        .source_type_name = "Status",
+        .llvm_type_name = "{ i32, i32 }",
+        .variants = {
+            orison::lowering::LoweredChoiceVariant {
+                .name = "Ready",
+                .tag = 0,
+                .payloads = {
+                    orison::lowering::LoweredChoicePayload {
+                        .name = "code",
+                        .source_type_name = "UInt32",
+                        .llvm_type = "i32",
+                    },
+                },
+            },
+            orison::lowering::LoweredChoiceVariant {
+                .name = "Empty",
+                .tag = 1,
+            },
+        },
+    });
+    auto choice_cases = std::vector<orison::syntax::SwitchCaseSyntax> {};
+    auto ready_case = orison::syntax::SwitchCaseSyntax {};
+    ready_case.pattern.kind = orison::syntax::ExpressionKind::call;
+    ready_case.pattern.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    ready_case.pattern.left->kind = orison::syntax::ExpressionKind::name;
+    ready_case.pattern.left->text = "Ready";
+    ready_case.pattern.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "code",
+    });
+    choice_cases.push_back(std::move(ready_case));
+    auto empty_choice_case = orison::syntax::SwitchCaseSyntax {};
+    empty_choice_case.pattern.kind = orison::syntax::ExpressionKind::name;
+    empty_choice_case.pattern.text = "Empty";
+    choice_cases.push_back(std::move(empty_choice_case));
+
+    auto choice_result = orison::lowering::plan_switch(
+        choice_cases,
+        orison::lowering::LoweredType {
+            .type = "{ i32, i32 }",
+        },
+        choice_context,
+        5
+    );
+    assert(choice_result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
+    assert(choice_result.plan.has_value());
+    assert(choice_result.plan->cases[0].pattern->type == "i32");
+    assert(choice_result.plan->cases[0].pattern->value == "0");
+    assert(choice_result.plan->cases[1].pattern->type == "i32");
+    assert(choice_result.plan->cases[1].pattern->value == "1");
     return 0;
 }

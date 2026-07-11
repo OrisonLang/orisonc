@@ -89,4 +89,9 @@ auto lowered_method_symbol_name(
 
 auto lowered_record_type_name(std::string_view record_name) -> std::string;
 
+auto find_lowered_choice_layout_by_llvm_type(
+    LoweringContext const& context,
+    std::string_view llvm_type
+) -> LoweredChoiceLayout const*;
+
 }  // namespace orison::lowering

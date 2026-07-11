@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/lowered_value.hpp"
+#include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_failures.hpp"
 #include "orison/syntax/module_parser.hpp"
 
@@ -33,6 +34,7 @@ struct SwitchPlanningResult {
 auto plan_switch(
     std::vector<syntax::SwitchCaseSyntax> const& cases,
     LoweredType const& subject_type,
+    LoweringContext const& context,
     std::size_t block_index
 ) -> SwitchPlanningResult;
 
