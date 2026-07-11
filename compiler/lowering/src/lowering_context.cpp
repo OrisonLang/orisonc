@@ -152,6 +152,46 @@ auto collect_record_layout(
     return layout;
 }
 
+auto collect_choice_layout(
+    syntax::ChoiceSyntax const& choice,
+    std::unordered_set<std::string> const& record_names
+) -> LoweredChoiceLayout {
+    auto choice_type = syntax::TypeSyntax {
+        .name = choice.name,
+    };
+    for (auto const& generic_parameter : choice.generic_parameters) {
+        choice_type.generic_arguments.push_back(syntax::TypeSyntax {
+            .name = generic_parameter,
+        });
+    }
+
+    auto layout = LoweredChoiceLayout {
+        .name = choice.name,
+        .source_type_name = render_source_type_name(choice_type),
+        .generic_parameters = choice.generic_parameters,
+    };
+    layout.variants.reserve(choice.variants.size());
+    for (auto variant_index = std::size_t {0}; variant_index < choice.variants.size(); ++variant_index) {
+        auto const& variant = choice.variants[variant_index];
+        auto lowered_variant = LoweredChoiceVariant {
+            .name = variant.name,
+            .tag = variant_index,
+        };
+        lowered_variant.payloads.reserve(variant.payloads.size());
+        for (auto payload_index = std::size_t {0}; payload_index < variant.payloads.size(); ++payload_index) {
+            auto const& payload = variant.payloads[payload_index];
+            lowered_variant.payloads.push_back(LoweredChoicePayload {
+                .name = payload.name,
+                .source_type_name = render_source_type_name(payload.type),
+                .llvm_type = llvm_field_type_for(payload.type, record_names),
+                .index = payload_index,
+            });
+        }
+        layout.variants.push_back(std::move(lowered_variant));
+    }
+    return layout;
+}
+
 }  // namespace
 
 auto build_lowering_context(
@@ -165,6 +205,9 @@ auto build_lowering_context(
     }
     for (auto const& record : module.records) {
         context.records.emplace(record.name, collect_record_layout(record, record_names));
+    }
+    for (auto const& choice : module.choices) {
+        context.choices.emplace(choice.name, collect_choice_layout(choice, record_names));
     }
 
     for (auto const& function : module.functions) {

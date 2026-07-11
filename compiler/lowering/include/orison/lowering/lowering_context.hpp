@@ -31,9 +31,30 @@ struct LoweredRecordLayout {
     std::vector<LoweredRecordField> fields;
 };
 
+struct LoweredChoicePayload {
+    std::string name;
+    std::string source_type_name;
+    std::string llvm_type;
+    std::size_t index = 0;
+};
+
+struct LoweredChoiceVariant {
+    std::string name;
+    std::size_t tag = 0;
+    std::vector<LoweredChoicePayload> payloads;
+};
+
+struct LoweredChoiceLayout {
+    std::string name;
+    std::string source_type_name;
+    std::vector<std::string> generic_parameters;
+    std::vector<LoweredChoiceVariant> variants;
+};
+
 struct LoweringContext {
     std::unordered_map<std::string, LoweredFunctionSignature> functions;
     std::unordered_map<std::string, LoweredRecordLayout> records;
+    std::unordered_map<std::string, LoweredChoiceLayout> choices;
     std::vector<LoweredMethodSignature> methods;
     std::vector<LoweredFunctionSignature> foreign_declarations;
 };

@@ -11,6 +11,9 @@ int main() {
     using orison::syntax::ImplementationSyntax;
     using orison::syntax::ExtensionSyntax;
     using orison::syntax::ModuleSyntax;
+    using orison::syntax::ChoiceSyntax;
+    using orison::syntax::ChoiceVariantSyntax;
+    using orison::syntax::NamedTypeSyntax;
     using orison::syntax::ParameterSyntax;
     using orison::syntax::RecordSyntax;
     using orison::syntax::TypeSyntax;
@@ -102,6 +105,49 @@ int main() {
             },
         },
     });
+    module.choices.push_back(ChoiceSyntax {
+        .name = "Maybe",
+        .generic_parameters = {"T"},
+        .variants = {
+            ChoiceVariantSyntax {
+                .name = "Some",
+                .payloads = {
+                    NamedTypeSyntax {
+                        .name = "value",
+                        .type = TypeSyntax {.name = "T"},
+                    },
+                },
+            },
+            ChoiceVariantSyntax {.name = "Empty"},
+        },
+    });
+    module.choices.push_back(ChoiceSyntax {
+        .name = "Expression",
+        .variants = {
+            ChoiceVariantSyntax {
+                .name = "Int",
+                .payloads = {
+                    NamedTypeSyntax {
+                        .name = "value",
+                        .type = TypeSyntax {.name = "Int64"},
+                    },
+                },
+            },
+            ChoiceVariantSyntax {
+                .name = "Add",
+                .payloads = {
+                    NamedTypeSyntax {
+                        .name = "left",
+                        .type = TypeSyntax {.name = "UInt32"},
+                    },
+                    NamedTypeSyntax {
+                        .name = "right",
+                        .type = TypeSyntax {.name = "Profile"},
+                    },
+                },
+            },
+        },
+    });
     auto implementation = ImplementationSyntax {
         .interface_type = TypeSyntax {.name = "Reader"},
         .receiver_type = TypeSyntax {.name = "Device"},
@@ -168,6 +214,7 @@ int main() {
     assert(!diagnostics.has_errors());
     assert(context.functions.size() == 2);
     assert(context.records.size() == 7);
+    assert(context.choices.size() == 2);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
     assert(context.records.contains("UartRegisters"));
@@ -219,6 +266,47 @@ int main() {
     assert(user_layout.fields[0].source_type_name == "Maybe<Profile>");
     assert(user_layout.fields[0].llvm_type == "{ i1, %record.Profile }");
     assert(user_layout.fields[0].index == 0);
+    assert(context.choices.contains("Maybe"));
+    auto const& maybe_layout = context.choices.at("Maybe");
+    assert(maybe_layout.name == "Maybe");
+    assert(maybe_layout.source_type_name == "Maybe<T>");
+    assert(maybe_layout.generic_parameters.size() == 1);
+    assert(maybe_layout.generic_parameters[0] == "T");
+    assert(maybe_layout.variants.size() == 2);
+    assert(maybe_layout.variants[0].name == "Some");
+    assert(maybe_layout.variants[0].tag == 0);
+    assert(maybe_layout.variants[0].payloads.size() == 1);
+    assert(maybe_layout.variants[0].payloads[0].name == "value");
+    assert(maybe_layout.variants[0].payloads[0].source_type_name == "T");
+    assert(maybe_layout.variants[0].payloads[0].llvm_type.empty());
+    assert(maybe_layout.variants[0].payloads[0].index == 0);
+    assert(maybe_layout.variants[1].name == "Empty");
+    assert(maybe_layout.variants[1].tag == 1);
+    assert(maybe_layout.variants[1].payloads.empty());
+    assert(context.choices.contains("Expression"));
+    auto const& expression_layout = context.choices.at("Expression");
+    assert(expression_layout.name == "Expression");
+    assert(expression_layout.source_type_name == "Expression");
+    assert(expression_layout.generic_parameters.empty());
+    assert(expression_layout.variants.size() == 2);
+    assert(expression_layout.variants[0].name == "Int");
+    assert(expression_layout.variants[0].tag == 0);
+    assert(expression_layout.variants[0].payloads.size() == 1);
+    assert(expression_layout.variants[0].payloads[0].name == "value");
+    assert(expression_layout.variants[0].payloads[0].source_type_name == "Int64");
+    assert(expression_layout.variants[0].payloads[0].llvm_type == "i64");
+    assert(expression_layout.variants[0].payloads[0].index == 0);
+    assert(expression_layout.variants[1].name == "Add");
+    assert(expression_layout.variants[1].tag == 1);
+    assert(expression_layout.variants[1].payloads.size() == 2);
+    assert(expression_layout.variants[1].payloads[0].name == "left");
+    assert(expression_layout.variants[1].payloads[0].source_type_name == "UInt32");
+    assert(expression_layout.variants[1].payloads[0].llvm_type == "i32");
+    assert(expression_layout.variants[1].payloads[0].index == 0);
+    assert(expression_layout.variants[1].payloads[1].name == "right");
+    assert(expression_layout.variants[1].payloads[1].source_type_name == "Profile");
+    assert(expression_layout.variants[1].payloads[1].llvm_type == "%record.Profile");
+    assert(expression_layout.variants[1].payloads[1].index == 1);
     assert(context.methods[0].receiver_type_name == "Device");
     assert(context.methods[0].method_name == "read");
     assert(context.methods[0].signature.symbol_name == "method.Device.read");
