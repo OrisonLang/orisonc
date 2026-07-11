@@ -546,6 +546,69 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_assignment_run.or",
         sourced_scalar_choice_assignment_lines
     );
+    auto sourced_scalar_choice_return_ternary_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "function choose(flag: Bool) -> LocalStatus",
+        "    flag ? Ready(13 as UInt32) : Empty",
+        "function main() -> UInt32",
+        "    switch choose(true)",
+        "        Ready(code) => code - 13 as UInt32",
+        "        Empty => 1 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_return_ternary_emit.or",
+        sourced_scalar_choice_return_ternary_lines,
+        {
+            "define { i32, i32 } @choose",
+            "ternary.then.",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 13, 1",
+            "insertvalue { i32, i32 } undef, i32 1, 0",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_return_ternary_run.or",
+        sourced_scalar_choice_return_ternary_lines
+    );
+    auto sourced_scalar_choice_let_ternary_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "function main() -> UInt32",
+        "    let status: LocalStatus = false ? Ready(17 as UInt32) : Empty",
+        "    switch status",
+        "        Ready(code) => code",
+        "        Empty => 0 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_let_ternary_emit.or",
+        sourced_scalar_choice_let_ternary_lines,
+        {
+            "ternary.then.",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 17, 1",
+            "insertvalue { i32, i32 } undef, i32 1, 0",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_let_ternary_run.or",
+        sourced_scalar_choice_let_ternary_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",

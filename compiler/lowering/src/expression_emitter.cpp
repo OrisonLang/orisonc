@@ -2275,6 +2275,7 @@ auto lowered_expression(
             EmissionContext const& context;
             FunctionLoweringSession& session;
             std::ostringstream& output;
+            std::optional<std::string_view> expected_source_type_name;
         };
         auto arm_context = ArmContext {
             .then_expression = *expression.right,
@@ -2284,6 +2285,7 @@ auto lowered_expression(
             .context = context,
             .session = session,
             .output = output,
+            .expected_source_type_name = expected_source_type_name,
         };
         auto result = emit_conditional_value(
             plan,
@@ -2300,7 +2302,8 @@ auto lowered_expression(
                         arm.expected_signedness,
                         arm.context,
                         arm.session,
-                        arm.output
+                        arm.output,
+                        arm.expected_source_type_name
                     );
                 },
                 .lower_else = [](void* opaque) {
@@ -2311,7 +2314,8 @@ auto lowered_expression(
                         arm.expected_signedness,
                         arm.context,
                         arm.session,
-                        arm.output
+                        arm.output,
+                        arm.expected_source_type_name
                     );
                 },
             }
