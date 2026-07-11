@@ -48,6 +48,26 @@ auto contextual_choice_type_for(
     return choice->second.llvm_type_name;
 }
 
+auto contextual_type_for(
+    syntax::TypeSyntax const& type,
+    std::unordered_set<std::string> const& record_names,
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+) -> std::optional<std::string> {
+    if (auto record_type = contextual_record_type_for(type, record_names)) {
+        return record_type;
+    }
+    if (auto choice_type = contextual_choice_type_for(type, choices)) {
+        return choice_type;
+    }
+    if (type.name == "Maybe" && type.generic_arguments.size() == 1) {
+        auto payload_type = contextual_type_for(type.generic_arguments.front(), record_names, choices);
+        if (payload_type.has_value()) {
+            return "{ i1, " + *payload_type + " }";
+        }
+    }
+    return std::nullopt;
+}
+
 auto lower_contextual_function_signature(
     syntax::TypeSyntax const& return_type,
     std::vector<syntax::ParameterSyntax> const& parameters,
@@ -58,11 +78,8 @@ auto lower_contextual_function_signature(
     auto signature = lower_function_signature(return_type, parameters, std::move(symbol_name));
     signature.source_return_type_name = render_source_type_name(return_type);
     if (signature.return_type.empty()) {
-        if (auto record_type = contextual_record_type_for(return_type, record_names)) {
-            signature.return_type = std::move(*record_type);
-            signature.return_signedness = IntegerSignedness::not_integer;
-        } else if (auto choice_type = contextual_choice_type_for(return_type, choices)) {
-            signature.return_type = std::move(*choice_type);
+        if (auto contextual_type = contextual_type_for(return_type, record_names, choices)) {
+            signature.return_type = std::move(*contextual_type);
             signature.return_signedness = IntegerSignedness::not_integer;
         }
     }
@@ -71,11 +88,8 @@ auto lower_contextual_function_signature(
         if (!signature.parameter_types[index].empty()) {
             continue;
         }
-        if (auto record_type = contextual_record_type_for(parameters[index].type, record_names)) {
-            signature.parameter_types[index] = std::move(*record_type);
-            signature.parameter_signedness[index] = IntegerSignedness::not_integer;
-        } else if (auto choice_type = contextual_choice_type_for(parameters[index].type, choices)) {
-            signature.parameter_types[index] = std::move(*choice_type);
+        if (auto contextual_type = contextual_type_for(parameters[index].type, record_names, choices)) {
+            signature.parameter_types[index] = std::move(*contextual_type);
             signature.parameter_signedness[index] = IntegerSignedness::not_integer;
         }
     }

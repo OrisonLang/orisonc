@@ -191,7 +191,12 @@ void bind_switch_payload(
     auto payload_type = maybe_payload_type_for_switch_subject(subject.type);
     auto binding_name = maybe_payload_binding_name(planned_case.syntax->pattern);
     if (payload_type.has_value() && binding_name.has_value()) {
-        auto source_type_name = source_type_name_for_llvm_type(*payload_type, context.lowering);
+        auto source_type_name = subject_source_type_name.has_value()
+            ? maybe_payload_source_type_name(*subject_source_type_name)
+            : source_type_name_for_llvm_type(*payload_type, context.lowering);
+        if (!source_type_name.has_value()) {
+            source_type_name = source_type_name_for_llvm_type(*payload_type, context.lowering);
+        }
         bind_switch_payload_value(
             *binding_name,
             *payload_type,

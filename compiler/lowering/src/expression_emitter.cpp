@@ -1892,8 +1892,16 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name && expression.left->text == "Some") {
-        auto maybe_abi = maybe_value_abi_for_llvm_type(expected_llvm_type, context.lowering);
+        auto maybe_abi = expected_source_type_name.has_value()
+            ? maybe_value_abi_for_source_type(*expected_source_type_name, context.lowering)
+            : maybe_value_abi_for_llvm_type(expected_llvm_type, context.lowering);
+        if (maybe_abi.has_value() && maybe_abi->llvm_type != expected_llvm_type) {
+            maybe_abi = std::nullopt;
+        }
         if (maybe_abi.has_value() && expression.arguments.size() == 1) {
+            auto payload_source_type_name = maybe_abi->payload_source_type_name.empty()
+                ? std::optional<std::string_view> {}
+                : std::optional<std::string_view> {maybe_abi->payload_source_type_name};
             auto payload = lowered_expression(
                 expression.arguments.front(),
                 maybe_abi->payload_llvm_type,
@@ -1905,7 +1913,8 @@ auto lowered_expression(
                 ),
                 context,
                 session,
-                output
+                output,
+                payload_source_type_name
             );
             if (!payload.has_value()) {
                 return std::nullopt;

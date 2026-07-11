@@ -609,6 +609,82 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_let_ternary_run.or",
         sourced_scalar_choice_let_ternary_lines
     );
+    auto sourced_scalar_choice_some_return_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function choose() -> Maybe<LocalStatus>",
+        "    Some(Ready(19 as UInt32))",
+        "function main() -> UInt32",
+        "    switch choose()",
+        "        Some(status) =>",
+        "            switch status",
+        "                Ready(code) => code - 19 as UInt32",
+        "                Empty => 1 as UInt32",
+        "        Empty => 2 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_some_return_emit.or",
+        sourced_scalar_choice_some_return_lines,
+        {
+            "define { i1, { i32, i32 } } @choose",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 19, 1",
+            "insertvalue { i1, { i32, i32 } } undef, i1 true, 0",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_some_return_run.or",
+        sourced_scalar_choice_some_return_lines
+    );
+    auto sourced_scalar_choice_some_let_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function main() -> UInt32",
+        "    let maybe_status: Maybe<LocalStatus> = Some(Ready(23 as UInt32))",
+        "    switch maybe_status",
+        "        Some(status) =>",
+        "            switch status",
+        "                Ready(code) => code - 23 as UInt32",
+        "                Empty => 1 as UInt32",
+        "        Empty => 2 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_some_let_emit.or",
+        sourced_scalar_choice_some_let_lines,
+        {
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 23, 1",
+            "insertvalue { i1, { i32, i32 } } undef, i1 true, 0",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_some_let_run.or",
+        sourced_scalar_choice_some_let_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
