@@ -148,6 +148,7 @@ auto lower_thread_let_statement(
 struct LoweredAssignmentTarget {
     LoweredType type;
     std::string pointer;
+    std::optional<std::string> source_type_name;
 };
 
 auto lower_assignment_target(
@@ -166,6 +167,13 @@ auto lower_assignment_target(
         return LoweredAssignmentTarget {
             .type = binding->second.type,
             .pointer = binding->second.storage,
+            .source_type_name = [&]() -> std::optional<std::string> {
+                auto source_type = session.state.source_type_names.find(target.text);
+                if (source_type == session.state.source_type_names.end()) {
+                    return std::nullopt;
+                }
+                return source_type->second;
+            }(),
         };
     }
 
@@ -302,6 +310,7 @@ auto lower_assignment_target(
     return LoweredAssignmentTarget {
         .type = std::move(*lowered_type),
         .pointer = std::move(cursor->pointer),
+        .source_type_name = cursor->source_type_name,
     };
 }
 
@@ -863,7 +872,8 @@ auto lower_assignment_statement(
         target->type.signedness,
         context,
         session,
-        output
+        output,
+        target->source_type_name
     );
     if (!lowered.has_value()) {
         diagnostics.error(

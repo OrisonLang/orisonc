@@ -514,6 +514,38 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_var_initializer_run.or",
         sourced_scalar_choice_var_initializer_lines
     );
+    auto sourced_scalar_choice_assignment_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "function main() -> UInt32",
+        "    var status: LocalStatus = Empty",
+        "    status = Ready(11 as UInt32)",
+        "    switch status",
+        "        Ready(code) => code - 11 as UInt32",
+        "        Empty => 1 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_assignment_emit.or",
+        sourced_scalar_choice_assignment_lines,
+        {
+            "alloca { i32, i32 }",
+            "insertvalue { i32, i32 } undef, i32 1, 0",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 11, 1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_assignment_run.or",
+        sourced_scalar_choice_assignment_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
