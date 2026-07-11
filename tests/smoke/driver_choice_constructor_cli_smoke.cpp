@@ -86,6 +86,25 @@ void assert_cli_emit_llvm_success(
 }
 
 template <typename SourceLines>
+void assert_cli_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    SourceLines const& lines,
+    std::string_view expected_message
+) {
+    {
+        std::ofstream output(path);
+        for (auto line : lines) {
+            output << line << '\n';
+        }
+    }
+
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+}
+
+template <typename SourceLines>
 void assert_cli_run_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path,
@@ -224,6 +243,63 @@ auto main() -> int {
         executable,
         smoke_temp_root / "orison_cli_choice_switch_run.or",
         scalar_choice_switch_lines
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice PairStatus",
+            "    Ready(left: UInt32, right: UInt32)",
+            "    Empty",
+            "function make_status() -> PairStatus",
+            "    Ready(1 as UInt32, 2 as UInt32)",
+        },
+        "lowering does not yet support this function return type"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        smoke_temp_root / "orison_cli_aggregate_payload_choice_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    code: UInt32",
+            "choice PayloadStatus",
+            "    Ready(payload: Payload)",
+            "    Empty",
+            "function make_status() -> PayloadStatus",
+            "    Ready(Payload(7 as UInt32))",
+        },
+        "lowering does not yet support this function return type"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        smoke_temp_root / "orison_cli_generic_choice_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Boxed<T>",
+            "    Wrap(value: T)",
+            "    Empty",
+            "function make_boxed() -> Boxed<UInt32>",
+            "    Wrap(7 as UInt32)",
+        },
+        "lowering does not yet support this function return type"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        smoke_temp_root / "orison_cli_ambiguous_choice_layout_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice LocalStatus",
+            "    Ready(code: UInt32)",
+            "    Empty",
+            "choice RemoteStatus",
+            "    Ready(code: UInt32)",
+            "    Empty",
+            "function make_status() -> LocalStatus",
+            "    Ready(7 as UInt32)",
+        },
+        "lowering does not yet support this return expression"
     );
 
     assert_cli_parse_failure(
