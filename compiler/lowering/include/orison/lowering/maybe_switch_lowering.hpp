@@ -23,7 +23,7 @@ auto switch_subject_for_emit(
     std::ostream& output
 ) -> LoweredExpression;
 
-void bind_maybe_switch_payload(
+void bind_switch_payload(
     LoweredSwitchCasePlan const& planned_case,
     LoweredExpression const& subject,
     LoweringEmissionContext const& context,

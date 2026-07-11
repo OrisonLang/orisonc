@@ -472,7 +472,7 @@ auto lower_unit_switch_statement(
         binding_scope.reset();
         emit_llvm_block_label(output, planned_case.block);
         session.state.current_block = planned_case.block;
-        bind_maybe_switch_payload(planned_case, original_subject, context, session, output);
+        bind_switch_payload(planned_case, original_subject, context, session, output);
 
         auto case_flow = lower_unit_statement_block(
             planned_case.syntax->statements,
@@ -982,7 +982,7 @@ auto lower_nonvoid_switch_statement(
         binding_scope.reset();
         emit_llvm_block_label(output, planned_case.block);
         session.state.current_block = planned_case.block;
-        bind_maybe_switch_payload(planned_case, original_subject, context, session, output);
+        bind_switch_payload(planned_case, original_subject, context, session, output);
 
         auto case_flow = lower_guard_statement_block(
             planned_case.syntax->statements,

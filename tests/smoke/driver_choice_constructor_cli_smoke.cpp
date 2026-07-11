@@ -201,10 +201,10 @@ auto main() -> int {
         "    Ready(7 as UInt32)",
         "function classify_status() -> UInt32",
         "    switch make_status()",
-        "        Ready(code) => 1 as UInt32",
+        "        Ready(code) => code",
         "        Empty => 0 as UInt32",
         "function main() -> UInt32",
-        "    return classify_status() - 1 as UInt32",
+        "    return classify_status() - 7 as UInt32",
     };
     assert_cli_emit_llvm_success(
         executable,
@@ -216,6 +216,7 @@ auto main() -> int {
             "switch i32",
             "i32 0, label %switch.case",
             "i32 1, label %switch.case",
+            "ret i32 %",
             "ret i32",
         }
     );

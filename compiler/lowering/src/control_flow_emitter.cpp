@@ -297,7 +297,7 @@ auto lower_final_switch_statement(
             .before_case = [](void* opaque, LoweredSwitchCasePlan const& planned_case) {
                 auto& current = *static_cast<CaseContext*>(opaque);
                 current.binding_scope.reset();
-                bind_maybe_switch_payload(
+                bind_switch_payload(
                     planned_case,
                     current.original_subject,
                     current.context,
