@@ -824,6 +824,82 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_call_argument_run.or",
         sourced_scalar_choice_maybe_call_argument_lines
     );
+    auto sourced_scalar_choice_member_call_argument_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "extend UInt32",
+        "    function observe(this: shared This, status: LocalStatus) -> UInt32",
+        "        switch status",
+        "            Ready(code) => code",
+        "            Empty => this",
+        "function main() -> UInt32",
+        "    let value: UInt32 = 0 as UInt32",
+        "    value.observe(Ready(43 as UInt32)) - 43 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_member_call_argument_emit.or",
+        sourced_scalar_choice_member_call_argument_lines,
+        {
+            "define i32 @method.UInt32.observe(i32 %this, { i32, i32 } %status)",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 43, 1",
+            "call i32 @method.UInt32.observe(i32 %value, { i32, i32 }",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_member_call_argument_run.or",
+        sourced_scalar_choice_member_call_argument_lines
+    );
+    auto sourced_scalar_choice_maybe_member_call_argument_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "extend UInt32",
+        "    function observe(this: shared This, maybe_status: Maybe<LocalStatus>) -> UInt32",
+        "        switch maybe_status",
+        "            Some(status) =>",
+        "                switch status",
+        "                    Ready(code) => code",
+        "                    Empty => this",
+        "            Empty => 2 as UInt32",
+        "function main() -> UInt32",
+        "    let value: UInt32 = 0 as UInt32",
+        "    value.observe(Some(Ready(47 as UInt32))) - 47 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_member_call_argument_emit.or",
+        sourced_scalar_choice_maybe_member_call_argument_lines,
+        {
+            "define i32 @method.UInt32.observe(i32 %this, { i1, { i32, i32 } } %maybe_status)",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 47, 1",
+            "insertvalue { i1, { i32, i32 } } undef, i1 true, 0",
+            "call i32 @method.UInt32.observe(i32 %value, { i1, { i32, i32 } }",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_member_call_argument_run.or",
+        sourced_scalar_choice_maybe_member_call_argument_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
