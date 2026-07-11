@@ -58,6 +58,10 @@ void assert_success_with_stdout_contains(
     assert(result.exit_code == 0);
     assert(result.stderr_text.empty());
     for (auto expected_fragment : expected_fragments) {
+        if (result.stdout_text.find(expected_fragment) == std::string::npos) {
+            std::cerr << "missing expected fragment: " << expected_fragment << "\n";
+            std::cerr << result.stdout_text;
+        }
         assert(result.stdout_text.find(expected_fragment) != std::string::npos);
     }
 }
@@ -190,6 +194,38 @@ auto main() -> int {
         }
     );
 
+    auto emit_maybe_record_switch_payload_path = std::filesystem::temp_directory_path() /
+        "emit_maybe_record_switch_payload.or";
+    write_fixture(
+        emit_maybe_record_switch_payload_path,
+        "demo.record_payload",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Profile",
+            "    rating: UInt32",
+            "function main() -> UInt32",
+            "    let profile: Maybe<Profile> = Some(Profile(9 as UInt32))",
+            "    switch profile",
+            "        Some(value) => value.rating",
+            "        Empty => 0 as UInt32",
+        }
+    );
+    auto emit_maybe_record_switch_payload = run_emit_llvm(app, emit_maybe_record_switch_payload_path);
+    assert_success_with_stdout_contains(
+        emit_maybe_record_switch_payload,
+        {
+            "%record.Profile = type { i32 }",
+            "extractvalue { i1, %record.Profile }",
+            "%value.addr = alloca %record.Profile",
+            "store %record.Profile",
+            "getelementptr %record.Profile, ptr %value.addr, i32 0, i32 0",
+            "load i32",
+            "ret i32",
+        }
+    );
+
     auto run_null_safe_paths = std::filesystem::temp_directory_path() /
         "run_null_safe_paths.or";
     write_fixture(
@@ -230,6 +266,16 @@ auto main() -> int {
             "    switch rating",
             "        Some(value) => return 1 as UInt32",
             "        Empty => return 0 as UInt32",
+            "function final_record_payload_score() -> UInt32",
+            "    let profile: Maybe<Profile> = Some(Profile(9 as UInt32))",
+            "    switch profile",
+            "        Some(value) => value.rating",
+            "        Empty => 0 as UInt32",
+            "function return_record_payload_score() -> UInt32",
+            "    let profile: Maybe<Profile> = Some(Profile(11 as UInt32))",
+            "    switch profile",
+            "        Some(value) => return value.rating",
+            "        Empty => return 0 as UInt32",
             "function main() -> UInt32",
             "    let empty_user: Maybe<User> = Empty",
             "    let empty_rating: Maybe<UInt32> = empty_user?.profile?.rating",
@@ -239,7 +285,7 @@ auto main() -> int {
             "    let absent_profile: Maybe<Profile> = Empty",
             "    let nested_absent_user: Maybe<User> = Some(User(absent_profile))",
             "    let nested_absent_rating: Maybe<UInt32> = nested_absent_user?.profile?.rating",
-            "    return final_present_score() + return_present_score() + final_empty_score() + return_nested_absent_score() - 14 as UInt32",
+            "    return final_present_score() + return_present_score() + final_empty_score() + return_nested_absent_score() + final_record_payload_score() + return_record_payload_score() - 34 as UInt32",
         }
     );
     assert_run_success(run_program(app, run_null_safe_paths));

@@ -1,5 +1,6 @@
 #include "orison/lowering/maybe_switch_lowering.hpp"
 
+#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/source_type_queries.hpp"
@@ -95,11 +96,13 @@ void bind_maybe_switch_payload(
         session.state.source_type_names[*binding_name] = std::move(*source_type);
     }
     output << "  " << payload << " = extractvalue " << subject.type << " " << subject.value << ", 1\n";
-    session.state.immutable_bindings[*binding_name] = LoweredExpression {
+    auto lowered_payload = LoweredExpression {
         .type = *payload_type,
         .value = std::move(payload),
         .signedness = payload_signedness,
     };
+    session.state.immutable_bindings[*binding_name] = lowered_payload;
+    bind_addressable_aggregate_value(*binding_name, lowered_payload, session, output);
 }
 
 }  // namespace orison::lowering
