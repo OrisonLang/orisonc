@@ -998,6 +998,22 @@ add_test(
     COMMAND orison_source_type_queries_smoke
 )
 
+add_executable(orison_maybe_value_emitter_smoke
+    smoke/maybe_value_emitter_smoke.cpp
+)
+
+target_link_libraries(orison_maybe_value_emitter_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_maybe_value_emitter_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_maybe_value_emitter_smoke
+    COMMAND orison_maybe_value_emitter_smoke
+)
+
 add_executable(orison_branch_binding_scope_smoke
     smoke/branch_binding_scope_smoke.cpp
 )
