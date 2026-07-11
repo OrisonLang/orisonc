@@ -952,6 +952,14 @@ auto lower_choice_constructor_expression(
         return std::nullopt;
     }
 
+    if (layout->llvm_type_name == "i32") {
+        return LoweredExpression {
+            .type = layout->llvm_type_name,
+            .value = std::to_string(variant->tag),
+            .signedness = IntegerSignedness::unsigned_integer,
+        };
+    }
+
     auto tag_name = next_llvm_temporary_name(session.state.next_temporary_index);
     output << "  " << tag_name << " = insertvalue " << layout->llvm_type_name << " undef, i32 "
            << variant->tag << ", 0\n";

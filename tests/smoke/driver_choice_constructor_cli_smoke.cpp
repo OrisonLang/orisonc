@@ -244,6 +244,41 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_choice_switch_run.or",
         scalar_choice_switch_lines
     );
+    auto tag_only_choice_switch_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice IOError",
+        "    Closed",
+        "    EndOfInput",
+        "    PermissionDenied",
+        "function make_error() -> IOError",
+        "    EndOfInput",
+        "function classify_error() -> UInt32",
+        "    switch make_error()",
+        "        Closed => 1 as UInt32",
+        "        EndOfInput => 2 as UInt32",
+        "        PermissionDenied => 3 as UInt32",
+        "function main() -> UInt32",
+        "    return classify_error() - 2 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_tag_only_choice_switch_emit.or",
+        tag_only_choice_switch_lines,
+        {
+            "define i32 @make_error()",
+            "ret i32 1",
+            "define i32 @classify_error()",
+            "switch i32",
+            "i32 0, label %switch.case",
+            "i32 1, label %switch.case",
+            "i32 2, label %switch.case",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_tag_only_choice_switch_run.or",
+        tag_only_choice_switch_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",

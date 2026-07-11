@@ -207,6 +207,7 @@ auto collect_choice_layout(
     };
     layout.variants.reserve(choice.variants.size());
     auto payload_llvm_type = std::optional<std::string> {};
+    auto has_payload = false;
     auto supports_scalar_payload_abi = choice.generic_parameters.empty();
     if (!supports_scalar_payload_abi) {
         layout.unsupported_abi_reason = "generic choices do not yet have a lowered choice ABI";
@@ -225,6 +226,7 @@ auto collect_choice_layout(
         }
         lowered_variant.payloads.reserve(variant.payloads.size());
         for (auto payload_index = std::size_t {0}; payload_index < variant.payloads.size(); ++payload_index) {
+            has_payload = true;
             auto const& payload = variant.payloads[payload_index];
             auto payload_llvm = llvm_field_type_for(payload.type, record_names);
             if (!is_supported_choice_payload_llvm_type(payload_llvm)) {
@@ -252,8 +254,8 @@ auto collect_choice_layout(
         }
         layout.variants.push_back(std::move(lowered_variant));
     }
-    if (supports_scalar_payload_abi && payload_llvm_type.has_value()) {
-        layout.llvm_type_name = "{ i32, " + *payload_llvm_type + " }";
+    if (supports_scalar_payload_abi) {
+        layout.llvm_type_name = has_payload ? "{ i32, " + *payload_llvm_type + " }" : "i32";
         layout.unsupported_abi_reason.clear();
     }
     return layout;

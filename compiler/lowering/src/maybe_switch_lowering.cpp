@@ -128,8 +128,11 @@ auto switch_subject_for_emit(
     FunctionLoweringSession& session,
     std::ostream& output
 ) -> LoweredExpression {
-    if (!subject.type.starts_with("{ i1,") &&
-        find_lowered_choice_layout_by_llvm_type(context.lowering, subject.type) == nullptr) {
+    auto const* choice = find_lowered_choice_layout_by_llvm_type(context.lowering, subject.type);
+    if (!subject.type.starts_with("{ i1,") && choice == nullptr) {
+        return subject;
+    }
+    if (choice != nullptr && choice->llvm_type_name == "i32") {
         return subject;
     }
 
