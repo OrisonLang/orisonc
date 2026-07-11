@@ -1,5 +1,7 @@
 #include "orison/lowering/function_signature.hpp"
 
+#include "orison/lowering/member_call_receiver.hpp"
+
 #include <utility>
 
 namespace orison::lowering {
@@ -59,11 +61,13 @@ auto lower_function_signature(
         signature.return_type = std::move(*lowered_return_type);
     }
     signature.parameter_types.reserve(parameters.size());
+    signature.parameter_source_type_names.reserve(parameters.size());
     for (auto const& parameter : parameters) {
         auto lowered_parameter_type = lowered_function_type_for(parameter.type);
         signature.parameter_types.push_back(lowered_parameter_type.has_value()
                                                 ? std::move(*lowered_parameter_type)
                                                 : std::string {});
+        signature.parameter_source_type_names.push_back(render_source_type_name(parameter.type));
     }
     return signature;
 }

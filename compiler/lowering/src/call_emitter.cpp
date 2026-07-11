@@ -60,6 +60,13 @@ auto lower_call_arguments_impl(
 
     auto lowered_arguments = std::vector<LoweredExpression> {};
     lowered_arguments.reserve(expected_argument_count);
+    auto expected_source_type_for_parameter = [&](std::size_t index) -> std::optional<std::string_view> {
+        if (index >= function.parameter_source_type_names.size() ||
+            function.parameter_source_type_names[index].empty()) {
+            return std::nullopt;
+        }
+        return function.parameter_source_type_names[index];
+    };
 
     auto parameter_index = std::size_t {0};
     if (receiver_expression != nullptr) {
@@ -69,7 +76,8 @@ auto lower_call_arguments_impl(
             function.parameter_signedness.front(),
             context,
             session,
-            output
+            output,
+            expected_source_type_for_parameter(0)
         );
         if (!lowered_receiver.has_value()) {
             return std::nullopt;
@@ -85,7 +93,8 @@ auto lower_call_arguments_impl(
             function.parameter_signedness[index + parameter_index],
             context,
             session,
-            output
+            output,
+            expected_source_type_for_parameter(index + parameter_index)
         );
         if (!argument.has_value()) {
             return std::nullopt;

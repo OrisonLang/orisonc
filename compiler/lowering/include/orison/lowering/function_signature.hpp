@@ -15,6 +15,7 @@ struct LoweredFunctionSignature {
     std::string source_return_type_name;
     IntegerSignedness return_signedness = IntegerSignedness::not_integer;
     std::vector<std::string> parameter_types;
+    std::vector<std::string> parameter_source_type_names;
     std::vector<IntegerSignedness> parameter_signedness;
     std::string symbol_name;
     CAbiAdapterKind adapter = CAbiAdapterKind::none;
