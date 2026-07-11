@@ -194,6 +194,20 @@ auto source_type_name_for_llvm_type(
             return record_name;
         }
     }
+    auto choice_source_type = std::optional<std::string> {};
+    for (auto const& [choice_name, layout] : context.choices) {
+        (void)choice_name;
+        if (layout.llvm_type_name != llvm_type) {
+            continue;
+        }
+        if (choice_source_type.has_value()) {
+            return std::nullopt;
+        }
+        choice_source_type = layout.source_type_name;
+    }
+    if (choice_source_type.has_value()) {
+        return choice_source_type;
+    }
 
     if (auto array = parse_llvm_array_type(llvm_type)) {
         auto element_source_type = source_type_name_for_llvm_type(array->element_type, context);
@@ -250,6 +264,13 @@ auto lowered_type_for_source_type_name(
     if (auto record = context.records.find(std::string(type_name)); record != context.records.end()) {
         return LoweredType {
             .type = record->second.llvm_type_name,
+            .signedness = IntegerSignedness::not_integer,
+        };
+    }
+    if (auto choice = context.choices.find(std::string(type_name));
+        choice != context.choices.end() && !choice->second.llvm_type_name.empty()) {
+        return LoweredType {
+            .type = choice->second.llvm_type_name,
             .signedness = IntegerSignedness::not_integer,
         };
     }

@@ -860,6 +860,110 @@ auto lower_record_constructor_expression(
     };
 }
 
+auto find_choice_variant(
+    LoweredChoiceLayout const& layout,
+    std::string_view variant_name
+) -> LoweredChoiceVariant const* {
+    for (auto const& variant : layout.variants) {
+        if (variant.name == variant_name) {
+            return &variant;
+        }
+    }
+    return nullptr;
+}
+
+auto choice_constructor_layout_for(
+    std::string_view variant_name,
+    std::string_view expected_llvm_type,
+    LoweringContext const& context
+) -> LoweredChoiceLayout const* {
+    auto const* match = static_cast<LoweredChoiceLayout const*>(nullptr);
+    for (auto const& [choice_name, layout] : context.choices) {
+        (void)choice_name;
+        if (layout.llvm_type_name != expected_llvm_type || find_choice_variant(layout, variant_name) == nullptr) {
+            continue;
+        }
+        if (match != nullptr) {
+            return nullptr;
+        }
+        match = &layout;
+    }
+    return match;
+}
+
+auto lower_choice_constructor_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    LoweringFailures& failures,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    auto const* constructor_name = static_cast<std::string const*>(nullptr);
+    auto const* arguments = static_cast<std::vector<syntax::ExpressionSyntax> const*>(nullptr);
+    if (expression.kind == syntax::ExpressionKind::name) {
+        constructor_name = &expression.text;
+    } else if (expression.kind == syntax::ExpressionKind::call &&
+               expression.left != nullptr &&
+               expression.left->kind == syntax::ExpressionKind::name) {
+        constructor_name = &expression.left->text;
+        arguments = &expression.arguments;
+    }
+    if (constructor_name == nullptr) {
+        return std::nullopt;
+    }
+
+    auto const* layout = choice_constructor_layout_for(*constructor_name, expected_llvm_type, context.lowering);
+    if (layout == nullptr) {
+        return std::nullopt;
+    }
+    auto const* variant = find_choice_variant(*layout, *constructor_name);
+    if (variant == nullptr) {
+        return std::nullopt;
+    }
+
+    auto const argument_count = arguments == nullptr ? std::size_t {0} : arguments->size();
+    if (argument_count != variant->payloads.size()) {
+        record_expression_lowering_failure(
+            failures,
+            ExpressionLoweringFailureReason::call_arity_mismatch,
+            *constructor_name + " expects " + std::to_string(variant->payloads.size()) +
+                " arguments, got " + std::to_string(argument_count)
+        );
+        return std::nullopt;
+    }
+
+    auto tag_name = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << tag_name << " = insertvalue " << layout->llvm_type_name << " undef, i32 "
+           << variant->tag << ", 0\n";
+    auto aggregate_value = std::move(tag_name);
+    if (!variant->payloads.empty()) {
+        auto const& payload = variant->payloads.front();
+        auto lowered_payload = lowered_expression(
+            arguments->front(),
+            payload.llvm_type,
+            integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
+            context,
+            session,
+            output
+        );
+        if (!lowered_payload.has_value()) {
+            return std::nullopt;
+        }
+        auto payload_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << payload_name << " = insertvalue " << layout->llvm_type_name << " "
+               << aggregate_value << ", " << payload.llvm_type << " " << lowered_payload->value
+               << ", 1\n";
+        aggregate_value = std::move(payload_name);
+    }
+
+    return LoweredExpression {
+        .type = layout->llvm_type_name,
+        .value = std::move(aggregate_value),
+        .signedness = IntegerSignedness::not_integer,
+    };
+}
+
 struct AggregateAddressBase {
     std::string pointer_value;
     std::string source_type_name;
@@ -1733,6 +1837,17 @@ auto lowered_expression(
         if (auto maybe_abi = maybe_value_abi_for_llvm_type(expected_llvm_type, context.lowering)) {
             return emit_empty_maybe_value(*maybe_abi, state.next_temporary_index, output);
         }
+    }
+
+    if (auto choice_constructor = lower_choice_constructor_expression(
+            expression,
+            expected_llvm_type,
+            context,
+            session,
+            failures,
+            output
+        )) {
+        return choice_constructor;
     }
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&

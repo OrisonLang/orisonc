@@ -23,6 +23,10 @@ int main() {
         .name = "main",
         .return_type = TypeSyntax {.name = "Int32"},
     });
+    module.functions.push_back(FunctionSyntax {
+        .name = "make_status",
+        .return_type = TypeSyntax {.name = "Status"},
+    });
     module.records.push_back(RecordSyntax {
         .name = "UartRegisters",
         .fields = {
@@ -148,6 +152,21 @@ int main() {
             },
         },
     });
+    module.choices.push_back(ChoiceSyntax {
+        .name = "Status",
+        .variants = {
+            ChoiceVariantSyntax {
+                .name = "Ready",
+                .payloads = {
+                    NamedTypeSyntax {
+                        .name = "code",
+                        .type = TypeSyntax {.name = "UInt32"},
+                    },
+                },
+            },
+            ChoiceVariantSyntax {.name = "Empty"},
+        },
+    });
     auto implementation = ImplementationSyntax {
         .interface_type = TypeSyntax {.name = "Reader"},
         .receiver_type = TypeSyntax {.name = "Device"},
@@ -212,9 +231,9 @@ int main() {
     auto diagnostics = orison::diagnostics::DiagnosticBag {};
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
-    assert(context.functions.size() == 2);
+    assert(context.functions.size() == 3);
     assert(context.records.size() == 7);
-    assert(context.choices.size() == 2);
+    assert(context.choices.size() == 3);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
     assert(context.records.contains("UartRegisters"));
@@ -287,6 +306,7 @@ int main() {
     auto const& expression_layout = context.choices.at("Expression");
     assert(expression_layout.name == "Expression");
     assert(expression_layout.source_type_name == "Expression");
+    assert(expression_layout.llvm_type_name.empty());
     assert(expression_layout.generic_parameters.empty());
     assert(expression_layout.variants.size() == 2);
     assert(expression_layout.variants[0].name == "Int");
@@ -307,6 +327,23 @@ int main() {
     assert(expression_layout.variants[1].payloads[1].source_type_name == "Profile");
     assert(expression_layout.variants[1].payloads[1].llvm_type == "%record.Profile");
     assert(expression_layout.variants[1].payloads[1].index == 1);
+    assert(context.choices.contains("Status"));
+    auto const& status_layout = context.choices.at("Status");
+    assert(status_layout.name == "Status");
+    assert(status_layout.source_type_name == "Status");
+    assert(status_layout.llvm_type_name == "{ i32, i32 }");
+    assert(status_layout.variants.size() == 2);
+    assert(status_layout.variants[0].name == "Ready");
+    assert(status_layout.variants[0].tag == 0);
+    assert(status_layout.variants[0].payloads.size() == 1);
+    assert(status_layout.variants[0].payloads[0].name == "code");
+    assert(status_layout.variants[0].payloads[0].source_type_name == "UInt32");
+    assert(status_layout.variants[0].payloads[0].llvm_type == "i32");
+    assert(status_layout.variants[1].name == "Empty");
+    assert(status_layout.variants[1].tag == 1);
+    assert(status_layout.variants[1].payloads.empty());
+    assert(context.functions.at("make_status").return_type == "{ i32, i32 }");
+    assert(context.functions.at("make_status").return_signedness == orison::lowering::IntegerSignedness::not_integer);
     assert(context.methods[0].receiver_type_name == "Device");
     assert(context.methods[0].method_name == "read");
     assert(context.methods[0].signature.symbol_name == "method.Device.read");

@@ -5,6 +5,7 @@
 #include "orison/lowering/type_lowering.hpp"
 
 #include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
@@ -33,16 +34,34 @@ auto contextual_record_type_for(
     return std::nullopt;
 }
 
+auto contextual_choice_type_for(
+    syntax::TypeSyntax const& type,
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+) -> std::optional<std::string> {
+    if (!type.generic_arguments.empty()) {
+        return std::nullopt;
+    }
+    auto choice = choices.find(type.name);
+    if (choice == choices.end() || choice->second.llvm_type_name.empty()) {
+        return std::nullopt;
+    }
+    return choice->second.llvm_type_name;
+}
+
 auto lower_contextual_function_signature(
     syntax::TypeSyntax const& return_type,
     std::vector<syntax::ParameterSyntax> const& parameters,
     std::string symbol_name,
-    std::unordered_set<std::string> const& record_names
+    std::unordered_set<std::string> const& record_names,
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
 ) -> LoweredFunctionSignature {
     auto signature = lower_function_signature(return_type, parameters, std::move(symbol_name));
     if (signature.return_type.empty()) {
         if (auto record_type = contextual_record_type_for(return_type, record_names)) {
             signature.return_type = std::move(*record_type);
+            signature.return_signedness = IntegerSignedness::not_integer;
+        } else if (auto choice_type = contextual_choice_type_for(return_type, choices)) {
+            signature.return_type = std::move(*choice_type);
             signature.return_signedness = IntegerSignedness::not_integer;
         }
     }
@@ -54,6 +73,9 @@ auto lower_contextual_function_signature(
         if (auto record_type = contextual_record_type_for(parameters[index].type, record_names)) {
             signature.parameter_types[index] = std::move(*record_type);
             signature.parameter_signedness[index] = IntegerSignedness::not_integer;
+        } else if (auto choice_type = contextual_choice_type_for(parameters[index].type, choices)) {
+            signature.parameter_types[index] = std::move(*choice_type);
+            signature.parameter_signedness[index] = IntegerSignedness::not_integer;
         }
     }
     return signature;
@@ -63,7 +85,8 @@ auto lower_method_signature(
     syntax::TypeSyntax const& receiver_type,
     syntax::FunctionSyntax const& method,
     std::string symbol_name,
-    std::unordered_set<std::string> const& record_names
+    std::unordered_set<std::string> const& record_names,
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
 ) -> LoweredFunctionSignature {
     auto parameters = method.parameters;
     for (auto& parameter : parameters) {
@@ -75,7 +98,8 @@ auto lower_method_signature(
         method.return_type,
         parameters,
         std::move(symbol_name),
-        record_names
+        record_names,
+        choices
     );
 }
 
@@ -83,13 +107,14 @@ auto collect_method_signature(
     syntax::TypeSyntax const& receiver_type,
     std::string receiver_type_name,
     syntax::FunctionSyntax const& method,
-    std::unordered_set<std::string> const& record_names
+    std::unordered_set<std::string> const& record_names,
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
 ) -> LoweredMethodSignature {
     auto symbol_name = lowered_method_symbol_name(receiver_type_name, method.name);
     return LoweredMethodSignature {
         .receiver_type_name = receiver_type_name,
         .method_name = method.name,
-        .signature = lower_method_signature(receiver_type, method, std::move(symbol_name), record_names),
+        .signature = lower_method_signature(receiver_type, method, std::move(symbol_name), record_names, choices),
     };
 }
 
@@ -129,6 +154,16 @@ auto llvm_field_type_for(
         }
     }
     return {};
+}
+
+auto is_supported_choice_payload_llvm_type(std::string_view type) -> bool {
+    return type == "i1" ||
+           type == "i8" ||
+           type == "i16" ||
+           type == "i32" ||
+           type == "i64" ||
+           type == "float" ||
+           type == "double";
 }
 
 auto collect_record_layout(
@@ -171,23 +206,39 @@ auto collect_choice_layout(
         .generic_parameters = choice.generic_parameters,
     };
     layout.variants.reserve(choice.variants.size());
+    auto payload_llvm_type = std::optional<std::string> {};
+    auto supports_scalar_payload_abi = choice.generic_parameters.empty();
     for (auto variant_index = std::size_t {0}; variant_index < choice.variants.size(); ++variant_index) {
         auto const& variant = choice.variants[variant_index];
         auto lowered_variant = LoweredChoiceVariant {
             .name = variant.name,
             .tag = variant_index,
         };
+        if (variant.payloads.size() > 1) {
+            supports_scalar_payload_abi = false;
+        }
         lowered_variant.payloads.reserve(variant.payloads.size());
         for (auto payload_index = std::size_t {0}; payload_index < variant.payloads.size(); ++payload_index) {
             auto const& payload = variant.payloads[payload_index];
+            auto payload_llvm = llvm_field_type_for(payload.type, record_names);
+            if (!is_supported_choice_payload_llvm_type(payload_llvm)) {
+                supports_scalar_payload_abi = false;
+            } else if (!payload_llvm_type.has_value()) {
+                payload_llvm_type = payload_llvm;
+            } else if (*payload_llvm_type != payload_llvm) {
+                supports_scalar_payload_abi = false;
+            }
             lowered_variant.payloads.push_back(LoweredChoicePayload {
                 .name = payload.name,
                 .source_type_name = render_source_type_name(payload.type),
-                .llvm_type = llvm_field_type_for(payload.type, record_names),
+                .llvm_type = std::move(payload_llvm),
                 .index = payload_index,
             });
         }
         layout.variants.push_back(std::move(lowered_variant));
+    }
+    if (supports_scalar_payload_abi && payload_llvm_type.has_value()) {
+        layout.llvm_type_name = "{ i32, " + *payload_llvm_type + " }";
     }
     return layout;
 }
@@ -215,7 +266,8 @@ auto build_lowering_context(
             function.return_type,
             function.parameters,
             function.name,
-            record_names
+            record_names,
+            context.choices
         );
         context.functions.emplace(function.name, std::move(signature));
     }
@@ -224,10 +276,11 @@ auto build_lowering_context(
         auto receiver_type_name = render_source_type_name(implementation.receiver_type);
         for (auto const& method : implementation.methods) {
             context.methods.push_back(collect_method_signature(
-                implementation.receiver_type,
-                receiver_type_name,
-                method,
-                record_names
+                    implementation.receiver_type,
+                    receiver_type_name,
+                    method,
+                    record_names,
+                    context.choices
             ));
         }
     }
@@ -236,10 +289,11 @@ auto build_lowering_context(
         auto receiver_type_name = render_source_type_name(extension.receiver_type);
         for (auto const& method : extension.methods) {
             context.methods.push_back(collect_method_signature(
-                extension.receiver_type,
-                receiver_type_name,
-                method,
-                record_names
+                    extension.receiver_type,
+                    receiver_type_name,
+                    method,
+                    record_names,
+                    context.choices
             ));
         }
     }

@@ -29,6 +29,22 @@ auto read_failing_command_output(std::string const& command) -> std::string {
     return output;
 }
 
+auto read_successful_command_output(std::string const& command) -> std::string {
+    std::array<char, 256> buffer {};
+    std::string output;
+
+    FILE* pipe = popen((command + " 2>&1").c_str(), "r");
+    assert(pipe != nullptr);
+
+    while (std::fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) != nullptr) {
+        output += buffer.data();
+    }
+
+    auto status = pclose(pipe);
+    assert(status == 0);
+    return output;
+}
+
 template <typename SourceLines>
 void assert_cli_parse_failure(
     std::filesystem::path const& executable,
@@ -46,6 +62,27 @@ void assert_cli_parse_failure(
     auto command = executable.string() + " --parse " + path.string();
     auto output = read_failing_command_output(command);
     assert(output.find(expected_message) != std::string::npos);
+}
+
+template <typename SourceLines>
+void assert_cli_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    SourceLines const& lines,
+    std::initializer_list<std::string_view> expected_fragments
+) {
+    {
+        std::ofstream output(path);
+        for (auto line : lines) {
+            output << line << '\n';
+        }
+    }
+
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_successful_command_output(command);
+    for (auto expected_fragment : expected_fragments) {
+        assert(output.find(expected_fragment) != std::string::npos);
+    }
 }
 
 auto status_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
@@ -116,6 +153,28 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
+
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_choice_constructor_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Status",
+            "    Ready(code: UInt32)",
+            "    Empty",
+            "function make_status() -> Status",
+            "    Ready(7 as UInt32)",
+            "function main() -> UInt32",
+            "    return 0 as UInt32",
+        },
+        {
+            "define { i32, i32 } @make_status()",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "insertvalue { i32, i32 }",
+            "i32 7, 1",
+            "ret { i32, i32 }",
+        }
+    );
 
     assert_cli_parse_failure(
         executable,

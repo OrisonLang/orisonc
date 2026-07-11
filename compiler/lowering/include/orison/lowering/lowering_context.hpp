@@ -47,6 +47,7 @@ struct LoweredChoiceVariant {
 struct LoweredChoiceLayout {
     std::string name;
     std::string source_type_name;
+    std::string llvm_type_name;
     std::vector<std::string> generic_parameters;
     std::vector<LoweredChoiceVariant> variants;
 };
