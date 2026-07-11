@@ -147,7 +147,8 @@ auto is_decimal_integer_text(std::string_view text) -> bool {
 
 auto llvm_field_type_for(
     syntax::TypeSyntax const& type,
-    std::unordered_set<std::string> const& record_names
+    std::unordered_set<std::string> const& record_names,
+    std::unordered_map<std::string, LoweredChoiceLayout> const* choices = nullptr
 ) -> std::string {
     if (auto lowered_type = llvm_type_for(type); lowered_type.has_value()) {
         return std::string {*lowered_type};
@@ -155,15 +156,21 @@ auto llvm_field_type_for(
     if (type.generic_arguments.empty() && record_names.contains(type.name)) {
         return lowered_record_type_name(type.name);
     }
+    if (type.generic_arguments.empty() && choices != nullptr) {
+        auto choice = choices->find(type.name);
+        if (choice != choices->end() && !choice->second.llvm_type_name.empty()) {
+            return choice->second.llvm_type_name;
+        }
+    }
     if (type.name == "Array" && type.generic_arguments.size() == 2 &&
         is_decimal_integer_text(type.generic_arguments[1].name)) {
-        auto element_type = llvm_field_type_for(type.generic_arguments[0], record_names);
+        auto element_type = llvm_field_type_for(type.generic_arguments[0], record_names, choices);
         if (!element_type.empty() && element_type != "void") {
             return "[" + type.generic_arguments[1].name + " x " + element_type + "]";
         }
     }
     if (type.name == "Maybe" && type.generic_arguments.size() == 1) {
-        auto payload_type = llvm_field_type_for(type.generic_arguments[0], record_names);
+        auto payload_type = llvm_field_type_for(type.generic_arguments[0], record_names, choices);
         if (!payload_type.empty() && payload_type != "void") {
             return "{ i1, " + payload_type + " }";
         }
@@ -183,7 +190,8 @@ auto is_supported_choice_payload_llvm_type(std::string_view type) -> bool {
 
 auto collect_record_layout(
     syntax::RecordSyntax const& record,
-    std::unordered_set<std::string> const& record_names
+    std::unordered_set<std::string> const& record_names,
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
 ) -> LoweredRecordLayout {
     auto layout = LoweredRecordLayout {
         .name = record.name,
@@ -195,7 +203,7 @@ auto collect_record_layout(
         layout.fields.push_back(LoweredRecordField {
             .name = field.name,
             .source_type_name = render_source_type_name(field.type),
-            .llvm_type = llvm_field_type_for(field.type, record_names),
+            .llvm_type = llvm_field_type_for(field.type, record_names, &choices),
             .index = index,
         });
     }
@@ -287,11 +295,11 @@ auto build_lowering_context(
     for (auto const& record : module.records) {
         record_names.insert(record.name);
     }
-    for (auto const& record : module.records) {
-        context.records.emplace(record.name, collect_record_layout(record, record_names));
-    }
     for (auto const& choice : module.choices) {
         context.choices.emplace(choice.name, collect_choice_layout(choice, record_names));
+    }
+    for (auto const& record : module.records) {
+        context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
     }
 
     for (auto const& function : module.functions) {

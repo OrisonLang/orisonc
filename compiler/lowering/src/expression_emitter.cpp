@@ -850,7 +850,10 @@ auto lower_record_constructor_expression(
             integer_signedness_for(syntax::TypeSyntax {.name = field.source_type_name}),
             context,
             session,
-            output
+            output,
+            field.source_type_name.empty()
+                ? std::optional<std::string_view> {}
+                : std::optional<std::string_view> {field.source_type_name}
         );
         if (!lowered_field.has_value()) {
             return std::nullopt;
