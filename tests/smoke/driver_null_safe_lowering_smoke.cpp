@@ -134,6 +134,43 @@ auto main() -> int {
         }
     );
 
+    auto emit_null_safe_nested_absent_path = std::filesystem::temp_directory_path() /
+        "emit_null_safe_nested_absent_path.or";
+    write_fixture(
+        emit_null_safe_nested_absent_path,
+        "demo.nested_absent",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Profile",
+            "    rating: UInt32",
+            "record User",
+            "    profile: Maybe<Profile>",
+            "function main() -> UInt32",
+            "    let profile: Maybe<Profile> = Empty",
+            "    let user: Maybe<User> = Some(User(profile))",
+            "    let rating: Maybe<UInt32> = user?.profile?.rating",
+            "    return 0 as UInt32",
+        }
+    );
+    auto emit_nested_absent_path = run_emit_llvm(app, emit_null_safe_nested_absent_path);
+    assert_success_with_stdout_contains(
+        emit_nested_absent_path,
+        {
+            "%record.Profile = type { i32 }",
+            "%record.User = type { { i1, %record.Profile } }",
+            "define i32 @main()",
+            "insertvalue { i1, %record.Profile } undef, i1 false, 0",
+            "insertvalue %record.User undef, { i1, %record.Profile }",
+            "insertvalue { i1, %record.User } undef, i1 true, 0",
+            "nullsafe.empty.2:",
+            "nullsafe.some.2:",
+            "phi { i1, i32 }",
+            "ret i32 0",
+        }
+    );
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }
