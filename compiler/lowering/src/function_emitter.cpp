@@ -458,7 +458,18 @@ auto lower_unit_switch_statement(
     auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
 
     auto block_index = next_llvm_block_index(session.state.next_block_index);
-    auto planning = plan_switch(statement.switch_cases, *subject_type, context.lowering, block_index);
+    auto subject_source_type = source_type_name_for_expression(
+        statement.expression,
+        context.lowering,
+        session.state
+    );
+    auto planning = plan_switch(
+        statement.switch_cases,
+        *subject_type,
+        context.lowering,
+        subject_source_type,
+        block_index
+    );
     if (!planning.plan.has_value()) {
         diagnostics.error(
             statement.line,
@@ -968,7 +979,18 @@ auto lower_nonvoid_switch_statement(
     auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
 
     auto block_index = next_llvm_block_index(session.state.next_block_index);
-    auto planning = plan_switch(statement.switch_cases, *subject_type, context.lowering, block_index);
+    auto subject_source_type = source_type_name_for_expression(
+        statement.expression,
+        context.lowering,
+        session.state
+    );
+    auto planning = plan_switch(
+        statement.switch_cases,
+        *subject_type,
+        context.lowering,
+        subject_source_type,
+        block_index
+    );
     if (!planning.plan.has_value()) {
         diagnostics.error(
             statement.line,
@@ -1421,7 +1443,8 @@ void emit_function_body(
             signature.return_signedness,
             context,
             session,
-            output
+            output,
+            render_source_type_name(function.return_type)
         );
     }
     if (!lowered.has_value()) {

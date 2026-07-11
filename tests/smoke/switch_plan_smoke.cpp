@@ -2,6 +2,8 @@
 
 #include <cassert>
 #include <memory>
+#include <optional>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -14,6 +16,7 @@ int main() {
             .type = "i1",
         },
         context,
+        std::nullopt,
         0
     );
     assert(!empty_result.plan.has_value());
@@ -47,6 +50,7 @@ int main() {
             .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
         },
         context,
+        std::nullopt,
         3
     );
     assert(result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
@@ -73,6 +77,7 @@ int main() {
             .type = "i1",
         },
         context,
+        std::nullopt,
         0
     );
     assert(!duplicate_result.plan.has_value());
@@ -91,6 +96,7 @@ int main() {
             .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
         },
         context,
+        std::nullopt,
         1
     );
     assert(!unsupported_result.plan.has_value());
@@ -108,6 +114,7 @@ int main() {
             .type = "i1",
         },
         context,
+        std::nullopt,
         2
     );
     assert(no_default_result.plan.has_value());
@@ -133,6 +140,7 @@ int main() {
             .type = "{ i1, i32 }",
         },
         context,
+        std::nullopt,
         4
     );
     assert(maybe_result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
@@ -188,6 +196,7 @@ int main() {
             .type = "{ i32, i32 }",
         },
         choice_context,
+        std::nullopt,
         5
     );
     assert(choice_result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
@@ -196,5 +205,49 @@ int main() {
     assert(choice_result.plan->cases[0].pattern->value == "0");
     assert(choice_result.plan->cases[1].pattern->type == "i32");
     assert(choice_result.plan->cases[1].pattern->value == "1");
+
+    auto tag_choice_context = orison::lowering::LoweringContext {};
+    tag_choice_context.choices.emplace("LocalStatus", orison::lowering::LoweredChoiceLayout {
+        .name = "LocalStatus",
+        .source_type_name = "LocalStatus",
+        .llvm_type_name = "i32",
+        .variants = {
+            orison::lowering::LoweredChoiceVariant {.name = "Ready", .tag = 0},
+            orison::lowering::LoweredChoiceVariant {.name = "Empty", .tag = 1},
+        },
+    });
+    tag_choice_context.choices.emplace("RemoteStatus", orison::lowering::LoweredChoiceLayout {
+        .name = "RemoteStatus",
+        .source_type_name = "RemoteStatus",
+        .llvm_type_name = "i32",
+        .variants = {
+            orison::lowering::LoweredChoiceVariant {.name = "Ready", .tag = 0},
+            orison::lowering::LoweredChoiceVariant {.name = "Empty", .tag = 1},
+        },
+    });
+    auto tag_choice_cases = std::vector<orison::syntax::SwitchCaseSyntax> {};
+    auto tag_ready_case = orison::syntax::SwitchCaseSyntax {};
+    tag_ready_case.pattern.kind = orison::syntax::ExpressionKind::name;
+    tag_ready_case.pattern.text = "Ready";
+    tag_choice_cases.push_back(std::move(tag_ready_case));
+    auto tag_empty_case = orison::syntax::SwitchCaseSyntax {};
+    tag_empty_case.pattern.kind = orison::syntax::ExpressionKind::name;
+    tag_empty_case.pattern.text = "Empty";
+    tag_choice_cases.push_back(std::move(tag_empty_case));
+
+    auto sourced_tag_result = orison::lowering::plan_switch(
+        tag_choice_cases,
+        orison::lowering::LoweredType {
+            .type = "i32",
+            .signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+        },
+        tag_choice_context,
+        std::string_view {"LocalStatus"},
+        6
+    );
+    assert(sourced_tag_result.failure == orison::lowering::ControlFlowLoweringFailureReason::none);
+    assert(sourced_tag_result.plan.has_value());
+    assert(sourced_tag_result.plan->cases[0].pattern->value == "0");
+    assert(sourced_tag_result.plan->cases[1].pattern->value == "1");
     return 0;
 }

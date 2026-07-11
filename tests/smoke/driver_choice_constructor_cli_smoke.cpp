@@ -279,6 +279,41 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_tag_only_choice_switch_run.or",
         tag_only_choice_switch_lines
     );
+    auto sourced_tag_only_choice_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready",
+        "    Empty",
+        "function make_status() -> LocalStatus",
+        "    Ready",
+        "function classify_status() -> UInt32",
+        "    switch make_status()",
+        "        Ready => 1 as UInt32",
+        "        Empty => 0 as UInt32",
+        "function main() -> UInt32",
+        "    return classify_status() - 1 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_tag_only_choice_emit.or",
+        sourced_tag_only_choice_lines,
+        {
+            "define i32 @make_status()",
+            "ret i32 0",
+            "define i32 @classify_status()",
+            "switch i32",
+            "i32 0, label %switch.case",
+            "i32 1, label %switch.case",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_tag_only_choice_run.or",
+        sourced_tag_only_choice_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
@@ -323,7 +358,7 @@ auto main() -> int {
         "lowering does not yet support Boxed<UInt32> as function return type: "
         "generic choices do not yet have a lowered choice ABI"
     );
-    assert_cli_emit_llvm_failure(
+    assert_cli_emit_llvm_success(
         executable,
         smoke_temp_root / "orison_cli_ambiguous_choice_layout_emit.or",
         std::vector<std::string_view> {
@@ -337,7 +372,10 @@ auto main() -> int {
             "function make_status() -> LocalStatus",
             "    Ready(7 as UInt32)",
         },
-        "choice constructor 'Ready' is ambiguous for lowered choice ABI type '{ i32, i32 }'"
+        {
+            "define { i32, i32 } @make_status()",
+            "ret { i32, i32 }",
+        }
     );
 
     assert_cli_parse_failure(

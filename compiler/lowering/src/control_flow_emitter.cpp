@@ -8,6 +8,7 @@
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/maybe_switch_lowering.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/switch_emitter.hpp"
@@ -259,7 +260,18 @@ auto lower_final_switch_statement(
     auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
 
     auto block_index = next_llvm_block_index(state.next_block_index);
-    auto planning = plan_switch(statement.switch_cases, *subject_type, context.lowering, block_index);
+    auto subject_source_type = source_type_name_for_expression(
+        statement.expression,
+        context.lowering,
+        state
+    );
+    auto planning = plan_switch(
+        statement.switch_cases,
+        *subject_type,
+        context.lowering,
+        subject_source_type,
+        block_index
+    );
     if (!planning.plan.has_value()) {
         record_control_flow_lowering_failure(failures, planning.failure);
         return std::nullopt;

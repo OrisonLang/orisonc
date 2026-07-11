@@ -13,7 +13,8 @@ namespace {
 auto lower_switch_pattern(
     syntax::ExpressionSyntax const& pattern,
     LoweredType const& subject_type,
-    LoweringContext const& context
+    LoweringContext const& context,
+    std::optional<std::string_view> subject_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto const maybe_subject = subject_type.type.starts_with("{ i1,");
     if (maybe_subject && pattern.kind == syntax::ExpressionKind::name && pattern.text == "Empty") {
@@ -35,7 +36,17 @@ auto lower_switch_pattern(
         };
     }
 
-    if (auto const* choice = find_lowered_choice_layout_by_llvm_type(context, subject_type.type)) {
+    auto const* choice = static_cast<LoweredChoiceLayout const*>(nullptr);
+    if (subject_source_type_name.has_value()) {
+        auto found = context.choices.find(std::string(*subject_source_type_name));
+        if (found != context.choices.end() && found->second.llvm_type_name == subject_type.type) {
+            choice = &found->second;
+        }
+    }
+    if (choice == nullptr) {
+        choice = find_lowered_choice_layout_by_llvm_type(context, subject_type.type);
+    }
+    if (choice != nullptr) {
         auto const* variant_name = static_cast<std::string const*>(nullptr);
         if (pattern.kind == syntax::ExpressionKind::name) {
             variant_name = &pattern.text;
@@ -83,6 +94,7 @@ auto plan_switch(
     std::vector<syntax::SwitchCaseSyntax> const& cases,
     LoweredType const& subject_type,
     LoweringContext const& context,
+    std::optional<std::string_view> subject_source_type_name,
     std::size_t block_index
 ) -> SwitchPlanningResult {
     if (cases.empty()) {
@@ -113,7 +125,12 @@ auto plan_switch(
             plan.has_default = true;
         } else {
             planned_case.block = llvm_block_name("switch.case", block_index, value_case_index++);
-            planned_case.pattern = lower_switch_pattern(switch_case.pattern, subject_type, context);
+            planned_case.pattern = lower_switch_pattern(
+                switch_case.pattern,
+                subject_type,
+                context,
+                subject_source_type_name
+            );
             if (!planned_case.pattern.has_value()) {
                 return {
                     .failure = ControlFlowLoweringFailureReason::unsupported_switch_pattern,

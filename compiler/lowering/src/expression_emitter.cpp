@@ -228,7 +228,8 @@ auto lowered_expression(
     IntegerSignedness expected_signedness,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name = std::nullopt
 ) -> std::optional<LoweredExpression>;
 
 auto inferred_expression_type(
@@ -880,12 +881,16 @@ struct ChoiceConstructorLayoutLookup {
 auto choice_constructor_layout_for(
     std::string_view variant_name,
     std::string_view expected_llvm_type,
-    LoweringContext const& context
+    LoweringContext const& context,
+    std::optional<std::string_view> expected_source_type_name
 ) -> ChoiceConstructorLayoutLookup {
     auto const* match = static_cast<LoweredChoiceLayout const*>(nullptr);
     for (auto const& [choice_name, layout] : context.choices) {
         (void)choice_name;
         if (layout.llvm_type_name != expected_llvm_type || find_choice_variant(layout, variant_name) == nullptr) {
+            continue;
+        }
+        if (expected_source_type_name.has_value() && layout.source_type_name != *expected_source_type_name) {
             continue;
         }
         if (match != nullptr) {
@@ -906,7 +911,8 @@ auto lower_choice_constructor_expression(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     LoweringFailures& failures,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto const* constructor_name = static_cast<std::string const*>(nullptr);
     auto const* arguments = static_cast<std::vector<syntax::ExpressionSyntax> const*>(nullptr);
@@ -922,7 +928,12 @@ auto lower_choice_constructor_expression(
         return std::nullopt;
     }
 
-    auto layout_lookup = choice_constructor_layout_for(*constructor_name, expected_llvm_type, context.lowering);
+    auto layout_lookup = choice_constructor_layout_for(
+        *constructor_name,
+        expected_llvm_type,
+        context.lowering,
+        expected_source_type_name
+    );
     if (layout_lookup.ambiguous) {
         record_expression_lowering_failure(
             failures,
@@ -1820,7 +1831,8 @@ auto lowered_expression(
     IntegerSignedness expected_signedness,
     EmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto& state = session.state;
     auto& failures = session.failures;
@@ -1872,7 +1884,8 @@ auto lowered_expression(
             context,
             session,
             failures,
-            output
+            output,
+            expected_source_type_name
         )) {
         return choice_constructor;
     }
@@ -2755,7 +2768,8 @@ auto lower_expression(
     IntegerSignedness expected_signedness,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto& failures = session.failures;
     reset_expression_lowering_failure(failures);
@@ -2765,7 +2779,8 @@ auto lower_expression(
         expected_signedness,
         context,
         session,
-        output
+        output,
+        expected_source_type_name
     );
 }
 

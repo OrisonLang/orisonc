@@ -19,7 +19,8 @@ auto lower_expression(
     IntegerSignedness expected_signedness,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name = std::nullopt
 ) -> std::optional<LoweredExpression>;
 
 auto infer_expression_type(

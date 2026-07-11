@@ -434,6 +434,9 @@ auto source_type_name_for_expression(
             function->second.return_type == "void") {
             return std::nullopt;
         }
+        if (!function->second.source_return_type_name.empty()) {
+            return function->second.source_return_type_name;
+        }
 
         return source_type_name_for_llvm_type(function->second.return_type, context);
     }

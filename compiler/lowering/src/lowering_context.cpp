@@ -56,6 +56,7 @@ auto lower_contextual_function_signature(
     std::unordered_map<std::string, LoweredChoiceLayout> const& choices
 ) -> LoweredFunctionSignature {
     auto signature = lower_function_signature(return_type, parameters, std::move(symbol_name));
+    signature.source_return_type_name = render_source_type_name(return_type);
     if (signature.return_type.empty()) {
         if (auto record_type = contextual_record_type_for(return_type, record_names)) {
             signature.return_type = std::move(*record_type);

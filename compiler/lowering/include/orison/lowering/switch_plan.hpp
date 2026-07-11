@@ -35,6 +35,7 @@ auto plan_switch(
     std::vector<syntax::SwitchCaseSyntax> const& cases,
     LoweredType const& subject_type,
     LoweringContext const& context,
+    std::optional<std::string_view> subject_source_type_name,
     std::size_t block_index
 ) -> SwitchPlanningResult;
 

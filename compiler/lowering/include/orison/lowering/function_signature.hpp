@@ -12,6 +12,7 @@ namespace orison::lowering {
 
 struct LoweredFunctionSignature {
     std::string return_type;
+    std::string source_return_type_name;
     IntegerSignedness return_signedness = IntegerSignedness::not_integer;
     std::vector<std::string> parameter_types;
     std::vector<IntegerSignedness> parameter_signedness;
