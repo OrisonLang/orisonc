@@ -703,11 +703,10 @@ auto lower_let_statement(
         .type = std::string(expected_llvm_type),
         .signedness = expected_signedness,
     };
+    auto annotated_source_type_name = std::optional<std::string> {};
     if (!statement.annotated_type.name.empty()) {
-        auto annotated_type = lowered_type_for_source_type_name(
-            render_source_type_name(statement.annotated_type),
-            context.lowering
-        );
+        annotated_source_type_name = render_source_type_name(statement.annotated_type);
+        auto annotated_type = lowered_type_for_source_type_name(*annotated_source_type_name, context.lowering);
         if (!annotated_type.has_value() || annotated_type->type == "void") {
             diagnostics.error(statement.line, "lowering does not yet support this let type");
             return false;
@@ -723,7 +722,8 @@ auto lower_let_statement(
         type.signedness,
         context,
         session,
-        output
+        output,
+        annotated_source_type_name
     );
     if (!lowered.has_value()) {
         diagnostics.error(
@@ -781,11 +781,10 @@ auto lower_var_statement(
         .type = std::string(fallback_llvm_type),
         .signedness = fallback_signedness,
     };
+    auto annotated_source_type_name = std::optional<std::string> {};
     if (!statement.annotated_type.name.empty()) {
-        auto annotated_type = lowered_type_for_source_type_name(
-            render_source_type_name(statement.annotated_type),
-            context.lowering
-        );
+        annotated_source_type_name = render_source_type_name(statement.annotated_type);
+        auto annotated_type = lowered_type_for_source_type_name(*annotated_source_type_name, context.lowering);
         if (!annotated_type.has_value() || annotated_type->type == "void") {
             diagnostics.error(statement.line, "lowering does not yet support this var type");
             return false;
@@ -801,7 +800,8 @@ auto lower_var_statement(
         type.signedness,
         context,
         session,
-        output
+        output,
+        annotated_source_type_name
     );
     if (!lowered.has_value()) {
         diagnostics.error(
