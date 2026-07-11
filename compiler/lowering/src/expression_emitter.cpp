@@ -716,7 +716,8 @@ auto lower_array_literal_expression(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     LoweringFailures& failures,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     if (expression.kind != syntax::ExpressionKind::array_literal) {
         return std::nullopt;
@@ -747,6 +748,13 @@ auto lower_array_literal_expression(
         };
     }
 
+    auto element_source_type_name = expected_source_type_name.has_value()
+        ? array_element_source_type_name(*expected_source_type_name)
+        : std::optional<std::string> {};
+    auto element_expected_source_type = element_source_type_name.has_value()
+        ? std::optional<std::string_view> {*element_source_type_name}
+        : std::optional<std::string_view> {};
+
     auto aggregate_value = std::string {"undef"};
     for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
         auto const& element = expression.arguments[index];
@@ -761,7 +769,8 @@ auto lower_array_literal_expression(
             ),
             context,
             session,
-            output
+            output,
+            element_expected_source_type
         );
         if (!lowered_element.has_value()) {
             return std::nullopt;
@@ -1851,7 +1860,8 @@ auto lowered_expression(
             context,
             session,
             failures,
-            output
+            output,
+            expected_source_type_name
         )) {
         return array_literal;
     }
