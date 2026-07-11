@@ -255,7 +255,8 @@ auto main() -> int {
             "function make_status() -> PairStatus",
             "    Ready(1 as UInt32, 2 as UInt32)",
         },
-        "lowering does not yet support this function return type"
+        "lowering does not yet support PairStatus as function return type: "
+        "variants with multiple payloads do not yet have a lowered choice ABI"
     );
     assert_cli_emit_llvm_failure(
         executable,
@@ -270,7 +271,8 @@ auto main() -> int {
             "function make_status() -> PayloadStatus",
             "    Ready(Payload(7 as UInt32))",
         },
-        "lowering does not yet support this function return type"
+        "lowering does not yet support PayloadStatus as function return type: "
+        "choice payload type 'Payload' does not yet have a scalar lowered choice ABI"
     );
     assert_cli_emit_llvm_failure(
         executable,
@@ -283,7 +285,8 @@ auto main() -> int {
             "function make_boxed() -> Boxed<UInt32>",
             "    Wrap(7 as UInt32)",
         },
-        "lowering does not yet support this function return type"
+        "lowering does not yet support Boxed<UInt32> as function return type: "
+        "generic choices do not yet have a lowered choice ABI"
     );
     assert_cli_emit_llvm_failure(
         executable,
@@ -299,7 +302,7 @@ auto main() -> int {
             "function make_status() -> LocalStatus",
             "    Ready(7 as UInt32)",
         },
-        "lowering does not yet support this return expression"
+        "choice constructor 'Ready' is ambiguous for lowered choice ABI type '{ i32, i32 }'"
     );
 
     assert_cli_parse_failure(

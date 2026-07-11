@@ -872,11 +872,16 @@ auto find_choice_variant(
     return nullptr;
 }
 
+struct ChoiceConstructorLayoutLookup {
+    LoweredChoiceLayout const* layout = nullptr;
+    bool ambiguous = false;
+};
+
 auto choice_constructor_layout_for(
     std::string_view variant_name,
     std::string_view expected_llvm_type,
     LoweringContext const& context
-) -> LoweredChoiceLayout const* {
+) -> ChoiceConstructorLayoutLookup {
     auto const* match = static_cast<LoweredChoiceLayout const*>(nullptr);
     for (auto const& [choice_name, layout] : context.choices) {
         (void)choice_name;
@@ -884,11 +889,15 @@ auto choice_constructor_layout_for(
             continue;
         }
         if (match != nullptr) {
-            return nullptr;
+            return ChoiceConstructorLayoutLookup {
+                .ambiguous = true,
+            };
         }
         match = &layout;
     }
-    return match;
+    return ChoiceConstructorLayoutLookup {
+        .layout = match,
+    };
 }
 
 auto lower_choice_constructor_expression(
@@ -913,7 +922,17 @@ auto lower_choice_constructor_expression(
         return std::nullopt;
     }
 
-    auto const* layout = choice_constructor_layout_for(*constructor_name, expected_llvm_type, context.lowering);
+    auto layout_lookup = choice_constructor_layout_for(*constructor_name, expected_llvm_type, context.lowering);
+    if (layout_lookup.ambiguous) {
+        record_expression_lowering_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "choice constructor '" + *constructor_name +
+                "' is ambiguous for lowered choice ABI type '" + std::string(expected_llvm_type) + "'"
+        );
+        return std::nullopt;
+    }
+    auto const* layout = layout_lookup.layout;
     if (layout == nullptr) {
         return std::nullopt;
     }

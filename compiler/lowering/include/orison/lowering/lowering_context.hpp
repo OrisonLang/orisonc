@@ -48,6 +48,7 @@ struct LoweredChoiceLayout {
     std::string name;
     std::string source_type_name;
     std::string llvm_type_name;
+    std::string unsupported_abi_reason;
     std::vector<std::string> generic_parameters;
     std::vector<LoweredChoiceVariant> variants;
 };

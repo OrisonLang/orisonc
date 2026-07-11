@@ -242,6 +242,23 @@ auto is_receiver_self_source_type(std::string_view type_name) -> bool {
     return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
 }
 
+auto unsupported_choice_abi_diagnostic(
+    syntax::TypeSyntax const& type,
+    LoweringContext const& context,
+    std::string_view role
+) -> std::optional<std::string> {
+    auto choice = context.choices.find(type.name);
+    if (choice == context.choices.end() || !choice->second.llvm_type_name.empty()) {
+        return std::nullopt;
+    }
+
+    auto source_type_name = render_source_type_name(type);
+    auto reason = choice->second.unsupported_abi_reason.empty()
+        ? std::string("choice type does not yet have a lowered choice ABI")
+        : choice->second.unsupported_abi_reason;
+    return "lowering does not yet support " + source_type_name + " as " + std::string(role) + ": " + reason;
+}
+
 auto infer_unit_binding_type(
     syntax::StatementSyntax const& statement,
     EmissionContext const& context,
@@ -1086,6 +1103,14 @@ void emit_function_body(
         return;
     }
     if (signature.return_type.empty()) {
+        if (auto choice_diagnostic = unsupported_choice_abi_diagnostic(
+                function.return_type,
+                context.lowering,
+                "function return type"
+            )) {
+            diagnostics.error(function.line, *choice_diagnostic);
+            return;
+        }
         diagnostics.error(function.line, "lowering does not yet support this function return type");
         return;
     }
