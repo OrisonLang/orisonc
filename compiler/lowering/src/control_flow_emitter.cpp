@@ -7,6 +7,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/switch_emitter.hpp"
@@ -68,6 +69,66 @@ auto switch_subject_for_emit(
         .type = "i1",
         .value = std::move(tag),
         .signedness = IntegerSignedness::not_integer,
+    };
+}
+
+auto maybe_payload_type_for_switch_subject(std::string_view type) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"{ i1,"};
+    if (!type.starts_with(prefix) || !type.ends_with("}")) {
+        return std::nullopt;
+    }
+
+    auto payload = type.substr(prefix.size(), type.size() - prefix.size() - 1);
+    while (!payload.empty() && payload.front() == ' ') {
+        payload.remove_prefix(1);
+    }
+    while (!payload.empty() && payload.back() == ' ') {
+        payload.remove_suffix(1);
+    }
+    return payload.empty() ? std::nullopt : std::optional<std::string> {std::string(payload)};
+}
+
+auto maybe_payload_binding_name(syntax::ExpressionSyntax const& pattern) -> std::optional<std::string> {
+    if (pattern.kind != syntax::ExpressionKind::call ||
+        pattern.left == nullptr ||
+        pattern.left->kind != syntax::ExpressionKind::name ||
+        pattern.left->text != "Some" ||
+        pattern.arguments.size() != 1 ||
+        pattern.arguments.front().kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+    return pattern.arguments.front().text;
+}
+
+void bind_maybe_switch_payload(
+    LoweredSwitchCasePlan const& planned_case,
+    LoweredExpression const& subject,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) {
+    if (planned_case.syntax == nullptr) {
+        return;
+    }
+    auto payload_type = maybe_payload_type_for_switch_subject(subject.type);
+    auto binding_name = maybe_payload_binding_name(planned_case.syntax->pattern);
+    if (!payload_type.has_value() || !binding_name.has_value()) {
+        return;
+    }
+
+    auto payload = next_llvm_temporary_name(session.state.next_temporary_index);
+    auto payload_signedness = IntegerSignedness::not_integer;
+    if (auto source_type = source_type_name_for_llvm_type(*payload_type, context.lowering)) {
+        if (auto lowered_type = lowered_type_for_source_type_name(*source_type, context.lowering)) {
+            payload_signedness = lowered_type->signedness;
+        }
+        session.state.source_type_names[*binding_name] = std::move(*source_type);
+    }
+    output << "  " << payload << " = extractvalue " << subject.type << " " << subject.value << ", 1\n";
+    session.state.immutable_bindings[*binding_name] = LoweredExpression {
+        .type = *payload_type,
+        .value = std::move(payload),
+        .signedness = payload_signedness,
     };
 }
 
@@ -280,6 +341,7 @@ auto lower_final_switch_statement(
         );
         return std::nullopt;
     }
+    auto original_subject = *subject;
     auto switch_subject = switch_subject_for_emit(std::move(*subject), session, output);
 
     auto block_index = next_llvm_block_index(state.next_block_index);
@@ -299,6 +361,7 @@ auto lower_final_switch_statement(
         diagnostics::DiagnosticBag& diagnostics;
         std::ostringstream& output;
         BranchBindingScope& binding_scope;
+        LoweredExpression const& original_subject;
     };
     auto case_context = CaseContext {
         .expected_llvm_type = expected_llvm_type,
@@ -308,6 +371,7 @@ auto lower_final_switch_statement(
         .diagnostics = diagnostics,
         .output = output,
         .binding_scope = binding_scope,
+        .original_subject = original_subject,
     };
     auto result = emit_switch_value(
         plan,
@@ -316,8 +380,16 @@ auto lower_final_switch_statement(
         output,
         SwitchLoweringCallbacks {
             .context = &case_context,
-            .before_case = [](void* opaque, LoweredSwitchCasePlan const&) {
-                static_cast<CaseContext*>(opaque)->binding_scope.reset();
+            .before_case = [](void* opaque, LoweredSwitchCasePlan const& planned_case) {
+                auto& current = *static_cast<CaseContext*>(opaque);
+                current.binding_scope.reset();
+                bind_maybe_switch_payload(
+                    planned_case,
+                    current.original_subject,
+                    current.context,
+                    current.session,
+                    current.output
+                );
             },
             .lower_case = [](void* opaque, LoweredSwitchCasePlan const& planned_case) {
                 auto& current = *static_cast<CaseContext*>(opaque);
