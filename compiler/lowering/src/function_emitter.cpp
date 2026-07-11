@@ -434,7 +434,12 @@ auto lower_unit_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
-    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context)) {
+    auto subject_source_type = source_type_name_for_expression(
+        statement.expression,
+        context.lowering,
+        session.state
+    );
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context, subject_source_type)) {
         diagnostics.error(statement.line, "lowering does not yet support this Unit switch subject");
         return StatementFlow::failed;
     }
@@ -458,14 +463,15 @@ auto lower_unit_switch_statement(
         return StatementFlow::failed;
     }
     auto original_subject = *subject;
-    auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
+    auto switch_subject = switch_subject_for_emit(
+        std::move(*subject),
+        context,
+        session,
+        output,
+        subject_source_type
+    );
 
     auto block_index = next_llvm_block_index(session.state.next_block_index);
-    auto subject_source_type = source_type_name_for_expression(
-        statement.expression,
-        context.lowering,
-        session.state
-    );
     auto planning = plan_switch(
         statement.switch_cases,
         *subject_type,
@@ -503,7 +509,7 @@ auto lower_unit_switch_statement(
         binding_scope.reset();
         emit_llvm_block_label(output, planned_case.block);
         session.state.current_block = planned_case.block;
-        bind_switch_payload(planned_case, original_subject, context, session, output);
+        bind_switch_payload(planned_case, original_subject, context, session, output, subject_source_type);
 
         auto case_flow = lower_unit_statement_block(
             planned_case.syntax->statements,
@@ -972,7 +978,12 @@ auto lower_nonvoid_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
-    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context)) {
+    auto subject_source_type = source_type_name_for_expression(
+        statement.expression,
+        context.lowering,
+        session.state
+    );
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context, subject_source_type)) {
         diagnostics.error(statement.line, "lowering does not yet support this non-void switch subject");
         return StatementFlow::failed;
     }
@@ -996,14 +1007,15 @@ auto lower_nonvoid_switch_statement(
         return StatementFlow::failed;
     }
     auto original_subject = *subject;
-    auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
+    auto switch_subject = switch_subject_for_emit(
+        std::move(*subject),
+        context,
+        session,
+        output,
+        subject_source_type
+    );
 
     auto block_index = next_llvm_block_index(session.state.next_block_index);
-    auto subject_source_type = source_type_name_for_expression(
-        statement.expression,
-        context.lowering,
-        session.state
-    );
     auto planning = plan_switch(
         statement.switch_cases,
         *subject_type,
@@ -1041,7 +1053,7 @@ auto lower_nonvoid_switch_statement(
         binding_scope.reset();
         emit_llvm_block_label(output, planned_case.block);
         session.state.current_block = planned_case.block;
-        bind_switch_payload(planned_case, original_subject, context, session, output);
+        bind_switch_payload(planned_case, original_subject, context, session, output, subject_source_type);
 
         auto case_flow = lower_guard_statement_block(
             planned_case.syntax->statements,

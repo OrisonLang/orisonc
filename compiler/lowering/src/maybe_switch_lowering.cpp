@@ -52,7 +52,8 @@ struct ChoicePayloadBinding {
 auto choice_payload_binding_for_switch_case(
     syntax::ExpressionSyntax const& pattern,
     LoweredExpression const& subject,
-    LoweringContext const& context
+    LoweringContext const& context,
+    std::optional<std::string_view> subject_source_type_name
 ) -> std::optional<ChoicePayloadBinding> {
     if (pattern.kind != syntax::ExpressionKind::call ||
         pattern.left == nullptr ||
@@ -62,7 +63,16 @@ auto choice_payload_binding_for_switch_case(
         return std::nullopt;
     }
 
-    auto const* choice = find_lowered_choice_layout_by_llvm_type(context, subject.type);
+    auto const* choice = static_cast<LoweredChoiceLayout const*>(nullptr);
+    if (subject_source_type_name.has_value()) {
+        auto found = context.choices.find(std::string(*subject_source_type_name));
+        if (found != context.choices.end() && found->second.llvm_type_name == subject.type) {
+            choice = &found->second;
+        }
+    }
+    if (choice == nullptr) {
+        choice = find_lowered_choice_layout_by_llvm_type(context, subject.type);
+    }
     if (choice == nullptr) {
         return std::nullopt;
     }
@@ -77,6 +87,20 @@ auto choice_payload_binding_for_switch_case(
         }
     }
     return std::nullopt;
+}
+
+auto choice_layout_for_switch_subject(
+    LoweringContext const& context,
+    std::string_view llvm_type,
+    std::optional<std::string_view> subject_source_type_name
+) -> LoweredChoiceLayout const* {
+    if (subject_source_type_name.has_value()) {
+        auto found = context.choices.find(std::string(*subject_source_type_name));
+        if (found != context.choices.end() && found->second.llvm_type_name == llvm_type) {
+            return &found->second;
+        }
+    }
+    return find_lowered_choice_layout_by_llvm_type(context, llvm_type);
 }
 
 void bind_switch_payload_value(
@@ -114,21 +138,27 @@ auto is_maybe_switch_subject(LoweredType const& type) -> bool {
 
 auto is_supported_switch_subject(
     LoweredType const& type,
-    LoweringEmissionContext const& context
+    LoweringEmissionContext const& context,
+    std::optional<std::string_view> subject_source_type_name
 ) -> bool {
     return type.type == "i1" ||
            is_integer_llvm_type(type.type) ||
            is_maybe_switch_subject(type) ||
-           find_lowered_choice_layout_by_llvm_type(context.lowering, type.type) != nullptr;
+           choice_layout_for_switch_subject(context.lowering, type.type, subject_source_type_name) != nullptr;
 }
 
 auto switch_subject_for_emit(
     LoweredExpression subject,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostream& output
+    std::ostream& output,
+    std::optional<std::string_view> subject_source_type_name
 ) -> LoweredExpression {
-    auto const* choice = find_lowered_choice_layout_by_llvm_type(context.lowering, subject.type);
+    auto const* choice = choice_layout_for_switch_subject(
+        context.lowering,
+        subject.type,
+        subject_source_type_name
+    );
     if (!subject.type.starts_with("{ i1,") && choice == nullptr) {
         return subject;
     }
@@ -152,7 +182,8 @@ void bind_switch_payload(
     LoweredExpression const& subject,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
-    std::ostream& output
+    std::ostream& output,
+    std::optional<std::string_view> subject_source_type_name
 ) {
     if (planned_case.syntax == nullptr) {
         return;
@@ -176,7 +207,8 @@ void bind_switch_payload(
     auto choice_binding = choice_payload_binding_for_switch_case(
         planned_case.syntax->pattern,
         subject,
-        context.lowering
+        context.lowering,
+        subject_source_type_name
     );
     if (!choice_binding.has_value()) {
         return;

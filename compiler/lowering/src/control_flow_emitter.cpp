@@ -244,7 +244,12 @@ auto lower_final_switch_statement(
     }
 
     auto subject_type = infer_expression_type(statement.expression, context, state);
-    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context)) {
+    auto subject_source_type = source_type_name_for_expression(
+        statement.expression,
+        context.lowering,
+        state
+    );
+    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context, subject_source_type)) {
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_subject_type_failure
@@ -268,14 +273,15 @@ auto lower_final_switch_statement(
         return std::nullopt;
     }
     auto original_subject = *subject;
-    auto switch_subject = switch_subject_for_emit(std::move(*subject), context, session, output);
+    auto switch_subject = switch_subject_for_emit(
+        std::move(*subject),
+        context,
+        session,
+        output,
+        subject_source_type
+    );
 
     auto block_index = next_llvm_block_index(state.next_block_index);
-    auto subject_source_type = source_type_name_for_expression(
-        statement.expression,
-        context.lowering,
-        state
-    );
     auto planning = plan_switch(
         statement.switch_cases,
         *subject_type,
@@ -300,6 +306,7 @@ auto lower_final_switch_statement(
         BranchBindingScope& binding_scope;
         LoweredExpression const& original_subject;
         std::optional<std::string_view> expected_source_type_name;
+        std::optional<std::string_view> subject_source_type_name;
     };
     auto case_context = CaseContext {
         .expected_llvm_type = expected_llvm_type,
@@ -311,6 +318,7 @@ auto lower_final_switch_statement(
         .binding_scope = binding_scope,
         .original_subject = original_subject,
         .expected_source_type_name = expected_source_type_name,
+        .subject_source_type_name = subject_source_type,
     };
     auto result = emit_switch_value(
         plan,
@@ -327,7 +335,8 @@ auto lower_final_switch_statement(
                     current.original_subject,
                     current.context,
                     current.session,
-                    current.output
+                    current.output,
+                    current.subject_source_type_name
                 );
             },
             .lower_case = [](void* opaque, LoweredSwitchCasePlan const& planned_case) {
