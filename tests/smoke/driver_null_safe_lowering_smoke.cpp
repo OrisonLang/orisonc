@@ -37,6 +37,17 @@ auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_program(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 3> argv {
+        "orisonc",
+        "run",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 void assert_success_with_stdout_contains(
     orison::driver::CompileResult const& result,
     std::initializer_list<std::string_view> expected_fragments
@@ -49,6 +60,14 @@ void assert_success_with_stdout_contains(
     for (auto expected_fragment : expected_fragments) {
         assert(result.stdout_text.find(expected_fragment) != std::string::npos);
     }
+}
+
+void assert_run_success(orison::driver::CompileResult const& result) {
+    if (result.exit_code != 0 || !result.stderr_text.empty()) {
+        std::cerr << result.stderr_text << result.stdout_text;
+    }
+    assert(result.exit_code == 0);
+    assert(result.stderr_text.empty());
 }
 
 }  // namespace
@@ -170,6 +189,33 @@ auto main() -> int {
             "ret i32 0",
         }
     );
+
+    auto run_null_safe_paths = std::filesystem::temp_directory_path() /
+        "run_null_safe_paths.or";
+    write_fixture(
+        run_null_safe_paths,
+        "demo.run",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Profile",
+            "    rating: UInt32",
+            "record User",
+            "    profile: Maybe<Profile>",
+            "function main() -> UInt32",
+            "    let empty_user: Maybe<User> = Empty",
+            "    let empty_rating: Maybe<UInt32> = empty_user?.profile?.rating",
+            "    let present_profile: Maybe<Profile> = Some(Profile(7 as UInt32))",
+            "    let present_user: Maybe<User> = Some(User(present_profile))",
+            "    let present_rating: Maybe<UInt32> = present_user?.profile?.rating",
+            "    let absent_profile: Maybe<Profile> = Empty",
+            "    let nested_absent_user: Maybe<User> = Some(User(absent_profile))",
+            "    let nested_absent_rating: Maybe<UInt32> = nested_absent_user?.profile?.rating",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_run_success(run_program(app, run_null_safe_paths));
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
