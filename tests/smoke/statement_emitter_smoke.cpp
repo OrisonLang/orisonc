@@ -28,7 +28,8 @@ auto reject_control_flow(
     orison::lowering::LoweringEmissionContext const&,
     orison::lowering::FunctionLoweringSession&,
     orison::diagnostics::DiagnosticBag&,
-    std::ostringstream&
+    std::ostringstream&,
+    std::optional<std::string_view>
 ) -> std::optional<orison::lowering::LoweredExpression> {
     return std::nullopt;
 }

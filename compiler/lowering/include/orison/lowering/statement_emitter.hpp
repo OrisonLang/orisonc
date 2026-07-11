@@ -26,7 +26,8 @@ using FinalControlFlowLowerer = std::optional<LoweredExpression> (*)(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 );
 
 auto value_expression_for(
@@ -93,7 +94,8 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
-    DeferredCleanupBlockLowerer lower_cleanup_block
+    DeferredCleanupBlockLowerer lower_cleanup_block,
+    std::optional<std::string_view> expected_source_type_name = std::nullopt
 ) -> std::optional<LoweredExpression>;
 
 auto lower_value_statement_block(
@@ -105,7 +107,8 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
-    DeferredCleanupBlockLowerer lower_cleanup_block
+    DeferredCleanupBlockLowerer lower_cleanup_block,
+    std::optional<std::string_view> expected_source_type_name = std::nullopt
 ) -> std::optional<LoweredExpression>;
 
 auto lower_value_statement_block(
@@ -117,7 +120,8 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
-    DeferredCleanupBlockLowerer lower_cleanup_block
+    DeferredCleanupBlockLowerer lower_cleanup_block,
+    std::optional<std::string_view> expected_source_type_name = std::nullopt
 ) -> std::optional<LoweredExpression>;
 
 }  // namespace orison::lowering

@@ -126,6 +126,7 @@ auto lower_guard_statement(
     syntax::StatementSyntax const& statement,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -136,6 +137,7 @@ auto lower_nonvoid_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -146,6 +148,7 @@ auto lower_nonvoid_switch_statement(
     syntax::StatementSyntax const& statement,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -609,6 +612,7 @@ auto lower_guard_return_statement(
     syntax::StatementSyntax const& statement,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -637,7 +641,8 @@ auto lower_guard_return_statement(
         return_signedness,
         context,
         session,
-        output
+        output,
+        return_source_type_name
     );
     if (!lowered.has_value()) {
         diagnostics.error(
@@ -661,6 +666,7 @@ auto lower_guard_statement_block(
     std::span<syntax::StatementSyntax const*> statements,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -687,6 +693,7 @@ auto lower_guard_statement_block(
                 *statement,
                 return_llvm_type,
                 return_signedness,
+                return_source_type_name,
                 context,
                 session,
                 diagnostics,
@@ -697,6 +704,7 @@ auto lower_guard_statement_block(
                 *statement,
                 return_llvm_type,
                 return_signedness,
+                return_source_type_name,
                 context,
                 session,
                 diagnostics,
@@ -707,6 +715,7 @@ auto lower_guard_statement_block(
                 *statement,
                 return_llvm_type,
                 return_signedness,
+                return_source_type_name,
                 context,
                 session,
                 diagnostics,
@@ -717,6 +726,7 @@ auto lower_guard_statement_block(
                 *statement,
                 return_llvm_type,
                 return_signedness,
+                return_source_type_name,
                 context,
                 session,
                 diagnostics,
@@ -748,6 +758,7 @@ auto lower_guard_statement_block(
     std::vector<syntax::StatementSyntax> const& statements,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -762,6 +773,7 @@ auto lower_guard_statement_block(
         statement_pointers,
         return_llvm_type,
         return_signedness,
+        return_source_type_name,
         context,
         session,
         diagnostics,
@@ -773,6 +785,7 @@ auto lower_guard_statement_block(
     std::vector<std::unique_ptr<syntax::StatementSyntax>> const& statements,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -787,6 +800,7 @@ auto lower_guard_statement_block(
         statement_pointers,
         return_llvm_type,
         return_signedness,
+        return_source_type_name,
         context,
         session,
         diagnostics,
@@ -798,6 +812,7 @@ auto lower_guard_statement(
     syntax::StatementSyntax const& statement,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -834,6 +849,7 @@ auto lower_guard_statement(
         statement.nested_statements,
         return_llvm_type,
         return_signedness,
+        return_source_type_name,
         context,
         session,
         diagnostics,
@@ -856,6 +872,7 @@ auto lower_nonvoid_if_statement(
     syntax::StatementSyntax const& statement,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -899,6 +916,7 @@ auto lower_nonvoid_if_statement(
         statement.nested_statements,
         return_llvm_type,
         return_signedness,
+        return_source_type_name,
         context,
         session,
         diagnostics,
@@ -920,6 +938,7 @@ auto lower_nonvoid_if_statement(
             statement.alternate_statements,
             return_llvm_type,
             return_signedness,
+            return_source_type_name,
             context,
             session,
             diagnostics,
@@ -946,6 +965,7 @@ auto lower_nonvoid_switch_statement(
     syntax::StatementSyntax const& statement,
     std::string_view return_llvm_type,
     IntegerSignedness return_signedness,
+    std::optional<std::string_view> return_source_type_name,
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
@@ -1027,6 +1047,7 @@ auto lower_nonvoid_switch_statement(
             planned_case.syntax->statements,
             return_llvm_type,
             return_signedness,
+            return_source_type_name,
             context,
             session,
             diagnostics,
@@ -1101,7 +1122,16 @@ auto lower_unit_statement(
         return lower_unit_switch_statement(statement, context, session, diagnostics, output);
     }
     if (statement.kind == syntax::StatementKind::guard_statement) {
-        return lower_guard_statement(statement, "void", IntegerSignedness::not_integer, context, session, diagnostics, output);
+        return lower_guard_statement(
+            statement,
+            "void",
+            IntegerSignedness::not_integer,
+            std::nullopt,
+            context,
+            session,
+            diagnostics,
+            output
+        );
     }
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_unit_if_statement(statement, context, session, diagnostics, output);
@@ -1216,6 +1246,9 @@ void emit_function_body(
 
     auto const* expression = static_cast<syntax::ExpressionSyntax const*>(nullptr);
     auto lowered_final_statement = std::optional<LoweredExpression> {};
+    auto return_source_type_name = signature.source_return_type_name.empty()
+        ? std::optional<std::string_view> {}
+        : std::optional<std::string_view> {signature.source_return_type_name};
     auto attempted_final_control_flow = false;
     auto final_statement_line = function.line;
     auto leading_statement_flow = StatementFlow::falls_through;
@@ -1354,6 +1387,7 @@ void emit_function_body(
                     statement,
                     signature.return_type,
                     signature.return_signedness,
+                    return_source_type_name,
                     context,
                     session,
                     diagnostics,
@@ -1368,6 +1402,7 @@ void emit_function_body(
                     statement,
                     signature.return_type,
                     signature.return_signedness,
+                    return_source_type_name,
                     context,
                     session,
                     diagnostics,
@@ -1382,6 +1417,7 @@ void emit_function_body(
                     statement,
                     signature.return_type,
                     signature.return_signedness,
+                    return_source_type_name,
                     context,
                     session,
                     diagnostics,
@@ -1404,7 +1440,8 @@ void emit_function_body(
                     context,
                     session,
                     diagnostics,
-                    output
+                    output,
+                    return_source_type_name
                 );
                 break;
             }
@@ -1444,7 +1481,7 @@ void emit_function_body(
             context,
             session,
             output,
-            render_source_type_name(function.return_type)
+            return_source_type_name
         );
     }
     if (!lowered.has_value()) {

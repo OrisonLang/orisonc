@@ -20,7 +20,8 @@ auto lower_final_control_flow_statement(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name = std::nullopt
 ) -> std::optional<LoweredExpression>;
 
 }  // namespace orison::lowering

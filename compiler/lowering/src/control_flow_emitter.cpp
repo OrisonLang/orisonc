@@ -34,7 +34,8 @@ auto lower_final_if_statement(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression>;
 
 auto lower_final_switch_statement(
@@ -44,7 +45,8 @@ auto lower_final_switch_statement(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression>;
 
 auto lower_nested_final_control_flow(
@@ -54,7 +56,8 @@ auto lower_nested_final_control_flow(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     if (statement.kind == syntax::StatementKind::if_statement) {
         return lower_final_if_statement(
@@ -64,7 +67,8 @@ auto lower_nested_final_control_flow(
             context,
             session,
             diagnostics,
-            output
+            output,
+            expected_source_type_name
         );
     }
     if (statement.kind == syntax::StatementKind::switch_statement) {
@@ -75,7 +79,8 @@ auto lower_nested_final_control_flow(
             context,
             session,
             diagnostics,
-            output
+            output,
+            expected_source_type_name
         );
     }
     return std::nullopt;
@@ -88,7 +93,8 @@ auto lower_final_if_statement(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto& state = session.state;
     auto& failures = session.failures;
@@ -133,6 +139,7 @@ auto lower_final_if_statement(
         diagnostics::DiagnosticBag& diagnostics;
         std::ostringstream& output;
         BranchBindingScope& binding_scope;
+        std::optional<std::string_view> expected_source_type_name;
     };
     auto arm_context = ArmContext {
         .statement = statement,
@@ -143,6 +150,7 @@ auto lower_final_if_statement(
         .diagnostics = diagnostics,
         .output = output,
         .binding_scope = binding_scope,
+        .expected_source_type_name = expected_source_type_name,
     };
     auto result = emit_conditional_value(
         plan,
@@ -162,7 +170,8 @@ auto lower_final_if_statement(
                     arm.diagnostics,
                     arm.output,
                     lower_nested_final_control_flow,
-                    lower_unit_deferred_cleanup_block
+                    lower_unit_deferred_cleanup_block,
+                    arm.expected_source_type_name
                 );
             },
             .between_arms = [](void* opaque) {
@@ -179,7 +188,8 @@ auto lower_final_if_statement(
                     arm.diagnostics,
                     arm.output,
                     lower_nested_final_control_flow,
-                    lower_unit_deferred_cleanup_block
+                    lower_unit_deferred_cleanup_block,
+                    arm.expected_source_type_name
                 );
             },
         }
@@ -219,7 +229,8 @@ auto lower_final_switch_statement(
     EmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto& state = session.state;
     auto& failures = session.failures;
@@ -288,6 +299,7 @@ auto lower_final_switch_statement(
         std::ostringstream& output;
         BranchBindingScope& binding_scope;
         LoweredExpression const& original_subject;
+        std::optional<std::string_view> expected_source_type_name;
     };
     auto case_context = CaseContext {
         .expected_llvm_type = expected_llvm_type,
@@ -298,6 +310,7 @@ auto lower_final_switch_statement(
         .output = output,
         .binding_scope = binding_scope,
         .original_subject = original_subject,
+        .expected_source_type_name = expected_source_type_name,
     };
     auto result = emit_switch_value(
         plan,
@@ -328,7 +341,8 @@ auto lower_final_switch_statement(
                     current.diagnostics,
                     current.output,
                     lower_nested_final_control_flow,
-                    lower_unit_deferred_cleanup_block
+                    lower_unit_deferred_cleanup_block,
+                    current.expected_source_type_name
                 );
             },
         }
@@ -372,7 +386,8 @@ auto lower_final_control_flow_statement(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto& failures = session.failures;
     reset_control_flow_lowering_failure(failures);
@@ -384,7 +399,8 @@ auto lower_final_control_flow_statement(
             context,
             session,
             diagnostics,
-            output
+            output,
+            expected_source_type_name
         );
     }
     if (statement.kind == syntax::StatementKind::switch_statement) {
@@ -395,7 +411,8 @@ auto lower_final_control_flow_statement(
             context,
             session,
             diagnostics,
-            output
+            output,
+            expected_source_type_name
         );
     }
     return std::nullopt;

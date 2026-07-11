@@ -314,6 +314,76 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_tag_only_choice_run.or",
         sourced_tag_only_choice_lines
     );
+    auto sourced_tag_only_guard_return_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready",
+        "    Empty",
+        "function choose(flag: Bool) -> LocalStatus",
+        "    guard flag else",
+        "        return Empty",
+        "    return Ready",
+        "function classify_status(flag: Bool) -> UInt32",
+        "    switch choose(flag)",
+        "        Ready => 1 as UInt32",
+        "        Empty => 0 as UInt32",
+        "function main() -> UInt32",
+        "    return classify_status(false)",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_tag_only_guard_return_emit.or",
+        sourced_tag_only_guard_return_lines,
+        {
+            "define i32 @choose",
+            "guard.failure.",
+            "ret i32 1",
+            "ret i32 0",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_tag_only_guard_return_run.or",
+        sourced_tag_only_guard_return_lines
+    );
+    auto sourced_tag_only_branch_return_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready",
+        "    Empty",
+        "function choose(flag: Bool) -> LocalStatus",
+        "    if flag",
+        "        return Ready",
+        "    return Empty",
+        "function classify_status(flag: Bool) -> UInt32",
+        "    switch choose(flag)",
+        "        Ready => 1 as UInt32",
+        "        Empty => 0 as UInt32",
+        "function main() -> UInt32",
+        "    return classify_status(true) - 1 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_tag_only_branch_return_emit.or",
+        sourced_tag_only_branch_return_lines,
+        {
+            "define i32 @choose",
+            "if.then.",
+            "ret i32 0",
+            "ret i32 1",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_tag_only_branch_return_run.or",
+        sourced_tag_only_branch_return_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",

@@ -385,7 +385,8 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
-    DeferredCleanupBlockLowerer lower_cleanup_block
+    DeferredCleanupBlockLowerer lower_cleanup_block,
+    std::optional<std::string_view> expected_source_type_name = std::nullopt
 ) -> std::optional<LoweredExpression> {
     if (statements.empty()) {
         return std::nullopt;
@@ -421,7 +422,8 @@ auto lower_value_statement_block(
             context,
             session,
             diagnostics,
-            output
+            output,
+            expected_source_type_name
         );
         if (!lowered.has_value()) {
             return std::nullopt;
@@ -449,7 +451,8 @@ auto lower_value_statement_block(
         expected_signedness,
         context,
         session,
-        output
+        output,
+        expected_source_type_name
     );
     if (!lowered.has_value()) {
         return std::nullopt;
@@ -1077,7 +1080,8 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
-    DeferredCleanupBlockLowerer lower_cleanup_block
+    DeferredCleanupBlockLowerer lower_cleanup_block,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
     statement_pointers.reserve(statements.size());
@@ -1093,7 +1097,8 @@ auto lower_value_statement_block(
         diagnostics,
         output,
         lower_final_control_flow,
-        lower_cleanup_block
+        lower_cleanup_block,
+        expected_source_type_name
     );
 }
 
@@ -1106,7 +1111,8 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
-    DeferredCleanupBlockLowerer lower_cleanup_block
+    DeferredCleanupBlockLowerer lower_cleanup_block,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     if (statements.empty()) {
         return std::nullopt;
@@ -1142,7 +1148,8 @@ auto lower_value_statement_block(
             context,
             session,
             diagnostics,
-            output
+            output,
+            expected_source_type_name
         );
         if (!lowered.has_value()) {
             return std::nullopt;
@@ -1170,7 +1177,8 @@ auto lower_value_statement_block(
         expected_signedness,
         context,
         session,
-        output
+        output,
+        expected_source_type_name
     );
     if (!lowered.has_value()) {
         return std::nullopt;
@@ -1197,7 +1205,8 @@ auto lower_value_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
     FinalControlFlowLowerer lower_final_control_flow,
-    DeferredCleanupBlockLowerer lower_cleanup_block
+    DeferredCleanupBlockLowerer lower_cleanup_block,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
     statement_pointers.reserve(statements.size());
@@ -1213,7 +1222,8 @@ auto lower_value_statement_block(
         diagnostics,
         output,
         lower_final_control_flow,
-        lower_cleanup_block
+        lower_cleanup_block,
+        expected_source_type_name
     );
 }
 
