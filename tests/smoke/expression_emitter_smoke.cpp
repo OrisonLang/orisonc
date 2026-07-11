@@ -197,6 +197,158 @@ int main() {
         "  %tmp2 = insertvalue { i1, i32 } %tmp1, i32 %left, 1\n"
     );
 
+    auto null_safe_lowering = orison::lowering::LoweringContext {};
+    null_safe_lowering.records.emplace("User", orison::lowering::LoweredRecordLayout {
+        .name = "User",
+        .llvm_type_name = "%record.User",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "value",
+                .source_type_name = "UInt32",
+                .llvm_type = "i32",
+                .index = 0,
+            },
+            orison::lowering::LoweredRecordField {
+                .name = "profile",
+                .source_type_name = "Maybe<Profile>",
+                .llvm_type = "{ i1, %record.Profile }",
+                .index = 1,
+            },
+        },
+    });
+    null_safe_lowering.records.emplace("Profile", orison::lowering::LoweredRecordLayout {
+        .name = "Profile",
+        .llvm_type_name = "%record.Profile",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "rating",
+                .source_type_name = "UInt32",
+                .llvm_type = "i32",
+                .index = 0,
+            },
+        },
+    });
+    auto null_safe_context = orison::lowering::LoweringEmissionContext {
+        .lowering = null_safe_lowering,
+        .string_constants = strings,
+        .options = {},
+    };
+    auto null_safe_state = orison::lowering::FunctionLoweringState {};
+    null_safe_state.immutable_bindings.emplace("user", orison::lowering::LoweredExpression {
+        .type = "{ i1, %record.User }",
+        .value = "%user",
+    });
+    null_safe_state.source_type_names.emplace("user", "Maybe<User>");
+    auto null_safe_failures = orison::lowering::LoweringFailures {};
+    auto null_safe_session = orison::lowering::FunctionLoweringSession {
+        .state = null_safe_state,
+        .failures = null_safe_failures,
+    };
+    auto null_safe_expression = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::null_safe_member_access,
+        .text = "value",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "user",
+            }
+        ),
+    };
+    output = {};
+    auto null_safe_lowered = orison::lowering::lower_expression(
+        null_safe_expression,
+        "{ i1, i32 }",
+        orison::lowering::IntegerSignedness::not_integer,
+        null_safe_context,
+        null_safe_session,
+        output
+    );
+    assert(null_safe_lowered.has_value());
+    assert(null_safe_lowered->type == "{ i1, i32 }");
+    assert(null_safe_lowered->value == "%tmp6");
+    assert(null_safe_session.state.current_block == "nullsafe.merge.0");
+    assert(
+        output.str() ==
+        "  %tmp0 = extractvalue { i1, %record.User } %user, 0\n"
+        "  br i1 %tmp0, label %nullsafe.some.1, label %nullsafe.empty.1\n"
+        "nullsafe.empty.1:\n"
+        "  %tmp1 = insertvalue { i1, i32 } undef, i1 false, 0\n"
+        "  br label %nullsafe.merge.0\n"
+        "nullsafe.some.1:\n"
+        "  %tmp2 = extractvalue { i1, %record.User } %user, 1\n"
+        "  %tmp3 = extractvalue %record.User %tmp2, 0\n"
+        "  %tmp4 = insertvalue { i1, i32 } undef, i1 true, 0\n"
+        "  %tmp5 = insertvalue { i1, i32 } %tmp4, i32 %tmp3, 1\n"
+        "  br label %nullsafe.merge.0\n"
+        "nullsafe.merge.0:\n"
+        "  %tmp6 = phi { i1, i32 } [%tmp1, %nullsafe.empty.1], [%tmp5, %nullsafe.some.1]\n"
+    );
+
+    auto nested_null_safe_state = orison::lowering::FunctionLoweringState {};
+    nested_null_safe_state.immutable_bindings.emplace("user", orison::lowering::LoweredExpression {
+        .type = "{ i1, %record.User }",
+        .value = "%user",
+    });
+    nested_null_safe_state.source_type_names.emplace("user", "Maybe<User>");
+    auto nested_null_safe_failures = orison::lowering::LoweringFailures {};
+    auto nested_null_safe_session = orison::lowering::FunctionLoweringSession {
+        .state = nested_null_safe_state,
+        .failures = nested_null_safe_failures,
+    };
+    auto nested_profile_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::null_safe_member_access,
+        .text = "profile",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "user",
+            }
+        ),
+    };
+    auto nested_rating_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::null_safe_member_access,
+        .text = "rating",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(nested_profile_access)),
+    };
+    output = {};
+    auto nested_null_safe_lowered = orison::lowering::lower_expression(
+        nested_rating_access,
+        "{ i1, i32 }",
+        orison::lowering::IntegerSignedness::not_integer,
+        null_safe_context,
+        nested_null_safe_session,
+        output
+    );
+    assert(nested_null_safe_lowered.has_value());
+    assert(nested_null_safe_lowered->type == "{ i1, i32 }");
+    assert(nested_null_safe_lowered->value == "%tmp10");
+    assert(nested_null_safe_session.state.current_block == "nullsafe.merge.0");
+    assert(
+        output.str() ==
+        "  %tmp0 = extractvalue { i1, %record.User } %user, 0\n"
+        "  br i1 %tmp0, label %nullsafe.some.1, label %nullsafe.empty.1\n"
+        "nullsafe.empty.1:\n"
+        "  %tmp1 = insertvalue { i1, i32 } undef, i1 false, 0\n"
+        "  br label %nullsafe.merge.0\n"
+        "nullsafe.some.1:\n"
+        "  %tmp2 = extractvalue { i1, %record.User } %user, 1\n"
+        "  %tmp3 = extractvalue %record.User %tmp2, 1\n"
+        "  %tmp4 = extractvalue { i1, %record.Profile } %tmp3, 0\n"
+        "  br i1 %tmp4, label %nullsafe.some.2, label %nullsafe.empty.2\n"
+        "nullsafe.empty.2:\n"
+        "  %tmp5 = insertvalue { i1, i32 } undef, i1 false, 0\n"
+        "  br label %nullsafe.merge.0\n"
+        "nullsafe.some.2:\n"
+        "  %tmp6 = extractvalue { i1, %record.Profile } %tmp3, 1\n"
+        "  %tmp7 = extractvalue %record.Profile %tmp6, 0\n"
+        "  %tmp8 = insertvalue { i1, i32 } undef, i1 true, 0\n"
+        "  %tmp9 = insertvalue { i1, i32 } %tmp8, i32 %tmp7, 1\n"
+        "  br label %nullsafe.merge.0\n"
+        "nullsafe.merge.0:\n"
+        "  %tmp10 = phi { i1, i32 } [%tmp1, %nullsafe.empty.1], "
+        "[%tmp5, %nullsafe.empty.2], [%tmp9, %nullsafe.some.2]\n"
+    );
+
     auto unknown = orison::syntax::ExpressionSyntax {
         .kind = orison::syntax::ExpressionKind::name,
         .text = "missing",

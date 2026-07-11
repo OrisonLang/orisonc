@@ -12,6 +12,7 @@
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/maybe_value_emitter.hpp"
+#include "orison/lowering/null_safe_plan.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -303,6 +304,11 @@ auto pointee_lowered_type_for_pointer_expression(
 struct ResolvedMemberCall {
     MemberCallReceiverInference receiver;
     LoweredMethodLookup method;
+};
+
+struct NullSafeIncoming {
+    std::string value;
+    std::string block;
 };
 
 auto resolve_member_call(
@@ -1477,6 +1483,206 @@ auto lower_temporary_aggregate_path_read(
     );
 }
 
+auto emit_null_safe_empty_result(
+    MaybeValueAbi const& result_abi,
+    FunctionLoweringState& state,
+    std::ostringstream& output
+) -> NullSafeIncoming {
+    auto empty = emit_empty_maybe_value(result_abi, state.next_temporary_index, output);
+    auto incoming_block = state.current_block;
+    return NullSafeIncoming {
+        .value = std::move(empty.value),
+        .block = std::move(incoming_block),
+    };
+}
+
+auto lower_null_safe_member_access_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::null_safe_member_access) {
+        return std::nullopt;
+    }
+
+    auto plan_result = plan_null_safe_member_access(expression, context.lowering, session.state);
+    if (!plan_result.plan.has_value()) {
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            render_null_safe_plan_failure(plan_result.failure)
+        );
+        return std::nullopt;
+    }
+
+    auto const& plan = *plan_result.plan;
+    auto result_abi = maybe_value_abi_for_source_type(plan.result_maybe_type_name, context.lowering);
+    if (!result_abi.has_value()) {
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "null-safe result ABI"
+        );
+        return std::nullopt;
+    }
+    if (result_abi->llvm_type != expected_llvm_type) {
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::type_mismatch,
+            plan.result_maybe_type_name + " has LLVM type " + result_abi->llvm_type +
+                ", expected " + std::string(expected_llvm_type)
+        );
+        return std::nullopt;
+    }
+
+    auto base_llvm_type = llvm_type_for_source_type_name(plan.base_maybe_type_name, context.lowering);
+    if (!base_llvm_type.has_value()) {
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "null-safe base ABI"
+        );
+        return std::nullopt;
+    }
+
+    auto current_maybe = lowered_expression(
+        *plan.base_expression,
+        *base_llvm_type,
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!current_maybe.has_value()) {
+        return std::nullopt;
+    }
+
+    auto current_maybe_type_name = plan.base_maybe_type_name;
+    auto incoming = std::vector<NullSafeIncoming> {};
+    auto merge_block = llvm_block_name(
+        "nullsafe.merge",
+        next_llvm_block_index(session.state.next_block_index)
+    );
+    for (auto index = std::size_t {0}; index < plan.segments.size(); ++index) {
+        auto current_abi = maybe_value_abi_for_source_type(current_maybe_type_name, context.lowering);
+        if (!current_abi.has_value() || current_maybe->type != current_abi->llvm_type) {
+            record_expression_lowering_failure(
+                session.failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "null-safe segment ABI"
+            );
+            return std::nullopt;
+        }
+
+        auto block_index = next_llvm_block_index(session.state.next_block_index);
+        auto some_block = llvm_block_name("nullsafe.some", block_index);
+        auto empty_block = llvm_block_name("nullsafe.empty", block_index);
+
+        auto tag_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << tag_name << " = extractvalue " << current_abi->llvm_type << " "
+               << current_maybe->value << ", 0\n";
+        output << "  br i1 " << tag_name << ", label %" << some_block
+               << ", label %" << empty_block << "\n";
+
+        session.state.current_block = empty_block;
+        output << empty_block << ":\n";
+        incoming.push_back(emit_null_safe_empty_result(*result_abi, session.state, output));
+        output << "  br label %" << merge_block << "\n";
+
+        session.state.current_block = some_block;
+        output << some_block << ":\n";
+        auto payload_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << payload_name << " = extractvalue " << current_abi->llvm_type << " "
+               << current_maybe->value << ", 1\n";
+        auto payload = LoweredExpression {
+            .type = current_abi->payload_llvm_type,
+            .value = std::move(payload_name),
+            .signedness = IntegerSignedness::not_integer,
+        };
+
+        auto const& segment = plan.segments[index];
+        auto const* layout = context.lowering.records.contains(segment.receiver_type_name)
+            ? &context.lowering.records.at(segment.receiver_type_name)
+            : nullptr;
+        auto const* field = layout != nullptr ? find_record_field(*layout, segment.field_name) : nullptr;
+        auto field_llvm_type = llvm_type_for_source_type_name(segment.field_type_name, context.lowering);
+        if (field == nullptr || !field_llvm_type.has_value()) {
+            record_expression_lowering_failure(
+                session.failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "null-safe field extraction"
+            );
+            return std::nullopt;
+        }
+
+        auto field_name = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << field_name << " = extractvalue " << payload.type << " "
+               << payload.value << ", " << field->index << "\n";
+        auto field_value = LoweredExpression {
+            .type = *field_llvm_type,
+            .value = std::move(field_name),
+            .signedness = integer_signedness_for(syntax::TypeSyntax {.name = segment.field_type_name}),
+        };
+
+        auto field_maybe_payload = maybe_payload_source_type_name(segment.field_type_name);
+        if (field_maybe_payload.has_value()) {
+            current_maybe = std::move(field_value);
+            current_maybe_type_name = segment.field_type_name;
+        } else {
+            auto segment_maybe_type_name = std::string {"Maybe<"} + segment.field_type_name + ">";
+            auto segment_abi = maybe_value_abi_for_source_type(segment_maybe_type_name, context.lowering);
+            if (!segment_abi.has_value()) {
+                record_expression_lowering_failure(
+                    session.failures,
+                    ExpressionLoweringFailureReason::unsupported_expression,
+                    "null-safe segment result ABI"
+                );
+                return std::nullopt;
+            }
+            current_maybe = emit_some_maybe_value(
+                *segment_abi,
+                field_value,
+                session.state.next_temporary_index,
+                output
+            );
+            if (!current_maybe.has_value()) {
+                return std::nullopt;
+            }
+            current_maybe_type_name = std::move(segment_maybe_type_name);
+        }
+
+        if (index + 1 == plan.segments.size()) {
+            incoming.push_back(NullSafeIncoming {
+                .value = current_maybe->value,
+                .block = session.state.current_block,
+            });
+            output << "  br label %" << merge_block << "\n";
+
+            output << merge_block << ":\n";
+            auto phi_name = next_llvm_temporary_name(session.state.next_temporary_index);
+            output << "  " << phi_name << " = phi " << result_abi->llvm_type << " ";
+            for (auto incoming_index = std::size_t {0}; incoming_index < incoming.size(); ++incoming_index) {
+                if (incoming_index > 0) {
+                    output << ", ";
+                }
+                output << "[" << incoming[incoming_index].value << ", %"
+                       << incoming[incoming_index].block << "]";
+            }
+            output << "\n";
+            session.state.current_block = std::move(merge_block);
+            return LoweredExpression {
+                .type = result_abi->llvm_type,
+                .value = std::move(phi_name),
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+    }
+
+    return std::nullopt;
+}
+
 auto lowered_expression(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -1627,6 +1833,16 @@ auto lowered_expression(
             output
         )) {
         return aggregate_path_read;
+    }
+
+    if (auto null_safe_access = lower_null_safe_member_access_expression(
+            expression,
+            expected_llvm_type,
+            context,
+            session,
+            output
+        )) {
+        return null_safe_access;
     }
 
     if (expression.kind == syntax::ExpressionKind::member_access && expression.left != nullptr) {
