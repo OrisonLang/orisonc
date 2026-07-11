@@ -1,5 +1,6 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
 

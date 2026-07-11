@@ -28,6 +28,8 @@ auto view_element_source_type_name(std::string_view type_name) -> std::optional<
 
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string>;
 
+auto maybe_payload_source_type_name(std::string_view type_name) -> std::optional<std::string>;
+
 auto source_type_name_for_llvm_type(
     std::string_view llvm_type,
     LoweringContext const& context

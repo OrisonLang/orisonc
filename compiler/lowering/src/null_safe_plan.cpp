@@ -41,19 +41,6 @@ auto maybe_type_name(std::string const& payload_type_name) -> std::string {
 
 }  // namespace
 
-auto maybe_payload_source_type_name(std::string const& type_name) -> std::optional<std::string> {
-    if (!type_name.starts_with("Maybe<") || !type_name.ends_with(">")) {
-        return std::nullopt;
-    }
-
-    auto inner = type_name.substr(6, type_name.size() - 7);
-    auto arguments = split_top_level_generic_arguments(inner);
-    if (arguments.size() != 1 || arguments.front().empty()) {
-        return std::nullopt;
-    }
-    return arguments.front();
-}
-
 auto plan_null_safe_member_access(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,

@@ -147,6 +147,22 @@ auto pointer_pointee_source_type_name(std::string_view type_name) -> std::option
     return std::string(type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1));
 }
 
+auto maybe_payload_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"Maybe<"};
+    if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
+        type_name.size() <= prefix.size() + 1) {
+        return std::nullopt;
+    }
+
+    auto arguments = split_top_level_generic_arguments(
+        type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
+    );
+    if (arguments.size() != 1 || arguments.front().empty()) {
+        return std::nullopt;
+    }
+    return arguments.front();
+}
+
 auto source_type_name_for_llvm_type(
     std::string_view llvm_type,
     LoweringContext const& context
@@ -236,6 +252,16 @@ auto lowered_type_for_source_type_name(
             .type = record->second.llvm_type_name,
             .signedness = IntegerSignedness::not_integer,
         };
+    }
+
+    if (auto payload_type_name = maybe_payload_source_type_name(type_name)) {
+        auto payload_type = lowered_type_for_source_type_name(*payload_type_name, context);
+        if (payload_type.has_value()) {
+            return LoweredType {
+                .type = "{ i1, " + payload_type->type + " }",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
     }
 
     constexpr auto prefix = std::string_view {"Array<"};

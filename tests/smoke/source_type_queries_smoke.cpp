@@ -259,6 +259,8 @@ int main() {
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");
     assert(orison::lowering::pointer_pointee_source_type_name("Pointer<UInt32>") == "UInt32");
+    assert(orison::lowering::maybe_payload_source_type_name("Maybe<Array<UInt32, 3>>") == "Array<UInt32, 3>");
+    assert(!orison::lowering::maybe_payload_source_type_name("Array<UInt32, 3>").has_value());
 
     auto array = orison::lowering::parse_llvm_array_type("[3 x i32]");
     assert(array.has_value());
@@ -276,6 +278,21 @@ int main() {
     auto array_type = orison::lowering::llvm_type_for_source_type_name("Array<Bucket, 2>", context);
     assert(array_type.has_value());
     assert(*array_type == "[2 x %record.Bucket]");
+
+    auto maybe_scalar_type = orison::lowering::llvm_type_for_source_type_name("Maybe<UInt32>", context);
+    assert(maybe_scalar_type.has_value());
+    assert(*maybe_scalar_type == "{ i1, i32 }");
+
+    auto maybe_record_type = orison::lowering::llvm_type_for_source_type_name("Maybe<Bucket>", context);
+    assert(maybe_record_type.has_value());
+    assert(*maybe_record_type == "{ i1, %record.Bucket }");
+
+    auto maybe_array_type =
+        orison::lowering::llvm_type_for_source_type_name("Maybe<Array<UInt32, 3>>", context);
+    assert(maybe_array_type.has_value());
+    assert(*maybe_array_type == "{ i1, [3 x i32] }");
+
+    assert(!orison::lowering::llvm_type_for_source_type_name("Maybe<Unit>", context).has_value());
 
     assert(orison::lowering::source_type_name_for_expression(name("wrapper"), context, state) == "Wrapper");
     assert(

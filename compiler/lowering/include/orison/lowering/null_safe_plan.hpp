@@ -43,8 +43,6 @@ struct NullSafePlanResult {
     NullSafePlanFailure failure;
 };
 
-auto maybe_payload_source_type_name(std::string const& type_name) -> std::optional<std::string>;
-
 auto plan_null_safe_member_access(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
