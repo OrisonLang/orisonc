@@ -3013,6 +3013,102 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_cast_array_return_run.or",
         sourced_scalar_choice_maybe_cast_array_return_lines
     );
+    auto sourced_scalar_choice_maybe_record_nested_array_return_array_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record StatusGrid",
+        "    statuses: Array<Array<LocalStatus, 2>, 2>",
+        "function make_grids() -> Array<Maybe<StatusGrid>, 2>",
+        "    return [Some(StatusGrid([[Empty, Ready(199 as UInt32)], [Empty, Empty]])), Empty]",
+        "function main() -> UInt32",
+        "    switch make_grids()[0 as UInt64]",
+        "        Some(grid) =>",
+        "            switch grid.statuses[0 as UInt64][1 as UInt64]",
+        "                Ready(code) => code - 199 as UInt32",
+        "                Empty => 1 as UInt32",
+        "        Empty => 2 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_return_array_emit.or",
+        sourced_scalar_choice_maybe_record_nested_array_return_array_lines,
+        {
+            "define [2 x { i1, %record.StatusGrid }] @make_grids()",
+            "%record.StatusGrid = type { [2 x [2 x { i32, i32 }]] }",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 199, 1",
+            "insertvalue [2 x [2 x { i32, i32 }]] undef, [2 x { i32, i32 }]",
+            "insertvalue %record.StatusGrid undef, [2 x [2 x { i32, i32 }]]",
+            "insertvalue { i1, %record.StatusGrid } undef, i1 true, 0",
+            "insertvalue [2 x { i1, %record.StatusGrid }] undef, { i1, %record.StatusGrid }",
+            "ret [2 x { i1, %record.StatusGrid }]",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_return_array_run.or",
+        sourced_scalar_choice_maybe_record_nested_array_return_array_lines
+    );
+    auto sourced_scalar_choice_maybe_record_maybe_nested_array_return_array_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record StatusGrid",
+        "    statuses: Array<Array<Maybe<LocalStatus>, 2>, 2>",
+        "function make_grids() -> Array<Maybe<StatusGrid>, 2>",
+        "    return [Some(StatusGrid([[Empty, Some(Ready(201 as UInt32))], [Empty, Empty]])), Empty]",
+        "function main() -> UInt32",
+        "    switch make_grids()[0 as UInt64]",
+        "        Some(grid) =>",
+        "            switch grid.statuses[0 as UInt64][1 as UInt64]",
+        "                Some(status) =>",
+        "                    switch status",
+        "                        Ready(code) => code - 201 as UInt32",
+        "                        Empty => 1 as UInt32",
+        "                Empty => 2 as UInt32",
+        "        Empty => 3 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_return_array_emit.or",
+        sourced_scalar_choice_maybe_record_maybe_nested_array_return_array_lines,
+        {
+            "define [2 x { i1, %record.StatusGrid }] @make_grids()",
+            "%record.StatusGrid = type { [2 x [2 x { i1, { i32, i32 } }]] }",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 201, 1",
+            "insertvalue { i1, { i32, i32 } } undef, i1 true, 0",
+            "insertvalue [2 x [2 x { i1, { i32, i32 } }]] undef, [2 x { i1, { i32, i32 } }]",
+            "insertvalue %record.StatusGrid undef, [2 x [2 x { i1, { i32, i32 } }]]",
+            "insertvalue { i1, %record.StatusGrid } undef, i1 true, 0",
+            "insertvalue [2 x { i1, %record.StatusGrid }] undef, { i1, %record.StatusGrid }",
+            "ret [2 x { i1, %record.StatusGrid }]",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_return_array_run.or",
+        sourced_scalar_choice_maybe_record_maybe_nested_array_return_array_lines
+    );
     auto sourced_scalar_choice_array_call_argument_lines = std::vector<std::string_view> {
         "package demo.cli",
         "choice LocalStatus",
