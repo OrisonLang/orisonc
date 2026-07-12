@@ -363,17 +363,7 @@ auto inferred_expression_type(
     }
 
     if (expression.kind == syntax::ExpressionKind::cast) {
-        syntax::TypeSyntax target_type {
-            .name = expression.text,
-        };
-        auto cast_type = llvm_type_for(target_type);
-        if (!cast_type.has_value()) {
-            return std::nullopt;
-        }
-        return LoweredType {
-            .type = std::string(*cast_type),
-            .signedness = integer_signedness_for(target_type),
-        };
+        return lowered_type_for_source_type_name(expression.text, context.lowering);
     }
 
     if (expression.kind == syntax::ExpressionKind::unary && expression.left != nullptr) {
@@ -2193,11 +2183,8 @@ auto lowered_expression(
     }
 
     if (expression.kind == syntax::ExpressionKind::cast && expression.left != nullptr) {
-        syntax::TypeSyntax target_type {
-            .name = expression.text,
-        };
-        auto cast_type = llvm_type_for(target_type);
-        if (!cast_type.has_value() || *cast_type != expected_llvm_type) {
+        auto cast_type = lowered_type_for_source_type_name(expression.text, context.lowering);
+        if (!cast_type.has_value() || cast_type->type != expected_llvm_type) {
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_cast,
@@ -2205,6 +2192,20 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
+        if (expression.left->kind == syntax::ExpressionKind::array_literal) {
+            return lowered_expression(
+                *expression.left,
+                expected_llvm_type,
+                expected_signedness,
+                context,
+                session,
+                output,
+                expression.text
+            );
+        }
+        syntax::TypeSyntax target_type {
+            .name = expression.text,
+        };
         if (auto integer = lowered_integer_literal(
                 *expression.left,
                 expected_llvm_type,

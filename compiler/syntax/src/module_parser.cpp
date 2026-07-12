@@ -375,6 +375,23 @@ private:
         return type;
     }
 
+    auto render_type_name(TypeSyntax const& type) -> std::string {
+        auto rendered = type.name;
+        if (type.generic_arguments.empty()) {
+            return rendered;
+        }
+
+        rendered += "<";
+        for (auto index = std::size_t {0}; index < type.generic_arguments.size(); ++index) {
+            if (index > 0) {
+                rendered += ", ";
+            }
+            rendered += render_type_name(type.generic_arguments[index]);
+        }
+        rendered += ">";
+        return rendered;
+    }
+
     auto consume_block_start(ParseResult& result, std::string const& message) -> bool {
         if (!is(TokenKind::newline)) {
             result.diagnostics.error(current().line, message);
@@ -746,7 +763,7 @@ private:
             expression = ExpressionSyntax {
                 .kind = ExpressionKind::cast,
                 .line = expression.line,
-                .text = cast_type.name,
+                .text = render_type_name(cast_type),
                 .arguments = {},
                 .left = std::make_unique<ExpressionSyntax>(std::move(expression)),
                 .right = nullptr,

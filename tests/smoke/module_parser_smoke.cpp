@@ -1253,6 +1253,30 @@ void test_cast_expression_success() {
     assert(return_statement.expression.right->left->text == "b");
 }
 
+void test_generic_cast_expression_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_generic_cast_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.casts\n";
+        output << "function values() -> Array<Maybe<UInt32>, 2>\n";
+        output << "    return [Some(1 as UInt32), Empty] as Array<Maybe<UInt32>, 2>\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    assert(result.module.functions.size() == 1);
+    assert(result.module.functions.front().body_statements.size() == 1);
+    auto const& return_statement = result.module.functions.front().body_statements[0];
+    assert(return_statement.expression.kind == orison::syntax::ExpressionKind::cast);
+    assert(return_statement.expression.text == "Array<Maybe<UInt32>, 2>");
+    assert(return_statement.expression.left->kind == orison::syntax::ExpressionKind::array_literal);
+}
+
 void test_cast_expression_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_module_parser_cast_failure.or";
     {
@@ -2219,6 +2243,7 @@ int main() {
     test_string_literal_failure();
     test_hex_binary_integer_success();
     test_cast_expression_success();
+    test_generic_cast_expression_success();
     test_cast_expression_failure();
     test_index_expression_success();
     test_index_expression_failure();

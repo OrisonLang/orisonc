@@ -1451,6 +1451,82 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_for_array_binding_run.or",
         sourced_scalar_choice_maybe_for_array_binding_lines
     );
+    auto sourced_scalar_choice_for_cast_array_literal_binding_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "function main() -> UInt32",
+        "    var total: UInt32 = 0 as UInt32",
+        "    for status in [Ready(111 as UInt32), Empty] as Array<LocalStatus, 2>",
+        "        switch status",
+        "            Ready(code) =>",
+        "                total = total + code",
+        "            Empty =>",
+        "                total = total + 0 as UInt32",
+        "    total - 111 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_for_cast_array_literal_binding_emit.or",
+        sourced_scalar_choice_for_cast_array_literal_binding_lines,
+        {
+            "insertvalue [2 x { i32, i32 }] undef, { i32, i32 }",
+            "i32 111, 1",
+            "extractvalue [2 x { i32, i32 }]",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_for_cast_array_literal_binding_run.or",
+        sourced_scalar_choice_for_cast_array_literal_binding_lines
+    );
+    auto sourced_scalar_choice_maybe_for_cast_array_literal_binding_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function main() -> UInt32",
+        "    var total: UInt32 = 0 as UInt32",
+        "    for maybe_status in [Some(Ready(113 as UInt32)), Empty] as Array<Maybe<LocalStatus>, 2>",
+        "        switch maybe_status",
+        "            Some(status) =>",
+        "                switch status",
+        "                    Ready(code) =>",
+        "                        total = total + code",
+        "                    Empty =>",
+        "                        total = total + 0 as UInt32",
+        "            Empty =>",
+        "                total = total + 0 as UInt32",
+        "    total - 113 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_for_cast_array_literal_binding_emit.or",
+        sourced_scalar_choice_maybe_for_cast_array_literal_binding_lines,
+        {
+            "insertvalue [2 x { i1, { i32, i32 } }] undef, { i1, { i32, i32 } }",
+            "i32 113, 1",
+            "extractvalue [2 x { i1, { i32, i32 } }]",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_for_cast_array_literal_binding_run.or",
+        sourced_scalar_choice_maybe_for_cast_array_literal_binding_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
