@@ -1669,6 +1669,77 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_cast_array_return_run.or",
         sourced_scalar_choice_maybe_cast_array_return_lines
     );
+    auto sourced_scalar_choice_array_call_argument_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "function consume(statuses: Array<LocalStatus, 2>) -> UInt32",
+        "    switch statuses[0 as UInt64]",
+        "        Ready(code) => code - 127 as UInt32",
+        "        Empty => 1 as UInt32",
+        "function main() -> UInt32",
+        "    consume([Ready(127 as UInt32), Empty])",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_array_call_argument_emit.or",
+        sourced_scalar_choice_array_call_argument_lines,
+        {
+            "define i32 @consume([2 x { i32, i32 }]",
+            "insertvalue [2 x { i32, i32 }] undef, { i32, i32 }",
+            "i32 127, 1",
+            "call i32 @consume([2 x { i32, i32 }]",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_array_call_argument_run.or",
+        sourced_scalar_choice_array_call_argument_lines
+    );
+    auto sourced_scalar_choice_maybe_array_call_argument_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function consume(statuses: Array<Maybe<LocalStatus>, 2>) -> UInt32",
+        "    switch statuses[0 as UInt64]",
+        "        Some(status) =>",
+        "            switch status",
+        "                Ready(code) => code - 129 as UInt32",
+        "                Empty => 1 as UInt32",
+        "        Empty => 2 as UInt32",
+        "function main() -> UInt32",
+        "    consume([Some(Ready(129 as UInt32)), Empty])",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_array_call_argument_emit.or",
+        sourced_scalar_choice_maybe_array_call_argument_lines,
+        {
+            "define i32 @consume([2 x { i1, { i32, i32 } }]",
+            "insertvalue [2 x { i1, { i32, i32 } }] undef, { i1, { i32, i32 } }",
+            "i32 129, 1",
+            "call i32 @consume([2 x { i1, { i32, i32 } }]",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_array_call_argument_run.or",
+        sourced_scalar_choice_maybe_array_call_argument_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_ambiguous_scalar_choice_for_bare_array_literal_binding_emit.or",
