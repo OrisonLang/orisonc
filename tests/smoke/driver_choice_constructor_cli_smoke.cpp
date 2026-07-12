@@ -1371,6 +1371,86 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_array_index_assignment_run.or",
         sourced_scalar_choice_maybe_record_array_index_assignment_lines
     );
+    auto sourced_scalar_choice_for_array_binding_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "function main() -> UInt32",
+        "    let statuses: Array<LocalStatus, 2> = [Ready(107 as UInt32), Empty]",
+        "    var total: UInt32 = 0 as UInt32",
+        "    for status in statuses",
+        "        switch status",
+        "            Ready(code) =>",
+        "                total = total + code",
+        "            Empty =>",
+        "                total = total + 0 as UInt32",
+        "    total - 107 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_for_array_binding_emit.or",
+        sourced_scalar_choice_for_array_binding_lines,
+        {
+            "extractvalue [2 x { i32, i32 }]",
+            "i32 107, 1",
+            "switch i32",
+            "load i32",
+            "store i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_for_array_binding_run.or",
+        sourced_scalar_choice_for_array_binding_lines
+    );
+    auto sourced_scalar_choice_maybe_for_array_binding_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "function main() -> UInt32",
+        "    let statuses: Array<Maybe<LocalStatus>, 2> = [Some(Ready(109 as UInt32)), Empty]",
+        "    var total: UInt32 = 0 as UInt32",
+        "    for maybe_status in statuses",
+        "        switch maybe_status",
+        "            Some(status) =>",
+        "                switch status",
+        "                    Ready(code) =>",
+        "                        total = total + code",
+        "                    Empty =>",
+        "                        total = total + 0 as UInt32",
+        "            Empty =>",
+        "                total = total + 0 as UInt32",
+        "    total - 109 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_for_array_binding_emit.or",
+        sourced_scalar_choice_maybe_for_array_binding_lines,
+        {
+            "extractvalue [2 x { i1, { i32, i32 } }]",
+            "i32 109, 1",
+            "switch i1",
+            "switch i32",
+            "load i32",
+            "store i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_for_array_binding_run.or",
+        sourced_scalar_choice_maybe_for_array_binding_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
