@@ -1548,7 +1548,7 @@ auto main() -> int {
             "                total = total + 0 as UInt32",
             "    total - 115 as UInt32",
         },
-        "lowering does not yet support this for iterable element"
+        "lowering array-literal for statements requires an explicit Array<T, N> source type"
     );
     assert_cli_emit_llvm_failure(
         executable,
@@ -1578,7 +1578,7 @@ auto main() -> int {
             "                total = total + 0 as UInt32",
             "    total - 117 as UInt32",
         },
-        "lowering does not yet support this for iterable element"
+        "lowering array-literal for statements requires an explicit Array<T, N> source type"
     );
     assert_cli_emit_llvm_failure(
         executable,

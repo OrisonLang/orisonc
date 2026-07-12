@@ -221,7 +221,9 @@ auto lower_array_literal_for_statement(
             diagnostics.error(
                 statement.expression.arguments[index].line,
                 append_expression_lowering_failure(
-                    "lowering does not yet support this for iterable element",
+                    "lowering array-literal for statements requires an explicit Array<T, N> "
+                    "source type when element type cannot be inferred; add a typed local "
+                    "binding or cast the iterable with 'as Array<T, N>'",
                     session.failures.expression
                 )
             );
