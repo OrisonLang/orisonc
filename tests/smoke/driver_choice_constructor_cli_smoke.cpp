@@ -1133,6 +1133,86 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_array_field_run.or",
         sourced_scalar_choice_maybe_record_array_field_lines
     );
+    auto sourced_scalar_choice_record_return_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "record StatusBox",
+        "    status: LocalStatus",
+        "function make_box() -> StatusBox",
+        "    StatusBox(Ready(79 as UInt32))",
+        "function main() -> UInt32",
+        "    let box: StatusBox = make_box()",
+        "    switch box.status",
+        "        Ready(code) => code - 79 as UInt32",
+        "        Empty => 1 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_record_return_emit.or",
+        sourced_scalar_choice_record_return_lines,
+        {
+            "define %record.StatusBox @make_box()",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 79, 1",
+            "insertvalue %record.StatusBox undef, { i32, i32 }",
+            "ret %record.StatusBox",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_record_return_run.or",
+        sourced_scalar_choice_record_return_lines
+    );
+    auto sourced_scalar_choice_maybe_record_return_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record StatusBox",
+        "    maybe_status: Maybe<LocalStatus>",
+        "function make_box() -> StatusBox",
+        "    StatusBox(Some(Ready(83 as UInt32)))",
+        "function main() -> UInt32",
+        "    let box: StatusBox = make_box()",
+        "    switch box.maybe_status",
+        "        Some(status) =>",
+        "            switch status",
+        "                Ready(code) => code - 83 as UInt32",
+        "                Empty => 1 as UInt32",
+        "        Empty => 2 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_return_emit.or",
+        sourced_scalar_choice_maybe_record_return_lines,
+        {
+            "define %record.StatusBox @make_box()",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 83, 1",
+            "insertvalue { i1, { i32, i32 } } undef, i1 true, 0",
+            "insertvalue %record.StatusBox undef, { i1, { i32, i32 } }",
+            "ret %record.StatusBox",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_return_run.or",
+        sourced_scalar_choice_maybe_record_return_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
