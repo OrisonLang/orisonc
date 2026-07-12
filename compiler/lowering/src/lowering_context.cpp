@@ -48,6 +48,8 @@ auto contextual_choice_type_for(
     return choice->second.llvm_type_name;
 }
 
+auto is_decimal_integer_text(std::string_view text) -> bool;
+
 auto contextual_type_for(
     syntax::TypeSyntax const& type,
     std::unordered_set<std::string> const& record_names,
@@ -63,6 +65,13 @@ auto contextual_type_for(
         auto payload_type = contextual_type_for(type.generic_arguments.front(), record_names, choices);
         if (payload_type.has_value()) {
             return "{ i1, " + *payload_type + " }";
+        }
+    }
+    if (type.name == "Array" && type.generic_arguments.size() == 2 &&
+        is_decimal_integer_text(type.generic_arguments[1].name)) {
+        auto element_type = contextual_type_for(type.generic_arguments[0], record_names, choices);
+        if (element_type.has_value() && *element_type != "void") {
+            return "[" + type.generic_arguments[1].name + " x " + *element_type + "]";
         }
     }
     return std::nullopt;
