@@ -1291,6 +1291,86 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_field_assignment_run.or",
         sourced_scalar_choice_maybe_record_field_assignment_lines
     );
+    auto sourced_scalar_choice_record_array_index_assignment_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "record StatusList",
+        "    statuses: Array<LocalStatus, 2>",
+        "function main() -> UInt32",
+        "    var list: StatusList = StatusList([Empty, Empty])",
+        "    list.statuses[0 as UInt64] = Ready(101 as UInt32)",
+        "    switch list.statuses[0 as UInt64]",
+        "        Ready(code) => code - 101 as UInt32",
+        "        Empty => 1 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_record_array_index_assignment_emit.or",
+        sourced_scalar_choice_record_array_index_assignment_lines,
+        {
+            "alloca %record.StatusList",
+            "getelementptr %record.StatusList",
+            "getelementptr [2 x { i32, i32 }]",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 101, 1",
+            "store { i32, i32 }",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_record_array_index_assignment_run.or",
+        sourced_scalar_choice_record_array_index_assignment_lines
+    );
+    auto sourced_scalar_choice_maybe_record_array_index_assignment_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "choice LocalStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice RemoteStatus",
+        "    Ready(code: UInt32)",
+        "    Empty",
+        "choice Maybe<T>",
+        "    Some(value: T)",
+        "    Empty",
+        "record StatusList",
+        "    statuses: Array<Maybe<LocalStatus>, 2>",
+        "function main() -> UInt32",
+        "    var list: StatusList = StatusList([Empty, Empty])",
+        "    list.statuses[0 as UInt64] = Some(Ready(103 as UInt32))",
+        "    switch list.statuses[0 as UInt64]",
+        "        Some(status) =>",
+        "            switch status",
+        "                Ready(code) => code - 103 as UInt32",
+        "                Empty => 1 as UInt32",
+        "        Empty => 2 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_array_index_assignment_emit.or",
+        sourced_scalar_choice_maybe_record_array_index_assignment_lines,
+        {
+            "alloca %record.StatusList",
+            "getelementptr %record.StatusList",
+            "getelementptr [2 x { i1, { i32, i32 } }]",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "i32 103, 1",
+            "insertvalue { i1, { i32, i32 } } undef, i1 true, 0",
+            "store { i1, { i32, i32 } }",
+            "switch i1",
+            "switch i32",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_array_index_assignment_run.or",
+        sourced_scalar_choice_maybe_record_array_index_assignment_lines
+    );
     assert_cli_emit_llvm_failure(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
