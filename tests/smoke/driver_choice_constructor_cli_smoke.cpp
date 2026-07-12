@@ -1529,6 +1529,59 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_failure(
         executable,
+        smoke_temp_root / "orison_cli_ambiguous_scalar_choice_for_bare_array_literal_binding_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice LocalStatus",
+            "    Ready(code: UInt32)",
+            "    Empty",
+            "choice RemoteStatus",
+            "    Ready(code: UInt32)",
+            "    Empty",
+            "function main() -> UInt32",
+            "    var total: UInt32 = 0 as UInt32",
+            "    for status in [Ready(115 as UInt32), Empty]",
+            "        switch status",
+            "            Ready(code) =>",
+            "                total = total + code",
+            "            Empty =>",
+            "                total = total + 0 as UInt32",
+            "    total - 115 as UInt32",
+        },
+        "lowering does not yet support this for iterable element"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        smoke_temp_root / "orison_cli_ambiguous_scalar_choice_maybe_for_bare_array_literal_binding_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice LocalStatus",
+            "    Ready(code: UInt32)",
+            "    Empty",
+            "choice RemoteStatus",
+            "    Ready(code: UInt32)",
+            "    Empty",
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "function main() -> UInt32",
+            "    var total: UInt32 = 0 as UInt32",
+            "    for maybe_status in [Some(Ready(117 as UInt32)), Empty]",
+            "        switch maybe_status",
+            "            Some(status) =>",
+            "                switch status",
+            "                    Ready(code) =>",
+            "                        total = total + code",
+            "                    Empty =>",
+            "                        total = total + 0 as UInt32",
+            "            Empty =>",
+            "                total = total + 0 as UInt32",
+            "    total - 117 as UInt32",
+        },
+        "lowering does not yet support this for iterable element"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
         std::vector<std::string_view> {
             "package demo.cli",
