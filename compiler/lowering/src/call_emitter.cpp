@@ -47,13 +47,15 @@ auto append_call_arguments(
 
 auto lower_call_arguments_impl(
     syntax::ExpressionSyntax const* receiver_expression,
+    LoweredExpression const* lowered_receiver_expression,
     std::span<syntax::ExpressionSyntax const> arguments,
     LoweredFunctionSignature const& function,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> std::optional<std::vector<LoweredExpression>> {
-    auto const expected_argument_count = arguments.size() + (receiver_expression == nullptr ? 0 : 1);
+    auto const has_receiver = receiver_expression != nullptr || lowered_receiver_expression != nullptr;
+    auto const expected_argument_count = arguments.size() + (has_receiver ? 1 : 0);
     if (function.parameter_types.size() != expected_argument_count) {
         return std::nullopt;
     }
@@ -83,6 +85,13 @@ auto lower_call_arguments_impl(
             return std::nullopt;
         }
         lowered_arguments.push_back(std::move(*lowered_receiver));
+        parameter_index = 1;
+    } else if (lowered_receiver_expression != nullptr) {
+        if (function.parameter_types.empty() ||
+            lowered_receiver_expression->type != function.parameter_types.front()) {
+            return std::nullopt;
+        }
+        lowered_arguments.push_back(*lowered_receiver_expression);
         parameter_index = 1;
     }
 
@@ -145,6 +154,7 @@ auto lower_call_arguments(
 ) -> std::optional<std::vector<LoweredExpression>> {
     return lower_call_arguments_impl(
         nullptr,
+        nullptr,
         std::span<syntax::ExpressionSyntax const>(expression.arguments.data(), expression.arguments.size()),
         function,
         context,
@@ -163,6 +173,26 @@ auto lower_member_call_arguments(
 ) -> std::optional<std::vector<LoweredExpression>> {
     return lower_call_arguments_impl(
         &receiver_expression,
+        nullptr,
+        arguments,
+        function,
+        context,
+        session,
+        output
+    );
+}
+
+auto lower_member_call_arguments(
+    LoweredExpression receiver,
+    std::span<syntax::ExpressionSyntax const> arguments,
+    LoweredFunctionSignature const& function,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::vector<LoweredExpression>> {
+    return lower_call_arguments_impl(
+        nullptr,
+        &receiver,
         arguments,
         function,
         context,

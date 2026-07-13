@@ -31,6 +31,15 @@ auto lower_member_call_arguments(
     std::ostringstream& output
 ) -> std::optional<std::vector<LoweredExpression>>;
 
+auto lower_member_call_arguments(
+    LoweredExpression receiver,
+    std::span<syntax::ExpressionSyntax const> arguments,
+    LoweredFunctionSignature const& function,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<std::vector<LoweredExpression>>;
+
 auto emit_value_call(
     std::string temporary_name,
     LoweredFunctionSignature const& function,

@@ -25,8 +25,10 @@ int main() {
         "printf"
     );
     assert(orison::lowering::has_supported_function_signature_types(signature));
+    assert(signature.source_return_type_name == "Int32");
     assert(signature.return_type == "i32");
     assert(signature.parameter_types == std::vector<std::string>({"ptr", "i16"}));
+    assert(signature.parameter_source_type_names == std::vector<std::string>({"Pointer<Byte>", "Int16"}));
 
     auto const* adapter = orison::lowering::find_c_abi_adapter("printf");
     assert(adapter != nullptr);
@@ -53,6 +55,7 @@ int main() {
         "make_values"
     );
     assert(orison::lowering::has_supported_function_signature_types(array_return));
+    assert(array_return.source_return_type_name == "Array<UInt32, 3>");
     assert(array_return.return_type == "[3 x i32]");
     return 0;
 }

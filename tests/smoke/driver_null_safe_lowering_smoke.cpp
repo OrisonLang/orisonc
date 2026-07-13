@@ -226,6 +226,43 @@ auto main() -> int {
         }
     );
 
+    auto emit_null_safe_member_call_path = std::filesystem::temp_directory_path() /
+        "emit_null_safe_member_call.or";
+    write_fixture(
+        emit_null_safe_member_call_path,
+        "demo.member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "extend Profile",
+            "    function scaled(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.rating + delta",
+            "record Profile",
+            "    rating: UInt32",
+            "function main() -> UInt32",
+            "    let profile: Maybe<Profile> = Some(Profile(7 as UInt32))",
+            "    let scaled: Maybe<UInt32> = profile?.scaled(5 as UInt32)",
+            "    return 0 as UInt32",
+        }
+    );
+    auto emit_null_safe_member_call = run_emit_llvm(app, emit_null_safe_member_call_path);
+    assert_success_with_stdout_contains(
+        emit_null_safe_member_call,
+        {
+            "%record.Profile = type { i32 }",
+            "define i32 @method.Profile.scaled(%record.Profile %this, i32 %delta)",
+            "define i32 @main()",
+            "nullsafe.call.empty.",
+            "nullsafe.call.some.",
+            "nullsafe.call.merge.",
+            "call i32 @method.Profile.scaled(%record.Profile",
+            "insertvalue { i1, i32 } undef, i1 true, 0",
+            "phi { i1, i32 }",
+            "ret i32 0",
+        }
+    );
+
     auto run_null_safe_paths = std::filesystem::temp_directory_path() /
         "run_null_safe_paths.or";
     write_fixture(
@@ -276,6 +313,21 @@ auto main() -> int {
             "    switch profile",
             "        Some(value) => return value.rating",
             "        Empty => return 0 as UInt32",
+            "extend Profile",
+            "    function scaled(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.rating + delta",
+            "function final_member_call_score() -> UInt32",
+            "    let profile: Maybe<Profile> = Some(Profile(7 as UInt32))",
+            "    let scaled: Maybe<UInt32> = profile?.scaled(5 as UInt32)",
+            "    switch scaled",
+            "        Some(value) => value",
+            "        Empty => 0 as UInt32",
+            "function return_empty_member_call_score() -> UInt32",
+            "    let profile: Maybe<Profile> = Empty",
+            "    let scaled: Maybe<UInt32> = profile?.scaled(5 as UInt32)",
+            "    switch scaled",
+            "        Some(value) => return 1 as UInt32",
+            "        Empty => return 0 as UInt32",
             "function main() -> UInt32",
             "    let empty_user: Maybe<User> = Empty",
             "    let empty_rating: Maybe<UInt32> = empty_user?.profile?.rating",
@@ -285,7 +337,7 @@ auto main() -> int {
             "    let absent_profile: Maybe<Profile> = Empty",
             "    let nested_absent_user: Maybe<User> = Some(User(absent_profile))",
             "    let nested_absent_rating: Maybe<UInt32> = nested_absent_user?.profile?.rating",
-            "    return final_present_score() + return_present_score() + final_empty_score() + return_nested_absent_score() + final_record_payload_score() + return_record_payload_score() - 34 as UInt32",
+            "    return final_present_score() + return_present_score() + final_empty_score() + return_nested_absent_score() + final_record_payload_score() + return_record_payload_score() + final_member_call_score() + return_empty_member_call_score() - 46 as UInt32",
         }
     );
     assert_run_success(run_program(app, run_null_safe_paths));

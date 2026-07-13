@@ -52,6 +52,7 @@ auto lower_function_signature(
     std::string symbol_name
 ) -> LoweredFunctionSignature {
     auto signature = LoweredFunctionSignature {
+        .source_return_type_name = render_source_type_name(return_type),
         .return_signedness = integer_signedness_for(return_type),
         .parameter_signedness = parameter_signedness_for(parameters),
         .symbol_name = std::move(symbol_name),

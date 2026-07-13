@@ -450,13 +450,30 @@ auto source_type_name_for_expression(
             return std::nullopt;
         }
 
-        auto method = find_lowered_method_signature(context, *receiver_type, expression.left->text);
+        auto lookup_receiver_type = *receiver_type;
+        if (expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+            auto payload_type = maybe_payload_source_type_name(*receiver_type);
+            if (!payload_type.has_value()) {
+                return std::nullopt;
+            }
+            lookup_receiver_type = std::move(*payload_type);
+        }
+
+        auto method = find_lowered_method_signature(context, lookup_receiver_type, expression.left->text);
         if (method.result != LoweredMethodLookupResult::found || method.method == nullptr ||
             method.method->signature.return_type.empty() || method.method->signature.return_type == "void") {
             return std::nullopt;
         }
 
-        return source_type_name_for_llvm_type(method.method->signature.return_type, context);
+        auto return_source_type = !method.method->signature.source_return_type_name.empty()
+            ? std::optional<std::string> {method.method->signature.source_return_type_name}
+            : source_type_name_for_llvm_type(method.method->signature.return_type, context);
+        if (!return_source_type.has_value()) {
+            return std::nullopt;
+        }
+        return expression.left->kind == syntax::ExpressionKind::null_safe_member_access
+            ? std::optional<std::string> {"Maybe<" + *return_source_type + ">"}
+            : return_source_type;
     }
 
     return std::nullopt;
