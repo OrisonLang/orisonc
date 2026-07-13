@@ -4343,9 +4343,10 @@ auto main() -> int {
         "                Empty => 1 as UInt32",
         "        Empty => 2 as UInt32",
     };
-    assert_cli_emit_llvm_success(
+    assert_cli_emit_llvm_and_run_success(
         executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_repeat_element_assignment_emit.or",
+        smoke_temp_root,
+        "orison_cli_sourced_scalar_choice_maybe_record_nested_array_repeat_element_assignment",
         sourced_scalar_choice_maybe_record_nested_array_repeat_element_assignment_lines,
         {
             "%record.StatusGrid = type { [2 x [2 x { i32, i32 }]] }",
@@ -4365,11 +4366,6 @@ auto main() -> int {
             "switch i1",
             "switch i32",
         }
-    );
-    assert_cli_run_success(
-        executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_repeat_element_assignment_run.or",
-        sourced_scalar_choice_maybe_record_nested_array_repeat_element_assignment_lines
     );
     auto sourced_scalar_choice_maybe_record_maybe_nested_array_repeat_element_assignment_lines = std::vector<std::string_view> {
         "package demo.cli",
@@ -4401,9 +4397,10 @@ auto main() -> int {
         "                Empty => 2 as UInt32",
         "        Empty => 3 as UInt32",
     };
-    assert_cli_emit_llvm_success(
+    assert_cli_emit_llvm_and_run_success(
         executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_repeat_element_assignment_emit.or",
+        smoke_temp_root,
+        "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_repeat_element_assignment",
         sourced_scalar_choice_maybe_record_maybe_nested_array_repeat_element_assignment_lines,
         {
             "%record.StatusGrid = type { [2 x [2 x { i1, { i32, i32 } }]] }",
@@ -4424,11 +4421,6 @@ auto main() -> int {
             "switch i1",
             "switch i32",
         }
-    );
-    assert_cli_run_success(
-        executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_repeat_element_assignment_run.or",
-        sourced_scalar_choice_maybe_record_maybe_nested_array_repeat_element_assignment_lines
     );
     auto sourced_scalar_choice_maybe_record_nested_array_repeat_element_assignment_alt_index_lines = std::vector<std::string_view> {
         "package demo.cli",
@@ -4562,9 +4554,10 @@ auto main() -> int {
         "                Empty => 1 as UInt32",
         "        Empty => 2 as UInt32",
     };
-    assert_cli_emit_llvm_success(
+    assert_cli_emit_llvm_and_run_success(
         executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_for_element_assignment_emit.or",
+        smoke_temp_root,
+        "orison_cli_sourced_scalar_choice_maybe_record_nested_array_for_element_assignment",
         sourced_scalar_choice_maybe_record_nested_array_for_element_assignment_lines,
         {
             "%record.StatusGrid = type { [2 x [2 x { i32, i32 }]] }",
@@ -4583,11 +4576,6 @@ auto main() -> int {
             "switch i1",
             "switch i32",
         }
-    );
-    assert_cli_run_success(
-        executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_for_element_assignment_run.or",
-        sourced_scalar_choice_maybe_record_nested_array_for_element_assignment_lines
     );
     auto sourced_scalar_choice_maybe_record_maybe_nested_array_for_element_assignment_lines = std::vector<std::string_view> {
         "package demo.cli",
@@ -4618,9 +4606,10 @@ auto main() -> int {
         "                Empty => 2 as UInt32",
         "        Empty => 3 as UInt32",
     };
-    assert_cli_emit_llvm_success(
+    assert_cli_emit_llvm_and_run_success(
         executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_for_element_assignment_emit.or",
+        smoke_temp_root,
+        "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_for_element_assignment",
         sourced_scalar_choice_maybe_record_maybe_nested_array_for_element_assignment_lines,
         {
             "%record.StatusGrid = type { [2 x [2 x { i1, { i32, i32 } }]] }",
@@ -4640,11 +4629,6 @@ auto main() -> int {
             "switch i1",
             "switch i32",
         }
-    );
-    assert_cli_run_success(
-        executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_for_element_assignment_run.or",
-        sourced_scalar_choice_maybe_record_maybe_nested_array_for_element_assignment_lines
     );
     auto sourced_scalar_choice_maybe_record_nested_array_for_element_assignment_alt_index_lines = std::vector<std::string_view> {
         "package demo.cli",
