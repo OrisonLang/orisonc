@@ -14,14 +14,13 @@
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/llvm_names.hpp"
-#include "orison/lowering/maybe_switch_lowering.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/nonvalue_switch_lowering.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
-#include "orison/lowering/switch_plan.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unit_deferred_cleanup.hpp"
 #include "orison/lowering/unsafe_block_lowering.hpp"
@@ -434,112 +433,30 @@ auto lower_unit_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
-    auto subject_source_type = source_type_name_for_expression(
-        statement.expression,
-        context.lowering,
-        session.state
-    );
-    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context, subject_source_type)) {
+    if (!subject_type.has_value()) {
         diagnostics.error(statement.line, "lowering does not yet support this Unit switch subject");
         return StatementFlow::failed;
     }
 
-    auto subject = lower_expression(
-        statement.expression,
-        subject_type->type,
-        subject_type->signedness,
-        context,
-        session,
-        output
-    );
-    if (!subject.has_value()) {
-        diagnostics.error(
-            statement.line,
-            append_expression_lowering_failure(
-                "lowering does not yet support this Unit switch subject",
-                session.failures.expression
-            )
-        );
-        return StatementFlow::failed;
-    }
-    auto original_subject = *subject;
-    auto switch_subject = switch_subject_for_emit(
-        std::move(*subject),
-        context,
-        session,
-        output,
-        subject_source_type
-    );
-
-    auto block_index = next_llvm_block_index(session.state.next_block_index);
-    auto planning = plan_switch(
-        statement.switch_cases,
+    return lower_nonvalue_switch_statement(
+        statement,
         *subject_type,
-        context.lowering,
-        subject_source_type,
-        block_index
+        context,
+        session,
+        diagnostics,
+        output,
+        "lowering does not yet support this Unit switch subject",
+        "lowering does not yet support this Unit switch statement",
+        [&](LoweredSwitchCasePlan const& planned_case) {
+            return lower_unit_statement_block(
+                planned_case.syntax->statements,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        }
     );
-    if (!planning.plan.has_value()) {
-        diagnostics.error(
-            statement.line,
-            append_control_flow_lowering_failure(
-                "lowering does not yet support this Unit switch statement",
-                planning.failure
-            )
-        );
-        return StatementFlow::failed;
-    }
-
-    auto const& plan = *planning.plan;
-    auto binding_scope = BranchBindingScope(session.state);
-    auto switch_targets = std::vector<LlvmSwitchTarget> {};
-    switch_targets.reserve(plan.cases.size());
-    for (auto const& planned_case : plan.cases) {
-        if (planned_case.pattern.has_value()) {
-            switch_targets.push_back(LlvmSwitchTarget {
-                .value = planned_case.pattern->value,
-                .block = planned_case.block,
-            });
-        }
-    }
-    emit_llvm_switch(output, switch_subject.type, switch_subject.value, plan.default_block, switch_targets);
-
-    auto all_cases_terminated = true;
-    for (auto const& planned_case : plan.cases) {
-        binding_scope.reset();
-        emit_llvm_block_label(output, planned_case.block);
-        session.state.current_block = planned_case.block;
-        bind_switch_payload(planned_case, original_subject, context, session, output, subject_source_type);
-
-        auto case_flow = lower_unit_statement_block(
-            planned_case.syntax->statements,
-            context,
-            session,
-            diagnostics,
-            output
-        );
-        if (case_flow == StatementFlow::failed) {
-            return StatementFlow::failed;
-        }
-        if (case_flow == StatementFlow::falls_through) {
-            emit_llvm_branch(output, plan.merge_block);
-            all_cases_terminated = false;
-        }
-    }
-
-    if (!plan.has_default) {
-        emit_llvm_block_label(output, plan.fallback_block);
-        emit_llvm_unreachable(output);
-    }
-
-    if (all_cases_terminated) {
-        return StatementFlow::terminated;
-    }
-
-    binding_scope.reset();
-    emit_llvm_block_label(output, plan.merge_block);
-    session.state.current_block = plan.merge_block;
-    return StatementFlow::falls_through;
 }
 
 auto lower_unit_repeat_statement(
@@ -982,115 +899,33 @@ auto lower_nonvoid_switch_statement(
     std::ostringstream& output
 ) -> StatementFlow {
     auto subject_type = infer_unit_expression_type(statement.expression, context, session.state);
-    auto subject_source_type = source_type_name_for_expression(
-        statement.expression,
-        context.lowering,
-        session.state
-    );
-    if (!subject_type.has_value() || !is_supported_switch_subject(*subject_type, context, subject_source_type)) {
+    if (!subject_type.has_value()) {
         diagnostics.error(statement.line, "lowering does not yet support this non-void switch subject");
         return StatementFlow::failed;
     }
 
-    auto subject = lower_expression(
-        statement.expression,
-        subject_type->type,
-        subject_type->signedness,
-        context,
-        session,
-        output
-    );
-    if (!subject.has_value()) {
-        diagnostics.error(
-            statement.line,
-            append_expression_lowering_failure(
-                "lowering does not yet support this non-void switch subject",
-                session.failures.expression
-            )
-        );
-        return StatementFlow::failed;
-    }
-    auto original_subject = *subject;
-    auto switch_subject = switch_subject_for_emit(
-        std::move(*subject),
-        context,
-        session,
-        output,
-        subject_source_type
-    );
-
-    auto block_index = next_llvm_block_index(session.state.next_block_index);
-    auto planning = plan_switch(
-        statement.switch_cases,
+    return lower_nonvalue_switch_statement(
+        statement,
         *subject_type,
-        context.lowering,
-        subject_source_type,
-        block_index
+        context,
+        session,
+        diagnostics,
+        output,
+        "lowering does not yet support this non-void switch subject",
+        "lowering does not yet support this non-void switch statement",
+        [&](LoweredSwitchCasePlan const& planned_case) {
+            return lower_guard_statement_block(
+                planned_case.syntax->statements,
+                return_llvm_type,
+                return_signedness,
+                return_source_type_name,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        }
     );
-    if (!planning.plan.has_value()) {
-        diagnostics.error(
-            statement.line,
-            append_control_flow_lowering_failure(
-                "lowering does not yet support this non-void switch statement",
-                planning.failure
-            )
-        );
-        return StatementFlow::failed;
-    }
-
-    auto const& plan = *planning.plan;
-    auto binding_scope = BranchBindingScope(session.state);
-    auto switch_targets = std::vector<LlvmSwitchTarget> {};
-    switch_targets.reserve(plan.cases.size());
-    for (auto const& planned_case : plan.cases) {
-        if (planned_case.pattern.has_value()) {
-            switch_targets.push_back(LlvmSwitchTarget {
-                .value = planned_case.pattern->value,
-                .block = planned_case.block,
-            });
-        }
-    }
-    emit_llvm_switch(output, switch_subject.type, switch_subject.value, plan.default_block, switch_targets);
-
-    auto all_cases_terminated = true;
-    for (auto const& planned_case : plan.cases) {
-        binding_scope.reset();
-        emit_llvm_block_label(output, planned_case.block);
-        session.state.current_block = planned_case.block;
-        bind_switch_payload(planned_case, original_subject, context, session, output, subject_source_type);
-
-        auto case_flow = lower_guard_statement_block(
-            planned_case.syntax->statements,
-            return_llvm_type,
-            return_signedness,
-            return_source_type_name,
-            context,
-            session,
-            diagnostics,
-            output
-        );
-        if (case_flow == StatementFlow::failed) {
-            return StatementFlow::failed;
-        }
-        if (case_flow == StatementFlow::falls_through) {
-            emit_llvm_branch(output, plan.merge_block);
-            all_cases_terminated = false;
-        }
-    }
-
-    if (!plan.has_default) {
-        emit_llvm_block_label(output, plan.fallback_block);
-        emit_llvm_unreachable(output);
-    }
-
-    if (all_cases_terminated) {
-        return StatementFlow::terminated;
-    }
-
-    binding_scope.reset();
-    emit_llvm_block_label(output, plan.merge_block);
-    session.state.current_block = plan.merge_block;
-    return StatementFlow::falls_through;
 }
 
 auto lower_unit_statement(
