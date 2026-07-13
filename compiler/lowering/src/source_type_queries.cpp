@@ -1,6 +1,7 @@
 #include "orison/lowering/source_type_queries.hpp"
 
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/null_safe_plan.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <utility>
@@ -373,6 +374,13 @@ auto source_type_name_for_expression(
             return std::nullopt;
         }
         return field->source_type_name;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::null_safe_member_access) {
+        auto plan_result = plan_null_safe_member_access(expression, context, state);
+        return plan_result.plan.has_value()
+            ? std::optional<std::string> {plan_result.plan->result_maybe_type_name}
+            : std::nullopt;
     }
 
     if (expression.kind == syntax::ExpressionKind::index_access && expression.left != nullptr &&
