@@ -3546,6 +3546,74 @@ void test_emit_nonvoid_repeat_for_unsafe_prefixes() {
     std::filesystem::remove(path);
 }
 
+void test_emit_repeat_body_partial_if_and_switch_flow() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_repeat_body_partial_if_switch.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main(value: UInt32) -> Unit\n"
+        "    var current = value\n"
+        "    repeat\n"
+        "        if current == 0 as UInt32\n"
+        "            break\n"
+        "        switch current\n"
+        "            1 => continue\n"
+        "            default => current = current + 1 as UInt32\n"
+        "    while current < 3 as UInt32\n"
+        "    return\n"
+    );
+
+    assert(!result.has_errors());
+    auto const main_pos = result.ir_text.find("define void @main");
+    assert(main_pos != std::string::npos);
+    auto const main_ir = result.ir_text.substr(main_pos);
+    assert(main_ir.find("repeat.body.0:") != std::string::npos);
+    assert(main_ir.find("if.then.1:") != std::string::npos);
+    assert(main_ir.find("if.merge.1:") != std::string::npos);
+    assert(main_ir.find("switch.case.2.0:") != std::string::npos);
+    assert(main_ir.find("switch.merge.2:") != std::string::npos);
+    assert(main_ir.find("br label %repeat.exit.0") != std::string::npos);
+    assert(main_ir.find("br label %repeat.condition.0") != std::string::npos);
+    std::filesystem::remove(path);
+}
+
+void test_emit_for_body_partial_if_and_switch_flow() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_for_body_partial_if_switch.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function main() -> Unit\n"
+        "    for item in [0 as UInt32, 1 as UInt32]\n"
+        "        if item == 0 as UInt32\n"
+        "            continue\n"
+        "        switch item\n"
+        "            1 => break\n"
+        "            default => observe(item)\n"
+        "    return\n"
+    );
+
+    assert(!result.has_errors());
+    auto const main_pos = result.ir_text.find("define void @main");
+    assert(main_pos != std::string::npos);
+    auto const main_ir = result.ir_text.substr(main_pos);
+    assert(main_ir.find("for.iteration.0.0:") != std::string::npos);
+    assert(main_ir.find("for.iteration.0.1:") != std::string::npos);
+    assert(main_ir.find("if.then.1:") != std::string::npos);
+    assert(main_ir.find("if.merge.1:") != std::string::npos);
+    assert(main_ir.find("switch.case.2.0:") != std::string::npos);
+    assert(main_ir.find("switch.merge.2:") != std::string::npos);
+    assert(main_ir.find("br label %for.iteration.0.1") != std::string::npos);
+    assert(main_ir.find("br label %for.exit.0") != std::string::npos);
+    std::filesystem::remove(path);
+}
+
 void test_reject_statements_after_terminating_nonvoid_statement() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_nonvoid_terminating_if.or";
@@ -4042,6 +4110,8 @@ auto main() -> int {
     test_emit_nested_defer_cleanup_in_unsafe_block();
     test_emit_nested_defer_cleanup_in_for_and_repeat_unsafe_blocks();
     test_emit_nonvoid_repeat_for_unsafe_prefixes();
+    test_emit_repeat_body_partial_if_and_switch_flow();
+    test_emit_for_body_partial_if_and_switch_flow();
     test_reject_statements_after_terminating_nonvoid_statement();
     test_emit_raw_mmio_intrinsics();
     test_reject_malformed_generated_llvm_ir();
