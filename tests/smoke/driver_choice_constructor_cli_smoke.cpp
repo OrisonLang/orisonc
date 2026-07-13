@@ -121,6 +121,19 @@ void assert_cli_run_success(
     (void)read_successful_command_output(command);
 }
 
+template <typename SourceLines>
+void assert_cli_emit_llvm_and_run_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& root,
+    std::string_view stem,
+    SourceLines const& lines,
+    std::initializer_list<std::string_view> expected_fragments
+) {
+    auto stem_text = std::string(stem);
+    assert_cli_emit_llvm_success(executable, root / (stem_text + "_emit.or"), lines, expected_fragments);
+    assert_cli_run_success(executable, root / (stem_text + "_run.or"), lines);
+}
+
 auto status_choice_constant_lines(std::string_view initializer) -> std::vector<std::string_view> {
     return {
         "package demo.cli",
@@ -2910,9 +2923,10 @@ auto main() -> int {
         "        return observe(maybe_grid)",
         "    3 as UInt32",
     };
-    assert_cli_emit_llvm_success(
+    assert_cli_emit_llvm_and_run_success(
         executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_guard_assignment_alt_index_emit.or",
+        smoke_temp_root,
+        "orison_cli_sourced_scalar_choice_maybe_record_nested_array_guard_assignment_alt_index",
         sourced_scalar_choice_maybe_record_nested_array_guard_assignment_alt_index_lines,
         {
             "define i32 @observe({ i1, %record.StatusGrid } %maybe_grid)",
@@ -2930,11 +2944,6 @@ auto main() -> int {
             "switch i1",
             "switch i32",
         }
-    );
-    assert_cli_run_success(
-        executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_nested_array_guard_assignment_alt_index_run.or",
-        sourced_scalar_choice_maybe_record_nested_array_guard_assignment_alt_index_lines
     );
     auto sourced_scalar_choice_maybe_record_maybe_nested_array_guard_assignment_alt_index_lines = std::vector<std::string_view> {
         "package demo.cli",
@@ -2966,9 +2975,10 @@ auto main() -> int {
         "        return observe(maybe_grid)",
         "    4 as UInt32",
     };
-    assert_cli_emit_llvm_success(
+    assert_cli_emit_llvm_and_run_success(
         executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_guard_assignment_alt_index_emit.or",
+        smoke_temp_root,
+        "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_guard_assignment_alt_index",
         sourced_scalar_choice_maybe_record_maybe_nested_array_guard_assignment_alt_index_lines,
         {
             "define i32 @observe({ i1, %record.StatusGrid } %maybe_grid)",
@@ -2987,11 +2997,6 @@ auto main() -> int {
             "switch i1",
             "switch i32",
         }
-    );
-    assert_cli_run_success(
-        executable,
-        smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_guard_assignment_alt_index_run.or",
-        sourced_scalar_choice_maybe_record_maybe_nested_array_guard_assignment_alt_index_lines
     );
     auto sourced_scalar_choice_maybe_record_nested_array_switch_assignment_lines = std::vector<std::string_view> {
         "package demo.cli",
