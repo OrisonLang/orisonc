@@ -4,7 +4,6 @@
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
-#include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/for_loop_lowering.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
@@ -15,6 +14,7 @@
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/nonvalue_if_lowering.hpp"
 #include "orison/lowering/nonvalue_switch_lowering.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
@@ -359,70 +359,27 @@ auto lower_unit_if_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto condition = lower_expression(
-        statement.expression,
-        "i1",
-        IntegerSignedness::not_integer,
+    return lower_nonvalue_if_statement(
+        statement,
         context,
         session,
-        output
-    );
-    if (!condition.has_value()) {
-        diagnostics.error(
-            statement.line,
-            append_expression_lowering_failure(
-                "lowering does not yet support this Unit if condition",
-                session.failures.expression
-            )
-        );
-        return StatementFlow::failed;
-    }
-
-    auto plan = plan_conditional(
-        ConditionalPlanKind::if_statement,
-        next_llvm_block_index(session.state.next_block_index)
-    );
-    auto has_else = !statement.alternate_statements.empty();
-    auto binding_scope = BranchBindingScope(session.state);
-    emit_llvm_conditional_branch(
+        diagnostics,
         output,
-        condition->value,
-        plan.then_block,
-        has_else ? plan.else_block : plan.merge_block
+        "lowering does not yet support this Unit if condition",
+        true,
+        [&]() {
+            return lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
+        },
+        [&]() {
+            return lower_unit_statement_block(
+                statement.alternate_statements,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        }
     );
-
-    emit_llvm_block_label(output, plan.then_block);
-    session.state.current_block = plan.then_block;
-    auto then_flow = lower_unit_statement_block(statement.nested_statements, context, session, diagnostics, output);
-    if (then_flow == StatementFlow::failed) {
-        return StatementFlow::failed;
-    }
-    if (then_flow == StatementFlow::falls_through) {
-        emit_llvm_branch(output, plan.merge_block);
-    }
-
-    auto else_flow = StatementFlow::falls_through;
-    if (has_else) {
-        binding_scope.reset();
-        emit_llvm_block_label(output, plan.else_block);
-        session.state.current_block = plan.else_block;
-        else_flow =
-            lower_unit_statement_block(statement.alternate_statements, context, session, diagnostics, output);
-        if (else_flow == StatementFlow::failed) {
-            return StatementFlow::failed;
-        }
-        if (else_flow == StatementFlow::falls_through) {
-            emit_llvm_branch(output, plan.merge_block);
-        }
-    }
-
-    binding_scope.reset();
-    emit_llvm_block_label(output, plan.merge_block);
-    session.state.current_block = plan.merge_block;
-    if (then_flow == StatementFlow::terminated && has_else && else_flow == StatementFlow::terminated) {
-        return StatementFlow::terminated;
-    }
-    return StatementFlow::falls_through;
 }
 
 auto lower_unit_switch_statement(
@@ -805,87 +762,39 @@ auto lower_nonvoid_if_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto condition = lower_expression(
-        statement.expression,
-        "i1",
-        IntegerSignedness::not_integer,
-        context,
-        session,
-        output
-    );
-    if (!condition.has_value()) {
-        diagnostics.error(
-            statement.line,
-            append_expression_lowering_failure(
-                "lowering does not yet support this non-void if condition",
-                session.failures.expression
-            )
-        );
-        return StatementFlow::failed;
-    }
-
-    auto plan = plan_conditional(
-        ConditionalPlanKind::if_statement,
-        next_llvm_block_index(session.state.next_block_index)
-    );
-    auto has_else = !statement.alternate_statements.empty();
-    auto binding_scope = BranchBindingScope(session.state);
-    emit_llvm_conditional_branch(
-        output,
-        condition->value,
-        plan.then_block,
-        has_else ? plan.else_block : plan.merge_block
-    );
-
-    emit_llvm_block_label(output, plan.then_block);
-    session.state.current_block = plan.then_block;
-    auto then_flow = lower_guard_statement_block(
-        statement.nested_statements,
-        return_llvm_type,
-        return_signedness,
-        return_source_type_name,
+    return lower_nonvalue_if_statement(
+        statement,
         context,
         session,
         diagnostics,
-        output
+        output,
+        "lowering does not yet support this non-void if condition",
+        true,
+        [&]() {
+            return lower_guard_statement_block(
+                statement.nested_statements,
+                return_llvm_type,
+                return_signedness,
+                return_source_type_name,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        },
+        [&]() {
+            return lower_guard_statement_block(
+                statement.alternate_statements,
+                return_llvm_type,
+                return_signedness,
+                return_source_type_name,
+                context,
+                session,
+                diagnostics,
+                output
+            );
+        }
     );
-    if (then_flow == StatementFlow::failed) {
-        return StatementFlow::failed;
-    }
-    if (then_flow == StatementFlow::falls_through) {
-        emit_llvm_branch(output, plan.merge_block);
-    }
-
-    auto else_flow = StatementFlow::falls_through;
-    if (has_else) {
-        binding_scope.reset();
-        emit_llvm_block_label(output, plan.else_block);
-        session.state.current_block = plan.else_block;
-        else_flow = lower_guard_statement_block(
-            statement.alternate_statements,
-            return_llvm_type,
-            return_signedness,
-            return_source_type_name,
-            context,
-            session,
-            diagnostics,
-            output
-        );
-        if (else_flow == StatementFlow::failed) {
-            return StatementFlow::failed;
-        }
-        if (else_flow == StatementFlow::falls_through) {
-            emit_llvm_branch(output, plan.merge_block);
-        }
-    }
-
-    binding_scope.reset();
-    emit_llvm_block_label(output, plan.merge_block);
-    session.state.current_block = plan.merge_block;
-    if (then_flow == StatementFlow::terminated && has_else && else_flow == StatementFlow::terminated) {
-        return StatementFlow::terminated;
-    }
-    return StatementFlow::falls_through;
 }
 
 auto lower_nonvoid_switch_statement(
