@@ -1693,6 +1693,46 @@ void test_emit_switch_nested_in_final_if() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_terminating_switch_nested_in_nonfinal_if() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_terminating_switch_nested_in_nonfinal_if.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(enabled: Bool, value: UInt32) -> UInt32\n"
+        "    if enabled\n"
+        "        switch value\n"
+        "            0 => return 1 as UInt32\n"
+        "            default => return 2 as UInt32\n"
+        "    return 3 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("switch.merge") == std::string::npos);
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %enabled, i32 %value) {\n"
+        "entry:\n"
+        "  br i1 %enabled, label %if.then.0, label %if.merge.0\n"
+        "if.then.0:\n"
+        "  switch i32 %value, label %switch.default.1 [\n"
+        "    i32 0, label %switch.case.1.0\n"
+        "  ]\n"
+        "switch.case.1.0:\n"
+        "  ret i32 1\n"
+        "switch.default.1:\n"
+        "  ret i32 2\n"
+        "if.merge.0:\n"
+        "  ret i32 3\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -3719,6 +3759,7 @@ auto main() -> int {
     test_emit_final_switch_mutable_case_prefixes();
     test_emit_exhaustive_boolean_switch_returns();
     test_emit_switch_nested_in_final_if();
+    test_emit_terminating_switch_nested_in_nonfinal_if();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();

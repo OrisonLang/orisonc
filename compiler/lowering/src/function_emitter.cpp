@@ -532,10 +532,14 @@ auto lower_unit_switch_statement(
         emit_llvm_unreachable(output);
     }
 
+    if (all_cases_terminated) {
+        return StatementFlow::terminated;
+    }
+
     binding_scope.reset();
     emit_llvm_block_label(output, plan.merge_block);
     session.state.current_block = plan.merge_block;
-    return all_cases_terminated ? StatementFlow::terminated : StatementFlow::falls_through;
+    return StatementFlow::falls_through;
 }
 
 auto lower_unit_repeat_statement(
@@ -1079,12 +1083,13 @@ auto lower_nonvoid_switch_statement(
         emit_llvm_unreachable(output);
     }
 
-    binding_scope.reset();
-    emit_llvm_block_label(output, plan.merge_block);
-    session.state.current_block = plan.merge_block;
     if (all_cases_terminated) {
         return StatementFlow::terminated;
     }
+
+    binding_scope.reset();
+    emit_llvm_block_label(output, plan.merge_block);
+    session.state.current_block = plan.merge_block;
     return StatementFlow::falls_through;
 }
 
