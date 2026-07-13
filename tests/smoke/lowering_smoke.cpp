@@ -547,6 +547,63 @@ void test_emit_conditional_while_continue_and_break() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_partial_switch_in_while_body() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_partial_switch_in_while_body.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(value: UInt32) -> UInt32\n"
+        "    var current = value\n"
+        "    while current < 2 as UInt32\n"
+        "        switch current\n"
+        "            0 => break\n"
+        "            default => current = current + 1 as UInt32\n"
+        "        current = current + 1 as UInt32\n"
+        "    current\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i32 %value) {\n"
+        "entry:\n"
+        "  %current.addr = alloca i32\n"
+        "  store i32 %value, ptr %current.addr\n"
+        "  br label %while.condition.0\n"
+        "while.condition.0:\n"
+        "  %tmp0 = load i32, ptr %current.addr\n"
+        "  %tmp1 = icmp ult i32 %tmp0, 2\n"
+        "  br i1 %tmp1, label %while.body.0, label %while.exit.0\n"
+        "while.body.0:\n"
+        "  %tmp2 = load i32, ptr %current.addr\n"
+        "  switch i32 %tmp2, label %switch.default.1 [\n"
+        "    i32 0, label %switch.case.1.0\n"
+        "  ]\n"
+        "switch.case.1.0:\n"
+        "  br label %while.exit.0\n"
+        "switch.default.1:\n"
+        "  %tmp3 = load i32, ptr %current.addr\n"
+        "  %tmp4 = add i32 %tmp3, 1\n"
+        "  store i32 %tmp4, ptr %current.addr\n"
+        "  br label %switch.merge.1\n"
+        "switch.merge.1:\n"
+        "  %tmp5 = load i32, ptr %current.addr\n"
+        "  %tmp6 = add i32 %tmp5, 1\n"
+        "  store i32 %tmp6, ptr %current.addr\n"
+        "  br label %while.condition.0\n"
+        "while.exit.0:\n"
+        "  %tmp7 = load i32, ptr %current.addr\n"
+        "  ret i32 %tmp7\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_terminating_while_if_else() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_terminating_while_if_else.or";
@@ -709,7 +766,7 @@ void test_reject_unsupported_while_body_statement() {
     assert(
         result.diagnostics.entries().front().message ==
         "lowering while body only supports local bindings, mutable-local assignments, "
-        "call statements, loop control, nested if statements, nested while/repeat/for statements, and unsafe blocks"
+        "call statements, loop control, nested if/switch statements, nested while/repeat/for statements, and unsafe blocks"
     );
 }
 
@@ -1775,6 +1832,55 @@ void test_emit_partial_switch_nested_in_nonfinal_if() {
         "  br label %if.merge.0\n"
         "if.merge.0:\n"
         "  ret i32 3\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_emit_partial_switch_in_guard_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_partial_switch_in_guard_failure.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(enabled: Bool, value: UInt32) -> UInt32\n"
+        "    var current = value\n"
+        "    guard enabled else\n"
+        "        switch current\n"
+        "            0 => return 1 as UInt32\n"
+        "            default => current = current + 1 as UInt32\n"
+        "    current\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @choose(i1 %enabled, i32 %value) {\n"
+        "entry:\n"
+        "  %current.addr = alloca i32\n"
+        "  store i32 %value, ptr %current.addr\n"
+        "  br i1 %enabled, label %guard.merge.0, label %guard.failure.0\n"
+        "guard.failure.0:\n"
+        "  %tmp0 = load i32, ptr %current.addr\n"
+        "  switch i32 %tmp0, label %switch.default.1 [\n"
+        "    i32 0, label %switch.case.1.0\n"
+        "  ]\n"
+        "switch.case.1.0:\n"
+        "  ret i32 1\n"
+        "switch.default.1:\n"
+        "  %tmp1 = load i32, ptr %current.addr\n"
+        "  %tmp2 = add i32 %tmp1, 1\n"
+        "  store i32 %tmp2, ptr %current.addr\n"
+        "  br label %switch.merge.1\n"
+        "switch.merge.1:\n"
+        "  br label %guard.merge.0\n"
+        "guard.merge.0:\n"
+        "  %tmp3 = load i32, ptr %current.addr\n"
+        "  ret i32 %tmp3\n"
         "}\n"
         "\n"
     };
@@ -3868,6 +3974,7 @@ auto main() -> int {
     test_emit_terminal_while_continue();
     test_emit_defer_cleanup_on_early_return();
     test_emit_conditional_while_continue_and_break();
+    test_emit_partial_switch_in_while_body();
     test_emit_terminating_while_if_else();
     test_emit_nested_while_if_control();
     test_emit_nested_while_loop_body();
@@ -3897,6 +4004,7 @@ auto main() -> int {
     test_emit_switch_nested_in_final_if();
     test_emit_terminating_switch_nested_in_nonfinal_if();
     test_emit_partial_switch_nested_in_nonfinal_if();
+    test_emit_partial_switch_in_guard_failure();
     test_emit_terminating_unit_switch_nested_in_nonfinal_if();
     test_emit_partial_unit_switch_nested_in_nonfinal_if();
     test_emit_zero_argument_function_call_return();
