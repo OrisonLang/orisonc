@@ -8,7 +8,9 @@
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/loop_lowering_support.hpp"
+#include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unsafe_block_lowering.hpp"
@@ -198,6 +200,10 @@ auto inferred_loop_binding_type(
     FunctionLoweringState const& state
 ) -> std::optional<LoweredType> {
     if (!statement.annotated_type.name.empty()) {
+        auto source_type_name = render_source_type_name(statement.annotated_type);
+        if (auto source_type = lowered_type_for_source_type_name(source_type_name, context.lowering)) {
+            return source_type;
+        }
         auto type = llvm_type_for(statement.annotated_type);
         if (!type.has_value() || *type == "void") {
             return std::nullopt;
