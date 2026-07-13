@@ -1733,6 +1733,46 @@ void test_emit_terminating_switch_nested_in_nonfinal_if() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_terminating_unit_switch_nested_in_nonfinal_if() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_terminating_unit_switch_nested_in_nonfinal_if.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function choose(enabled: Bool, value: UInt32) -> Unit\n"
+        "    if enabled\n"
+        "        switch value\n"
+        "            0 => return\n"
+        "            default => return\n"
+        "    return\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("switch.merge") == std::string::npos);
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define void @choose(i1 %enabled, i32 %value) {\n"
+        "entry:\n"
+        "  br i1 %enabled, label %if.then.0, label %if.merge.0\n"
+        "if.then.0:\n"
+        "  switch i32 %value, label %switch.default.1 [\n"
+        "    i32 0, label %switch.case.1.0\n"
+        "  ]\n"
+        "switch.case.1.0:\n"
+        "  ret void\n"
+        "switch.default.1:\n"
+        "  ret void\n"
+        "if.merge.0:\n"
+        "  ret void\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_zero_argument_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_zero_argument_call.or";
     auto result = lower_source(
@@ -3760,6 +3800,7 @@ auto main() -> int {
     test_emit_exhaustive_boolean_switch_returns();
     test_emit_switch_nested_in_final_if();
     test_emit_terminating_switch_nested_in_nonfinal_if();
+    test_emit_terminating_unit_switch_nested_in_nonfinal_if();
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
