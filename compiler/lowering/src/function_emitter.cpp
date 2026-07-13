@@ -556,86 +556,66 @@ auto lower_guard_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto flow = StatementFlow::falls_through;
-    DeferredCleanupScope defer_scope(session.state);
-    for (auto index = std::size_t {0}; index < statements.size(); ++index) {
-        auto const* statement = statements[index];
-        if (statement == nullptr) {
-            return StatementFlow::failed;
+    return lower_nonvalue_statement_block(
+        std::span<syntax::StatementSyntax const* const> {statements.data(), statements.size()},
+        "lowering does not yet support statements after a terminating guard failure statement",
+        context,
+        session,
+        diagnostics,
+        output,
+        lower_unit_deferred_cleanup_block,
+        [&](syntax::StatementSyntax const& statement, bool is_last_statement) {
+            if (statement.kind == syntax::StatementKind::return_statement) {
+                return lower_guard_return_statement(
+                    statement,
+                    return_llvm_type,
+                    return_signedness,
+                    return_source_type_name,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                );
+            }
+            if (statement.kind == syntax::StatementKind::if_statement) {
+                return lower_nonvoid_if_statement(
+                    statement,
+                    return_llvm_type,
+                    return_signedness,
+                    return_source_type_name,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                );
+            }
+            if (statement.kind == syntax::StatementKind::switch_statement) {
+                return lower_nonvoid_switch_statement(
+                    statement,
+                    return_llvm_type,
+                    return_signedness,
+                    return_source_type_name,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                );
+            }
+            if (statement.kind == syntax::StatementKind::guard_statement) {
+                return lower_guard_statement(
+                    statement,
+                    return_llvm_type,
+                    return_signedness,
+                    return_source_type_name,
+                    context,
+                    session,
+                    diagnostics,
+                    output
+                );
+            }
+            return lower_unit_statement(statement, is_last_statement, context, session, diagnostics, output);
         }
-        if (flow == StatementFlow::terminated) {
-            diagnostics.error(
-                statement->line,
-                "lowering does not yet support statements after a terminating guard failure statement"
-            );
-            return StatementFlow::failed;
-        }
-
-        auto const is_last_statement = index + 1 == statements.size();
-        if (statement->kind == syntax::StatementKind::return_statement) {
-            flow = lower_guard_return_statement(
-                *statement,
-                return_llvm_type,
-                return_signedness,
-                return_source_type_name,
-                context,
-                session,
-                diagnostics,
-                output
-            );
-        } else if (statement->kind == syntax::StatementKind::if_statement) {
-            flow = lower_nonvoid_if_statement(
-                *statement,
-                return_llvm_type,
-                return_signedness,
-                return_source_type_name,
-                context,
-                session,
-                diagnostics,
-                output
-            );
-        } else if (statement->kind == syntax::StatementKind::switch_statement) {
-            flow = lower_nonvoid_switch_statement(
-                *statement,
-                return_llvm_type,
-                return_signedness,
-                return_source_type_name,
-                context,
-                session,
-                diagnostics,
-                output
-            );
-        } else if (statement->kind == syntax::StatementKind::guard_statement) {
-            flow = lower_guard_statement(
-                *statement,
-                return_llvm_type,
-                return_signedness,
-                return_source_type_name,
-                context,
-                session,
-                diagnostics,
-                output
-            );
-        } else {
-            flow = lower_unit_statement(*statement, is_last_statement, context, session, diagnostics, output);
-        }
-
-        if (flow == StatementFlow::failed) {
-            return StatementFlow::failed;
-        }
-    }
-    if (flow == StatementFlow::falls_through &&
-        !emit_deferred_cleanup_to_depth(
-            defer_scope.cleanup_depth(),
-            context,
-            session,
-            diagnostics,
-            output,
-            lower_unit_deferred_cleanup_block
-        )) {
-        return StatementFlow::failed;
-    }
-    return flow;
+    );
 }
 
 auto lower_guard_statement_block(
