@@ -34,8 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
-- 2026-07-14: unsigned negative integer casts such as `-1 as UInt32` remain rejected and now have explicit lowering
-  smoke coverage for the current unsupported-cast diagnostic.
+- 2026-07-14: unsigned negative integer casts such as `-1 as UInt32` remain rejected with a targeted
+  `unsupported cast: negative value to UInt32` lowering diagnostic.
 - 2026-07-14: signed unary integer operands now lower inside explicit cast contexts such as `-27 as Int32`, unblocking
   negative signed integer `let`/`var` initializers and signed compound-assignment fixtures that start negative.
 - 2026-07-14: signed integer compound assignment smoke coverage now pins `/=` and `%=` to LLVM `sdiv` and `srem`,

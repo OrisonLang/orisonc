@@ -276,7 +276,7 @@ void test_reject_negative_uint32_cast_return() {
     assert(result.diagnostics.entries().size() == 1);
     assert(
         result.diagnostics.entries().front().message ==
-        "lowering does not yet support this return expression: unsupported cast: UInt32"
+        "lowering does not yet support this return expression: unsupported cast: negative value to UInt32"
     );
 }
 

@@ -2480,6 +2480,16 @@ auto lowered_expression(
                 output
             );
         }
+        if (expression.left->kind == syntax::ExpressionKind::unary && expression.left->text == "-" &&
+            cast_type->signedness == IntegerSignedness::unsigned_integer &&
+            is_integer_llvm_type_impl(expected_llvm_type)) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_cast,
+                "negative value to " + expression.text
+            );
+            return std::nullopt;
+        }
         auto lowered_float = lowered_float_literal(*expression.left, expected_llvm_type);
         if (!lowered_float.has_value()) {
             record_expression_lowering_failure(
