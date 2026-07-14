@@ -206,6 +206,35 @@ void test_emit_mutable_uint32_compound_assignment_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_negative_int32_var_initializer_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_var_initializer.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    var value = -27 as Int32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = sub i32 0, 27\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 %tmp0, ptr %value.addr\n"
+        "  %tmp1 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_mutable_int32_compound_assignment_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_mutable_int32_compound.or";
     auto result = lower_source(
@@ -213,7 +242,7 @@ void test_emit_mutable_int32_compound_assignment_return() {
         "package demo.lowering\n"
         "\n"
         "function main() -> Int32\n"
-        "    var value = 27 as Int32\n"
+        "    var value = -27 as Int32\n"
         "    value /= 4 as Int32\n"
         "    value %= 5 as Int32\n"
         "    value\n"
@@ -226,16 +255,17 @@ void test_emit_mutable_int32_compound_assignment_return() {
         "\n"
         "define i32 @main() {\n"
         "entry:\n"
+        "  %tmp0 = sub i32 0, 27\n"
         "  %value.addr = alloca i32\n"
-        "  store i32 27, ptr %value.addr\n"
-        "  %tmp0 = load i32, ptr %value.addr\n"
-        "  %tmp1 = sdiv i32 %tmp0, 4\n"
-        "  store i32 %tmp1, ptr %value.addr\n"
-        "  %tmp2 = load i32, ptr %value.addr\n"
-        "  %tmp3 = srem i32 %tmp2, 5\n"
-        "  store i32 %tmp3, ptr %value.addr\n"
-        "  %tmp4 = load i32, ptr %value.addr\n"
-        "  ret i32 %tmp4\n"
+        "  store i32 %tmp0, ptr %value.addr\n"
+        "  %tmp1 = load i32, ptr %value.addr\n"
+        "  %tmp2 = sdiv i32 %tmp1, 4\n"
+        "  store i32 %tmp2, ptr %value.addr\n"
+        "  %tmp3 = load i32, ptr %value.addr\n"
+        "  %tmp4 = srem i32 %tmp3, 5\n"
+        "  store i32 %tmp4, ptr %value.addr\n"
+        "  %tmp5 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp5\n"
         "}\n"
         "\n"
     };
@@ -4264,6 +4294,7 @@ auto main() -> int {
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();
     test_emit_mutable_uint32_compound_assignment_return();
+    test_emit_negative_int32_var_initializer_return();
     test_emit_mutable_int32_compound_assignment_return();
     test_reject_bool_compound_assignment();
     test_reject_bool_aggregate_compound_assignment();

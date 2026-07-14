@@ -2468,6 +2468,18 @@ auto lowered_expression(
             )) {
             return integer;
         }
+        if (expression.left->kind == syntax::ExpressionKind::unary && expression.left->text == "-" &&
+            cast_type->signedness == IntegerSignedness::signed_integer &&
+            is_integer_llvm_type_impl(expected_llvm_type)) {
+            return lowered_expression(
+                *expression.left,
+                expected_llvm_type,
+                cast_type->signedness,
+                context,
+                session,
+                output
+            );
+        }
         auto lowered_float = lowered_float_literal(*expression.left, expected_llvm_type);
         if (!lowered_float.has_value()) {
             record_expression_lowering_failure(
