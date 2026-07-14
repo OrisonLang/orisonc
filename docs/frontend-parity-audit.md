@@ -35,8 +35,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 ## Latest update
 
 - 2026-07-14: compound assignment tokens and statements now parse for the EBNF-listed `+=`, `-=`, `*=`, `/=`, and
-  `%=` forms, and scalar mutable-local lowering desugars them through the existing binary expression path with
-  load/compute/store smoke coverage.
+  `%=` forms; mutable-local and supported aggregate target lowering now emits direct target-pointer
+  load/compute/store sequences without re-evaluating member/index assignment targets.
 - 2026-07-14: unsupported unary negation contexts now fail with `unsupported operator: -` diagnostics instead of
   falling through generic unsupported-expression reporting, with unsigned integer and boolean return-expression
   regression coverage.

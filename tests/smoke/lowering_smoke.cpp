@@ -3907,14 +3907,29 @@ void test_emit_raw_mmio_intrinsics() {
         "    regs.status = 4 as UInt32\n"
         "    return\n"
         "\n"
+        "unsafe function compound_assign_local_status() -> Unit\n"
+        "    var regs = UartRegisters(0 as UInt32, 1 as UInt32)\n"
+        "    regs.status += 4 as UInt32\n"
+        "    return\n"
+        "\n"
         "unsafe function assign_local_array_byte(index: UInt64) -> Unit\n"
         "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
         "    bytes[index] = 9\n"
         "    return\n"
         "\n"
+        "unsafe function compound_assign_local_array_byte(index: UInt64) -> Unit\n"
+        "    var bytes: Array<Byte, 4> = [1, 2, 3, 4]\n"
+        "    bytes[index] += 9\n"
+        "    return\n"
+        "\n"
         "unsafe function assign_pointer_aggregate(regs: Pointer<UartRegisters>, buffer: Pointer<Buffer>, index: UInt64) -> Unit\n"
         "    regs.status = 4 as UInt32\n"
         "    buffer.bytes[index] = 7\n"
+        "    return\n"
+        "\n"
+        "unsafe function compound_assign_pointer_aggregate(regs: Pointer<UartRegisters>, buffer: Pointer<Buffer>, index: UInt64) -> Unit\n"
+        "    regs.status += 4 as UInt32\n"
+        "    buffer.bytes[index] += 7\n"
         "    return\n"
         "\n"
         "unsafe function assign_nested_pointer_aggregate(log: Pointer<Log>, matrix: Pointer<Matrix>, index: UInt64, inner: UInt64) -> Unit\n"
@@ -4047,8 +4062,14 @@ void test_emit_raw_mmio_intrinsics() {
     assert(result.ir_text.find("store [4 x i8] %tmp") != std::string::npos);
     assert(result.ir_text.find("define void @assign_local_status()") != std::string::npos);
     assert(result.ir_text.find("store i32 4, ptr %tmp") != std::string::npos);
+    assert(result.ir_text.find("define void @compound_assign_local_status()") != std::string::npos);
+    assert(result.ir_text.find(" = load i32, ptr %tmp") != std::string::npos);
+    assert(result.ir_text.find(" = add i32 ") != std::string::npos);
     assert(result.ir_text.find("define void @assign_local_array_byte(i64 %index)") != std::string::npos);
     assert(result.ir_text.find("store i8 9, ptr %tmp") != std::string::npos);
+    assert(result.ir_text.find("define void @compound_assign_local_array_byte(i64 %index)") != std::string::npos);
+    assert(result.ir_text.find(" = load i8, ptr %tmp") != std::string::npos);
+    assert(result.ir_text.find(" = add i8 ") != std::string::npos);
     assert(
         result.ir_text.find("define void @assign_pointer_aggregate(ptr %regs, ptr %buffer, i64 %index)") !=
         std::string::npos
@@ -4063,6 +4084,10 @@ void test_emit_raw_mmio_intrinsics() {
     );
     assert(result.ir_text.find("store i32 4, ptr %tmp") != std::string::npos);
     assert(result.ir_text.find("store i8 7, ptr %tmp") != std::string::npos);
+    assert(
+        result.ir_text.find("define void @compound_assign_pointer_aggregate(ptr %regs, ptr %buffer, i64 %index)") !=
+        std::string::npos
+    );
     assert(
         result.ir_text.find("define void @assign_nested_pointer_aggregate(ptr %log, ptr %matrix, i64 %index, i64 %inner)") !=
         std::string::npos

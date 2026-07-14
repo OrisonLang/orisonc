@@ -16,7 +16,6 @@
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
 
-#include <memory>
 #include <optional>
 #include <span>
 #include <sstream>
@@ -35,44 +34,34 @@ auto is_task_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::task;
 }
 
-auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax {
-    auto cloned = syntax::ExpressionSyntax {
-        .kind = expression.kind,
-        .line = expression.line,
-        .text = expression.text,
-        .arguments = {},
-        .nested_statements = {},
-        .left = expression.left ? std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.left))
-                                : nullptr,
-        .right = expression.right ? std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.right))
-                                  : nullptr,
-        .alternate = expression.alternate
-            ? std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.alternate))
-            : nullptr,
-    };
-    cloned.arguments.reserve(expression.arguments.size());
-    for (auto const& argument : expression.arguments) {
-        cloned.arguments.push_back(clone_expression(argument));
-    }
-    return cloned;
-}
-
-auto binary_operator_for_assignment_operator(std::string const& assignment_operator)
-    -> std::optional<std::string_view> {
+auto binary_instruction_for_assignment_operator(
+    std::string const& assignment_operator,
+    IntegerSignedness signedness
+) -> std::optional<std::string_view> {
     if (assignment_operator == "+=") {
-        return std::string_view {"+"};
+        return std::string_view {"add"};
     }
     if (assignment_operator == "-=") {
-        return std::string_view {"-"};
+        return std::string_view {"sub"};
     }
     if (assignment_operator == "*=") {
-        return std::string_view {"*"};
+        return std::string_view {"mul"};
     }
     if (assignment_operator == "/=") {
-        return std::string_view {"/"};
+        if (signedness == IntegerSignedness::not_integer) {
+            return std::nullopt;
+        }
+        return signedness == IntegerSignedness::signed_integer
+            ? std::string_view {"sdiv"}
+            : std::string_view {"udiv"};
     }
     if (assignment_operator == "%=") {
-        return std::string_view {"%"};
+        if (signedness == IntegerSignedness::not_integer) {
+            return std::nullopt;
+        }
+        return signedness == IntegerSignedness::signed_integer
+            ? std::string_view {"srem"}
+            : std::string_view {"urem"};
     }
     return std::nullopt;
 }
@@ -940,35 +929,59 @@ auto lower_assignment_statement(
         return false;
     }
 
-    auto assignment_value = std::optional<syntax::ExpressionSyntax> {};
-    auto const* expression_to_lower = &statement.expression;
+    auto lowered = std::optional<LoweredExpression> {};
     if (statement.assignment_operator != "=") {
-        auto binary_operator = binary_operator_for_assignment_operator(statement.assignment_operator);
-        if (!binary_operator.has_value()) {
+        auto instruction = binary_instruction_for_assignment_operator(
+            statement.assignment_operator,
+            target->type.signedness
+        );
+        if (!instruction.has_value() || !is_integer_llvm_type(target->type.type)) {
             diagnostics.error(statement.line, "lowering assignment operator is unsupported");
             return false;
         }
-        assignment_value = syntax::ExpressionSyntax {
-            .kind = syntax::ExpressionKind::binary,
-            .line = statement.line,
-            .text = std::string {*binary_operator},
-            .arguments = {},
-            .nested_statements = {},
-            .left = std::make_unique<syntax::ExpressionSyntax>(clone_expression(statement.assignment_target)),
-            .right = std::make_unique<syntax::ExpressionSyntax>(clone_expression(statement.expression)),
-        };
-        expression_to_lower = &*assignment_value;
-    }
 
-    auto lowered = lower_expression(
-        *expression_to_lower,
-        target->type.type,
-        target->type.signedness,
-        context,
-        session,
-        output,
-        target->source_type_name
-    );
+        auto current_value = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << current_value << " = load " << target->type.type << ", ptr "
+               << target->pointer << "\n";
+        auto right = lower_expression(
+            statement.expression,
+            target->type.type,
+            target->type.signedness,
+            context,
+            session,
+            output,
+            target->source_type_name
+        );
+        if (!right.has_value()) {
+            diagnostics.error(
+                statement.line,
+                append_expression_lowering_failure(
+                    "lowering does not yet support this assignment value",
+                    session.failures.expression
+                )
+            );
+            return false;
+        }
+
+        auto computed_value = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << computed_value << " = " << *instruction << " " << target->type.type
+               << " " << current_value << ", " << right->value << "\n";
+        lowered = LoweredExpression {
+            .type = target->type.type,
+            .value = std::move(computed_value),
+            .signedness = target->type.signedness,
+        };
+    } else {
+        lowered = lower_expression(
+            statement.expression,
+            target->type.type,
+            target->type.signedness,
+            context,
+            session,
+            output,
+            target->source_type_name
+        );
+    }
     if (!lowered.has_value()) {
         diagnostics.error(
             statement.line,
