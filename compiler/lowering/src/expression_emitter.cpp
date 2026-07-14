@@ -169,6 +169,12 @@ auto llvm_binary_instruction_for(
     if (operator_text == "/") {
         return signedness == IntegerSignedness::signed_integer ? "sdiv" : "udiv";
     }
+    if (operator_text == "%") {
+        if (signedness == IntegerSignedness::not_integer) {
+            return std::nullopt;
+        }
+        return signedness == IntegerSignedness::signed_integer ? "srem" : "urem";
+    }
     if (operator_text == "bit_and") {
         return "and";
     }

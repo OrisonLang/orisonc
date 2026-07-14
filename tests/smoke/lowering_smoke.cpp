@@ -1035,7 +1035,7 @@ void test_emit_uint32_arithmetic_return() {
         "function main() -> UInt32\n"
         "    let left = 8 as UInt32\n"
         "    let right = 2 as UInt32\n"
-        "    left - right * right / right\n"
+        "    left - right * right / right + left % 3 as UInt32\n"
     );
 
     assert(!result.has_errors());
@@ -1050,7 +1050,9 @@ void test_emit_uint32_arithmetic_return() {
         "  %tmp0 = mul i32 %right, %right\n"
         "  %tmp1 = udiv i32 %tmp0, %right\n"
         "  %tmp2 = sub i32 %left, %tmp1\n"
-        "  ret i32 %tmp2\n"
+        "  %tmp3 = urem i32 %left, 3\n"
+        "  %tmp4 = add i32 %tmp2, %tmp3\n"
+        "  ret i32 %tmp4\n"
         "}\n"
         "\n"
     };
@@ -1066,8 +1068,11 @@ void test_emit_int32_division_return() {
         "function divide(left: Int32, right: Int32) -> Int32\n"
         "    left / right\n"
         "\n"
+        "function remainder(left: Int32, right: Int32) -> Int32\n"
+        "    left % right\n"
+        "\n"
         "function main() -> Int32\n"
-        "    divide(8 as Int32, 2 as Int32)\n"
+        "    divide(8 as Int32, 2 as Int32) + remainder(9 as Int32, 4 as Int32)\n"
     );
 
     assert(!result.has_errors());
@@ -1081,10 +1086,18 @@ void test_emit_int32_division_return() {
         "  ret i32 %tmp0\n"
         "}\n"
         "\n"
+        "define i32 @remainder(i32 %left, i32 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = srem i32 %left, %right\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
         "define i32 @main() {\n"
         "entry:\n"
         "  %tmp0 = call i32 @divide(i32 8, i32 2)\n"
-        "  ret i32 %tmp0\n"
+        "  %tmp1 = call i32 @remainder(i32 9, i32 4)\n"
+        "  %tmp2 = add i32 %tmp0, %tmp1\n"
+        "  ret i32 %tmp2\n"
         "}\n"
         "\n"
     };

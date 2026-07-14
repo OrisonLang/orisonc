@@ -4,7 +4,7 @@ public function arithmetic(left: UInt32, right: UInt32) -> UInt32
     let sum = left + right
     var value = sum
     value = value * 2
-    value
+    value % 3 as UInt32
 
 public function booleans(left: Bool, right: Bool) -> Bool
     not left or right and true
