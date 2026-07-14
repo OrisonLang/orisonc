@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: branch-local aggregate assignment now has signed negative cast lowering and unsigned negative cast
+  rejection coverage across `if` record-field and `switch` fixed-array element paths.
 - 2026-07-14: aggregate field/index assignment now has signed negative cast lowering coverage and unsigned negative
   cast rejection coverage for record fields and fixed-array elements.
 - 2026-07-14: unsigned negative integer casts now have aggregate rejection coverage for record fields and fixed-array
