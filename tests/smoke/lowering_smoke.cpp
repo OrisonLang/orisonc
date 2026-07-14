@@ -1231,6 +1231,12 @@ void test_emit_boolean_expression_returns() {
         "function allowed(left: Bool, right: Bool) -> Bool\n"
         "    left or right\n"
         "\n"
+        "function same(left: Bool, right: Bool) -> Bool\n"
+        "    left == right\n"
+        "\n"
+        "function different(left: Bool, right: Bool) -> Bool\n"
+        "    left != right\n"
+        "\n"
         "function in_range(value: UInt32) -> Bool\n"
         "    value >= 1 as UInt32 and value <= 10 as UInt32\n"
     );
@@ -1259,6 +1265,18 @@ void test_emit_boolean_expression_returns() {
         "define i1 @allowed(i1 %left, i1 %right) {\n"
         "entry:\n"
         "  %tmp0 = or i1 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @same(i1 %left, i1 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp eq i1 %left, %right\n"
+        "  ret i1 %tmp0\n"
+        "}\n"
+        "\n"
+        "define i1 @different(i1 %left, i1 %right) {\n"
+        "entry:\n"
+        "  %tmp0 = icmp ne i1 %left, %right\n"
         "  ret i1 %tmp0\n"
         "}\n"
         "\n"
@@ -2346,14 +2364,14 @@ void test_reject_unsupported_return_expression() {
         "package demo.lowering\n"
         "\n"
         "function same(left: Bool, right: Bool) -> Bool\n"
-        "    left == right\n"
+        "    left < right\n"
     );
 
     assert(result.has_errors());
     assert(result.diagnostics.entries().size() == 1);
     assert(
         result.diagnostics.entries().front().message ==
-        "lowering does not yet support this return expression: cannot infer operand type: =="
+        "lowering does not yet support this return expression: unsupported operator: <"
     );
 }
 
@@ -3090,7 +3108,7 @@ void test_reject_unsupported_final_if_arm_expression() {
         "\n"
         "function same(flag: Bool, left: Bool, right: Bool) -> Bool\n"
         "    if flag\n"
-        "        left == right\n"
+        "        left < right\n"
         "    else\n"
         "        false\n"
     );
@@ -3100,7 +3118,7 @@ void test_reject_unsupported_final_if_arm_expression() {
     assert(
         result.diagnostics.entries().front().message ==
         "lowering does not yet support this final control-flow statement: "
-        "if then arm lowering failed: cannot infer operand type: =="
+        "if then arm lowering failed: unsupported operator: <"
     );
 }
 
@@ -3112,7 +3130,7 @@ void test_reject_unsupported_final_switch_case_expression() {
         "\n"
         "function same(flag: Bool, left: Bool, right: Bool) -> Bool\n"
         "    switch flag\n"
-        "        true => left == right\n"
+        "        true => left < right\n"
         "        false => false\n"
     );
 
@@ -3121,7 +3139,7 @@ void test_reject_unsupported_final_switch_case_expression() {
     assert(
         result.diagnostics.entries().front().message ==
         "lowering does not yet support this final control-flow statement: "
-        "switch case lowering failed: cannot infer operand type: =="
+        "switch case lowering failed: unsupported operator: <"
     );
 }
 

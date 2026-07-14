@@ -212,6 +212,18 @@ auto llvm_integer_comparison_predicate_for(
     return std::nullopt;
 }
 
+auto llvm_boolean_comparison_predicate_for(
+    std::string_view operator_text
+) -> std::optional<std::string_view> {
+    if (operator_text == "==") {
+        return "eq";
+    }
+    if (operator_text == "!=") {
+        return "ne";
+    }
+    return std::nullopt;
+}
+
 auto is_integer_llvm_type_impl(std::string_view type) -> bool {
     return type == "i8" || type == "i16" || type == "i32" || type == "i64";
 }
@@ -398,7 +410,15 @@ auto inferred_expression_type(
             return std::nullopt;
         }
 
-        if (llvm_integer_comparison_predicate_for(expression.text, left->signedness).has_value()) {
+        if (left->type == "i1" && left->signedness == IntegerSignedness::not_integer &&
+            llvm_boolean_comparison_predicate_for(expression.text).has_value()) {
+            return LoweredType {
+                .type = "i1",
+                .signedness = IntegerSignedness::not_integer,
+            };
+        }
+        if (left->signedness != IntegerSignedness::not_integer &&
+            llvm_integer_comparison_predicate_for(expression.text, left->signedness).has_value()) {
             return LoweredType {
                 .type = "i1",
                 .signedness = IntegerSignedness::not_integer,
@@ -2602,6 +2622,55 @@ auto lowered_expression(
 
                 auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
                 output << "  " << temporary_name << " = " << expression.text << " i1 ";
+                output << left->value << ", " << right->value << "\n";
+                return LoweredExpression {
+                    .type = "i1",
+                    .value = std::move(temporary_name),
+                    .signedness = IntegerSignedness::not_integer,
+                };
+            }
+
+            auto boolean_left_type = inferred_expression_type(*expression.left, context, state);
+            auto boolean_right_type = inferred_expression_type(*expression.right, context, state);
+            auto const has_boolean_operands =
+                boolean_left_type.has_value() &&
+                boolean_right_type.has_value() &&
+                boolean_left_type->type == "i1" &&
+                boolean_right_type->type == "i1" &&
+                boolean_left_type->signedness == IntegerSignedness::not_integer &&
+                boolean_right_type->signedness == IntegerSignedness::not_integer;
+            if (has_boolean_operands) {
+                auto boolean_predicate = llvm_boolean_comparison_predicate_for(expression.text);
+                if (!boolean_predicate.has_value()) {
+                    record_expression_lowering_failure(
+                        failures,
+                        ExpressionLoweringFailureReason::unsupported_operator,
+                        expression.text
+                    );
+                    return std::nullopt;
+                }
+                auto left = lowered_expression(
+                    *expression.left,
+                    "i1",
+                    IntegerSignedness::not_integer,
+                    context,
+                    session,
+                    output
+                );
+                auto right = lowered_expression(
+                    *expression.right,
+                    "i1",
+                    IntegerSignedness::not_integer,
+                    context,
+                    session,
+                    output
+                );
+                if (!left.has_value() || !right.has_value()) {
+                    return std::nullopt;
+                }
+
+                auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+                output << "  " << temporary_name << " = icmp " << *boolean_predicate << " i1 ";
                 output << left->value << ", " << right->value << "\n";
                 return LoweredExpression {
                     .type = "i1",

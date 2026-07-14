@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: boolean equality and inequality now lower directly as `icmp eq/ne i1`, while unsupported boolean
+  relational operators remain rejected with explicit unsupported-operator diagnostics.
 - 2026-07-14: non-void null-safe member-call statements now lower by reusing the null-safe expression path and
   discarding the produced `Maybe<T>` value; void-returning null-safe member-call statements remain unsupported until a
   `Maybe<Unit>` ABI policy is accepted.
