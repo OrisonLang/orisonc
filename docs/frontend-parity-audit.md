@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: scalar method bodies now have signed negative `Int32` return lowering and unsigned negative `UInt32`
+  return rejection coverage, extending negative cast checks beyond top-level functions.
 - 2026-07-14: negative call-argument smoke coverage now uses named assertion helpers for lowered signed `Int32`
   temporary operands and null-safe member-call diagnostic/result fragments, preserving direct/member/null-safe coverage
   while reducing duplicated substring checks.
