@@ -866,6 +866,36 @@ int main() {
         },
     });
 
+    call_state.source_type_names["maybe_receiver"] = "Maybe<Device>";
+    auto null_safe_void_member_call_statement = orison::syntax::StatementSyntax {};
+    null_safe_void_member_call_statement.kind = orison::syntax::StatementKind::expression_statement;
+    null_safe_void_member_call_statement.line = 11;
+    null_safe_void_member_call_statement.expression.kind = orison::syntax::ExpressionKind::call;
+    null_safe_void_member_call_statement.expression.left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_void_member_call_statement.expression.left->kind =
+        orison::syntax::ExpressionKind::null_safe_member_access;
+    null_safe_void_member_call_statement.expression.left->text = "observe";
+    null_safe_void_member_call_statement.expression.left->left =
+        std::make_unique<orison::syntax::ExpressionSyntax>();
+    null_safe_void_member_call_statement.expression.left->left->kind =
+        orison::syntax::ExpressionKind::name;
+    null_safe_void_member_call_statement.expression.left->left->text = "maybe_receiver";
+    diagnostics = {};
+    output = {};
+    assert(!orison::lowering::lower_call_statement(
+        null_safe_void_member_call_statement,
+        context,
+        call_session,
+        diagnostics,
+        output
+    ));
+    assert(
+        diagnostics.entries().front().message ==
+        "lowering void null-safe member call statements requires an accepted Maybe<Unit> ABI: Device.observe"
+    );
+    assert(output.str().empty());
+
     lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
         .receiver_type_name = "Device",
         .method_name = "observe",

@@ -37,6 +37,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-14: non-void null-safe member-call statements now lower by reusing the null-safe expression path and
   discarding the produced `Maybe<T>` value; void-returning null-safe member-call statements remain unsupported until a
   `Maybe<Unit>` ABI policy is accepted.
+- 2026-07-14: void-returning null-safe member-call statements now fail with a dedicated `Maybe<Unit>` ABI diagnostic
+  instead of falling through generic result-type inference failure.
 - 2026-07-05: source-type recovery now propagates through ternary expressions when both branches have the same source
   type, allowing fixed-array `for` iterables selected by `?:`; `local_ternary_array_for.or` pins backend validation.
 - 2026-07-05: source-type recovery now recognizes lowerable explicit casts and homogeneous explicitly typed array

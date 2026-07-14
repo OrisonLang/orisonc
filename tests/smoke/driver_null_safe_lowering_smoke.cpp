@@ -74,6 +74,19 @@ void assert_run_success(orison::driver::CompileResult const& result) {
     assert(result.stderr_text.empty());
 }
 
+void assert_failure_with_stderr_contains(
+    orison::driver::CompileResult const& result,
+    std::string_view expected_fragment
+) {
+    if (result.exit_code == 0 || result.stderr_text.find(expected_fragment) == std::string::npos ||
+        !result.stdout_text.empty()) {
+        std::cerr << result.stderr_text << result.stdout_text;
+    }
+    assert(result.exit_code != 0);
+    assert(result.stdout_text.empty());
+    assert(result.stderr_text.find(expected_fragment) != std::string::npos);
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -288,6 +301,31 @@ auto main() -> int {
             "phi { i1, [2 x i32] }",
             "ret i32 0",
         }
+    );
+
+    auto reject_void_null_safe_member_call_path = std::filesystem::temp_directory_path() /
+        "reject_void_null_safe_member_call.or";
+    write_fixture(
+        reject_void_null_safe_member_call_path,
+        "demo.reject_void_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "extend Profile",
+            "    function reset(this: shared This, value: UInt32) -> Unit",
+            "        return",
+            "record Profile",
+            "    rating: UInt32",
+            "function main() -> UInt32",
+            "    let profile: Maybe<Profile> = Some(Profile(7 as UInt32))",
+            "    profile?.reset(9 as UInt32)",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_void_null_safe_member_call_path),
+        "lowering void null-safe member call statements requires an accepted Maybe<Unit> ABI: Profile.reset"
     );
 
     auto run_null_safe_paths = std::filesystem::temp_directory_path() /

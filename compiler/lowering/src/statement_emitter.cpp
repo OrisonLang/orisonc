@@ -564,6 +564,35 @@ auto member_call_target_name(ResolvedMemberCall const& resolved) -> std::string 
     return resolved.receiver.receiver_type_name + "." + resolved.receiver.method_name;
 }
 
+auto null_safe_member_call_void_target_name(
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto resolved = infer_member_call_receiver(expression, context.lowering, state);
+    if (resolved.result != MemberCallReceiverInferenceResult::found) {
+        return std::nullopt;
+    }
+
+    auto payload_type = maybe_payload_source_type_name(resolved.receiver_type_name);
+    if (!payload_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto method = find_lowered_method_signature(
+        context.lowering,
+        *payload_type,
+        resolved.method_name
+    );
+    if (method.result != LoweredMethodLookupResult::found ||
+        method.method == nullptr ||
+        method.method->signature.return_type != "void") {
+        return std::nullopt;
+    }
+
+    return *payload_type + "." + resolved.method_name;
+}
+
 auto diagnose_member_call_statement(
     syntax::StatementSyntax const& statement,
     ResolvedMemberCall const& resolved,
@@ -906,6 +935,19 @@ auto lower_call_statement(
     }
     if (statement.expression.left != nullptr &&
         statement.expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
+        if (auto void_target = null_safe_member_call_void_target_name(
+                statement.expression,
+                context,
+                session.state
+            )) {
+            diagnostics.error(
+                statement.line,
+                "lowering void null-safe member call statements requires an accepted Maybe<Unit> ABI: " +
+                    *void_target
+            );
+            return false;
+        }
+
         auto source_type = source_type_name_for_expression(
             statement.expression,
             context.lowering,
