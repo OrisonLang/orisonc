@@ -187,6 +187,38 @@ void assert_emits_negative_int32_array_element_control_flow_call_argument_return
     );
 }
 
+void assert_emits_negative_int32_record_field_control_flow_assignment_return(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    FinalControlFlowKind control_flow_kind
+) {
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    if (control_flow_kind == FinalControlFlowKind::switch_expression) {
+        assert_emits_final_switch_blocks(result);
+    } else {
+        assert_emits_final_if_blocks(result);
+    }
+    assert_ir_contains(result, " = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
+}
+
+void assert_emits_negative_int32_array_element_control_flow_assignment_return(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    FinalControlFlowKind control_flow_kind
+) {
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
+    if (control_flow_kind == FinalControlFlowKind::switch_expression) {
+        assert_emits_final_switch_blocks(result);
+    } else {
+        assert_emits_final_if_blocks(result);
+    }
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
+}
+
 void assert_rejects_negative_uint32_cast(orison::lowering::LlvmIrEmissionResult const& result) {
     assert(result.has_errors());
     assert(result.diagnostics.entries().size() == 1);
@@ -3694,13 +3726,10 @@ void test_emit_negative_int32_if_record_field_assignment_return() {
         "    box.value\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_ir_contains(result, "if.then.");
-    assert_ir_contains(result, "if.else.");
-    assert_ir_contains(result, "if.merge.");
-    assert_stores_lowered_int32_tmp(result);
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_record_field_control_flow_assignment_return(
+        result,
+        FinalControlFlowKind::if_expression
+    );
 }
 
 void test_emit_negative_int32_switch_array_element_assignment_return() {
@@ -3718,14 +3747,10 @@ void test_emit_negative_int32_switch_array_element_assignment_return() {
         "    values[0]\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
-    assert_ir_contains(result, "switch.case.");
-    assert_ir_contains(result, "switch.default.");
-    assert_ir_contains(result, "switch.merge.");
-    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
-    assert_stores_lowered_int32_tmp(result);
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_array_element_control_flow_assignment_return(
+        result,
+        FinalControlFlowKind::switch_expression
+    );
 }
 
 void test_emit_negative_int32_switch_record_field_assignment_return() {
@@ -3746,12 +3771,10 @@ void test_emit_negative_int32_switch_record_field_assignment_return() {
         "    box.value\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_emits_final_switch_blocks(result);
-    assert_ir_contains(result, " = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0");
-    assert_stores_lowered_int32_tmp(result);
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_record_field_control_flow_assignment_return(
+        result,
+        FinalControlFlowKind::switch_expression
+    );
 }
 
 void test_emit_negative_int32_if_array_element_assignment_return() {
@@ -3770,12 +3793,10 @@ void test_emit_negative_int32_if_array_element_assignment_return() {
         "    values[0]\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
-    assert_emits_final_if_blocks(result);
-    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
-    assert_stores_lowered_int32_tmp(result);
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_array_element_control_flow_assignment_return(
+        result,
+        FinalControlFlowKind::if_expression
+    );
 }
 
 void test_reject_negative_uint32_if_record_field_assignment() {
