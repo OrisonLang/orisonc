@@ -9,6 +9,7 @@
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
+#include "orison/lowering/statement_pointer_adapter.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/unsafe_block_lowering.hpp"
 #include "orison/lowering/unit_deferred_cleanup.hpp"
@@ -257,11 +258,7 @@ auto lower_while_body_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(&statement);
-    }
+    auto statement_pointers = statement_pointers_for(statements);
 
     return lower_nonvalue_statement_block(
         std::span<syntax::StatementSyntax const* const> {
@@ -288,11 +285,7 @@ auto lower_while_body_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(statement.get());
-    }
+    auto statement_pointers = statement_pointers_for(statements);
 
     return lower_nonvalue_statement_block(
         std::span<syntax::StatementSyntax const* const> {

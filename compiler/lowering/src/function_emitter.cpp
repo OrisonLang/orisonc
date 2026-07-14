@@ -19,6 +19,7 @@
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
+#include "orison/lowering/statement_pointer_adapter.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -308,11 +309,7 @@ auto lower_unit_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(&statement);
-    }
+    auto statement_pointers = statement_pointers_for(statements);
     return lower_unit_statement_block(statement_pointers, context, session, diagnostics, output);
 }
 
@@ -344,11 +341,7 @@ auto lower_unit_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(statement.get());
-    }
+    auto statement_pointers = statement_pointers_for(statements);
     return lower_unit_statement_block(statement_pointers, context, session, diagnostics, output);
 }
 
@@ -628,11 +621,7 @@ auto lower_guard_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(&statement);
-    }
+    auto statement_pointers = statement_pointers_for(statements);
     return lower_guard_statement_block(
         statement_pointers,
         return_llvm_type,
@@ -655,11 +644,7 @@ auto lower_guard_statement_block(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> StatementFlow {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(statement.get());
-    }
+    auto statement_pointers = statement_pointers_for(statements);
     return lower_guard_statement_block(
         statement_pointers,
         return_llvm_type,

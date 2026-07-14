@@ -2,6 +2,7 @@
 
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
+#include "orison/lowering/statement_pointer_adapter.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <utility>
@@ -589,11 +590,7 @@ auto source_type_name_for_value_statement_block(
     LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<std::string> {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(&statement);
-    }
+    auto statement_pointers = statement_pointers_for(statements);
     return source_type_name_for_value_statement_pointer_block(statement_pointers, context, state);
 }
 
@@ -602,11 +599,7 @@ auto source_type_name_for_value_statement_block(
     LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> std::optional<std::string> {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(statement.get());
-    }
+    auto statement_pointers = statement_pointers_for(statements);
     return source_type_name_for_value_statement_pointer_block(statement_pointers, context, state);
 }
 

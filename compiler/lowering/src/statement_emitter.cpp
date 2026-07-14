@@ -14,6 +14,7 @@
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/source_type_queries.hpp"
+#include "orison/lowering/statement_pointer_adapter.hpp"
 
 #include <span>
 #include <sstream>
@@ -1093,11 +1094,7 @@ auto lower_value_statement_block(
     DeferredCleanupBlockLowerer lower_cleanup_block,
     std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(&statement);
-    }
+    auto statement_pointers = statement_pointers_for(statements);
     return lower_value_statement_block(
         statement_pointers,
         expected_llvm_type,
@@ -1218,11 +1215,7 @@ auto lower_value_statement_block(
     DeferredCleanupBlockLowerer lower_cleanup_block,
     std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
-    auto statement_pointers = std::vector<syntax::StatementSyntax const*> {};
-    statement_pointers.reserve(statements.size());
-    for (auto const& statement : statements) {
-        statement_pointers.push_back(statement.get());
-    }
+    auto statement_pointers = statement_pointers_for(statements);
     return lower_value_statement_block(
         statement_pointers,
         expected_llvm_type,
