@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: record-field and array-element assignment RHS paths now have paired `if`/`switch` signed negative
+  lowering and unsigned negative rejection coverage.
 - 2026-07-14: aggregate-access final control-flow call-argument smoke tests now share record-field and array-element
   signed assertion helpers, preserving explicit source fixtures while reducing repeated IR-shape checks.
 - 2026-07-14: final `if`/`switch` call-argument paths now cover signed negative values flowing through record-field
