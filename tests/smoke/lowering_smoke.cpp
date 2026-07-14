@@ -16,6 +16,11 @@
 
 namespace {
 
+enum class FinalControlFlowKind {
+    if_expression,
+    switch_expression,
+};
+
 auto lower_source(
     std::filesystem::path const& path,
     std::string_view source,
@@ -87,6 +92,50 @@ void assert_inserts_lowered_int32_tmp_into_aggregate(
         result,
         std::string {" = insertvalue "} + std::string {aggregate_type} + " undef, i32 %tmp"
     );
+}
+
+void assert_emits_final_if_blocks(orison::lowering::LlvmIrEmissionResult const& result) {
+    assert_ir_contains(result, "if.then.");
+    assert_ir_contains(result, "if.else.");
+    assert_ir_contains(result, "if.merge.");
+}
+
+void assert_emits_final_switch_blocks(orison::lowering::LlvmIrEmissionResult const& result) {
+    assert_ir_contains(result, "switch.case.");
+    assert_ir_contains(result, "switch.default.");
+    assert_ir_contains(result, "switch.merge.");
+}
+
+void assert_emits_negative_int32_scalar_control_flow_method_return(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    std::string_view method_symbol,
+    FinalControlFlowKind control_flow_kind
+) {
+    assert_emits_negative_int32_value(result);
+    assert_defines_method(result, "i32", method_symbol, "i32 %this, i1 %flag");
+    if (control_flow_kind == FinalControlFlowKind::switch_expression) {
+        assert_emits_final_switch_blocks(result);
+    } else {
+        assert_emits_final_if_blocks(result);
+    }
+    assert_returns_lowered_tmp(result);
+}
+
+void assert_emits_negative_int32_aggregate_control_flow_method_return(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    std::string_view return_type,
+    std::string_view method_symbol,
+    FinalControlFlowKind control_flow_kind
+) {
+    assert_emits_negative_int32_value(result);
+    assert_defines_method(result, return_type, method_symbol, "i32 %this, i1 %flag");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, return_type);
+    if (control_flow_kind == FinalControlFlowKind::switch_expression) {
+        assert_emits_final_switch_blocks(result);
+    } else {
+        assert_emits_final_if_blocks(result);
+    }
+    assert_returns_lowered_aggregate_tmp(result, return_type);
 }
 
 void assert_calls_lowered_int32_tmp(
@@ -1289,12 +1338,11 @@ void test_emit_negative_int32_final_if_method_return() {
         "    0 as UInt32\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_defines_method(result, "i32", "method.Int32.choose", "i32 %this, i1 %flag");
-    assert_ir_contains(result, "if.then.");
-    assert_ir_contains(result, "if.else.");
-    assert_ir_contains(result, "if.merge.");
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_scalar_control_flow_method_return(
+        result,
+        "method.Int32.choose",
+        FinalControlFlowKind::if_expression
+    );
 }
 
 void test_emit_negative_int32_final_switch_method_return() {
@@ -1314,12 +1362,11 @@ void test_emit_negative_int32_final_switch_method_return() {
         "    0 as UInt32\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_defines_method(result, "i32", "method.Int32.choose", "i32 %this, i1 %flag");
-    assert_ir_contains(result, "switch.case.");
-    assert_ir_contains(result, "switch.default.");
-    assert_ir_contains(result, "switch.merge.");
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_scalar_control_flow_method_return(
+        result,
+        "method.Int32.choose",
+        FinalControlFlowKind::switch_expression
+    );
 }
 
 void test_reject_negative_uint32_final_if_method_return() {
@@ -1384,14 +1431,13 @@ void test_emit_negative_int32_final_if_record_constructor_method_return() {
         "    0 as UInt32\n"
     );
 
-    assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "%record.SignedBox", "method.Int32.choose_box", "i32 %this, i1 %flag");
-    assert_inserts_lowered_int32_tmp_into_aggregate(result, "%record.SignedBox");
-    assert_ir_contains(result, "if.then.");
-    assert_ir_contains(result, "if.else.");
-    assert_ir_contains(result, "if.merge.");
-    assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
+    assert_emits_negative_int32_aggregate_control_flow_method_return(
+        result,
+        "%record.SignedBox",
+        "method.Int32.choose_box",
+        FinalControlFlowKind::if_expression
+    );
 }
 
 void test_emit_negative_int32_final_switch_record_constructor_method_return() {
@@ -1414,14 +1460,13 @@ void test_emit_negative_int32_final_switch_record_constructor_method_return() {
         "    0 as UInt32\n"
     );
 
-    assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_defines_method(result, "%record.SignedBox", "method.Int32.choose_box", "i32 %this, i1 %flag");
-    assert_inserts_lowered_int32_tmp_into_aggregate(result, "%record.SignedBox");
-    assert_ir_contains(result, "switch.case.");
-    assert_ir_contains(result, "switch.default.");
-    assert_ir_contains(result, "switch.merge.");
-    assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
+    assert_emits_negative_int32_aggregate_control_flow_method_return(
+        result,
+        "%record.SignedBox",
+        "method.Int32.choose_box",
+        FinalControlFlowKind::switch_expression
+    );
 }
 
 void test_emit_negative_int32_final_if_array_literal_method_return() {
@@ -1442,13 +1487,12 @@ void test_emit_negative_int32_final_if_array_literal_method_return() {
         "    0 as UInt32\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_defines_method(result, "[2 x i32]", "method.Int32.choose_pair", "i32 %this, i1 %flag");
-    assert_inserts_lowered_int32_tmp_into_aggregate(result, "[2 x i32]");
-    assert_ir_contains(result, "if.then.");
-    assert_ir_contains(result, "if.else.");
-    assert_ir_contains(result, "if.merge.");
-    assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
+    assert_emits_negative_int32_aggregate_control_flow_method_return(
+        result,
+        "[2 x i32]",
+        "method.Int32.choose_pair",
+        FinalControlFlowKind::if_expression
+    );
 }
 
 void test_emit_negative_int32_final_switch_array_literal_method_return() {
@@ -1468,13 +1512,12 @@ void test_emit_negative_int32_final_switch_array_literal_method_return() {
         "    0 as UInt32\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_defines_method(result, "[2 x i32]", "method.Int32.choose_pair", "i32 %this, i1 %flag");
-    assert_inserts_lowered_int32_tmp_into_aggregate(result, "[2 x i32]");
-    assert_ir_contains(result, "switch.case.");
-    assert_ir_contains(result, "switch.default.");
-    assert_ir_contains(result, "switch.merge.");
-    assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
+    assert_emits_negative_int32_aggregate_control_flow_method_return(
+        result,
+        "[2 x i32]",
+        "method.Int32.choose_pair",
+        FinalControlFlowKind::switch_expression
+    );
 }
 
 void test_reject_negative_uint32_final_if_record_constructor_method_return() {
