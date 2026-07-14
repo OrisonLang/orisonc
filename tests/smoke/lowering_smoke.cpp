@@ -145,6 +145,21 @@ void assert_calls_lowered_int32_tmp(
     assert_ir_contains(result, std::string {call_prefix} + "i32 %tmp");
 }
 
+void assert_emits_negative_int32_control_flow_call_argument_return(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    std::string_view call_prefix,
+    FinalControlFlowKind control_flow_kind
+) {
+    assert_emits_negative_int32_value(result);
+    assert_calls_lowered_int32_tmp(result, call_prefix);
+    if (control_flow_kind == FinalControlFlowKind::switch_expression) {
+        assert_emits_final_switch_blocks(result);
+    } else {
+        assert_emits_final_if_blocks(result);
+    }
+    assert_returns_lowered_tmp(result);
+}
+
 void assert_rejects_negative_uint32_cast(orison::lowering::LlvmIrEmissionResult const& result) {
     assert(result.has_errors());
     assert(result.diagnostics.entries().size() == 1);
@@ -1704,10 +1719,11 @@ void test_emit_negative_int32_final_if_scalar_member_call_argument_return() {
         "        value.shift(4 as Int32)\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_calls_lowered_int32_tmp(result, " = call i32 @method.Int32.shift(i32 %value, ");
-    assert_emits_final_if_blocks(result);
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_control_flow_call_argument_return(
+        result,
+        " = call i32 @method.Int32.shift(i32 %value, ",
+        FinalControlFlowKind::if_expression
+    );
 }
 
 void test_emit_negative_int32_final_switch_scalar_member_call_argument_return() {
@@ -1728,10 +1744,11 @@ void test_emit_negative_int32_final_switch_scalar_member_call_argument_return() 
         "        default => value.shift(4 as Int32)\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_calls_lowered_int32_tmp(result, " = call i32 @method.Int32.shift(i32 %value, ");
-    assert_emits_final_switch_blocks(result);
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_control_flow_call_argument_return(
+        result,
+        " = call i32 @method.Int32.shift(i32 %value, ",
+        FinalControlFlowKind::switch_expression
+    );
 }
 
 void test_reject_negative_uint32_final_if_scalar_member_call_argument_return() {
@@ -3137,10 +3154,11 @@ void test_emit_negative_int32_final_if_call_argument_return() {
         "        identity(4 as Int32)\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
-    assert_emits_final_if_blocks(result);
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_control_flow_call_argument_return(
+        result,
+        " = call i32 @identity(",
+        FinalControlFlowKind::if_expression
+    );
 }
 
 void test_emit_negative_int32_final_switch_call_argument_return() {
@@ -3159,10 +3177,11 @@ void test_emit_negative_int32_final_switch_call_argument_return() {
         "        default => identity(4 as Int32)\n"
     );
 
-    assert_emits_negative_int32_value(result);
-    assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
-    assert_emits_final_switch_blocks(result);
-    assert_returns_lowered_tmp(result);
+    assert_emits_negative_int32_control_flow_call_argument_return(
+        result,
+        " = call i32 @identity(",
+        FinalControlFlowKind::switch_expression
+    );
 }
 
 void test_reject_negative_uint32_final_if_call_argument_return() {
