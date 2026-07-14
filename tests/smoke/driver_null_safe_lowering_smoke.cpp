@@ -303,6 +303,67 @@ auto main() -> int {
         }
     );
 
+    auto emit_negative_null_safe_member_call_path = std::filesystem::temp_directory_path() /
+        "emit_negative_null_safe_member_call.or";
+    write_fixture(
+        emit_negative_null_safe_member_call_path,
+        "demo.negative_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "extend SignedProfile",
+            "    function shifted(this: shared This, delta: Int32) -> Int32",
+            "        return this.rating + delta",
+            "record SignedProfile",
+            "    rating: Int32",
+            "function main() -> UInt32",
+            "    let profile: Maybe<SignedProfile> = Some(SignedProfile(7 as Int32))",
+            "    let shifted: Maybe<Int32> = profile?.shifted(-27 as Int32)",
+            "    return 0 as UInt32",
+        }
+    );
+    auto emit_negative_null_safe_member_call =
+        run_emit_llvm(app, emit_negative_null_safe_member_call_path);
+    assert_success_with_stdout_contains(
+        emit_negative_null_safe_member_call,
+        {
+            "%record.SignedProfile = type { i32 }",
+            "define i32 @method.SignedProfile.shifted(%record.SignedProfile %this, i32 %delta)",
+            "sub i32 0, 27",
+            "call i32 @method.SignedProfile.shifted(%record.SignedProfile",
+            "i32 %tmp",
+            "insertvalue { i1, i32 } undef, i1 true, 0",
+            "phi { i1, i32 }",
+            "ret i32 0",
+        }
+    );
+
+    auto reject_negative_uint32_null_safe_member_call_path = std::filesystem::temp_directory_path() /
+        "reject_negative_uint32_null_safe_member_call.or";
+    write_fixture(
+        reject_negative_uint32_null_safe_member_call_path,
+        "demo.reject_negative_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "extend Profile",
+            "    function scaled(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.rating + delta",
+            "record Profile",
+            "    rating: UInt32",
+            "function main() -> UInt32",
+            "    let profile: Maybe<Profile> = Some(Profile(7 as UInt32))",
+            "    let scaled: Maybe<UInt32> = profile?.scaled(-1 as UInt32)",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_negative_uint32_null_safe_member_call_path),
+        "unsupported cast: negative value to UInt32"
+    );
+
     auto reject_void_null_safe_member_call_path = std::filesystem::temp_directory_path() /
         "reject_void_null_safe_member_call.or";
     write_fixture(
