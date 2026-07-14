@@ -160,6 +160,33 @@ void assert_emits_negative_int32_control_flow_call_argument_return(
     assert_returns_lowered_tmp(result);
 }
 
+void assert_emits_negative_int32_record_field_control_flow_call_argument_return(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    FinalControlFlowKind control_flow_kind
+) {
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
+    assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
+    assert_emits_negative_int32_control_flow_call_argument_return(
+        result,
+        " = call i32 @identity(",
+        control_flow_kind
+    );
+}
+
+void assert_emits_negative_int32_array_element_control_flow_call_argument_return(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    FinalControlFlowKind control_flow_kind
+) {
+    assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
+    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
+    assert_emits_negative_int32_control_flow_call_argument_return(
+        result,
+        " = call i32 @identity(",
+        control_flow_kind
+    );
+}
+
 void assert_rejects_negative_uint32_cast(orison::lowering::LlvmIrEmissionResult const& result) {
     assert(result.has_errors());
     assert(result.diagnostics.entries().size() == 1);
@@ -3330,12 +3357,8 @@ void test_emit_negative_int32_final_if_record_field_call_argument_return() {
         "        identity(4 as Int32)\n"
     );
 
-    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
-    assert_emits_negative_int32_control_flow_call_argument_return(
+    assert_emits_negative_int32_record_field_control_flow_call_argument_return(
         result,
-        " = call i32 @identity(",
         FinalControlFlowKind::if_expression
     );
 }
@@ -3360,12 +3383,8 @@ void test_emit_negative_int32_final_switch_record_field_call_argument_return() {
         "        default => identity(4 as Int32)\n"
     );
 
-    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
-    assert_emits_negative_int32_control_flow_call_argument_return(
+    assert_emits_negative_int32_record_field_control_flow_call_argument_return(
         result,
-        " = call i32 @identity(",
         FinalControlFlowKind::switch_expression
     );
 }
@@ -3388,11 +3407,8 @@ void test_emit_negative_int32_final_if_array_element_call_argument_return() {
         "        identity(4 as Int32)\n"
     );
 
-    assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
-    assert_emits_negative_int32_control_flow_call_argument_return(
+    assert_emits_negative_int32_array_element_control_flow_call_argument_return(
         result,
-        " = call i32 @identity(",
         FinalControlFlowKind::if_expression
     );
 }
@@ -3414,11 +3430,8 @@ void test_emit_negative_int32_final_switch_array_element_call_argument_return() 
         "        default => identity(4 as Int32)\n"
     );
 
-    assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
-    assert_emits_negative_int32_control_flow_call_argument_return(
+    assert_emits_negative_int32_array_element_control_flow_call_argument_return(
         result,
-        " = call i32 @identity(",
         FinalControlFlowKind::switch_expression
     );
 }

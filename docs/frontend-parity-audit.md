@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: aggregate-access final control-flow call-argument smoke tests now share record-field and array-element
+  signed assertion helpers, preserving explicit source fixtures while reducing repeated IR-shape checks.
 - 2026-07-14: final `if`/`switch` call-argument paths now cover signed negative values flowing through record-field
   and array-element arguments plus unsigned negative rejection for the same aggregate access forms.
 - 2026-07-14: direct-call and member-call final control-flow argument smoke tests now share a named signed negative
