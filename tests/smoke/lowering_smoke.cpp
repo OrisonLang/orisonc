@@ -1685,6 +1685,98 @@ void test_reject_negative_uint32_scalar_member_call_argument() {
     assert_rejects_negative_uint32_cast(result);
 }
 
+void test_emit_negative_int32_final_if_scalar_member_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_final_if_scalar_member_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend Int32\n"
+        "    function shift(this: shared This, amount: Int32) -> Int32\n"
+        "        this + amount\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    let value: Int32 = 1 as Int32\n"
+        "    if flag\n"
+        "        value.shift(-27 as Int32)\n"
+        "    else\n"
+        "        value.shift(4 as Int32)\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_calls_lowered_int32_tmp(result, " = call i32 @method.Int32.shift(i32 %value, ");
+    assert_emits_final_if_blocks(result);
+    assert_returns_lowered_tmp(result);
+}
+
+void test_emit_negative_int32_final_switch_scalar_member_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_final_switch_scalar_member_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend Int32\n"
+        "    function shift(this: shared This, amount: Int32) -> Int32\n"
+        "        this + amount\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    let value: Int32 = 1 as Int32\n"
+        "    switch flag\n"
+        "        true => value.shift(-27 as Int32)\n"
+        "        default => value.shift(4 as Int32)\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_calls_lowered_int32_tmp(result, " = call i32 @method.Int32.shift(i32 %value, ");
+    assert_emits_final_switch_blocks(result);
+    assert_returns_lowered_tmp(result);
+}
+
+void test_reject_negative_uint32_final_if_scalar_member_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_final_if_scalar_member_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function scale(this: shared This, amount: UInt32) -> UInt32\n"
+        "        this + amount\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    let value: UInt32 = 1 as UInt32\n"
+        "    if flag\n"
+        "        value.scale(-1 as UInt32)\n"
+        "    else\n"
+        "        value.scale(4 as UInt32)\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_final_switch_scalar_member_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_final_switch_scalar_member_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function scale(this: shared This, amount: UInt32) -> UInt32\n"
+        "        this + amount\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    let value: UInt32 = 1 as UInt32\n"
+        "    switch flag\n"
+        "        true => value.scale(-1 as UInt32)\n"
+        "        default => value.scale(4 as UInt32)\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
 void test_emit_scalar_member_call_statement() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_scalar_member_call_statement.or";
@@ -5637,6 +5729,10 @@ auto main() -> int {
     test_emit_scalar_member_call_expression();
     test_emit_negative_int32_scalar_member_call_argument_return();
     test_reject_negative_uint32_scalar_member_call_argument();
+    test_emit_negative_int32_final_if_scalar_member_call_argument_return();
+    test_emit_negative_int32_final_switch_scalar_member_call_argument_return();
+    test_reject_negative_uint32_final_if_scalar_member_call_argument_return();
+    test_reject_negative_uint32_final_switch_scalar_member_call_argument_return();
     test_emit_scalar_member_call_statement();
     test_emit_negative_int32_scalar_member_call_statement_argument();
     test_reject_negative_uint32_scalar_member_call_statement_argument();
