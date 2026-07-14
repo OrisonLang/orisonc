@@ -6,6 +6,9 @@ public function arithmetic(left: UInt32, right: UInt32) -> UInt32
     value = value * 2
     value % 3 as UInt32
 
+public function negate(value: Int32) -> Int32
+    -value
+
 public function booleans(left: Bool, right: Bool) -> Bool
     not left or right and true
 

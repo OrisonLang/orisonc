@@ -398,6 +398,13 @@ auto inferred_expression_type(
                 return operand;
             }
         }
+        if (expression.text == "-") {
+            auto operand = inferred_expression_type(*expression.left, context, state);
+            if (operand.has_value() && is_integer_llvm_type_impl(operand->type) &&
+                operand->signedness == IntegerSignedness::signed_integer) {
+                return operand;
+            }
+        }
     }
 
     if (expression.kind == syntax::ExpressionKind::binary && expression.left != nullptr &&
@@ -2513,6 +2520,31 @@ auto lowered_expression(
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         output << "  " << temporary_name << " = xor " << operand->type << " " << operand->value
                << ", -1\n";
+        return LoweredExpression {
+            .type = operand->type,
+            .value = std::move(temporary_name),
+            .signedness = operand->signedness,
+        };
+    }
+
+    if (expression.kind == syntax::ExpressionKind::unary && expression.text == "-" &&
+        expression.left != nullptr && is_integer_llvm_type_impl(expected_llvm_type) &&
+        expected_signedness == IntegerSignedness::signed_integer) {
+        auto operand = lowered_expression(
+            *expression.left,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        );
+        if (!operand.has_value()) {
+            return std::nullopt;
+        }
+
+        auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
+        output << "  " << temporary_name << " = sub " << operand->type << " 0, "
+               << operand->value << "\n";
         return LoweredExpression {
             .type = operand->type,
             .value = std::move(temporary_name),

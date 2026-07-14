@@ -68,7 +68,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `tour_02_records_choices.or` | visibility, `record`, `choice`, constructors, generics | backend |
 | `tour_03_interfaces_methods.or` | `interface`, `implements`, `extend`, `this`, `This` | backend |
 | `tour_04_generics_ownership.or` | generics, `where`, `shared`, `exclusive` | backend |
-| `tour_05_bindings_operators.or` | `let`, `var`, assignment, arithmetic/modulo, boolean, ternary, bitwise, shifts | backend |
+| `tour_05_bindings_operators.or` | `let`, `var`, assignment, arithmetic/modulo, negation, boolean, ternary, bitwise, shifts | backend |
 | `tour_06_control_flow.or` | `guard`, `else`, `if`, `switch`, `default`, loops, `break`, `continue`, `defer` | backend |
 | `tour_07_recursion.or` | recursion, explicit and implicit `return` | backend |
 | `tour_08_collections.or` | arrays, views, dynamic arrays, indexing | backend |

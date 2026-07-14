@@ -34,6 +34,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: signed integer unary negation now lowers for fixed-width `Int*` operands as LLVM `sub 0, value`, with
+  `tour_05_bindings_operators.or` covering `-value`; unsigned negation remains intentionally unsupported pending an
+  explicit overflow/wrapping policy.
 - 2026-07-14: integer modulo now lowers for fixed-width integer operands, emitting unsigned `urem` and signed `srem`;
   `tour_05_bindings_operators.or` now exercises `%` through backend example coverage.
 - 2026-07-14: boolean equality and inequality now lower directly as `icmp eq/ne i1`, while unsupported boolean
