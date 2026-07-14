@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: value-producing method control flow now has signed negative cast lowering and unsigned negative cast
+  rejection coverage for final `if` and `switch` scalar return paths.
 - 2026-07-14: negative method-return smoke coverage now uses named helpers for method definition fragments and
   aggregate insertion fragments, preserving scalar, record-receiver, and aggregate-valued method coverage while
   reducing repeated substring checks.
