@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: scalar ternary return paths now cover signed negative `Int32` arm lowering and unsigned negative `UInt32`
+  arm rejection, closing the first audited `?:` negative-cast carrier gap.
 - 2026-07-14: negative-cast lowering coverage audit found the next highest-value missing slice is ternary `?:`
   expression carriers: existing tests cover general ternary lowering plus signed/unsigned negative casts through returns,
   methods, calls, aggregate access, and aggregate assignments, but not signed negative ternary arms or unsigned negative

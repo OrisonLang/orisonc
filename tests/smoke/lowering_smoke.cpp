@@ -491,6 +491,56 @@ void test_emit_negative_int32_cast_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_negative_int32_ternary_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_ternary_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    flag ? -27 as Int32 : 4 as Int32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main(i1 %flag) {\n"
+        "entry:\n"
+        "  br i1 %flag, label %ternary.then.0, label %ternary.else.0\n"
+        "ternary.then.0:\n"
+        "  %tmp0 = sub i32 0, 27\n"
+        "  br label %ternary.merge.0\n"
+        "ternary.else.0:\n"
+        "  br label %ternary.merge.0\n"
+        "ternary.merge.0:\n"
+        "  %tmp1 = phi i32 [%tmp0, %ternary.then.0], [4, %ternary.else.0]\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
+void test_reject_negative_uint32_ternary_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_ternary_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    flag ? -1 as UInt32 : 4 as UInt32\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support this return expression: unsupported cast: negative value to UInt32"
+    );
+}
+
 void test_emit_mutable_int32_compound_assignment_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_mutable_int32_compound.or";
     auto result = lower_source(
@@ -6112,6 +6162,8 @@ auto main() -> int {
     test_emit_negative_int32_let_initializer_return();
     test_reject_negative_uint32_cast_return();
     test_emit_negative_int32_cast_return();
+    test_emit_negative_int32_ternary_return();
+    test_reject_negative_uint32_ternary_return();
     test_emit_mutable_int32_compound_assignment_return();
     test_reject_bool_compound_assignment();
     test_reject_bool_aggregate_compound_assignment();
