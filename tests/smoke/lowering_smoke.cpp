@@ -2420,6 +2420,49 @@ void test_emit_negative_int32_array_element_return() {
     assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
 }
 
+void test_reject_negative_uint32_record_field_initializer() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_record_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let box: UnsignedBox = UnsignedBox(-1 as UInt32)\n"
+        "    box.value\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
+        std::string::npos
+    );
+}
+
+void test_reject_negative_uint32_array_element_initializer() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_array_element.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let values: Array<UInt32, 2> = [-1 as UInt32, 4 as UInt32]\n"
+        "    values[0]\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
+        std::string::npos
+    );
+}
+
 void test_emit_multi_uint32_parameter_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_multi_uint32_parameter_call.or";
     auto result = lower_source(
@@ -4496,6 +4539,8 @@ auto main() -> int {
     test_emit_negative_int32_call_argument_return();
     test_emit_negative_int32_record_field_return();
     test_emit_negative_int32_array_element_return();
+    test_reject_negative_uint32_record_field_initializer();
+    test_reject_negative_uint32_array_element_initializer();
     test_emit_multi_uint32_parameter_function_call_return();
     test_emit_c_foreign_call_with_string_literal();
     test_emit_fixed_printf_adapter_with_integer_promotion();
