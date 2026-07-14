@@ -2463,6 +2463,97 @@ void test_reject_negative_uint32_array_element_initializer() {
     );
 }
 
+void test_emit_negative_int32_record_field_assignment_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_record_field_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    var box: SignedBox = SignedBox(0 as Int32)\n"
+        "    box.value = -27 as Int32\n"
+        "    box.value\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.SignedBox = type { i32 }") != std::string::npos);
+    assert(result.ir_text.find("%box.addr = alloca %record.SignedBox") != std::string::npos);
+    assert(result.ir_text.find(" = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0") != std::string::npos);
+    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
+    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
+    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+}
+
+void test_emit_negative_int32_array_element_assignment_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_array_element_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    var values: Array<Int32, 2> = [0 as Int32, 4 as Int32]\n"
+        "    values[0] = -27 as Int32\n"
+        "    values[0]\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%values.addr = alloca [2 x i32]") != std::string::npos);
+    assert(result.ir_text.find(" = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0") != std::string::npos);
+    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
+    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
+    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+}
+
+void test_reject_negative_uint32_record_field_assignment() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_record_field_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var box: UnsignedBox = UnsignedBox(0 as UInt32)\n"
+        "    box.value = -1 as UInt32\n"
+        "    box.value\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
+        std::string::npos
+    );
+}
+
+void test_reject_negative_uint32_array_element_assignment() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_array_element_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var values: Array<UInt32, 2> = [0 as UInt32, 4 as UInt32]\n"
+        "    values[0] = -1 as UInt32\n"
+        "    values[0]\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
+        std::string::npos
+    );
+}
+
 void test_emit_multi_uint32_parameter_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_multi_uint32_parameter_call.or";
     auto result = lower_source(
@@ -4541,6 +4632,10 @@ auto main() -> int {
     test_emit_negative_int32_array_element_return();
     test_reject_negative_uint32_record_field_initializer();
     test_reject_negative_uint32_array_element_initializer();
+    test_emit_negative_int32_record_field_assignment_return();
+    test_emit_negative_int32_array_element_assignment_return();
+    test_reject_negative_uint32_record_field_assignment();
+    test_reject_negative_uint32_array_element_assignment();
     test_emit_multi_uint32_parameter_function_call_return();
     test_emit_c_foreign_call_with_string_literal();
     test_emit_fixed_printf_adapter_with_integer_promotion();
