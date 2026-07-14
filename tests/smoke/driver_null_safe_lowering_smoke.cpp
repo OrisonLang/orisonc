@@ -87,6 +87,26 @@ void assert_failure_with_stderr_contains(
     assert(result.stderr_text.find(expected_fragment) != std::string::npos);
 }
 
+void assert_negative_uint32_cast_failure(orison::driver::CompileResult const& result) {
+    assert_failure_with_stderr_contains(result, "unsupported cast: negative value to UInt32");
+}
+
+void assert_negative_int32_null_safe_member_call_emits(orison::driver::CompileResult const& result) {
+    assert_success_with_stdout_contains(
+        result,
+        {
+            "%record.SignedProfile = type { i32 }",
+            "define i32 @method.SignedProfile.shifted(%record.SignedProfile %this, i32 %delta)",
+            "sub i32 0, 27",
+            "call i32 @method.SignedProfile.shifted(%record.SignedProfile",
+            "i32 %tmp",
+            "insertvalue { i1, i32 } undef, i1 true, 0",
+            "phi { i1, i32 }",
+            "ret i32 0",
+        }
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -325,19 +345,7 @@ auto main() -> int {
     );
     auto emit_negative_null_safe_member_call =
         run_emit_llvm(app, emit_negative_null_safe_member_call_path);
-    assert_success_with_stdout_contains(
-        emit_negative_null_safe_member_call,
-        {
-            "%record.SignedProfile = type { i32 }",
-            "define i32 @method.SignedProfile.shifted(%record.SignedProfile %this, i32 %delta)",
-            "sub i32 0, 27",
-            "call i32 @method.SignedProfile.shifted(%record.SignedProfile",
-            "i32 %tmp",
-            "insertvalue { i1, i32 } undef, i1 true, 0",
-            "phi { i1, i32 }",
-            "ret i32 0",
-        }
-    );
+    assert_negative_int32_null_safe_member_call_emits(emit_negative_null_safe_member_call);
 
     auto reject_negative_uint32_null_safe_member_call_path = std::filesystem::temp_directory_path() /
         "reject_negative_uint32_null_safe_member_call.or";
@@ -359,10 +367,7 @@ auto main() -> int {
             "    return 0 as UInt32",
         }
     );
-    assert_failure_with_stderr_contains(
-        run_emit_llvm(app, reject_negative_uint32_null_safe_member_call_path),
-        "unsupported cast: negative value to UInt32"
-    );
+    assert_negative_uint32_cast_failure(run_emit_llvm(app, reject_negative_uint32_null_safe_member_call_path));
 
     auto reject_void_null_safe_member_call_path = std::filesystem::temp_directory_path() /
         "reject_void_null_safe_member_call.or";

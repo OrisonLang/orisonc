@@ -34,6 +34,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: negative call-argument smoke coverage now uses named assertion helpers for lowered signed `Int32`
+  temporary operands and null-safe member-call diagnostic/result fragments, preserving direct/member/null-safe coverage
+  while reducing duplicated substring checks.
 - 2026-07-14: null-safe member-call arguments now have signed negative cast lowering and unsigned negative cast
   rejection coverage through the driver LLVM smoke path.
 - 2026-07-14: scalar member-call arguments now have signed negative cast lowering and unsigned negative cast rejection

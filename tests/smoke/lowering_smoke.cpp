@@ -59,6 +59,13 @@ void assert_returns_lowered_tmp(orison::lowering::LlvmIrEmissionResult const& re
     assert_ir_contains(result, "ret i32 %tmp");
 }
 
+void assert_calls_lowered_int32_tmp(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    std::string_view call_prefix
+) {
+    assert_ir_contains(result, std::string {call_prefix} + "i32 %tmp");
+}
+
 void assert_rejects_negative_uint32_cast(orison::lowering::LlvmIrEmissionResult const& result) {
     assert(result.has_errors());
     assert(result.diagnostics.entries().size() == 1);
@@ -1120,7 +1127,7 @@ void test_emit_negative_int32_scalar_member_call_argument_return() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_ir_contains(result, " = call i32 @method.Int32.shift(i32 %value, i32 %tmp");
+    assert_calls_lowered_int32_tmp(result, " = call i32 @method.Int32.shift(i32 %value, ");
     assert_returns_lowered_tmp(result);
 }
 
@@ -1215,7 +1222,7 @@ void test_emit_negative_int32_scalar_member_call_statement_argument() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_ir_contains(result, "call void @method.Int32.observe(i32 %value, i32 %tmp");
+    assert_calls_lowered_int32_tmp(result, "call void @method.Int32.observe(i32 %value, ");
     assert_returns_lowered_tmp(result);
 }
 
@@ -2548,7 +2555,7 @@ void test_emit_negative_int32_record_field_call_argument_return() {
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
     assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
     assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
-    assert_ir_contains(result, " = call i32 @identity(i32 %tmp");
+    assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
     assert_returns_lowered_tmp(result);
 }
 
@@ -2570,7 +2577,7 @@ void test_emit_negative_int32_array_element_call_argument_return() {
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
     assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
-    assert_ir_contains(result, " = call i32 @identity(i32 %tmp");
+    assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
     assert_returns_lowered_tmp(result);
 }
 
