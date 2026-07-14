@@ -3121,6 +3121,88 @@ void test_emit_negative_int32_call_argument_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_negative_int32_final_if_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_final_if_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function identity(value: Int32) -> Int32\n"
+        "    value\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    if flag\n"
+        "        identity(-27 as Int32)\n"
+        "    else\n"
+        "        identity(4 as Int32)\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
+    assert_emits_final_if_blocks(result);
+    assert_returns_lowered_tmp(result);
+}
+
+void test_emit_negative_int32_final_switch_call_argument_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_final_switch_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function identity(value: Int32) -> Int32\n"
+        "    value\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    switch flag\n"
+        "        true => identity(-27 as Int32)\n"
+        "        default => identity(4 as Int32)\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
+    assert_emits_final_switch_blocks(result);
+    assert_returns_lowered_tmp(result);
+}
+
+void test_reject_negative_uint32_final_if_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_final_if_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function identity(value: UInt32) -> UInt32\n"
+        "    value\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    if flag\n"
+        "        identity(-1 as UInt32)\n"
+        "    else\n"
+        "        identity(4 as UInt32)\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_final_switch_call_argument_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_final_switch_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function identity(value: UInt32) -> UInt32\n"
+        "    value\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    switch flag\n"
+        "        true => identity(-1 as UInt32)\n"
+        "        default => identity(4 as UInt32)\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
 void test_emit_negative_int32_record_field_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_record_field.or";
     auto result = lower_source(
@@ -5764,6 +5846,10 @@ auto main() -> int {
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
     test_emit_negative_int32_call_argument_return();
+    test_emit_negative_int32_final_if_call_argument_return();
+    test_emit_negative_int32_final_switch_call_argument_return();
+    test_reject_negative_uint32_final_if_call_argument_return();
+    test_reject_negative_uint32_final_switch_call_argument_return();
     test_emit_negative_int32_record_field_return();
     test_emit_negative_int32_array_element_return();
     test_emit_negative_int32_record_field_call_argument_return();

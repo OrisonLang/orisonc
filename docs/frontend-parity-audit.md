@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: final `if`/`switch` direct-call return paths now cover signed negative argument lowering and unsigned
+  negative argument rejection for ordinary scalar function calls.
 - 2026-07-14: final `if`/`switch` member-call return paths now cover signed negative argument lowering and unsigned
   negative argument rejection for scalar receiver methods.
 - 2026-07-14: control-flow method-return lowering smoke assertions now share named helpers for final `if`/`switch`
