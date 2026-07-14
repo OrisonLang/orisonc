@@ -262,6 +262,24 @@ void test_emit_negative_int32_let_initializer_return() {
     assert(result.ir_text == expected);
 }
 
+void test_reject_negative_uint32_cast_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_cast.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    -1 as UInt32\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support this return expression: unsupported cast: UInt32"
+    );
+}
+
 void test_emit_mutable_int32_compound_assignment_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_mutable_int32_compound.or";
     auto result = lower_source(
@@ -4323,6 +4341,7 @@ auto main() -> int {
     test_emit_mutable_uint32_compound_assignment_return();
     test_emit_negative_int32_var_initializer_return();
     test_emit_negative_int32_let_initializer_return();
+    test_reject_negative_uint32_cast_return();
     test_emit_mutable_int32_compound_assignment_return();
     test_reject_bool_compound_assignment();
     test_reject_bool_aggregate_compound_assignment();
