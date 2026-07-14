@@ -55,7 +55,7 @@ auto lower_nonvalue_switch_statement(
     if (!subject.has_value()) {
         diagnostics.error(
             statement.line,
-            append_expression_lowering_failure(std::string(unsupported_subject_diagnostic), session.failures.expression)
+            append_expression_lowering_failure(unsupported_subject_diagnostic, session.failures.expression)
         );
         return StatementFlow::failed;
     }
@@ -79,7 +79,7 @@ auto lower_nonvalue_switch_statement(
     if (!planning.plan.has_value()) {
         diagnostics.error(
             statement.line,
-            append_control_flow_lowering_failure(std::string(unsupported_statement_diagnostic), planning.failure)
+            append_control_flow_lowering_failure(unsupported_statement_diagnostic, planning.failure)
         );
         return StatementFlow::failed;
     }

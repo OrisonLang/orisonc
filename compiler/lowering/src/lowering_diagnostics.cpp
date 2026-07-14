@@ -16,11 +16,39 @@ auto append_expression_lowering_failure(
     return append_lowering_detail(std::move(prefix), render_expression_lowering_failure(failure));
 }
 
+auto append_expression_lowering_failure(
+    std::string_view prefix,
+    ExpressionLoweringFailure const& failure
+) -> std::string {
+    return append_expression_lowering_failure(std::string(prefix), failure);
+}
+
+auto append_expression_lowering_failure(
+    char const* prefix,
+    ExpressionLoweringFailure const& failure
+) -> std::string {
+    return append_expression_lowering_failure(std::string_view(prefix), failure);
+}
+
 auto append_control_flow_lowering_failure(
     std::string prefix,
     ControlFlowLoweringFailure const& failure
 ) -> std::string {
     return append_lowering_detail(std::move(prefix), render_control_flow_lowering_failure(failure));
+}
+
+auto append_control_flow_lowering_failure(
+    std::string_view prefix,
+    ControlFlowLoweringFailure const& failure
+) -> std::string {
+    return append_control_flow_lowering_failure(std::string(prefix), failure);
+}
+
+auto append_control_flow_lowering_failure(
+    char const* prefix,
+    ControlFlowLoweringFailure const& failure
+) -> std::string {
+    return append_control_flow_lowering_failure(std::string_view(prefix), failure);
 }
 
 auto append_control_flow_lowering_failure(
@@ -32,6 +60,22 @@ auto append_control_flow_lowering_failure(
         std::move(prefix),
         render_control_flow_lowering_failure(reason, std::move(detail))
     );
+}
+
+auto append_control_flow_lowering_failure(
+    std::string_view prefix,
+    ControlFlowLoweringFailureReason reason,
+    std::string detail
+) -> std::string {
+    return append_control_flow_lowering_failure(std::string(prefix), reason, std::move(detail));
+}
+
+auto append_control_flow_lowering_failure(
+    char const* prefix,
+    ControlFlowLoweringFailureReason reason,
+    std::string detail
+) -> std::string {
+    return append_control_flow_lowering_failure(std::string_view(prefix), reason, std::move(detail));
 }
 
 auto expression_lowering_failure_detail(

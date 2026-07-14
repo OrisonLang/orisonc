@@ -40,7 +40,7 @@ auto lower_nonvalue_if_statement(
     if (!condition.has_value()) {
         diagnostics.error(
             statement.line,
-            append_expression_lowering_failure(std::string(unsupported_condition_diagnostic), session.failures.expression)
+            append_expression_lowering_failure(unsupported_condition_diagnostic, session.failures.expression)
         );
         return StatementFlow::failed;
     }
