@@ -2379,6 +2379,47 @@ void test_emit_negative_int32_call_argument_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_negative_int32_record_field_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_record_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    let box: SignedBox = SignedBox(-27 as Int32)\n"
+        "    box.value\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find("%record.SignedBox = type { i32 }") != std::string::npos);
+    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
+    assert(result.ir_text.find(" = insertvalue %record.SignedBox undef, i32 %tmp") != std::string::npos);
+    assert(result.ir_text.find(" = extractvalue %record.SignedBox %tmp") != std::string::npos);
+    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+}
+
+void test_emit_negative_int32_array_element_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_array_element.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    let values: Array<Int32, 2> = [-27 as Int32, 4 as Int32]\n"
+        "    values[0]\n"
+    );
+
+    assert(!result.has_errors());
+    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
+    assert(result.ir_text.find(" = insertvalue [2 x i32] undef, i32 %tmp") != std::string::npos);
+    assert(result.ir_text.find(" = insertvalue [2 x i32] %tmp") != std::string::npos);
+    assert(result.ir_text.find(" = extractvalue [2 x i32] %tmp") != std::string::npos);
+    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+}
+
 void test_emit_multi_uint32_parameter_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_multi_uint32_parameter_call.or";
     auto result = lower_source(
@@ -4453,6 +4494,8 @@ auto main() -> int {
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
     test_emit_negative_int32_call_argument_return();
+    test_emit_negative_int32_record_field_return();
+    test_emit_negative_int32_array_element_return();
     test_emit_multi_uint32_parameter_function_call_return();
     test_emit_c_foreign_call_with_string_literal();
     test_emit_fixed_printf_adapter_with_integer_promotion();
