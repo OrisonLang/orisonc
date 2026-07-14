@@ -136,6 +136,7 @@ struct StatementSyntax {
     std::string name;
     TypeSyntax annotated_type;
     ExpressionSyntax assignment_target;
+    std::string assignment_operator = "=";
     ExpressionSyntax expression;
     std::vector<StatementSyntax> nested_statements;
     std::vector<StatementSyntax> alternate_statements;

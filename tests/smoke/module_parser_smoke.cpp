@@ -869,11 +869,48 @@ void test_assignment_success() {
     assert(result.module.functions.front().body_statements[0].assignment_target.kind ==
            orison::syntax::ExpressionKind::name);
     assert(result.module.functions.front().body_statements[0].assignment_target.text == "current");
+    assert(result.module.functions.front().body_statements[0].assignment_operator == "=");
     assert(result.module.functions.front().body_statements[1].kind == orison::syntax::StatementKind::assignment_statement);
     assert(result.module.functions.front().body_statements[1].assignment_target.kind ==
            orison::syntax::ExpressionKind::member_access);
     assert(result.module.functions.front().body_statements[1].assignment_target.text == "value");
     assert(result.module.functions.front().body_statements[1].assignment_target.left->text == "this");
+    assert(result.module.functions.front().body_statements[1].assignment_operator == "=");
+}
+
+void test_compound_assignment_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_module_parser_compound_assignment_success.or";
+    {
+        std::ofstream output(path);
+        output << "package demo.assign\n";
+        output << "function update(current: UInt32) -> UInt32\n";
+        output << "    current += 1 as UInt32\n";
+        output << "    current -= 1 as UInt32\n";
+        output << "    current *= 2 as UInt32\n";
+        output << "    current /= 2 as UInt32\n";
+        output << "    current %= 2 as UInt32\n";
+        output << "    return current\n";
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto result = parser.parse(*source_file);
+
+    assert(!result.diagnostics.has_errors());
+    auto const& statements = result.module.functions.front().body_statements;
+    assert(statements.size() == 6);
+    assert(statements[0].assignment_operator == "+=");
+    assert(statements[1].assignment_operator == "-=");
+    assert(statements[2].assignment_operator == "*=");
+    assert(statements[3].assignment_operator == "/=");
+    assert(statements[4].assignment_operator == "%=");
+    for (auto index = std::size_t {0}; index < 5; ++index) {
+        assert(statements[index].kind == orison::syntax::StatementKind::assignment_statement);
+        assert(statements[index].assignment_target.kind == orison::syntax::ExpressionKind::name);
+        assert(statements[index].assignment_target.text == "current");
+    }
 }
 
 void test_index_assignment_success() {
@@ -2230,6 +2267,7 @@ int main() {
     test_where_success();
     test_where_failure();
     test_assignment_success();
+    test_compound_assignment_success();
     test_index_assignment_success();
     test_assignment_failure();
     test_break_continue_success();

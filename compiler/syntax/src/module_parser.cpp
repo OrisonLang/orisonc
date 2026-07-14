@@ -1067,6 +1067,11 @@ private:
                expression.kind == ExpressionKind::index_access;
     }
 
+    auto is_assignment_operator(TokenKind kind) const -> bool {
+        return kind == TokenKind::equal || kind == TokenKind::plus_equal || kind == TokenKind::minus_equal ||
+               kind == TokenKind::star_equal || kind == TokenKind::slash_equal || kind == TokenKind::percent_equal;
+    }
+
     auto current_starts_assignment_statement() const -> bool {
         if (!is(TokenKind::identifier)) {
             return false;
@@ -1101,7 +1106,7 @@ private:
                 continue;
             }
 
-            return kind == TokenKind::equal;
+            return is_assignment_operator(kind);
         }
 
         return false;
@@ -1157,12 +1162,13 @@ private:
             return statement;
         }
 
-        if (!is(TokenKind::equal)) {
-            result.diagnostics.error(current().line, "assignment statement requires '=' before the assigned expression");
+        if (!is_assignment_operator(current().kind)) {
+            result.diagnostics.error(current().line, "assignment statement requires an assignment operator before the assigned expression");
             statement.valid = false;
             return statement;
         }
 
+        statement.assignment_operator = current().lexeme;
         advance();
         statement.expression = parse_expression(result);
         if (statement.expression.text.empty() && !statement.expression.left && !statement.expression.right &&

@@ -158,6 +158,54 @@ void test_emit_mutable_uint32_assignment_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_mutable_uint32_compound_assignment_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_mutable_uint32_compound.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var value = 6 as UInt32\n"
+        "    value += 2 as UInt32\n"
+        "    value *= 3 as UInt32\n"
+        "    value -= 4 as UInt32\n"
+        "    value /= 2 as UInt32\n"
+        "    value %= 5 as UInt32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %value.addr = alloca i32\n"
+        "  store i32 6, ptr %value.addr\n"
+        "  %tmp0 = load i32, ptr %value.addr\n"
+        "  %tmp1 = add i32 %tmp0, 2\n"
+        "  store i32 %tmp1, ptr %value.addr\n"
+        "  %tmp2 = load i32, ptr %value.addr\n"
+        "  %tmp3 = mul i32 %tmp2, 3\n"
+        "  store i32 %tmp3, ptr %value.addr\n"
+        "  %tmp4 = load i32, ptr %value.addr\n"
+        "  %tmp5 = sub i32 %tmp4, 4\n"
+        "  store i32 %tmp5, ptr %value.addr\n"
+        "  %tmp6 = load i32, ptr %value.addr\n"
+        "  %tmp7 = udiv i32 %tmp6, 2\n"
+        "  store i32 %tmp7, ptr %value.addr\n"
+        "  %tmp8 = load i32, ptr %value.addr\n"
+        "  %tmp9 = urem i32 %tmp8, 5\n"
+        "  store i32 %tmp9, ptr %value.addr\n"
+        "  %tmp10 = load i32, ptr %value.addr\n"
+        "  ret i32 %tmp10\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_mutable_uint32_while_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_mutable_uint32_while.or";
     auto result = lower_source(
@@ -4111,6 +4159,7 @@ auto main() -> int {
     test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();
+    test_emit_mutable_uint32_compound_assignment_return();
     test_emit_mutable_uint32_while_return();
     test_emit_while_call_statement();
     test_emit_while_unit_call_statement();

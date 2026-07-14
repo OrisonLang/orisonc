@@ -76,6 +76,11 @@ int main() {
         output << "    let inverted = bit_not source.bits\n";
         output << "    let left = source.bits shift_left 2\n";
         output << "    let right = source.bits shift_right 1\n";
+        output << "    value += 1\n";
+        output << "    value -= 1\n";
+        output << "    value *= 2\n";
+        output << "    value /= 2\n";
+        output << "    value %= 2\n";
         output << "    return\n";
     }
 
@@ -131,6 +136,11 @@ int main() {
     bool saw_bit_not = false;
     bool saw_shift_left = false;
     bool saw_shift_right = false;
+    bool saw_plus_equal = false;
+    bool saw_minus_equal = false;
+    bool saw_star_equal = false;
+    bool saw_slash_equal = false;
+    bool saw_percent_equal = false;
     bool saw_indent = false;
     bool saw_dedent = false;
     for (auto const& token : result.tokens) {
@@ -251,6 +261,21 @@ int main() {
         if (token.kind == orison::syntax::TokenKind::keyword_shift_right) {
             saw_shift_right = true;
         }
+        if (token.kind == orison::syntax::TokenKind::plus_equal) {
+            saw_plus_equal = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::minus_equal) {
+            saw_minus_equal = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::star_equal) {
+            saw_star_equal = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::slash_equal) {
+            saw_slash_equal = true;
+        }
+        if (token.kind == orison::syntax::TokenKind::percent_equal) {
+            saw_percent_equal = true;
+        }
         if (token.kind == orison::syntax::TokenKind::indent) {
             saw_indent = true;
         }
@@ -297,6 +322,11 @@ int main() {
     assert(saw_bit_not);
     assert(saw_shift_left);
     assert(saw_shift_right);
+    assert(saw_plus_equal);
+    assert(saw_minus_equal);
+    assert(saw_star_equal);
+    assert(saw_slash_equal);
+    assert(saw_percent_equal);
     assert(saw_indent);
     assert(saw_dedent);
     std::filesystem::remove_all(smoke_temp_root);

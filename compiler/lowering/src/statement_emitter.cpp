@@ -16,6 +16,8 @@
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
 
+#include <memory>
+#include <optional>
 #include <span>
 #include <sstream>
 #include <string>
@@ -31,6 +33,48 @@ auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
 
 auto is_task_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::task;
+}
+
+auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax {
+    auto cloned = syntax::ExpressionSyntax {
+        .kind = expression.kind,
+        .line = expression.line,
+        .text = expression.text,
+        .arguments = {},
+        .nested_statements = {},
+        .left = expression.left ? std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.left))
+                                : nullptr,
+        .right = expression.right ? std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.right))
+                                  : nullptr,
+        .alternate = expression.alternate
+            ? std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.alternate))
+            : nullptr,
+    };
+    cloned.arguments.reserve(expression.arguments.size());
+    for (auto const& argument : expression.arguments) {
+        cloned.arguments.push_back(clone_expression(argument));
+    }
+    return cloned;
+}
+
+auto binary_operator_for_assignment_operator(std::string const& assignment_operator)
+    -> std::optional<std::string_view> {
+    if (assignment_operator == "+=") {
+        return std::string_view {"+"};
+    }
+    if (assignment_operator == "-=") {
+        return std::string_view {"-"};
+    }
+    if (assignment_operator == "*=") {
+        return std::string_view {"*"};
+    }
+    if (assignment_operator == "/=") {
+        return std::string_view {"/"};
+    }
+    if (assignment_operator == "%=") {
+        return std::string_view {"%"};
+    }
+    return std::nullopt;
 }
 
 auto lower_thread_let_statement(
@@ -896,8 +940,28 @@ auto lower_assignment_statement(
         return false;
     }
 
+    auto assignment_value = std::optional<syntax::ExpressionSyntax> {};
+    auto const* expression_to_lower = &statement.expression;
+    if (statement.assignment_operator != "=") {
+        auto binary_operator = binary_operator_for_assignment_operator(statement.assignment_operator);
+        if (!binary_operator.has_value()) {
+            diagnostics.error(statement.line, "lowering assignment operator is unsupported");
+            return false;
+        }
+        assignment_value = syntax::ExpressionSyntax {
+            .kind = syntax::ExpressionKind::binary,
+            .line = statement.line,
+            .text = std::string {*binary_operator},
+            .arguments = {},
+            .nested_statements = {},
+            .left = std::make_unique<syntax::ExpressionSyntax>(clone_expression(statement.assignment_target)),
+            .right = std::make_unique<syntax::ExpressionSyntax>(clone_expression(statement.expression)),
+        };
+        expression_to_lower = &*assignment_value;
+    }
+
     auto lowered = lower_expression(
-        statement.expression,
+        *expression_to_lower,
         target->type.type,
         target->type.signedness,
         context,
