@@ -35,7 +35,7 @@ This file tracks which source-language frontend slices are reflected in the curr
 ## Latest update
 
 - 2026-07-14: signed unary integer operands now lower inside explicit cast contexts such as `-27 as Int32`, unblocking
-  negative signed integer `var` initializers and signed compound-assignment fixtures that start negative.
+  negative signed integer `let`/`var` initializers and signed compound-assignment fixtures that start negative.
 - 2026-07-14: signed integer compound assignment smoke coverage now pins `/=` and `%=` to LLVM `sdiv` and `srem`,
   matching signed expression lowering while preserving direct load/compute/store assignment lowering.
 - 2026-07-14: compound assignment lowering now rejects non-integer targets with a dedicated diagnostic before

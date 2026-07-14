@@ -235,6 +235,33 @@ void test_emit_negative_int32_var_initializer_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_negative_int32_let_initializer_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_let_initializer.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    let value = -27 as Int32\n"
+        "    value\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = sub i32 0, 27\n"
+        "  %value = add i32 0, %tmp0\n"
+        "  ret i32 %value\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_mutable_int32_compound_assignment_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_mutable_int32_compound.or";
     auto result = lower_source(
@@ -4295,6 +4322,7 @@ auto main() -> int {
     test_emit_mutable_uint32_assignment_return();
     test_emit_mutable_uint32_compound_assignment_return();
     test_emit_negative_int32_var_initializer_return();
+    test_emit_negative_int32_let_initializer_return();
     test_emit_mutable_int32_compound_assignment_return();
     test_reject_bool_compound_assignment();
     test_reject_bool_aggregate_compound_assignment();
