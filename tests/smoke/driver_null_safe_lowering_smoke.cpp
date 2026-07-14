@@ -253,6 +253,8 @@ auto main() -> int {
             "    let adjusted: Maybe<Profile> = user?.profile?.adjusted(3 as UInt32)",
             "    let adjusted_rating: Maybe<UInt32> = user?.profile?.adjusted(3 as UInt32)?.rating",
             "    let pair: Maybe<Array<UInt32, 2>> = user?.profile?.pair(4 as UInt32)",
+            "    user?.profile?.scaled(6 as UInt32)",
+            "    user?.profile?.pair(9 as UInt32)",
             "    return 0 as UInt32",
         }
     );
@@ -273,8 +275,11 @@ auto main() -> int {
             "nullsafe.call.some.",
             "nullsafe.call.merge.",
             "call i32 @method.Profile.scaled(%record.Profile",
+            "call i32 @method.Profile.scaled(%record.Profile %tmp",
+            "i32 6)",
             "call %record.Profile @method.Profile.adjusted(%record.Profile",
             "call [2 x i32] @method.Profile.pair(%record.Profile",
+            "i32 9)",
             "insertvalue { i1, %record.Profile } undef, i1 true, 0",
             "insertvalue { i1, [2 x i32] } undef, i1 true, 0",
             "insertvalue { i1, i32 } undef, i1 true, 0",

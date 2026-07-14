@@ -906,17 +906,46 @@ auto lower_call_statement(
     }
     if (statement.expression.left != nullptr &&
         statement.expression.left->kind == syntax::ExpressionKind::null_safe_member_access) {
-        auto resolved = resolve_member_call(statement.expression, context, session.state);
-        auto function = diagnose_member_call_statement(statement, resolved, diagnostics);
-        if (function == nullptr) {
+        auto source_type = source_type_name_for_expression(
+            statement.expression,
+            context.lowering,
+            session.state
+        );
+        if (!source_type.has_value()) {
+            diagnostics.error(
+                statement.line,
+                "lowering does not yet support this null-safe call statement result type"
+            );
             return false;
         }
-
-        diagnostics.error(
-            statement.line,
-            "lowering null-safe member call statements is not yet supported: " + member_call_target_name(resolved)
+        auto type = lowered_type_for_source_type_name(*source_type, context.lowering);
+        if (!type.has_value() || type->type.empty()) {
+            diagnostics.error(
+                statement.line,
+                "lowering does not yet support this null-safe call statement result type"
+            );
+            return false;
+        }
+        auto lowered = lower_expression(
+            statement.expression,
+            type->type,
+            type->signedness,
+            context,
+            session,
+            output,
+            std::optional<std::string_view> {*source_type}
         );
-        return false;
+        if (!lowered.has_value()) {
+            diagnostics.error(
+                statement.line,
+                append_expression_lowering_failure(
+                    "lowering does not yet support this null-safe call statement",
+                    session.failures.expression
+                )
+            );
+            return false;
+        }
+        return true;
     }
     if (statement.expression.left != nullptr &&
         statement.expression.left->kind == syntax::ExpressionKind::member_access) {

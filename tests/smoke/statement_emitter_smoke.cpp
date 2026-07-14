@@ -822,7 +822,7 @@ int main() {
     ));
     assert(
         diagnostics.entries().front().message ==
-        "lowering null-safe member call statements is not yet supported: UInt32.reset"
+        "lowering does not yet support this null-safe call statement result type"
     );
     assert(output.str().empty());
 
@@ -851,7 +851,7 @@ int main() {
     ));
     assert(
         diagnostics.entries().front().message ==
-        "lowering member call target is unknown: Device.observe"
+        "lowering does not yet support this null-safe call statement result type"
     );
     assert(output.str().empty());
 
