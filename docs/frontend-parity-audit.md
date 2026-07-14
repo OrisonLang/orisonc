@@ -34,6 +34,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: unsupported unary negation contexts now fail with `unsupported operator: -` diagnostics instead of
+  falling through generic unsupported-expression reporting, with unsigned integer and boolean return-expression
+  regression coverage.
 - 2026-07-14: signed integer unary negation now lowers for fixed-width `Int*` operands as LLVM `sub 0, value`, with
   `tour_05_bindings_operators.or` covering `-value`; unsigned negation remains intentionally unsupported pending an
   explicit overflow/wrapping policy.

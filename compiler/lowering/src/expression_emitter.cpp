@@ -2552,6 +2552,16 @@ auto lowered_expression(
         };
     }
 
+    if (expression.kind == syntax::ExpressionKind::unary && expression.text == "-" &&
+        expression.left != nullptr) {
+        record_expression_lowering_failure(
+            failures,
+            ExpressionLoweringFailureReason::unsupported_operator,
+            expression.text
+        );
+        return std::nullopt;
+    }
+
     if (expression.kind == syntax::ExpressionKind::ternary && expression.left != nullptr &&
         expression.right != nullptr && expression.alternate != nullptr) {
         auto condition = lowered_expression(

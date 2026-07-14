@@ -2399,6 +2399,42 @@ void test_reject_unsupported_return_expression() {
     );
 }
 
+void test_reject_unsigned_unary_negation_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_unsigned_unary_negation.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function negate(value: UInt32) -> UInt32\n"
+        "    -value\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support this return expression: unsupported operator: -"
+    );
+}
+
+void test_reject_boolean_unary_negation_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_boolean_unary_negation.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function negate(value: Bool) -> Bool\n"
+        "    -value\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support this return expression: unsupported operator: -"
+    );
+}
+
 void test_emit_scalar_thread_join_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_thread_expression.or";
     auto result = lower_source(
@@ -4103,6 +4139,8 @@ auto main() -> int {
     test_emit_uint32_comparison_returns();
     test_emit_int32_comparison_returns();
     test_emit_boolean_expression_returns();
+    test_reject_unsigned_unary_negation_return();
+    test_reject_boolean_unary_negation_return();
     test_emit_ternary_expression_returns();
     test_emit_final_if_expression_returns();
     test_emit_final_if_branch_local_bindings();
