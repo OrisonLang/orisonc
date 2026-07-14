@@ -1363,6 +1363,208 @@ void test_reject_negative_uint32_final_switch_method_return() {
     assert_rejects_negative_uint32_cast(result);
 }
 
+void test_emit_negative_int32_final_if_record_constructor_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_final_if_record_constructor_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend Int32\n"
+        "    function choose_box(this: shared This, flag: Bool) -> SignedBox\n"
+        "        if flag\n"
+        "            SignedBox(-27 as Int32)\n"
+        "        else\n"
+        "            SignedBox(4 as Int32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_defines_method(result, "%record.SignedBox", "method.Int32.choose_box", "i32 %this, i1 %flag");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, "%record.SignedBox");
+    assert_ir_contains(result, "if.then.");
+    assert_ir_contains(result, "if.else.");
+    assert_ir_contains(result, "if.merge.");
+    assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
+}
+
+void test_emit_negative_int32_final_switch_record_constructor_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_final_switch_record_constructor_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend Int32\n"
+        "    function choose_box(this: shared This, flag: Bool) -> SignedBox\n"
+        "        switch flag\n"
+        "            true => SignedBox(-27 as Int32)\n"
+        "            default => SignedBox(4 as Int32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_defines_method(result, "%record.SignedBox", "method.Int32.choose_box", "i32 %this, i1 %flag");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, "%record.SignedBox");
+    assert_ir_contains(result, "switch.case.");
+    assert_ir_contains(result, "switch.default.");
+    assert_ir_contains(result, "switch.merge.");
+    assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
+}
+
+void test_emit_negative_int32_final_if_array_literal_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_final_if_array_literal_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend Int32\n"
+        "    function choose_pair(this: shared This, flag: Bool) -> Array<Int32, 2>\n"
+        "        if flag\n"
+        "            [-27 as Int32, 4 as Int32]\n"
+        "        else\n"
+        "            [4 as Int32, 5 as Int32]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_defines_method(result, "[2 x i32]", "method.Int32.choose_pair", "i32 %this, i1 %flag");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, "[2 x i32]");
+    assert_ir_contains(result, "if.then.");
+    assert_ir_contains(result, "if.else.");
+    assert_ir_contains(result, "if.merge.");
+    assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
+}
+
+void test_emit_negative_int32_final_switch_array_literal_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_final_switch_array_literal_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend Int32\n"
+        "    function choose_pair(this: shared This, flag: Bool) -> Array<Int32, 2>\n"
+        "        switch flag\n"
+        "            true => [-27 as Int32, 4 as Int32]\n"
+        "            default => [4 as Int32, 5 as Int32]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_defines_method(result, "[2 x i32]", "method.Int32.choose_pair", "i32 %this, i1 %flag");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, "[2 x i32]");
+    assert_ir_contains(result, "switch.case.");
+    assert_ir_contains(result, "switch.default.");
+    assert_ir_contains(result, "switch.merge.");
+    assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
+}
+
+void test_reject_negative_uint32_final_if_record_constructor_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_final_if_record_constructor_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UInt32\n"
+        "    function choose_box(this: shared This, flag: Bool) -> UnsignedBox\n"
+        "        if flag\n"
+        "            UnsignedBox(-1 as UInt32)\n"
+        "        else\n"
+        "            UnsignedBox(4 as UInt32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_final_switch_record_constructor_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_final_switch_record_constructor_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UInt32\n"
+        "    function choose_box(this: shared This, flag: Bool) -> UnsignedBox\n"
+        "        switch flag\n"
+        "            true => UnsignedBox(-1 as UInt32)\n"
+        "            default => UnsignedBox(4 as UInt32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_final_if_array_literal_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_final_if_array_literal_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function choose_pair(this: shared This, flag: Bool) -> Array<UInt32, 2>\n"
+        "        if flag\n"
+        "            [-1 as UInt32, 4 as UInt32]\n"
+        "        else\n"
+        "            [4 as UInt32, 5 as UInt32]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_final_switch_array_literal_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_final_switch_array_literal_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function choose_pair(this: shared This, flag: Bool) -> Array<UInt32, 2>\n"
+        "        switch flag\n"
+        "            true => [-1 as UInt32, 4 as UInt32]\n"
+        "            default => [4 as UInt32, 5 as UInt32]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
 void test_emit_scalar_member_call_expression() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_scalar_member_call.or";
     auto result = lower_source(
@@ -5381,6 +5583,14 @@ auto main() -> int {
     test_emit_negative_int32_final_switch_method_return();
     test_reject_negative_uint32_final_if_method_return();
     test_reject_negative_uint32_final_switch_method_return();
+    test_emit_negative_int32_final_if_record_constructor_method_return();
+    test_emit_negative_int32_final_switch_record_constructor_method_return();
+    test_emit_negative_int32_final_if_array_literal_method_return();
+    test_emit_negative_int32_final_switch_array_literal_method_return();
+    test_reject_negative_uint32_final_if_record_constructor_method_return();
+    test_reject_negative_uint32_final_switch_record_constructor_method_return();
+    test_reject_negative_uint32_final_if_array_literal_method_return();
+    test_reject_negative_uint32_final_switch_array_literal_method_return();
     test_emit_scalar_member_call_expression();
     test_emit_negative_int32_scalar_member_call_argument_return();
     test_reject_negative_uint32_scalar_member_call_argument();
