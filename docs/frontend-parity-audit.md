@@ -34,6 +34,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: negative-cast lowering coverage audit found the next highest-value missing slice is ternary `?:`
+  expression carriers: existing tests cover general ternary lowering plus signed/unsigned negative casts through returns,
+  methods, calls, aggregate access, and aggregate assignments, but not signed negative ternary arms or unsigned negative
+  rejection through ternary arms.
 - 2026-07-14: aggregate assignment control-flow smoke tests now share record-field and array-element signed assertion
   helpers, matching the call-argument helper pattern while keeping source fixtures explicit.
 - 2026-07-14: record-field and array-element assignment RHS paths now have paired `if`/`switch` signed negative
