@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: compound assignment lowering now rejects non-integer targets with a dedicated diagnostic before
+  emitting arithmetic, covering both mutable local `Bool` and aggregate `Bool` field targets.
 - 2026-07-14: compound assignment tokens and statements now parse for the EBNF-listed `+=`, `-=`, `*=`, `/=`, and
   `%=` forms; mutable-local and supported aggregate target lowering now emits direct target-pointer
   load/compute/store sequences without re-evaluating member/index assignment targets.

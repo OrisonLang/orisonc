@@ -206,6 +206,49 @@ void test_emit_mutable_uint32_compound_assignment_return() {
     assert(result.ir_text == expected);
 }
 
+void test_reject_bool_compound_assignment() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_bool_compound_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> Bool\n"
+        "    var value = true\n"
+        "    value += false\n"
+        "    value\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering compound assignment operator '+=' requires an integer assignment target"
+    );
+}
+
+void test_reject_bool_aggregate_compound_assignment() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_bool_aggregate_compound_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Flags\n"
+        "    enabled: Bool\n"
+        "\n"
+        "function main() -> Unit\n"
+        "    var flags = Flags(true)\n"
+        "    flags.enabled += false\n"
+        "    return\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering compound assignment operator '+=' requires an integer assignment target"
+    );
+}
+
 void test_emit_mutable_uint32_while_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_mutable_uint32_while.or";
     auto result = lower_source(
@@ -4185,6 +4228,8 @@ auto main() -> int {
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();
     test_emit_mutable_uint32_compound_assignment_return();
+    test_reject_bool_compound_assignment();
+    test_reject_bool_aggregate_compound_assignment();
     test_emit_mutable_uint32_while_return();
     test_emit_while_call_statement();
     test_emit_while_unit_call_statement();

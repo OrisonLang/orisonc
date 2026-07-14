@@ -935,8 +935,13 @@ auto lower_assignment_statement(
             statement.assignment_operator,
             target->type.signedness
         );
-        if (!instruction.has_value() || !is_integer_llvm_type(target->type.type)) {
-            diagnostics.error(statement.line, "lowering assignment operator is unsupported");
+        if (!instruction.has_value() || !is_integer_llvm_type(target->type.type) ||
+            target->type.signedness == IntegerSignedness::not_integer) {
+            diagnostics.error(
+                statement.line,
+                "lowering compound assignment operator '" + statement.assignment_operator +
+                    "' requires an integer assignment target"
+            );
             return false;
         }
 
