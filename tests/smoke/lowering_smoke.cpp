@@ -66,6 +66,29 @@ void assert_returns_lowered_aggregate_tmp(
     assert_ir_contains(result, std::string {"ret "} + std::string {aggregate_type} + " %tmp");
 }
 
+void assert_defines_method(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    std::string_view return_type,
+    std::string_view symbol_name,
+    std::string_view parameter_fragment
+) {
+    assert_ir_contains(
+        result,
+        std::string {"define "} + std::string {return_type} + " @" + std::string {symbol_name} + "(" +
+            std::string {parameter_fragment} + ")"
+    );
+}
+
+void assert_inserts_lowered_int32_tmp_into_aggregate(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    std::string_view aggregate_type
+) {
+    assert_ir_contains(
+        result,
+        std::string {" = insertvalue "} + std::string {aggregate_type} + " undef, i32 %tmp"
+    );
+}
+
 void assert_calls_lowered_int32_tmp(
     orison::lowering::LlvmIrEmissionResult const& result,
     std::string_view call_prefix
@@ -1095,7 +1118,7 @@ void test_emit_negative_int32_scalar_method_return() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_ir_contains(result, "define i32 @method.Int32.negative(i32 %this)");
+    assert_defines_method(result, "i32", "method.Int32.negative", "i32 %this");
     assert_returns_lowered_tmp(result);
 }
 
@@ -1137,7 +1160,7 @@ void test_emit_negative_int32_record_receiver_method_return() {
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_ir_contains(result, "define i32 @method.SignedBox.negative(%record.SignedBox %this)");
+    assert_defines_method(result, "i32", "method.SignedBox.negative", "%record.SignedBox %this");
     assert_returns_lowered_tmp(result);
 }
 
@@ -1182,8 +1205,8 @@ void test_emit_negative_int32_record_constructor_method_return() {
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
-    assert_ir_contains(result, "define %record.SignedBox @method.Int32.make_box(i32 %this)");
-    assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
+    assert_defines_method(result, "%record.SignedBox", "method.Int32.make_box", "i32 %this");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, "%record.SignedBox");
     assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
 }
 
@@ -1203,8 +1226,8 @@ void test_emit_negative_int32_array_literal_method_return() {
     );
 
     assert_emits_negative_int32_value(result);
-    assert_ir_contains(result, "define [2 x i32] @method.Int32.pair(i32 %this)");
-    assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
+    assert_defines_method(result, "[2 x i32]", "method.Int32.pair", "i32 %this");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, "[2 x i32]");
     assert_ir_contains(result, " = insertvalue [2 x i32] %tmp");
     assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
 }
