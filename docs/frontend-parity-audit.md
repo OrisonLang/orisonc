@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: signed negative integer casts now have explicit return-expression and call-argument lowering coverage in
+  addition to `let`/`var` initializer coverage.
 - 2026-07-14: unsigned negative integer casts such as `-1 as UInt32` remain rejected with a targeted
   `unsupported cast: negative value to UInt32` lowering diagnostic.
 - 2026-07-14: signed unary integer operands now lower inside explicit cast contexts such as `-27 as Int32`, unblocking

@@ -280,6 +280,31 @@ void test_reject_negative_uint32_cast_return() {
     );
 }
 
+void test_emit_negative_int32_cast_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_cast_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    -27 as Int32\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = sub i32 0, 27\n"
+        "  ret i32 %tmp0\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_mutable_int32_compound_assignment_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_mutable_int32_compound.or";
     auto result = lower_source(
@@ -2320,6 +2345,40 @@ void test_emit_single_uint32_parameter_function_call_return() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_negative_int32_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function identity(value: Int32) -> Int32\n"
+        "    value\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    identity(-27 as Int32)\n"
+    );
+
+    assert(!result.has_errors());
+    auto expected = std::string {
+        "; Orison LLVM IR scaffold\n"
+        "; package demo.lowering\n"
+        "\n"
+        "define i32 @identity(i32 %value) {\n"
+        "entry:\n"
+        "  ret i32 %value\n"
+        "}\n"
+        "\n"
+        "define i32 @main() {\n"
+        "entry:\n"
+        "  %tmp0 = sub i32 0, 27\n"
+        "  %tmp1 = call i32 @identity(i32 %tmp0)\n"
+        "  ret i32 %tmp1\n"
+        "}\n"
+        "\n"
+    };
+    assert(result.ir_text == expected);
+}
+
 void test_emit_multi_uint32_parameter_function_call_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_multi_uint32_parameter_call.or";
     auto result = lower_source(
@@ -4342,6 +4401,7 @@ auto main() -> int {
     test_emit_negative_int32_var_initializer_return();
     test_emit_negative_int32_let_initializer_return();
     test_reject_negative_uint32_cast_return();
+    test_emit_negative_int32_cast_return();
     test_emit_mutable_int32_compound_assignment_return();
     test_reject_bool_compound_assignment();
     test_reject_bool_aggregate_compound_assignment();
@@ -4392,6 +4452,7 @@ auto main() -> int {
     test_emit_zero_argument_function_call_return();
     test_emit_zero_argument_function_call_add_return();
     test_emit_single_uint32_parameter_function_call_return();
+    test_emit_negative_int32_call_argument_return();
     test_emit_multi_uint32_parameter_function_call_return();
     test_emit_c_foreign_call_with_string_literal();
     test_emit_fixed_printf_adapter_with_integer_promotion();
