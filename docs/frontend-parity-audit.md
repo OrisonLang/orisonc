@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: aggregate-valued method bodies now have signed negative cast lowering and unsigned negative cast
+  rejection coverage for record constructor returns and fixed-array literal returns.
 - 2026-07-14: record receiver method bodies now have signed negative `Int32` return lowering and unsigned negative
   `UInt32` return rejection coverage for supported non-generic record layouts.
 - 2026-07-14: scalar method bodies now have signed negative `Int32` return lowering and unsigned negative `UInt32`

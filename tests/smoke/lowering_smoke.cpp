@@ -59,6 +59,13 @@ void assert_returns_lowered_tmp(orison::lowering::LlvmIrEmissionResult const& re
     assert_ir_contains(result, "ret i32 %tmp");
 }
 
+void assert_returns_lowered_aggregate_tmp(
+    orison::lowering::LlvmIrEmissionResult const& result,
+    std::string_view aggregate_type
+) {
+    assert_ir_contains(result, std::string {"ret "} + std::string {aggregate_type} + " %tmp");
+}
+
 void assert_calls_lowered_int32_tmp(
     orison::lowering::LlvmIrEmissionResult const& result,
     std::string_view call_prefix
@@ -1147,6 +1154,92 @@ void test_reject_negative_uint32_record_receiver_method_return() {
         "extend UnsignedBox\n"
         "    function invalid(this: shared This) -> UInt32\n"
         "        -1 as UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_emit_negative_int32_record_constructor_method_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_record_constructor_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend Int32\n"
+        "    function make_box(this: shared This) -> SignedBox\n"
+        "        SignedBox(-27 as Int32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_ir_contains(result, "define %record.SignedBox @method.Int32.make_box(i32 %this)");
+    assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
+    assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
+}
+
+void test_emit_negative_int32_array_literal_method_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_array_literal_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend Int32\n"
+        "    function pair(this: shared This) -> Array<Int32, 2>\n"
+        "        [-27 as Int32, 4 as Int32]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "define [2 x i32] @method.Int32.pair(i32 %this)");
+    assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
+    assert_ir_contains(result, " = insertvalue [2 x i32] %tmp");
+    assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
+}
+
+void test_reject_negative_uint32_record_constructor_method_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_record_constructor_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UInt32\n"
+        "    function make_box(this: shared This) -> UnsignedBox\n"
+        "        UnsignedBox(-1 as UInt32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_array_literal_method_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_array_literal_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function pair(this: shared This) -> Array<UInt32, 2>\n"
+        "        [-1 as UInt32, 4 as UInt32]\n"
         "\n"
         "function main() -> UInt32\n"
         "    0 as UInt32\n"
@@ -5165,6 +5258,10 @@ auto main() -> int {
     test_reject_negative_uint32_scalar_method_return();
     test_emit_negative_int32_record_receiver_method_return();
     test_reject_negative_uint32_record_receiver_method_return();
+    test_emit_negative_int32_record_constructor_method_return();
+    test_emit_negative_int32_array_literal_method_return();
+    test_reject_negative_uint32_record_constructor_method_return();
+    test_reject_negative_uint32_array_literal_method_return();
     test_emit_scalar_member_call_expression();
     test_emit_negative_int32_scalar_member_call_argument_return();
     test_reject_negative_uint32_scalar_member_call_argument();
