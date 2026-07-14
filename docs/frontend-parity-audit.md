@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: scoped aggregate assignment now has signed negative cast lowering and unsigned negative cast rejection
+  coverage across `guard ... else` and `unsafe` block statement paths.
 - 2026-07-14: loop-body aggregate assignment now has signed negative cast lowering and unsigned negative cast rejection
   coverage across `while`, `for`, and `repeat` statement paths.
 - 2026-07-14: branch-local aggregate assignment now has signed negative cast lowering and unsigned negative cast
