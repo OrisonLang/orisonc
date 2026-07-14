@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: scalar member-call arguments now have signed negative cast lowering and unsigned negative cast rejection
+  coverage for both value-returning calls and `Unit` statement calls.
 - 2026-07-14: aggregate-derived call arguments now have signed negative cast lowering and unsigned negative cast
   rejection coverage for record-field and fixed-array element reads.
 - 2026-07-14: negative aggregate cast smoke coverage now uses shared local assertion helpers for repeated signed
