@@ -40,6 +40,14 @@ auto lower_while_body_block(
     std::ostringstream& output
 ) -> StatementFlow;
 
+auto lower_while_body_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow;
+
 auto lower_while_body_if(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
@@ -259,12 +267,18 @@ auto lower_while_body_block(
     std::ostringstream& output
 ) -> StatementFlow {
     auto statement_pointers = statement_pointers_for(statements);
+    return lower_while_body_block(statement_pointers, context, session, diagnostics, output);
+}
 
+auto lower_while_body_block(
+    std::vector<syntax::StatementSyntax const*> const& statements,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> StatementFlow {
     return lower_nonvalue_statement_block(
-        std::span<syntax::StatementSyntax const* const> {
-            statement_pointers.data(),
-            statement_pointers.size(),
-        },
+        statement_pointer_span(statements),
         "lowering does not support statements after terminating loop control",
         context,
         session,
@@ -286,23 +300,7 @@ auto lower_while_body_block(
     std::ostringstream& output
 ) -> StatementFlow {
     auto statement_pointers = statement_pointers_for(statements);
-
-    return lower_nonvalue_statement_block(
-        std::span<syntax::StatementSyntax const* const> {
-            statement_pointers.data(),
-            statement_pointers.size(),
-        },
-        "lowering does not support statements after terminating loop control",
-        context,
-        session,
-        diagnostics,
-        output,
-        lower_unit_deferred_cleanup_block,
-        [&](syntax::StatementSyntax const& statement, bool is_last_statement) {
-            (void)is_last_statement;
-            return lower_while_body_statement(statement, context, session, diagnostics, output);
-        }
-    );
+    return lower_while_body_block(statement_pointers, context, session, diagnostics, output);
 }
 
 }  // namespace

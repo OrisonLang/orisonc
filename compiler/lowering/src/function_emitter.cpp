@@ -321,7 +321,7 @@ auto lower_unit_statement_block(
     std::ostringstream& output
 ) -> StatementFlow {
     return lower_nonvalue_statement_block(
-        std::span<syntax::StatementSyntax const* const> {statements.data(), statements.size()},
+        statement_pointer_span(statements),
         "lowering does not yet support statements after a terminating Unit statement",
         context,
         session,
@@ -550,7 +550,7 @@ auto lower_guard_statement_block(
     std::ostringstream& output
 ) -> StatementFlow {
     return lower_nonvalue_statement_block(
-        std::span<syntax::StatementSyntax const* const> {statements.data(), statements.size()},
+        statements,
         "lowering does not yet support statements after a terminating guard failure statement",
         context,
         session,
