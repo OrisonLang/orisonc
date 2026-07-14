@@ -42,6 +42,32 @@ auto lower_source(
     return emitter.emit(parse_result.module, semantic_result, options);
 }
 
+void assert_ir_contains(orison::lowering::LlvmIrEmissionResult const& result, std::string_view needle) {
+    assert(result.ir_text.find(needle) != std::string::npos);
+}
+
+void assert_emits_negative_int32_value(orison::lowering::LlvmIrEmissionResult const& result) {
+    assert(!result.has_errors());
+    assert_ir_contains(result, " = sub i32 0, 27");
+}
+
+void assert_stores_lowered_int32_tmp(orison::lowering::LlvmIrEmissionResult const& result) {
+    assert_ir_contains(result, "store i32 %tmp");
+}
+
+void assert_returns_lowered_tmp(orison::lowering::LlvmIrEmissionResult const& result) {
+    assert_ir_contains(result, "ret i32 %tmp");
+}
+
+void assert_rejects_negative_uint32_cast(orison::lowering::LlvmIrEmissionResult const& result) {
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
+        std::string::npos
+    );
+}
+
 void test_emit_constant_uint32_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_constant_uint32.or";
     auto result = lower_source(
@@ -2393,12 +2419,11 @@ void test_emit_negative_int32_record_field_return() {
         "    box.value\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("%record.SignedBox = type { i32 }") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find(" = insertvalue %record.SignedBox undef, i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find(" = extractvalue %record.SignedBox %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
+    assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
+    assert_returns_lowered_tmp(result);
 }
 
 void test_emit_negative_int32_array_element_return() {
@@ -2412,12 +2437,11 @@ void test_emit_negative_int32_array_element_return() {
         "    values[0]\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find(" = insertvalue [2 x i32] undef, i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find(" = insertvalue [2 x i32] %tmp") != std::string::npos);
-    assert(result.ir_text.find(" = extractvalue [2 x i32] %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
+    assert_ir_contains(result, " = insertvalue [2 x i32] %tmp");
+    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
+    assert_returns_lowered_tmp(result);
 }
 
 void test_reject_negative_uint32_record_field_initializer() {
@@ -2435,12 +2459,7 @@ void test_reject_negative_uint32_record_field_initializer() {
         "    box.value\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_reject_negative_uint32_array_element_initializer() {
@@ -2455,12 +2474,7 @@ void test_reject_negative_uint32_array_element_initializer() {
         "    values[0]\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_emit_negative_int32_record_field_assignment_return() {
@@ -2479,13 +2493,12 @@ void test_emit_negative_int32_record_field_assignment_return() {
         "    box.value\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("%record.SignedBox = type { i32 }") != std::string::npos);
-    assert(result.ir_text.find("%box.addr = alloca %record.SignedBox") != std::string::npos);
-    assert(result.ir_text.find(" = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_ir_contains(result, "%box.addr = alloca %record.SignedBox");
+    assert_ir_contains(result, " = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_emit_negative_int32_array_element_assignment_return() {
@@ -2501,12 +2514,11 @@ void test_emit_negative_int32_array_element_assignment_return() {
         "    values[0]\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("%values.addr = alloca [2 x i32]") != std::string::npos);
-    assert(result.ir_text.find(" = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_reject_negative_uint32_record_field_assignment() {
@@ -2525,12 +2537,7 @@ void test_reject_negative_uint32_record_field_assignment() {
         "    box.value\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_reject_negative_uint32_array_element_assignment() {
@@ -2546,12 +2553,7 @@ void test_reject_negative_uint32_array_element_assignment() {
         "    values[0]\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_emit_negative_int32_if_record_field_assignment_return() {
@@ -2573,14 +2575,13 @@ void test_emit_negative_int32_if_record_field_assignment_return() {
         "    box.value\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("%record.SignedBox = type { i32 }") != std::string::npos);
-    assert(result.ir_text.find("if.then.") != std::string::npos);
-    assert(result.ir_text.find("if.else.") != std::string::npos);
-    assert(result.ir_text.find("if.merge.") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_ir_contains(result, "if.then.");
+    assert_ir_contains(result, "if.else.");
+    assert_ir_contains(result, "if.merge.");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_emit_negative_int32_switch_array_element_assignment_return() {
@@ -2598,15 +2599,14 @@ void test_emit_negative_int32_switch_array_element_assignment_return() {
         "    values[0]\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("%values.addr = alloca [2 x i32]") != std::string::npos);
-    assert(result.ir_text.find("switch.case.") != std::string::npos);
-    assert(result.ir_text.find("switch.default.") != std::string::npos);
-    assert(result.ir_text.find("switch.merge.") != std::string::npos);
-    assert(result.ir_text.find(" = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
+    assert_ir_contains(result, "switch.case.");
+    assert_ir_contains(result, "switch.default.");
+    assert_ir_contains(result, "switch.merge.");
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_reject_negative_uint32_if_record_field_assignment() {
@@ -2628,12 +2628,7 @@ void test_reject_negative_uint32_if_record_field_assignment() {
         "    box.value\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_reject_negative_uint32_switch_array_element_assignment() {
@@ -2651,12 +2646,7 @@ void test_reject_negative_uint32_switch_array_element_assignment() {
         "    values[0]\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_emit_negative_int32_while_record_field_assignment_return() {
@@ -2678,11 +2668,10 @@ void test_emit_negative_int32_while_record_field_assignment_return() {
         "    box.value\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("while.body.") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "while.body.");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_emit_negative_int32_for_array_element_assignment_return() {
@@ -2699,12 +2688,11 @@ void test_emit_negative_int32_for_array_element_assignment_return() {
         "    values[0]\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("for.iteration.") != std::string::npos);
-    assert(result.ir_text.find(" = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "for.iteration.");
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_emit_negative_int32_repeat_record_field_assignment_return() {
@@ -2725,11 +2713,10 @@ void test_emit_negative_int32_repeat_record_field_assignment_return() {
         "    box.value\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("repeat.body.") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "repeat.body.");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_reject_negative_uint32_while_record_field_assignment() {
@@ -2750,12 +2737,7 @@ void test_reject_negative_uint32_while_record_field_assignment() {
         "    box.value\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_reject_negative_uint32_for_array_element_assignment() {
@@ -2772,12 +2754,7 @@ void test_reject_negative_uint32_for_array_element_assignment() {
         "    values[0]\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_reject_negative_uint32_repeat_record_field_assignment() {
@@ -2798,12 +2775,7 @@ void test_reject_negative_uint32_repeat_record_field_assignment() {
         "    box.value\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_emit_negative_int32_guard_record_field_assignment_return() {
@@ -2823,12 +2795,11 @@ void test_emit_negative_int32_guard_record_field_assignment_return() {
         "    box.value\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find("guard.failure.") != std::string::npos);
-    assert(result.ir_text.find("guard.merge.") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "guard.failure.");
+    assert_ir_contains(result, "guard.merge.");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_emit_negative_int32_unsafe_array_element_assignment_return() {
@@ -2845,11 +2816,10 @@ void test_emit_negative_int32_unsafe_array_element_assignment_return() {
         "    values[0]\n"
     );
 
-    assert(!result.has_errors());
-    assert(result.ir_text.find(" = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0") != std::string::npos);
-    assert(result.ir_text.find(" = sub i32 0, 27") != std::string::npos);
-    assert(result.ir_text.find("store i32 %tmp") != std::string::npos);
-    assert(result.ir_text.find("ret i32 %tmp") != std::string::npos);
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
 }
 
 void test_reject_negative_uint32_guard_record_field_assignment() {
@@ -2869,12 +2839,7 @@ void test_reject_negative_uint32_guard_record_field_assignment() {
         "    box.value\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_reject_negative_uint32_unsafe_array_element_assignment() {
@@ -2891,12 +2856,7 @@ void test_reject_negative_uint32_unsafe_array_element_assignment() {
         "    values[0]\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find("unsupported cast: negative value to UInt32") !=
-        std::string::npos
-    );
+    assert_rejects_negative_uint32_cast(result);
 }
 
 void test_emit_multi_uint32_parameter_function_call_return() {
