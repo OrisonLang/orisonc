@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: fixed-array element assignment RHS paths now cover signed negative `Int32` ternary arm lowering through
+  the merged assignment value and unsigned negative `UInt32` arm rejection.
 - 2026-07-14: record-field assignment RHS paths now cover signed negative `Int32` ternary arm lowering through the
   merged assignment value and unsigned negative `UInt32` arm rejection.
 - 2026-07-14: fixed-array element call-argument paths now cover signed negative `Int32` ternary arm lowering through
