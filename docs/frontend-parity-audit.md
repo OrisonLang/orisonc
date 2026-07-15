@@ -34,6 +34,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-15: statement-level `if` and block-arm `switch` branch-local `defer` cleanup replay now covers
+  record-receiver `Unit` member-call statements with signed negative `Int32` ternary argument lowering and unsigned
+  negative `UInt32` ternary argument rejection.
 - 2026-07-15: `for` continue and `repeat` break `defer` cleanup replay now cover record-receiver `Unit` member-call
   statements with signed negative `Int32` ternary argument lowering and unsigned negative `UInt32` ternary argument
   rejection.
