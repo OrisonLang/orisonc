@@ -780,7 +780,10 @@ auto lower_let_statement(
         annotated_source_type_name = render_source_type_name(statement.annotated_type);
         auto annotated_type = lowered_type_for_source_type_name(*annotated_source_type_name, context.lowering);
         if (!annotated_type.has_value() || annotated_type->type == "void") {
-            diagnostics.error(statement.line, "lowering does not yet support this let type");
+            diagnostics.error(
+                statement.line,
+                "lowering does not yet support let type: " + *annotated_source_type_name
+            );
             return false;
         }
         type = std::move(*annotated_type);
@@ -858,7 +861,10 @@ auto lower_var_statement(
         annotated_source_type_name = render_source_type_name(statement.annotated_type);
         auto annotated_type = lowered_type_for_source_type_name(*annotated_source_type_name, context.lowering);
         if (!annotated_type.has_value() || annotated_type->type == "void") {
-            diagnostics.error(statement.line, "lowering does not yet support this var type");
+            diagnostics.error(
+                statement.line,
+                "lowering does not yet support var type: " + *annotated_source_type_name
+            );
             return false;
         }
         type = std::move(*annotated_type);

@@ -1467,6 +1467,29 @@ void test_emit_negative_int32_ternary_record_constructor_method_return() {
     assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
 }
 
+void test_reject_generic_record_constructor_let_lowering() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_generic_record_constructor_let.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let box: Box<UInt32> = Box(1 as UInt32)\n"
+        "    0 as UInt32\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message ==
+        "lowering does not yet support let type: Box<UInt32>"
+    );
+}
+
 void test_emit_negative_int32_array_literal_method_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_array_literal_method_return.or";
@@ -8372,6 +8395,7 @@ auto main() -> int {
     test_reject_negative_uint32_record_receiver_method_return();
     test_emit_negative_int32_record_constructor_method_return();
     test_emit_negative_int32_ternary_record_constructor_method_return();
+    test_reject_generic_record_constructor_let_lowering();
     test_emit_negative_int32_array_literal_method_return();
     test_emit_negative_int32_ternary_array_literal_method_return();
     test_reject_negative_uint32_record_constructor_method_return();

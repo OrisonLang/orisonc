@@ -1015,7 +1015,19 @@ void emit_function_body(
             }
             auto type = infer_unit_binding_type(statement, context, session.state);
             if (!type.has_value()) {
-                if (is_concurrency_expression(statement.expression)) {
+                if (!statement.annotated_type.name.empty()) {
+                    if (!lower_let_statement(
+                            statement,
+                            "",
+                            IntegerSignedness::not_integer,
+                            context,
+                            session,
+                            diagnostics,
+                            output
+                        )) {
+                        return;
+                    }
+                } else if (is_concurrency_expression(statement.expression)) {
                     diagnostics.error(
                         statement.line,
                         "lowering does not yet support " +
