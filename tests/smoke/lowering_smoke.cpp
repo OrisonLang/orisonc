@@ -5201,6 +5201,33 @@ void test_emit_negative_int32_array_element_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_generic_record_array_element_field_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_generic_record_array_element_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let boxes: Array<Box<UInt32>, 2> = [Box(1 as UInt32), Box(2 as UInt32)]\n"
+        "    boxes[0].value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 1, 0");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 2, 0");
+    assert_ir_contains(result, " = insertvalue [2 x %record.Box_UInt32_] undef, %record.Box_UInt32_ %tmp");
+    assert_ir_contains(result, "%boxes.addr = alloca [2 x %record.Box_UInt32_]");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Box_UInt32_], ptr %boxes.addr, i64 0, i64 0");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_negative_int32_record_field_call_argument_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_record_field_call_argument.or";
@@ -8589,6 +8616,7 @@ auto main() -> int {
     test_emit_generic_record_field_return();
     test_emit_nested_generic_record_field_return();
     test_emit_negative_int32_array_element_return();
+    test_emit_generic_record_array_element_field_return();
     test_emit_negative_int32_record_field_call_argument_return();
     test_emit_negative_int32_ternary_record_field_call_argument_return();
     test_emit_negative_int32_array_element_call_argument_return();
