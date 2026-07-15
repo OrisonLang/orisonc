@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-15: final `if`/`switch` record-receiver member-call argument paths now cover signed negative `Int32`
+  argument lowering and unsigned negative `UInt32` argument rejection.
 - 2026-07-15: record-receiver member-call argument paths now cover signed negative `Int32` ternary argument
   lowering through aggregate receiver method calls and unsigned negative `UInt32` ternary argument rejection.
 - 2026-07-14: null-safe member-call argument paths now cover signed negative `Int32` ternary argument
