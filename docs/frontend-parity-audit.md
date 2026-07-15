@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: `guard ... else` record-field assignment paths now cover signed negative `Int32` ternary RHS lowering
+  and unsigned negative `UInt32` ternary RHS rejection inside the failure block.
 - 2026-07-14: `repeat` loop record-field assignment paths now cover signed negative `Int32` ternary RHS lowering and
   unsigned negative `UInt32` ternary RHS rejection inside the loop body.
 - 2026-07-14: `for` loop fixed-array element assignment paths now cover signed negative `Int32` ternary RHS lowering
