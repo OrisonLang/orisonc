@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: direct `Unit` call statement argument paths now cover signed negative `Int32` ternary argument lowering
+  into the discarded call operand and unsigned negative `UInt32` ternary argument rejection.
 - 2026-07-14: `unsafe` fixed-array element assignment paths now cover signed negative `Int32` ternary RHS lowering and
   unsigned negative `UInt32` ternary RHS rejection inside the unsafe block, completing the scoped assignment wrapper slice.
 - 2026-07-14: `guard ... else` record-field assignment paths now cover signed negative `Int32` ternary RHS lowering

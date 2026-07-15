@@ -2254,6 +2254,48 @@ void test_emit_scalar_unit_call_statements() {
     assert(result.ir_text == expected);
 }
 
+void test_emit_negative_int32_ternary_unit_call_statement_argument() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_ternary_unit_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: Int32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    observe(flag ? -27 as Int32 : 4 as Int32)\n"
+        "    0 as Int32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_ir_contains(result, " = phi i32 [%tmp");
+    assert_calls_lowered_int32_tmp(result, "call void @observe(");
+    assert_ir_contains(result, "ret i32 0");
+}
+
+void test_reject_negative_uint32_ternary_unit_call_statement_argument() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_ternary_unit_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    observe(flag ? -1 as UInt32 : 4 as UInt32)\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
 void test_emit_uint32_add_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_uint32_add.or";
     auto result = lower_source(
@@ -6866,6 +6908,8 @@ auto main() -> int {
     test_reject_negative_uint32_scalar_member_call_statement_argument();
     test_emit_scalar_call_statements();
     test_emit_scalar_unit_call_statements();
+    test_emit_negative_int32_ternary_unit_call_statement_argument();
+    test_reject_negative_uint32_ternary_unit_call_statement_argument();
     test_emit_uint32_add_return();
     test_emit_uint32_arithmetic_return();
     test_emit_int32_division_return();
