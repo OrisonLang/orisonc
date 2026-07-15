@@ -27,6 +27,18 @@ int main() {
         .name = "make_status",
         .return_type = TypeSyntax {.name = "Status"},
     });
+    module.functions.push_back(FunctionSyntax {
+        .name = "make_nested_box",
+        .return_type = TypeSyntax {
+            .name = "Box",
+            .generic_arguments = {
+                TypeSyntax {
+                    .name = "Box",
+                    .generic_arguments = {TypeSyntax {.name = "UInt32"}},
+                },
+            },
+        },
+    });
     module.records.push_back(RecordSyntax {
         .name = "UartRegisters",
         .fields = {
@@ -238,8 +250,8 @@ int main() {
     auto diagnostics = orison::diagnostics::DiagnosticBag {};
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
-    assert(context.functions.size() == 3);
-    assert(context.records.size() == 9);
+    assert(context.functions.size() == 4);
+    assert(context.records.size() == 10);
     assert(context.choices.size() == 3);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
@@ -306,6 +318,13 @@ int main() {
     assert(box_uint32_layout.fields[0].name == "value");
     assert(box_uint32_layout.fields[0].source_type_name == "UInt32");
     assert(box_uint32_layout.fields[0].llvm_type == "i32");
+    assert(context.records.contains("Box<Box<UInt32>>"));
+    auto const& nested_box_layout = context.records.at("Box<Box<UInt32>>");
+    assert(nested_box_layout.llvm_type_name == "%record.Box_Box_UInt32__");
+    assert(nested_box_layout.fields.size() == 1);
+    assert(nested_box_layout.fields[0].name == "value");
+    assert(nested_box_layout.fields[0].source_type_name == "Box<UInt32>");
+    assert(nested_box_layout.fields[0].llvm_type == "%record.Box_UInt32_");
     assert(context.choices.contains("Maybe"));
     auto const& maybe_layout = context.choices.at("Maybe");
     assert(maybe_layout.name == "Maybe");

@@ -26,14 +26,17 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
-  non-generic record/fixed-array subset plus the first concrete generic record constructor/field-read/mutable-field
-  assignment slice, broader generic aggregate construction and nested generic-record coverage, aggregate assignment
-  beyond the currently supported mutable-local and pointer-backed record/fixed-array field and index targets, and
-  iterable lowering beyond the current fixed-array forms toward future dynamic arrays, views, and standard-library
-  iterator abstractions
+  non-generic record/fixed-array subset plus the first concrete and nested generic record
+  constructor/field-read/mutable-field assignment slice, broader generic aggregate construction coverage, aggregate
+  assignment beyond the currently supported mutable-local and pointer-backed record/fixed-array field and index
+  targets, and iterable lowering beyond the current fixed-array forms toward future dynamic arrays, views, and
+  standard-library iterator abstractions
 
 ## Latest update
 
+- 2026-07-15: nested concrete generic record lowering is now pinned: `Box<Box<UInt32>>` annotations synthesize both
+  inner and outer monomorphized layouts, nested constructors materialize both aggregate values, and
+  `outer.value.value` lowers through chained record-field reads.
 - 2026-07-15: concrete generic record mutable-local field assignment is now pinned: annotated
   `var box: Box<UInt32>` initialization retains monomorphized source-type metadata, `box.value = ...` lowers through
   the existing aggregate assignment path, and a later `box.value` read observes the stored value.

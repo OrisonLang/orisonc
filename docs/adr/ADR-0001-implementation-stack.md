@@ -253,8 +253,8 @@ analysis, and lowering components.
 - Lowering context now also synthesizes monomorphized record layout entries for concrete generic record types
   discovered from source annotations and signatures. These layouts are keyed by rendered source type names such as
   `Box<UInt32>`, use sanitized LLVM struct names such as `%record.Box_UInt32_`, and are emitted deterministically
-  after ordinary source record layouts. This enables the first concrete generic record constructor lowering path,
-  field reads from annotated immutable aggregate locals, and mutable-local field assignment through the existing
+  after ordinary source record layouts. This enables the first concrete and nested generic record constructor lowering
+  paths, field reads from annotated immutable aggregate locals, and mutable-local field assignment through the existing
   aggregate assignment path while broader generic aggregate interactions remain follow-up work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
