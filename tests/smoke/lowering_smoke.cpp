@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <unistd.h>
@@ -48,6 +49,10 @@ auto lower_source(
 }
 
 void assert_ir_contains(orison::lowering::LlvmIrEmissionResult const& result, std::string_view needle) {
+    if (result.ir_text.find(needle) == std::string::npos) {
+        std::cerr << "missing expected IR fragment: " << needle << "\n";
+        std::cerr << result.ir_text << "\n";
+    }
     assert(result.ir_text.find(needle) != std::string::npos);
 }
 
@@ -1966,6 +1971,59 @@ void test_reject_negative_uint32_ternary_scalar_member_call_argument() {
         "function main(flag: Bool) -> UInt32\n"
         "    let value: UInt32 = 1 as UInt32\n"
         "    value.scale(flag ? -1 as UInt32 : 4 as UInt32)\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_emit_negative_int32_ternary_record_receiver_member_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_ternary_record_receiver_member_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend SignedBox\n"
+        "    function shift(this: shared This, amount: Int32) -> Int32\n"
+        "        this.value + amount\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    let box: SignedBox = SignedBox(1 as Int32)\n"
+        "    box.shift(flag ? -27 as Int32 : 4 as Int32)\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_defines_method(result, "i32", "method.SignedBox.shift", "%record.SignedBox %this, i32 %amount");
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_ir_contains(result, " = phi i32 [%tmp");
+    assert_ir_contains(result, " = call i32 @method.SignedBox.shift(%record.SignedBox %tmp");
+    assert_ir_contains(result, ", i32 %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
+void test_reject_negative_uint32_ternary_record_receiver_member_call_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_ternary_record_receiver_member_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UnsignedBox\n"
+        "    function scale(this: shared This, amount: UInt32) -> UInt32\n"
+        "        this.value + amount\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    let box: UnsignedBox = UnsignedBox(1 as UInt32)\n"
+        "    box.scale(flag ? -1 as UInt32 : 4 as UInt32)\n"
     );
 
     assert_rejects_negative_uint32_cast(result);
@@ -6945,6 +7003,8 @@ auto main() -> int {
     test_reject_negative_uint32_scalar_member_call_argument();
     test_emit_negative_int32_ternary_scalar_member_call_argument_return();
     test_reject_negative_uint32_ternary_scalar_member_call_argument();
+    test_emit_negative_int32_ternary_record_receiver_member_call_argument_return();
+    test_reject_negative_uint32_ternary_record_receiver_member_call_argument();
     test_emit_negative_int32_final_if_scalar_member_call_argument_return();
     test_emit_negative_int32_final_switch_scalar_member_call_argument_return();
     test_reject_negative_uint32_final_if_scalar_member_call_argument_return();
