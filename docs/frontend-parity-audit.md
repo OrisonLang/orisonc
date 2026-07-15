@@ -27,13 +27,15 @@ This file tracks which source-language frontend slices are reflected in the curr
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
   non-generic record/fixed-array subset, aggregate assignment beyond the currently supported mutable-local and
-  pointer-backed record/fixed-array field and index targets, and iterable lowering beyond array literals plus named
-  fixed-size arrays recovered from local names, nested record-backed array fields, index-derived array sources,
-  indexed record-field array sources, ternary-selected fixed-size arrays and explicitly typed scalar/record array
-  literals whose branches share a source type, plus helper-returned and scalar/record-method-returned array sources
+  pointer-backed record/fixed-array field and index targets, and iterable lowering beyond the current fixed-array
+  forms toward future dynamic arrays, views, and standard-library iterator abstractions
 
 ## Latest update
 
+- 2026-07-15: fixed-array `for` iterable lowering audit confirmed helper-returned, scalar-method-returned,
+  record-method-returned, member-receiver method-returned, nested record-backed, indexed record-field, and
+  ternary-selected fixed-array sources are implemented; lowering smoke now pins helper-returned plus scalar-method
+  returned fixed-array iterables end-to-end.
 - 2026-07-15: loop-nested branch-local `defer` cleanup replay now covers record-receiver `Unit` member-call
   statements with signed negative `Int32` ternary argument lowering and unsigned negative `UInt32` ternary argument
   rejection for `while` body `if`/`continue` and block-arm `switch`/`break` paths.
