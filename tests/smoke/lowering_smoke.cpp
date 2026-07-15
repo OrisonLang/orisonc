@@ -2161,6 +2161,52 @@ void test_reject_negative_uint32_scalar_member_call_statement_argument() {
     assert_rejects_negative_uint32_cast(result);
 }
 
+void test_emit_negative_int32_ternary_scalar_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_ternary_scalar_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend Int32\n"
+        "    function observe(this: shared This, amount: Int32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    let value: Int32 = 1 as Int32\n"
+        "    value.observe(flag ? -27 as Int32 : 4 as Int32)\n"
+        "    value\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_ir_contains(result, " = phi i32 [%tmp");
+    assert_calls_lowered_int32_tmp(result, "call void @method.Int32.observe(i32 %value, ");
+    assert_ir_contains(result, "ret i32 %value");
+}
+
+void test_reject_negative_uint32_ternary_scalar_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_ternary_scalar_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function observe(this: shared This, amount: UInt32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    let value: UInt32 = 1 as UInt32\n"
+        "    value.observe(flag ? -1 as UInt32 : 4 as UInt32)\n"
+        "    value\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
 void test_emit_scalar_call_statements() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_scalar_call_statements.or";
     auto result = lower_source(
@@ -6906,6 +6952,8 @@ auto main() -> int {
     test_emit_scalar_member_call_statement();
     test_emit_negative_int32_scalar_member_call_statement_argument();
     test_reject_negative_uint32_scalar_member_call_statement_argument();
+    test_emit_negative_int32_ternary_scalar_member_call_statement_argument();
+    test_reject_negative_uint32_ternary_scalar_member_call_statement_argument();
     test_emit_scalar_call_statements();
     test_emit_scalar_unit_call_statements();
     test_emit_negative_int32_ternary_unit_call_statement_argument();
