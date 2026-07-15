@@ -107,6 +107,26 @@ void assert_negative_int32_null_safe_member_call_emits(orison::driver::CompileRe
     );
 }
 
+void assert_negative_int32_ternary_null_safe_member_call_emits(orison::driver::CompileResult const& result) {
+    assert_success_with_stdout_contains(
+        result,
+        {
+            "%record.SignedProfile = type { i32 }",
+            "define i32 @method.SignedProfile.shifted(%record.SignedProfile %this, i32 %delta)",
+            "ternary.then.",
+            "sub i32 0, 27",
+            "ternary.else.",
+            "ternary.merge.",
+            "phi i32",
+            "call i32 @method.SignedProfile.shifted(%record.SignedProfile",
+            "i32 %tmp",
+            "insertvalue { i1, i32 } undef, i1 true, 0",
+            "phi { i1, i32 }",
+            "ret i32 0",
+        }
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -347,6 +367,30 @@ auto main() -> int {
         run_emit_llvm(app, emit_negative_null_safe_member_call_path);
     assert_negative_int32_null_safe_member_call_emits(emit_negative_null_safe_member_call);
 
+    auto emit_negative_ternary_null_safe_member_call_path = std::filesystem::temp_directory_path() /
+        "emit_negative_ternary_null_safe_member_call.or";
+    write_fixture(
+        emit_negative_ternary_null_safe_member_call_path,
+        "demo.negative_ternary_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "extend SignedProfile",
+            "    function shifted(this: shared This, delta: Int32) -> Int32",
+            "        return this.rating + delta",
+            "record SignedProfile",
+            "    rating: Int32",
+            "function main(flag: Bool) -> UInt32",
+            "    let profile: Maybe<SignedProfile> = Some(SignedProfile(7 as Int32))",
+            "    let shifted: Maybe<Int32> = profile?.shifted(flag ? -27 as Int32 : 4 as Int32)",
+            "    return 0 as UInt32",
+        }
+    );
+    auto emit_negative_ternary_null_safe_member_call =
+        run_emit_llvm(app, emit_negative_ternary_null_safe_member_call_path);
+    assert_negative_int32_ternary_null_safe_member_call_emits(emit_negative_ternary_null_safe_member_call);
+
     auto reject_negative_uint32_null_safe_member_call_path = std::filesystem::temp_directory_path() /
         "reject_negative_uint32_null_safe_member_call.or";
     write_fixture(
@@ -368,6 +412,30 @@ auto main() -> int {
         }
     );
     assert_negative_uint32_cast_failure(run_emit_llvm(app, reject_negative_uint32_null_safe_member_call_path));
+
+    auto reject_negative_uint32_ternary_null_safe_member_call_path = std::filesystem::temp_directory_path() /
+        "reject_negative_uint32_ternary_null_safe_member_call.or";
+    write_fixture(
+        reject_negative_uint32_ternary_null_safe_member_call_path,
+        "demo.reject_negative_ternary_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "extend Profile",
+            "    function scaled(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.rating + delta",
+            "record Profile",
+            "    rating: UInt32",
+            "function main(flag: Bool) -> UInt32",
+            "    let profile: Maybe<Profile> = Some(Profile(7 as UInt32))",
+            "    let scaled: Maybe<UInt32> = profile?.scaled(flag ? -1 as UInt32 : 4 as UInt32)",
+            "    return 0 as UInt32",
+        }
+    );
+    assert_negative_uint32_cast_failure(
+        run_emit_llvm(app, reject_negative_uint32_ternary_null_safe_member_call_path)
+    );
 
     auto reject_void_null_safe_member_call_path = std::filesystem::temp_directory_path() /
         "reject_void_null_safe_member_call.or";

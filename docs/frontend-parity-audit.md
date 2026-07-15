@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: null-safe member-call argument paths now cover signed negative `Int32` ternary argument
+  lowering through the null-safe call merge and unsigned negative `UInt32` ternary argument rejection.
 - 2026-07-14: scalar member `Unit` call statement argument paths now cover signed negative `Int32` ternary argument
   lowering into the discarded method-call operand and unsigned negative `UInt32` ternary argument rejection.
 - 2026-07-14: direct `Unit` call statement argument paths now cover signed negative `Int32` ternary argument lowering
