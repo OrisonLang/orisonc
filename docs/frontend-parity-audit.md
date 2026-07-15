@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-15: `repeat` and `for` record-receiver `Unit` member-call statement paths now cover signed negative
+  `Int32` ternary argument lowering and unsigned negative `UInt32` ternary argument rejection.
 - 2026-07-15: scoped record-receiver `Unit` member-call statement paths now cover signed negative `Int32` ternary
   argument lowering and unsigned negative `UInt32` ternary argument rejection inside `while`, `guard`, and `unsafe`.
 - 2026-07-15: record-receiver `Unit` member-call statement argument paths now cover signed negative `Int32`
