@@ -34,6 +34,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-15: early-exit `defer` cleanup replay now covers record-receiver `Unit` member-call statements with signed
+  negative `Int32` ternary argument lowering and unsigned negative `UInt32` ternary argument rejection across explicit
+  `return`, loop `break`, and loop `continue`.
 - 2026-07-15: `defer` cleanup replay now covers record-receiver `Unit` member-call statements with signed negative
   `Int32` ternary argument lowering and unsigned negative `UInt32` ternary argument rejection.
 - 2026-07-15: statement-level `if`/`switch` record-receiver `Unit` member-call statement paths now cover signed
