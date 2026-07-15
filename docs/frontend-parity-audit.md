@@ -27,13 +27,16 @@ This file tracks which source-language frontend slices are reflected in the curr
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
   non-generic record/fixed-array subset plus the first concrete and nested generic record
-  constructor/field-read/mutable-field assignment slice plus fixed arrays of concrete generic records, broader
-  generic aggregate construction coverage, aggregate assignment beyond the currently supported mutable-local and
-  pointer-backed record/fixed-array field and index targets, and iterable lowering beyond the current fixed-array
-  forms toward future dynamic arrays, views, and standard-library iterator abstractions
+  constructor/field-read/mutable-field assignment slice plus immutable and mutable fixed arrays of concrete generic
+  records, broader generic aggregate construction coverage, aggregate assignment beyond the currently supported
+  mutable-local and pointer-backed record/fixed-array field and index targets, and iterable lowering beyond the
+  current fixed-array forms toward future dynamic arrays, views, and standard-library iterator abstractions
 
 ## Latest update
 
+- 2026-07-15: mutable fixed arrays of concrete generic records are now pinned: annotated
+  `var boxes: Array<Box<UInt32>, 2>` retains source-type metadata, `boxes[0].value = ...` lowers through the mixed
+  index-plus-field aggregate assignment path, and a later `boxes[0].value` read observes the stored value.
 - 2026-07-15: fixed arrays of concrete generic records are now pinned: `Array<Box<UInt32>, 2>` literals materialize
   as fixed LLVM arrays of monomorphized record values, and `boxes[0].value` lowers through indexed element recovery
   followed by record-field extraction.

@@ -5688,6 +5688,32 @@ void test_emit_generic_record_field_assignment_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_generic_record_array_element_field_assignment_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_generic_record_array_element_field_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var boxes: Array<Box<UInt32>, 2> = [Box(0 as UInt32), Box(1 as UInt32)]\n"
+        "    boxes[0].value = 7 as UInt32\n"
+        "    boxes[0].value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "%boxes.addr = alloca [2 x %record.Box_UInt32_]");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Box_UInt32_], ptr %boxes.addr, i64 0, i64 0");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
+    assert_ir_contains(result, "store i32 7, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_negative_int32_ternary_record_field_assignment_return() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_negative_int32_ternary_record_field_assignment.or";
@@ -8637,6 +8663,7 @@ auto main() -> int {
     test_reject_negative_uint32_final_switch_array_element_call_argument();
     test_emit_negative_int32_record_field_assignment_return();
     test_emit_generic_record_field_assignment_return();
+    test_emit_generic_record_array_element_field_assignment_return();
     test_emit_negative_int32_ternary_record_field_assignment_return();
     test_emit_negative_int32_array_element_assignment_return();
     test_emit_negative_int32_ternary_array_element_assignment_return();
