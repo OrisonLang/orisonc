@@ -2335,6 +2335,57 @@ void test_reject_negative_uint32_scalar_member_call_statement_argument() {
     assert_rejects_negative_uint32_cast(result);
 }
 
+void test_emit_negative_int32_record_receiver_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_record_receiver_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend SignedBox\n"
+        "    function observe(this: shared This, amount: Int32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main() -> Int32\n"
+        "    let box: SignedBox = SignedBox(1 as Int32)\n"
+        "    box.observe(-27 as Int32)\n"
+        "    0 as Int32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, ", i32 %tmp");
+    assert_ir_contains(result, "ret i32 0");
+}
+
+void test_reject_negative_uint32_record_receiver_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_record_receiver_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UnsignedBox\n"
+        "    function observe(this: shared This, amount: UInt32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let box: UnsignedBox = UnsignedBox(1 as UInt32)\n"
+        "    box.observe(-1 as UInt32)\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
 void test_emit_negative_int32_ternary_scalar_member_call_statement_argument() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_negative_int32_ternary_scalar_member_call_statement_argument.or";
@@ -2376,6 +2427,61 @@ void test_reject_negative_uint32_ternary_scalar_member_call_statement_argument()
         "    let value: UInt32 = 1 as UInt32\n"
         "    value.observe(flag ? -1 as UInt32 : 4 as UInt32)\n"
         "    value\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_emit_negative_int32_ternary_record_receiver_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_ternary_record_receiver_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend SignedBox\n"
+        "    function observe(this: shared This, amount: Int32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    let box: SignedBox = SignedBox(1 as Int32)\n"
+        "    box.observe(flag ? -27 as Int32 : 4 as Int32)\n"
+        "    0 as Int32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_defines_method(result, "void", "method.SignedBox.observe", "%record.SignedBox %this, i32 %amount");
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_ir_contains(result, " = phi i32 [%tmp");
+    assert_ir_contains(result, "call void @method.SignedBox.observe(%record.SignedBox %tmp");
+    assert_ir_contains(result, ", i32 %tmp");
+    assert_ir_contains(result, "ret i32 0");
+}
+
+void test_reject_negative_uint32_ternary_record_receiver_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_ternary_record_receiver_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UnsignedBox\n"
+        "    function observe(this: shared This, amount: UInt32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    let box: UnsignedBox = UnsignedBox(1 as UInt32)\n"
+        "    box.observe(flag ? -1 as UInt32 : 4 as UInt32)\n"
+        "    0 as UInt32\n"
     );
 
     assert_rejects_negative_uint32_cast(result);
@@ -7132,8 +7238,12 @@ auto main() -> int {
     test_emit_scalar_member_call_statement();
     test_emit_negative_int32_scalar_member_call_statement_argument();
     test_reject_negative_uint32_scalar_member_call_statement_argument();
+    test_emit_negative_int32_record_receiver_member_call_statement_argument();
+    test_reject_negative_uint32_record_receiver_member_call_statement_argument();
     test_emit_negative_int32_ternary_scalar_member_call_statement_argument();
     test_reject_negative_uint32_ternary_scalar_member_call_statement_argument();
+    test_emit_negative_int32_ternary_record_receiver_member_call_statement_argument();
+    test_reject_negative_uint32_ternary_record_receiver_member_call_statement_argument();
     test_emit_scalar_call_statements();
     test_emit_scalar_unit_call_statements();
     test_emit_negative_int32_ternary_unit_call_statement_argument();
