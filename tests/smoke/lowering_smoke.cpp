@@ -1434,6 +1434,31 @@ void test_emit_negative_int32_array_literal_method_return() {
     assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
 }
 
+void test_emit_negative_int32_ternary_array_literal_method_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_ternary_array_literal_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend Int32\n"
+        "    function choose_pair(this: shared This, flag: Bool) -> Array<Int32, 2>\n"
+        "        flag ? [-27 as Int32, 4 as Int32] : [4 as Int32, 5 as Int32]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_defines_method(result, "[2 x i32]", "method.Int32.choose_pair", "i32 %this, i1 %flag");
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, "[2 x i32]");
+    assert_ir_contains(result, " = phi [2 x i32] [%tmp");
+    assert_returns_lowered_aggregate_tmp(result, "[2 x i32]");
+}
+
 void test_reject_negative_uint32_record_constructor_method_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_record_constructor_method_return.or";
@@ -1468,6 +1493,24 @@ void test_reject_negative_uint32_ternary_record_constructor_method_return() {
         "extend UInt32\n"
         "    function choose_box(this: shared This, flag: Bool) -> UnsignedBox\n"
         "        flag ? UnsignedBox(-1 as UInt32) : UnsignedBox(4 as UInt32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_ternary_array_literal_method_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_ternary_array_literal_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    function choose_pair(this: shared This, flag: Bool) -> Array<UInt32, 2>\n"
+        "        flag ? [-1 as UInt32, 4 as UInt32] : [4 as UInt32, 5 as UInt32]\n"
         "\n"
         "function main() -> UInt32\n"
         "    0 as UInt32\n"
@@ -6546,9 +6589,11 @@ auto main() -> int {
     test_emit_negative_int32_record_constructor_method_return();
     test_emit_negative_int32_ternary_record_constructor_method_return();
     test_emit_negative_int32_array_literal_method_return();
+    test_emit_negative_int32_ternary_array_literal_method_return();
     test_reject_negative_uint32_record_constructor_method_return();
     test_reject_negative_uint32_ternary_record_constructor_method_return();
     test_reject_negative_uint32_array_literal_method_return();
+    test_reject_negative_uint32_ternary_array_literal_method_return();
     test_emit_negative_int32_final_if_method_return();
     test_emit_negative_int32_final_switch_method_return();
     test_reject_negative_uint32_final_if_method_return();

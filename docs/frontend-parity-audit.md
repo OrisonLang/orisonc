@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: fixed-array literal method returns now cover signed negative `Int32` ternary arm lowering through the
+  aggregate method return ABI and unsigned negative `UInt32` ternary arm rejection.
 - 2026-07-14: record-constructor method returns now cover signed negative `Int32` ternary arm lowering through the
   aggregate method return ABI and unsigned negative `UInt32` ternary arm rejection.
 - 2026-07-14: remaining ternary negative-cast coverage audit found method-return aggregate ternaries are the next
