@@ -1383,6 +1383,35 @@ void test_emit_negative_int32_record_constructor_method_return() {
     assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
 }
 
+void test_emit_negative_int32_ternary_record_constructor_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_ternary_record_constructor_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend Int32\n"
+        "    function choose_box(this: shared This, flag: Bool) -> SignedBox\n"
+        "        flag ? SignedBox(-27 as Int32) : SignedBox(4 as Int32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "%record.SignedBox = type { i32 }");
+    assert_defines_method(result, "%record.SignedBox", "method.Int32.choose_box", "i32 %this, i1 %flag");
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_inserts_lowered_int32_tmp_into_aggregate(result, "%record.SignedBox");
+    assert_ir_contains(result, " = phi %record.SignedBox [%tmp");
+    assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
+}
+
 void test_emit_negative_int32_array_literal_method_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_array_literal_method_return.or";
@@ -1418,6 +1447,27 @@ void test_reject_negative_uint32_record_constructor_method_return() {
         "extend UInt32\n"
         "    function make_box(this: shared This) -> UnsignedBox\n"
         "        UnsignedBox(-1 as UInt32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_ternary_record_constructor_method_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_ternary_record_constructor_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UInt32\n"
+        "    function choose_box(this: shared This, flag: Bool) -> UnsignedBox\n"
+        "        flag ? UnsignedBox(-1 as UInt32) : UnsignedBox(4 as UInt32)\n"
         "\n"
         "function main() -> UInt32\n"
         "    0 as UInt32\n"
@@ -6494,8 +6544,10 @@ auto main() -> int {
     test_emit_negative_int32_record_receiver_method_return();
     test_reject_negative_uint32_record_receiver_method_return();
     test_emit_negative_int32_record_constructor_method_return();
+    test_emit_negative_int32_ternary_record_constructor_method_return();
     test_emit_negative_int32_array_literal_method_return();
     test_reject_negative_uint32_record_constructor_method_return();
+    test_reject_negative_uint32_ternary_record_constructor_method_return();
     test_reject_negative_uint32_array_literal_method_return();
     test_emit_negative_int32_final_if_method_return();
     test_emit_negative_int32_final_switch_method_return();
