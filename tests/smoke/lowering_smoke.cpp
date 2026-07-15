@@ -5019,6 +5019,66 @@ void test_emit_generic_record_receiver_field_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_generic_record_method_parameter_field_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_generic_record_method_parameter_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "extend UInt32\n"
+        "    function read_box(this: shared This, box: Box<UInt32>) -> UInt32\n"
+        "        box.value\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let value: UInt32 = 0 as UInt32\n"
+        "    value.read_box(Box(7 as UInt32))\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_defines_method(result, "i32", "method.UInt32.read_box", "i32 %this, %record.Box_UInt32_ %box");
+    assert_ir_contains(result, "%box.addr = alloca %record.Box_UInt32_");
+    assert_ir_contains(result, "store %record.Box_UInt32_ %box, ptr %box.addr");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %box.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_ir_contains(result, " = call i32 @method.UInt32.read_box(i32 %value, %record.Box_UInt32_ %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
+void test_emit_generic_record_array_method_parameter_field_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_generic_record_array_method_parameter_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "extend UInt32\n"
+        "    function read_boxes(this: shared This, boxes: Array<Box<UInt32>, 2>) -> UInt32\n"
+        "        boxes[0].value\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let value: UInt32 = 0 as UInt32\n"
+        "    value.read_boxes([Box(7 as UInt32), Box(9 as UInt32)])\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_defines_method(result, "i32", "method.UInt32.read_boxes", "i32 %this, [2 x %record.Box_UInt32_] %boxes");
+    assert_ir_contains(result, "%boxes.addr = alloca [2 x %record.Box_UInt32_]");
+    assert_ir_contains(result, "store [2 x %record.Box_UInt32_] %boxes, ptr %boxes.addr");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Box_UInt32_], ptr %boxes.addr, i64 0, i64 0");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_ir_contains(result, " = call i32 @method.UInt32.read_boxes(i32 %value, [2 x %record.Box_UInt32_] %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_negative_int32_call_argument_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_call_argument.or";
     auto result = lower_source(
@@ -8719,6 +8779,8 @@ auto main() -> int {
     test_emit_generic_record_parameter_field_return();
     test_emit_generic_record_array_parameter_field_return();
     test_emit_generic_record_receiver_field_return();
+    test_emit_generic_record_method_parameter_field_return();
+    test_emit_generic_record_array_method_parameter_field_return();
     test_emit_negative_int32_call_argument_return();
     test_emit_negative_int32_final_if_call_argument_return();
     test_emit_negative_int32_final_switch_call_argument_return();
