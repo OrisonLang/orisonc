@@ -1467,7 +1467,7 @@ void test_emit_negative_int32_ternary_record_constructor_method_return() {
     assert_returns_lowered_aggregate_tmp(result, "%record.SignedBox");
 }
 
-void test_reject_generic_record_constructor_let_lowering() {
+void test_emit_generic_record_constructor_let_lowering() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_generic_record_constructor_let.or";
     auto result = lower_source(
@@ -1482,12 +1482,11 @@ void test_reject_generic_record_constructor_let_lowering() {
         "    0 as UInt32\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message ==
-        "lowering does not yet support let type: Box<UInt32>"
-    );
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 1, 0");
+    assert_ir_contains(result, "%box.addr = alloca %record.Box_UInt32_");
+    assert_ir_contains(result, "store %record.Box_UInt32_ %tmp0, ptr %box.addr");
 }
 
 void test_emit_negative_int32_array_literal_method_return() {
@@ -8395,7 +8394,7 @@ auto main() -> int {
     test_reject_negative_uint32_record_receiver_method_return();
     test_emit_negative_int32_record_constructor_method_return();
     test_emit_negative_int32_ternary_record_constructor_method_return();
-    test_reject_generic_record_constructor_let_lowering();
+    test_emit_generic_record_constructor_let_lowering();
     test_emit_negative_int32_array_literal_method_return();
     test_emit_negative_int32_ternary_array_literal_method_return();
     test_reject_negative_uint32_record_constructor_method_return();

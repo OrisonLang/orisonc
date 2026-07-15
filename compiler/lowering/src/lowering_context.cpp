@@ -24,12 +24,196 @@ auto is_receiver_self_type(syntax::TypeSyntax const& type) -> bool {
         (type.name == "This" || type.name == "shared.This" || type.name == "exclusive.This");
 }
 
+auto render_record_type_name(syntax::TypeSyntax const& type) -> std::string {
+    return render_source_type_name(type);
+}
+
+auto substitute_type(
+    syntax::TypeSyntax const& type,
+    std::unordered_map<std::string, syntax::TypeSyntax> const& substitutions
+) -> syntax::TypeSyntax {
+    if (type.generic_arguments.empty()) {
+        auto substitution = substitutions.find(type.name);
+        if (substitution != substitutions.end()) {
+            return substitution->second;
+        }
+        return type;
+    }
+
+    auto substituted = syntax::TypeSyntax {.name = type.name};
+    substituted.generic_arguments.reserve(type.generic_arguments.size());
+    for (auto const& argument : type.generic_arguments) {
+        substituted.generic_arguments.push_back(substitute_type(argument, substitutions));
+    }
+    return substituted;
+}
+
+void collect_type_instantiations(
+    syntax::TypeSyntax const& type,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::TypeSyntax>& pending,
+    std::unordered_set<std::string>& seen
+) {
+    for (auto const& argument : type.generic_arguments) {
+        collect_type_instantiations(argument, generic_records, pending, seen);
+    }
+
+    auto record = generic_records.find(type.name);
+    if (record == generic_records.end() ||
+        type.generic_arguments.size() != record->second->generic_parameters.size()) {
+        return;
+    }
+
+    auto source_type_name = render_record_type_name(type);
+    if (seen.insert(source_type_name).second) {
+        pending.push_back(type);
+    }
+}
+
+void collect_statement_type_instantiations(
+    syntax::StatementSyntax const& statement,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::TypeSyntax>& pending,
+    std::unordered_set<std::string>& seen
+) {
+    if (!statement.annotated_type.name.empty()) {
+        collect_type_instantiations(statement.annotated_type, generic_records, pending, seen);
+    }
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_statement_type_instantiations(nested_statement, generic_records, pending, seen);
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_statement_type_instantiations(alternate_statement, generic_records, pending, seen);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_statement_type_instantiations(*case_statement, generic_records, pending, seen);
+            }
+        }
+    }
+}
+
+void collect_function_type_instantiations(
+    syntax::FunctionSyntax const& function,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::TypeSyntax>& pending,
+    std::unordered_set<std::string>& seen
+) {
+    collect_type_instantiations(function.return_type, generic_records, pending, seen);
+    for (auto const& parameter : function.parameters) {
+        collect_type_instantiations(parameter.type, generic_records, pending, seen);
+    }
+    for (auto const& constraint : function.where_constraints) {
+        for (auto const& requirement : constraint.requirements) {
+            collect_type_instantiations(requirement, generic_records, pending, seen);
+        }
+    }
+    for (auto const& statement : function.body_statements) {
+        collect_statement_type_instantiations(statement, generic_records, pending, seen);
+    }
+}
+
+auto collect_generic_record_instantiations(
+    syntax::ModuleSyntax const& module,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
+) -> std::vector<syntax::TypeSyntax> {
+    auto pending = std::vector<syntax::TypeSyntax> {};
+    auto seen = std::unordered_set<std::string> {};
+
+    for (auto const& alias : module.type_aliases) {
+        collect_type_instantiations(alias.aliased_type, generic_records, pending, seen);
+    }
+    for (auto const& constant : module.constants) {
+        collect_type_instantiations(constant.type, generic_records, pending, seen);
+    }
+    for (auto const& record : module.records) {
+        for (auto const& field : record.fields) {
+            collect_type_instantiations(field.type, generic_records, pending, seen);
+        }
+    }
+    for (auto const& choice : module.choices) {
+        for (auto const& variant : choice.variants) {
+            for (auto const& payload : variant.payloads) {
+                collect_type_instantiations(payload.type, generic_records, pending, seen);
+            }
+        }
+    }
+    for (auto const& interface : module.interfaces) {
+        for (auto const& method : interface.methods) {
+            collect_type_instantiations(method.return_type, generic_records, pending, seen);
+            for (auto const& parameter : method.parameters) {
+                collect_type_instantiations(parameter.type, generic_records, pending, seen);
+            }
+            for (auto const& constraint : method.where_constraints) {
+                for (auto const& requirement : constraint.requirements) {
+                    collect_type_instantiations(requirement, generic_records, pending, seen);
+                }
+            }
+        }
+    }
+    for (auto const& foreign_import : module.foreign_imports) {
+        for (auto const& function : foreign_import.functions) {
+            collect_type_instantiations(function.return_type, generic_records, pending, seen);
+            for (auto const& parameter : function.parameters) {
+                collect_type_instantiations(parameter.type, generic_records, pending, seen);
+            }
+        }
+    }
+    for (auto const& foreign_export : module.foreign_exports) {
+        collect_function_type_instantiations(foreign_export.function, generic_records, pending, seen);
+    }
+    for (auto const& implementation : module.implementations) {
+        collect_type_instantiations(implementation.interface_type, generic_records, pending, seen);
+        collect_type_instantiations(implementation.receiver_type, generic_records, pending, seen);
+        for (auto const& method : implementation.methods) {
+            collect_function_type_instantiations(method, generic_records, pending, seen);
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        collect_type_instantiations(extension.receiver_type, generic_records, pending, seen);
+        for (auto const& method : extension.methods) {
+            collect_function_type_instantiations(method, generic_records, pending, seen);
+        }
+    }
+    for (auto const& function : module.functions) {
+        collect_function_type_instantiations(function, generic_records, pending, seen);
+    }
+
+    for (auto index = std::size_t {0}; index < pending.size(); ++index) {
+        auto record = generic_records.find(pending[index].name);
+        if (record == generic_records.end()) {
+            continue;
+        }
+
+        auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+        for (auto argument_index = std::size_t {0}; argument_index < pending[index].generic_arguments.size();
+             ++argument_index) {
+            substitutions.emplace(
+                record->second->generic_parameters[argument_index],
+                pending[index].generic_arguments[argument_index]
+            );
+        }
+        for (auto const& field : record->second->fields) {
+            collect_type_instantiations(
+                substitute_type(field.type, substitutions),
+                generic_records,
+                pending,
+                seen
+            );
+        }
+    }
+
+    return pending;
+}
+
 auto contextual_record_type_for(
     syntax::TypeSyntax const& type,
     std::unordered_set<std::string> const& record_names
 ) -> std::optional<std::string> {
-    if (type.generic_arguments.empty() && record_names.contains(type.name)) {
-        return lowered_record_type_name(type.name);
+    auto source_type_name = render_record_type_name(type);
+    if (record_names.contains(source_type_name)) {
+        return lowered_record_type_name(source_type_name);
     }
     return std::nullopt;
 }
@@ -162,8 +346,9 @@ auto llvm_field_type_for(
     if (auto lowered_type = llvm_type_for(type); lowered_type.has_value()) {
         return std::string {*lowered_type};
     }
-    if (type.generic_arguments.empty() && record_names.contains(type.name)) {
-        return lowered_record_type_name(type.name);
+    auto source_type_name = render_record_type_name(type);
+    if (record_names.contains(source_type_name)) {
+        return lowered_record_type_name(source_type_name);
     }
     if (type.generic_arguments.empty() && choices != nullptr) {
         auto choice = choices->find(type.name);
@@ -213,6 +398,36 @@ auto collect_record_layout(
             .name = field.name,
             .source_type_name = render_source_type_name(field.type),
             .llvm_type = llvm_field_type_for(field.type, record_names, &choices),
+            .index = index,
+        });
+    }
+    return layout;
+}
+
+auto collect_instantiated_record_layout(
+    syntax::TypeSyntax const& concrete_type,
+    syntax::RecordSyntax const& record,
+    std::unordered_set<std::string> const& record_names,
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices
+) -> LoweredRecordLayout {
+    auto source_type_name = render_record_type_name(concrete_type);
+    auto layout = LoweredRecordLayout {
+        .name = source_type_name,
+        .llvm_type_name = lowered_record_type_name(source_type_name),
+    };
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    for (auto index = std::size_t {0}; index < record.generic_parameters.size(); ++index) {
+        substitutions.emplace(record.generic_parameters[index], concrete_type.generic_arguments[index]);
+    }
+
+    layout.fields.reserve(record.fields.size());
+    for (auto index = std::size_t {0}; index < record.fields.size(); ++index) {
+        auto const& field = record.fields[index];
+        auto substituted_type = substitute_type(field.type, substitutions);
+        layout.fields.push_back(LoweredRecordField {
+            .name = field.name,
+            .source_type_name = render_source_type_name(substituted_type),
+            .llvm_type = llvm_field_type_for(substituted_type, record_names, &choices),
             .index = index,
         });
     }
@@ -301,14 +516,33 @@ auto build_lowering_context(
 ) -> LoweringContext {
     auto context = LoweringContext {};
     auto record_names = std::unordered_set<std::string> {};
+    auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
     for (auto const& record : module.records) {
         record_names.insert(record.name);
+        if (!record.generic_parameters.empty()) {
+            generic_records.emplace(record.name, &record);
+        }
+    }
+    auto instantiated_record_types = collect_generic_record_instantiations(module, generic_records);
+    for (auto const& type : instantiated_record_types) {
+        record_names.insert(render_record_type_name(type));
     }
     for (auto const& choice : module.choices) {
         context.choices.emplace(choice.name, collect_choice_layout(choice, record_names));
     }
     for (auto const& record : module.records) {
         context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
+    }
+    for (auto const& type : instantiated_record_types) {
+        auto record = generic_records.find(type.name);
+        if (record == generic_records.end()) {
+            continue;
+        }
+        auto source_type_name = render_record_type_name(type);
+        context.records.emplace(
+            source_type_name,
+            collect_instantiated_record_layout(type, *record->second, record_names, context.choices)
+        );
     }
 
     for (auto const& function : module.functions) {

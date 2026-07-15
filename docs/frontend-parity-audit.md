@@ -26,16 +26,19 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
-  non-generic record/fixed-array subset, including concrete generic record instantiations that require
-  monomorphized layouts, aggregate assignment beyond the currently supported mutable-local and pointer-backed
-  record/fixed-array field and index targets, and iterable lowering beyond the current fixed-array forms toward
-  future dynamic arrays, views, and standard-library iterator abstractions
+  non-generic record/fixed-array subset plus the first concrete generic record constructor slice, broader generic
+  aggregate construction and nested generic-record coverage, aggregate assignment beyond the currently supported
+  mutable-local and pointer-backed record/fixed-array field and index targets, and iterable lowering beyond the
+  current fixed-array forms toward future dynamic arrays, views, and standard-library iterator abstractions
 
 ## Latest update
 
-- 2026-07-15: generic record constructor lowering is now pinned as an explicit unsupported aggregate-construction
-  gap: semantic analysis can recognize `Box<UInt32>` constructor use, but LLVM lowering still rejects the concrete
-  generic `let` type until monomorphized record layouts exist.
+- 2026-07-15: lowering now synthesizes monomorphized layouts for concrete generic record types discovered from
+  source annotations/signatures, emits deterministic LLVM struct declarations such as `%record.Box_UInt32_`, and
+  lowers the simplest `Box<UInt32>` constructor `let` path end-to-end.
+- 2026-07-15: generic record constructor lowering was pinned as an explicit unsupported aggregate-construction
+  gap before the first monomorphized-layout slice: semantic analysis could recognize `Box<UInt32>` constructor
+  use while LLVM lowering still rejected the concrete generic `let` type.
 - 2026-07-15: fixed-array `for` iterable lowering audit confirmed helper-returned, scalar-method-returned,
   record-method-returned, member-receiver method-returned, nested record-backed, indexed record-field, and
   ternary-selected fixed-array sources are implemented; lowering smoke now pins helper-returned plus scalar-method

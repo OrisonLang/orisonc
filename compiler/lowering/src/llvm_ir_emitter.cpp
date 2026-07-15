@@ -8,8 +8,11 @@
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/syntax_traversal.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <sstream>
+#include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -33,6 +36,7 @@ auto emit_record_layouts(
     LoweringContext const& context
 ) -> std::string {
     auto output = std::ostringstream {};
+    auto emitted_record_names = std::unordered_set<std::string> {};
     for (auto const& record : module.records) {
         auto layout = context.records.find(record.name);
         if (layout == context.records.end() || !can_emit_record_layout(record, layout->second)) {
@@ -45,6 +49,36 @@ auto emit_record_layouts(
                 output << ", ";
             }
             output << layout->second.fields[index].llvm_type;
+        }
+        output << " }\n";
+        emitted_record_names.insert(record.name);
+    }
+
+    auto instantiated_record_names = std::vector<std::string> {};
+    for (auto const& [record_name, layout] : context.records) {
+        if (emitted_record_names.contains(record_name)) {
+            continue;
+        }
+        auto can_emit_layout = true;
+        for (auto const& field : layout.fields) {
+            if (field.llvm_type.empty() || field.llvm_type == "void") {
+                can_emit_layout = false;
+                break;
+            }
+        }
+        if (can_emit_layout) {
+            instantiated_record_names.push_back(record_name);
+        }
+    }
+    std::ranges::sort(instantiated_record_names);
+    for (auto const& record_name : instantiated_record_names) {
+        auto const& layout = context.records.at(record_name);
+        output << layout.llvm_type_name << " = type { ";
+        for (auto index = std::size_t {0}; index < layout.fields.size(); ++index) {
+            if (index > 0) {
+                output << ", ";
+            }
+            output << layout.fields[index].llvm_type;
         }
         output << " }\n";
     }

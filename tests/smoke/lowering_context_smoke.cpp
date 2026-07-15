@@ -109,6 +109,13 @@ int main() {
             },
         },
     });
+    module.records.push_back(RecordSyntax {
+        .name = "Box",
+        .generic_parameters = {"T"},
+        .fields = {
+            FieldSyntax {.name = "value", .type = TypeSyntax {.name = "T"}},
+        },
+    });
     module.choices.push_back(ChoiceSyntax {
         .name = "Maybe",
         .generic_parameters = {"T"},
@@ -232,7 +239,7 @@ int main() {
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
     assert(context.functions.size() == 3);
-    assert(context.records.size() == 7);
+    assert(context.records.size() == 9);
     assert(context.choices.size() == 3);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
@@ -285,6 +292,20 @@ int main() {
     assert(user_layout.fields[0].source_type_name == "Maybe<Profile>");
     assert(user_layout.fields[0].llvm_type == "{ i1, %record.Profile }");
     assert(user_layout.fields[0].index == 0);
+    assert(context.records.contains("Box"));
+    auto const& box_template_layout = context.records.at("Box");
+    assert(box_template_layout.llvm_type_name == "%record.Box");
+    assert(box_template_layout.fields.size() == 1);
+    assert(box_template_layout.fields[0].name == "value");
+    assert(box_template_layout.fields[0].source_type_name == "T");
+    assert(box_template_layout.fields[0].llvm_type.empty());
+    assert(context.records.contains("Box<UInt32>"));
+    auto const& box_uint32_layout = context.records.at("Box<UInt32>");
+    assert(box_uint32_layout.llvm_type_name == "%record.Box_UInt32_");
+    assert(box_uint32_layout.fields.size() == 1);
+    assert(box_uint32_layout.fields[0].name == "value");
+    assert(box_uint32_layout.fields[0].source_type_name == "UInt32");
+    assert(box_uint32_layout.fields[0].llvm_type == "i32");
     assert(context.choices.contains("Maybe"));
     auto const& maybe_layout = context.choices.at("Maybe");
     assert(maybe_layout.name == "Maybe");
@@ -356,7 +377,7 @@ int main() {
     assert(context.methods[1].signature.symbol_name == "method.Box_UInt32_.reset");
     assert(context.methods[1].signature.return_type == "void");
     assert(context.methods[1].signature.parameter_types.size() == 1);
-    assert(context.methods[1].signature.parameter_types[0].empty());
+    assert(context.methods[1].signature.parameter_types[0] == "%record.Box_UInt32_");
     assert(context.methods[2].receiver_type_name == "UInt32");
     assert(context.methods[2].method_name == "identity");
     assert(context.methods[2].signature.symbol_name == "method.UInt32.identity");

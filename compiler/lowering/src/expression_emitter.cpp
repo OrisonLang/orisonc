@@ -819,14 +819,24 @@ auto lower_record_constructor_expression(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     LoweringFailures& failures,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression> {
     if (expression.left == nullptr || expression.left->kind != syntax::ExpressionKind::name) {
         return std::nullopt;
     }
 
-    auto layout = context.lowering.records.find(expression.left->text);
+    auto layout = expected_source_type_name.has_value()
+        ? context.lowering.records.find(std::string(*expected_source_type_name))
+        : context.lowering.records.end();
     if (layout == context.lowering.records.end()) {
+        layout = context.lowering.records.find(expression.left->text);
+    }
+    if (layout == context.lowering.records.end()) {
+        return std::nullopt;
+    }
+    if (layout->second.name != expression.left->text &&
+        !layout->second.name.starts_with(expression.left->text + "<")) {
         return std::nullopt;
     }
     if (layout->second.llvm_type_name != expected_llvm_type) {
@@ -3058,7 +3068,8 @@ auto lowered_expression(
                 context,
                 session,
                 failures,
-                output
+                output,
+                expected_source_type_name
             )) {
             return record_constructor;
         }
