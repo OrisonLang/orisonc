@@ -28,12 +28,16 @@ This file tracks which source-language frontend slices are reflected in the curr
 - lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
   non-generic record/fixed-array subset plus the first concrete and nested generic record
   constructor/field-read/mutable-field assignment slice plus immutable and mutable fixed arrays of concrete generic
-  records, broader generic aggregate construction coverage, aggregate assignment beyond the currently supported
-  mutable-local and pointer-backed record/fixed-array field and index targets, and iterable lowering beyond the
-  current fixed-array forms toward future dynamic arrays, views, and standard-library iterator abstractions
+  records and generic-record aggregate parameter reads, broader generic aggregate construction coverage, aggregate
+  assignment beyond the currently supported mutable-local and pointer-backed record/fixed-array field and index
+  targets, and iterable lowering beyond the current fixed-array forms toward future dynamic arrays, views, and
+  standard-library iterator abstractions
 
 ## Latest update
 
+- 2026-07-15: concrete generic record aggregates now cross plain function boundaries in lowering smoke coverage:
+  callees read fields from `Box<UInt32>` parameters and from `Array<Box<UInt32>, 2>` parameters using the same
+  read-only aggregate parameter storage path as non-generic records and fixed arrays.
 - 2026-07-15: mutable fixed arrays of concrete generic records are now pinned: annotated
   `var boxes: Array<Box<UInt32>, 2>` retains source-type metadata, `boxes[0].value = ...` lowers through the mixed
   index-plus-field aggregate assignment path, and a later `boxes[0].value` read observes the stored value.
