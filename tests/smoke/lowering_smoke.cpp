@@ -2925,6 +2925,140 @@ void test_reject_negative_uint32_switch_defer_record_receiver_member_call_statem
     assert_rejects_negative_uint32_cast(result);
 }
 
+void test_emit_negative_int32_while_if_defer_continue_record_receiver_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_while_if_defer_continue_record_receiver_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend SignedBox\n"
+        "    function observe(this: shared This, amount: Int32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main(flag: Bool, choose: Bool) -> Int32\n"
+        "    var index: UInt32 = 0 as UInt32\n"
+        "    while index < 1 as UInt32\n"
+        "        if flag\n"
+        "            let box: SignedBox = SignedBox(1 as Int32)\n"
+        "            defer\n"
+        "                box.observe(choose ? -27 as Int32 : 4 as Int32)\n"
+        "            index = index + 1 as UInt32\n"
+        "            continue\n"
+        "        else\n"
+        "            index = index + 1 as UInt32\n"
+        "    0 as Int32\n"
+    );
+
+    assert_emits_negative_int32_record_receiver_cleanup_call(result);
+    assert_ir_contains(result, "while.body.");
+    assert_ir_contains(result, "if.then.");
+    assert_ir_contains(result, "if.else.");
+    assert_ir_contains(result, "while.condition.");
+    assert_ir_contains(result, "ret i32 0");
+}
+
+void test_reject_negative_uint32_while_if_defer_continue_record_receiver_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_while_if_defer_continue_record_receiver_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UnsignedBox\n"
+        "    function observe(this: shared This, amount: UInt32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main(flag: Bool, choose: Bool) -> UInt32\n"
+        "    var index: UInt32 = 0 as UInt32\n"
+        "    while index < 1 as UInt32\n"
+        "        if flag\n"
+        "            let box: UnsignedBox = UnsignedBox(1 as UInt32)\n"
+        "            defer\n"
+        "                box.observe(choose ? -1 as UInt32 : 4 as UInt32)\n"
+        "            index = index + 1 as UInt32\n"
+        "            continue\n"
+        "        else\n"
+        "            index = index + 1 as UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_emit_negative_int32_while_switch_defer_break_record_receiver_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_while_switch_defer_break_record_receiver_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "extend SignedBox\n"
+        "    function observe(this: shared This, amount: Int32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main(flag: Bool, choose: Bool) -> Int32\n"
+        "    var index: UInt32 = 0 as UInt32\n"
+        "    while index < 1 as UInt32\n"
+        "        switch flag\n"
+        "            true =>\n"
+        "                let box: SignedBox = SignedBox(1 as Int32)\n"
+        "                defer\n"
+        "                    box.observe(choose ? -27 as Int32 : 4 as Int32)\n"
+        "                break\n"
+        "            default =>\n"
+        "                index = index + 1 as UInt32\n"
+        "    0 as Int32\n"
+    );
+
+    assert_emits_negative_int32_record_receiver_cleanup_call(result);
+    assert_ir_contains(result, "while.body.");
+    assert_ir_contains(result, "switch.case.");
+    assert_ir_contains(result, "switch.default.");
+    assert_ir_contains(result, "while.exit.");
+    assert_ir_contains(result, "ret i32 0");
+}
+
+void test_reject_negative_uint32_while_switch_defer_break_record_receiver_member_call_statement_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_while_switch_defer_break_record_receiver_member_call_statement_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "extend UnsignedBox\n"
+        "    function observe(this: shared This, amount: UInt32) -> Unit\n"
+        "        return\n"
+        "\n"
+        "function main(flag: Bool, choose: Bool) -> UInt32\n"
+        "    var index: UInt32 = 0 as UInt32\n"
+        "    while index < 1 as UInt32\n"
+        "        switch flag\n"
+        "            true =>\n"
+        "                let box: UnsignedBox = UnsignedBox(1 as UInt32)\n"
+        "                defer\n"
+        "                    box.observe(choose ? -1 as UInt32 : 4 as UInt32)\n"
+        "                break\n"
+        "            default =>\n"
+        "                index = index + 1 as UInt32\n"
+        "    0 as UInt32\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
 void test_emit_negative_int32_ternary_defer_record_receiver_member_call_statement_argument() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_negative_int32_ternary_defer_record_receiver_member_call_statement_argument.or";
@@ -8261,6 +8395,10 @@ auto main() -> int {
     test_reject_negative_uint32_if_defer_record_receiver_member_call_statement_argument();
     test_emit_negative_int32_switch_defer_record_receiver_member_call_statement_argument();
     test_reject_negative_uint32_switch_defer_record_receiver_member_call_statement_argument();
+    test_emit_negative_int32_while_if_defer_continue_record_receiver_member_call_statement_argument();
+    test_reject_negative_uint32_while_if_defer_continue_record_receiver_member_call_statement_argument();
+    test_emit_negative_int32_while_switch_defer_break_record_receiver_member_call_statement_argument();
+    test_reject_negative_uint32_while_switch_defer_break_record_receiver_member_call_statement_argument();
     test_emit_negative_int32_ternary_defer_record_receiver_member_call_statement_argument();
     test_reject_negative_uint32_ternary_defer_record_receiver_member_call_statement_argument();
     test_emit_negative_int32_ternary_defer_return_record_receiver_member_call_statement_argument();
