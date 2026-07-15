@@ -34,6 +34,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: fixed-array element call-argument paths now cover signed negative `Int32` ternary arm lowering through
+  array construction, element extraction, and the final direct-call operand, plus unsigned negative `UInt32` arm rejection.
 - 2026-07-14: record-field aggregate call-argument paths now cover signed negative `Int32` ternary arm lowering through
   record construction, field extraction, and the final direct-call operand, plus unsigned negative `UInt32` arm rejection.
 - 2026-07-14: scalar member-call ternary argument paths now cover signed negative `Int32` arm lowering into the merged

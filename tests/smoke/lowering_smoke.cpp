@@ -3591,6 +3591,50 @@ void test_emit_negative_int32_array_element_call_argument_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_negative_int32_ternary_array_element_call_argument_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_ternary_array_element_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function identity(value: Int32) -> Int32\n"
+        "    value\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    let values: Array<Int32, 2> = [flag ? -27 as Int32 : 4 as Int32, 5 as Int32]\n"
+        "    identity(values[0])\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_ir_contains(result, " = phi i32 [%tmp");
+    assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
+    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
+    assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
+    assert_returns_lowered_tmp(result);
+}
+
+void test_reject_negative_uint32_ternary_array_element_call_argument() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_ternary_array_element_call_argument.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function identity(value: UInt32) -> UInt32\n"
+        "    value\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    let values: Array<UInt32, 2> = [flag ? -1 as UInt32 : 4 as UInt32, 5 as UInt32]\n"
+        "    identity(values[0])\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
 void test_emit_negative_int32_final_if_record_field_call_argument_return() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_negative_int32_final_if_record_field_call_argument.or";
@@ -6429,6 +6473,7 @@ auto main() -> int {
     test_emit_negative_int32_record_field_call_argument_return();
     test_emit_negative_int32_ternary_record_field_call_argument_return();
     test_emit_negative_int32_array_element_call_argument_return();
+    test_emit_negative_int32_ternary_array_element_call_argument_return();
     test_emit_negative_int32_final_if_record_field_call_argument_return();
     test_emit_negative_int32_final_switch_record_field_call_argument_return();
     test_emit_negative_int32_final_if_array_element_call_argument_return();
@@ -6438,6 +6483,7 @@ auto main() -> int {
     test_reject_negative_uint32_record_field_call_argument();
     test_reject_negative_uint32_ternary_record_field_call_argument();
     test_reject_negative_uint32_array_element_call_argument();
+    test_reject_negative_uint32_ternary_array_element_call_argument();
     test_reject_negative_uint32_final_if_record_field_call_argument();
     test_reject_negative_uint32_final_switch_record_field_call_argument();
     test_reject_negative_uint32_final_if_array_element_call_argument();
