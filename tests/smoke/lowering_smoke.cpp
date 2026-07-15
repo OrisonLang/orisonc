@@ -4466,6 +4466,34 @@ void test_emit_negative_int32_repeat_record_field_assignment_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_negative_int32_ternary_repeat_record_field_assignment_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_ternary_repeat_record_field_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    var box: SignedBox = SignedBox(0 as Int32)\n"
+        "    repeat\n"
+        "        box.value = flag ? -27 as Int32 : 4 as Int32\n"
+        "    while false\n"
+        "    box.value\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "repeat.body.");
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_ir_contains(result, " = phi i32 [%tmp");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
+}
+
 void test_reject_negative_uint32_while_record_field_assignment() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_negative_uint32_while_record_field_assignment.or";
@@ -4556,6 +4584,27 @@ void test_reject_negative_uint32_repeat_record_field_assignment() {
         "    var box: UnsignedBox = UnsignedBox(0 as UInt32)\n"
         "    repeat\n"
         "        box.value = -1 as UInt32\n"
+        "    while false\n"
+        "    box.value\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_ternary_repeat_record_field_assignment() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_ternary_repeat_record_field_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    var box: UnsignedBox = UnsignedBox(0 as UInt32)\n"
+        "    repeat\n"
+        "        box.value = flag ? -1 as UInt32 : 4 as UInt32\n"
         "    while false\n"
         "    box.value\n"
     );
@@ -6801,11 +6850,13 @@ auto main() -> int {
     test_emit_negative_int32_for_array_element_assignment_return();
     test_emit_negative_int32_ternary_for_array_element_assignment_return();
     test_emit_negative_int32_repeat_record_field_assignment_return();
+    test_emit_negative_int32_ternary_repeat_record_field_assignment_return();
     test_reject_negative_uint32_while_record_field_assignment();
     test_reject_negative_uint32_ternary_while_record_field_assignment();
     test_reject_negative_uint32_for_array_element_assignment();
     test_reject_negative_uint32_ternary_for_array_element_assignment();
     test_reject_negative_uint32_repeat_record_field_assignment();
+    test_reject_negative_uint32_ternary_repeat_record_field_assignment();
     test_emit_negative_int32_guard_record_field_assignment_return();
     test_emit_negative_int32_unsafe_array_element_assignment_return();
     test_reject_negative_uint32_guard_record_field_assignment();
