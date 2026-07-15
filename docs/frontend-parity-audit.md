@@ -34,6 +34,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-14: explicit same-target casts now lower nested expressions, preserving parsed ternary RHS casts in
+  assignment contexts; `while` loop record-field assignments cover signed negative `Int32` ternary lowering and
+  unsigned negative `UInt32` ternary rejection inside the loop body.
 - 2026-07-14: fixed-array literal method returns now cover signed negative `Int32` ternary arm lowering through the
   aggregate method return ABI and unsigned negative `UInt32` ternary arm rejection.
 - 2026-07-14: record-constructor method returns now cover signed negative `Int32` ternary arm lowering through the

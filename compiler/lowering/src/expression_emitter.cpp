@@ -2490,6 +2490,17 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
+        if (auto nested = lowered_expression(
+                *expression.left,
+                expected_llvm_type,
+                cast_type->signedness,
+                context,
+                session,
+                output,
+                expression.text
+            )) {
+            return nested;
+        }
         auto lowered_float = lowered_float_literal(*expression.left, expected_llvm_type);
         if (!lowered_float.has_value()) {
             record_expression_lowering_failure(
@@ -2576,6 +2587,16 @@ auto lowered_expression(
 
     if (expression.kind == syntax::ExpressionKind::unary && expression.text == "-" &&
         expression.left != nullptr) {
+        if (expected_signedness == IntegerSignedness::unsigned_integer &&
+            expected_source_type_name.has_value() &&
+            expression.left->kind == syntax::ExpressionKind::integer_literal) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_cast,
+                "negative value to " + std::string(*expected_source_type_name)
+            );
+            return std::nullopt;
+        }
         record_expression_lowering_failure(
             failures,
             ExpressionLoweringFailureReason::unsupported_operator,

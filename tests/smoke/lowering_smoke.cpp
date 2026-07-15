@@ -166,7 +166,9 @@ void assert_emits_negative_int32_record_field_control_flow_call_argument_return(
 ) {
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
     assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
+    assert_ir_contains(result, "%box.addr = alloca %record.SignedBox");
+    assert_ir_contains(result, " = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_emits_negative_int32_control_flow_call_argument_return(
         result,
         " = call i32 @identity(",
@@ -179,7 +181,9 @@ void assert_emits_negative_int32_array_element_control_flow_call_argument_return
     FinalControlFlowKind control_flow_kind
 ) {
     assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
+    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_emits_negative_int32_control_flow_call_argument_return(
         result,
         " = call i32 @identity(",
@@ -2134,7 +2138,7 @@ void test_emit_negative_int32_scalar_member_call_statement_argument() {
 
     assert_emits_negative_int32_value(result);
     assert_calls_lowered_int32_tmp(result, "call void @method.Int32.observe(i32 %value, ");
-    assert_returns_lowered_tmp(result);
+    assert_ir_contains(result, "ret i32 %value");
 }
 
 void test_reject_negative_uint32_scalar_member_call_statement_argument() {
@@ -3563,7 +3567,9 @@ void test_emit_negative_int32_record_field_return() {
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
     assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
+    assert_ir_contains(result, "%box.addr = alloca %record.SignedBox");
+    assert_ir_contains(result, " = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_returns_lowered_tmp(result);
 }
 
@@ -3581,7 +3587,9 @@ void test_emit_negative_int32_array_element_return() {
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
     assert_ir_contains(result, " = insertvalue [2 x i32] %tmp");
-    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
+    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_returns_lowered_tmp(result);
 }
 
@@ -3606,7 +3614,9 @@ void test_emit_negative_int32_record_field_call_argument_return() {
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, "%record.SignedBox = type { i32 }");
     assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
+    assert_ir_contains(result, "%box.addr = alloca %record.SignedBox");
+    assert_ir_contains(result, " = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
     assert_returns_lowered_tmp(result);
 }
@@ -3636,7 +3646,9 @@ void test_emit_negative_int32_ternary_record_field_call_argument_return() {
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
     assert_ir_contains(result, " = insertvalue %record.SignedBox undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue %record.SignedBox %tmp");
+    assert_ir_contains(result, "%box.addr = alloca %record.SignedBox");
+    assert_ir_contains(result, " = getelementptr %record.SignedBox, ptr %box.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
     assert_returns_lowered_tmp(result);
 }
@@ -3679,7 +3691,9 @@ void test_emit_negative_int32_array_element_call_argument_return() {
 
     assert_emits_negative_int32_value(result);
     assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
+    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
     assert_returns_lowered_tmp(result);
 }
@@ -3705,7 +3719,9 @@ void test_emit_negative_int32_ternary_array_element_call_argument_return() {
     assert_ir_contains(result, "ternary.merge.");
     assert_ir_contains(result, " = phi i32 [%tmp");
     assert_ir_contains(result, " = insertvalue [2 x i32] undef, i32 %tmp");
-    assert_ir_contains(result, " = extractvalue [2 x i32] %tmp");
+    assert_ir_contains(result, "%values.addr = alloca [2 x i32]");
+    assert_ir_contains(result, " = getelementptr [2 x i32], ptr %values.addr, i64 0, i64 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
     assert_calls_lowered_int32_tmp(result, " = call i32 @identity(");
     assert_returns_lowered_tmp(result);
 }
@@ -4351,6 +4367,35 @@ void test_emit_negative_int32_while_record_field_assignment_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_negative_int32_ternary_while_record_field_assignment_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_int32_ternary_while_record_field_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record SignedBox\n"
+        "    value: Int32\n"
+        "\n"
+        "function main(flag: Bool) -> Int32\n"
+        "    var box: SignedBox = SignedBox(0 as Int32)\n"
+        "    var index = 0 as UInt32\n"
+        "    while index < 1 as UInt32\n"
+        "        box.value = flag ? -27 as Int32 : 4 as Int32\n"
+        "        index = index + 1 as UInt32\n"
+        "    box.value\n"
+    );
+
+    assert_emits_negative_int32_value(result);
+    assert_ir_contains(result, "while.body.");
+    assert_ir_contains(result, "ternary.then.");
+    assert_ir_contains(result, "ternary.else.");
+    assert_ir_contains(result, "ternary.merge.");
+    assert_ir_contains(result, " = phi i32 [%tmp");
+    assert_stores_lowered_int32_tmp(result);
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_negative_int32_for_array_element_assignment_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_negative_int32_for_array_assignment.or";
@@ -4410,6 +4455,27 @@ void test_reject_negative_uint32_while_record_field_assignment() {
         "    var box: UnsignedBox = UnsignedBox(0 as UInt32)\n"
         "    while true\n"
         "        box.value = -1 as UInt32\n"
+        "        break\n"
+        "    box.value\n"
+    );
+
+    assert_rejects_negative_uint32_cast(result);
+}
+
+void test_reject_negative_uint32_ternary_while_record_field_assignment() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_negative_uint32_ternary_while_record_field_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record UnsignedBox\n"
+        "    value: UInt32\n"
+        "\n"
+        "function main(flag: Bool) -> UInt32\n"
+        "    var box: UnsignedBox = UnsignedBox(0 as UInt32)\n"
+        "    while true\n"
+        "        box.value = flag ? -1 as UInt32 : 4 as UInt32\n"
         "        break\n"
         "    box.value\n"
     );
@@ -6689,9 +6755,11 @@ auto main() -> int {
     test_reject_negative_uint32_switch_record_field_assignment();
     test_reject_negative_uint32_if_array_element_assignment();
     test_emit_negative_int32_while_record_field_assignment_return();
+    test_emit_negative_int32_ternary_while_record_field_assignment_return();
     test_emit_negative_int32_for_array_element_assignment_return();
     test_emit_negative_int32_repeat_record_field_assignment_return();
     test_reject_negative_uint32_while_record_field_assignment();
+    test_reject_negative_uint32_ternary_while_record_field_assignment();
     test_reject_negative_uint32_for_array_element_assignment();
     test_reject_negative_uint32_repeat_record_field_assignment();
     test_emit_negative_int32_guard_record_field_assignment_return();
