@@ -5338,7 +5338,7 @@ void test_emit_generic_record_for_item_field_return() {
     assert_returns_lowered_tmp(result);
 }
 
-void test_reject_bare_generic_record_array_literal_for_item_field_return() {
+void test_emit_bare_generic_record_array_literal_for_item_field_return() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_bare_generic_record_array_literal_for_item_field.or";
     auto result = lower_source(
@@ -5355,13 +5355,15 @@ void test_reject_bare_generic_record_array_literal_for_item_field_return() {
         "    total\n"
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message.find(
-            "lowering array-literal for statements requires an explicit Array<T, N> source type"
-        ) != std::string::npos
-    );
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 7, 0");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 9, 0");
+    assert_ir_contains(result, "%item.addr = alloca %record.Box_UInt32_");
+    assert_ir_contains(result, "store %record.Box_UInt32_ %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %item.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_returns_lowered_tmp(result);
 }
 
 void test_emit_generic_record_receiver_field_return() {
@@ -9295,7 +9297,7 @@ auto main() -> int {
     test_emit_generic_record_guard_early_return_field_return();
     test_emit_generic_record_array_defer_early_return_field_return();
     test_emit_generic_record_for_item_field_return();
-    test_reject_bare_generic_record_array_literal_for_item_field_return();
+    test_emit_bare_generic_record_array_literal_for_item_field_return();
     test_emit_generic_record_receiver_field_return();
     test_emit_generic_record_method_parameter_field_return();
     test_emit_generic_record_array_method_parameter_field_return();

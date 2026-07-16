@@ -259,9 +259,8 @@ analysis, and lowering components.
   return paths, and guard/defer early-return paths, concrete generic receiver methods, method parameters, and method
   returns, pointer-backed unsafe field/index reads and writes, plus mutable-local field assignment through the existing
   aggregate assignment path and concrete generic fixed-array `for` item field reads while broader generic aggregate
-  interactions remain follow-up work. Bare inline generic-record constructor array literals in `for` iterables remain
-  a pinned explicit-context gap because the current lowering context only synthesizes concrete generic record layouts
-  from source type mentions.
+  interactions remain follow-up work. Bare inline generic-record constructor array literals in `for` iterables can now
+  synthesize concrete generic record layouts when constructor arguments prove every generic parameter.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
   Read-only aggregate addressable binding setup is shared through a lowering helper so parameters, immutable aggregate

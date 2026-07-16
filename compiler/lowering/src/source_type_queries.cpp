@@ -235,6 +235,50 @@ auto find_record_field(
     return nullptr;
 }
 
+auto source_type_name_for_record_constructor(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::call || expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto inferred = std::optional<std::string> {};
+    auto generic_prefix = expression.left->text + "<";
+    for (auto const& [record_name, layout] : context.records) {
+        if (!record_name.starts_with(generic_prefix) || layout.fields.size() != expression.arguments.size()) {
+            continue;
+        }
+
+        auto matches = true;
+        for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+            auto argument_type = source_type_name_for_expression(expression.arguments[index], context, state);
+            if (!argument_type.has_value() || *argument_type != layout.fields[index].source_type_name) {
+                matches = false;
+                break;
+            }
+        }
+        if (!matches) {
+            continue;
+        }
+        if (inferred.has_value()) {
+            return std::nullopt;
+        }
+        inferred = record_name;
+    }
+    if (inferred.has_value()) {
+        return inferred;
+    }
+
+    auto exact_record = context.records.find(expression.left->text);
+    if (exact_record != context.records.end()) {
+        return expression.left->text;
+    }
+    return std::nullopt;
+}
+
 auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context
@@ -434,8 +478,8 @@ auto source_type_name_for_expression(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
-        if (context.records.contains(expression.left->text)) {
-            return expression.left->text;
+        if (auto constructor_type = source_type_name_for_record_constructor(expression, context, state)) {
+            return constructor_type;
         }
 
         auto function = context.functions.find(expression.left->text);

@@ -453,6 +453,13 @@ auto inferred_expression_type(
 
     if (expression.kind == syntax::ExpressionKind::call && expression.left != nullptr &&
         expression.left->kind == syntax::ExpressionKind::name) {
+        if (auto source_type = source_type_name_for_expression(expression, context, state)) {
+            auto lowered_source_type = lowered_type_for_source_type_name(*source_type, context.lowering);
+            if (lowered_source_type.has_value()) {
+                return lowered_source_type;
+            }
+        }
+
         auto record = context.lowering.records.find(expression.left->text);
         if (record != context.lowering.records.end()) {
             return LoweredType {

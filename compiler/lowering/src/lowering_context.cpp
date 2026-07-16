@@ -48,6 +48,199 @@ auto substitute_type(
     return substituted;
 }
 
+auto parse_source_type_name(std::string_view type_name) -> syntax::TypeSyntax {
+    auto depth = std::size_t {0};
+    auto generic_start = std::optional<std::size_t> {};
+    for (auto index = std::size_t {0}; index < type_name.size(); ++index) {
+        auto const character = type_name[index];
+        if (character == '<') {
+            if (depth == 0 && !generic_start.has_value()) {
+                generic_start = index;
+            }
+            ++depth;
+            continue;
+        }
+        if (character == '>' && depth > 0) {
+            --depth;
+        }
+    }
+    if (!generic_start.has_value() || !type_name.ends_with(">")) {
+        return syntax::TypeSyntax {.name = std::string {type_name}};
+    }
+
+    auto parsed = syntax::TypeSyntax {
+        .name = std::string {type_name.substr(0, *generic_start)},
+    };
+    auto argument_start = *generic_start + 1;
+    depth = 0;
+    for (auto index = argument_start; index + 1 < type_name.size(); ++index) {
+        auto const character = type_name[index];
+        if (character == '<') {
+            ++depth;
+            continue;
+        }
+        if (character == '>' && depth > 0) {
+            --depth;
+            continue;
+        }
+        if (character == ',' && depth == 0) {
+            auto argument = type_name.substr(argument_start, index - argument_start);
+            while (!argument.empty() && argument.front() == ' ') {
+                argument.remove_prefix(1);
+            }
+            while (!argument.empty() && argument.back() == ' ') {
+                argument.remove_suffix(1);
+            }
+            parsed.generic_arguments.push_back(parse_source_type_name(argument));
+            argument_start = index + 1;
+        }
+    }
+
+    auto argument = type_name.substr(argument_start, type_name.size() - argument_start - 1);
+    while (!argument.empty() && argument.front() == ' ') {
+        argument.remove_prefix(1);
+    }
+    while (!argument.empty() && argument.back() == ' ') {
+        argument.remove_suffix(1);
+    }
+    if (!argument.empty()) {
+        parsed.generic_arguments.push_back(parse_source_type_name(argument));
+    }
+    return parsed;
+}
+
+auto generic_parameter_set(syntax::RecordSyntax const& record) -> std::unordered_set<std::string> {
+    auto parameters = std::unordered_set<std::string> {};
+    for (auto const& parameter : record.generic_parameters) {
+        parameters.insert(parameter);
+    }
+    return parameters;
+}
+
+auto unify_constructor_type(
+    syntax::TypeSyntax const& pattern,
+    syntax::TypeSyntax const& actual,
+    std::unordered_set<std::string> const& generic_parameters,
+    std::unordered_map<std::string, syntax::TypeSyntax>& substitutions
+) -> bool {
+    if (pattern.generic_arguments.empty() && generic_parameters.contains(pattern.name)) {
+        auto existing = substitutions.find(pattern.name);
+        if (existing == substitutions.end()) {
+            substitutions.emplace(pattern.name, actual);
+            return true;
+        }
+        return render_source_type_name(existing->second) == render_source_type_name(actual);
+    }
+
+    if (pattern.name != actual.name || pattern.generic_arguments.size() != actual.generic_arguments.size()) {
+        return false;
+    }
+    for (auto index = std::size_t {0}; index < pattern.generic_arguments.size(); ++index) {
+        if (!unify_constructor_type(
+                pattern.generic_arguments[index],
+                actual.generic_arguments[index],
+                generic_parameters,
+                substitutions
+            )) {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto infer_constructor_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
+) -> std::optional<syntax::TypeSyntax>;
+
+auto infer_constructor_argument_type(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
+) -> std::optional<syntax::TypeSyntax> {
+    if (expression.kind == syntax::ExpressionKind::cast && !expression.text.empty()) {
+        return parse_source_type_name(expression.text);
+    }
+    if (expression.kind == syntax::ExpressionKind::call) {
+        return infer_constructor_expression_type(expression, generic_records);
+    }
+    if (expression.kind == syntax::ExpressionKind::array_literal && !expression.arguments.empty()) {
+        auto element_type = infer_constructor_argument_type(expression.arguments.front(), generic_records);
+        if (!element_type.has_value()) {
+            return std::nullopt;
+        }
+        for (auto index = std::size_t {1}; index < expression.arguments.size(); ++index) {
+            auto next_element_type = infer_constructor_argument_type(expression.arguments[index], generic_records);
+            if (!next_element_type.has_value() ||
+                render_source_type_name(*next_element_type) != render_source_type_name(*element_type)) {
+                return std::nullopt;
+            }
+        }
+        return syntax::TypeSyntax {
+            .name = "Array",
+            .generic_arguments = {
+                *element_type,
+                syntax::TypeSyntax {.name = std::to_string(expression.arguments.size())},
+            },
+        };
+    }
+    return std::nullopt;
+}
+
+auto infer_constructor_expression_type(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
+) -> std::optional<syntax::TypeSyntax> {
+    if (expression.kind != syntax::ExpressionKind::call || expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto record = generic_records.find(expression.left->text);
+    if (record == generic_records.end() || record->second->fields.size() != expression.arguments.size()) {
+        return std::nullopt;
+    }
+
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    auto parameters = generic_parameter_set(*record->second);
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto argument_type = infer_constructor_argument_type(expression.arguments[index], generic_records);
+        if (!argument_type.has_value() ||
+            !unify_constructor_type(
+                record->second->fields[index].type,
+                *argument_type,
+                parameters,
+                substitutions
+            )) {
+            return std::nullopt;
+        }
+    }
+
+    auto concrete_type = syntax::TypeSyntax {.name = record->second->name};
+    concrete_type.generic_arguments.reserve(record->second->generic_parameters.size());
+    for (auto const& parameter : record->second->generic_parameters) {
+        auto substitution = substitutions.find(parameter);
+        if (substitution == substitutions.end()) {
+            return std::nullopt;
+        }
+        concrete_type.generic_arguments.push_back(substitution->second);
+    }
+    return concrete_type;
+}
+
+void collect_expression_type_instantiations(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::TypeSyntax>& pending,
+    std::unordered_set<std::string>& seen
+);
+
+void collect_statement_type_instantiations(
+    syntax::StatementSyntax const& statement,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::TypeSyntax>& pending,
+    std::unordered_set<std::string>& seen
+);
+
 void collect_type_instantiations(
     syntax::TypeSyntax const& type,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
@@ -70,6 +263,35 @@ void collect_type_instantiations(
     }
 }
 
+void collect_expression_type_instantiations(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::vector<syntax::TypeSyntax>& pending,
+    std::unordered_set<std::string>& seen
+) {
+    if (auto inferred_type = infer_constructor_expression_type(expression, generic_records)) {
+        collect_type_instantiations(*inferred_type, generic_records, pending, seen);
+    }
+
+    for (auto const& argument : expression.arguments) {
+        collect_expression_type_instantiations(argument, generic_records, pending, seen);
+    }
+    if (expression.left != nullptr) {
+        collect_expression_type_instantiations(*expression.left, generic_records, pending, seen);
+    }
+    if (expression.right != nullptr) {
+        collect_expression_type_instantiations(*expression.right, generic_records, pending, seen);
+    }
+    if (expression.alternate != nullptr) {
+        collect_expression_type_instantiations(*expression.alternate, generic_records, pending, seen);
+    }
+    for (auto const& statement : expression.nested_statements) {
+        if (statement != nullptr) {
+            collect_statement_type_instantiations(*statement, generic_records, pending, seen);
+        }
+    }
+}
+
 void collect_statement_type_instantiations(
     syntax::StatementSyntax const& statement,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
@@ -79,6 +301,8 @@ void collect_statement_type_instantiations(
     if (!statement.annotated_type.name.empty()) {
         collect_type_instantiations(statement.annotated_type, generic_records, pending, seen);
     }
+    collect_expression_type_instantiations(statement.assignment_target, generic_records, pending, seen);
+    collect_expression_type_instantiations(statement.expression, generic_records, pending, seen);
     for (auto const& nested_statement : statement.nested_statements) {
         collect_statement_type_instantiations(nested_statement, generic_records, pending, seen);
     }
@@ -86,6 +310,7 @@ void collect_statement_type_instantiations(
         collect_statement_type_instantiations(alternate_statement, generic_records, pending, seen);
     }
     for (auto const& switch_case : statement.switch_cases) {
+        collect_expression_type_instantiations(switch_case.pattern, generic_records, pending, seen);
         for (auto const& case_statement : switch_case.statements) {
             if (case_statement != nullptr) {
                 collect_statement_type_instantiations(*case_statement, generic_records, pending, seen);

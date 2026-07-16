@@ -209,13 +209,22 @@ auto lower_array_literal_for_statement(
         emit_llvm_block_label(output, block_plan.iteration_blocks[index]);
         session.state.current_block = block_plan.iteration_blocks[index];
 
+        auto expected_source_type_name = source_type_name_for_expression(
+            statement.expression.arguments[index],
+            context.lowering,
+            session.state
+        );
+        auto expected_source_type = expected_source_type_name.has_value()
+            ? std::optional<std::string_view> {*expected_source_type_name}
+            : std::optional<std::string_view> {};
         auto lowered_item = lower_expression(
             statement.expression.arguments[index],
             element_type->type,
             element_type->signedness,
             context,
             session,
-            output
+            output,
+            expected_source_type
         );
         if (!lowered_item.has_value()) {
             diagnostics.error(
