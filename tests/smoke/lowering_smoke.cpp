@@ -5046,6 +5046,134 @@ void test_emit_generic_record_array_function_return_field_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_generic_record_final_if_function_return_field_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_generic_record_final_if_function_return_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "function choose_box(flag: Bool) -> Box<UInt32>\n"
+        "    if flag\n"
+        "        Box(7 as UInt32)\n"
+        "    else\n"
+        "        Box(9 as UInt32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    choose_box(true).value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "define %record.Box_UInt32_ @choose_box(i1 %flag)");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 7, 0");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 9, 0");
+    assert_ir_contains(result, " = phi %record.Box_UInt32_ [%tmp");
+    assert_ir_contains(result, " = call %record.Box_UInt32_ @choose_box(i1 1)");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
+void test_emit_generic_record_final_switch_function_return_field_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_generic_record_final_switch_function_return_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "function choose_box(flag: Bool) -> Box<UInt32>\n"
+        "    switch flag\n"
+        "        true => Box(7 as UInt32)\n"
+        "        default => Box(9 as UInt32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    choose_box(true).value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "define %record.Box_UInt32_ @choose_box(i1 %flag)");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 7, 0");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 9, 0");
+    assert_ir_contains(result, " = phi %record.Box_UInt32_ [%tmp");
+    assert_ir_contains(result, " = call %record.Box_UInt32_ @choose_box(i1 1)");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
+void test_emit_generic_record_array_final_if_function_return_field_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_generic_record_array_final_if_function_return_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "function choose_boxes(flag: Bool) -> Array<Box<UInt32>, 2>\n"
+        "    if flag\n"
+        "        [Box(7 as UInt32), Box(9 as UInt32)]\n"
+        "    else\n"
+        "        [Box(11 as UInt32), Box(13 as UInt32)]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    choose_boxes(true)[0].value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "define [2 x %record.Box_UInt32_] @choose_boxes(i1 %flag)");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 7, 0");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 13, 0");
+    assert_ir_contains(result, " = phi [2 x %record.Box_UInt32_] [%tmp");
+    assert_ir_contains(result, " = call [2 x %record.Box_UInt32_] @choose_boxes(i1 1)");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Box_UInt32_], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
+void test_emit_generic_record_array_final_switch_function_return_field_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_generic_record_array_final_switch_function_return_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "function choose_boxes(flag: Bool) -> Array<Box<UInt32>, 2>\n"
+        "    switch flag\n"
+        "        true => [Box(7 as UInt32), Box(9 as UInt32)]\n"
+        "        default => [Box(11 as UInt32), Box(13 as UInt32)]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    choose_boxes(true)[0].value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Box_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "define [2 x %record.Box_UInt32_] @choose_boxes(i1 %flag)");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 7, 0");
+    assert_ir_contains(result, " = insertvalue %record.Box_UInt32_ undef, i32 13, 0");
+    assert_ir_contains(result, " = phi [2 x %record.Box_UInt32_] [%tmp");
+    assert_ir_contains(result, " = call [2 x %record.Box_UInt32_] @choose_boxes(i1 1)");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Box_UInt32_], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Box_UInt32_, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_receiver_field_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_generic_record_receiver_field.or";
     auto result = lower_source(
@@ -8896,6 +9024,10 @@ auto main() -> int {
     test_emit_generic_record_array_parameter_field_return();
     test_emit_generic_record_function_return_field_return();
     test_emit_generic_record_array_function_return_field_return();
+    test_emit_generic_record_final_if_function_return_field_return();
+    test_emit_generic_record_final_switch_function_return_field_return();
+    test_emit_generic_record_array_final_if_function_return_field_return();
+    test_emit_generic_record_array_final_switch_function_return_field_return();
     test_emit_generic_record_receiver_field_return();
     test_emit_generic_record_method_parameter_field_return();
     test_emit_generic_record_array_method_parameter_field_return();

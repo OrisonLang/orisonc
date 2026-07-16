@@ -28,14 +28,18 @@ This file tracks which source-language frontend slices are reflected in the curr
 - lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
   non-generic record/fixed-array subset plus the first concrete and nested generic record
   constructor/field-read/mutable-field assignment slice plus immutable and mutable fixed arrays of concrete generic
-  records, generic-record aggregate parameter/return reads, concrete generic receiver field reads, and generic-record
-  method parameter/return reads, broader generic aggregate construction coverage, aggregate
+  records, generic-record aggregate parameter/return reads including final `if`/`switch` return merges, concrete
+  generic receiver field reads, and generic-record method parameter/return reads, broader generic aggregate
+  construction coverage, aggregate
   assignment beyond the currently supported mutable-local and pointer-backed record/fixed-array field and index
   targets, and iterable lowering beyond the current fixed-array forms toward future dynamic arrays, views, and
   standard-library iterator abstractions
 
 ## Latest update
 
+- 2026-07-15: concrete generic record aggregates now cross final control-flow return merges in lowering smoke
+  coverage: callers read fields from final `if` and final `switch` functions returning `Box<UInt32>` and
+  `Array<Box<UInt32>, 2>`.
 - 2026-07-15: concrete generic record aggregates now cross plain function return boundaries in lowering smoke
   coverage: callers read fields from functions returning `Box<UInt32>` and `Array<Box<UInt32>, 2>` through the
   existing temporary aggregate spill/read path.
