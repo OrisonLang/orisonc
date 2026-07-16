@@ -8695,6 +8695,14 @@ void test_emit_raw_mmio_intrinsics() {
         "    let pointer = Pointer(address_of(log.entries[index].status))\n"
         "    raw_write(pointer, value)\n"
         "\n"
+        "unsafe function assign_box_value_pointer(box: Pointer<Box<UInt32>>, value: UInt32) -> Unit\n"
+        "    box.value = value\n"
+        "    return\n"
+        "\n"
+        "unsafe function assign_generic_entry_value_pointer(log: Pointer<GenericLog>, index: UInt64, value: UInt32) -> Unit\n"
+        "    log.entries[index].value = value\n"
+        "    return\n"
+        "\n"
         "unsafe function volatile_read_entry_status_pointer(log: Pointer<Log>, index: UInt64) -> UInt32\n"
         "    let pointer = Pointer(address_of(log.entries[index].status))\n"
         "    volatile_read(pointer)\n"
@@ -8871,6 +8879,30 @@ void test_emit_raw_mmio_intrinsics() {
         std::string::npos
     );
     assert(result.ir_text.find("store i32 %value, ptr") != std::string::npos);
+    assert(
+        result.ir_text.find("define void @assign_box_value_pointer(ptr %box, i32 %value)") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.Box_UInt32_, ptr %box, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("define void @assign_generic_entry_value_pointer(ptr %log, i64 %index, i32 %value)") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.GenericLog, ptr %log, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr [2 x %record.Box_UInt32_], ptr %tmp") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.Box_UInt32_, ptr %tmp") !=
+        std::string::npos
+    );
     assert(
         result.ir_text.find("define i32 @volatile_read_entry_status_pointer(ptr %log, i64 %index)") !=
         std::string::npos

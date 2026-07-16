@@ -30,13 +30,16 @@ This file tracks which source-language frontend slices are reflected in the curr
   constructor/field-read/mutable-field assignment slice plus immutable and mutable fixed arrays of concrete generic
   records, generic-record aggregate parameter/return reads including final `if`/`switch`, loop-built, and guard/defer
   early-return paths, concrete generic receiver field reads, and generic-record method parameter/return reads, broader
-  generic aggregate construction coverage, generic pointer-backed field/index reads, aggregate
+  generic aggregate construction coverage, generic pointer-backed field/index reads and writes, aggregate
   assignment beyond the currently supported mutable-local and pointer-backed record/fixed-array field and index
   targets, and iterable lowering beyond the current fixed-array forms toward future dynamic arrays, views, and
   standard-library iterator abstractions
 
 ## Latest update
 
+- 2026-07-15: concrete generic record aggregates now participate in pointer-backed unsafe writes in lowering smoke
+  coverage: `Pointer<Box<UInt32>>.value = value` and `Pointer<GenericLog>.entries[index].value = value` lower through
+  the same direct pointer-backed assignment path as non-generic aggregates.
 - 2026-07-15: concrete generic record aggregates now participate in pointer-backed unsafe reads in lowering smoke
   coverage: `Pointer<Box<UInt32>>.value` and `Pointer<GenericLog>.entries[index].value` lower through
   `address_of(...)`, `Pointer(...)`, and `raw_read(...)`.
