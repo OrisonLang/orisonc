@@ -33,10 +33,14 @@ This file tracks which source-language frontend slices are reflected in the curr
   generic aggregate construction coverage, generic pointer-backed field/index reads and writes, aggregate
   assignment beyond the currently supported mutable-local and pointer-backed record/fixed-array field and index
   targets, concrete generic fixed-array `for` item field reads, and iterable lowering beyond the current fixed-array
-  forms toward future dynamic arrays, views, and standard-library iterator abstractions
+  forms, including bare inline generic-record constructor array literals without explicit `Array<T, N>` context,
+  toward future dynamic arrays, views, and standard-library iterator abstractions
 
 ## Latest update
 
+- 2026-07-16: bare inline generic-record constructor array literals in `for` iterables are now pinned as an explicit
+  diagnostic gap: `[Box(...), Box(...)]` still requires an explicit `Array<Box<UInt32>, N>` binding or cast before
+  loop item field reads can lower.
 - 2026-07-15: concrete generic record aggregates now participate in fixed-array `for` item reads in lowering smoke
   coverage: iterating `Array<Box<UInt32>, 2>` makes each `item` addressable so `item.value` lowers inside the loop body.
 - 2026-07-15: concrete generic record aggregates now participate in pointer-backed unsafe writes in lowering smoke
