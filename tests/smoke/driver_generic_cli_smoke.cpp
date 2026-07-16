@@ -147,6 +147,26 @@ auto generic_same_record_lines(
     return lines;
 }
 
+auto generic_same_record_for_lines() -> std::vector<std::string> {
+    return {
+        "package demo.cli",
+        "record Header",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        "record OtherHeader",
+        "    magic: Array<UInt32, 2>",
+        "    version: UInt16",
+        "record Same<T>",
+        "    first: T",
+        "    second: T",
+        "function demo() -> UInt16",
+        "    var total: UInt16 = 0 as UInt16",
+        "    for item in [Same(Header([1, 2], 1), OtherHeader([1, 2], 1))]",
+        "        total = total + item.first.version",
+        "    total",
+    };
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -183,6 +203,12 @@ auto main() -> int {
                 "    return same.first.version",
             }
         ),
+        "record constructor field 'second' type 'OtherHeader' does not match expected field type 'Header'"
+    );
+    assert_cli_parse_failure(
+        executable,
+        smoke_temp_root / "orison_cli_generic_record_array_literal_for_repeated_field_type.or",
+        generic_same_record_for_lines(),
         "record constructor field 'second' type 'OtherHeader' does not match expected field type 'Header'"
     );
     assert_cli_parse_success(

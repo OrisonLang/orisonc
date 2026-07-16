@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-16: CLI generic diagnostics now pin safe refusal for inline generic-record constructor array literal `for`
+  iterables when repeated generic field bindings conflict, preventing the lowering path from treating an unprovable
+  constructor instantiation as concrete.
 - 2026-07-16: checked-in CLI coverage now pins bare inline generic-record constructor array literal `for` iterables
   across LLVM emission, object emission, direct `run`, and retained `--build` using
   `examples/local_generic_record_array_literal_for.or`.
