@@ -260,7 +260,9 @@ analysis, and lowering components.
   returns, pointer-backed unsafe field/index reads and writes, plus mutable-local field assignment through the existing
   aggregate assignment path and concrete generic fixed-array `for` item field reads while broader generic aggregate
   interactions remain follow-up work. Bare inline generic-record constructor array literals in `for` iterables can now
-  synthesize concrete generic record layouts when constructor arguments prove every generic parameter.
+  synthesize concrete generic record layouts when constructor arguments prove every generic parameter; uninstantiated
+  generic record templates are not exposed as lowerable record layouts, so underconstrained constructors must fail
+  instead of falling back to a template-shaped `%record.Name` layout.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
   Read-only aggregate addressable binding setup is shared through a lowering helper so parameters, immutable aggregate

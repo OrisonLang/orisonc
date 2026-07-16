@@ -5366,6 +5366,32 @@ void test_emit_bare_generic_record_array_literal_for_item_field_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_reject_underconstrained_generic_record_array_literal_for_item_field_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_underconstrained_generic_record_array_literal_for_item_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var total: UInt32 = 0 as UInt32\n"
+        "    for item in [Tag(7 as UInt32), Tag(9 as UInt32)]\n"
+        "        total = item.code\n"
+        "    total\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message.find(
+            "lowering array-literal for statements requires an explicit Array<T, N> source type"
+        ) != std::string::npos
+    );
+}
+
 void test_emit_generic_record_receiver_field_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_generic_record_receiver_field.or";
     auto result = lower_source(
@@ -9298,6 +9324,7 @@ auto main() -> int {
     test_emit_generic_record_array_defer_early_return_field_return();
     test_emit_generic_record_for_item_field_return();
     test_emit_bare_generic_record_array_literal_for_item_field_return();
+    test_reject_underconstrained_generic_record_array_literal_for_item_field_return();
     test_emit_generic_record_receiver_field_return();
     test_emit_generic_record_method_parameter_field_return();
     test_emit_generic_record_array_method_parameter_field_return();

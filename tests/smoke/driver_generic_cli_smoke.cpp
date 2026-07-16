@@ -80,6 +80,20 @@ void assert_cli_parse_success(
     assert(output.find("parsed ") != std::string::npos);
 }
 
+template <typename SourceLines>
+void assert_cli_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    SourceLines const& lines,
+    std::string_view expected_message
+) {
+    write_lines(path, lines);
+
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+}
+
 auto generic_pair_consumer_lines(
     std::initializer_list<std::string_view> body_lines
 ) -> std::vector<std::string> {
@@ -167,6 +181,19 @@ auto generic_same_record_for_lines() -> std::vector<std::string> {
     };
 }
 
+auto underconstrained_generic_record_for_lines() -> std::vector<std::string> {
+    return {
+        "package demo.cli",
+        "record Tag<T>",
+        "    code: UInt32",
+        "function main() -> UInt32",
+        "    var total: UInt32 = 0 as UInt32",
+        "    for item in [Tag(7 as UInt32), Tag(9 as UInt32)]",
+        "        total = total + item.code",
+        "    total",
+    };
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -210,6 +237,12 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_generic_record_array_literal_for_repeated_field_type.or",
         generic_same_record_for_lines(),
         "record constructor field 'second' type 'OtherHeader' does not match expected field type 'Header'"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        smoke_temp_root / "orison_cli_underconstrained_generic_record_array_literal_for_emit.or",
+        underconstrained_generic_record_for_lines(),
+        "lowering array-literal for statements requires an explicit Array<T, N> source type"
     );
     assert_cli_parse_success(
         executable,

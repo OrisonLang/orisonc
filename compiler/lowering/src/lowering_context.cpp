@@ -743,10 +743,11 @@ auto build_lowering_context(
     auto record_names = std::unordered_set<std::string> {};
     auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
     for (auto const& record : module.records) {
-        record_names.insert(record.name);
         if (!record.generic_parameters.empty()) {
             generic_records.emplace(record.name, &record);
+            continue;
         }
+        record_names.insert(record.name);
     }
     auto instantiated_record_types = collect_generic_record_instantiations(module, generic_records);
     for (auto const& type : instantiated_record_types) {
@@ -756,6 +757,9 @@ auto build_lowering_context(
         context.choices.emplace(choice.name, collect_choice_layout(choice, record_names));
     }
     for (auto const& record : module.records) {
+        if (!record.generic_parameters.empty()) {
+            continue;
+        }
         context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
     }
     for (auto const& type : instantiated_record_types) {

@@ -251,7 +251,7 @@ int main() {
     auto context = orison::lowering::build_lowering_context(module, diagnostics);
     assert(!diagnostics.has_errors());
     assert(context.functions.size() == 4);
-    assert(context.records.size() == 10);
+    assert(context.records.size() == 9);
     assert(context.choices.size() == 3);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
@@ -304,13 +304,7 @@ int main() {
     assert(user_layout.fields[0].source_type_name == "Maybe<Profile>");
     assert(user_layout.fields[0].llvm_type == "{ i1, %record.Profile }");
     assert(user_layout.fields[0].index == 0);
-    assert(context.records.contains("Box"));
-    auto const& box_template_layout = context.records.at("Box");
-    assert(box_template_layout.llvm_type_name == "%record.Box");
-    assert(box_template_layout.fields.size() == 1);
-    assert(box_template_layout.fields[0].name == "value");
-    assert(box_template_layout.fields[0].source_type_name == "T");
-    assert(box_template_layout.fields[0].llvm_type.empty());
+    assert(!context.records.contains("Box"));
     assert(context.records.contains("Box<UInt32>"));
     auto const& box_uint32_layout = context.records.at("Box<UInt32>");
     assert(box_uint32_layout.llvm_type_name == "%record.Box_UInt32_");

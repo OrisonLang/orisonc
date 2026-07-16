@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-16: lowering context no longer exposes uninstantiated generic record templates as lowerable record layouts;
+  underconstrained generic record constructor array literal `for` iterables now fail instead of falling back to a
+  template-shaped `%record.Name` layout.
 - 2026-07-16: CLI generic diagnostics now pin safe refusal for inline generic-record constructor array literal `for`
   iterables when repeated generic field bindings conflict, preventing the lowering path from treating an unprovable
   constructor instantiation as concrete.
