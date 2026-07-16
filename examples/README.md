@@ -52,6 +52,7 @@
 `local_ternary_array_for.or` demonstrates fixed-array iteration over a ternary-selected array.
 `local_ternary_array_literal_for.or` demonstrates fixed-array iteration over ternary-selected array literals.
 `local_ternary_record_array_literal_for.or` demonstrates fixed-array iteration over ternary-selected record array literals.
+`local_generic_record_array_literal_for.or` demonstrates fixed-array iteration over inline generic-record constructor array literals.
 `local_helper_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a helper function.
 `local_method_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a method.
 `local_record_method_array_for.or` demonstrates non-literal fixed-array iteration over an array returned by a record method.
@@ -126,6 +127,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_ternary_array_for.or` | ternary-selected fixed-array iteration | backend |
 | `local_ternary_array_literal_for.or` | ternary-selected fixed-array literal iteration | backend |
 | `local_ternary_record_array_literal_for.or` | ternary-selected record array literal iteration | backend |
+| `local_generic_record_array_literal_for.or` | inline generic-record constructor array literal iteration | backend |
 | `local_helper_array_for.or` | helper-returned fixed-array iteration | backend |
 | `local_method_array_for.or` | method-returned fixed-array iteration | backend |
 | `local_record_method_array_for.or` | record-method-returned fixed-array iteration | backend |
@@ -558,6 +560,14 @@ build/tools/orisonc/orisonc run examples/local_record_index_field_for.or
 ```
 
 It returns `0` after lowering a `for` loop over a fixed-size array reached through an indexed record field.
+
+Run the inline generic-record constructor array literal `for` demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_generic_record_array_literal_for.or
+```
+
+It returns `0` after lowering a `for` loop over an inline fixed-size array of `Box<UInt32>` constructor values.
 
 Run the helper-returned array `for` demo with:
 

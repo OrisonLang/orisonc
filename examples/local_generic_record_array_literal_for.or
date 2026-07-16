@@ -1,0 +1,10 @@
+package examples.collections
+
+record Box<T>
+    value: T
+
+function main() -> UInt32
+    var total = 0 as UInt32
+    for item in [Box(7 as UInt32), Box(9 as UInt32)]
+        total = total + item.value
+    total - 16 as UInt32

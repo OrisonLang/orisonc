@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-16: checked-in CLI coverage now pins bare inline generic-record constructor array literal `for` iterables
+  across LLVM emission, object emission, direct `run`, and retained `--build` using
+  `examples/local_generic_record_array_literal_for.or`.
 - 2026-07-16: bare inline generic-record constructor array literals now participate in fixed-array `for` lowering when
   constructor arguments prove a single concrete instantiation: `[Box(7 as UInt32), Box(9 as UInt32)]` synthesizes
   `Box<UInt32>` layout metadata, makes each loop item addressable, and lowers `item.value`.
