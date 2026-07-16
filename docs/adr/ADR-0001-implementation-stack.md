@@ -258,7 +258,8 @@ analysis, and lowering components.
   aggregate locals, plain function parameters and returns including final `if`/`switch` return merges, loop-built
   return paths, and guard/defer early-return paths, concrete generic receiver methods, method parameters, and method
   returns, pointer-backed unsafe field/index reads and writes, plus mutable-local field assignment through the existing
-  aggregate assignment path while broader generic aggregate interactions remain follow-up work.
+  aggregate assignment path and concrete generic fixed-array `for` item field reads while broader generic aggregate
+  interactions remain follow-up work.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
   Read-only aggregate addressable binding setup is shared through a lowering helper so parameters, immutable aggregate
