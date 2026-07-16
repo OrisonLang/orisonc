@@ -8611,6 +8611,12 @@ void test_emit_raw_mmio_intrinsics() {
         "record Matrix\n"
         "    rows: Array<Array<Byte, 4>, 2>\n"
         "\n"
+        "record Box<T>\n"
+        "    value: T\n"
+        "\n"
+        "record GenericLog\n"
+        "    entries: Array<Box<UInt32>, 2>\n"
+        "\n"
         "record Device\n"
         "    registers: UartRegisters\n"
         "    buffer: Buffer\n"
@@ -8675,6 +8681,14 @@ void test_emit_raw_mmio_intrinsics() {
         "\n"
         "unsafe function read_entry_status_pointer(log: Pointer<Log>, index: UInt64) -> UInt32\n"
         "    let pointer = Pointer(address_of(log.entries[index].status))\n"
+        "    raw_read(pointer)\n"
+        "\n"
+        "unsafe function read_box_value_pointer(box: Pointer<Box<UInt32>>) -> UInt32\n"
+        "    let pointer = Pointer(address_of(box.value))\n"
+        "    raw_read(pointer)\n"
+        "\n"
+        "unsafe function read_generic_entry_value_pointer(log: Pointer<GenericLog>, index: UInt64) -> UInt32\n"
+        "    let pointer = Pointer(address_of(log.entries[index].value))\n"
         "    raw_read(pointer)\n"
         "\n"
         "unsafe function write_entry_status_pointer(log: Pointer<Log>, index: UInt64, value: UInt32) -> Unit\n"
@@ -8771,6 +8785,8 @@ void test_emit_raw_mmio_intrinsics() {
     assert(result.ir_text.find("%record.Buffer = type { [4 x i8] }") != std::string::npos);
     assert(result.ir_text.find("%record.Log = type { [2 x %record.UartRegisters] }") != std::string::npos);
     assert(result.ir_text.find("%record.Matrix = type { [2 x [4 x i8]] }") != std::string::npos);
+    assert(result.ir_text.find("%record.GenericLog = type { [2 x %record.Box_UInt32_] }") != std::string::npos);
+    assert(result.ir_text.find("%record.Box_UInt32_ = type { i32 }") != std::string::npos);
     assert(
         result.ir_text.find("%record.Device = type { %record.UartRegisters, %record.Buffer }") !=
         std::string::npos
@@ -8826,6 +8842,30 @@ void test_emit_raw_mmio_intrinsics() {
         std::string::npos
     );
     assert(result.ir_text.find("load i32, ptr %pointer") != std::string::npos);
+    assert(
+        result.ir_text.find("define i32 @read_box_value_pointer(ptr %box)") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.Box_UInt32_, ptr %box, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("define i32 @read_generic_entry_value_pointer(ptr %log, i64 %index)") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.GenericLog, ptr %log, i32 0, i32 0") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr [2 x %record.Box_UInt32_], ptr %tmp") !=
+        std::string::npos
+    );
+    assert(
+        result.ir_text.find("getelementptr %record.Box_UInt32_, ptr %tmp") !=
+        std::string::npos
+    );
     assert(
         result.ir_text.find("define void @write_entry_status_pointer(ptr %log, i64 %index, i32 %value)") !=
         std::string::npos
