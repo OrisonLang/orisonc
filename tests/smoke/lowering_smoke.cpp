@@ -5099,6 +5099,65 @@ void test_emit_nested_generic_record_array_function_boundaries() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_nested_record_array_function_boundaries() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nested_record_array_function_boundaries.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Counter\n"
+        "    value: UInt32\n"
+        "\n"
+        "record CounterPair\n"
+        "    left: Counter\n"
+        "    right: Counter\n"
+        "\n"
+        "record CounterMatrix\n"
+        "    rows: Array<Array<Counter, 2>, 2>\n"
+        "\n"
+        "function read_pair(pair: CounterPair) -> UInt32\n"
+        "    pair.right.value\n"
+        "\n"
+        "function read_matrix(matrix: CounterMatrix) -> UInt32\n"
+        "    matrix.rows[1][0].value\n"
+        "\n"
+        "function make_pair() -> CounterPair\n"
+        "    CounterPair(Counter(5 as UInt32), Counter(8 as UInt32))\n"
+        "\n"
+        "function make_matrix() -> CounterMatrix\n"
+        "    CounterMatrix([[Counter(1 as UInt32), Counter(2 as UInt32)], [Counter(3 as UInt32), Counter(4 as UInt32)]])\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    read_pair(CounterPair(Counter(1 as UInt32), Counter(2 as UInt32))) + read_matrix(CounterMatrix([[Counter(1 as UInt32), Counter(2 as UInt32)], [Counter(3 as UInt32), Counter(4 as UInt32)]])) + make_pair().right.value + make_matrix().rows[1][0].value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Counter = type { i32 }");
+    assert_ir_contains(result, "%record.CounterPair = type { %record.Counter, %record.Counter }");
+    assert_ir_contains(result, "%record.CounterMatrix = type { [2 x [2 x %record.Counter]] }");
+    assert_ir_contains(result, "define i32 @read_pair(%record.CounterPair %pair)");
+    assert_ir_contains(result, "define i32 @read_matrix(%record.CounterMatrix %matrix)");
+    assert_ir_contains(result, "define %record.CounterPair @make_pair()");
+    assert_ir_contains(result, "define %record.CounterMatrix @make_matrix()");
+    assert_ir_contains(result, "%pair.addr = alloca %record.CounterPair");
+    assert_ir_contains(result, "store %record.CounterPair %pair, ptr %pair.addr");
+    assert_ir_contains(result, "%matrix.addr = alloca %record.CounterMatrix");
+    assert_ir_contains(result, "store %record.CounterMatrix %matrix, ptr %matrix.addr");
+    assert_ir_contains(result, " = call i32 @read_pair(%record.CounterPair %tmp");
+    assert_ir_contains(result, " = call i32 @read_matrix(%record.CounterMatrix %tmp");
+    assert_ir_contains(result, " = call %record.CounterPair @make_pair()");
+    assert_ir_contains(result, " = call %record.CounterMatrix @make_matrix()");
+    assert_ir_contains(result, " = insertvalue %record.CounterPair undef, %record.Counter %tmp");
+    assert_ir_contains(result, " = insertvalue %record.CounterMatrix undef, [2 x [2 x %record.Counter]] %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterPair, ptr %pair.addr, i32 0, i32 1");
+    assert_ir_contains(result, "getelementptr %record.Counter, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterMatrix, ptr %matrix.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Counter]], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Counter], ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_final_if_function_return_field_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_generic_record_final_if_function_return_field.or";
@@ -10256,6 +10315,7 @@ auto main() -> int {
     test_emit_generic_record_function_return_field_return();
     test_emit_generic_record_array_function_return_field_return();
     test_emit_nested_generic_record_array_function_boundaries();
+    test_emit_nested_record_array_function_boundaries();
     test_emit_generic_record_final_if_function_return_field_return();
     test_emit_generic_record_final_switch_function_return_field_return();
     test_emit_generic_record_array_final_if_function_return_field_return();
