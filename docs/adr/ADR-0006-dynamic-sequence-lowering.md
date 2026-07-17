@@ -24,6 +24,10 @@ representation.
 - Dynamic-array lowering requires a unique owning descriptor, an allocator/runtime allocation path, a proven
   `0 <= length <= capacity` descriptor invariant, and an element drop walk for initialized elements before lowered
   signatures can be enabled.
+- Dynamic-array runtime ABI entry points are finite and internal: `__orison_dynamic_array_allocate(i64, i64)`,
+  `__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)`, and
+  `__orison_dynamic_array_deallocate(ptr, i64, i64)`. The `i64` parameters are element size/capacity-style scalar
+  values chosen by lowering, not source-level variadic or spread arguments.
 - Shared/exclusive access is tracked as source-type metadata, not by inventing different LLVM pointer spellings.
 - The current fixed-array-only `for` lowering diagnostic remains valid until loop lowering consumes this model and
   emits descriptor-aware indexing and bounds.
@@ -37,10 +41,12 @@ representation.
 - Literal LLVM struct layout support sizes descriptor-shaped ABI values directly.
 - Dynamic-array drop handling remains metadata-only under ADR-0005 until ownership/drop semantics authorize production
   cleanup calls.
+- Dynamic-array runtime declarations are modeled but not emitted into modules until source-level construction,
+  ownership, and cleanup lowering consume them.
 
 ## Follow-up work
 
-- Define the allocator/runtime entry points and element cleanup lowering for `DynamicArray<T>`.
+- Implement the dynamic-array runtime entry points and element cleanup lowering.
 - Enable `DynamicArray<T>` lowered signatures only after semantic ownership/drop analysis proves unique ownership,
   initialized length, capacity bounds, and deterministic cleanup.
 - Extend `for ... in` lowering to consume dynamic sequence descriptors after descriptor ABI support is in place.

@@ -1,3 +1,4 @@
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/target_layout.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -75,6 +76,31 @@ int main() {
         orison::lowering::lowered_type_size_bytes(orison::lowering::dynamic_array_descriptor_llvm_type());
     assert(dynamic_array_descriptor_size.has_value());
     assert(*dynamic_array_descriptor_size == 24);
+
+    auto dynamic_array_allocate = orison::lowering::dynamic_array_runtime_call(
+        orison::lowering::DynamicArrayRuntimeOperation::allocate
+    );
+    assert(dynamic_array_allocate.symbol_name == "__orison_dynamic_array_allocate");
+    assert(dynamic_array_allocate.return_type == orison::lowering::dynamic_array_descriptor_llvm_type());
+    assert(dynamic_array_allocate.parameter_types == std::vector<std::string_view>({"i64", "i64"}));
+
+    auto dynamic_array_grow = orison::lowering::dynamic_array_runtime_call(
+        orison::lowering::DynamicArrayRuntimeOperation::grow
+    );
+    assert(dynamic_array_grow.symbol_name == "__orison_dynamic_array_grow");
+    assert(dynamic_array_grow.return_type == orison::lowering::dynamic_array_descriptor_llvm_type());
+    assert(dynamic_array_grow.parameter_types == std::vector<std::string_view>({
+        orison::lowering::dynamic_array_descriptor_llvm_type(),
+        "i64",
+        "i64",
+    }));
+
+    auto dynamic_array_deallocate = orison::lowering::dynamic_array_runtime_call(
+        orison::lowering::DynamicArrayRuntimeOperation::deallocate
+    );
+    assert(dynamic_array_deallocate.symbol_name == "__orison_dynamic_array_deallocate");
+    assert(dynamic_array_deallocate.return_type == "void");
+    assert(dynamic_array_deallocate.parameter_types == std::vector<std::string_view>({"ptr", "i64", "i64"}));
 
     auto nested_literal_struct_size = orison::lowering::lowered_type_size_bytes("{ i8, { ptr, i64 } }");
     assert(nested_literal_struct_size.has_value());
