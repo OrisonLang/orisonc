@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-17: concrete generic record array receiver method returns now have final-control-flow and early-return
+  coverage: `Array<Tag<UInt32>, 2>` methods lower `Tag(...)` elements through final `if`, guard failure, and
+  deferred-cleanup returns.
 - 2026-07-16: generic record constructor receiver method loop-built returns now have expected-return-context coverage:
   `while`-built and fixed-array `for`-built values return `Tag(...)` through a declared `Tag<UInt32>` method return.
 - 2026-07-16: generic record constructor receiver method early returns now have expected-return-context coverage:
