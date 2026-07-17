@@ -1,6 +1,7 @@
 #include "orison/lowering/type_lowering.hpp"
 #include "orison/lowering/target_layout.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 
 #include <cassert>
 #include <string>
@@ -64,6 +65,20 @@ int main() {
     auto padded_struct_size = orison::lowering::lowered_struct_size_bytes({"i8", "i64"});
     assert(padded_struct_size.has_value());
     assert(*padded_struct_size == 16);
+
+    auto view_descriptor_size =
+        orison::lowering::lowered_type_size_bytes(orison::lowering::view_descriptor_llvm_type());
+    assert(view_descriptor_size.has_value());
+    assert(*view_descriptor_size == 16);
+
+    auto dynamic_array_descriptor_size =
+        orison::lowering::lowered_type_size_bytes(orison::lowering::dynamic_array_descriptor_llvm_type());
+    assert(dynamic_array_descriptor_size.has_value());
+    assert(*dynamic_array_descriptor_size == 24);
+
+    auto nested_literal_struct_size = orison::lowering::lowered_type_size_bytes("{ i8, { ptr, i64 } }");
+    assert(nested_literal_struct_size.has_value());
+    assert(*nested_literal_struct_size == 24);
 
     assert(!orison::lowering::lowered_type_size_bytes("%Unknown").has_value());
 

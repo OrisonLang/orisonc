@@ -273,6 +273,7 @@ int main() {
     assert(dynamic_array_sequence->element_source_type_name == "UInt32");
     assert(dynamic_array_sequence->owns_storage);
     assert(dynamic_array_sequence->permits_element_mutation);
+    assert(orison::lowering::dynamic_array_descriptor_llvm_type() == "{ ptr, i64, i64 }");
 
     auto shared_view_sequence = orison::lowering::dynamic_sequence_source_type("shared.View<Byte>");
     assert(shared_view_sequence.has_value());
@@ -329,6 +330,7 @@ int main() {
     auto view_type = orison::lowering::llvm_type_for_source_type_name("shared.View<UInt32>", context);
     assert(view_type.has_value());
     assert(*view_type == std::string {orison::lowering::view_descriptor_llvm_type()});
+    assert(!orison::lowering::llvm_type_for_source_type_name("DynamicArray<UInt32>", context).has_value());
 
     assert(!orison::lowering::llvm_type_for_source_type_name("Maybe<Unit>", context).has_value());
 

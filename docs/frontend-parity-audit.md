@@ -42,6 +42,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-17: `View<T>`/qualified view function parameters and returns now lower through the descriptor ABI
   `{ ptr, i64 }`; view parameter indexing extracts the descriptor data pointer before element addressing, while
   length-aware bounds and dynamic `for ... in` lowering remain pending.
+- 2026-07-17: dynamic-array descriptor layout is now pinned internally as `{ ptr, i64, i64 }`, and target layout can
+  size literal LLVM structs such as view and dynamic-array descriptors. `DynamicArray<T>` lowered signatures remain
+  intentionally rejected until ownership/allocation/drop invariants are implemented.
 - 2026-07-17: refreshed pending lowering-gap wording after the nested non-generic aggregate expansion; record and
   fixed-array aggregate construction/assignment coverage is now broad enough that the remaining aggregate wording
   points to forms outside the pinned scalar, record, and fixed-array paths.

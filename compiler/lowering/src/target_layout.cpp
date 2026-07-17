@@ -69,6 +69,59 @@ auto parse_array_type(std::string_view llvm_type) -> std::optional<std::pair<std
     return std::pair {*count, inner.substr(separator + 3)};
 }
 
+auto parse_literal_struct_type(std::string_view llvm_type) -> std::optional<std::vector<std::string_view>> {
+    if (llvm_type.size() < 4 || llvm_type.front() != '{' || llvm_type.back() != '}') {
+        return std::nullopt;
+    }
+
+    auto fields = std::vector<std::string_view> {};
+    auto inner = llvm_type.substr(1, llvm_type.size() - 2);
+    auto depth = std::size_t {0};
+    auto start = std::size_t {0};
+    for (auto index = std::size_t {0}; index < inner.size(); ++index) {
+        auto const character = inner[index];
+        if (character == '{' || character == '[') {
+            ++depth;
+            continue;
+        }
+        if (character == '}' || character == ']') {
+            if (depth > 0) {
+                --depth;
+            }
+            continue;
+        }
+        if (character != ',' || depth != 0) {
+            continue;
+        }
+
+        auto field = inner.substr(start, index - start);
+        while (!field.empty() && field.front() == ' ') {
+            field.remove_prefix(1);
+        }
+        while (!field.empty() && field.back() == ' ') {
+            field.remove_suffix(1);
+        }
+        if (field.empty()) {
+            return std::nullopt;
+        }
+        fields.push_back(field);
+        start = index + 1;
+    }
+
+    auto field = inner.substr(start);
+    while (!field.empty() && field.front() == ' ') {
+        field.remove_prefix(1);
+    }
+    while (!field.empty() && field.back() == ' ') {
+        field.remove_suffix(1);
+    }
+    if (field.empty()) {
+        return std::nullopt;
+    }
+    fields.push_back(field);
+    return fields;
+}
+
 auto record_layout_for(
     std::string_view llvm_type,
     LoweringContext const* context
@@ -147,6 +200,9 @@ auto lowered_type_layout(
             .size_bytes = element->size_bytes * array->first,
             .alignment_bytes = element->alignment_bytes,
         };
+    }
+    if (auto literal_struct = parse_literal_struct_type(llvm_type); literal_struct.has_value()) {
+        return lowered_struct_layout(*literal_struct, layout, context, active_records);
     }
     if (auto const* record = record_layout_for(llvm_type, context); record != nullptr) {
         if (std::find(active_records.begin(), active_records.end(), llvm_type) != active_records.end()) {

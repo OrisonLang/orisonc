@@ -15,10 +15,12 @@ representation.
 - Lowering classifies `DynamicArray<T>` and `View<T>`-shaped source types as dynamic sequences before emitters decide
   whether a use site is currently supported.
 - `DynamicArray<T>` is the owned contiguous dynamic sequence form. Its target ABI model is a descriptor containing a
-  data pointer, a length, and a capacity.
+  data pointer, a length, and a capacity, represented internally as `{ ptr, i64, i64 }`.
 - `View<T>`, `shared.View<T>`, and `exclusive.View<T>` are non-owning contiguous sequence views. Their target ABI model
   is a descriptor containing a data pointer and a length.
 - View-shaped function parameters and returns lower to the descriptor ABI as `{ ptr, i64 }`.
+- Dynamic-array descriptor layout is pinned for sizing and future ABI work, but dynamic-array function signatures
+  remain rejected until allocation, ownership, and drop invariants are implemented.
 - Shared/exclusive access is tracked as source-type metadata, not by inventing different LLVM pointer spellings.
 - The current fixed-array-only `for` lowering diagnostic remains valid until loop lowering consumes this model and
   emits descriptor-aware indexing and bounds.
@@ -29,6 +31,7 @@ representation.
 - Emitters have a single query for dynamic sequence element type, ownership, and mutation capability.
 - View parameter indexing extracts the descriptor data pointer before element addressing. Length-aware bounds and
   dynamic iteration remain future work.
+- Literal LLVM struct layout support sizes descriptor-shaped ABI values directly.
 
 ## Follow-up work
 
