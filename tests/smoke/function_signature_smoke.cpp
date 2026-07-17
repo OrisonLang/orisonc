@@ -46,6 +46,26 @@ int main() {
     assert(unsupported.parameter_types.size() == 1);
     assert(unsupported.parameter_types.front().empty());
 
+    auto dynamic_array_signature = orison::lowering::lower_function_signature(
+        TypeSyntax {.name = "UInt32"},
+        {
+            ParameterSyntax {
+                .name = "values",
+                .type = TypeSyntax {
+                    .name = "DynamicArray",
+                    .generic_arguments = {TypeSyntax {.name = "UInt32"}},
+                },
+            },
+        },
+        "sum_dynamic"
+    );
+    assert(!orison::lowering::has_supported_function_signature_types(dynamic_array_signature));
+    assert(dynamic_array_signature.source_return_type_name == "UInt32");
+    assert(dynamic_array_signature.return_type == "i32");
+    assert(dynamic_array_signature.parameter_types.size() == 1);
+    assert(dynamic_array_signature.parameter_types.front().empty());
+    assert(dynamic_array_signature.parameter_source_type_names == std::vector<std::string>({"DynamicArray<UInt32>"}));
+
     auto array_return = orison::lowering::lower_function_signature(
         TypeSyntax {
             .name = "Array",

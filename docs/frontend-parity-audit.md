@@ -26,12 +26,15 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction and assignment outside the pinned
-  scalar, record, and fixed-array paths; dynamic arrays, views, and future standard-library iterator abstractions
-  beyond fixed-array `for` lowering; and production backend completeness beyond the current LLVM/object/link/run smoke
-  paths
+  scalar, record, and fixed-array paths; dynamic-array ABI/signature lowering; view and future standard-library
+  iterator abstractions beyond the current pinned fixed-array-only `for` lowering diagnostic; and production backend
+  completeness beyond the current LLVM/object/link/run smoke paths
 
 ## Latest update
 
+- 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
+  function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
+  fixed-size-array-only iterable diagnostic instead of implying view iteration support.
 - 2026-07-17: refreshed pending lowering-gap wording after the nested non-generic aggregate expansion; record and
   fixed-array aggregate construction/assignment coverage is now broad enough that the remaining aggregate wording
   points to forms outside the pinned scalar, record, and fixed-array paths.
