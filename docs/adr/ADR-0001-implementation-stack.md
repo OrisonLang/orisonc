@@ -267,10 +267,10 @@ analysis, and lowering components.
   generic record constructor lowering failures use that metadata before the ordinary function-call fallback, and
   inferred binding diagnostics preserve the same detail. Function-call argument lowering also uses declared parameter
   source types as expected constructor context, so `Tag(...)` can lower safely when passed to a `Tag<UInt32>` parameter
-  for both direct calls and receiver method calls. Receiver method return lowering carries declared generic record
-  return context through final `if`/`switch` arms, guard failure returns, deferred-cleanup returns, and loop-built
-  returns, including fixed arrays of concrete generic records across control-flow, early-return, loop-built, and nested
-  aggregate return paths.
+  for both direct calls and receiver method calls, including nested concrete generic aggregate method parameters.
+  Receiver method return lowering carries declared generic record return context through final `if`/`switch` arms,
+  guard failure returns, deferred-cleanup returns, and loop-built returns, including fixed arrays of concrete generic
+  records across control-flow, early-return, loop-built, and nested aggregate return paths.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
   Read-only aggregate addressable binding setup is shared through a lowering helper so parameters, immutable aggregate
