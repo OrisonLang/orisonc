@@ -259,8 +259,9 @@ analysis, and lowering components.
   return paths, guard/defer early-return paths, nested concrete generic aggregate parameters/returns, and nested
   concrete generic aggregate final-control, early-return, and loop-built paths, concrete generic receiver methods, method
   parameters, and method returns, pointer-backed unsafe field/index reads and writes including nested concrete generic
-  aggregate paths, plus mutable-local field assignment through the existing aggregate assignment path and concrete
-  generic fixed-array `for` item field reads while broader generic aggregate interactions remain follow-up work. Bare inline generic-record constructor array
+  aggregate paths, plus mutable-local field assignment through the existing aggregate assignment path including nested
+  concrete generic aggregate locals, and concrete generic fixed-array `for` item field reads while broader generic
+  aggregate interactions remain follow-up work. Bare inline generic-record constructor array
   literals in `for` iterables can now
   synthesize concrete generic record layouts when constructor arguments prove every generic parameter; uninstantiated
   generic record templates are not exposed as lowerable record layouts, so underconstrained constructors must fail
