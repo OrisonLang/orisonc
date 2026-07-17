@@ -6200,6 +6200,53 @@ void test_emit_nested_generic_record_array_method_return_context() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_nested_record_array_method_return_context() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_nested_record_array_method_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Counter\n"
+        "    value: UInt32\n"
+        "\n"
+        "record CounterPair\n"
+        "    left: Counter\n"
+        "    right: Counter\n"
+        "\n"
+        "record CounterMatrix\n"
+        "    rows: Array<Array<Counter, 2>, 2>\n"
+        "\n"
+        "extend UInt32\n"
+        "    function pair(this: shared This) -> CounterPair\n"
+        "        CounterPair(Counter(5 as UInt32), Counter(8 as UInt32))\n"
+        "\n"
+        "    function matrix(this: shared This) -> CounterMatrix\n"
+        "        CounterMatrix([[Counter(1 as UInt32), Counter(2 as UInt32)], [Counter(3 as UInt32), Counter(4 as UInt32)]])\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let receiver: UInt32 = 0 as UInt32\n"
+        "    receiver.pair().right.value + receiver.matrix().rows[1][0].value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Counter = type { i32 }");
+    assert_ir_contains(result, "%record.CounterPair = type { %record.Counter, %record.Counter }");
+    assert_ir_contains(result, "%record.CounterMatrix = type { [2 x [2 x %record.Counter]] }");
+    assert_defines_method(result, "%record.CounterPair", "method.UInt32.pair", "i32 %this");
+    assert_defines_method(result, "%record.CounterMatrix", "method.UInt32.matrix", "i32 %this");
+    assert_ir_contains(result, " = insertvalue %record.CounterPair undef, %record.Counter %tmp");
+    assert_ir_contains(result, " = insertvalue %record.CounterMatrix undef, [2 x [2 x %record.Counter]] %tmp");
+    assert_ir_contains(result, " = call %record.CounterPair @method.UInt32.pair(i32 %receiver)");
+    assert_ir_contains(result, " = call %record.CounterMatrix @method.UInt32.matrix(i32 %receiver)");
+    assert_ir_contains(result, " = getelementptr %record.CounterPair, ptr %tmp");
+    assert_ir_contains(result, "getelementptr %record.Counter, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterMatrix, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Counter]], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Counter], ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_receiver_field_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_generic_record_receiver_field.or";
     auto result = lower_source(
@@ -6331,6 +6378,55 @@ void test_emit_nested_generic_record_array_method_parameter_field_return() {
     assert_ir_contains(result, " = getelementptr [2 x %record.Tag_Tag_UInt32__], ptr %boxes.addr");
     assert_ir_contains(result, " = getelementptr %record.Tag_Tag_UInt32__, ptr %tmp");
     assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
+void test_emit_nested_record_array_method_parameter_field_return() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nested_record_array_method_parameter.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Counter\n"
+        "    value: UInt32\n"
+        "\n"
+        "record CounterPair\n"
+        "    left: Counter\n"
+        "    right: Counter\n"
+        "\n"
+        "record CounterMatrix\n"
+        "    rows: Array<Array<Counter, 2>, 2>\n"
+        "\n"
+        "extend UInt32\n"
+        "    function read_pair(this: shared This, pair: CounterPair) -> UInt32\n"
+        "        pair.right.value\n"
+        "\n"
+        "    function read_matrix(this: shared This, matrix: CounterMatrix) -> UInt32\n"
+        "        matrix.rows[1][0].value\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let receiver: UInt32 = 0 as UInt32\n"
+        "    receiver.read_pair(CounterPair(Counter(1 as UInt32), Counter(2 as UInt32))) + receiver.read_matrix(CounterMatrix([[Counter(1 as UInt32), Counter(2 as UInt32)], [Counter(3 as UInt32), Counter(4 as UInt32)]]))\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Counter = type { i32 }");
+    assert_ir_contains(result, "%record.CounterPair = type { %record.Counter, %record.Counter }");
+    assert_ir_contains(result, "%record.CounterMatrix = type { [2 x [2 x %record.Counter]] }");
+    assert_defines_method(result, "i32", "method.UInt32.read_pair", "i32 %this, %record.CounterPair %pair");
+    assert_defines_method(result, "i32", "method.UInt32.read_matrix", "i32 %this, %record.CounterMatrix %matrix");
+    assert_ir_contains(result, "%pair.addr = alloca %record.CounterPair");
+    assert_ir_contains(result, "store %record.CounterPair %pair, ptr %pair.addr");
+    assert_ir_contains(result, "%matrix.addr = alloca %record.CounterMatrix");
+    assert_ir_contains(result, "store %record.CounterMatrix %matrix, ptr %matrix.addr");
+    assert_ir_contains(result, " = call i32 @method.UInt32.read_pair(i32 %receiver, %record.CounterPair %tmp");
+    assert_ir_contains(result, " = call i32 @method.UInt32.read_matrix(i32 %receiver, %record.CounterMatrix %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterPair, ptr %pair.addr, i32 0, i32 1");
+    assert_ir_contains(result, "getelementptr %record.Counter, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterMatrix, ptr %matrix.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Counter]], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Counter], ptr %tmp");
     assert_returns_lowered_tmp(result);
 }
 
@@ -10343,10 +10439,12 @@ auto main() -> int {
     test_emit_generic_record_array_method_control_flow_early_return_context();
     test_emit_generic_record_array_method_loop_built_return_context();
     test_emit_nested_generic_record_array_method_return_context();
+    test_emit_nested_record_array_method_return_context();
     test_emit_generic_record_receiver_field_return();
     test_emit_generic_record_method_parameter_field_return();
     test_emit_generic_record_array_method_parameter_field_return();
     test_emit_nested_generic_record_array_method_parameter_field_return();
+    test_emit_nested_record_array_method_parameter_field_return();
     test_emit_generic_record_method_return_field_return();
     test_emit_generic_record_array_method_return_field_return();
     test_emit_negative_int32_call_argument_return();
