@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-17: nested concrete generic record array plain function boundaries now have coverage:
+  `Array<Array<Tag<UInt32>, 2>, 2>` and `Array<Tag<Tag<UInt32>>, 2>` parameters and returns lower nested
+  `Tag(...)` constructors plus caller/callee indexed field reads.
 - 2026-07-17: nested concrete generic record array receiver method parameters now have coverage:
   `Array<Array<Tag<UInt32>, 2>, 2>` and `Array<Tag<Tag<UInt32>>, 2>` parameter contexts lower nested `Tag(...)`
   arguments and address-backed callee field reads.

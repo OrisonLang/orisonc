@@ -5046,6 +5046,59 @@ void test_emit_generic_record_array_function_return_field_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_nested_generic_record_array_function_boundaries() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nested_generic_record_array_function_boundaries.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: T\n"
+        "\n"
+        "function read_nested_array(boxes: Array<Array<Tag<UInt32>, 2>, 2>) -> UInt32\n"
+        "    boxes[1][0].code\n"
+        "\n"
+        "function read_nested_record(boxes: Array<Tag<Tag<UInt32>>, 2>) -> UInt32\n"
+        "    boxes[1].code.code\n"
+        "\n"
+        "function make_nested_array() -> Array<Array<Tag<UInt32>, 2>, 2>\n"
+        "    [[Tag(1 as UInt32), Tag(2 as UInt32)], [Tag(3 as UInt32), Tag(4 as UInt32)]]\n"
+        "\n"
+        "function make_nested_record() -> Array<Tag<Tag<UInt32>>, 2>\n"
+        "    [Tag(Tag(5 as UInt32)), Tag(Tag(8 as UInt32))]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    read_nested_array([[Tag(1 as UInt32), Tag(2 as UInt32)], [Tag(3 as UInt32), Tag(4 as UInt32)]]) + read_nested_record([Tag(Tag(5 as UInt32)), Tag(Tag(8 as UInt32))]) + make_nested_array()[1][0].code + make_nested_record()[1].code.code\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "%record.Tag_Tag_UInt32__ = type { %record.Tag_UInt32_ }");
+    assert_ir_contains(result, "define i32 @read_nested_array([2 x [2 x %record.Tag_UInt32_]] %boxes)");
+    assert_ir_contains(result, "define i32 @read_nested_record([2 x %record.Tag_Tag_UInt32__] %boxes)");
+    assert_ir_contains(result, "define [2 x [2 x %record.Tag_UInt32_]] @make_nested_array()");
+    assert_ir_contains(result, "define [2 x %record.Tag_Tag_UInt32__] @make_nested_record()");
+    assert_ir_contains(result, "%boxes.addr = alloca [2 x [2 x %record.Tag_UInt32_]]");
+    assert_ir_contains(result, "store [2 x [2 x %record.Tag_UInt32_]] %boxes, ptr %boxes.addr");
+    assert_ir_contains(result, "%boxes.addr = alloca [2 x %record.Tag_Tag_UInt32__]");
+    assert_ir_contains(result, "store [2 x %record.Tag_Tag_UInt32__] %boxes, ptr %boxes.addr");
+    assert_ir_contains(result, " = call i32 @read_nested_array([2 x [2 x %record.Tag_UInt32_]] %tmp");
+    assert_ir_contains(result, " = call i32 @read_nested_record([2 x %record.Tag_Tag_UInt32__] %tmp");
+    assert_ir_contains(result, " = call [2 x [2 x %record.Tag_UInt32_]] @make_nested_array()");
+    assert_ir_contains(result, " = call [2 x %record.Tag_Tag_UInt32__] @make_nested_record()");
+    assert_ir_contains(
+        result, " = insertvalue [2 x [2 x %record.Tag_UInt32_]] undef, [2 x %record.Tag_UInt32_] %tmp");
+    assert_ir_contains(
+        result, " = insertvalue [2 x %record.Tag_Tag_UInt32__] undef, %record.Tag_Tag_UInt32__ %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Tag_UInt32_]], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Tag_UInt32_], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Tag_Tag_UInt32__], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Tag_Tag_UInt32__, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_final_if_function_return_field_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_generic_record_final_if_function_return_field.or";
@@ -9748,6 +9801,7 @@ auto main() -> int {
     test_emit_generic_record_array_parameter_field_return();
     test_emit_generic_record_function_return_field_return();
     test_emit_generic_record_array_function_return_field_return();
+    test_emit_nested_generic_record_array_function_boundaries();
     test_emit_generic_record_final_if_function_return_field_return();
     test_emit_generic_record_final_switch_function_return_field_return();
     test_emit_generic_record_array_final_if_function_return_field_return();
