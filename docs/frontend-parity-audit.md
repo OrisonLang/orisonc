@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-17: generic aggregate lowering gap review found nested plain-function final `switch` returns were the next
+  unpinned peer of existing one-level coverage; `Array<Array<Tag<UInt32>, 2>, 2>` and `Array<Tag<Tag<UInt32>>, 2>`
+  now lower through final `switch` merge paths.
 - 2026-07-17: underconstrained bare inline nested generic record constructor array literals in `for` iterables now
   preserve generic inference diagnostics instead of falling through to unknown lowered functions.
 - 2026-07-17: bare inline nested concrete generic record constructor array literals in `for` iterables now have
