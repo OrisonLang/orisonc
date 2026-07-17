@@ -18,6 +18,7 @@ representation.
   data pointer, a length, and a capacity.
 - `View<T>`, `shared.View<T>`, and `exclusive.View<T>` are non-owning contiguous sequence views. Their target ABI model
   is a descriptor containing a data pointer and a length.
+- View-shaped function parameters and returns lower to the descriptor ABI as `{ ptr, i64 }`.
 - Shared/exclusive access is tracked as source-type metadata, not by inventing different LLVM pointer spellings.
 - The current fixed-array-only `for` lowering diagnostic remains valid until loop lowering consumes this model and
   emits descriptor-aware indexing and bounds.
@@ -26,12 +27,11 @@ representation.
 
 - Dynamic sequence support can be added without changing the source grammar.
 - Emitters have a single query for dynamic sequence element type, ownership, and mutation capability.
-- The existing pointer-only `View<T>` lowering paths are transitional and should be replaced by descriptor-aware
-  lowering before view iteration is enabled.
+- View parameter indexing extracts the descriptor data pointer before element addressing. Length-aware bounds and
+  dynamic iteration remain future work.
 
 ## Follow-up work
 
-- Lower `View<T>` function parameters and returns through the descriptor ABI.
 - Define `DynamicArray<T>` allocation, drop, and capacity invariants before enabling owned dynamic-array values in
   lowered signatures.
 - Extend `for ... in` lowering to consume dynamic sequence descriptors after descriptor ABI support is in place.

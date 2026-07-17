@@ -44,6 +44,8 @@ auto view_element_source_type_name(std::string_view type_name) -> std::optional<
 
 auto dynamic_sequence_source_type(std::string_view type_name) -> std::optional<DynamicSequenceSourceType>;
 
+auto view_descriptor_llvm_type() -> std::string_view;
+
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string>;
 
 auto maybe_payload_source_type_name(std::string_view type_name) -> std::optional<std::string>;

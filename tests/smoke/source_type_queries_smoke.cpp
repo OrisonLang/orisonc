@@ -326,6 +326,10 @@ int main() {
     assert(maybe_array_type.has_value());
     assert(*maybe_array_type == "{ i1, [3 x i32] }");
 
+    auto view_type = orison::lowering::llvm_type_for_source_type_name("shared.View<UInt32>", context);
+    assert(view_type.has_value());
+    assert(*view_type == std::string {orison::lowering::view_descriptor_llvm_type()});
+
     assert(!orison::lowering::llvm_type_for_source_type_name("Maybe<Unit>", context).has_value());
 
     assert(orison::lowering::source_type_name_for_expression(name("wrapper"), context, state) == "Wrapper");

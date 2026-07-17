@@ -190,6 +190,10 @@ auto dynamic_sequence_source_type(std::string_view type_name) -> std::optional<D
     };
 }
 
+auto view_descriptor_llvm_type() -> std::string_view {
+    return "{ ptr, i64 }";
+}
+
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string> {
     constexpr auto prefix = std::string_view {"Pointer<"};
     if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
@@ -384,7 +388,7 @@ auto lowered_type_for_source_type_name(
 
     if (view_element_source_type_name(type_name).has_value()) {
         return LoweredType {
-            .type = "ptr",
+            .type = std::string {view_descriptor_llvm_type()},
             .signedness = IntegerSignedness::not_integer,
         };
     }

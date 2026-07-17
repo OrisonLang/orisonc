@@ -1,6 +1,7 @@
 #include "orison/lowering/function_signature.hpp"
 
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 
 #include <utility>
 
@@ -33,7 +34,7 @@ auto lowered_function_type_for(syntax::TypeSyntax const& type) -> std::optional<
         type.generic_arguments.size() == 1) {
         auto element_type = lowered_function_type_for(type.generic_arguments[0]);
         return element_type.has_value() && *element_type != "void"
-            ? std::optional<std::string> {"ptr"}
+            ? std::optional<std::string> {std::string {view_descriptor_llvm_type()}}
             : std::nullopt;
     }
 

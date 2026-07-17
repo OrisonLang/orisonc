@@ -5974,6 +5974,23 @@ void test_reject_view_for_iterable_lowering() {
     );
 }
 
+void test_emit_view_parameter_index_lowering() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_view_parameter_index.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function first(values: View<UInt32>) -> UInt32\n"
+        "    values[0]\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "define i32 @first({ ptr, i64 } %values)");
+    assert_ir_contains(result, " = extractvalue { ptr, i64 } %values, 0");
+    assert_ir_contains(result, " = getelementptr i32, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+}
+
 void test_reject_underconstrained_generic_record_array_literal_for_item_field_return() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_underconstrained_generic_record_array_literal_for_item_field.or";
@@ -10655,6 +10672,7 @@ auto main() -> int {
     test_emit_bare_generic_record_array_literal_for_item_field_return();
     test_emit_bare_nested_generic_record_array_literal_for_item_field_return();
     test_reject_view_for_iterable_lowering();
+    test_emit_view_parameter_index_lowering();
     test_reject_underconstrained_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_nested_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_generic_record_inferred_let_binding();

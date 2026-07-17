@@ -2428,8 +2428,11 @@ auto lowered_expression(
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
         if (is_view_index) {
             auto element_pointer_name = next_llvm_temporary_name(state.next_temporary_index);
+            auto data_pointer_name = next_llvm_temporary_name(state.next_temporary_index);
+            output << "  " << data_pointer_name << " = extractvalue " << lowered_base->type << " "
+                   << lowered_base->value << ", 0\n";
             output << "  " << element_pointer_name << " = getelementptr " << *element_llvm_type
-                   << ", ptr " << lowered_base->value << ", i64 " << lowered_index->value << "\n";
+                   << ", ptr " << data_pointer_name << ", i64 " << lowered_index->value << "\n";
             output << "  " << temporary_name << " = load " << *element_llvm_type << ", ptr "
                    << element_pointer_name << "\n";
         } else if (is_decimal_integer_text(lowered_index->value)) {

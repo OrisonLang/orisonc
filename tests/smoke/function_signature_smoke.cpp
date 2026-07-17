@@ -1,5 +1,6 @@
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/function_signature.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 
 #include <cassert>
 #include <string>
@@ -65,6 +66,27 @@ int main() {
     assert(dynamic_array_signature.parameter_types.size() == 1);
     assert(dynamic_array_signature.parameter_types.front().empty());
     assert(dynamic_array_signature.parameter_source_type_names == std::vector<std::string>({"DynamicArray<UInt32>"}));
+
+    auto view_signature = orison::lowering::lower_function_signature(
+        TypeSyntax {.name = "View", .generic_arguments = {TypeSyntax {.name = "UInt32"}}},
+        {
+            ParameterSyntax {
+                .name = "values",
+                .type = TypeSyntax {
+                    .name = "shared.View",
+                    .generic_arguments = {TypeSyntax {.name = "UInt32"}},
+                },
+            },
+        },
+        "first"
+    );
+    assert(orison::lowering::has_supported_function_signature_types(view_signature));
+    assert(view_signature.source_return_type_name == "View<UInt32>");
+    assert(view_signature.return_type == std::string {orison::lowering::view_descriptor_llvm_type()});
+    assert(view_signature.parameter_types == std::vector<std::string>({
+        std::string {orison::lowering::view_descriptor_llvm_type()},
+    }));
+    assert(view_signature.parameter_source_type_names == std::vector<std::string>({"shared.View<UInt32>"}));
 
     auto array_return = orison::lowering::lower_function_signature(
         TypeSyntax {
