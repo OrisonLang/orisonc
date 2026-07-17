@@ -5567,6 +5567,45 @@ void test_emit_generic_record_constructor_method_return_control_flow_context() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_generic_record_constructor_method_guard_defer_return_context() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_generic_record_constructor_method_guard_defer_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: UInt32\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "extend UInt32\n"
+        "    function choose(this: shared This, flag: Bool) -> Tag<UInt32>\n"
+        "        guard flag else\n"
+        "            return Tag(11 as UInt32)\n"
+        "        defer\n"
+        "            observe(1 as UInt32)\n"
+        "        return Tag(13 as UInt32)\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let receiver: UInt32 = 0 as UInt32\n"
+        "    receiver.choose(false).code\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
+    assert_defines_method(result, "%record.Tag_UInt32_", "method.UInt32.choose", "i32 %this, i1 %flag");
+    assert_ir_contains(result, "guard.failure.");
+    assert_ir_contains(result, "guard.merge.");
+    assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 11, 0");
+    assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 13, 0");
+    assert_ir_contains(result, "call void @observe(i32 1)");
+    assert_ir_contains(result, "ret %record.Tag_UInt32_ %tmp");
+    assert_ir_contains(result, " = call %record.Tag_UInt32_ @method.UInt32.choose(i32 %receiver, i1 0)");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_receiver_field_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_generic_record_receiver_field.or";
     auto result = lower_source(
@@ -9505,6 +9544,7 @@ auto main() -> int {
     test_emit_generic_record_constructor_call_argument_from_parameter_context();
     test_emit_generic_record_constructor_method_call_argument_from_parameter_context();
     test_emit_generic_record_constructor_method_return_control_flow_context();
+    test_emit_generic_record_constructor_method_guard_defer_return_context();
     test_emit_generic_record_receiver_field_return();
     test_emit_generic_record_method_parameter_field_return();
     test_emit_generic_record_array_method_parameter_field_return();
