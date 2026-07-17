@@ -37,6 +37,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-16: generic record constructor receiver method returns now have final control-flow expected-return-context
+  coverage: final `if` and `switch` arms lower `Tag(...)` through a declared `Tag<UInt32>` method return type.
 - 2026-07-16: generic record constructor receiver method-call arguments now have expected-parameter-context lowering
   coverage: `receiver.take(Tag(...))` lowers when the method declares `Tag<UInt32>`.
 - 2026-07-16: generic record constructor call arguments now have expected-parameter-context lowering coverage:
