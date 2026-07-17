@@ -37,6 +37,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-16: generic record constructor receiver method-call arguments now have expected-parameter-context lowering
+  coverage: `receiver.take(Tag(...))` lowers when the method declares `Tag<UInt32>`.
 - 2026-07-16: generic record constructor call arguments now have expected-parameter-context lowering coverage:
   `take(Tag(...))` lowers when `take` declares `Tag<UInt32>`, while scalar mismatches remain semantic diagnostics.
 - 2026-07-16: direct underconstrained generic record constructor inferred `let` and `var` bindings now preserve the
