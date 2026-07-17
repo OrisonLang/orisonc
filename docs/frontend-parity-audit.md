@@ -37,6 +37,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-16: generic record constructor call arguments now have expected-parameter-context lowering coverage:
+  `take(Tag(...))` lowers when `take` declares `Tag<UInt32>`, while scalar mismatches remain semantic diagnostics.
 - 2026-07-16: direct underconstrained generic record constructor inferred `let` and `var` bindings now preserve the
   generic parameter inference diagnostic instead of reporting only broad unsupported binding messages.
 - 2026-07-16: underconstrained generic record constructor diagnostics now retain template parameter metadata without

@@ -5468,6 +5468,34 @@ void test_reject_underconstrained_generic_record_inferred_var_binding() {
     );
 }
 
+void test_emit_generic_record_constructor_call_argument_from_parameter_context() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_generic_record_constructor_call_argument_context.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: UInt32\n"
+        "\n"
+        "function take(value: Tag<UInt32>) -> UInt32\n"
+        "    value.code\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    take(Tag(7 as UInt32))\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "define i32 @take(%record.Tag_UInt32_ %value)");
+    assert_ir_contains(result, "%value.addr = alloca %record.Tag_UInt32_");
+    assert_ir_contains(result, "store %record.Tag_UInt32_ %value, ptr %value.addr");
+    assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %value.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = insertvalue %record.Tag_UInt32_ undef, i32 7, 0");
+    assert_ir_contains(result, " = call i32 @take(%record.Tag_UInt32_ %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_receiver_field_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_generic_record_receiver_field.or";
     auto result = lower_source(
@@ -9403,6 +9431,7 @@ auto main() -> int {
     test_reject_underconstrained_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_generic_record_inferred_let_binding();
     test_reject_underconstrained_generic_record_inferred_var_binding();
+    test_emit_generic_record_constructor_call_argument_from_parameter_context();
     test_emit_generic_record_receiver_field_return();
     test_emit_generic_record_method_parameter_field_return();
     test_emit_generic_record_array_method_parameter_field_return();

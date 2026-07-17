@@ -265,7 +265,8 @@ analysis, and lowering components.
   instead of falling back to a template-shaped `%record.Name` layout. Lowering context retains generic record parameter
   names only as template metadata for diagnostics and source-type recovery, not as lowerable layout entries; direct
   generic record constructor lowering failures use that metadata before the ordinary function-call fallback, and
-  inferred binding diagnostics preserve the same detail.
+  inferred binding diagnostics preserve the same detail. Function-call argument lowering also uses declared parameter
+  source types as expected constructor context, so `Tag(...)` can lower safely when passed to a `Tag<UInt32>` parameter.
 - Lowered scalar expression and inferred-type metadata live in a neutral `lowered_value.hpp`; function state and
   emitter APIs share these records without assigning representation ownership to state or expression emission.
   Read-only aggregate addressable binding setup is shared through a lowering helper so parameters, immutable aggregate
