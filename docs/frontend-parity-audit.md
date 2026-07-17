@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-16: underconstrained generic record constructor diagnostics now retain template parameter metadata without
+  exposing generic templates as lowerable layouts, so array literal `for` failures identify the missing generic
+  parameter instead of surfacing only an unknown lowered function fallback.
 - 2026-07-16: lowering context no longer exposes uninstantiated generic record templates as lowerable record layouts;
   underconstrained generic record constructor array literal `for` iterables now fail instead of falling back to a
   template-shaped `%record.Name` layout.

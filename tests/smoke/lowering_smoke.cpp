@@ -5390,6 +5390,11 @@ void test_reject_underconstrained_generic_record_array_literal_for_item_field_re
             "lowering array-literal for statements requires an explicit Array<T, N> source type"
         ) != std::string::npos
     );
+    assert(
+        result.diagnostics.entries().front().message.find(
+            "generic parameter 'T' cannot be inferred for record 'Tag'"
+        ) != std::string::npos
+    );
 }
 
 void test_emit_generic_record_receiver_field_return() {

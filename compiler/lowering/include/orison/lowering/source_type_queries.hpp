@@ -40,6 +40,12 @@ auto find_record_field(
     std::string_view field_name
 ) -> LoweredRecordField const*;
 
+auto generic_record_constructor_inference_failure_detail(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string>;
+
 auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context

@@ -745,6 +745,7 @@ auto build_lowering_context(
     for (auto const& record : module.records) {
         if (!record.generic_parameters.empty()) {
             generic_records.emplace(record.name, &record);
+            context.generic_record_parameters.emplace(record.name, record.generic_parameters);
             continue;
         }
         record_names.insert(record.name);

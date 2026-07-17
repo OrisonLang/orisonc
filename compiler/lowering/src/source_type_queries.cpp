@@ -279,6 +279,45 @@ auto source_type_name_for_record_constructor(
     return std::nullopt;
 }
 
+auto generic_record_constructor_inference_failure_detail(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (expression.kind != syntax::ExpressionKind::call || expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto generic_record = context.generic_record_parameters.find(expression.left->text);
+    if (generic_record == context.generic_record_parameters.end() || generic_record->second.empty()) {
+        return std::nullopt;
+    }
+    if (source_type_name_for_record_constructor(expression, context, state).has_value()) {
+        return std::nullopt;
+    }
+
+    auto message = std::string {};
+    if (generic_record->second.size() == 1) {
+        message = "generic parameter '" + generic_record->second.front() + "' cannot be inferred";
+    } else {
+        message = "generic parameters ";
+        for (auto index = std::size_t {0}; index < generic_record->second.size(); ++index) {
+            if (index > 0) {
+                message += ", ";
+            }
+            message += "'";
+            message += generic_record->second[index];
+            message += "'";
+        }
+        message += " cannot be inferred";
+    }
+    message += " for record '";
+    message += expression.left->text;
+    message += "'";
+    return message;
+}
+
 auto lowered_type_for_source_type_name(
     std::string_view type_name,
     LoweringContext const& context

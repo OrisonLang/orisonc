@@ -255,6 +255,10 @@ int main() {
     assert(context.choices.size() == 3);
     assert(context.methods.size() == 3);
     assert(context.foreign_declarations.size() == 1);
+    assert(context.generic_record_parameters.size() == 1);
+    assert(context.generic_record_parameters.contains("Box"));
+    assert(context.generic_record_parameters.at("Box").size() == 1);
+    assert(context.generic_record_parameters.at("Box")[0] == "T");
     assert(context.records.contains("UartRegisters"));
     auto const& uart_layout = context.records.at("UartRegisters");
     assert(uart_layout.name == "UartRegisters");

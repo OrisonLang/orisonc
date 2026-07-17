@@ -227,14 +227,21 @@ auto lower_array_literal_for_statement(
             expected_source_type
         );
         if (!lowered_item.has_value()) {
+            auto prefix =
+                "lowering array-literal for statements requires an explicit Array<T, N> "
+                "source type when element type cannot be inferred; add a typed local "
+                "binding or cast the iterable with 'as Array<T, N>'";
+            auto message = append_expression_lowering_failure(prefix, session.failures.expression);
+            if (auto detail = generic_record_constructor_inference_failure_detail(
+                    statement.expression.arguments[index],
+                    context.lowering,
+                    session.state
+                )) {
+                message = prefix + std::string {": "} + *detail;
+            }
             diagnostics.error(
                 statement.expression.arguments[index].line,
-                append_expression_lowering_failure(
-                    "lowering array-literal for statements requires an explicit Array<T, N> "
-                    "source type when element type cannot be inferred; add a typed local "
-                    "binding or cast the iterable with 'as Array<T, N>'",
-                    session.failures.expression
-                )
+                message
             );
             return StatementFlow::failed;
         }

@@ -242,7 +242,7 @@ auto main() -> int {
         executable,
         smoke_temp_root / "orison_cli_underconstrained_generic_record_array_literal_for_emit.or",
         underconstrained_generic_record_for_lines(),
-        "lowering array-literal for statements requires an explicit Array<T, N> source type"
+        "generic parameter 'T' cannot be inferred for record 'Tag'"
     );
     assert_cli_parse_success(
         executable,
