@@ -171,7 +171,7 @@ int main() {
         "demo.emit",
         {
             "function same(left: Bool, right: Bool) -> Bool",
-            "    left == right",
+            "    left < right",
         }
     );
     auto drop_readiness_summary_failure = run_drop_readiness_summary(app, emit_failure_path);

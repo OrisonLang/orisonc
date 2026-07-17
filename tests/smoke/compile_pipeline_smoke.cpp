@@ -280,7 +280,7 @@ auto main() -> int {
         std::ofstream source(failed_lowering_path);
         source << "package demo.readinessfailure\n";
         source << "function same(left: Bool, right: Bool) -> Bool\n";
-        source << "    left == right\n";
+        source << "    left < right\n";
     }
     auto failed_lowering = pipeline.emit_llvm(failed_lowering_path);
     assert(failed_lowering.has_errors());

@@ -459,7 +459,7 @@ int main() {
     assert(
         orison::lowering::render_expression_lowering_failure(
             member_session.failures.expression
-        ) == "unsupported expression: null-safe member call lowering is not yet supported: UInt32.scale"
+        ) == "unsupported expression: null-safe member call receiver ABI: UInt32.scale"
     );
     assert(output.str().empty());
 

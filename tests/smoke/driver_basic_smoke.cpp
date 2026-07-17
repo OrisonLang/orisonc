@@ -104,7 +104,7 @@ int main() {
         "demo.emit",
         {
             "function same(left: Bool, right: Bool) -> Bool",
-            "    left == right",
+            "    left < right",
         }
     );
     auto emit_failure = run_emit_llvm(app, emit_failure_path);
