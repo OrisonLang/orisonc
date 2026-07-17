@@ -1,4 +1,5 @@
 #include "orison/lowering/drop_metadata.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 
 #include <cassert>
 #include <vector>
@@ -196,5 +197,18 @@ int main() {
     assert(declared_test_drops.front().source_type_name == "Payload");
     assert(declared_test_drops.front().discovery_line == 42);
     assert(declared_test_drops.front().emit_declaration);
+
+    auto dynamic_array_action = orison::lowering::PlannedDropAction {
+        .capture_name = "items",
+        .source_type_name = "DynamicArray<UInt32>",
+        .symbol_name = orison::semantics::drop_abi_symbol_name("DynamicArray<UInt32>"),
+        .field_index = 1,
+        .discovery_line = 64,
+    };
+    auto dynamic_array_invariants = orison::lowering::dynamic_array_lowering_invariants();
+    assert(dynamic_array_invariants.element_drop_walk_required);
+    assert(!dynamic_array_invariants.lowered_signatures_enabled);
+    assert(declared_drop_declarations_for_allowed_source_types({dynamic_array_action}, {}).empty());
+    assert(declared_drop_declarations_for_authorized_semantic_drops({}).empty());
     return 0;
 }

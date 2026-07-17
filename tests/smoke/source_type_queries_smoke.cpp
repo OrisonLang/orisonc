@@ -274,6 +274,13 @@ int main() {
     assert(dynamic_array_sequence->owns_storage);
     assert(dynamic_array_sequence->permits_element_mutation);
     assert(orison::lowering::dynamic_array_descriptor_llvm_type() == "{ ptr, i64, i64 }");
+    auto dynamic_array_invariants = orison::lowering::dynamic_array_lowering_invariants();
+    assert(dynamic_array_invariants.descriptor_llvm_type == orison::lowering::dynamic_array_descriptor_llvm_type());
+    assert(dynamic_array_invariants.unique_owner_required);
+    assert(dynamic_array_invariants.allocator_required);
+    assert(dynamic_array_invariants.length_capacity_invariant_required);
+    assert(dynamic_array_invariants.element_drop_walk_required);
+    assert(!dynamic_array_invariants.lowered_signatures_enabled);
 
     auto shared_view_sequence = orison::lowering::dynamic_sequence_source_type("shared.View<Byte>");
     assert(shared_view_sequence.has_value());

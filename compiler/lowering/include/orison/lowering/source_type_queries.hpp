@@ -32,6 +32,15 @@ struct DynamicSequenceSourceType {
     bool permits_element_mutation = false;
 };
 
+struct DynamicArrayLoweringInvariants {
+    std::string_view descriptor_llvm_type;
+    bool unique_owner_required = true;
+    bool allocator_required = true;
+    bool length_capacity_invariant_required = true;
+    bool element_drop_walk_required = true;
+    bool lowered_signatures_enabled = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -47,6 +56,8 @@ auto dynamic_sequence_source_type(std::string_view type_name) -> std::optional<D
 auto view_descriptor_llvm_type() -> std::string_view;
 
 auto dynamic_array_descriptor_llvm_type() -> std::string_view;
+
+auto dynamic_array_lowering_invariants() -> DynamicArrayLoweringInvariants;
 
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string>;
 

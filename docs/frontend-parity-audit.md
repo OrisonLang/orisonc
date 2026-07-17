@@ -45,6 +45,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-17: dynamic-array descriptor layout is now pinned internally as `{ ptr, i64, i64 }`, and target layout can
   size literal LLVM structs such as view and dynamic-array descriptors. `DynamicArray<T>` lowered signatures remain
   intentionally rejected until ownership/allocation/drop invariants are implemented.
+- 2026-07-17: dynamic-array lowering invariants are now pinned in smoke coverage: signatures stay disabled until a
+  unique owning descriptor, allocator path, `length <= capacity` invariant, and initialized-element drop walk are
+  proven. Drop declaration emission remains metadata-only under ADR-0005.
 - 2026-07-17: refreshed pending lowering-gap wording after the nested non-generic aggregate expansion; record and
   fixed-array aggregate construction/assignment coverage is now broad enough that the remaining aggregate wording
   points to forms outside the pinned scalar, record, and fixed-array paths.

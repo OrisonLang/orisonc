@@ -21,6 +21,9 @@ representation.
 - View-shaped function parameters and returns lower to the descriptor ABI as `{ ptr, i64 }`.
 - Dynamic-array descriptor layout is pinned for sizing and future ABI work, but dynamic-array function signatures
   remain rejected until allocation, ownership, and drop invariants are implemented.
+- Dynamic-array lowering requires a unique owning descriptor, an allocator/runtime allocation path, a proven
+  `0 <= length <= capacity` descriptor invariant, and an element drop walk for initialized elements before lowered
+  signatures can be enabled.
 - Shared/exclusive access is tracked as source-type metadata, not by inventing different LLVM pointer spellings.
 - The current fixed-array-only `for` lowering diagnostic remains valid until loop lowering consumes this model and
   emits descriptor-aware indexing and bounds.
@@ -32,9 +35,12 @@ representation.
 - View parameter indexing extracts the descriptor data pointer before element addressing. Length-aware bounds and
   dynamic iteration remain future work.
 - Literal LLVM struct layout support sizes descriptor-shaped ABI values directly.
+- Dynamic-array drop handling remains metadata-only under ADR-0005 until ownership/drop semantics authorize production
+  cleanup calls.
 
 ## Follow-up work
 
-- Define `DynamicArray<T>` allocation, drop, and capacity invariants before enabling owned dynamic-array values in
-  lowered signatures.
+- Define the allocator/runtime entry points and element cleanup lowering for `DynamicArray<T>`.
+- Enable `DynamicArray<T>` lowered signatures only after semantic ownership/drop analysis proves unique ownership,
+  initialized length, capacity bounds, and deterministic cleanup.
 - Extend `for ... in` lowering to consume dynamic sequence descriptors after descriptor ABI support is in place.

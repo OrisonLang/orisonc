@@ -198,6 +198,12 @@ auto dynamic_array_descriptor_llvm_type() -> std::string_view {
     return "{ ptr, i64, i64 }";
 }
 
+auto dynamic_array_lowering_invariants() -> DynamicArrayLoweringInvariants {
+    return DynamicArrayLoweringInvariants {
+        .descriptor_llvm_type = dynamic_array_descriptor_llvm_type(),
+    };
+}
+
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string> {
     constexpr auto prefix = std::string_view {"Pointer<"};
     if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
