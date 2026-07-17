@@ -25,14 +25,16 @@ This file tracks which source-language frontend slices are reflected in the curr
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
-- lowering gaps after the current recursive statement path: broader aggregate construction and assignment beyond the
-  currently pinned scalar, nested local/pointer/function/method-boundary plus control/early/final-switch/loop-built
-  non-generic record/fixed-array, and concrete generic record/fixed-array slices; dynamic arrays, views, and future
-  standard-library iterator abstractions beyond fixed-array `for` lowering; and production backend completeness beyond
-  the current LLVM/object/link/run smoke paths
+- lowering gaps after the current recursive statement path: aggregate construction and assignment outside the pinned
+  scalar, record, and fixed-array paths; dynamic arrays, views, and future standard-library iterator abstractions
+  beyond fixed-array `for` lowering; and production backend completeness beyond the current LLVM/object/link/run smoke
+  paths
 
 ## Latest update
 
+- 2026-07-17: refreshed pending lowering-gap wording after the nested non-generic aggregate expansion; record and
+  fixed-array aggregate construction/assignment coverage is now broad enough that the remaining aggregate wording
+  points to forms outside the pinned scalar, record, and fixed-array paths.
 - 2026-07-17: nested non-generic record/fixed-array aggregate loop-built returns now have lowering smoke coverage:
   records containing records and records containing fixed arrays of records lower through `while`-built and fixed-array
   `for`-built return paths with caller-side nested reads.
