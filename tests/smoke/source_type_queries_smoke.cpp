@@ -258,9 +258,43 @@ int main() {
 
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");
+    assert(orison::lowering::dynamic_array_element_source_type_name("DynamicArray<Array<UInt32, 3>>") == "Array<UInt32, 3>");
+    assert(!orison::lowering::dynamic_array_element_source_type_name("Array<UInt32, 3>").has_value());
+    assert(orison::lowering::view_element_source_type_name("View<UInt32>") == "UInt32");
+    assert(orison::lowering::view_element_source_type_name("shared.View<Array<UInt32, 3>>") == "Array<UInt32, 3>");
+    assert(orison::lowering::view_element_source_type_name("exclusive.View<Bucket>") == "Bucket");
     assert(orison::lowering::pointer_pointee_source_type_name("Pointer<UInt32>") == "UInt32");
     assert(orison::lowering::maybe_payload_source_type_name("Maybe<Array<UInt32, 3>>") == "Array<UInt32, 3>");
     assert(!orison::lowering::maybe_payload_source_type_name("Array<UInt32, 3>").has_value());
+
+    auto dynamic_array_sequence = orison::lowering::dynamic_sequence_source_type("DynamicArray<UInt32>");
+    assert(dynamic_array_sequence.has_value());
+    assert(dynamic_array_sequence->kind == orison::lowering::DynamicSequenceKind::dynamic_array);
+    assert(dynamic_array_sequence->element_source_type_name == "UInt32");
+    assert(dynamic_array_sequence->owns_storage);
+    assert(dynamic_array_sequence->permits_element_mutation);
+
+    auto shared_view_sequence = orison::lowering::dynamic_sequence_source_type("shared.View<Byte>");
+    assert(shared_view_sequence.has_value());
+    assert(shared_view_sequence->kind == orison::lowering::DynamicSequenceKind::shared_view);
+    assert(shared_view_sequence->element_source_type_name == "Byte");
+    assert(!shared_view_sequence->owns_storage);
+    assert(!shared_view_sequence->permits_element_mutation);
+
+    auto plain_view_sequence = orison::lowering::dynamic_sequence_source_type("View<Byte>");
+    assert(plain_view_sequence.has_value());
+    assert(plain_view_sequence->kind == orison::lowering::DynamicSequenceKind::view);
+    assert(plain_view_sequence->element_source_type_name == "Byte");
+    assert(!plain_view_sequence->owns_storage);
+    assert(!plain_view_sequence->permits_element_mutation);
+
+    auto exclusive_view_sequence = orison::lowering::dynamic_sequence_source_type("exclusive.View<Bucket>");
+    assert(exclusive_view_sequence.has_value());
+    assert(exclusive_view_sequence->kind == orison::lowering::DynamicSequenceKind::exclusive_view);
+    assert(exclusive_view_sequence->element_source_type_name == "Bucket");
+    assert(!exclusive_view_sequence->owns_storage);
+    assert(exclusive_view_sequence->permits_element_mutation);
+    assert(!orison::lowering::dynamic_sequence_source_type("Array<UInt32, 3>").has_value());
 
     auto array = orison::lowering::parse_llvm_array_type("[3 x i32]");
     assert(array.has_value());

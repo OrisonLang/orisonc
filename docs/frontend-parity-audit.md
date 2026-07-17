@@ -35,6 +35,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.
+- 2026-07-17: ADR-0006 and source-type query smoke coverage now pin the internal dynamic sequence model:
+  `DynamicArray<T>` is classified as owned contiguous storage, while `View<T>`/`shared.View<T>`/`exclusive.View<T>`
+  are classified as non-owning contiguous views with access-mode metadata. Emitters still reject dynamic iteration
+  until descriptor ABI lowering is implemented.
 - 2026-07-17: refreshed pending lowering-gap wording after the nested non-generic aggregate expansion; record and
   fixed-array aggregate construction/assignment coverage is now broad enough that the remaining aggregate wording
   points to forms outside the pinned scalar, record, and fixed-array paths.

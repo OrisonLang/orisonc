@@ -18,13 +18,31 @@ struct ParsedLlvmArrayType {
     std::size_t length = 0;
 };
 
+enum class DynamicSequenceKind {
+    dynamic_array,
+    shared_view,
+    exclusive_view,
+    view,
+};
+
+struct DynamicSequenceSourceType {
+    DynamicSequenceKind kind = DynamicSequenceKind::view;
+    std::string element_source_type_name;
+    bool owns_storage = false;
+    bool permits_element_mutation = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
 
 auto array_element_source_type_name(std::string_view type_name) -> std::optional<std::string>;
 
+auto dynamic_array_element_source_type_name(std::string_view type_name) -> std::optional<std::string>;
+
 auto view_element_source_type_name(std::string_view type_name) -> std::optional<std::string>;
+
+auto dynamic_sequence_source_type(std::string_view type_name) -> std::optional<DynamicSequenceSourceType>;
 
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string>;
 

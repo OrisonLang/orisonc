@@ -116,12 +116,32 @@ auto array_element_source_type_name(std::string_view type_name) -> std::optional
     return arguments[0];
 }
 
-auto view_element_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+auto dynamic_array_element_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+    constexpr auto prefix = std::string_view {"DynamicArray<"};
+    if (!type_name.starts_with(prefix) || !type_name.ends_with(">") ||
+        type_name.size() <= prefix.size() + 1) {
+        return std::nullopt;
+    }
+
+    auto arguments = split_top_level_generic_arguments(
+        type_name.substr(prefix.size(), type_name.size() - prefix.size() - 1)
+    );
+    if (arguments.size() != 1 || arguments[0].empty()) {
+        return std::nullopt;
+    }
+    return arguments[0];
+}
+
+auto view_source_type_parts(std::string_view type_name)
+    -> std::optional<std::pair<DynamicSequenceKind, std::string>> {
     auto normalized = type_name;
+    auto kind = DynamicSequenceKind::view;
     if (normalized.starts_with("shared.")) {
         normalized.remove_prefix(std::string_view {"shared."}.size());
+        kind = DynamicSequenceKind::shared_view;
     } else if (normalized.starts_with("exclusive.")) {
         normalized.remove_prefix(std::string_view {"exclusive."}.size());
+        kind = DynamicSequenceKind::exclusive_view;
     }
 
     constexpr auto prefix = std::string_view {"View<"};
@@ -136,7 +156,38 @@ auto view_element_source_type_name(std::string_view type_name) -> std::optional<
     if (arguments.size() != 1 || arguments[0].empty()) {
         return std::nullopt;
     }
-    return arguments[0];
+    return std::pair {kind, arguments[0]};
+}
+
+auto view_element_source_type_name(std::string_view type_name) -> std::optional<std::string> {
+    auto parts = view_source_type_parts(type_name);
+    if (!parts.has_value()) {
+        return std::nullopt;
+    }
+    return parts->second;
+}
+
+auto dynamic_sequence_source_type(std::string_view type_name) -> std::optional<DynamicSequenceSourceType> {
+    if (auto element_type = dynamic_array_element_source_type_name(type_name)) {
+        return DynamicSequenceSourceType {
+            .kind = DynamicSequenceKind::dynamic_array,
+            .element_source_type_name = std::move(*element_type),
+            .owns_storage = true,
+            .permits_element_mutation = true,
+        };
+    }
+
+    auto view_parts = view_source_type_parts(type_name);
+    if (!view_parts.has_value()) {
+        return std::nullopt;
+    }
+
+    return DynamicSequenceSourceType {
+        .kind = view_parts->first,
+        .element_source_type_name = std::move(view_parts->second),
+        .owns_storage = false,
+        .permits_element_mutation = view_parts->first == DynamicSequenceKind::exclusive_view,
+    };
 }
 
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string> {
