@@ -5299,6 +5299,71 @@ void test_emit_nested_generic_record_array_function_control_early_returns() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_nested_generic_record_array_function_loop_built_returns() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nested_generic_record_array_function_loop_returns.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: T\n"
+        "\n"
+        "function build_nested_array_while() -> Array<Array<Tag<UInt32>, 2>, 2>\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    while value < 1 as UInt32\n"
+        "        value = value + 1 as UInt32\n"
+        "    [[Tag(value), Tag(2 as UInt32)], [Tag(3 as UInt32), Tag(4 as UInt32)]]\n"
+        "\n"
+        "function build_nested_array_for() -> Array<Array<Tag<UInt32>, 2>, 2>\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    for item in [7 as UInt32, 9 as UInt32]\n"
+        "        value = item\n"
+        "    [[Tag(value), Tag(11 as UInt32)], [Tag(13 as UInt32), Tag(17 as UInt32)]]\n"
+        "\n"
+        "function build_nested_record_while() -> Array<Tag<Tag<UInt32>>, 2>\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    while value < 1 as UInt32\n"
+        "        value = value + 1 as UInt32\n"
+        "    [Tag(Tag(value)), Tag(Tag(19 as UInt32))]\n"
+        "\n"
+        "function build_nested_record_for() -> Array<Tag<Tag<UInt32>>, 2>\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    for item in [23 as UInt32, 29 as UInt32]\n"
+        "        value = item\n"
+        "    [Tag(Tag(value)), Tag(Tag(31 as UInt32))]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    build_nested_array_while()[0][0].code + build_nested_array_for()[0][0].code + build_nested_record_while()[0].code.code + build_nested_record_for()[1].code.code\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "%record.Tag_Tag_UInt32__ = type { %record.Tag_UInt32_ }");
+    assert_ir_contains(result, "define [2 x [2 x %record.Tag_UInt32_]] @build_nested_array_while()");
+    assert_ir_contains(result, "define [2 x [2 x %record.Tag_UInt32_]] @build_nested_array_for()");
+    assert_ir_contains(result, "define [2 x %record.Tag_Tag_UInt32__] @build_nested_record_while()");
+    assert_ir_contains(result, "define [2 x %record.Tag_Tag_UInt32__] @build_nested_record_for()");
+    assert_ir_contains(result, "while.condition.");
+    assert_ir_contains(result, "while.exit.");
+    assert_ir_contains(result, "for.iteration.");
+    assert_ir_contains(result, "for.exit.");
+    assert_ir_contains(result, " = call [2 x [2 x %record.Tag_UInt32_]] @build_nested_array_while()");
+    assert_ir_contains(result, " = call [2 x [2 x %record.Tag_UInt32_]] @build_nested_array_for()");
+    assert_ir_contains(result, " = call [2 x %record.Tag_Tag_UInt32__] @build_nested_record_while()");
+    assert_ir_contains(result, " = call [2 x %record.Tag_Tag_UInt32__] @build_nested_record_for()");
+    assert_ir_contains(
+        result, " = insertvalue [2 x [2 x %record.Tag_UInt32_]] undef, [2 x %record.Tag_UInt32_] %tmp");
+    assert_ir_contains(
+        result, " = insertvalue [2 x %record.Tag_Tag_UInt32__] undef, %record.Tag_Tag_UInt32__ %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Tag_UInt32_]], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Tag_UInt32_], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Tag_Tag_UInt32__], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Tag_Tag_UInt32__, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_while_built_function_return_field_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_generic_record_while_built_function_return_field.or";
@@ -9879,6 +9944,7 @@ auto main() -> int {
     test_emit_generic_record_array_final_if_function_return_field_return();
     test_emit_generic_record_array_final_switch_function_return_field_return();
     test_emit_nested_generic_record_array_function_control_early_returns();
+    test_emit_nested_generic_record_array_function_loop_built_returns();
     test_emit_generic_record_while_built_function_return_field_return();
     test_emit_generic_record_array_for_built_function_return_field_return();
     test_emit_generic_record_guard_early_return_field_return();

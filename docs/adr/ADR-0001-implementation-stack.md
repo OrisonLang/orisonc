@@ -257,7 +257,7 @@ analysis, and lowering components.
   paths, immutable and mutable fixed arrays of concrete generic records, field reads from annotated immutable
   aggregate locals, plain function parameters and returns including final `if`/`switch` return merges, loop-built
   return paths, guard/defer early-return paths, nested concrete generic aggregate parameters/returns, and nested
-  concrete generic aggregate final-control plus early-return paths, concrete generic receiver methods, method
+  concrete generic aggregate final-control, early-return, and loop-built paths, concrete generic receiver methods, method
   parameters, and method returns, pointer-backed unsafe field/index reads and writes, plus mutable-local field
   assignment through the existing aggregate assignment path and concrete generic fixed-array `for` item field reads
   while broader generic aggregate interactions remain follow-up work. Bare inline generic-record constructor array
