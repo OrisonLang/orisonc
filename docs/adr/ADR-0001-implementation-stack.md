@@ -264,7 +264,8 @@ analysis, and lowering components.
   generic aggregate loop items while broader generic aggregate interactions remain follow-up work. Bare inline generic-record constructor array
   literals in `for` iterables can now
   synthesize concrete generic record layouts when constructor arguments prove every generic parameter, including nested
-  concrete generic constructor-array item shapes; uninstantiated
+  concrete generic constructor-array item shapes, while underconstrained nested generic constructor-array items retain
+  generic inference diagnostics; uninstantiated
   generic record templates are not exposed as lowerable record layouts, so underconstrained constructors must fail
   instead of falling back to a template-shaped `%record.Name` layout. Lowering context retains generic record parameter
   names only as template metadata for diagnostics and source-type recovery, not as lowerable layout entries; direct

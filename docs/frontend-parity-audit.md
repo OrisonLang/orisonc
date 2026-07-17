@@ -37,6 +37,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-17: underconstrained bare inline nested generic record constructor array literals in `for` iterables now
+  preserve generic inference diagnostics instead of falling through to unknown lowered functions.
 - 2026-07-17: bare inline nested concrete generic record constructor array literals in `for` iterables now have
   coverage: nested `Tag(...)` constructor arrays synthesize concrete item types and support nested field reads.
 - 2026-07-17: nested concrete generic record fixed-array `for` iterables now have coverage:
