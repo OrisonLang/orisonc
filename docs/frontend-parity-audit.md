@@ -25,18 +25,16 @@ This file tracks which source-language frontend slices are reflected in the curr
 - additional top-level forms and modifiers from the updated docs
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
-- lowering gaps after the current recursive statement path: aggregate construction beyond the current lowerable
-  non-generic record/fixed-array subset plus the first concrete and nested generic record
-  constructor/field-read/mutable-field assignment slice plus immutable and mutable fixed arrays of concrete generic
-  records, generic-record aggregate parameter/return reads including final `if`/`switch`, loop-built, and guard/defer
-  early-return paths, concrete generic receiver field reads, and generic-record method parameter/return reads, broader
-  generic aggregate construction coverage, generic pointer-backed field/index reads and writes, aggregate
-  assignment beyond the currently supported mutable-local and pointer-backed record/fixed-array field and index
-  targets, concrete generic fixed-array `for` item field reads, and iterable lowering beyond the current fixed-array
-  forms toward future dynamic arrays, views, and standard-library iterator abstractions
+- lowering gaps after the current recursive statement path: broader aggregate construction and assignment beyond the
+  currently pinned non-generic record/fixed-array plus concrete generic record/fixed-array slices; dynamic arrays,
+  views, and future standard-library iterator abstractions beyond fixed-array `for` lowering; and production backend
+  completeness beyond the current LLVM/object/link/run smoke paths
 
 ## Latest update
 
+- 2026-07-17: refreshed pending lowering-gap wording after the generic aggregate coverage expansion; the stale
+  generic-record parameter/return, pointer-backed, mutable-local, and fixed-array iterable gaps now point to the
+  remaining broader aggregate, dynamic iterable, and backend-completeness work.
 - 2026-07-17: generic aggregate lowering gap review found nested plain-function final `switch` returns were the next
   unpinned peer of existing one-level coverage; `Array<Array<Tag<UInt32>, 2>, 2>` and `Array<Tag<Tag<UInt32>>, 2>`
   now lower through final `switch` merge paths.
