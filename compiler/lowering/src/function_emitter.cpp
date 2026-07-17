@@ -82,6 +82,23 @@ auto lower_unit_statement(
     std::ostringstream& output
 ) -> StatementFlow;
 
+auto append_generic_record_constructor_inference_detail(
+    std::string message,
+    syntax::ExpressionSyntax const& expression,
+    EmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::string {
+    if (auto detail = generic_record_constructor_inference_failure_detail(
+            expression,
+            context.lowering,
+            session.state
+        )) {
+        message += ": ";
+        message += *detail;
+    }
+    return message;
+}
+
 auto lower_unit_if_statement(
     syntax::StatementSyntax const& statement,
     EmissionContext const& context,
@@ -1034,16 +1051,15 @@ void emit_function_body(
                             concurrency_expression_name(statement.expression) + " expressions"
                     );
                 } else {
-                    auto message = std::string {"lowering does not yet support this let binding"};
-                    if (auto detail = generic_record_constructor_inference_failure_detail(
+                    diagnostics.error(
+                        statement.line,
+                        append_generic_record_constructor_inference_detail(
+                            "lowering does not yet support this let binding",
                             statement.expression,
-                            context.lowering,
-                            session.state
-                        )) {
-                        message += ": ";
-                        message += *detail;
-                    }
-                    diagnostics.error(statement.line, message);
+                            context,
+                            session
+                        )
+                    );
                 }
                 return;
             }
