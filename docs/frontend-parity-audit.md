@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-17: nested concrete generic record pointer-backed unsafe paths now have coverage:
+  `Pointer<NestedArrayLog>` and `Pointer<NestedRecordLog>` lower nested generic aggregate `address_of(...)` plus
+  `raw_read(...)` paths and direct pointer-backed nested field assignments.
 - 2026-07-17: nested concrete generic record array plain function loop-built returns now have coverage:
   `Array<Array<Tag<UInt32>, 2>, 2>` and `Array<Tag<Tag<UInt32>>, 2>` lower through `while`-built and fixed-array
   `for`-built return paths.

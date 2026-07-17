@@ -9722,6 +9722,59 @@ void test_emit_raw_mmio_intrinsics() {
     std::filesystem::remove(path);
 }
 
+void test_emit_nested_generic_pointer_paths() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_nested_generic_pointer_paths.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: T\n"
+        "\n"
+        "record NestedArrayLog\n"
+        "    entries: Array<Array<Tag<UInt32>, 2>, 2>\n"
+        "\n"
+        "record NestedRecordLog\n"
+        "    entries: Array<Tag<Tag<UInt32>>, 2>\n"
+        "\n"
+        "unsafe function read_nested_array_entry(log: Pointer<NestedArrayLog>, index: UInt64, inner: UInt64) -> UInt32\n"
+        "    let pointer = Pointer(address_of(log.entries[index][inner].code))\n"
+        "    raw_read(pointer)\n"
+        "\n"
+        "unsafe function read_nested_record_entry(log: Pointer<NestedRecordLog>, index: UInt64) -> UInt32\n"
+        "    let pointer = Pointer(address_of(log.entries[index].code.code))\n"
+        "    raw_read(pointer)\n"
+        "\n"
+        "unsafe function assign_nested_array_entry(log: Pointer<NestedArrayLog>, index: UInt64, inner: UInt64, value: UInt32) -> Unit\n"
+        "    log.entries[index][inner].code = value\n"
+        "    return\n"
+        "\n"
+        "unsafe function assign_nested_record_entry(log: Pointer<NestedRecordLog>, index: UInt64, value: UInt32) -> Unit\n"
+        "    log.entries[index].code.code = value\n"
+        "    return\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.NestedArrayLog = type { [2 x [2 x %record.Tag_UInt32_]] }");
+    assert_ir_contains(result, "%record.NestedRecordLog = type { [2 x %record.Tag_Tag_UInt32__] }");
+    assert_ir_contains(result, "%record.Tag_Tag_UInt32__ = type { %record.Tag_UInt32_ }");
+    assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "define i32 @read_nested_array_entry(ptr %log, i64 %index, i64 %inner)");
+    assert_ir_contains(result, "define i32 @read_nested_record_entry(ptr %log, i64 %index)");
+    assert_ir_contains(result, "define void @assign_nested_array_entry(ptr %log, i64 %index, i64 %inner, i32 %value)");
+    assert_ir_contains(result, "define void @assign_nested_record_entry(ptr %log, i64 %index, i32 %value)");
+    assert_ir_contains(result, "getelementptr %record.NestedArrayLog, ptr %log, i32 0, i32 0");
+    assert_ir_contains(result, "getelementptr [2 x [2 x %record.Tag_UInt32_]], ptr %tmp");
+    assert_ir_contains(result, "getelementptr [2 x %record.Tag_UInt32_], ptr %tmp");
+    assert_ir_contains(result, "getelementptr %record.NestedRecordLog, ptr %log, i32 0, i32 0");
+    assert_ir_contains(result, "getelementptr [2 x %record.Tag_Tag_UInt32__], ptr %tmp");
+    assert_ir_contains(result, "getelementptr %record.Tag_Tag_UInt32__, ptr %tmp");
+    assert_ir_contains(result, "getelementptr %record.Tag_UInt32_, ptr %tmp");
+    assert_ir_contains(result, "load i32, ptr %tmp");
+    assert_ir_contains(result, "store i32 %value, ptr %tmp");
+    std::filesystem::remove(path);
+}
+
 void test_reject_malformed_generated_llvm_ir() {
     orison::lowering::LlvmIrVerifier verifier;
     auto diagnostics = verifier.verify(
@@ -10072,6 +10125,7 @@ auto main() -> int {
     test_emit_for_body_partial_if_and_switch_flow();
     test_reject_statements_after_terminating_nonvoid_statement();
     test_emit_raw_mmio_intrinsics();
+    test_emit_nested_generic_pointer_paths();
     test_reject_malformed_generated_llvm_ir();
     test_reject_invalid_generated_llvm_module();
     test_emit_native_object_file();
