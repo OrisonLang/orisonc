@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-17: nested concrete generic record fixed-array `for` iterables now have coverage:
+  `Array<Array<Tag<UInt32>, 2>, 2>` loop items and `Array<Tag<Tag<UInt32>>, 2>` loop items become addressable and
+  support nested field reads.
 - 2026-07-17: nested concrete generic record mutable-local assignments now have coverage:
   `Array<Array<Tag<UInt32>, 2>, 2>` and `Array<Tag<Tag<UInt32>>, 2>` locals lower nested indexed field writes and
   subsequent reads.

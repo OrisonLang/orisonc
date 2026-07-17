@@ -5528,6 +5528,49 @@ void test_emit_generic_record_for_item_field_return() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_nested_generic_record_for_item_field_return() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_nested_generic_record_for_item_field.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: T\n"
+        "\n"
+        "function sum_nested_array_items() -> UInt32\n"
+        "    var total: UInt32 = 0 as UInt32\n"
+        "    let rows: Array<Array<Tag<UInt32>, 2>, 2> = [[Tag(1 as UInt32), Tag(2 as UInt32)], [Tag(3 as UInt32), Tag(4 as UInt32)]]\n"
+        "    for row in rows\n"
+        "        total = total + row[1].code\n"
+        "    total\n"
+        "\n"
+        "function sum_nested_record_items() -> UInt32\n"
+        "    var total: UInt32 = 0 as UInt32\n"
+        "    let boxes: Array<Tag<Tag<UInt32>>, 2> = [Tag(Tag(5 as UInt32)), Tag(Tag(8 as UInt32))]\n"
+        "    for box in boxes\n"
+        "        total = total + box.code.code\n"
+        "    total\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    sum_nested_array_items() + sum_nested_record_items()\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
+    assert_ir_contains(result, "%record.Tag_Tag_UInt32__ = type { %record.Tag_UInt32_ }");
+    assert_ir_contains(result, "%row.addr = alloca [2 x %record.Tag_UInt32_]");
+    assert_ir_contains(result, "store [2 x %record.Tag_UInt32_] %tmp");
+    assert_ir_contains(result, "%box.addr = alloca %record.Tag_Tag_UInt32__");
+    assert_ir_contains(result, "store %record.Tag_Tag_UInt32__ %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Tag_UInt32_], ptr %row.addr");
+    assert_ir_contains(result, " = getelementptr %record.Tag_Tag_UInt32__, ptr %box.addr, i32 0, i32 0");
+    assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %tmp");
+    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_ir_contains(result, "for.iteration.");
+    assert_ir_contains(result, "for.exit.");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_bare_generic_record_array_literal_for_item_field_return() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_bare_generic_record_array_literal_for_item_field.or";
@@ -10047,6 +10090,7 @@ auto main() -> int {
     test_emit_generic_record_guard_early_return_field_return();
     test_emit_generic_record_array_defer_early_return_field_return();
     test_emit_generic_record_for_item_field_return();
+    test_emit_nested_generic_record_for_item_field_return();
     test_emit_bare_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_generic_record_inferred_let_binding();
