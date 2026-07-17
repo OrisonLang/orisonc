@@ -5358,6 +5358,84 @@ void test_emit_nested_generic_record_array_function_control_early_returns() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_nested_record_array_function_control_early_returns() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_nested_record_array_function_control_early_returns.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Counter\n"
+        "    value: UInt32\n"
+        "\n"
+        "record CounterPair\n"
+        "    left: Counter\n"
+        "    right: Counter\n"
+        "\n"
+        "record CounterMatrix\n"
+        "    rows: Array<Array<Counter, 2>, 2>\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function choose_pair(flag: Bool) -> CounterPair\n"
+        "    if flag\n"
+        "        CounterPair(Counter(1 as UInt32), Counter(2 as UInt32))\n"
+        "    else\n"
+        "        CounterPair(Counter(3 as UInt32), Counter(4 as UInt32))\n"
+        "\n"
+        "function choose_matrix(flag: Bool) -> CounterMatrix\n"
+        "    if flag\n"
+        "        CounterMatrix([[Counter(5 as UInt32), Counter(6 as UInt32)], [Counter(7 as UInt32), Counter(8 as UInt32)]])\n"
+        "    else\n"
+        "        CounterMatrix([[Counter(9 as UInt32), Counter(10 as UInt32)], [Counter(11 as UInt32), Counter(12 as UInt32)]])\n"
+        "\n"
+        "function early_pair(flag: Bool) -> CounterPair\n"
+        "    guard flag else\n"
+        "        return CounterPair(Counter(13 as UInt32), Counter(14 as UInt32))\n"
+        "    defer\n"
+        "        observe(1 as UInt32)\n"
+        "    return CounterPair(Counter(15 as UInt32), Counter(16 as UInt32))\n"
+        "\n"
+        "function early_matrix(flag: Bool) -> CounterMatrix\n"
+        "    guard flag else\n"
+        "        return CounterMatrix([[Counter(17 as UInt32), Counter(18 as UInt32)], [Counter(19 as UInt32), Counter(20 as UInt32)]])\n"
+        "    defer\n"
+        "        observe(2 as UInt32)\n"
+        "    return CounterMatrix([[Counter(21 as UInt32), Counter(22 as UInt32)], [Counter(23 as UInt32), Counter(24 as UInt32)]])\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    choose_pair(true).right.value + choose_matrix(false).rows[1][0].value + early_pair(false).left.value + early_matrix(true).rows[0][1].value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Counter = type { i32 }");
+    assert_ir_contains(result, "%record.CounterPair = type { %record.Counter, %record.Counter }");
+    assert_ir_contains(result, "%record.CounterMatrix = type { [2 x [2 x %record.Counter]] }");
+    assert_ir_contains(result, "define %record.CounterPair @choose_pair(i1 %flag)");
+    assert_ir_contains(result, "define %record.CounterMatrix @choose_matrix(i1 %flag)");
+    assert_ir_contains(result, "define %record.CounterPair @early_pair(i1 %flag)");
+    assert_ir_contains(result, "define %record.CounterMatrix @early_matrix(i1 %flag)");
+    assert_ir_contains(result, " = phi %record.CounterPair [%tmp");
+    assert_ir_contains(result, " = phi %record.CounterMatrix [%tmp");
+    assert_ir_contains(result, "guard.failure.");
+    assert_ir_contains(result, "guard.merge.");
+    assert_ir_contains(result, "call void @observe(i32 1)");
+    assert_ir_contains(result, "call void @observe(i32 2)");
+    assert_ir_contains(result, " = call %record.CounterPair @choose_pair(i1 1)");
+    assert_ir_contains(result, " = call %record.CounterMatrix @choose_matrix(i1 0)");
+    assert_ir_contains(result, " = call %record.CounterPair @early_pair(i1 0)");
+    assert_ir_contains(result, " = call %record.CounterMatrix @early_matrix(i1 1)");
+    assert_ir_contains(result, " = insertvalue %record.CounterPair undef, %record.Counter %tmp");
+    assert_ir_contains(result, " = insertvalue %record.CounterMatrix undef, [2 x [2 x %record.Counter]] %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterPair, ptr %tmp");
+    assert_ir_contains(result, "getelementptr %record.Counter, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterMatrix, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Counter]], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Counter], ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_nested_generic_record_array_function_final_switch_returns() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_nested_generic_record_array_function_final_switch_returns.or";
@@ -10417,6 +10495,7 @@ auto main() -> int {
     test_emit_generic_record_array_final_if_function_return_field_return();
     test_emit_generic_record_array_final_switch_function_return_field_return();
     test_emit_nested_generic_record_array_function_control_early_returns();
+    test_emit_nested_record_array_function_control_early_returns();
     test_emit_nested_generic_record_array_function_final_switch_returns();
     test_emit_nested_generic_record_array_function_loop_built_returns();
     test_emit_generic_record_while_built_function_return_field_return();

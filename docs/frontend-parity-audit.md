@@ -26,12 +26,16 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: broader aggregate construction and assignment beyond the
-  currently pinned scalar, nested local/pointer/function/method-boundary non-generic record/fixed-array, and concrete
-  generic record/fixed-array slices; dynamic arrays, views, and future standard-library iterator abstractions beyond
-  fixed-array `for` lowering; and production backend completeness beyond the current LLVM/object/link/run smoke paths
+  currently pinned scalar, nested local/pointer/function/method-boundary plus control/early-return non-generic
+  record/fixed-array, and concrete generic record/fixed-array slices; dynamic arrays, views, and future
+  standard-library iterator abstractions beyond fixed-array `for` lowering; and production backend completeness beyond
+  the current LLVM/object/link/run smoke paths
 
 ## Latest update
 
+- 2026-07-17: nested non-generic record/fixed-array aggregate function control and early-return paths now have lowering
+  smoke coverage: records containing records and records containing fixed arrays of records lower through final `if`,
+  guard failure, deferred cleanup, and caller-side nested reads.
 - 2026-07-17: nested non-generic record/fixed-array aggregate receiver-method boundaries now have lowering smoke
   coverage: records containing records and records containing fixed arrays of records cross method parameter and
   return boundaries with caller/callee nested field reads.
