@@ -1034,7 +1034,16 @@ void emit_function_body(
                             concurrency_expression_name(statement.expression) + " expressions"
                     );
                 } else {
-                    diagnostics.error(statement.line, "lowering does not yet support this let binding");
+                    auto message = std::string {"lowering does not yet support this let binding"};
+                    if (auto detail = generic_record_constructor_inference_failure_detail(
+                            statement.expression,
+                            context.lowering,
+                            session.state
+                        )) {
+                        message += ": ";
+                        message += *detail;
+                    }
+                    diagnostics.error(statement.line, message);
                 }
                 return;
             }

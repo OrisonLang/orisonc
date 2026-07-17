@@ -130,6 +130,9 @@ auto render_expression_lowering_failure(
     case ExpressionLoweringFailureReason::branch_type_mismatch:
         prefix = "branch type mismatch";
         break;
+    case ExpressionLoweringFailureReason::generic_record_constructor_inference_failed:
+        prefix = "generic record constructor inference failed";
+        break;
     case ExpressionLoweringFailureReason::unknown_function:
         prefix = "unknown lowered function";
         break;

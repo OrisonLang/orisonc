@@ -73,6 +73,10 @@ int main() {
         },
         std::pair {ExpressionLoweringFailureReason::cannot_infer_operand_type, "cannot infer operand type"},
         std::pair {ExpressionLoweringFailureReason::branch_type_mismatch, "branch type mismatch"},
+        std::pair {
+            ExpressionLoweringFailureReason::generic_record_constructor_inference_failed,
+            "generic record constructor inference failed"
+        },
         std::pair {ExpressionLoweringFailureReason::unknown_function, "unknown lowered function"},
         std::pair {ExpressionLoweringFailureReason::call_return_type_mismatch, "call return type mismatch"},
         std::pair {ExpressionLoweringFailureReason::call_arity_mismatch, "call arity mismatch"},

@@ -5397,6 +5397,39 @@ void test_reject_underconstrained_generic_record_array_literal_for_item_field_re
     );
 }
 
+void test_reject_underconstrained_generic_record_inferred_let_binding() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_underconstrained_generic_record_inferred_let.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let tag = Tag(7 as UInt32)\n"
+        "    tag.code\n"
+    );
+
+    assert(result.has_errors());
+    assert(result.diagnostics.entries().size() == 1);
+    assert(
+        result.diagnostics.entries().front().message.find(
+            "lowering does not yet support this let binding"
+        ) != std::string::npos
+    );
+    assert(
+        result.diagnostics.entries().front().message.find(
+            "generic parameter 'T' cannot be inferred for record 'Tag'"
+        ) != std::string::npos
+    );
+    assert(
+        result.diagnostics.entries().front().message.find("unknown lowered function") ==
+        std::string::npos
+    );
+}
+
 void test_emit_generic_record_receiver_field_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_generic_record_receiver_field.or";
     auto result = lower_source(
@@ -9330,6 +9363,7 @@ auto main() -> int {
     test_emit_generic_record_for_item_field_return();
     test_emit_bare_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_generic_record_array_literal_for_item_field_return();
+    test_reject_underconstrained_generic_record_inferred_let_binding();
     test_emit_generic_record_receiver_field_return();
     test_emit_generic_record_method_parameter_field_return();
     test_emit_generic_record_array_method_parameter_field_return();

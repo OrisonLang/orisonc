@@ -37,6 +37,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-16: direct underconstrained generic record constructor inferred `let` bindings now preserve the generic
+  parameter inference diagnostic instead of reporting only a broad unsupported binding message.
 - 2026-07-16: underconstrained generic record constructor diagnostics now retain template parameter metadata without
   exposing generic templates as lowerable layouts, so array literal `for` failures identify the missing generic
   parameter instead of surfacing only an unknown lowered function fallback.

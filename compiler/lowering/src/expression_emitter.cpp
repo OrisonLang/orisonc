@@ -3083,6 +3083,18 @@ auto lowered_expression(
 
         auto function = context.lowering.functions.find(expression.left->text);
         if (function == context.lowering.functions.end()) {
+            if (auto detail = generic_record_constructor_inference_failure_detail(
+                    expression,
+                    context.lowering,
+                    session.state
+                )) {
+                record_expression_lowering_failure(
+                    failures,
+                    ExpressionLoweringFailureReason::generic_record_constructor_inference_failed,
+                    *detail
+                );
+                return std::nullopt;
+            }
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unknown_function,
