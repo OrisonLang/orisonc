@@ -5696,6 +5696,50 @@ void test_emit_generic_record_array_method_control_flow_early_return_context() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_generic_record_array_method_loop_built_return_context() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_generic_record_array_method_loop_built_return.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Tag<T>\n"
+        "    code: UInt32\n"
+        "\n"
+        "extend UInt32\n"
+        "    function make_while(this: shared This) -> Array<Tag<UInt32>, 2>\n"
+        "        var value: UInt32 = 0 as UInt32\n"
+        "        while value < 1 as UInt32\n"
+        "            value = value + 1 as UInt32\n"
+        "        [Tag(value), Tag(7 as UInt32)]\n"
+        "\n"
+        "    function make_for(this: shared This) -> Array<Tag<UInt32>, 2>\n"
+        "        var value: UInt32 = 0 as UInt32\n"
+        "        for item in [7 as UInt32, 9 as UInt32]\n"
+        "            value = item\n"
+        "        [Tag(value), Tag(11 as UInt32)]\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let receiver: UInt32 = 0 as UInt32\n"
+        "    receiver.make_while()[0].code + receiver.make_for()[1].code\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Tag_UInt32_ = type { i32 }");
+    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "method.UInt32.make_while", "i32 %this");
+    assert_defines_method(result, "[2 x %record.Tag_UInt32_]", "method.UInt32.make_for", "i32 %this");
+    assert_ir_contains(result, "while.condition.");
+    assert_ir_contains(result, "while.exit.");
+    assert_ir_contains(result, "for.iteration.");
+    assert_ir_contains(result, "for.exit.");
+    assert_ir_contains(result, " = insertvalue [2 x %record.Tag_UInt32_] undef, %record.Tag_UInt32_ %tmp");
+    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @method.UInt32.make_while(i32 %receiver)");
+    assert_ir_contains(result, " = call [2 x %record.Tag_UInt32_] @method.UInt32.make_for(i32 %receiver)");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Tag_UInt32_], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Tag_UInt32_, ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_receiver_field_return() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_generic_record_receiver_field.or";
     auto result = lower_source(
@@ -9637,6 +9681,7 @@ auto main() -> int {
     test_emit_generic_record_constructor_method_guard_defer_return_context();
     test_emit_generic_record_constructor_method_loop_built_return_context();
     test_emit_generic_record_array_method_control_flow_early_return_context();
+    test_emit_generic_record_array_method_loop_built_return_context();
     test_emit_generic_record_receiver_field_return();
     test_emit_generic_record_method_parameter_field_return();
     test_emit_generic_record_array_method_parameter_field_return();
