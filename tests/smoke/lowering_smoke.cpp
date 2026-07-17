@@ -5603,6 +5603,77 @@ void test_emit_nested_generic_record_array_function_loop_built_returns() {
     assert_returns_lowered_tmp(result);
 }
 
+void test_emit_nested_record_array_function_loop_built_returns() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_lowering_nested_record_array_function_loop_returns.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Counter\n"
+        "    value: UInt32\n"
+        "\n"
+        "record CounterPair\n"
+        "    left: Counter\n"
+        "    right: Counter\n"
+        "\n"
+        "record CounterMatrix\n"
+        "    rows: Array<Array<Counter, 2>, 2>\n"
+        "\n"
+        "function build_pair_while() -> CounterPair\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    while value < 1 as UInt32\n"
+        "        value = value + 1 as UInt32\n"
+        "    CounterPair(Counter(value), Counter(2 as UInt32))\n"
+        "\n"
+        "function build_pair_for() -> CounterPair\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    for item in [7 as UInt32, 9 as UInt32]\n"
+        "        value = item\n"
+        "    CounterPair(Counter(value), Counter(11 as UInt32))\n"
+        "\n"
+        "function build_matrix_while() -> CounterMatrix\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    while value < 1 as UInt32\n"
+        "        value = value + 1 as UInt32\n"
+        "    CounterMatrix([[Counter(value), Counter(13 as UInt32)], [Counter(17 as UInt32), Counter(19 as UInt32)]])\n"
+        "\n"
+        "function build_matrix_for() -> CounterMatrix\n"
+        "    var value: UInt32 = 0 as UInt32\n"
+        "    for item in [23 as UInt32, 29 as UInt32]\n"
+        "        value = item\n"
+        "    CounterMatrix([[Counter(value), Counter(31 as UInt32)], [Counter(37 as UInt32), Counter(41 as UInt32)]])\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    build_pair_while().left.value + build_pair_for().right.value + build_matrix_while().rows[0][0].value + build_matrix_for().rows[1][0].value\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "%record.Counter = type { i32 }");
+    assert_ir_contains(result, "%record.CounterPair = type { %record.Counter, %record.Counter }");
+    assert_ir_contains(result, "%record.CounterMatrix = type { [2 x [2 x %record.Counter]] }");
+    assert_ir_contains(result, "define %record.CounterPair @build_pair_while()");
+    assert_ir_contains(result, "define %record.CounterPair @build_pair_for()");
+    assert_ir_contains(result, "define %record.CounterMatrix @build_matrix_while()");
+    assert_ir_contains(result, "define %record.CounterMatrix @build_matrix_for()");
+    assert_ir_contains(result, "while.condition.");
+    assert_ir_contains(result, "while.exit.");
+    assert_ir_contains(result, "for.iteration.");
+    assert_ir_contains(result, "for.exit.");
+    assert_ir_contains(result, " = call %record.CounterPair @build_pair_while()");
+    assert_ir_contains(result, " = call %record.CounterPair @build_pair_for()");
+    assert_ir_contains(result, " = call %record.CounterMatrix @build_matrix_while()");
+    assert_ir_contains(result, " = call %record.CounterMatrix @build_matrix_for()");
+    assert_ir_contains(result, " = insertvalue %record.CounterPair undef, %record.Counter %tmp");
+    assert_ir_contains(result, " = insertvalue %record.CounterMatrix undef, [2 x [2 x %record.Counter]] %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterPair, ptr %tmp");
+    assert_ir_contains(result, "getelementptr %record.Counter, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr %record.CounterMatrix, ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x [2 x %record.Counter]], ptr %tmp");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Counter], ptr %tmp");
+    assert_returns_lowered_tmp(result);
+}
+
 void test_emit_generic_record_while_built_function_return_field_return() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_lowering_generic_record_while_built_function_return_field.or";
@@ -10553,6 +10624,7 @@ auto main() -> int {
     test_emit_nested_generic_record_array_function_final_switch_returns();
     test_emit_nested_record_array_function_final_switch_returns();
     test_emit_nested_generic_record_array_function_loop_built_returns();
+    test_emit_nested_record_array_function_loop_built_returns();
     test_emit_generic_record_while_built_function_return_field_return();
     test_emit_generic_record_array_for_built_function_return_field_return();
     test_emit_generic_record_guard_early_return_field_return();
