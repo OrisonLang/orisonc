@@ -292,6 +292,16 @@ auto LlvmIrEmitter::emit(
     if (result.has_errors()) {
         return result;
     }
+    if (options.test_only_render_dynamic_array_allocation_calls) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            result.test_only_dynamic_array_allocation_call_ir.push_back(
+                emit_dynamic_array_allocation_call(
+                    result.dynamic_array_construction_plans[index],
+                    "%dynamic_array_alloc" + std::to_string(index)
+                )
+            );
+        }
+    }
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,

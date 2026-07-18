@@ -104,6 +104,19 @@ auto format_dynamic_array_construction_plan_report(
     return report;
 }
 
+auto emit_dynamic_array_allocation_call(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view result_name
+) -> std::string {
+    auto runtime_call = dynamic_array_runtime_call(DynamicArrayRuntimeOperation::allocate);
+    auto output = std::ostringstream {};
+    output << "  " << result_name << " = call " << runtime_call.return_type;
+    output << " @" << runtime_call.symbol_name;
+    output << "(i64 " << plan.element_size_bytes;
+    output << ", i64 " << plan.initial_capacity << ")\n";
+    return output.str();
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {

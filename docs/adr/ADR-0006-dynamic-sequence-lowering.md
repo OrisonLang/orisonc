@@ -54,6 +54,9 @@ representation.
 - A test-only LLVM emission seam can feed construction requests into that planner and surface the resulting operation
   request report. This may request the runtime declaration for audit coverage, but it still emits no allocation call
   instruction and does not expose new source syntax.
+- A disabled allocation-call renderer can produce the exact LLVM `call` instruction text from a construction plan under
+  test-only control. The rendered snippets are retained outside module IR until source-level construction lowering and
+  ownership/drop authorization exist.
 
 ## Follow-up work
 

@@ -161,6 +161,10 @@ int main() {
         "dynamic array construction DynamicArray<Payload> element Payload lowers to %record.Payload "
         "element_size 16 initial_capacity 8 requests __orison_dynamic_array_allocate (metadata only)"
     );
+    assert(
+        orison::lowering::emit_dynamic_array_allocation_call(*dynamic_array_plan, "%array") ==
+        "  %array = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 16, i64 8)\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

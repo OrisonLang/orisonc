@@ -293,6 +293,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
                     .initial_capacity = 4,
                 },
             },
+            .test_only_render_dynamic_array_allocation_calls = true,
         }
     );
 
@@ -315,6 +316,11 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     );
     assert_ir_contains(result, "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)");
     assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_allocate") == std::string::npos);
+    assert(result.test_only_dynamic_array_allocation_call_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_allocation_call_ir.front() ==
+        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 4)\n"
+    );
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
