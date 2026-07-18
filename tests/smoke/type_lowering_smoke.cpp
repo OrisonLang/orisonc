@@ -170,6 +170,24 @@ int main() {
         "  %array.addr = alloca { ptr, i64, i64 }\n"
         "  store { ptr, i64, i64 } %array, ptr %array.addr\n"
     );
+    assert(
+        orison::lowering::dynamic_array_descriptor_field_index(
+            orison::lowering::DynamicArrayDescriptorField::data
+        ) == 0
+    );
+    assert(
+        orison::lowering::dynamic_array_descriptor_field_llvm_type(
+            orison::lowering::DynamicArrayDescriptorField::length
+        ) == "i64"
+    );
+    assert(
+        orison::lowering::emit_dynamic_array_descriptor_field_projection(
+            "%array.length",
+            "%array",
+            orison::lowering::DynamicArrayDescriptorField::length
+        ) ==
+        "  %array.length = extractvalue { ptr, i64, i64 } %array, 1\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

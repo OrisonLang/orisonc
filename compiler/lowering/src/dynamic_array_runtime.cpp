@@ -130,6 +130,45 @@ auto emit_dynamic_array_descriptor_binding(
     return output.str();
 }
 
+auto dynamic_array_descriptor_field_index(
+    DynamicArrayDescriptorField field
+) -> std::size_t {
+    switch (field) {
+    case DynamicArrayDescriptorField::data:
+        return 0;
+    case DynamicArrayDescriptorField::length:
+        return 1;
+    case DynamicArrayDescriptorField::capacity:
+        return 2;
+    }
+    return 0;
+}
+
+auto dynamic_array_descriptor_field_llvm_type(
+    DynamicArrayDescriptorField field
+) -> std::string_view {
+    switch (field) {
+    case DynamicArrayDescriptorField::data:
+        return "ptr";
+    case DynamicArrayDescriptorField::length:
+    case DynamicArrayDescriptorField::capacity:
+        return "i64";
+    }
+    return "";
+}
+
+auto emit_dynamic_array_descriptor_field_projection(
+    std::string_view result_name,
+    std::string_view descriptor_value_name,
+    DynamicArrayDescriptorField field
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << result_name << " = extractvalue ";
+    output << dynamic_array_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", " << dynamic_array_descriptor_field_index(field) << "\n";
+    return output.str();
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {

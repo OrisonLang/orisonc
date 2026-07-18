@@ -18,6 +18,12 @@ enum class DynamicArrayRuntimeOperation {
     deallocate,
 };
 
+enum class DynamicArrayDescriptorField {
+    data,
+    length,
+    capacity,
+};
+
 struct DynamicArrayRuntimeCall {
     std::string_view symbol_name;
     std::string_view return_type;
@@ -61,6 +67,20 @@ auto emit_dynamic_array_descriptor_binding(
     DynamicArrayConstructionPlan const& plan,
     std::string_view local_address_name,
     std::string_view descriptor_value_name
+) -> std::string;
+
+auto dynamic_array_descriptor_field_index(
+    DynamicArrayDescriptorField field
+) -> std::size_t;
+
+auto dynamic_array_descriptor_field_llvm_type(
+    DynamicArrayDescriptorField field
+) -> std::string_view;
+
+auto emit_dynamic_array_descriptor_field_projection(
+    std::string_view result_name,
+    std::string_view descriptor_value_name,
+    DynamicArrayDescriptorField field
 ) -> std::string;
 
 auto format_dynamic_array_runtime_request(

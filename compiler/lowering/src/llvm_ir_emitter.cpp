@@ -313,6 +313,32 @@ auto LlvmIrEmitter::emit(
             );
         }
     }
+    if (options.test_only_render_dynamic_array_descriptor_projections) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto descriptor_name = "%dynamic_array_alloc" + std::to_string(index);
+            result.test_only_dynamic_array_descriptor_projection_ir.push_back(
+                emit_dynamic_array_descriptor_field_projection(
+                    "%dynamic_array" + std::to_string(index) + ".data",
+                    descriptor_name,
+                    DynamicArrayDescriptorField::data
+                )
+            );
+            result.test_only_dynamic_array_descriptor_projection_ir.push_back(
+                emit_dynamic_array_descriptor_field_projection(
+                    "%dynamic_array" + std::to_string(index) + ".length",
+                    descriptor_name,
+                    DynamicArrayDescriptorField::length
+                )
+            );
+            result.test_only_dynamic_array_descriptor_projection_ir.push_back(
+                emit_dynamic_array_descriptor_field_projection(
+                    "%dynamic_array" + std::to_string(index) + ".capacity",
+                    descriptor_name,
+                    DynamicArrayDescriptorField::capacity
+                )
+            );
+        }
+    }
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,

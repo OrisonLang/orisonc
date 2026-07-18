@@ -59,6 +59,9 @@ representation.
   ownership/drop authorization exist.
 - A disabled descriptor-binding renderer models the future local descriptor `alloca` and `store` for an allocation
   result. Like the call renderer, it is retained outside module IR until construction lowering is authorized.
+- Disabled descriptor-field projection helpers pin the `{ ptr, i64, i64 }` field order for data pointer, length, and
+  capacity extraction. The snippets remain outside module IR until bounds checks and element access lowering consume
+  the descriptor model.
 
 ## Follow-up work
 

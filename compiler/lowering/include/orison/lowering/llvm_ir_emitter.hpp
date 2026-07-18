@@ -24,6 +24,7 @@ struct LlvmIrEmissionResult {
     std::vector<DynamicArrayConstructionPlan> dynamic_array_construction_plans;
     std::vector<std::string> test_only_dynamic_array_allocation_call_ir;
     std::vector<std::string> test_only_dynamic_array_descriptor_binding_ir;
+    std::vector<std::string> test_only_dynamic_array_descriptor_projection_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;

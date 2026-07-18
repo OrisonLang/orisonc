@@ -295,6 +295,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             },
             .test_only_render_dynamic_array_allocation_calls = true,
             .test_only_render_dynamic_array_descriptor_bindings = true,
+            .test_only_render_dynamic_array_descriptor_projections = true,
         }
     );
 
@@ -329,6 +330,20 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("%dynamic_array0.addr = alloca { ptr, i64, i64 }") == std::string::npos);
+    assert(result.test_only_dynamic_array_descriptor_projection_ir.size() == 3);
+    assert(
+        result.test_only_dynamic_array_descriptor_projection_ir[0] ==
+        "  %dynamic_array0.data = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 0\n"
+    );
+    assert(
+        result.test_only_dynamic_array_descriptor_projection_ir[1] ==
+        "  %dynamic_array0.length = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 1\n"
+    );
+    assert(
+        result.test_only_dynamic_array_descriptor_projection_ir[2] ==
+        "  %dynamic_array0.capacity = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 2\n"
+    );
+    assert(result.ir_text.find("%dynamic_array0.length = extractvalue") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {

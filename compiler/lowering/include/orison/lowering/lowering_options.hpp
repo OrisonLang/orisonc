@@ -19,6 +19,7 @@ struct LlvmIrEmissionOptions {
     std::vector<TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
     bool test_only_render_dynamic_array_allocation_calls = false;
     bool test_only_render_dynamic_array_descriptor_bindings = false;
+    bool test_only_render_dynamic_array_descriptor_projections = false;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
 
