@@ -23,6 +23,7 @@ struct LlvmIrEmissionResult {
     std::vector<DynamicArrayRuntimeOperation> dynamic_array_runtime_operations;
     std::vector<DynamicArrayConstructionPlan> dynamic_array_construction_plans;
     std::vector<std::string> test_only_dynamic_array_allocation_call_ir;
+    std::vector<std::string> test_only_dynamic_array_grow_call_ir;
     std::vector<std::string> test_only_dynamic_array_descriptor_binding_ir;
     std::vector<std::string> test_only_dynamic_array_descriptor_projection_ir;
     std::vector<std::string> test_only_dynamic_array_bounds_check_ir;
@@ -32,6 +33,7 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> test_only_dynamic_array_descriptor_length_update_ir;
     std::vector<std::string> test_only_dynamic_array_descriptor_write_back_ir;
     std::vector<std::string> test_only_dynamic_array_append_sequence_ir;
+    std::vector<std::string> test_only_dynamic_array_grow_sequence_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;

@@ -117,6 +117,22 @@ auto emit_dynamic_array_allocation_call(
     return output.str();
 }
 
+auto emit_dynamic_array_grow_call(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view result_name,
+    std::string_view descriptor_value_name,
+    std::string_view next_capacity_name
+) -> std::string {
+    auto runtime_call = dynamic_array_runtime_call(DynamicArrayRuntimeOperation::grow);
+    auto output = std::ostringstream {};
+    output << "  " << result_name << " = call " << runtime_call.return_type;
+    output << " @" << runtime_call.symbol_name;
+    output << "(" << dynamic_array_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", i64 " << plan.element_size_bytes;
+    output << ", i64 " << next_capacity_name << ")\n";
+    return output.str();
+}
+
 auto emit_dynamic_array_descriptor_binding(
     DynamicArrayConstructionPlan const& plan,
     std::string_view local_address_name,
@@ -290,6 +306,29 @@ auto emit_dynamic_array_append_sequence(
     );
     output << emit_dynamic_array_descriptor_write_back(
         prefix + ".append.updated",
+        local_address_name
+    );
+    return output.str();
+}
+
+auto emit_dynamic_array_grow_sequence(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view local_address_name,
+    std::string_view capacity_name,
+    std::string_view name_prefix
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    output << "  " << prefix << ".grow.next.capacity = mul i64 " << capacity_name << ", 2\n";
+    output << emit_dynamic_array_grow_call(
+        plan,
+        prefix + ".grown",
+        descriptor_value_name,
+        prefix + ".grow.next.capacity"
+    );
+    output << emit_dynamic_array_descriptor_write_back(
+        prefix + ".grown",
         local_address_name
     );
     return output.str();

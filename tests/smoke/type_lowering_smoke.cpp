@@ -171,6 +171,16 @@ int main() {
         "  store { ptr, i64, i64 } %array, ptr %array.addr\n"
     );
     assert(
+        orison::lowering::emit_dynamic_array_grow_call(
+            *dynamic_array_plan,
+            "%array.grown",
+            "%array",
+            "%array.grow.next.capacity"
+        ) ==
+        "  %array.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
+        "({ ptr, i64, i64 } %array, i64 16, i64 %array.grow.next.capacity)\n"
+    );
+    assert(
         orison::lowering::dynamic_array_descriptor_field_index(
             orison::lowering::DynamicArrayDescriptorField::data
         ) == 0
@@ -267,6 +277,19 @@ int main() {
         "  %array.append.updated = insertvalue { ptr, i64, i64 } %array.descriptor, "
         "i64 %array.append.next.length, 1\n"
         "  store { ptr, i64, i64 } %array.append.updated, ptr %array.addr\n"
+    );
+    assert(
+        orison::lowering::emit_dynamic_array_grow_sequence(
+            *dynamic_array_plan,
+            "%array",
+            "%array.addr",
+            "%array.capacity",
+            "%array"
+        ) ==
+        "  %array.grow.next.capacity = mul i64 %array.capacity, 2\n"
+        "  %array.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
+        "({ ptr, i64, i64 } %array, i64 16, i64 %array.grow.next.capacity)\n"
+        "  store { ptr, i64, i64 } %array.grown, ptr %array.addr\n"
     );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",

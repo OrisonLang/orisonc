@@ -81,6 +81,10 @@ representation.
 - A disabled append sequence renderer composes append capacity checking, element addressing at current length, element
   store, descriptor length update, and descriptor write-back in order. The snippet remains outside module IR until
   dynamic-array mutation lowering is authorized.
+- A disabled grow-call renderer pins the finite runtime call shape for capacity-failure handling as
+  `__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)`. A disabled grow sequence currently doubles capacity,
+  calls grow with the element size and next capacity, and writes the returned descriptor back to the local slot. The
+  snippet remains outside module IR until dynamic-array growth semantics are authorized.
 
 ## Follow-up work
 

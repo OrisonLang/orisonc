@@ -18,6 +18,7 @@ struct LlvmIrEmissionOptions {
     std::vector<std::string_view> test_only_declared_drop_source_type_allowlist;
     std::vector<TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
     bool test_only_render_dynamic_array_allocation_calls = false;
+    bool test_only_render_dynamic_array_grow_calls = false;
     bool test_only_render_dynamic_array_descriptor_bindings = false;
     bool test_only_render_dynamic_array_descriptor_projections = false;
     bool test_only_render_dynamic_array_bounds_checks = false;
@@ -27,6 +28,7 @@ struct LlvmIrEmissionOptions {
     bool test_only_render_dynamic_array_descriptor_length_updates = false;
     bool test_only_render_dynamic_array_descriptor_write_backs = false;
     bool test_only_render_dynamic_array_append_sequences = false;
+    bool test_only_render_dynamic_array_grow_sequences = false;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
 

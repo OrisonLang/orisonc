@@ -294,6 +294,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
                 },
             },
             .test_only_render_dynamic_array_allocation_calls = true,
+            .test_only_render_dynamic_array_grow_calls = true,
             .test_only_render_dynamic_array_descriptor_bindings = true,
             .test_only_render_dynamic_array_descriptor_projections = true,
             .test_only_render_dynamic_array_bounds_checks = true,
@@ -303,13 +304,15 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             .test_only_render_dynamic_array_descriptor_length_updates = true,
             .test_only_render_dynamic_array_descriptor_write_backs = true,
             .test_only_render_dynamic_array_append_sequences = true,
+            .test_only_render_dynamic_array_grow_sequences = true,
         }
     );
 
     assert(!result.has_errors());
     assert(result.dynamic_array_construction_plans.size() == 1);
-    assert(result.dynamic_array_runtime_operations.size() == 1);
+    assert(result.dynamic_array_runtime_operations.size() == 2);
     assert(result.dynamic_array_runtime_operations.front() == orison::lowering::DynamicArrayRuntimeOperation::allocate);
+    assert(result.dynamic_array_runtime_operations[1] == orison::lowering::DynamicArrayRuntimeOperation::grow);
     auto plan_report = result.dynamic_array_construction_plan_report();
     assert(plan_report.size() == 1);
     assert(
@@ -318,17 +321,33 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "element_size 4 initial_capacity 4 requests __orison_dynamic_array_allocate (metadata only)"
     );
     auto runtime_report = result.dynamic_array_runtime_request_report();
-    assert(runtime_report.size() == 1);
+    assert(runtime_report.size() == 2);
     assert(
-        runtime_report.front() ==
+        runtime_report[0] ==
         "dynamic array runtime __orison_dynamic_array_allocate returns { ptr, i64, i64 } params i64 i64"
     );
+    assert(
+        runtime_report[1] ==
+        "dynamic array runtime __orison_dynamic_array_grow returns { ptr, i64, i64 } "
+        "params { ptr, i64, i64 } i64 i64"
+    );
     assert_ir_contains(result, "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)");
+    assert_ir_contains(
+        result,
+        "declare { ptr, i64, i64 } @__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)"
+    );
     assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_allocate") == std::string::npos);
+    assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_grow") == std::string::npos);
     assert(result.test_only_dynamic_array_allocation_call_ir.size() == 1);
     assert(
         result.test_only_dynamic_array_allocation_call_ir.front() ==
         "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 4)\n"
+    );
+    assert(result.test_only_dynamic_array_grow_call_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_grow_call_ir.front() ==
+        "  %dynamic_array0.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
+        "({ ptr, i64, i64 } %dynamic_array_alloc0, i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
     );
     assert(result.test_only_dynamic_array_descriptor_binding_ir.size() == 1);
     assert(
@@ -410,6 +429,15 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "  store { ptr, i64, i64 } %dynamic_array0.append.updated, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("%dynamic_array0.append.has_capacity = icmp") == std::string::npos);
+    assert(result.test_only_dynamic_array_grow_sequence_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_grow_sequence_ir.front() ==
+        "  %dynamic_array0.grow.next.capacity = mul i64 %dynamic_array0.capacity, 2\n"
+        "  %dynamic_array0.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
+        "({ ptr, i64, i64 } %dynamic_array_alloc0, i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+        "  store { ptr, i64, i64 } %dynamic_array0.grown, ptr %dynamic_array0.addr\n"
+    );
+    assert(result.ir_text.find("%dynamic_array0.grown = call") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {

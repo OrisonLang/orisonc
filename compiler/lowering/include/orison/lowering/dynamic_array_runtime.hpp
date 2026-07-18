@@ -69,6 +69,13 @@ auto emit_dynamic_array_allocation_call(
     std::string_view result_name
 ) -> std::string;
 
+auto emit_dynamic_array_grow_call(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view result_name,
+    std::string_view descriptor_value_name,
+    std::string_view next_capacity_name
+) -> std::string;
+
 auto emit_dynamic_array_descriptor_binding(
     DynamicArrayConstructionPlan const& plan,
     std::string_view local_address_name,
@@ -139,6 +146,14 @@ auto emit_dynamic_array_append_sequence(
     std::string_view length_name,
     std::string_view capacity_name,
     std::string_view value_name,
+    std::string_view name_prefix
+) -> std::string;
+
+auto emit_dynamic_array_grow_sequence(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view local_address_name,
+    std::string_view capacity_name,
     std::string_view name_prefix
 ) -> std::string;
 

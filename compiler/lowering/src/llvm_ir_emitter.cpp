@@ -144,6 +144,10 @@ auto collect_dynamic_array_runtime_operations(
             continue;
         }
         operations.push_back(plan->operation);
+        if (options.test_only_render_dynamic_array_grow_calls ||
+            options.test_only_render_dynamic_array_grow_sequences) {
+            operations.push_back(DynamicArrayRuntimeOperation::grow);
+        }
         plans.push_back(std::move(*plan));
     }
     return operations;
@@ -302,6 +306,19 @@ auto LlvmIrEmitter::emit(
             );
         }
     }
+    if (options.test_only_render_dynamic_array_grow_calls) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto prefix = "%dynamic_array" + std::to_string(index);
+            result.test_only_dynamic_array_grow_call_ir.push_back(
+                emit_dynamic_array_grow_call(
+                    result.dynamic_array_construction_plans[index],
+                    prefix + ".grown",
+                    "%dynamic_array_alloc" + std::to_string(index),
+                    prefix + ".grow.next.capacity"
+                )
+            );
+        }
+    }
     if (options.test_only_render_dynamic_array_descriptor_bindings) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             result.test_only_dynamic_array_descriptor_binding_ir.push_back(
@@ -441,6 +458,20 @@ auto LlvmIrEmitter::emit(
                     prefix + ".length",
                     prefix + ".capacity",
                     prefix + ".value",
+                    prefix
+                )
+            );
+        }
+    }
+    if (options.test_only_render_dynamic_array_grow_sequences) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto prefix = "%dynamic_array" + std::to_string(index);
+            result.test_only_dynamic_array_grow_sequence_ir.push_back(
+                emit_dynamic_array_grow_sequence(
+                    result.dynamic_array_construction_plans[index],
+                    "%dynamic_array_alloc" + std::to_string(index),
+                    prefix + ".addr",
+                    prefix + ".capacity",
                     prefix
                 )
             );
