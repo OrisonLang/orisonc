@@ -232,16 +232,15 @@ auto dynamic_array_element_drop_action(
 auto dynamic_array_element_drop_cleanup(
     DynamicArrayDescriptorCleanupPlan const& plan,
     std::size_t ordinal
-) -> std::optional<ConcurrencyDropCleanupPlan> {
-    if (is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
-        return std::nullopt;
-    }
-
+) -> ConcurrencyDropCleanupPlan {
     auto cleanup = ConcurrencyDropCleanupPlan {
         .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
         .requires_semantic_authorization = true,
+        .requires_descriptor_deallocation = true,
     };
-    cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal));
+    if (!is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
+        cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal));
+    }
     return cleanup;
 }
 
@@ -274,9 +273,7 @@ auto collect_dynamic_array_descriptor_drop_cleanups(
     auto cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
     for (auto index = std::size_t {0}; index < plans.size(); ++index) {
         auto cleanup = dynamic_array_element_drop_cleanup(plans[index], ordinal_offset + index);
-        if (cleanup.has_value()) {
-            cleanups.push_back(std::move(*cleanup));
-        }
+        cleanups.push_back(std::move(cleanup));
     }
     return cleanups;
 }

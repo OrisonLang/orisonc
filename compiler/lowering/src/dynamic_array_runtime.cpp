@@ -582,12 +582,14 @@ auto emit_dynamic_array_descriptor_cleanup_sequence(
         descriptor_value_name,
         DynamicArrayDescriptorField::capacity
     );
-    output << emit_dynamic_array_element_drop_walk(
-        plan,
-        prefix + ".cleanup.data",
-        prefix + ".cleanup.length",
-        prefix
-    );
+    if (!is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
+        output << emit_dynamic_array_element_drop_walk(
+            plan,
+            prefix + ".cleanup.data",
+            prefix + ".cleanup.length",
+            prefix
+        );
+    }
     output << "  call void @__orison_dynamic_array_deallocate(ptr ";
     output << prefix << ".cleanup.data";
     output << ", i64 " << plan.element_size_bytes;

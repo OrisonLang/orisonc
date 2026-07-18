@@ -343,6 +343,7 @@ auto format_concurrency_drop_cleanup_plan(
         header << " " << plan.cleanup_symbol_name;
     }
     header << " actions " << plan.actions.size()
+           << " descriptor deallocation " << (plan.requires_descriptor_deallocation ? "required" : "not-required")
            << " drop calls " << (drop_calls_enabled(plan) ? "enabled" : "disabled");
     if (!drop_calls_enabled(plan)) {
         header << " (metadata only)";
@@ -386,6 +387,7 @@ auto plan_drop_cleanup_authorization(
 ) -> DropCleanupAuthorizationReport {
     auto report = DropCleanupAuthorizationReport {};
     if (plan.actions.empty()) {
+        report.authorized = plan.requires_descriptor_deallocation;
         return report;
     }
 

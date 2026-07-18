@@ -126,6 +126,9 @@ representation.
 - A disabled descriptor-load cleanup renderer now composes a load from the expected descriptor storage, descriptor
   field projections, initialized-element drop walk placeholder, and deallocation call shape. The rendered snippet stays
   outside module IR until real descriptor storage and cleanup emission are authorized.
+- Descriptor-origin cleanup readiness now separates container deallocation from element drops. Scalar element
+  descriptors such as `DynamicArray<UInt32>` can report an authorized deallocation-only cleanup obligation with zero
+  planned element-drop actions, while owned element descriptors still require semantic drop authorization.
 
 ## Follow-up work
 

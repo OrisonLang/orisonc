@@ -105,7 +105,8 @@ int main() {
     assert(empty_drop_cleanup_report.size() == 1);
     assert(
         empty_drop_cleanup_report.front() ==
-        "drop cleanup plan __orison_task_cleanup.compute.7.0 actions 0 drop calls disabled (metadata only)"
+        "drop cleanup plan __orison_task_cleanup.compute.7.0 actions 0 descriptor deallocation not-required "
+        "drop calls disabled (metadata only)"
     );
     assert(task_plan->result_storage.llvm_type == "i64");
     assert(task_plan->result_storage.size_bytes == 8);
@@ -406,7 +407,8 @@ int main() {
     assert(authorized_drop_cleanup_report.size() == 2);
     assert(
         authorized_drop_cleanup_report[0] ==
-        "drop cleanup plan __orison_thread_cleanup.record_worker.20.2 actions 1 drop calls enabled"
+        "drop cleanup plan __orison_thread_cleanup.record_worker.20.2 actions 1 "
+        "descriptor deallocation not-required drop calls enabled"
     );
     auto record_drop_cleanup_report =
         orison::lowering::format_concurrency_drop_cleanup_plan(record_plan->cleanup.drop_cleanup);
@@ -414,7 +416,7 @@ int main() {
     assert(
         record_drop_cleanup_report[0] ==
         "drop cleanup plan __orison_thread_cleanup.record_worker.20.2 actions 1 "
-        "drop calls disabled (metadata only)"
+        "descriptor deallocation not-required drop calls disabled (metadata only)"
     );
     assert(
         record_drop_cleanup_report[1] ==
