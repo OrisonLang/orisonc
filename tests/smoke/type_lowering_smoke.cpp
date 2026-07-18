@@ -207,6 +207,15 @@ int main() {
         ) ==
         "  %array.index.in_bounds = icmp ult i64 %index, %array.length\n"
     );
+    assert(
+        orison::lowering::emit_dynamic_array_element_address(
+            *dynamic_array_plan,
+            "%array.element.addr",
+            "%array.data",
+            "%index"
+        ) ==
+        "  %array.element.addr = getelementptr %record.Payload, ptr %array.data, i64 %index\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

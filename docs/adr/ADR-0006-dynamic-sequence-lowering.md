@@ -65,6 +65,9 @@ representation.
 - Disabled bounds-check renderers pin unsigned `i64` comparisons for future indexing, append-without-grow, and
   `length <= capacity` descriptor invariant checks. These snippets remain outside module IR until dynamic-array
   element access and growth lowering are authorized.
+- A disabled element-address renderer pins future dynamic-array indexing as `getelementptr <element>, ptr <data>, i64
+  <index>` after descriptor projection and bounds checks. The snippet remains outside module IR until element access
+  lowering is authorized.
 
 ## Follow-up work
 

@@ -368,6 +368,19 @@ auto LlvmIrEmitter::emit(
             );
         }
     }
+    if (options.test_only_render_dynamic_array_element_addresses) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto prefix = "%dynamic_array" + std::to_string(index);
+            result.test_only_dynamic_array_element_address_ir.push_back(
+                emit_dynamic_array_element_address(
+                    result.dynamic_array_construction_plans[index],
+                    prefix + ".element.addr",
+                    prefix + ".data",
+                    prefix + ".index"
+                )
+            );
+        }
+    }
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,

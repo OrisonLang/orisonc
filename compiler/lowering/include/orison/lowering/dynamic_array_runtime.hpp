@@ -100,6 +100,13 @@ auto emit_dynamic_array_bounds_check(
     DynamicArrayBoundsCheckKind kind
 ) -> std::string;
 
+auto emit_dynamic_array_element_address(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view result_name,
+    std::string_view data_pointer_name,
+    std::string_view index_value_name
+) -> std::string;
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string;
