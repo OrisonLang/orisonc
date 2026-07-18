@@ -243,6 +243,16 @@ auto emit_dynamic_array_descriptor_length_update(
     return output.str();
 }
 
+auto emit_dynamic_array_descriptor_write_back(
+    std::string_view descriptor_value_name,
+    std::string_view local_address_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  store " << dynamic_array_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", ptr " << local_address_name << "\n";
+    return output.str();
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {

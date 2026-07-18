@@ -301,6 +301,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             .test_only_render_dynamic_array_element_loads = true,
             .test_only_render_dynamic_array_element_stores = true,
             .test_only_render_dynamic_array_descriptor_length_updates = true,
+            .test_only_render_dynamic_array_descriptor_write_backs = true,
         }
     );
 
@@ -389,6 +390,12 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "i64 %dynamic_array0.next.length, 1\n"
     );
     assert(result.ir_text.find("%dynamic_array0.updated = insertvalue") == std::string::npos);
+    assert(result.test_only_dynamic_array_descriptor_write_back_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_descriptor_write_back_ir.front() ==
+        "  store { ptr, i64, i64 } %dynamic_array0.updated, ptr %dynamic_array0.addr\n"
+    );
+    assert(result.ir_text.find("store { ptr, i64, i64 } %dynamic_array0.updated") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
