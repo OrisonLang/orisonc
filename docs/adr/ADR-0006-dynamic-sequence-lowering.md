@@ -156,6 +156,9 @@ representation.
 - Authorized owned-element cleanup coverage now pins early-return paths for bound `DynamicArray<Payload>` parameters:
   guard failures and non-final `if` arm returns emit the element drop walk before descriptor deallocation on each
   function-exit branch, with branch-local `defer` replay still ordered before container cleanup.
+- Authorized owned-element cleanup coverage now also pins explicit `Unit` returns and `switch` case returns for bound
+  `DynamicArray<Payload>` parameters. Each covered return emits the element drop walk before descriptor deallocation,
+  and branch-local `switch` defers still replay before owned-container cleanup.
 
 ## Follow-up work
 
