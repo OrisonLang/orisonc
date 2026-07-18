@@ -291,6 +291,39 @@ int main() {
         "({ ptr, i64, i64 } %array, i64 16, i64 %array.grow.next.capacity)\n"
         "  store { ptr, i64, i64 } %array.grown, ptr %array.addr\n"
     );
+    assert(
+        orison::lowering::emit_dynamic_array_append_with_grow_sequence(
+            *dynamic_array_plan,
+            "%array",
+            "%array.addr",
+            "%array.data",
+            "%array.length",
+            "%array.capacity",
+            "%value",
+            "%array"
+        ) ==
+        "array.append.entry:\n"
+        "  %array.append.has_capacity = icmp ult i64 %array.length, %array.capacity\n"
+        "  br i1 %array.append.has_capacity, label %array.append.ready, label %array.grow\n"
+        "array.grow:\n"
+        "  %array.grow.next.capacity = mul i64 %array.capacity, 2\n"
+        "  %array.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
+        "({ ptr, i64, i64 } %array, i64 16, i64 %array.grow.next.capacity)\n"
+        "  store { ptr, i64, i64 } %array.grown, ptr %array.addr\n"
+        "  br label %array.append.ready\n"
+        "array.append.ready:\n"
+        "  %array.active = phi { ptr, i64, i64 } [ %array, %array.append.entry ], "
+        "[ %array.grown, %array.grow ]\n"
+        "  %array.active.data = extractvalue { ptr, i64, i64 } %array.active, 0\n"
+        "  %array.active.length = extractvalue { ptr, i64, i64 } %array.active, 1\n"
+        "  %array.active.append.element.addr = getelementptr %record.Payload, ptr %array.active.data, "
+        "i64 %array.active.length\n"
+        "  store %record.Payload %value, ptr %array.active.append.element.addr\n"
+        "  %array.active.append.next.length = add i64 %array.active.length, 1\n"
+        "  %array.active.append.updated = insertvalue { ptr, i64, i64 } %array.active, "
+        "i64 %array.active.append.next.length, 1\n"
+        "  store { ptr, i64, i64 } %array.active.append.updated, ptr %array.addr\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

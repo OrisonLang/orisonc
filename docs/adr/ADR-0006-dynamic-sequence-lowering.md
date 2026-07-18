@@ -85,6 +85,9 @@ representation.
   `__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)`. A disabled grow sequence currently doubles capacity,
   calls grow with the element size and next capacity, and writes the returned descriptor back to the local slot. The
   snippet remains outside module IR until dynamic-array growth semantics are authorized.
+- A disabled append-with-grow sequence renderer pins the future branch shape for append mutation: check capacity,
+  branch to grow only when needed, join on an active descriptor value, then perform the append store and descriptor
+  update. The snippet remains outside module IR until dynamic-array control-flow and growth semantics are authorized.
 
 ## Follow-up work
 

@@ -145,7 +145,8 @@ auto collect_dynamic_array_runtime_operations(
         }
         operations.push_back(plan->operation);
         if (options.test_only_render_dynamic_array_grow_calls ||
-            options.test_only_render_dynamic_array_grow_sequences) {
+            options.test_only_render_dynamic_array_grow_sequences ||
+            options.test_only_render_dynamic_array_append_with_grow_sequences) {
             operations.push_back(DynamicArrayRuntimeOperation::grow);
         }
         plans.push_back(std::move(*plan));
@@ -472,6 +473,23 @@ auto LlvmIrEmitter::emit(
                     "%dynamic_array_alloc" + std::to_string(index),
                     prefix + ".addr",
                     prefix + ".capacity",
+                    prefix
+                )
+            );
+        }
+    }
+    if (options.test_only_render_dynamic_array_append_with_grow_sequences) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto prefix = "%dynamic_array" + std::to_string(index);
+            result.test_only_dynamic_array_append_with_grow_sequence_ir.push_back(
+                emit_dynamic_array_append_with_grow_sequence(
+                    result.dynamic_array_construction_plans[index],
+                    "%dynamic_array_alloc" + std::to_string(index),
+                    prefix + ".addr",
+                    prefix + ".data",
+                    prefix + ".length",
+                    prefix + ".capacity",
+                    prefix + ".value",
                     prefix
                 )
             );

@@ -305,6 +305,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             .test_only_render_dynamic_array_descriptor_write_backs = true,
             .test_only_render_dynamic_array_append_sequences = true,
             .test_only_render_dynamic_array_grow_sequences = true,
+            .test_only_render_dynamic_array_append_with_grow_sequences = true,
         }
     );
 
@@ -438,6 +439,33 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "  store { ptr, i64, i64 } %dynamic_array0.grown, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("%dynamic_array0.grown = call") == std::string::npos);
+    assert(result.test_only_dynamic_array_append_with_grow_sequence_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_append_with_grow_sequence_ir.front() ==
+        "dynamic_array0.append.entry:\n"
+        "  %dynamic_array0.append.has_capacity = icmp ult i64 %dynamic_array0.length, %dynamic_array0.capacity\n"
+        "  br i1 %dynamic_array0.append.has_capacity, label %dynamic_array0.append.ready, "
+        "label %dynamic_array0.grow\n"
+        "dynamic_array0.grow:\n"
+        "  %dynamic_array0.grow.next.capacity = mul i64 %dynamic_array0.capacity, 2\n"
+        "  %dynamic_array0.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
+        "({ ptr, i64, i64 } %dynamic_array_alloc0, i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+        "  store { ptr, i64, i64 } %dynamic_array0.grown, ptr %dynamic_array0.addr\n"
+        "  br label %dynamic_array0.append.ready\n"
+        "dynamic_array0.append.ready:\n"
+        "  %dynamic_array0.active = phi { ptr, i64, i64 } "
+        "[ %dynamic_array_alloc0, %dynamic_array0.append.entry ], [ %dynamic_array0.grown, %dynamic_array0.grow ]\n"
+        "  %dynamic_array0.active.data = extractvalue { ptr, i64, i64 } %dynamic_array0.active, 0\n"
+        "  %dynamic_array0.active.length = extractvalue { ptr, i64, i64 } %dynamic_array0.active, 1\n"
+        "  %dynamic_array0.active.append.element.addr = getelementptr i32, ptr %dynamic_array0.active.data, "
+        "i64 %dynamic_array0.active.length\n"
+        "  store i32 %dynamic_array0.value, ptr %dynamic_array0.active.append.element.addr\n"
+        "  %dynamic_array0.active.append.next.length = add i64 %dynamic_array0.active.length, 1\n"
+        "  %dynamic_array0.active.append.updated = insertvalue { ptr, i64, i64 } %dynamic_array0.active, "
+        "i64 %dynamic_array0.active.append.next.length, 1\n"
+        "  store { ptr, i64, i64 } %dynamic_array0.active.append.updated, ptr %dynamic_array0.addr\n"
+    );
+    assert(result.ir_text.find("dynamic_array0.append.entry") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {

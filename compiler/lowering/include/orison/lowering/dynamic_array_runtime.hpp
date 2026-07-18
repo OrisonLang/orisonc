@@ -157,6 +157,17 @@ auto emit_dynamic_array_grow_sequence(
     std::string_view name_prefix
 ) -> std::string;
 
+auto emit_dynamic_array_append_with_grow_sequence(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view local_address_name,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view capacity_name,
+    std::string_view value_name,
+    std::string_view name_prefix
+) -> std::string;
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string;

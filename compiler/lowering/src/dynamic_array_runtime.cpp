@@ -8,6 +8,13 @@
 namespace orison::lowering {
 namespace {
 
+auto label_name(std::string_view name_prefix) -> std::string {
+    if (!name_prefix.empty() && name_prefix.front() == '%') {
+        return std::string {name_prefix.substr(1)};
+    }
+    return std::string {name_prefix};
+}
+
 auto has_reported_symbol(
     std::vector<std::string_view> const& reported_symbols,
     std::string_view symbol_name
@@ -331,6 +338,77 @@ auto emit_dynamic_array_grow_sequence(
         prefix + ".grown",
         local_address_name
     );
+    return output.str();
+}
+
+auto emit_dynamic_array_append_with_grow_sequence(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view local_address_name,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view capacity_name,
+    std::string_view value_name,
+    std::string_view name_prefix
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    auto label_prefix = label_name(name_prefix);
+    output << label_prefix << ".append.entry:\n";
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".append.has_capacity",
+        length_name,
+        capacity_name,
+        DynamicArrayBoundsCheckKind::append_has_capacity
+    );
+    output << "  br i1 " << prefix << ".append.has_capacity";
+    output << ", label %" << label_prefix << ".append.ready";
+    output << ", label %" << label_prefix << ".grow\n";
+    output << label_prefix << ".grow:\n";
+    output << emit_dynamic_array_grow_sequence(
+        plan,
+        descriptor_value_name,
+        local_address_name,
+        capacity_name,
+        name_prefix
+    );
+    output << "  br label %" << label_prefix << ".append.ready\n";
+    output << label_prefix << ".append.ready:\n";
+    output << "  " << prefix << ".active = phi " << dynamic_array_descriptor_llvm_type();
+    output << " [ " << descriptor_value_name << ", %" << label_prefix << ".append.entry ],";
+    output << " [ " << prefix << ".grown, %" << label_prefix << ".grow ]\n";
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".active.data",
+        prefix + ".active",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".active.length",
+        prefix + ".active",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_element_address(
+        plan,
+        prefix + ".active.append.element.addr",
+        prefix + ".active.data",
+        prefix + ".active.length"
+    );
+    output << emit_dynamic_array_element_store(
+        plan,
+        value_name,
+        prefix + ".active.append.element.addr"
+    );
+    output << emit_dynamic_array_descriptor_length_update(
+        prefix + ".active.append.updated",
+        prefix + ".active.append.next.length",
+        prefix + ".active",
+        prefix + ".active.length"
+    );
+    output << emit_dynamic_array_descriptor_write_back(
+        prefix + ".active.append.updated",
+        local_address_name
+    );
+    (void)data_pointer_name;
     return output.str();
 }
 
