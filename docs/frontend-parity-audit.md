@@ -51,6 +51,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-17: dynamic-array runtime ABI entry points are now modeled internally as finite allocate/grow/deallocate
   calls over descriptor and `i64` scalar operands. The declarations are intentionally not emitted until construction,
   ownership, and cleanup lowering consume them.
+- 2026-07-17: module prelude emission now has opt-in dynamic-array runtime declaration support, deduplicated by
+  symbol, while the default operation list remains empty so ordinary lowering still emits no dynamic-array runtime
+  declarations.
 - 2026-07-17: refreshed pending lowering-gap wording after the nested non-generic aggregate expansion; record and
   fixed-array aggregate construction/assignment coverage is now broad enough that the remaining aggregate wording
   points to forms outside the pinned scalar, record, and fixed-array paths.

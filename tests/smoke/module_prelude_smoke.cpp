@@ -1,4 +1,5 @@
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/module_prelude.hpp"
 
 #include <cassert>
@@ -59,6 +60,27 @@ int main() {
         "declare ptr @__orison_task_spawn(ptr, ptr, ptr, i64, ptr)\n"
         "declare void @__orison_task_await(ptr)\n"
         "declare void @__orison_concurrency_handle_destroy(ptr)\n"
+        "\n"
+    );
+
+    using orison::lowering::DynamicArrayRuntimeOperation;
+    auto dynamic_array_prelude = orison::lowering::emit_module_prelude(
+        {},
+        {},
+        {},
+        {},
+        {
+            DynamicArrayRuntimeOperation::allocate,
+            DynamicArrayRuntimeOperation::grow,
+            DynamicArrayRuntimeOperation::allocate,
+            DynamicArrayRuntimeOperation::deallocate,
+        }
+    );
+    assert(
+        dynamic_array_prelude ==
+        "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)\n"
+        "declare { ptr, i64, i64 } @__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)\n"
+        "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)\n"
         "\n"
     );
 

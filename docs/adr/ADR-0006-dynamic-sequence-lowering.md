@@ -43,10 +43,12 @@ representation.
   cleanup calls.
 - Dynamic-array runtime declarations are modeled but not emitted into modules until source-level construction,
   ownership, and cleanup lowering consume them.
+- Module prelude emission supports dynamic-array runtime declarations only through an explicit internal operation list;
+  the default list is empty, so ordinary modules do not gain these declarations until lowering requests them.
 
 ## Follow-up work
 
-- Implement the dynamic-array runtime entry points and element cleanup lowering.
+- Implement the dynamic-array runtime entry points, construction lowering, and element cleanup lowering.
 - Enable `DynamicArray<T>` lowered signatures only after semantic ownership/drop analysis proves unique ownership,
   initialized length, capacity bounds, and deterministic cleanup.
 - Extend `for ... in` lowering to consume dynamic sequence descriptors after descriptor ABI support is in place.

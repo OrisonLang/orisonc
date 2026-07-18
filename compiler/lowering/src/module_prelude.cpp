@@ -41,7 +41,8 @@ auto emit_module_prelude(
     StringConstantTable const& string_constants,
     std::vector<LoweredFunctionSignature> const& foreign_declarations,
     std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations,
-    std::vector<PlannedDropDeclaration> const& planned_drop_declarations
+    std::vector<PlannedDropDeclaration> const& planned_drop_declarations,
+    std::vector<DynamicArrayRuntimeOperation> const& dynamic_array_runtime_operations
 ) -> std::string {
     auto output = std::ostringstream {};
     for (auto const& constant : string_constants.constants) {
@@ -90,6 +91,24 @@ auto emit_module_prelude(
         emitted_runtime_symbols.push_back(runtime_call.symbol_name);
     }
     if (!emitted_runtime_symbols.empty()) {
+        output << "\n";
+    }
+
+    auto emitted_dynamic_array_symbols = std::vector<std::string_view> {};
+    for (auto operation : dynamic_array_runtime_operations) {
+        auto runtime_call = dynamic_array_runtime_call(operation);
+        if (has_emitted_symbol(emitted_dynamic_array_symbols, runtime_call.symbol_name)) {
+            continue;
+        }
+        emit_declaration(
+            output,
+            runtime_call.return_type,
+            runtime_call.symbol_name,
+            runtime_call.parameter_types
+        );
+        emitted_dynamic_array_symbols.push_back(runtime_call.symbol_name);
+    }
+    if (!emitted_dynamic_array_symbols.empty()) {
         output << "\n";
     }
 
