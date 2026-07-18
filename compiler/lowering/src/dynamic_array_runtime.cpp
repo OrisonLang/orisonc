@@ -35,6 +35,16 @@ auto descriptor_storage_name_for_owner(std::string_view owner_name) -> std::stri
     return llvm_local_value_name(std::string {owner_name} + ".addr");
 }
 
+auto format_dynamic_array_descriptor_storage_status(
+    DynamicArrayDescriptorStorageStatus status
+) -> std::string_view {
+    switch (status) {
+    case DynamicArrayDescriptorStorageStatus::predicted_owner_local:
+        return "predicted";
+    }
+    return "unknown";
+}
+
 }  // namespace
 
 auto dynamic_array_runtime_call(
@@ -162,6 +172,7 @@ auto format_dynamic_array_descriptor_cleanup_plan(
     output << " lowers to " << plan.element_llvm_type;
     if (!plan.descriptor_storage_name.empty()) {
         output << " descriptor " << plan.descriptor_storage_name;
+        output << " " << format_dynamic_array_descriptor_storage_status(plan.descriptor_storage_status);
     }
     output << " element_size " << plan.element_size_bytes;
     output << " (metadata only)";

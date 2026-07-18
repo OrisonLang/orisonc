@@ -30,6 +30,10 @@ enum class DynamicArrayBoundsCheckKind {
     length_within_capacity,
 };
 
+enum class DynamicArrayDescriptorStorageStatus {
+    predicted_owner_local,
+};
+
 struct DynamicArrayRuntimeCall {
     std::string_view symbol_name;
     std::string_view return_type;
@@ -51,6 +55,8 @@ struct DynamicArrayDescriptorCleanupPlan {
     std::string element_source_type_name;
     std::string element_llvm_type;
     std::string descriptor_storage_name;
+    DynamicArrayDescriptorStorageStatus descriptor_storage_status =
+        DynamicArrayDescriptorStorageStatus::predicted_owner_local;
     std::size_t element_size_bytes = 0;
 };
 

@@ -679,12 +679,16 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(blocked.dynamic_array_runtime_operations.empty());
     assert(blocked.dynamic_array_descriptor_cleanup_plans.size() == 1);
     assert(blocked.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_name == "%items.addr");
+    assert(
+        blocked.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local
+    );
     auto cleanup_report = blocked.dynamic_array_descriptor_cleanup_plan_report();
     assert(cleanup_report.size() == 1);
     assert(
         cleanup_report.front() ==
         "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
-        "lowers to %record.Payload descriptor %items.addr element_size 8 (metadata only)"
+        "lowers to %record.Payload descriptor %items.addr predicted element_size 8 (metadata only)"
     );
     assert(blocked.planned_drop_actions.size() == 1);
     assert(blocked.planned_drop_actions.front().capture_name == "items.element");
@@ -791,6 +795,10 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
     assert(result.dynamic_array_descriptor_cleanup_plans.size() == 1);
     assert(result.dynamic_array_descriptor_cleanup_plans.front().element_source_type_name == "UInt32");
     assert(result.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_name == "%items.addr");
+    assert(
+        result.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local
+    );
     assert(result.planned_drop_actions.empty());
     assert(result.planned_drop_declarations.empty());
     assert(result.drop_cleanups.size() == 1);

@@ -129,6 +129,9 @@ representation.
 - Descriptor-origin cleanup readiness now separates container deallocation from element drops. Scalar element
   descriptors such as `DynamicArray<UInt32>` can report an authorized deallocation-only cleanup obligation with zero
   planned element-drop actions, while owned element descriptors still require semantic drop authorization.
+- Descriptor-origin cleanup plans now label descriptor storage as predicted owner-local storage, such as `%items.addr`,
+  rather than claiming a proven lowered binding. This keeps the metadata honest until real `DynamicArray<T>` descriptor
+  ABI/storage lowering is enabled.
 
 ## Follow-up work
 
