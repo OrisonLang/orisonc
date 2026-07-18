@@ -51,6 +51,9 @@ representation.
 - Dynamic-array construction planning is metadata-only until construction lowering is enabled: it derives the finite
   `allocate` request operands from `DynamicArray<T>` source type metadata, the lowered element type, target-layout
   element size, and explicit initial capacity.
+- A test-only LLVM emission seam can feed construction requests into that planner and surface the resulting operation
+  request report. This may request the runtime declaration for audit coverage, but it still emits no allocation call
+  instruction and does not expose new source syntax.
 
 ## Follow-up work
 

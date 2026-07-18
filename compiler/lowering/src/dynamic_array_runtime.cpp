@@ -78,6 +78,32 @@ auto plan_dynamic_array_construction(
     };
 }
 
+auto format_dynamic_array_construction_plan(
+    DynamicArrayConstructionPlan const& plan
+) -> std::string {
+    auto runtime_call = dynamic_array_runtime_call(plan.operation);
+    auto output = std::ostringstream {};
+    output << "dynamic array construction " << plan.source_type_name;
+    output << " element " << plan.element_source_type_name;
+    output << " lowers to " << plan.element_llvm_type;
+    output << " element_size " << plan.element_size_bytes;
+    output << " initial_capacity " << plan.initial_capacity;
+    output << " requests " << runtime_call.symbol_name;
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_dynamic_array_construction_plan_report(
+    std::vector<DynamicArrayConstructionPlan> const& plans
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(plans.size());
+    for (auto const& plan : plans) {
+        report.push_back(format_dynamic_array_construction_plan(plan));
+    }
+    return report;
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {

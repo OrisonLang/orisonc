@@ -127,9 +127,26 @@ auto collect_concurrency_runtime_operations(syntax::ModuleSyntax const& module)
 }
 
 auto collect_dynamic_array_runtime_operations(
-    syntax::ModuleSyntax const&
+    LlvmIrEmissionOptions const& options,
+    LoweringContext const& context,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::vector<DynamicArrayConstructionPlan>& plans
 ) -> std::vector<DynamicArrayRuntimeOperation> {
-    return {};
+    auto operations = std::vector<DynamicArrayRuntimeOperation> {};
+    for (auto const& request : options.test_only_dynamic_array_construction_requests) {
+        auto plan = plan_dynamic_array_construction(
+            request.source_type_name,
+            request.initial_capacity,
+            context
+        );
+        if (!plan.has_value()) {
+            diagnostics.error(1, "test-only dynamic array construction request could not be planned");
+            continue;
+        }
+        operations.push_back(plan->operation);
+        plans.push_back(std::move(*plan));
+    }
+    return operations;
 }
 
 }  // namespace
@@ -144,6 +161,10 @@ auto LlvmIrEmissionResult::render(std::string_view path) const -> std::string {
 
 auto LlvmIrEmissionResult::planned_drop_report() const -> std::vector<std::string> {
     return format_planned_drop_report(planned_drop_declarations);
+}
+
+auto LlvmIrEmissionResult::dynamic_array_construction_plan_report() const -> std::vector<std::string> {
+    return format_dynamic_array_construction_plan_report(dynamic_array_construction_plans);
 }
 
 auto LlvmIrEmissionResult::dynamic_array_runtime_request_report() const -> std::vector<std::string> {
@@ -262,7 +283,15 @@ auto LlvmIrEmitter::emit(
         );
     }
     output << emit_record_layouts(module, context);
-    result.dynamic_array_runtime_operations = collect_dynamic_array_runtime_operations(module);
+    result.dynamic_array_runtime_operations = collect_dynamic_array_runtime_operations(
+        options,
+        context,
+        result.diagnostics,
+        result.dynamic_array_construction_plans
+    );
+    if (result.has_errors()) {
+        return result;
+    }
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,

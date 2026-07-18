@@ -44,6 +44,14 @@ auto plan_dynamic_array_construction(
     TargetLayout const& layout = native_target_layout()
 ) -> std::optional<DynamicArrayConstructionPlan>;
 
+auto format_dynamic_array_construction_plan(
+    DynamicArrayConstructionPlan const& plan
+) -> std::string;
+
+auto format_dynamic_array_construction_plan_report(
+    std::vector<DynamicArrayConstructionPlan> const& plans
+) -> std::vector<std::string>;
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string;

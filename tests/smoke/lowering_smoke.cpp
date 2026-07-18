@@ -278,6 +278,45 @@ void test_emit_constant_uint32_return() {
     assert(result.ir_text == expected);
 }
 
+void test_collects_test_only_dynamic_array_construction_metadata() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_dynamic_array_construction_metadata.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    1 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_dynamic_array_construction_requests = {
+                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+                    .source_type_name = "DynamicArray<UInt32>",
+                    .initial_capacity = 4,
+                },
+            },
+        }
+    );
+
+    assert(!result.has_errors());
+    assert(result.dynamic_array_construction_plans.size() == 1);
+    assert(result.dynamic_array_runtime_operations.size() == 1);
+    assert(result.dynamic_array_runtime_operations.front() == orison::lowering::DynamicArrayRuntimeOperation::allocate);
+    auto plan_report = result.dynamic_array_construction_plan_report();
+    assert(plan_report.size() == 1);
+    assert(
+        plan_report.front() ==
+        "dynamic array construction DynamicArray<UInt32> element UInt32 lowers to i32 "
+        "element_size 4 initial_capacity 4 requests __orison_dynamic_array_allocate (metadata only)"
+    );
+    auto runtime_report = result.dynamic_array_runtime_request_report();
+    assert(runtime_report.size() == 1);
+    assert(
+        runtime_report.front() ==
+        "dynamic array runtime __orison_dynamic_array_allocate returns { ptr, i64, i64 } params i64 i64"
+    );
+    assert_ir_contains(result, "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)");
+    assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_allocate") == std::string::npos);
+}
+
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_semantic_drop_authorization_metadata.or";
     auto site = orison::semantics::PlannedDropSite {
@@ -10502,6 +10541,7 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     test_emit_constant_uint32_return();
+    test_collects_test_only_dynamic_array_construction_metadata();
     test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();
