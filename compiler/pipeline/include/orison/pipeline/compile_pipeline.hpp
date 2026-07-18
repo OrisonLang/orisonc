@@ -16,6 +16,7 @@ namespace orison::pipeline {
 struct CompilePipelineOptions {
     std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
     std::vector<semantics::DropImplementationCandidate> test_only_semantic_drop_implementation_candidates;
+    std::vector<semantics::DropLoweringAuthorization> test_only_semantic_drop_lowering_authorizations;
     std::vector<lowering::TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
     bool test_only_render_dynamic_array_element_drop_walks = false;
 };

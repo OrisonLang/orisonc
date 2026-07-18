@@ -105,6 +105,9 @@ representation.
 - Pipeline-level drop cleanup authorization, readiness blocker, relation, and source-correlation reports can now carry
   disabled dynamic-array element cleanup blockers through the same report fields used by concurrency cleanup plans.
   This remains an internal test seam and does not add a public source syntax or production cleanup emission path.
+- Pipeline smoke coverage also pins the positive metadata-only path: when a dynamic-array element cleanup has positive
+  semantic drop authorization and emitted drop declaration metadata, readiness reports mark the cleanup authorized while
+  generated IR still contains no dynamic-array element drop calls.
 
 ## Follow-up work
 
