@@ -527,7 +527,8 @@ auto LlvmIrEmitter::emit(
             }
         }
     }
-    if (options.test_only_render_dynamic_array_element_drop_walks) {
+    if (options.test_only_render_dynamic_array_element_drop_walks ||
+        options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
         auto dynamic_array_drop_cleanups =
             collect_dynamic_array_element_drop_cleanups(
                 result.dynamic_array_construction_plans,

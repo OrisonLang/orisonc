@@ -342,6 +342,46 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto dynamic_array_owned_cleanup = pipeline.emit_llvm(
+        dynamic_array_source_owner_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "items.element",
+                        .site_line = 6,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+        }
+    );
+    assert(!dynamic_array_owned_cleanup.has_errors());
+    assert(dynamic_array_owned_cleanup.drop_readiness_summary.cleanup_authorized == 1);
+    assert(dynamic_array_owned_cleanup.drop_readiness_summary.cleanup_blocked == 0);
+    assert(
+        dynamic_array_owned_cleanup.ir_text.find("declare void @__orison_drop.Payload(ptr)") !=
+        std::string::npos
+    );
+    assert(
+        dynamic_array_owned_cleanup.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_cleanup.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
+            "i64 %items.dynamic_array_cleanup0.cleanup.capacity)"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {

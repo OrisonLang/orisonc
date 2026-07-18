@@ -28,6 +28,7 @@
 #include "orison/lowering/unsafe_block_lowering.hpp"
 #include "orison/lowering/while_emitter.hpp"
 
+#include <algorithm>
 #include <optional>
 #include <memory>
 #include <span>
@@ -212,9 +213,97 @@ auto is_thread_join_expression(
     return state.thread_bindings.contains(expression.left->left->text);
 }
 
+auto dynamic_array_parameter_drop_action(
+    std::string_view name,
+    DynamicArrayDescriptorCleanupPlan const& plan
+) -> PlannedDropAction {
+    return PlannedDropAction {
+        .capture_name = std::string {name} + ".element",
+        .source_type_name = plan.element_source_type_name,
+        .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
+    };
+}
+
+auto emit_dynamic_array_element_drop_walk_with_calls(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view name_prefix,
+    std::string_view drop_symbol_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    auto label_prefix = prefix;
+    if (!label_prefix.empty() && label_prefix.front() == '%') {
+        label_prefix.erase(label_prefix.begin());
+    }
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.walk:\n";
+    output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << label_prefix << ".cleanup.entry ],";
+    output << " [ " << prefix << ".drop.next, %" << label_prefix << ".drop.body ]\n";
+    output << "  " << prefix << ".drop.more = icmp ult i64 " << prefix << ".drop.index";
+    output << ", " << length_name << "\n";
+    output << "  br i1 " << prefix << ".drop.more";
+    output << ", label %" << label_prefix << ".drop.body";
+    output << ", label %" << label_prefix << ".drop.done\n";
+    output << label_prefix << ".drop.body:\n";
+    output << emit_dynamic_array_element_address(
+        plan,
+        prefix + ".drop.element.addr",
+        data_pointer_name,
+        prefix + ".drop.index"
+    );
+    output << "  ; drop element " << plan.element_source_type_name;
+    output << " at " << prefix << ".drop.element.addr using " << drop_symbol_name << "\n";
+    output << "  call void @" << drop_symbol_name << "(ptr " << prefix << ".drop.element.addr)\n";
+    output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.done:\n";
+    return output.str();
+}
+
+auto emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view name_prefix,
+    std::optional<std::string_view> drop_symbol_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.data",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.length",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.capacity",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::capacity
+    );
+    if (drop_symbol_name.has_value()) {
+        output << emit_dynamic_array_element_drop_walk_with_calls(
+            plan,
+            prefix + ".cleanup.data",
+            prefix + ".cleanup.length",
+            prefix,
+            *drop_symbol_name
+        );
+    }
+    output << "  call void @__orison_dynamic_array_deallocate(ptr ";
+    output << prefix << ".cleanup.data";
+    output << ", i64 " << plan.element_size_bytes;
+    output << ", i64 " << prefix << ".cleanup.capacity)\n";
+    return output.str();
+}
+
 auto emit_test_only_bound_dynamic_array_parameter_cleanups(
     EmissionContext const& context,
-    FunctionLoweringSession const& session,
+    FunctionLoweringSession& session,
     std::ostringstream& output
 ) -> bool {
     if (!context.options.test_only_enable_dynamic_array_parameter_descriptors ||
@@ -222,11 +311,17 @@ auto emit_test_only_bound_dynamic_array_parameter_cleanups(
         return true;
     }
 
-    auto emitted_count = std::size_t {0};
-    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+    auto names = std::vector<std::string> {};
+    names.reserve(session.state.source_type_names.size());
+    for (auto const& [name, _] : session.state.source_type_names) {
+        names.push_back(name);
+    }
+    std::ranges::sort(names);
+
+    for (auto const& name : names) {
+        auto const& source_type_name = session.state.source_type_names.at(name);
         auto sequence = dynamic_sequence_source_type(source_type_name);
-        if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array ||
-            !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
             continue;
         }
 
@@ -242,11 +337,44 @@ auto emit_test_only_bound_dynamic_array_parameter_cleanups(
         plan->descriptor_storage_name = std::move(*storage);
         plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
 
-        auto prefix = "%" + name + ".dynamic_array_cleanup" + std::to_string(emitted_count++);
-        output << emit_dynamic_array_descriptor_load_cleanup_sequence(
+        auto drop_symbol_name = std::optional<std::string> {};
+        if (!is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+            auto action = dynamic_array_parameter_drop_action(name, *plan);
+            auto cleanup = ConcurrencyDropCleanupPlan {
+                .cleanup_symbol_name = "__orison_dynamic_array_cleanup." +
+                    std::to_string(session.state.next_temporary_index),
+                .actions = {action},
+                .requires_semantic_authorization = true,
+                .requires_descriptor_deallocation = true,
+            };
+            auto declarations = declared_drop_declarations_for_authorized_semantic_drops(
+                context.options.semantic_drop_lowering_authorizations
+            );
+            auto authorization = plan_drop_cleanup_authorization(
+                cleanup,
+                declarations,
+                context.options.semantic_drop_lowering_authorizations
+            );
+            if (!authorization.authorized) {
+                continue;
+            }
+            drop_symbol_name = action.symbol_name;
+        }
+
+        auto prefix = "%" + name + ".dynamic_array_cleanup" +
+            std::to_string(session.state.next_temporary_index++);
+        auto label_prefix = prefix.substr(1);
+        output << "  br label %" << label_prefix << ".cleanup.entry\n";
+        output << label_prefix << ".cleanup.entry:\n";
+        output << emit_dynamic_array_descriptor_load(
+            prefix + ".descriptor",
+            plan->descriptor_storage_name
+        );
+        output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
             *plan,
             prefix + ".descriptor",
-            prefix
+            prefix,
+            drop_symbol_name
         );
     }
     return true;

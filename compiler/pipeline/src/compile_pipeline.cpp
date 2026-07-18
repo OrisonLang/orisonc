@@ -162,11 +162,12 @@ auto CompilePipeline::emit_llvm(
 
     lowering::LlvmIrEmitter emitter;
     auto emission_options = lowering::LlvmIrEmissionOptions {};
-    emission_options.semantic_drop_lowering_authorizations = result.semantic_drop_lowering_authorizations;
+    emission_options.semantic_drop_lowering_authorizations =
+        options.test_only_semantic_drop_lowering_authorizations;
     emission_options.semantic_drop_lowering_authorizations.insert(
         emission_options.semantic_drop_lowering_authorizations.end(),
-        options.test_only_semantic_drop_lowering_authorizations.begin(),
-        options.test_only_semantic_drop_lowering_authorizations.end()
+        result.semantic_drop_lowering_authorizations.begin(),
+        result.semantic_drop_lowering_authorizations.end()
     );
     emission_options.test_only_dynamic_array_construction_requests =
         options.test_only_dynamic_array_construction_requests;

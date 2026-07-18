@@ -951,6 +951,85 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(cleanup_call < return_instruction);
 }
 
+void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_owned_dynamic_array_parameter_cleanup.or";
+    auto source = std::string {
+        "package demo.dynamicarray\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+        "    1 as UInt32\n"
+    };
+    auto options = orison::lowering::LlvmIrEmissionOptions {
+        .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+        .test_only_enable_dynamic_array_parameter_descriptors = true,
+        .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+    };
+
+    auto unauthorized = lower_source(path, source, options);
+    assert(!unauthorized.has_errors());
+    assert(unauthorized.dynamic_array_descriptor_cleanup_plans.size() == 1);
+    assert(
+        unauthorized.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
+    );
+    assert(unauthorized.drop_readiness_summary().cleanup_blocked == 1);
+    assert(unauthorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(unauthorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
+
+    options.semantic_drop_lowering_authorizations = {
+        orison::semantics::DropLoweringAuthorization {
+            .site = orison::semantics::PlannedDropSite {
+                .source_type_name = "Payload",
+                .abi_symbol_name = "__orison_drop.Payload",
+                .owner_name = "items.element",
+                .site_line = 6,
+            },
+            .semantic_resolved = true,
+            .source_drop_lowering_enabled = true,
+            .authorized = true,
+        },
+    };
+    auto authorized = lower_source(path, source, options);
+    assert(!authorized.has_errors());
+    assert(authorized.planned_drop_declarations.size() == 1);
+    assert(authorized.planned_drop_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(authorized.planned_drop_declarations.front().emit_declaration);
+    assert(authorized.drop_readiness_summary().cleanup_authorized == 1);
+    assert(authorized.drop_readiness_summary().cleanup_blocked == 0);
+    assert_ir_contains(authorized, "declare void @__orison_drop.Payload(ptr)");
+    assert_ir_contains(authorized, "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)");
+    assert_ir_contains(
+        authorized,
+        "  %items.dynamic_array_cleanup0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert_ir_contains(
+        authorized,
+        "  %items.dynamic_array_cleanup0.drop.element.addr = getelementptr %record.Payload, "
+        "ptr %items.dynamic_array_cleanup0.cleanup.data, i64 %items.dynamic_array_cleanup0.drop.index\n"
+    );
+    assert_ir_contains(
+        authorized,
+        "  call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)\n"
+    );
+    assert_ir_contains(
+        authorized,
+        "  call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
+        "i64 %items.dynamic_array_cleanup0.cleanup.capacity)\n"
+    );
+    auto drop_call = authorized.ir_text.find("call void @__orison_drop.Payload");
+    auto deallocate_call = authorized.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto return_instruction = authorized.ir_text.find("ret i32 1");
+    assert(drop_call != std::string::npos);
+    assert(deallocate_call != std::string::npos);
+    assert(return_instruction != std::string::npos);
+    assert(drop_call < deallocate_call);
+    assert(deallocate_call < return_instruction);
+}
+
 void test_dynamic_array_element_drop_readiness_requires_semantic_authorization() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_dynamic_array_drop_readiness_authorization.or";
@@ -11268,6 +11347,7 @@ auto main() -> int {
     test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin();
     test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor_origin();
     test_binds_test_only_dynamic_array_parameter_descriptor_origin();
+    test_emits_authorized_owned_dynamic_array_parameter_cleanup();
     test_dynamic_array_element_drop_readiness_requires_semantic_authorization();
     test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();

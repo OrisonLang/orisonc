@@ -138,6 +138,12 @@ representation.
 - A second test-only seam can emit bound scalar/non-owning dynamic-array parameter cleanup at normal function returns:
   it loads the descriptor from `%name.addr` and calls `__orison_dynamic_array_deallocate` before `ret`. Owned element
   cleanup emission remains disabled until element drop authorization and sequencing are complete.
+- The same test-only cleanup seam can now emit owned-element drop walking for bound `DynamicArray<T>` parameters when
+  semantic drop lowering authorization is present. The generated loop calls the authorized element drop ABI for each
+  initialized element before descriptor deallocation; without authorization, owned-element cleanup emission remains
+  suppressed.
+- Pipeline test-only semantic drop authorizations take precedence over automatically derived blocked authorizations so
+  internal lowering seams can model the positive authorized path without requiring production source drop syntax first.
 
 ## Follow-up work
 
