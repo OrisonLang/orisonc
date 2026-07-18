@@ -1,6 +1,7 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
 
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -125,6 +126,12 @@ auto collect_concurrency_runtime_operations(syntax::ModuleSyntax const& module)
     return operations;
 }
 
+auto collect_dynamic_array_runtime_operations(
+    syntax::ModuleSyntax const&
+) -> std::vector<DynamicArrayRuntimeOperation> {
+    return {};
+}
+
 }  // namespace
 
 auto LlvmIrEmissionResult::has_errors() const -> bool {
@@ -137,6 +144,10 @@ auto LlvmIrEmissionResult::render(std::string_view path) const -> std::string {
 
 auto LlvmIrEmissionResult::planned_drop_report() const -> std::vector<std::string> {
     return format_planned_drop_report(planned_drop_declarations);
+}
+
+auto LlvmIrEmissionResult::dynamic_array_runtime_request_report() const -> std::vector<std::string> {
+    return format_dynamic_array_runtime_request_report(dynamic_array_runtime_operations);
 }
 
 auto LlvmIrEmissionResult::emitted_drop_declaration_report() const -> std::vector<std::string> {
@@ -251,11 +262,13 @@ auto LlvmIrEmitter::emit(
         );
     }
     output << emit_record_layouts(module, context);
+    result.dynamic_array_runtime_operations = collect_dynamic_array_runtime_operations(module);
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,
         collect_concurrency_runtime_operations(module),
-        result.planned_drop_declarations
+        result.planned_drop_declarations,
+        result.dynamic_array_runtime_operations
     );
     for (auto const& function : module.functions) {
         if (is_uninstantiated_generic_function(function)) {

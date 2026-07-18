@@ -45,6 +45,9 @@ representation.
   ownership, and cleanup lowering consume them.
 - Module prelude emission supports dynamic-array runtime declarations only through an explicit internal operation list;
   the default list is empty, so ordinary modules do not gain these declarations until lowering requests them.
+- LLVM IR emission records dynamic-array runtime operation requests separately from prelude emission. The collection
+  pass currently returns an empty set until construction/lowering support has a proven reason to request allocation,
+  growth, or deallocation declarations.
 
 ## Follow-up work
 

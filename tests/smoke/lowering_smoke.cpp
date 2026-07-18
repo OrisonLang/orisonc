@@ -262,6 +262,9 @@ void test_emit_constant_uint32_return() {
     );
 
     assert(!result.has_errors());
+    assert(result.dynamic_array_runtime_operations.empty());
+    assert(result.dynamic_array_runtime_request_report().empty());
+    assert(result.ir_text.find("__orison_dynamic_array_") == std::string::npos);
     auto expected = std::string {
         "; Orison LLVM IR scaffold\n"
         "; package demo.lowering\n"

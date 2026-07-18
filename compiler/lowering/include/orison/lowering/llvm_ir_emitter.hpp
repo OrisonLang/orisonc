@@ -2,6 +2,7 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
@@ -19,11 +20,13 @@ struct LlvmIrEmissionResult {
     std::vector<ConcurrencyDropCleanupPlan> drop_cleanups;
     std::vector<PlannedDropAction> planned_drop_actions;
     std::vector<PlannedDropDeclaration> planned_drop_declarations;
+    std::vector<DynamicArrayRuntimeOperation> dynamic_array_runtime_operations;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;
     auto render(std::string_view path) const -> std::string;
     auto planned_drop_report() const -> std::vector<std::string>;
+    auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;
     auto drop_cleanup_authorization_report() const -> std::vector<std::string>;

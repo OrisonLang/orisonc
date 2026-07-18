@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -20,5 +21,13 @@ struct DynamicArrayRuntimeCall {
 auto dynamic_array_runtime_call(
     DynamicArrayRuntimeOperation operation
 ) -> DynamicArrayRuntimeCall;
+
+auto format_dynamic_array_runtime_request(
+    DynamicArrayRuntimeOperation operation
+) -> std::string;
+
+auto format_dynamic_array_runtime_request_report(
+    std::vector<DynamicArrayRuntimeOperation> const& operations
+) -> std::vector<std::string>;
 
 }  // namespace orison::lowering
