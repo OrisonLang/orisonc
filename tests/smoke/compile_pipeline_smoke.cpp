@@ -46,6 +46,7 @@ auto main() -> int {
     assert(analysis.semantic_drop_lowering_authorizations.empty());
     assert(analysis.semantic_drop_lowering_authorization_report.empty());
     assert(analysis.semantic_drop_resolution_summary_report.empty());
+    assert(analysis.dynamic_array_descriptor_cleanup_plan_report.empty());
 
     auto ir = pipeline.emit_llvm(source_path);
     assert(!ir.has_errors());
@@ -87,6 +88,7 @@ auto main() -> int {
         ir.drop_readiness_source_correlation_report.front() ==
         "drop readiness source correlations actions 0 semantic sites 0"
     );
+    assert(ir.dynamic_array_descriptor_cleanup_plan_report.empty());
 
     auto drop_readiness_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";

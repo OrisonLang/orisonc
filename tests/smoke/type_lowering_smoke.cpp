@@ -161,6 +161,29 @@ int main() {
         "dynamic array construction DynamicArray<Payload> element Payload lowers to %record.Payload "
         "element_size 16 initial_capacity 8 requests __orison_dynamic_array_allocate (metadata only)"
     );
+    auto dynamic_array_cleanup_plan = orison::lowering::plan_dynamic_array_descriptor_cleanup(
+        "items",
+        "DynamicArray<Payload>",
+        context
+    );
+    assert(dynamic_array_cleanup_plan.has_value());
+    assert(dynamic_array_cleanup_plan->owner_name == "items");
+    assert(dynamic_array_cleanup_plan->source_type_name == "DynamicArray<Payload>");
+    assert(dynamic_array_cleanup_plan->element_source_type_name == "Payload");
+    assert(dynamic_array_cleanup_plan->element_llvm_type == "%record.Payload");
+    assert(dynamic_array_cleanup_plan->element_size_bytes == 16);
+    assert(
+        orison::lowering::format_dynamic_array_descriptor_cleanup_plan(*dynamic_array_cleanup_plan) ==
+        "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
+        "lowers to %record.Payload element_size 16 (metadata only)"
+    );
+    assert(
+        orison::lowering::format_dynamic_array_descriptor_cleanup_plan_report({*dynamic_array_cleanup_plan}) ==
+        std::vector<std::string>({
+            "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
+            "lowers to %record.Payload element_size 16 (metadata only)"
+        })
+    );
     assert(
         orison::lowering::emit_dynamic_array_allocation_call(*dynamic_array_plan, "%array") ==
         "  %array = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 16, i64 8)\n"

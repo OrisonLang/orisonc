@@ -170,6 +170,8 @@ auto CompilePipeline::emit_llvm(
     );
     emission_options.test_only_dynamic_array_construction_requests =
         options.test_only_dynamic_array_construction_requests;
+    emission_options.test_only_derive_dynamic_array_cleanup_from_semantics =
+        options.test_only_derive_dynamic_array_cleanup_from_semantics;
     emission_options.test_only_render_dynamic_array_element_drop_walks =
         options.test_only_render_dynamic_array_element_drop_walks;
     auto emission = emitter.emit(result.parse_result.module, result.semantic_result, emission_options);
@@ -178,6 +180,8 @@ auto CompilePipeline::emit_llvm(
         return result;
     }
     result.ir_text = std::move(emission.ir_text);
+    result.dynamic_array_descriptor_cleanup_plan_report =
+        emission.dynamic_array_descriptor_cleanup_plan_report();
     result.planned_drop_report = emission.planned_drop_report();
     result.emitted_drop_declaration_report = emission.emitted_drop_declaration_report();
     result.planned_drop_action_report = emission.planned_drop_action_report();

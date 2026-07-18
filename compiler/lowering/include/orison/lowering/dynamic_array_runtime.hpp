@@ -45,6 +45,14 @@ struct DynamicArrayConstructionPlan {
     DynamicArrayRuntimeOperation operation = DynamicArrayRuntimeOperation::allocate;
 };
 
+struct DynamicArrayDescriptorCleanupPlan {
+    std::string owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string element_llvm_type;
+    std::size_t element_size_bytes = 0;
+};
+
 auto dynamic_array_runtime_call(
     DynamicArrayRuntimeOperation operation
 ) -> DynamicArrayRuntimeCall;
@@ -56,12 +64,27 @@ auto plan_dynamic_array_construction(
     TargetLayout const& layout = native_target_layout()
 ) -> std::optional<DynamicArrayConstructionPlan>;
 
+auto plan_dynamic_array_descriptor_cleanup(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    TargetLayout const& layout = native_target_layout()
+) -> std::optional<DynamicArrayDescriptorCleanupPlan>;
+
 auto format_dynamic_array_construction_plan(
     DynamicArrayConstructionPlan const& plan
 ) -> std::string;
 
 auto format_dynamic_array_construction_plan_report(
     std::vector<DynamicArrayConstructionPlan> const& plans
+) -> std::vector<std::string>;
+
+auto format_dynamic_array_descriptor_cleanup_plan(
+    DynamicArrayDescriptorCleanupPlan const& plan
+) -> std::string;
+
+auto format_dynamic_array_descriptor_cleanup_plan_report(
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& plans
 ) -> std::vector<std::string>;
 
 auto emit_dynamic_array_allocation_call(
@@ -115,6 +138,13 @@ auto emit_dynamic_array_bounds_check(
 
 auto emit_dynamic_array_element_address(
     DynamicArrayConstructionPlan const& plan,
+    std::string_view result_name,
+    std::string_view data_pointer_name,
+    std::string_view index_value_name
+) -> std::string;
+
+auto emit_dynamic_array_element_address(
+    DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view result_name,
     std::string_view data_pointer_name,
     std::string_view index_value_name
@@ -182,6 +212,13 @@ auto emit_dynamic_array_cleanup_sequence(
 
 auto emit_dynamic_array_element_drop_walk(
     DynamicArrayConstructionPlan const& plan,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view name_prefix
+) -> std::string;
+
+auto emit_dynamic_array_element_drop_walk(
+    DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view data_pointer_name,
     std::string_view length_name,
     std::string_view name_prefix

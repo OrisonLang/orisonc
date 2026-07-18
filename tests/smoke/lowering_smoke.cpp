@@ -48,6 +48,31 @@ auto lower_source(
     return emitter.emit(parse_result.module, semantic_result, options);
 }
 
+auto lower_source_with_semantics(
+    std::filesystem::path const& path,
+    std::string_view source,
+    orison::semantics::SemanticAnalysisResult semantic_result,
+    orison::lowering::LlvmIrEmissionOptions const& options = {}
+)
+    -> orison::lowering::LlvmIrEmissionResult {
+    {
+        std::ofstream output(path);
+        output << source;
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    assert(!semantic_result.has_errors());
+
+    orison::lowering::LlvmIrEmitter emitter;
+    return emitter.emit(parse_result.module, semantic_result, options);
+}
+
 void assert_ir_contains(orison::lowering::LlvmIrEmissionResult const& result, std::string_view needle) {
     if (result.ir_text.find(needle) == std::string::npos) {
         std::cerr << "missing expected IR fragment: " << needle << "\n";
@@ -607,6 +632,111 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
     );
     assert(result.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(result.ir_text.find("declare void @__orison_drop.Payload") == std::string::npos);
+}
+
+void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_dynamic_array_descriptor_cleanup_metadata.or";
+    auto source =
+        "package demo.lowering\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    1 as UInt32\n";
+    auto semantic_result = orison::semantics::SemanticAnalysisResult {};
+    semantic_result.dynamic_array_descriptor_origins.push_back(
+        orison::semantics::DynamicArrayDescriptorOrigin {
+            .owner_name = "items",
+            .source_type_name = "DynamicArray<Payload>",
+            .element_source_type_name = "Payload",
+            .line = 8,
+        }
+    );
+    semantic_result.planned_drop_sites.push_back(
+        orison::semantics::PlannedDropSite {
+            .source_type_name = "Payload",
+            .abi_symbol_name = "__orison_drop.Payload",
+            .owner_name = "items.element",
+            .site_line = 8,
+        }
+    );
+
+    auto blocked = lower_source_with_semantics(
+        path,
+        source,
+        semantic_result,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_render_dynamic_array_element_drop_walks = true,
+        }
+    );
+
+    assert(!blocked.has_errors());
+    assert(blocked.dynamic_array_construction_plans.empty());
+    assert(blocked.dynamic_array_runtime_operations.empty());
+    assert(blocked.dynamic_array_descriptor_cleanup_plans.size() == 1);
+    auto cleanup_report = blocked.dynamic_array_descriptor_cleanup_plan_report();
+    assert(cleanup_report.size() == 1);
+    assert(
+        cleanup_report.front() ==
+        "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
+        "lowers to %record.Payload element_size 8 (metadata only)"
+    );
+    assert(blocked.planned_drop_actions.size() == 1);
+    assert(blocked.planned_drop_actions.front().capture_name == "items.element");
+    assert(blocked.planned_drop_actions.front().source_type_name == "Payload");
+    assert(blocked.drop_cleanups.size() == 1);
+    assert(blocked.drop_cleanups.front().cleanup_symbol_name == "__orison_dynamic_array_cleanup.0");
+    auto blocked_readiness = blocked.drop_readiness_snapshot_report();
+    assert(blocked_readiness.size() == 2);
+    assert(
+        blocked_readiness[1] ==
+        "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 missing declarations 1"
+    );
+    assert(blocked.test_only_dynamic_array_element_drop_walk_ir.size() == 1);
+    assert(
+        blocked.test_only_dynamic_array_element_drop_walk_ir.front().find(
+            "planned drop for Payload at %dynamic_array0.drop.element.addr remains disabled"
+        ) != std::string::npos
+    );
+
+    auto authorized = lower_source_with_semantics(
+        path,
+        source,
+        semantic_result,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_render_dynamic_array_element_drop_walks = true,
+            .semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = semantic_result.planned_drop_sites.front(),
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        }
+    );
+
+    assert(!authorized.has_errors());
+    assert(authorized.dynamic_array_construction_plans.empty());
+    assert(authorized.dynamic_array_runtime_operations.empty());
+    auto authorized_summary = authorized.drop_readiness_summary();
+    assert(authorized_summary.semantic_authorized == 1);
+    assert(authorized_summary.emitted_declarations == 1);
+    assert(authorized_summary.cleanup_authorized == 1);
+    assert(authorized_summary.cleanup_blocked == 0);
+    auto authorized_action_report = authorized.planned_drop_action_report();
+    assert(authorized_action_report.size() == 1);
+    assert(
+        authorized_action_report.front() ==
+        "planned drop action __orison_drop.Payload for capture items.element: Payload field 0 (metadata only)"
+    );
+    assert(authorized.ir_text.find("declare void @__orison_drop.Payload") != std::string::npos);
+    assert(authorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(authorized.ir_text.find("__orison_dynamic_array_allocate") == std::string::npos);
 }
 
 void test_dynamic_array_element_drop_readiness_requires_semantic_authorization() {
@@ -10923,6 +11053,7 @@ auto main() -> int {
     test_emit_constant_uint32_return();
     test_collects_test_only_dynamic_array_construction_metadata();
     test_collects_test_only_dynamic_array_element_drop_readiness_metadata();
+    test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin();
     test_dynamic_array_element_drop_readiness_requires_semantic_authorization();
     test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();

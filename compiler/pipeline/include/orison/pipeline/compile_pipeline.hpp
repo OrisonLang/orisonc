@@ -18,6 +18,7 @@ struct CompilePipelineOptions {
     std::vector<semantics::DropImplementationCandidate> test_only_semantic_drop_implementation_candidates;
     std::vector<semantics::DropLoweringAuthorization> test_only_semantic_drop_lowering_authorizations;
     std::vector<lowering::TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
+    bool test_only_derive_dynamic_array_cleanup_from_semantics = false;
     bool test_only_render_dynamic_array_element_drop_walks = false;
 };
 
@@ -35,6 +36,7 @@ struct CompilePipelineResult {
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
     std::vector<std::string> semantic_drop_lowering_authorization_report;
     std::vector<std::string> semantic_drop_resolution_summary_report;
+    std::vector<std::string> dynamic_array_descriptor_cleanup_plan_report;
     std::vector<std::string> planned_drop_report;
     std::vector<std::string> emitted_drop_declaration_report;
     std::vector<std::string> planned_drop_action_report;

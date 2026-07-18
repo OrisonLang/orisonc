@@ -117,6 +117,9 @@ representation.
 - Semantic analysis now also records metadata-only dynamic-array descriptor origins for owned source bindings. These
   origins capture the source owner, full `DynamicArray<T>` type, element type, and declaration line so future lowering
   can connect a real binding descriptor to cleanup planning without relying on synthetic construction requests.
+- Lowering now has a separate disabled descriptor-cleanup plan derived from semantic descriptor origins. This preserves
+  the distinction between source-owned descriptor cleanup and allocation/construction planning while feeding the same
+  metadata-only element-drop readiness path under test control.
 
 ## Follow-up work
 

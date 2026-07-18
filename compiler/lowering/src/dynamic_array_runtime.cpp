@@ -85,6 +85,36 @@ auto plan_dynamic_array_construction(
     };
 }
 
+auto plan_dynamic_array_descriptor_cleanup(
+    std::string_view owner_name,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    TargetLayout const& layout
+) -> std::optional<DynamicArrayDescriptorCleanupPlan> {
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
+        return std::nullopt;
+    }
+
+    auto element_llvm_type = llvm_type_for_source_type_name(sequence->element_source_type_name, context);
+    if (!element_llvm_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto element_size = lowered_type_size_bytes(*element_llvm_type, context, layout);
+    if (!element_size.has_value()) {
+        return std::nullopt;
+    }
+
+    return DynamicArrayDescriptorCleanupPlan {
+        .owner_name = std::string {owner_name},
+        .source_type_name = std::string {source_type_name},
+        .element_source_type_name = sequence->element_source_type_name,
+        .element_llvm_type = *element_llvm_type,
+        .element_size_bytes = *element_size,
+    };
+}
+
 auto format_dynamic_array_construction_plan(
     DynamicArrayConstructionPlan const& plan
 ) -> std::string {
@@ -107,6 +137,32 @@ auto format_dynamic_array_construction_plan_report(
     report.reserve(plans.size());
     for (auto const& plan : plans) {
         report.push_back(format_dynamic_array_construction_plan(plan));
+    }
+    return report;
+}
+
+auto format_dynamic_array_descriptor_cleanup_plan(
+    DynamicArrayDescriptorCleanupPlan const& plan
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "dynamic array descriptor cleanup " << plan.source_type_name;
+    if (!plan.owner_name.empty()) {
+        output << " owner " << plan.owner_name;
+    }
+    output << " element " << plan.element_source_type_name;
+    output << " lowers to " << plan.element_llvm_type;
+    output << " element_size " << plan.element_size_bytes;
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_dynamic_array_descriptor_cleanup_plan_report(
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& plans
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(plans.size());
+    for (auto const& plan : plans) {
+        report.push_back(format_dynamic_array_descriptor_cleanup_plan(plan));
     }
     return report;
 }
@@ -233,6 +289,26 @@ auto emit_dynamic_array_bounds_check(
 
 auto emit_dynamic_array_element_address(
     DynamicArrayConstructionPlan const& plan,
+    std::string_view result_name,
+    std::string_view data_pointer_name,
+    std::string_view index_value_name
+) -> std::string {
+    auto descriptor_plan = DynamicArrayDescriptorCleanupPlan {
+        .source_type_name = plan.source_type_name,
+        .element_source_type_name = plan.element_source_type_name,
+        .element_llvm_type = plan.element_llvm_type,
+        .element_size_bytes = plan.element_size_bytes,
+    };
+    return emit_dynamic_array_element_address(
+        descriptor_plan,
+        result_name,
+        data_pointer_name,
+        index_value_name
+    );
+}
+
+auto emit_dynamic_array_element_address(
+    DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view result_name,
     std::string_view data_pointer_name,
     std::string_view index_value_name
@@ -464,6 +540,26 @@ auto emit_dynamic_array_cleanup_sequence(
 
 auto emit_dynamic_array_element_drop_walk(
     DynamicArrayConstructionPlan const& plan,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view name_prefix
+) -> std::string {
+    auto descriptor_plan = DynamicArrayDescriptorCleanupPlan {
+        .source_type_name = plan.source_type_name,
+        .element_source_type_name = plan.element_source_type_name,
+        .element_llvm_type = plan.element_llvm_type,
+        .element_size_bytes = plan.element_size_bytes,
+    };
+    return emit_dynamic_array_element_drop_walk(
+        descriptor_plan,
+        data_pointer_name,
+        length_name,
+        name_prefix
+    );
+}
+
+auto emit_dynamic_array_element_drop_walk(
+    DynamicArrayDescriptorCleanupPlan const& plan,
     std::string_view data_pointer_name,
     std::string_view length_name,
     std::string_view name_prefix

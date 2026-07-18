@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <sstream>
 #include <string>
 #include <unordered_set>
@@ -213,6 +214,73 @@ auto collect_dynamic_array_element_drop_cleanups(
     return cleanups;
 }
 
+auto dynamic_array_element_drop_action(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::size_t ordinal
+) -> PlannedDropAction {
+    auto capture_name = !plan.owner_name.empty()
+        ? plan.owner_name + ".element"
+        : "dynamic_array_descriptor" + std::to_string(ordinal) + ".element";
+    return PlannedDropAction {
+        .capture_name = std::move(capture_name),
+        .source_type_name = plan.element_source_type_name,
+        .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
+        .field_index = ordinal,
+    };
+}
+
+auto dynamic_array_element_drop_cleanup(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::size_t ordinal
+) -> std::optional<ConcurrencyDropCleanupPlan> {
+    if (is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
+        return std::nullopt;
+    }
+
+    auto cleanup = ConcurrencyDropCleanupPlan {
+        .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
+        .requires_semantic_authorization = true,
+    };
+    cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal));
+    return cleanup;
+}
+
+auto collect_dynamic_array_descriptor_cleanup_plans(
+    semantics::SemanticAnalysisResult const& semantic_result,
+    LoweringContext const& context,
+    diagnostics::DiagnosticBag& diagnostics
+) -> std::vector<DynamicArrayDescriptorCleanupPlan> {
+    auto plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
+    plans.reserve(semantic_result.dynamic_array_descriptor_origins.size());
+    for (auto const& origin : semantic_result.dynamic_array_descriptor_origins) {
+        auto plan = plan_dynamic_array_descriptor_cleanup(
+            origin.owner_name,
+            origin.source_type_name,
+            context
+        );
+        if (!plan.has_value()) {
+            diagnostics.error(origin.line, "dynamic array descriptor cleanup could not be planned");
+            continue;
+        }
+        plans.push_back(std::move(*plan));
+    }
+    return plans;
+}
+
+auto collect_dynamic_array_descriptor_drop_cleanups(
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& plans,
+    std::size_t ordinal_offset
+) -> std::vector<ConcurrencyDropCleanupPlan> {
+    auto cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
+    for (auto index = std::size_t {0}; index < plans.size(); ++index) {
+        auto cleanup = dynamic_array_element_drop_cleanup(plans[index], ordinal_offset + index);
+        if (cleanup.has_value()) {
+            cleanups.push_back(std::move(*cleanup));
+        }
+    }
+    return cleanups;
+}
+
 void add_dynamic_array_planned_drop_declarations(
     LlvmIrEmissionOptions const& options,
     std::vector<PlannedDropDeclaration>& declarations,
@@ -249,6 +317,10 @@ auto LlvmIrEmissionResult::planned_drop_report() const -> std::vector<std::strin
 
 auto LlvmIrEmissionResult::dynamic_array_construction_plan_report() const -> std::vector<std::string> {
     return format_dynamic_array_construction_plan_report(dynamic_array_construction_plans);
+}
+
+auto LlvmIrEmissionResult::dynamic_array_descriptor_cleanup_plan_report() const -> std::vector<std::string> {
+    return format_dynamic_array_descriptor_cleanup_plan_report(dynamic_array_descriptor_cleanup_plans);
 }
 
 auto LlvmIrEmissionResult::dynamic_array_runtime_request_report() const -> std::vector<std::string> {
@@ -376,12 +448,32 @@ auto LlvmIrEmitter::emit(
     if (result.has_errors()) {
         return result;
     }
+    if (options.test_only_derive_dynamic_array_cleanup_from_semantics) {
+        result.dynamic_array_descriptor_cleanup_plans = collect_dynamic_array_descriptor_cleanup_plans(
+            semantic_result,
+            context,
+            result.diagnostics
+        );
+        if (result.has_errors()) {
+            return result;
+        }
+    }
     if (options.test_only_render_dynamic_array_element_drop_walks) {
         auto dynamic_array_drop_cleanups =
             collect_dynamic_array_element_drop_cleanups(
                 result.dynamic_array_construction_plans,
                 options.test_only_dynamic_array_construction_requests
             );
+        auto dynamic_array_descriptor_drop_cleanups =
+            collect_dynamic_array_descriptor_drop_cleanups(
+                result.dynamic_array_descriptor_cleanup_plans,
+                result.dynamic_array_construction_plans.size()
+            );
+        dynamic_array_drop_cleanups.insert(
+            dynamic_array_drop_cleanups.end(),
+            std::make_move_iterator(dynamic_array_descriptor_drop_cleanups.begin()),
+            std::make_move_iterator(dynamic_array_descriptor_drop_cleanups.end())
+        );
         for (auto& cleanup : dynamic_array_drop_cleanups) {
             result.planned_drop_actions.insert(
                 result.planned_drop_actions.end(),
@@ -624,6 +716,19 @@ auto LlvmIrEmitter::emit(
             result.test_only_dynamic_array_element_drop_walk_ir.push_back(
                 emit_dynamic_array_element_drop_walk(
                     result.dynamic_array_construction_plans[index],
+                    prefix + ".cleanup.data",
+                    prefix + ".cleanup.length",
+                    prefix
+                )
+            );
+        }
+        auto offset = result.dynamic_array_construction_plans.size();
+        for (auto index = std::size_t {0}; index < result.dynamic_array_descriptor_cleanup_plans.size(); ++index) {
+            auto ordinal = offset + index;
+            auto prefix = "%dynamic_array" + std::to_string(ordinal);
+            result.test_only_dynamic_array_element_drop_walk_ir.push_back(
+                emit_dynamic_array_element_drop_walk(
+                    result.dynamic_array_descriptor_cleanup_plans[index],
                     prefix + ".cleanup.data",
                     prefix + ".cleanup.length",
                     prefix
