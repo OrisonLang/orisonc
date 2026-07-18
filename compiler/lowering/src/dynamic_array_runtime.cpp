@@ -117,6 +117,19 @@ auto emit_dynamic_array_allocation_call(
     return output.str();
 }
 
+auto emit_dynamic_array_descriptor_binding(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view local_address_name,
+    std::string_view descriptor_value_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << local_address_name << " = alloca " << dynamic_array_descriptor_llvm_type() << "\n";
+    output << "  store " << dynamic_array_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", ptr " << local_address_name << "\n";
+    (void)plan;
+    return output.str();
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {

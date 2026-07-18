@@ -165,6 +165,11 @@ int main() {
         orison::lowering::emit_dynamic_array_allocation_call(*dynamic_array_plan, "%array") ==
         "  %array = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 16, i64 8)\n"
     );
+    assert(
+        orison::lowering::emit_dynamic_array_descriptor_binding(*dynamic_array_plan, "%array.addr", "%array") ==
+        "  %array.addr = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %array, ptr %array.addr\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

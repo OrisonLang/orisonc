@@ -57,6 +57,8 @@ representation.
 - A disabled allocation-call renderer can produce the exact LLVM `call` instruction text from a construction plan under
   test-only control. The rendered snippets are retained outside module IR until source-level construction lowering and
   ownership/drop authorization exist.
+- A disabled descriptor-binding renderer models the future local descriptor `alloca` and `store` for an allocation
+  result. Like the call renderer, it is retained outside module IR until construction lowering is authorized.
 
 ## Follow-up work
 

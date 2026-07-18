@@ -57,6 +57,12 @@ auto emit_dynamic_array_allocation_call(
     std::string_view result_name
 ) -> std::string;
 
+auto emit_dynamic_array_descriptor_binding(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view local_address_name,
+    std::string_view descriptor_value_name
+) -> std::string;
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string;

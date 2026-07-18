@@ -294,6 +294,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
                 },
             },
             .test_only_render_dynamic_array_allocation_calls = true,
+            .test_only_render_dynamic_array_descriptor_bindings = true,
         }
     );
 
@@ -321,6 +322,13 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         result.test_only_dynamic_array_allocation_call_ir.front() ==
         "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 4)\n"
     );
+    assert(result.test_only_dynamic_array_descriptor_binding_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_descriptor_binding_ir.front() ==
+        "  %dynamic_array0.addr = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.addr\n"
+    );
+    assert(result.ir_text.find("%dynamic_array0.addr = alloca { ptr, i64, i64 }") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
