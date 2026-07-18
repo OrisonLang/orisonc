@@ -32,6 +32,7 @@ struct LlvmIrEmissionOptions {
     bool test_only_render_dynamic_array_grow_sequences = false;
     bool test_only_render_dynamic_array_append_with_grow_sequences = false;
     bool test_only_render_dynamic_array_cleanup_sequences = false;
+    bool test_only_render_dynamic_array_element_drop_walks = false;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
 

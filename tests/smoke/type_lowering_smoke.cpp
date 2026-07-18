@@ -341,7 +341,37 @@ int main() {
         "  %array.cleanup.data = extractvalue { ptr, i64, i64 } %array, 0\n"
         "  %array.cleanup.length = extractvalue { ptr, i64, i64 } %array, 1\n"
         "  %array.cleanup.capacity = extractvalue { ptr, i64, i64 } %array, 2\n"
+        "  br label %array.drop.walk\n"
+        "array.drop.walk:\n"
+        "  %array.drop.index = phi i64 [ 0, %array.cleanup.entry ], [ %array.drop.next, %array.drop.body ]\n"
+        "  %array.drop.more = icmp ult i64 %array.drop.index, %array.cleanup.length\n"
+        "  br i1 %array.drop.more, label %array.drop.body, label %array.drop.done\n"
+        "array.drop.body:\n"
+        "  %array.drop.element.addr = getelementptr %record.Payload, ptr %array.cleanup.data, i64 %array.drop.index\n"
+        "  ; planned drop for Payload at %array.drop.element.addr remains disabled\n"
+        "  %array.drop.next = add i64 %array.drop.index, 1\n"
+        "  br label %array.drop.walk\n"
+        "array.drop.done:\n"
         "  call void @__orison_dynamic_array_deallocate(ptr %array.cleanup.data, i64 16, i64 %array.cleanup.capacity)\n"
+    );
+    assert(
+        orison::lowering::emit_dynamic_array_element_drop_walk(
+            *dynamic_array_plan,
+            "%array.data",
+            "%array.length",
+            "%array"
+        ) ==
+        "  br label %array.drop.walk\n"
+        "array.drop.walk:\n"
+        "  %array.drop.index = phi i64 [ 0, %array.cleanup.entry ], [ %array.drop.next, %array.drop.body ]\n"
+        "  %array.drop.more = icmp ult i64 %array.drop.index, %array.length\n"
+        "  br i1 %array.drop.more, label %array.drop.body, label %array.drop.done\n"
+        "array.drop.body:\n"
+        "  %array.drop.element.addr = getelementptr %record.Payload, ptr %array.data, i64 %array.drop.index\n"
+        "  ; planned drop for Payload at %array.drop.element.addr remains disabled\n"
+        "  %array.drop.next = add i64 %array.drop.index, 1\n"
+        "  br label %array.drop.walk\n"
+        "array.drop.done:\n"
     );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",

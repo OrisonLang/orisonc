@@ -180,6 +180,13 @@ auto emit_dynamic_array_cleanup_sequence(
     std::string_view name_prefix
 ) -> std::string;
 
+auto emit_dynamic_array_element_drop_walk(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view name_prefix
+) -> std::string;
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string;

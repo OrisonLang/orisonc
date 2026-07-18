@@ -448,11 +448,50 @@ auto emit_dynamic_array_cleanup_sequence(
         descriptor_value_name,
         DynamicArrayDescriptorField::capacity
     );
+    output << emit_dynamic_array_element_drop_walk(
+        plan,
+        prefix + ".cleanup.data",
+        prefix + ".cleanup.length",
+        prefix
+    );
     output << emit_dynamic_array_deallocation_call(
         plan,
         prefix + ".cleanup.data",
         prefix + ".cleanup.capacity"
     );
+    return output.str();
+}
+
+auto emit_dynamic_array_element_drop_walk(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view name_prefix
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    auto label_prefix = label_name(name_prefix);
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.walk:\n";
+    output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << label_prefix << ".cleanup.entry ],";
+    output << " [ " << prefix << ".drop.next, %" << label_prefix << ".drop.body ]\n";
+    output << "  " << prefix << ".drop.more = icmp ult i64 " << prefix << ".drop.index";
+    output << ", " << length_name << "\n";
+    output << "  br i1 " << prefix << ".drop.more";
+    output << ", label %" << label_prefix << ".drop.body";
+    output << ", label %" << label_prefix << ".drop.done\n";
+    output << label_prefix << ".drop.body:\n";
+    output << emit_dynamic_array_element_address(
+        plan,
+        prefix + ".drop.element.addr",
+        data_pointer_name,
+        prefix + ".drop.index"
+    );
+    output << "  ; planned drop for " << plan.element_source_type_name;
+    output << " at " << prefix << ".drop.element.addr remains disabled\n";
+    output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.done:\n";
     return output.str();
 }
 

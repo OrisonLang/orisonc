@@ -92,6 +92,9 @@ representation.
   `__orison_dynamic_array_deallocate(ptr, i64, i64)`. A disabled cleanup sequence currently extracts data, length, and
   capacity, then deallocates the backing storage with element size and capacity. Element drop walking remains future
   ownership/drop work.
+- A disabled initialized-element drop-walk renderer pins a future cleanup loop over initialized indexes
+  `0 <= index < length`. It computes each element address and emits only a planned-drop placeholder comment before
+  deallocation; it does not emit drop calls or drop declarations until ownership/drop semantics authorize them.
 
 ## Follow-up work
 

@@ -308,6 +308,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             .test_only_render_dynamic_array_grow_sequences = true,
             .test_only_render_dynamic_array_append_with_grow_sequences = true,
             .test_only_render_dynamic_array_cleanup_sequences = true,
+            .test_only_render_dynamic_array_element_drop_walks = true,
         }
     );
 
@@ -486,10 +487,43 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "  %dynamic_array0.cleanup.data = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 0\n"
         "  %dynamic_array0.cleanup.length = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 1\n"
         "  %dynamic_array0.cleanup.capacity = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 2\n"
+        "  br label %dynamic_array0.drop.walk\n"
+        "dynamic_array0.drop.walk:\n"
+        "  %dynamic_array0.drop.index = phi i64 [ 0, %dynamic_array0.cleanup.entry ], "
+        "[ %dynamic_array0.drop.next, %dynamic_array0.drop.body ]\n"
+        "  %dynamic_array0.drop.more = icmp ult i64 %dynamic_array0.drop.index, "
+        "%dynamic_array0.cleanup.length\n"
+        "  br i1 %dynamic_array0.drop.more, label %dynamic_array0.drop.body, label %dynamic_array0.drop.done\n"
+        "dynamic_array0.drop.body:\n"
+        "  %dynamic_array0.drop.element.addr = getelementptr i32, ptr %dynamic_array0.cleanup.data, "
+        "i64 %dynamic_array0.drop.index\n"
+        "  ; planned drop for UInt32 at %dynamic_array0.drop.element.addr remains disabled\n"
+        "  %dynamic_array0.drop.next = add i64 %dynamic_array0.drop.index, 1\n"
+        "  br label %dynamic_array0.drop.walk\n"
+        "dynamic_array0.drop.done:\n"
         "  call void @__orison_dynamic_array_deallocate"
         "(ptr %dynamic_array0.cleanup.data, i64 4, i64 %dynamic_array0.cleanup.capacity)\n"
     );
     assert(result.ir_text.find("%dynamic_array0.cleanup.data = extractvalue") == std::string::npos);
+    assert(result.test_only_dynamic_array_element_drop_walk_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_element_drop_walk_ir.front() ==
+        "  br label %dynamic_array0.drop.walk\n"
+        "dynamic_array0.drop.walk:\n"
+        "  %dynamic_array0.drop.index = phi i64 [ 0, %dynamic_array0.cleanup.entry ], "
+        "[ %dynamic_array0.drop.next, %dynamic_array0.drop.body ]\n"
+        "  %dynamic_array0.drop.more = icmp ult i64 %dynamic_array0.drop.index, "
+        "%dynamic_array0.cleanup.length\n"
+        "  br i1 %dynamic_array0.drop.more, label %dynamic_array0.drop.body, label %dynamic_array0.drop.done\n"
+        "dynamic_array0.drop.body:\n"
+        "  %dynamic_array0.drop.element.addr = getelementptr i32, ptr %dynamic_array0.cleanup.data, "
+        "i64 %dynamic_array0.drop.index\n"
+        "  ; planned drop for UInt32 at %dynamic_array0.drop.element.addr remains disabled\n"
+        "  %dynamic_array0.drop.next = add i64 %dynamic_array0.drop.index, 1\n"
+        "  br label %dynamic_array0.drop.walk\n"
+        "dynamic_array0.drop.done:\n"
+    );
+    assert(result.ir_text.find("planned drop for UInt32") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
