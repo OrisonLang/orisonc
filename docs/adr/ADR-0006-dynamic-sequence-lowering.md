@@ -147,6 +147,9 @@ representation.
 - Bound dynamic-array parameter cleanup is now pinned across normal returns, explicit `Unit` returns, and guard-failure
   returns under the test-only cleanup emission seam. This keeps all covered function-exit paths routed through the same
   descriptor cleanup hook before any production dynamic-array signature support is enabled.
+- Branch-local return coverage now pins `defer` replay before bound dynamic-array descriptor cleanup in non-final `if`
+  arms and `switch` cases. The descriptor deallocation remains test-only, but ordering now matches the existing
+  function-exit cleanup model.
 
 ## Follow-up work
 
