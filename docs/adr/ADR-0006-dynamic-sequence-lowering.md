@@ -62,6 +62,9 @@ representation.
 - Disabled descriptor-field projection helpers pin the `{ ptr, i64, i64 }` field order for data pointer, length, and
   capacity extraction. The snippets remain outside module IR until bounds checks and element access lowering consume
   the descriptor model.
+- Disabled bounds-check renderers pin unsigned `i64` comparisons for future indexing, append-without-grow, and
+  `length <= capacity` descriptor invariant checks. These snippets remain outside module IR until dynamic-array
+  element access and growth lowering are authorized.
 
 ## Follow-up work
 

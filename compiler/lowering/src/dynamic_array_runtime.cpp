@@ -169,6 +169,31 @@ auto emit_dynamic_array_descriptor_field_projection(
     return output.str();
 }
 
+auto dynamic_array_bounds_check_predicate(
+    DynamicArrayBoundsCheckKind kind
+) -> std::string_view {
+    switch (kind) {
+    case DynamicArrayBoundsCheckKind::index_within_length:
+    case DynamicArrayBoundsCheckKind::append_has_capacity:
+        return "ult";
+    case DynamicArrayBoundsCheckKind::length_within_capacity:
+        return "ule";
+    }
+    return "";
+}
+
+auto emit_dynamic_array_bounds_check(
+    std::string_view result_name,
+    std::string_view left_value_name,
+    std::string_view right_value_name,
+    DynamicArrayBoundsCheckKind kind
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << result_name << " = icmp " << dynamic_array_bounds_check_predicate(kind);
+    output << " i64 " << left_value_name << ", " << right_value_name << "\n";
+    return output.str();
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {

@@ -188,6 +188,25 @@ int main() {
         ) ==
         "  %array.length = extractvalue { ptr, i64, i64 } %array, 1\n"
     );
+    assert(
+        orison::lowering::dynamic_array_bounds_check_predicate(
+            orison::lowering::DynamicArrayBoundsCheckKind::index_within_length
+        ) == "ult"
+    );
+    assert(
+        orison::lowering::dynamic_array_bounds_check_predicate(
+            orison::lowering::DynamicArrayBoundsCheckKind::length_within_capacity
+        ) == "ule"
+    );
+    assert(
+        orison::lowering::emit_dynamic_array_bounds_check(
+            "%array.index.in_bounds",
+            "%index",
+            "%array.length",
+            orison::lowering::DynamicArrayBoundsCheckKind::index_within_length
+        ) ==
+        "  %array.index.in_bounds = icmp ult i64 %index, %array.length\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

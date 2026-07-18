@@ -24,6 +24,12 @@ enum class DynamicArrayDescriptorField {
     capacity,
 };
 
+enum class DynamicArrayBoundsCheckKind {
+    index_within_length,
+    append_has_capacity,
+    length_within_capacity,
+};
+
 struct DynamicArrayRuntimeCall {
     std::string_view symbol_name;
     std::string_view return_type;
@@ -81,6 +87,17 @@ auto emit_dynamic_array_descriptor_field_projection(
     std::string_view result_name,
     std::string_view descriptor_value_name,
     DynamicArrayDescriptorField field
+) -> std::string;
+
+auto dynamic_array_bounds_check_predicate(
+    DynamicArrayBoundsCheckKind kind
+) -> std::string_view;
+
+auto emit_dynamic_array_bounds_check(
+    std::string_view result_name,
+    std::string_view left_value_name,
+    std::string_view right_value_name,
+    DynamicArrayBoundsCheckKind kind
 ) -> std::string;
 
 auto format_dynamic_array_runtime_request(

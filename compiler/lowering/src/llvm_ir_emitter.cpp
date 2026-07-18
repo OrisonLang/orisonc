@@ -339,6 +339,35 @@ auto LlvmIrEmitter::emit(
             );
         }
     }
+    if (options.test_only_render_dynamic_array_bounds_checks) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto prefix = "%dynamic_array" + std::to_string(index);
+            result.test_only_dynamic_array_bounds_check_ir.push_back(
+                emit_dynamic_array_bounds_check(
+                    prefix + ".index.in_bounds",
+                    prefix + ".index",
+                    prefix + ".length",
+                    DynamicArrayBoundsCheckKind::index_within_length
+                )
+            );
+            result.test_only_dynamic_array_bounds_check_ir.push_back(
+                emit_dynamic_array_bounds_check(
+                    prefix + ".append.has_capacity",
+                    prefix + ".length",
+                    prefix + ".capacity",
+                    DynamicArrayBoundsCheckKind::append_has_capacity
+                )
+            );
+            result.test_only_dynamic_array_bounds_check_ir.push_back(
+                emit_dynamic_array_bounds_check(
+                    prefix + ".length.within_capacity",
+                    prefix + ".length",
+                    prefix + ".capacity",
+                    DynamicArrayBoundsCheckKind::length_within_capacity
+                )
+            );
+        }
+    }
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,
