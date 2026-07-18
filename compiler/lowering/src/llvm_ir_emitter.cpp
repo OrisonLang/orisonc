@@ -405,6 +405,19 @@ auto LlvmIrEmitter::emit(
             );
         }
     }
+    if (options.test_only_render_dynamic_array_descriptor_length_updates) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto prefix = "%dynamic_array" + std::to_string(index);
+            result.test_only_dynamic_array_descriptor_length_update_ir.push_back(
+                emit_dynamic_array_descriptor_length_update(
+                    prefix + ".updated",
+                    prefix + ".next.length",
+                    "%dynamic_array_alloc" + std::to_string(index),
+                    prefix + ".length"
+                )
+            );
+        }
+    }
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,

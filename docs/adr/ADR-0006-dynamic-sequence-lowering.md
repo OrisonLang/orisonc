@@ -72,6 +72,9 @@ representation.
   The snippet remains outside module IR until element access lowering is authorized.
 - A disabled element-store renderer pins future mutable indexing writes as `store <element> <value>, ptr
   <element.addr>`. The snippet remains outside module IR until mutable element access lowering is authorized.
+- A disabled descriptor length-update renderer pins future append initialization as `add i64 <length>, 1` followed by
+  `insertvalue { ptr, i64, i64 } <descriptor>, i64 <next.length>, 1`. The snippet remains outside module IR until
+  dynamic-array mutation lowering is authorized.
 
 ## Follow-up work
 

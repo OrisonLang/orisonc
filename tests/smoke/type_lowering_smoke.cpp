@@ -232,6 +232,16 @@ int main() {
         ) ==
         "  store %record.Payload %value, ptr %array.element.addr\n"
     );
+    assert(
+        orison::lowering::emit_dynamic_array_descriptor_length_update(
+            "%array.updated",
+            "%array.next.length",
+            "%array.descriptor",
+            "%array.length"
+        ) ==
+        "  %array.next.length = add i64 %array.length, 1\n"
+        "  %array.updated = insertvalue { ptr, i64, i64 } %array.descriptor, i64 %array.next.length, 1\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

@@ -228,6 +228,21 @@ auto emit_dynamic_array_element_store(
     return output.str();
 }
 
+auto emit_dynamic_array_descriptor_length_update(
+    std::string_view result_descriptor_name,
+    std::string_view next_length_name,
+    std::string_view descriptor_value_name,
+    std::string_view current_length_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << next_length_name << " = add i64 " << current_length_name << ", 1\n";
+    output << "  " << result_descriptor_name << " = insertvalue ";
+    output << dynamic_array_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", i64 " << next_length_name;
+    output << ", " << dynamic_array_descriptor_field_index(DynamicArrayDescriptorField::length) << "\n";
+    return output.str();
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {
