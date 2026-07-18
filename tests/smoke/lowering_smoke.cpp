@@ -583,25 +583,118 @@ void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
     );
     assert(
         readiness_report[1] ==
-        "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 0 missing declarations 1"
+        "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 missing declarations 1"
     );
     auto readiness_summary = result.drop_readiness_summary();
     assert(readiness_summary.cleanup_authorized == 0);
     assert(readiness_summary.cleanup_blocked == 1);
     auto relation_report = result.drop_readiness_relation_report();
-    assert(relation_report.size() == 2);
+    assert(relation_report.size() == 3);
     assert(
         relation_report[0] ==
-        "drop readiness relation __orison_dynamic_array_cleanup.0 blocked semantic blockers 0 "
+        "drop readiness relation __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 "
         "emitted declarations 0 missing declarations 1"
     );
     assert(
         relation_report[1] ==
+        "drop readiness relation semantic blocker __orison_drop.Payload for Payload "
+        "capture dynamic_array0.element field 0"
+    );
+    assert(
+        relation_report[2] ==
         "drop readiness relation missing declaration __orison_drop.Payload for Payload "
         "capture dynamic_array0.element field 0"
     );
     assert(result.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(result.ir_text.find("declare void @__orison_drop.Payload") == std::string::npos);
+}
+
+void test_dynamic_array_element_drop_readiness_requires_semantic_authorization() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_dynamic_array_drop_readiness_authorization.or";
+    auto source =
+        "package demo.lowering\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    1 as UInt32\n";
+
+    auto allowlist_only = lower_source(
+        path,
+        source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_declared_drop_source_type_allowlist = {"Payload"},
+            .test_only_dynamic_array_construction_requests = {
+                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+                    .source_type_name = "DynamicArray<Payload>",
+                    .initial_capacity = 2,
+                },
+            },
+            .test_only_render_dynamic_array_element_drop_walks = true,
+        }
+    );
+
+    assert(!allowlist_only.has_errors());
+    assert(allowlist_only.emitted_drop_declaration_report().size() == 1);
+    auto allowlist_summary = allowlist_only.drop_readiness_summary();
+    assert(allowlist_summary.semantic_authorized == 0);
+    assert(allowlist_summary.cleanup_authorized == 0);
+    assert(allowlist_summary.cleanup_blocked == 1);
+    auto allowlist_readiness = allowlist_only.drop_readiness_snapshot_report();
+    assert(allowlist_readiness.size() == 3);
+    assert(allowlist_readiness[1] == "emitted declaration readiness __orison_drop.Payload for Payload");
+    assert(
+        allowlist_readiness[2] ==
+        "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 missing declarations 0"
+    );
+    assert(allowlist_only.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+
+    auto authorized = lower_source(
+        path,
+        source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_dynamic_array_construction_requests = {
+                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+                    .source_type_name = "DynamicArray<Payload>",
+                    .initial_capacity = 2,
+                },
+            },
+            .test_only_render_dynamic_array_element_drop_walks = true,
+            .semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "dynamic_array0.element",
+                        .site_line = 0,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        }
+    );
+
+    assert(!authorized.has_errors());
+    auto authorized_summary = authorized.drop_readiness_summary();
+    assert(authorized_summary.semantic_authorized == 1);
+    assert(authorized_summary.emitted_declarations == 1);
+    assert(authorized_summary.cleanup_authorized == 1);
+    assert(authorized_summary.cleanup_blocked == 0);
+    auto authorized_readiness = authorized.drop_readiness_snapshot_report();
+    assert(authorized_readiness.size() == 4);
+    assert(
+        authorized_readiness[0] ==
+        "drop readiness snapshot semantic authorizations 1 emitted declarations 1 cleanup authorizations 1"
+    );
+    assert(authorized_readiness[1] == "semantic readiness __orison_drop.Payload for Payload authorized");
+    assert(authorized_readiness[2] == "emitted declaration readiness __orison_drop.Payload for Payload");
+    assert(authorized_readiness[3] == "cleanup readiness __orison_dynamic_array_cleanup.0 authorized");
+    assert(authorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(authorized.ir_text.find("declare void @__orison_drop.Payload") != std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
@@ -10830,6 +10923,7 @@ auto main() -> int {
     test_emit_constant_uint32_return();
     test_collects_test_only_dynamic_array_construction_metadata();
     test_collects_test_only_dynamic_array_element_drop_readiness_metadata();
+    test_dynamic_array_element_drop_readiness_requires_semantic_authorization();
     test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();

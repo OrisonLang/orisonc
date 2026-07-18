@@ -99,6 +99,9 @@ representation.
   owned element types add a metadata-only cleanup plan and planned element-drop action, while scalar and non-owning
   element types remain cleanup-neutral. This records future cleanup obligations without emitting drop calls or enabling
   `DynamicArray<T>` lowered source signatures.
+- Dynamic-array element cleanup plans require positive semantic drop authorization in addition to emitted drop
+  declaration metadata before readiness can be reported as authorized. Allowlist-only declaration metadata is
+  insufficient for these owned-container element cleanup obligations.
 
 ## Follow-up work
 

@@ -358,6 +358,20 @@ auto drop_calls_enabled(ConcurrencyDropCleanupPlan const& plan) -> bool {
     return plan.drop_call_emission == DropCallEmissionEligibility::declared_drop_abi;
 }
 
+auto matching_semantic_drop_authorization(
+    PlannedDropAction const& action,
+    std::vector<semantics::DropLoweringAuthorization> const& semantic_authorizations
+) -> std::vector<semantics::DropLoweringAuthorization>::const_iterator {
+    return std::find_if(
+        semantic_authorizations.begin(),
+        semantic_authorizations.end(),
+        [&](semantics::DropLoweringAuthorization const& candidate) {
+            return candidate.site.abi_symbol_name == action.symbol_name &&
+                   candidate.site.source_type_name == action.source_type_name;
+        }
+    );
+}
+
 auto plan_drop_cleanup_authorization(
     ConcurrencyDropCleanupPlan const& plan,
     std::vector<PlannedDropDeclaration> const& declarations
@@ -376,20 +390,36 @@ auto plan_drop_cleanup_authorization(
     }
 
     for (auto const& action : plan.actions) {
-        auto const semantic_authorization = std::find_if(
-            semantic_authorizations.begin(),
-            semantic_authorizations.end(),
-            [&](semantics::DropLoweringAuthorization const& candidate) {
-                return candidate.site.abi_symbol_name == action.symbol_name &&
-                       candidate.site.source_type_name == action.source_type_name &&
-                       !candidate.authorized;
-            }
-        );
-        if (semantic_authorization != semantic_authorizations.end()) {
+        auto const semantic_authorization =
+            matching_semantic_drop_authorization(action, semantic_authorizations);
+        if (
+            semantic_authorization != semantic_authorizations.end() &&
+            !semantic_authorization->authorized
+        ) {
             report.semantic_lowering_blockers.push_back(action);
             if (semantic_authorization->semantic_resolved) {
                 report.source_drop_lowering_blockers.push_back(action);
             } else {
+                report.semantic_unresolved_blockers.push_back(action);
+            }
+        }
+        if (
+            plan.requires_semantic_authorization &&
+            (semantic_authorization == semantic_authorizations.end() ||
+             !semantic_authorization->authorized)
+        ) {
+            auto already_blocked = std::find_if(
+                report.semantic_lowering_blockers.begin(),
+                report.semantic_lowering_blockers.end(),
+                [&](PlannedDropAction const& blocker) {
+                    return blocker.symbol_name == action.symbol_name &&
+                           blocker.source_type_name == action.source_type_name &&
+                           blocker.capture_name == action.capture_name &&
+                           blocker.field_index == action.field_index;
+                }
+            ) != report.semantic_lowering_blockers.end();
+            if (!already_blocked) {
+                report.semantic_lowering_blockers.push_back(action);
                 report.semantic_unresolved_blockers.push_back(action);
             }
         }

@@ -187,6 +187,7 @@ auto dynamic_array_element_drop_cleanup(
 
     auto cleanup = ConcurrencyDropCleanupPlan {
         .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
+        .requires_semantic_authorization = true,
     };
     cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal));
     return cleanup;

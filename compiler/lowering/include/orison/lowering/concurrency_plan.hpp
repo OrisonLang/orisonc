@@ -59,6 +59,7 @@ struct ConcurrencyDropCleanupPlan {
     std::string cleanup_symbol_name;
     std::vector<PlannedDropAction> actions;
     DropCallEmissionEligibility drop_call_emission = DropCallEmissionEligibility::metadata_only;
+    bool requires_semantic_authorization = false;
 };
 
 struct DropCleanupAuthorizationReport {
