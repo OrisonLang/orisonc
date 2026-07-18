@@ -211,6 +211,23 @@ auto emit_dynamic_array_cleanup_sequence(
     std::string_view name_prefix
 ) -> std::string;
 
+auto emit_dynamic_array_descriptor_load(
+    std::string_view result_descriptor_name,
+    std::string_view descriptor_storage_name
+) -> std::string;
+
+auto emit_dynamic_array_descriptor_cleanup_sequence(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view name_prefix
+) -> std::string;
+
+auto emit_dynamic_array_descriptor_load_cleanup_sequence(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view name_prefix
+) -> std::string;
+
 auto emit_dynamic_array_element_drop_walk(
     DynamicArrayConstructionPlan const& plan,
     std::string_view data_pointer_name,

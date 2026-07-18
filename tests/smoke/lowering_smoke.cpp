@@ -669,6 +669,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         semantic_result,
         orison::lowering::LlvmIrEmissionOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_render_dynamic_array_descriptor_load_cleanup_sequences = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
         }
     );
@@ -697,6 +698,18 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 1 missing declarations 1"
     );
     assert(blocked.test_only_dynamic_array_element_drop_walk_ir.size() == 1);
+    assert(blocked.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
+    assert(
+        blocked.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
+            "  %dynamic_array0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        blocked.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %dynamic_array0.cleanup.data, i64 8, "
+            "i64 %dynamic_array0.cleanup.capacity)\n"
+        ) != std::string::npos
+    );
     assert(
         blocked.test_only_dynamic_array_element_drop_walk_ir.front().find(
             "planned drop for Payload at %dynamic_array0.drop.element.addr remains disabled"
@@ -739,6 +752,8 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(authorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(authorized.ir_text.find("__orison_dynamic_array_allocate") == std::string::npos);
     assert(authorized.ir_text.find("%items.addr = alloca { ptr, i64, i64 }") == std::string::npos);
+    assert(authorized.ir_text.find("%dynamic_array0.descriptor = load { ptr, i64, i64 }") == std::string::npos);
+    assert(authorized.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 }
 
 void test_dynamic_array_element_drop_readiness_requires_semantic_authorization() {

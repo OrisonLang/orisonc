@@ -186,6 +186,33 @@ int main() {
         })
     );
     assert(
+        orison::lowering::emit_dynamic_array_descriptor_load("%items.descriptor", "%items.addr") ==
+        "  %items.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        orison::lowering::emit_dynamic_array_descriptor_load_cleanup_sequence(
+            *dynamic_array_cleanup_plan,
+            "%items.descriptor",
+            "%items"
+        ) ==
+        "  %items.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        "  %items.cleanup.data = extractvalue { ptr, i64, i64 } %items.descriptor, 0\n"
+        "  %items.cleanup.length = extractvalue { ptr, i64, i64 } %items.descriptor, 1\n"
+        "  %items.cleanup.capacity = extractvalue { ptr, i64, i64 } %items.descriptor, 2\n"
+        "  br label %items.drop.walk\n"
+        "items.drop.walk:\n"
+        "  %items.drop.index = phi i64 [ 0, %items.cleanup.entry ], [ %items.drop.next, %items.drop.body ]\n"
+        "  %items.drop.more = icmp ult i64 %items.drop.index, %items.cleanup.length\n"
+        "  br i1 %items.drop.more, label %items.drop.body, label %items.drop.done\n"
+        "items.drop.body:\n"
+        "  %items.drop.element.addr = getelementptr %record.Payload, ptr %items.cleanup.data, i64 %items.drop.index\n"
+        "  ; planned drop for Payload at %items.drop.element.addr remains disabled\n"
+        "  %items.drop.next = add i64 %items.drop.index, 1\n"
+        "  br label %items.drop.walk\n"
+        "items.drop.done:\n"
+        "  call void @__orison_dynamic_array_deallocate(ptr %items.cleanup.data, i64 16, i64 %items.cleanup.capacity)\n"
+    );
+    assert(
         orison::lowering::emit_dynamic_array_allocation_call(*dynamic_array_plan, "%array") ==
         "  %array = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 16, i64 8)\n"
     );

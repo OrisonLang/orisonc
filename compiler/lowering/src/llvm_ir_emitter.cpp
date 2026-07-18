@@ -710,6 +710,20 @@ auto LlvmIrEmitter::emit(
             );
         }
     }
+    if (options.test_only_render_dynamic_array_descriptor_load_cleanup_sequences) {
+        auto offset = result.dynamic_array_construction_plans.size();
+        for (auto index = std::size_t {0}; index < result.dynamic_array_descriptor_cleanup_plans.size(); ++index) {
+            auto ordinal = offset + index;
+            auto prefix = "%dynamic_array" + std::to_string(ordinal);
+            result.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.push_back(
+                emit_dynamic_array_descriptor_load_cleanup_sequence(
+                    result.dynamic_array_descriptor_cleanup_plans[index],
+                    prefix + ".descriptor",
+                    prefix
+                )
+            );
+        }
+    }
     if (options.test_only_render_dynamic_array_element_drop_walks) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
             auto prefix = "%dynamic_array" + std::to_string(index);

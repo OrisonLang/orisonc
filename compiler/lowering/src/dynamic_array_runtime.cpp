@@ -550,6 +550,69 @@ auto emit_dynamic_array_cleanup_sequence(
     return output.str();
 }
 
+auto emit_dynamic_array_descriptor_load(
+    std::string_view result_descriptor_name,
+    std::string_view descriptor_storage_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << result_descriptor_name << " = load ";
+    output << dynamic_array_descriptor_llvm_type() << ", ptr " << descriptor_storage_name << "\n";
+    return output.str();
+}
+
+auto emit_dynamic_array_descriptor_cleanup_sequence(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view name_prefix
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.data",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.length",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.capacity",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::capacity
+    );
+    output << emit_dynamic_array_element_drop_walk(
+        plan,
+        prefix + ".cleanup.data",
+        prefix + ".cleanup.length",
+        prefix
+    );
+    output << "  call void @__orison_dynamic_array_deallocate(ptr ";
+    output << prefix << ".cleanup.data";
+    output << ", i64 " << plan.element_size_bytes;
+    output << ", i64 " << prefix << ".cleanup.capacity)\n";
+    return output.str();
+}
+
+auto emit_dynamic_array_descriptor_load_cleanup_sequence(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view name_prefix
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << emit_dynamic_array_descriptor_load(
+        descriptor_value_name,
+        plan.descriptor_storage_name
+    );
+    output << emit_dynamic_array_descriptor_cleanup_sequence(
+        plan,
+        descriptor_value_name,
+        name_prefix
+    );
+    return output.str();
+}
+
 auto emit_dynamic_array_element_drop_walk(
     DynamicArrayConstructionPlan const& plan,
     std::string_view data_pointer_name,

@@ -38,6 +38,7 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> test_only_dynamic_array_grow_sequence_ir;
     std::vector<std::string> test_only_dynamic_array_append_with_grow_sequence_ir;
     std::vector<std::string> test_only_dynamic_array_cleanup_sequence_ir;
+    std::vector<std::string> test_only_dynamic_array_descriptor_load_cleanup_sequence_ir;
     std::vector<std::string> test_only_dynamic_array_element_drop_walk_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 

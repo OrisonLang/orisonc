@@ -123,6 +123,9 @@ representation.
 - Descriptor-cleanup plans also record the expected local descriptor storage name, such as `%items.addr`, so future
   cleanup lowering can attach to the real addressable descriptor. This is still metadata-only and does not emit the
   local descriptor allocation or cleanup IR.
+- A disabled descriptor-load cleanup renderer now composes a load from the expected descriptor storage, descriptor
+  field projections, initialized-element drop walk placeholder, and deallocation call shape. The rendered snippet stays
+  outside module IR until real descriptor storage and cleanup emission are authorized.
 
 ## Follow-up work
 
