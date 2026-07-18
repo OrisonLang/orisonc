@@ -150,6 +150,9 @@ representation.
 - Branch-local return coverage now pins `defer` replay before bound dynamic-array descriptor cleanup in non-final `if`
   arms and `switch` cases. The descriptor deallocation remains test-only, but ordering now matches the existing
   function-exit cleanup model.
+- Loop-control coverage now pins that `break` and `continue` replay branch-local `defer` blocks without cleaning bound
+  dynamic-array parameters. Descriptor cleanup remains tied to the later function-exit path because the parameter is
+  still live after loop control transfers.
 
 ## Follow-up work
 
