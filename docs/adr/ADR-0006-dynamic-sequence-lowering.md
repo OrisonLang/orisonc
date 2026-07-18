@@ -153,6 +153,9 @@ representation.
 - Loop-control coverage now pins that `break` and `continue` replay branch-local `defer` blocks without cleaning bound
   dynamic-array parameters. Descriptor cleanup remains tied to the later function-exit path because the parameter is
   still live after loop control transfers.
+- Authorized owned-element cleanup coverage now pins early-return paths for bound `DynamicArray<Payload>` parameters:
+  guard failures and non-final `if` arm returns emit the element drop walk before descriptor deallocation on each
+  function-exit branch, with branch-local `defer` replay still ordered before container cleanup.
 
 ## Follow-up work
 

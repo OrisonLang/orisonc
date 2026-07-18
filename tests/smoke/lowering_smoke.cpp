@@ -1030,6 +1030,128 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     assert(deallocate_call < return_instruction);
 }
 
+void test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failure_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_owned_dynamic_array_parameter_guard_return_cleanup.or";
+    auto result = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "function use_items(items: DynamicArray<Payload>, flag: Bool) -> UInt32\n"
+        "    guard flag else\n"
+        "        return 7 as UInt32\n"
+        "    1 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "items.element",
+                        .site_line = 6,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        }
+    );
+
+    assert(!result.has_errors());
+    auto const function_pos = result.ir_text.find("define i32 @use_items");
+    assert(function_pos != std::string::npos);
+    auto const function_ir = result.ir_text.substr(function_pos);
+    auto const first_drop = function_ir.find("call void @__orison_drop.Payload");
+    auto const first_deallocate = function_ir.find("call void @__orison_dynamic_array_deallocate");
+    auto const guard_return = function_ir.find("ret i32 7");
+    auto const second_drop = function_ir.find("call void @__orison_drop.Payload", first_drop + 1);
+    auto const second_deallocate =
+        function_ir.find("call void @__orison_dynamic_array_deallocate", first_deallocate + 1);
+    auto const final_return = function_ir.find("ret i32 1");
+    assert(first_drop != std::string::npos);
+    assert(first_deallocate != std::string::npos);
+    assert(guard_return != std::string::npos);
+    assert(second_drop != std::string::npos);
+    assert(second_deallocate != std::string::npos);
+    assert(final_return != std::string::npos);
+    assert(first_drop < first_deallocate);
+    assert(first_deallocate < guard_return);
+    assert(second_drop < second_deallocate);
+    assert(second_deallocate < final_return);
+}
+
+void test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_defer_return() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_owned_dynamic_array_parameter_if_defer_return_cleanup.or";
+    auto result = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "function observe(value: UInt32) -> Unit\n"
+        "    return\n"
+        "\n"
+        "function use_items(items: DynamicArray<Payload>, flag: Bool) -> UInt32\n"
+        "    if flag\n"
+        "        defer\n"
+        "            observe(41 as UInt32)\n"
+        "        return 7 as UInt32\n"
+        "    1 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "items.element",
+                        .site_line = 9,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        }
+    );
+
+    assert(!result.has_errors());
+    auto const function_pos = result.ir_text.find("define i32 @use_items");
+    assert(function_pos != std::string::npos);
+    auto const function_ir = result.ir_text.substr(function_pos);
+    auto const defer_call = function_ir.find("call void @observe(i32 41)");
+    auto const first_drop = function_ir.find("call void @__orison_drop.Payload");
+    auto const first_deallocate = function_ir.find("call void @__orison_dynamic_array_deallocate");
+    auto const arm_return = function_ir.find("ret i32 7");
+    auto const second_drop = function_ir.find("call void @__orison_drop.Payload", first_drop + 1);
+    auto const second_deallocate =
+        function_ir.find("call void @__orison_dynamic_array_deallocate", first_deallocate + 1);
+    auto const final_return = function_ir.find("ret i32 1");
+    assert(defer_call != std::string::npos);
+    assert(first_drop != std::string::npos);
+    assert(first_deallocate != std::string::npos);
+    assert(arm_return != std::string::npos);
+    assert(second_drop != std::string::npos);
+    assert(second_deallocate != std::string::npos);
+    assert(final_return != std::string::npos);
+    assert(defer_call < first_drop);
+    assert(first_drop < first_deallocate);
+    assert(first_deallocate < arm_return);
+    assert(second_drop < second_deallocate);
+    assert(second_deallocate < final_return);
+}
+
 void test_emits_dynamic_array_parameter_cleanup_on_explicit_unit_returns() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_dynamic_array_parameter_unit_return_cleanup.or";
@@ -11614,6 +11736,8 @@ auto main() -> int {
     test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor_origin();
     test_binds_test_only_dynamic_array_parameter_descriptor_origin();
     test_emits_authorized_owned_dynamic_array_parameter_cleanup();
+    test_emits_authorized_owned_dynamic_array_parameter_cleanup_on_guard_failure_return();
+    test_emits_authorized_owned_dynamic_array_parameter_cleanup_after_if_arm_defer_return();
     test_emits_dynamic_array_parameter_cleanup_on_explicit_unit_returns();
     test_emits_dynamic_array_parameter_cleanup_on_guard_failure_return();
     test_emits_dynamic_array_parameter_cleanup_after_if_arm_defer_return();
