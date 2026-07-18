@@ -95,6 +95,10 @@ representation.
 - A disabled initialized-element drop-walk renderer pins a future cleanup loop over initialized indexes
   `0 <= index < length`. It computes each element address and emits only a planned-drop placeholder comment before
   deallocation; it does not emit drop calls or drop declarations until ownership/drop semantics authorize them.
+- Dynamic-array element cleanup now feeds the existing drop-readiness metadata path for disabled test-only drop walks:
+  owned element types add a metadata-only cleanup plan and planned element-drop action, while scalar and non-owning
+  element types remain cleanup-neutral. This records future cleanup obligations without emitting drop calls or enabling
+  `DynamicArray<T>` lowered source signatures.
 
 ## Follow-up work
 

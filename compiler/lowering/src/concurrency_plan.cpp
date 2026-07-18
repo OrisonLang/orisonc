@@ -206,43 +206,6 @@ auto capture_llvm_types(
     return types;
 }
 
-auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
-    constexpr auto scalar_names = std::array<std::string_view, 25> {
-        "Address",
-        "Bool",
-        "Byte",
-        "Char",
-        "Float32",
-        "Float64",
-        "Int8",
-        "Int16",
-        "Int32",
-        "Int64",
-        "Int128",
-        "IntSize",
-        "UInt8",
-        "UInt16",
-        "UInt32",
-        "UInt64",
-        "UInt128",
-        "UIntSize",
-        "Unit",
-        "Pointer",
-        "Pointer<",
-        "View",
-        "View<",
-        "shared.",
-        "exclusive.",
-    };
-
-    for (auto scalar_name : scalar_names) {
-        if (source_type_name == scalar_name || source_type_name.starts_with(scalar_name)) {
-            return true;
-        }
-    }
-    return false;
-}
-
 auto drop_symbol_name_for(std::string_view source_type_name) -> std::string {
     auto symbol = std::string {"__orison_drop."};
     append_sanitized_symbol_part(symbol, source_type_name);

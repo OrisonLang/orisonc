@@ -5,6 +5,7 @@
 #include "orison/lowering/statement_pointer_adapter.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
+#include <array>
 #include <utility>
 
 namespace orison::lowering {
@@ -202,6 +203,43 @@ auto dynamic_array_lowering_invariants() -> DynamicArrayLoweringInvariants {
     return DynamicArrayLoweringInvariants {
         .descriptor_llvm_type = dynamic_array_descriptor_llvm_type(),
     };
+}
+
+auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
+    constexpr auto scalar_names = std::array<std::string_view, 25> {
+        "Address",
+        "Bool",
+        "Byte",
+        "Char",
+        "Float32",
+        "Float64",
+        "Int8",
+        "Int16",
+        "Int32",
+        "Int64",
+        "Int128",
+        "IntSize",
+        "UInt8",
+        "UInt16",
+        "UInt32",
+        "UInt64",
+        "UInt128",
+        "UIntSize",
+        "Unit",
+        "Pointer",
+        "Pointer<",
+        "View",
+        "View<",
+        "shared.",
+        "exclusive.",
+    };
+
+    for (auto scalar_name : scalar_names) {
+        if (source_type_name == scalar_name || source_type_name.starts_with(scalar_name)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 auto pointer_pointee_source_type_name(std::string_view type_name) -> std::optional<std::string> {

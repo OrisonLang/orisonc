@@ -524,6 +524,84 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "dynamic_array0.drop.done:\n"
     );
     assert(result.ir_text.find("planned drop for UInt32") == std::string::npos);
+    assert(result.planned_drop_actions.empty());
+    assert(result.planned_drop_declarations.empty());
+    assert(result.drop_cleanups.empty());
+    auto readiness_summary = result.drop_readiness_summary();
+    assert(readiness_summary.cleanup_authorized == 0);
+    assert(readiness_summary.cleanup_blocked == 0);
+    assert(result.drop_readiness_snapshot_report().front().find("cleanup authorizations 0") != std::string::npos);
+}
+
+void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_dynamic_array_drop_readiness_metadata.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    1 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_dynamic_array_construction_requests = {
+                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+                    .source_type_name = "DynamicArray<Payload>",
+                    .initial_capacity = 2,
+                },
+            },
+            .test_only_render_dynamic_array_element_drop_walks = true,
+        }
+    );
+
+    assert(!result.has_errors());
+    assert(result.dynamic_array_construction_plans.size() == 1);
+    assert(result.planned_drop_actions.size() == 1);
+    assert(result.planned_drop_actions.front().capture_name == "dynamic_array0.element");
+    assert(result.planned_drop_actions.front().source_type_name == "Payload");
+    assert(result.planned_drop_actions.front().symbol_name == "__orison_drop.Payload");
+    assert(result.planned_drop_actions.front().field_index == 0);
+    assert(result.planned_drop_declarations.size() == 1);
+    assert(result.planned_drop_declarations.front().symbol_name == "__orison_drop.Payload");
+    assert(!result.planned_drop_declarations.front().emit_declaration);
+    assert(result.drop_cleanups.size() == 1);
+    assert(result.drop_cleanups.front().cleanup_symbol_name == "__orison_dynamic_array_cleanup.0");
+    assert(!orison::lowering::drop_calls_enabled(result.drop_cleanups.front()));
+    auto action_report = result.planned_drop_action_report();
+    assert(action_report.size() == 1);
+    assert(
+        action_report.front() ==
+        "planned drop action __orison_drop.Payload for capture dynamic_array0.element: Payload "
+        "field 0 (metadata only)"
+    );
+    auto readiness_report = result.drop_readiness_snapshot_report();
+    assert(readiness_report.size() == 2);
+    assert(
+        readiness_report[0] ==
+        "drop readiness snapshot semantic authorizations 0 emitted declarations 0 cleanup authorizations 1"
+    );
+    assert(
+        readiness_report[1] ==
+        "cleanup readiness __orison_dynamic_array_cleanup.0 blocked semantic blockers 0 missing declarations 1"
+    );
+    auto readiness_summary = result.drop_readiness_summary();
+    assert(readiness_summary.cleanup_authorized == 0);
+    assert(readiness_summary.cleanup_blocked == 1);
+    auto relation_report = result.drop_readiness_relation_report();
+    assert(relation_report.size() == 2);
+    assert(
+        relation_report[0] ==
+        "drop readiness relation __orison_dynamic_array_cleanup.0 blocked semantic blockers 0 "
+        "emitted declarations 0 missing declarations 1"
+    );
+    assert(
+        relation_report[1] ==
+        "drop readiness relation missing declaration __orison_drop.Payload for Payload "
+        "capture dynamic_array0.element field 0"
+    );
+    assert(result.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
+    assert(result.ir_text.find("declare void @__orison_drop.Payload") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
@@ -10751,6 +10829,7 @@ auto main() -> int {
 
     test_emit_constant_uint32_return();
     test_collects_test_only_dynamic_array_construction_metadata();
+    test_collects_test_only_dynamic_array_element_drop_readiness_metadata();
     test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();
     test_emit_mutable_uint32_assignment_return();

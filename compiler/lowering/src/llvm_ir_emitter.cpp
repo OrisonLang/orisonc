@@ -6,6 +6,7 @@
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/module_prelude.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/syntax_traversal.hpp"
 
@@ -158,6 +159,72 @@ auto collect_dynamic_array_runtime_operations(
     return operations;
 }
 
+auto dynamic_array_cleanup_symbol_name(std::size_t ordinal) -> std::string {
+    auto output = std::ostringstream {};
+    output << "__orison_dynamic_array_cleanup." << ordinal;
+    return output.str();
+}
+
+auto dynamic_array_element_drop_action(
+    DynamicArrayConstructionPlan const& plan,
+    std::size_t ordinal
+) -> PlannedDropAction {
+    return PlannedDropAction {
+        .capture_name = "dynamic_array" + std::to_string(ordinal) + ".element",
+        .source_type_name = plan.element_source_type_name,
+        .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
+        .field_index = ordinal,
+    };
+}
+
+auto dynamic_array_element_drop_cleanup(
+    DynamicArrayConstructionPlan const& plan,
+    std::size_t ordinal
+) -> std::optional<ConcurrencyDropCleanupPlan> {
+    if (is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
+        return std::nullopt;
+    }
+
+    auto cleanup = ConcurrencyDropCleanupPlan {
+        .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
+    };
+    cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal));
+    return cleanup;
+}
+
+auto collect_dynamic_array_element_drop_cleanups(
+    std::vector<DynamicArrayConstructionPlan> const& plans
+) -> std::vector<ConcurrencyDropCleanupPlan> {
+    auto cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
+    for (auto index = std::size_t {0}; index < plans.size(); ++index) {
+        auto cleanup = dynamic_array_element_drop_cleanup(plans[index], index);
+        if (cleanup.has_value()) {
+            cleanups.push_back(std::move(*cleanup));
+        }
+    }
+    return cleanups;
+}
+
+void add_dynamic_array_planned_drop_declarations(
+    LlvmIrEmissionOptions const& options,
+    std::vector<PlannedDropDeclaration>& declarations,
+    std::vector<PlannedDropAction> const& actions
+) {
+    if (options.test_only_declared_drop_source_type_allowlist.empty()) {
+        for (auto const& action : actions) {
+            add_planned_drop_declaration(declarations, planned_drop_declaration_for_action(action));
+        }
+        return;
+    }
+
+    for (auto declaration : declared_drop_declarations_for_allowed_source_types(
+             actions,
+             options.test_only_declared_drop_source_type_allowlist
+         )) {
+        add_planned_drop_declaration(declarations, std::move(declaration));
+    }
+}
+
 }  // namespace
 
 auto LlvmIrEmissionResult::has_errors() const -> bool {
@@ -300,6 +367,23 @@ auto LlvmIrEmitter::emit(
     );
     if (result.has_errors()) {
         return result;
+    }
+    if (options.test_only_render_dynamic_array_element_drop_walks) {
+        auto dynamic_array_drop_cleanups =
+            collect_dynamic_array_element_drop_cleanups(result.dynamic_array_construction_plans);
+        for (auto& cleanup : dynamic_array_drop_cleanups) {
+            result.planned_drop_actions.insert(
+                result.planned_drop_actions.end(),
+                cleanup.actions.begin(),
+                cleanup.actions.end()
+            );
+            add_dynamic_array_planned_drop_declarations(
+                options,
+                result.planned_drop_declarations,
+                cleanup.actions
+            );
+            result.drop_cleanups.push_back(std::move(cleanup));
+        }
     }
     if (options.test_only_render_dynamic_array_allocation_calls) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
