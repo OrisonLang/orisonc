@@ -5,6 +5,7 @@
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/module_prelude.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
@@ -90,6 +91,58 @@ auto emit_record_layouts(
 
 auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) -> bool {
     return !function.generic_parameters.empty();
+}
+
+void enable_test_only_dynamic_array_parameter_descriptors(
+    syntax::ModuleSyntax const& module,
+    LoweringContext& context
+) {
+    for (auto const& function : module.functions) {
+        auto signature = context.functions.find(function.name);
+        if (signature == context.functions.end()) {
+            continue;
+        }
+        for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+            if (index >= signature->second.parameter_types.size()) {
+                continue;
+            }
+            auto source_type_name = render_source_type_name(function.parameters[index].type);
+            auto sequence = dynamic_sequence_source_type(source_type_name);
+            if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
+                continue;
+            }
+            signature->second.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
+            signature->second.parameter_signedness[index] = IntegerSignedness::not_integer;
+        }
+    }
+}
+
+auto has_bound_test_only_dynamic_array_parameter_descriptor(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> bool {
+    for (auto const& function : module.functions) {
+        auto signature = context.functions.find(function.name);
+        if (signature == context.functions.end()) {
+            continue;
+        }
+        for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+            if (index >= signature->second.parameter_types.size()) {
+                continue;
+            }
+            if (function.parameters[index].name != origin.owner_name) {
+                continue;
+            }
+            if (render_source_type_name(function.parameters[index].type) != origin.source_type_name) {
+                continue;
+            }
+            if (signature->second.parameter_types[index] == dynamic_array_descriptor_llvm_type()) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 void collect_concurrency_runtime_operations(
@@ -245,6 +298,7 @@ auto dynamic_array_element_drop_cleanup(
 }
 
 auto collect_dynamic_array_descriptor_cleanup_plans(
+    syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result,
     LoweringContext const& context,
     diagnostics::DiagnosticBag& diagnostics
@@ -260,6 +314,9 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
         if (!plan.has_value()) {
             diagnostics.error(origin.line, "dynamic array descriptor cleanup could not be planned");
             continue;
+        }
+        if (has_bound_test_only_dynamic_array_parameter_descriptor(origin, module, context)) {
+            plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
         }
         plans.push_back(std::move(*plan));
     }
@@ -399,6 +456,9 @@ auto LlvmIrEmitter::emit(
     if (result.has_errors()) {
         return result;
     }
+    if (options.test_only_enable_dynamic_array_parameter_descriptors) {
+        enable_test_only_dynamic_array_parameter_descriptors(module, context);
+    }
     auto string_constants = collect_string_constants(module);
     auto emission_context = LoweringEmissionContext {
         .lowering = context,
@@ -447,6 +507,7 @@ auto LlvmIrEmitter::emit(
     }
     if (options.test_only_derive_dynamic_array_cleanup_from_semantics) {
         result.dynamic_array_descriptor_cleanup_plans = collect_dynamic_array_descriptor_cleanup_plans(
+            module,
             semantic_result,
             context,
             result.diagnostics

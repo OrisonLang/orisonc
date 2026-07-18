@@ -172,6 +172,8 @@ auto CompilePipeline::emit_llvm(
         options.test_only_dynamic_array_construction_requests;
     emission_options.test_only_derive_dynamic_array_cleanup_from_semantics =
         options.test_only_derive_dynamic_array_cleanup_from_semantics;
+    emission_options.test_only_enable_dynamic_array_parameter_descriptors =
+        options.test_only_enable_dynamic_array_parameter_descriptors;
     emission_options.test_only_render_dynamic_array_element_drop_walks =
         options.test_only_render_dynamic_array_element_drop_walks;
     auto emission = emitter.emit(result.parse_result.module, result.semantic_result, emission_options);

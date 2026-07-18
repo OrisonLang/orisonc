@@ -283,6 +283,29 @@ auto main() -> int {
         "Payload owner items.element"
     );
 
+    auto dynamic_array_bound_descriptor = pipeline.emit_llvm(
+        dynamic_array_source_owner_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+        }
+    );
+    assert(!dynamic_array_bound_descriptor.has_errors());
+    assert(dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_bound_descriptor.dynamic_array_descriptor_cleanup_plan_report,
+        0,
+        "descriptor %items.addr bound"
+    );
+    assert(
+        dynamic_array_bound_descriptor.ir_text.find("define i32 @use_items({ ptr, i64, i64 } %items)") !=
+        std::string::npos
+    );
+    assert(
+        dynamic_array_bound_descriptor.ir_text.find("store { ptr, i64, i64 } %items, ptr %items.addr") !=
+        std::string::npos
+    );
+
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {

@@ -132,6 +132,9 @@ representation.
 - Descriptor-origin cleanup plans now label descriptor storage as predicted owner-local storage, such as `%items.addr`,
   rather than claiming a proven lowered binding. This keeps the metadata honest until real `DynamicArray<T>` descriptor
   ABI/storage lowering is enabled.
+- A test-only dynamic-array parameter descriptor seam can lower `DynamicArray<T>` parameters as `{ ptr, i64, i64 }`,
+  spill them to `%name.addr`, and mark matching semantic descriptor-origin cleanup plans as bound. The default
+  production path still rejects `DynamicArray<T>` lowered function signatures.
 
 ## Follow-up work
 

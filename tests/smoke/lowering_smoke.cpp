@@ -852,6 +852,69 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
     assert(result.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 }
 
+void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_dynamic_array_parameter_descriptor_binding.or";
+    auto source = std::string {
+        "package demo.dynamicarray\n"
+        "\n"
+        "function use_items(items: DynamicArray<UInt32>) -> UInt32\n"
+        "    1 as UInt32\n"
+    };
+
+    auto rejected = lower_source(path, source);
+    assert(rejected.has_errors());
+    assert(
+        rejected.render(path.string()).find(
+            "lowering does not yet support this function parameter type"
+        ) != std::string::npos
+    );
+
+    auto bound = lower_source(
+        path,
+        source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_render_dynamic_array_descriptor_load_cleanup_sequences = true,
+            .test_only_render_dynamic_array_element_drop_walks = true,
+        }
+    );
+
+    assert(!bound.has_errors());
+    assert_ir_contains(bound, "define i32 @use_items({ ptr, i64, i64 } %items)");
+    assert_ir_contains(bound, "  %items.addr = alloca { ptr, i64, i64 }");
+    assert_ir_contains(bound, "  store { ptr, i64, i64 } %items, ptr %items.addr");
+    assert(bound.dynamic_array_descriptor_cleanup_plans.size() == 1);
+    assert(bound.dynamic_array_descriptor_cleanup_plans.front().owner_name == "items");
+    assert(bound.dynamic_array_descriptor_cleanup_plans.front().source_type_name == "DynamicArray<UInt32>");
+    assert(bound.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_name == "%items.addr");
+    assert(
+        bound.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
+    );
+    auto cleanup_report = bound.dynamic_array_descriptor_cleanup_plan_report();
+    assert(cleanup_report.size() == 1);
+    assert(
+        cleanup_report.front() ==
+        "dynamic array descriptor cleanup DynamicArray<UInt32> owner items element UInt32 "
+        "lowers to i32 descriptor %items.addr bound element_size 4 (metadata only)"
+    );
+    assert(bound.planned_drop_actions.empty());
+    assert(bound.drop_cleanups.size() == 1);
+    assert(bound.drop_cleanups.front().requires_descriptor_deallocation);
+    auto summary = bound.drop_readiness_summary();
+    assert(summary.cleanup_authorized == 1);
+    assert(summary.cleanup_blocked == 0);
+    assert(bound.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.size() == 1);
+    assert(
+        bound.test_only_dynamic_array_descriptor_load_cleanup_sequence_ir.front().find(
+            "  %dynamic_array0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(bound.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
+}
+
 void test_dynamic_array_element_drop_readiness_requires_semantic_authorization() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_dynamic_array_drop_readiness_authorization.or";
@@ -11168,6 +11231,7 @@ auto main() -> int {
     test_collects_test_only_dynamic_array_element_drop_readiness_metadata();
     test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin();
     test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor_origin();
+    test_binds_test_only_dynamic_array_parameter_descriptor_origin();
     test_dynamic_array_element_drop_readiness_requires_semantic_authorization();
     test_emit_carries_semantic_drop_lowering_authorization_metadata();
     test_emit_let_bound_uint32_return();

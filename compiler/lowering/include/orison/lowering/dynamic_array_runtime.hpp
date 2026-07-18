@@ -32,6 +32,7 @@ enum class DynamicArrayBoundsCheckKind {
 
 enum class DynamicArrayDescriptorStorageStatus {
     predicted_owner_local,
+    bound_parameter_descriptor,
 };
 
 struct DynamicArrayRuntimeCall {
