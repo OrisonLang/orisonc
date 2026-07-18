@@ -144,6 +144,9 @@ representation.
   suppressed.
 - Pipeline test-only semantic drop authorizations take precedence over automatically derived blocked authorizations so
   internal lowering seams can model the positive authorized path without requiring production source drop syntax first.
+- Bound dynamic-array parameter cleanup is now pinned across normal returns, explicit `Unit` returns, and guard-failure
+  returns under the test-only cleanup emission seam. This keeps all covered function-exit paths routed through the same
+  descriptor cleanup hook before any production dynamic-array signature support is enabled.
 
 ## Follow-up work
 
