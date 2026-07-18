@@ -144,7 +144,14 @@ auto CompilePipeline::analyze(
 }
 
 auto CompilePipeline::emit_llvm(std::filesystem::path const& source_path) const -> CompilePipelineResult {
-    auto result = analyze(source_path);
+    return emit_llvm(source_path, CompilePipelineOptions {});
+}
+
+auto CompilePipeline::emit_llvm(
+    std::filesystem::path const& source_path,
+    CompilePipelineOptions const& options
+) const -> CompilePipelineResult {
+    auto result = analyze(source_path, options);
     if (result.has_errors()) {
         return result;
     }
@@ -152,6 +159,10 @@ auto CompilePipeline::emit_llvm(std::filesystem::path const& source_path) const 
     lowering::LlvmIrEmitter emitter;
     auto emission_options = lowering::LlvmIrEmissionOptions {};
     emission_options.semantic_drop_lowering_authorizations = result.semantic_drop_lowering_authorizations;
+    emission_options.test_only_dynamic_array_construction_requests =
+        options.test_only_dynamic_array_construction_requests;
+    emission_options.test_only_render_dynamic_array_element_drop_walks =
+        options.test_only_render_dynamic_array_element_drop_walks;
     auto emission = emitter.emit(result.parse_result.module, result.semantic_result, emission_options);
     if (emission.has_errors()) {
         result.error_text = emission.render(result.source_file->path().string());

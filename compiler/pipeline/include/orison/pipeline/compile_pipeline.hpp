@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/lowering_options.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -15,6 +16,8 @@ namespace orison::pipeline {
 struct CompilePipelineOptions {
     std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
     std::vector<semantics::DropImplementationCandidate> test_only_semantic_drop_implementation_candidates;
+    std::vector<lowering::TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
+    bool test_only_render_dynamic_array_element_drop_walks = false;
 };
 
 struct CompilePipelineResult {
@@ -56,6 +59,10 @@ public:
         CompilePipelineOptions const& options
     ) const -> CompilePipelineResult;
     auto emit_llvm(std::filesystem::path const& source_path) const -> CompilePipelineResult;
+    auto emit_llvm(
+        std::filesystem::path const& source_path,
+        CompilePipelineOptions const& options
+    ) const -> CompilePipelineResult;
     auto emit_object(std::filesystem::path const& source_path) const -> CompilePipelineResult;
 };
 

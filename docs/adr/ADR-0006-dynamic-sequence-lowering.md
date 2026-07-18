@@ -102,6 +102,9 @@ representation.
 - Dynamic-array element cleanup plans require positive semantic drop authorization in addition to emitted drop
   declaration metadata before readiness can be reported as authorized. Allowlist-only declaration metadata is
   insufficient for these owned-container element cleanup obligations.
+- Pipeline-level drop cleanup authorization, readiness blocker, relation, and source-correlation reports can now carry
+  disabled dynamic-array element cleanup blockers through the same report fields used by concurrency cleanup plans.
+  This remains an internal test seam and does not add a public source syntax or production cleanup emission path.
 
 ## Follow-up work
 
