@@ -111,6 +111,9 @@ representation.
 - Semantic analysis now records source-derived ownership facts for real `DynamicArray<T>` bindings: the owned container
   itself gets a planned drop site, and owned element types add an element planned drop site such as
   `items.element`. Scalar and non-owning element types do not add element drop sites.
+- Disabled dynamic-array cleanup metadata can now carry the source owner name into its planned element-drop action, so
+  readiness reports can correlate a real semantic site such as `items.element` with the internal cleanup plan while
+  `DynamicArray<T>` signature lowering remains disabled.
 
 ## Follow-up work
 

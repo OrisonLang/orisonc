@@ -248,16 +248,39 @@ auto main() -> int {
     );
     assert(dynamic_array_drop_readiness.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
 
+    auto dynamic_array_source_owner_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_source_owner.or";
+    {
+        auto dynamic_array_source_owner_source = std::ofstream(dynamic_array_source_owner_path);
+        dynamic_array_source_owner_source
+            << "package demo.pipeline.dynamicarraysource\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+            << "    1 as UInt32\n";
+    }
+    auto dynamic_array_source_owner = pipeline.analyze(dynamic_array_source_owner_path);
+    assert(!dynamic_array_source_owner.has_errors());
+    assert(dynamic_array_source_owner.semantic_planned_drop_report.size() == 2);
+    assert_line_contains(
+        dynamic_array_source_owner.semantic_planned_drop_report,
+        0,
+        "DynamicArray<Payload> owner items"
+    );
+    assert_line_contains(
+        dynamic_array_source_owner.semantic_planned_drop_report,
+        1,
+        "Payload owner items.element"
+    );
+
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
                 orison::semantics::DropLoweringAuthorization {
-                    .site = orison::semantics::PlannedDropSite {
-                        .source_type_name = "Payload",
-                        .abi_symbol_name = "__orison_drop.Payload",
-                        .owner_name = "dynamic_array0.element",
-                    },
+                    .site = dynamic_array_source_owner.semantic_result.planned_drop_sites[1],
                     .semantic_resolved = true,
                     .source_drop_lowering_enabled = true,
                     .authorized = true,
@@ -266,6 +289,7 @@ auto main() -> int {
             .test_only_dynamic_array_construction_requests = {
                 orison::lowering::TestOnlyDynamicArrayConstructionRequest {
                     .source_type_name = "DynamicArray<Payload>",
+                    .owner_name = "items",
                     .initial_capacity = 2,
                 },
             },
@@ -281,8 +305,14 @@ auto main() -> int {
     );
     assert(dynamic_array_authorized_readiness.drop_cleanup_authorization_report.empty());
     assert(dynamic_array_authorized_readiness.drop_readiness_snapshot.semantic_authorizations.size() == 1);
+    assert(
+        dynamic_array_authorized_readiness.drop_readiness_snapshot.semantic_authorizations.front().site.owner_name ==
+        "items.element"
+    );
     assert(dynamic_array_authorized_readiness.drop_readiness_snapshot.emitted_declarations.size() == 1);
     assert(dynamic_array_authorized_readiness.drop_readiness_snapshot.cleanup_authorizations.size() == 1);
+    assert(dynamic_array_authorized_readiness.planned_drop_action_report.size() == 1);
+    assert_line_contains(dynamic_array_authorized_readiness.planned_drop_action_report, 0, "capture items.element");
     assert(dynamic_array_authorized_readiness.drop_readiness_summary.semantic_authorized == 1);
     assert(dynamic_array_authorized_readiness.drop_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_authorized_readiness.drop_readiness_summary.cleanup_blocked == 0);

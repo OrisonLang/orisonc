@@ -167,10 +167,14 @@ auto dynamic_array_cleanup_symbol_name(std::size_t ordinal) -> std::string {
 
 auto dynamic_array_element_drop_action(
     DynamicArrayConstructionPlan const& plan,
-    std::size_t ordinal
+    std::size_t ordinal,
+    std::string_view owner_name
 ) -> PlannedDropAction {
+    auto capture_name = !owner_name.empty()
+        ? std::string {owner_name} + ".element"
+        : "dynamic_array" + std::to_string(ordinal) + ".element";
     return PlannedDropAction {
-        .capture_name = "dynamic_array" + std::to_string(ordinal) + ".element",
+        .capture_name = std::move(capture_name),
         .source_type_name = plan.element_source_type_name,
         .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
         .field_index = ordinal,
@@ -179,7 +183,8 @@ auto dynamic_array_element_drop_action(
 
 auto dynamic_array_element_drop_cleanup(
     DynamicArrayConstructionPlan const& plan,
-    std::size_t ordinal
+    std::size_t ordinal,
+    std::string_view owner_name
 ) -> std::optional<ConcurrencyDropCleanupPlan> {
     if (is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
         return std::nullopt;
@@ -189,16 +194,18 @@ auto dynamic_array_element_drop_cleanup(
         .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
         .requires_semantic_authorization = true,
     };
-    cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal));
+    cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal, owner_name));
     return cleanup;
 }
 
 auto collect_dynamic_array_element_drop_cleanups(
-    std::vector<DynamicArrayConstructionPlan> const& plans
+    std::vector<DynamicArrayConstructionPlan> const& plans,
+    std::vector<TestOnlyDynamicArrayConstructionRequest> const& requests
 ) -> std::vector<ConcurrencyDropCleanupPlan> {
     auto cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
     for (auto index = std::size_t {0}; index < plans.size(); ++index) {
-        auto cleanup = dynamic_array_element_drop_cleanup(plans[index], index);
+        auto owner_name = index < requests.size() ? requests[index].owner_name : std::string_view {};
+        auto cleanup = dynamic_array_element_drop_cleanup(plans[index], index, owner_name);
         if (cleanup.has_value()) {
             cleanups.push_back(std::move(*cleanup));
         }
@@ -371,7 +378,10 @@ auto LlvmIrEmitter::emit(
     }
     if (options.test_only_render_dynamic_array_element_drop_walks) {
         auto dynamic_array_drop_cleanups =
-            collect_dynamic_array_element_drop_cleanups(result.dynamic_array_construction_plans);
+            collect_dynamic_array_element_drop_cleanups(
+                result.dynamic_array_construction_plans,
+                options.test_only_dynamic_array_construction_requests
+            );
         for (auto& cleanup : dynamic_array_drop_cleanups) {
             result.planned_drop_actions.insert(
                 result.planned_drop_actions.end(),

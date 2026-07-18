@@ -10,6 +10,7 @@ namespace orison::lowering {
 
 struct TestOnlyDynamicArrayConstructionRequest {
     std::string_view source_type_name;
+    std::string_view owner_name;
     std::size_t initial_capacity = 0;
 };
 
