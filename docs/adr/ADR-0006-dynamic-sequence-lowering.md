@@ -70,6 +70,8 @@ representation.
   lowering is authorized.
 - A disabled element-load renderer pins the final future safe-indexing read as `load <element>, ptr <element.addr>`.
   The snippet remains outside module IR until element access lowering is authorized.
+- A disabled element-store renderer pins future mutable indexing writes as `store <element> <value>, ptr
+  <element.addr>`. The snippet remains outside module IR until mutable element access lowering is authorized.
 
 ## Follow-up work
 

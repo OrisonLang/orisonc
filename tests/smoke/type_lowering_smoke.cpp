@@ -224,6 +224,14 @@ int main() {
         ) ==
         "  %array.element = load %record.Payload, ptr %array.element.addr\n"
     );
+    assert(
+        orison::lowering::emit_dynamic_array_element_store(
+            *dynamic_array_plan,
+            "%value",
+            "%array.element.addr"
+        ) ==
+        "  store %record.Payload %value, ptr %array.element.addr\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

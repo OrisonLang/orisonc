@@ -28,6 +28,7 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> test_only_dynamic_array_bounds_check_ir;
     std::vector<std::string> test_only_dynamic_array_element_address_ir;
     std::vector<std::string> test_only_dynamic_array_element_load_ir;
+    std::vector<std::string> test_only_dynamic_array_element_store_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;
