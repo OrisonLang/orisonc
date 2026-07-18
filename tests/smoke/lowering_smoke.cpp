@@ -298,6 +298,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             .test_only_render_dynamic_array_descriptor_projections = true,
             .test_only_render_dynamic_array_bounds_checks = true,
             .test_only_render_dynamic_array_element_addresses = true,
+            .test_only_render_dynamic_array_element_loads = true,
         }
     );
 
@@ -366,6 +367,12 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "  %dynamic_array0.element.addr = getelementptr i32, ptr %dynamic_array0.data, i64 %dynamic_array0.index\n"
     );
     assert(result.ir_text.find("%dynamic_array0.element.addr = getelementptr") == std::string::npos);
+    assert(result.test_only_dynamic_array_element_load_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_element_load_ir.front() ==
+        "  %dynamic_array0.element = load i32, ptr %dynamic_array0.element.addr\n"
+    );
+    assert(result.ir_text.find("%dynamic_array0.element = load") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {

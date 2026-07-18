@@ -68,6 +68,8 @@ representation.
 - A disabled element-address renderer pins future dynamic-array indexing as `getelementptr <element>, ptr <data>, i64
   <index>` after descriptor projection and bounds checks. The snippet remains outside module IR until element access
   lowering is authorized.
+- A disabled element-load renderer pins the final future safe-indexing read as `load <element>, ptr <element.addr>`.
+  The snippet remains outside module IR until element access lowering is authorized.
 
 ## Follow-up work
 

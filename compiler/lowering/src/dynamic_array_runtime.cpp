@@ -206,6 +206,17 @@ auto emit_dynamic_array_element_address(
     return output.str();
 }
 
+auto emit_dynamic_array_element_load(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view result_name,
+    std::string_view element_address_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << result_name << " = load " << plan.element_llvm_type;
+    output << ", ptr " << element_address_name << "\n";
+    return output.str();
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {

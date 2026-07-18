@@ -107,6 +107,12 @@ auto emit_dynamic_array_element_address(
     std::string_view index_value_name
 ) -> std::string;
 
+auto emit_dynamic_array_element_load(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view result_name,
+    std::string_view element_address_name
+) -> std::string;
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string;
