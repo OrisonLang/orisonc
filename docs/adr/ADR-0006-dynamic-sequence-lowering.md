@@ -159,6 +159,9 @@ representation.
 - Authorized owned-element cleanup coverage now also pins explicit `Unit` returns and `switch` case returns for bound
   `DynamicArray<Payload>` parameters. Each covered return emits the element drop walk before descriptor deallocation,
   and branch-local `switch` defers still replay before owned-container cleanup.
+- Bound dynamic-array parameter cleanup planning is now isolated from function emission in a dedicated lowering module.
+  Function returns delegate to that planner after concurrency and `defer` cleanup, preserving the existing test-only
+  sequencing while giving production enablement a single audited attachment point.
 
 ## Follow-up work
 

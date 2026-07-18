@@ -11,6 +11,7 @@ add_library(orison_lowering STATIC
     src/control_flow_emitter.cpp
     src/deferred_cleanup.cpp
     src/drop_metadata.cpp
+    src/dynamic_array_cleanup_plan.cpp
     src/dynamic_array_runtime.cpp
     src/expression_emitter.cpp
     src/for_loop_lowering.cpp
