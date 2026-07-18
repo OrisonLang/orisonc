@@ -88,6 +88,10 @@ representation.
 - A disabled append-with-grow sequence renderer pins the future branch shape for append mutation: check capacity,
   branch to grow only when needed, join on an active descriptor value, then perform the append store and descriptor
   update. The snippet remains outside module IR until dynamic-array control-flow and growth semantics are authorized.
+- A disabled deallocation-call renderer pins the finite cleanup runtime call shape as
+  `__orison_dynamic_array_deallocate(ptr, i64, i64)`. A disabled cleanup sequence currently extracts data, length, and
+  capacity, then deallocates the backing storage with element size and capacity. Element drop walking remains future
+  ownership/drop work.
 
 ## Follow-up work
 

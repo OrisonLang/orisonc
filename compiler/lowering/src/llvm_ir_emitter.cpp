@@ -149,6 +149,10 @@ auto collect_dynamic_array_runtime_operations(
             options.test_only_render_dynamic_array_append_with_grow_sequences) {
             operations.push_back(DynamicArrayRuntimeOperation::grow);
         }
+        if (options.test_only_render_dynamic_array_deallocation_calls ||
+            options.test_only_render_dynamic_array_cleanup_sequences) {
+            operations.push_back(DynamicArrayRuntimeOperation::deallocate);
+        }
         plans.push_back(std::move(*plan));
     }
     return operations;
@@ -316,6 +320,18 @@ auto LlvmIrEmitter::emit(
                     prefix + ".grown",
                     "%dynamic_array_alloc" + std::to_string(index),
                     prefix + ".grow.next.capacity"
+                )
+            );
+        }
+    }
+    if (options.test_only_render_dynamic_array_deallocation_calls) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto prefix = "%dynamic_array" + std::to_string(index);
+            result.test_only_dynamic_array_deallocation_call_ir.push_back(
+                emit_dynamic_array_deallocation_call(
+                    result.dynamic_array_construction_plans[index],
+                    prefix + ".data",
+                    prefix + ".capacity"
                 )
             );
         }
@@ -490,6 +506,18 @@ auto LlvmIrEmitter::emit(
                     prefix + ".length",
                     prefix + ".capacity",
                     prefix + ".value",
+                    prefix
+                )
+            );
+        }
+    }
+    if (options.test_only_render_dynamic_array_cleanup_sequences) {
+        for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
+            auto prefix = "%dynamic_array" + std::to_string(index);
+            result.test_only_dynamic_array_cleanup_sequence_ir.push_back(
+                emit_dynamic_array_cleanup_sequence(
+                    result.dynamic_array_construction_plans[index],
+                    "%dynamic_array_alloc" + std::to_string(index),
                     prefix
                 )
             );

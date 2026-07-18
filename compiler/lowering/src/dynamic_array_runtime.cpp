@@ -140,6 +140,20 @@ auto emit_dynamic_array_grow_call(
     return output.str();
 }
 
+auto emit_dynamic_array_deallocation_call(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view data_pointer_name,
+    std::string_view capacity_name
+) -> std::string {
+    auto runtime_call = dynamic_array_runtime_call(DynamicArrayRuntimeOperation::deallocate);
+    auto output = std::ostringstream {};
+    output << "  call " << runtime_call.return_type << " @" << runtime_call.symbol_name;
+    output << "(ptr " << data_pointer_name;
+    output << ", i64 " << plan.element_size_bytes;
+    output << ", i64 " << capacity_name << ")\n";
+    return output.str();
+}
+
 auto emit_dynamic_array_descriptor_binding(
     DynamicArrayConstructionPlan const& plan,
     std::string_view local_address_name,
@@ -409,6 +423,36 @@ auto emit_dynamic_array_append_with_grow_sequence(
         local_address_name
     );
     (void)data_pointer_name;
+    return output.str();
+}
+
+auto emit_dynamic_array_cleanup_sequence(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view name_prefix
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.data",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.length",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".cleanup.capacity",
+        descriptor_value_name,
+        DynamicArrayDescriptorField::capacity
+    );
+    output << emit_dynamic_array_deallocation_call(
+        plan,
+        prefix + ".cleanup.data",
+        prefix + ".cleanup.capacity"
+    );
     return output.str();
 }
 

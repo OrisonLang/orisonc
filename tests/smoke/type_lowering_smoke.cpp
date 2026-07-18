@@ -181,6 +181,14 @@ int main() {
         "({ ptr, i64, i64 } %array, i64 16, i64 %array.grow.next.capacity)\n"
     );
     assert(
+        orison::lowering::emit_dynamic_array_deallocation_call(
+            *dynamic_array_plan,
+            "%array.data",
+            "%array.capacity"
+        ) ==
+        "  call void @__orison_dynamic_array_deallocate(ptr %array.data, i64 16, i64 %array.capacity)\n"
+    );
+    assert(
         orison::lowering::dynamic_array_descriptor_field_index(
             orison::lowering::DynamicArrayDescriptorField::data
         ) == 0
@@ -323,6 +331,17 @@ int main() {
         "  %array.active.append.updated = insertvalue { ptr, i64, i64 } %array.active, "
         "i64 %array.active.append.next.length, 1\n"
         "  store { ptr, i64, i64 } %array.active.append.updated, ptr %array.addr\n"
+    );
+    assert(
+        orison::lowering::emit_dynamic_array_cleanup_sequence(
+            *dynamic_array_plan,
+            "%array",
+            "%array"
+        ) ==
+        "  %array.cleanup.data = extractvalue { ptr, i64, i64 } %array, 0\n"
+        "  %array.cleanup.length = extractvalue { ptr, i64, i64 } %array, 1\n"
+        "  %array.cleanup.capacity = extractvalue { ptr, i64, i64 } %array, 2\n"
+        "  call void @__orison_dynamic_array_deallocate(ptr %array.cleanup.data, i64 16, i64 %array.cleanup.capacity)\n"
     );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",

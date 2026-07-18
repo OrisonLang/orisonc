@@ -295,6 +295,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             },
             .test_only_render_dynamic_array_allocation_calls = true,
             .test_only_render_dynamic_array_grow_calls = true,
+            .test_only_render_dynamic_array_deallocation_calls = true,
             .test_only_render_dynamic_array_descriptor_bindings = true,
             .test_only_render_dynamic_array_descriptor_projections = true,
             .test_only_render_dynamic_array_bounds_checks = true,
@@ -306,14 +307,16 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             .test_only_render_dynamic_array_append_sequences = true,
             .test_only_render_dynamic_array_grow_sequences = true,
             .test_only_render_dynamic_array_append_with_grow_sequences = true,
+            .test_only_render_dynamic_array_cleanup_sequences = true,
         }
     );
 
     assert(!result.has_errors());
     assert(result.dynamic_array_construction_plans.size() == 1);
-    assert(result.dynamic_array_runtime_operations.size() == 2);
+    assert(result.dynamic_array_runtime_operations.size() == 3);
     assert(result.dynamic_array_runtime_operations.front() == orison::lowering::DynamicArrayRuntimeOperation::allocate);
     assert(result.dynamic_array_runtime_operations[1] == orison::lowering::DynamicArrayRuntimeOperation::grow);
+    assert(result.dynamic_array_runtime_operations[2] == orison::lowering::DynamicArrayRuntimeOperation::deallocate);
     auto plan_report = result.dynamic_array_construction_plan_report();
     assert(plan_report.size() == 1);
     assert(
@@ -322,7 +325,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "element_size 4 initial_capacity 4 requests __orison_dynamic_array_allocate (metadata only)"
     );
     auto runtime_report = result.dynamic_array_runtime_request_report();
-    assert(runtime_report.size() == 2);
+    assert(runtime_report.size() == 3);
     assert(
         runtime_report[0] ==
         "dynamic array runtime __orison_dynamic_array_allocate returns { ptr, i64, i64 } params i64 i64"
@@ -332,13 +335,19 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "dynamic array runtime __orison_dynamic_array_grow returns { ptr, i64, i64 } "
         "params { ptr, i64, i64 } i64 i64"
     );
+    assert(
+        runtime_report[2] ==
+        "dynamic array runtime __orison_dynamic_array_deallocate returns void params ptr i64 i64"
+    );
     assert_ir_contains(result, "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)");
     assert_ir_contains(
         result,
         "declare { ptr, i64, i64 } @__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)"
     );
+    assert_ir_contains(result, "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)");
     assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_allocate") == std::string::npos);
     assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_grow") == std::string::npos);
+    assert(result.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
     assert(result.test_only_dynamic_array_allocation_call_ir.size() == 1);
     assert(
         result.test_only_dynamic_array_allocation_call_ir.front() ==
@@ -349,6 +358,11 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         result.test_only_dynamic_array_grow_call_ir.front() ==
         "  %dynamic_array0.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
         "({ ptr, i64, i64 } %dynamic_array_alloc0, i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+    );
+    assert(result.test_only_dynamic_array_deallocation_call_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_deallocation_call_ir.front() ==
+        "  call void @__orison_dynamic_array_deallocate(ptr %dynamic_array0.data, i64 4, i64 %dynamic_array0.capacity)\n"
     );
     assert(result.test_only_dynamic_array_descriptor_binding_ir.size() == 1);
     assert(
@@ -466,6 +480,16 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "  store { ptr, i64, i64 } %dynamic_array0.active.append.updated, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("dynamic_array0.append.entry") == std::string::npos);
+    assert(result.test_only_dynamic_array_cleanup_sequence_ir.size() == 1);
+    assert(
+        result.test_only_dynamic_array_cleanup_sequence_ir.front() ==
+        "  %dynamic_array0.cleanup.data = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 0\n"
+        "  %dynamic_array0.cleanup.length = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 1\n"
+        "  %dynamic_array0.cleanup.capacity = extractvalue { ptr, i64, i64 } %dynamic_array_alloc0, 2\n"
+        "  call void @__orison_dynamic_array_deallocate"
+        "(ptr %dynamic_array0.cleanup.data, i64 4, i64 %dynamic_array0.cleanup.capacity)\n"
+    );
+    assert(result.ir_text.find("%dynamic_array0.cleanup.data = extractvalue") == std::string::npos);
 }
 
 void test_emit_carries_semantic_drop_lowering_authorization_metadata() {
