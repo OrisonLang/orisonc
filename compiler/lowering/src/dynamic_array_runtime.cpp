@@ -253,6 +253,48 @@ auto emit_dynamic_array_descriptor_write_back(
     return output.str();
 }
 
+auto emit_dynamic_array_append_sequence(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view descriptor_value_name,
+    std::string_view local_address_name,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view capacity_name,
+    std::string_view value_name,
+    std::string_view name_prefix
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".append.has_capacity",
+        length_name,
+        capacity_name,
+        DynamicArrayBoundsCheckKind::append_has_capacity
+    );
+    output << emit_dynamic_array_element_address(
+        plan,
+        prefix + ".append.element.addr",
+        data_pointer_name,
+        length_name
+    );
+    output << emit_dynamic_array_element_store(
+        plan,
+        value_name,
+        prefix + ".append.element.addr"
+    );
+    output << emit_dynamic_array_descriptor_length_update(
+        prefix + ".append.updated",
+        prefix + ".append.next.length",
+        descriptor_value_name,
+        length_name
+    );
+    output << emit_dynamic_array_descriptor_write_back(
+        prefix + ".append.updated",
+        local_address_name
+    );
+    return output.str();
+}
+
 auto format_dynamic_array_runtime_request(
     DynamicArrayRuntimeOperation operation
 ) -> std::string {

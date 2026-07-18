@@ -249,6 +249,25 @@ int main() {
         ) ==
         "  store { ptr, i64, i64 } %array.updated, ptr %array.addr\n"
     );
+    assert(
+        orison::lowering::emit_dynamic_array_append_sequence(
+            *dynamic_array_plan,
+            "%array.descriptor",
+            "%array.addr",
+            "%array.data",
+            "%array.length",
+            "%array.capacity",
+            "%value",
+            "%array"
+        ) ==
+        "  %array.append.has_capacity = icmp ult i64 %array.length, %array.capacity\n"
+        "  %array.append.element.addr = getelementptr %record.Payload, ptr %array.data, i64 %array.length\n"
+        "  store %record.Payload %value, ptr %array.append.element.addr\n"
+        "  %array.append.next.length = add i64 %array.length, 1\n"
+        "  %array.append.updated = insertvalue { ptr, i64, i64 } %array.descriptor, "
+        "i64 %array.append.next.length, 1\n"
+        "  store { ptr, i64, i64 } %array.append.updated, ptr %array.addr\n"
+    );
     auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
         "DynamicArray<UInt32>",
         4,

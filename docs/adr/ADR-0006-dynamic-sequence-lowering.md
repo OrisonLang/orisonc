@@ -78,6 +78,9 @@ representation.
 - A disabled descriptor write-back renderer pins committing an updated dynamic-array descriptor back to its local slot
   as `store { ptr, i64, i64 } <updated>, ptr <descriptor.addr>`. The snippet remains outside module IR until
   dynamic-array mutation lowering is authorized.
+- A disabled append sequence renderer composes append capacity checking, element addressing at current length, element
+  store, descriptor length update, and descriptor write-back in order. The snippet remains outside module IR until
+  dynamic-array mutation lowering is authorized.
 
 ## Follow-up work
 
