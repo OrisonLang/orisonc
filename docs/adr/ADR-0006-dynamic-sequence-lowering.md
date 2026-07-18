@@ -108,6 +108,9 @@ representation.
 - Pipeline smoke coverage also pins the positive metadata-only path: when a dynamic-array element cleanup has positive
   semantic drop authorization and emitted drop declaration metadata, readiness reports mark the cleanup authorized while
   generated IR still contains no dynamic-array element drop calls.
+- Semantic analysis now records source-derived ownership facts for real `DynamicArray<T>` bindings: the owned container
+  itself gets a planned drop site, and owned element types add an element planned drop site such as
+  `items.element`. Scalar and non-owning element types do not add element drop sites.
 
 ## Follow-up work
 

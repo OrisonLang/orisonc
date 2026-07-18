@@ -5066,6 +5066,18 @@ private:
         return is_source_declared_nominal_type(type_name);
     }
 
+    auto dynamic_array_element_owned_drop_candidate_type_name(std::string const& type_name) const -> std::string {
+        if (source_type_base_name(type_name) != "DynamicArray") {
+            return {};
+        }
+
+        auto element_type_name = first_generic_argument_type_name(type_name);
+        if (!is_owned_drop_candidate_type_name(element_type_name)) {
+            return {};
+        }
+        return element_type_name;
+    }
+
     void collect_planned_drop_sites(std::vector<Binding> const& bindings) {
         for (auto const& binding : bindings) {
             if (binding.module_constant || binding.receiver_binding ||
@@ -5081,6 +5093,15 @@ private:
                 .owner_name = binding.name,
                 .site_line = binding.declaration_line,
             });
+            auto element_type_name = dynamic_array_element_owned_drop_candidate_type_name(binding.type_name);
+            if (!element_type_name.empty()) {
+                planned_drop_sites_.push_back(PlannedDropSite {
+                    .source_type_name = element_type_name,
+                    .abi_symbol_name = drop_abi_symbol_name(element_type_name),
+                    .owner_name = binding.name + ".element",
+                    .site_line = binding.declaration_line,
+                });
+            }
         }
     }
 

@@ -12235,6 +12235,53 @@ void test_owned_binding_planned_drop_sites_success() {
     );
 }
 
+void test_dynamic_array_binding_planned_drop_sites_success() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_dynamic_array_drop_sites_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.drop",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "function use_items(items: DynamicArray<Payload>) -> UInt32",
+            "    1 as UInt32",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.planned_drop_sites.size() == 2);
+    assert(
+        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites[0]) ==
+        "drop site __orison_drop.DynamicArray_Payload_ for DynamicArray<Payload> owner items at line 4"
+    );
+    assert(
+        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites[1]) ==
+        "drop site __orison_drop.Payload for Payload owner items.element at line 4"
+    );
+}
+
+void test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_scalar_dynamic_array_drop_sites_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.drop",
+        {
+            "function use_words(words: DynamicArray<UInt32>) -> UInt32",
+            "    1 as UInt32",
+        }
+    );
+
+    auto analysis = analyze_orison_fixture(path);
+    assert(!analysis.has_errors());
+    assert(analysis.planned_drop_sites.size() == 1);
+    assert(
+        orison::semantics::format_planned_drop_site(analysis.planned_drop_sites.front()) ==
+        "drop site __orison_drop.DynamicArray_UInt32_ for DynamicArray<UInt32> owner words at line 2"
+    );
+}
+
 void test_trivial_binding_planned_drop_sites_ignored_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_trivial_binding_drop_sites_ignored.or";
     write_concurrency_fixture(
@@ -12877,6 +12924,8 @@ int main() {
     test_thread_capture_mutable_outer_local_failure();
     test_thread_capture_receiver_this_failure();
     test_owned_binding_planned_drop_sites_success();
+    test_dynamic_array_binding_planned_drop_sites_success();
+    test_scalar_dynamic_array_binding_planned_drop_sites_skip_element_success();
     test_trivial_binding_planned_drop_sites_ignored_success();
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
