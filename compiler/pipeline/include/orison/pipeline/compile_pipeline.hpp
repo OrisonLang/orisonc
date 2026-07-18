@@ -27,6 +27,7 @@ struct CompilePipelineResult {
     semantics::SemanticAnalysisResult semantic_result;
     std::string ir_text;
     std::string object_bytes;
+    std::vector<std::string> semantic_dynamic_array_descriptor_origin_report;
     std::vector<std::string> semantic_planned_drop_report;
     std::vector<std::string> semantic_drop_implementation_report;
     std::vector<std::string> semantic_drop_resolution_report;

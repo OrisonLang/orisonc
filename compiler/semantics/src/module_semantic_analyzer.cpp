@@ -114,6 +114,7 @@ public:
             .diagnostics = std::move(diagnostics_),
             .concurrency_captures = std::move(concurrency_captures),
             .planned_drop_sites = std::move(planned_drop_sites_),
+            .dynamic_array_descriptor_origins = std::move(dynamic_array_descriptor_origins_),
         };
     }
 
@@ -5078,6 +5079,13 @@ private:
         return element_type_name;
     }
 
+    auto dynamic_array_element_type_name(std::string const& type_name) const -> std::string {
+        if (source_type_base_name(type_name) != "DynamicArray") {
+            return {};
+        }
+        return first_generic_argument_type_name(type_name);
+    }
+
     void collect_planned_drop_sites(std::vector<Binding> const& bindings) {
         for (auto const& binding : bindings) {
             if (binding.module_constant || binding.receiver_binding ||
@@ -5087,6 +5095,15 @@ private:
                 continue;
             }
 
+            auto dynamic_array_element_type = dynamic_array_element_type_name(binding.type_name);
+            if (!dynamic_array_element_type.empty()) {
+                dynamic_array_descriptor_origins_.push_back(DynamicArrayDescriptorOrigin {
+                    .owner_name = binding.name,
+                    .source_type_name = binding.type_name,
+                    .element_source_type_name = dynamic_array_element_type,
+                    .line = binding.declaration_line,
+                });
+            }
             planned_drop_sites_.push_back(PlannedDropSite {
                 .source_type_name = binding.type_name,
                 .abi_symbol_name = drop_abi_symbol_name(binding.type_name),
@@ -5213,6 +5230,7 @@ private:
     diagnostics::DiagnosticBag diagnostics_;
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<PlannedDropSite> planned_drop_sites_;
+    std::vector<DynamicArrayDescriptorOrigin> dynamic_array_descriptor_origins_;
     std::vector<std::string> async_callable_names_;
     std::vector<AsyncMethodSignature> async_method_signatures_;
     std::vector<std::string> unsafe_callable_names_;
@@ -5244,6 +5262,36 @@ private:
 
 auto ModuleSemanticAnalyzer::analyze(syntax::ModuleSyntax const& module) const -> SemanticAnalysisResult {
     return Analyzer(module).analyze();
+}
+
+auto format_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin const& origin) -> std::string {
+    auto output = std::string {"dynamic array descriptor origin "};
+    output += origin.source_type_name;
+    if (!origin.owner_name.empty()) {
+        output += " owner ";
+        output += origin.owner_name;
+    }
+    if (!origin.element_source_type_name.empty()) {
+        output += " element ";
+        output += origin.element_source_type_name;
+    }
+    if (origin.line != 0) {
+        output += " at line ";
+        output += std::to_string(origin.line);
+    }
+    output += " (metadata only)";
+    return output;
+}
+
+auto format_dynamic_array_descriptor_origin_report(
+    std::vector<DynamicArrayDescriptorOrigin> const& origins
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(origins.size());
+    for (auto const& origin : origins) {
+        report.push_back(format_dynamic_array_descriptor_origin(origin));
+    }
+    return report;
 }
 
 }  // namespace orison::semantics

@@ -114,6 +114,9 @@ representation.
 - Disabled dynamic-array cleanup metadata can now carry the source owner name into its planned element-drop action, so
   readiness reports can correlate a real semantic site such as `items.element` with the internal cleanup plan while
   `DynamicArray<T>` signature lowering remains disabled.
+- Semantic analysis now also records metadata-only dynamic-array descriptor origins for owned source bindings. These
+  origins capture the source owner, full `DynamicArray<T>` type, element type, and declaration line so future lowering
+  can connect a real binding descriptor to cleanup planning without relying on synthetic construction requests.
 
 ## Follow-up work
 

@@ -114,6 +114,10 @@ auto CompilePipeline::analyze(
     for (auto const& implementation : discovered_drop_implementations) {
         semantic_drop_implementations.push_back(implementation.implementation);
     }
+    result.semantic_dynamic_array_descriptor_origin_report =
+        semantics::format_dynamic_array_descriptor_origin_report(
+            result.semantic_result.dynamic_array_descriptor_origins
+        );
     result.semantic_planned_drop_report =
         semantics::format_planned_drop_site_report(result.semantic_result.planned_drop_sites);
     result.semantic_drop_implementation_report.reserve(discovered_drop_implementations.size());

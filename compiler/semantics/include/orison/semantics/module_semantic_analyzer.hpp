@@ -30,10 +30,18 @@ struct ConcurrencyCapture {
     ConcurrencyCaptureKind capture_kind = ConcurrencyCaptureKind::parameter;
 };
 
+struct DynamicArrayDescriptorOrigin {
+    std::string owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::size_t line = 0;
+};
+
 struct SemanticAnalysisResult {
     diagnostics::DiagnosticBag diagnostics;
     std::vector<ConcurrencyCapture> concurrency_captures;
     std::vector<PlannedDropSite> planned_drop_sites;
+    std::vector<DynamicArrayDescriptorOrigin> dynamic_array_descriptor_origins;
 
     auto has_errors() const -> bool {
         return diagnostics.has_errors();
@@ -47,6 +55,12 @@ struct SemanticAnalysisResult {
         return diagnostics.render(path);
     }
 };
+
+auto format_dynamic_array_descriptor_origin(DynamicArrayDescriptorOrigin const& origin) -> std::string;
+
+auto format_dynamic_array_descriptor_origin_report(
+    std::vector<DynamicArrayDescriptorOrigin> const& origins
+) -> std::vector<std::string>;
 
 class ModuleSemanticAnalyzer {
 public:

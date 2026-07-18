@@ -263,6 +263,12 @@ auto main() -> int {
     }
     auto dynamic_array_source_owner = pipeline.analyze(dynamic_array_source_owner_path);
     assert(!dynamic_array_source_owner.has_errors());
+    assert(dynamic_array_source_owner.semantic_result.dynamic_array_descriptor_origins.size() == 1);
+    assert(dynamic_array_source_owner.semantic_dynamic_array_descriptor_origin_report.size() == 1);
+    assert(
+        dynamic_array_source_owner.semantic_dynamic_array_descriptor_origin_report.front() ==
+        "dynamic array descriptor origin DynamicArray<Payload> owner items element Payload at line 6 (metadata only)"
+    );
     assert(dynamic_array_source_owner.semantic_planned_drop_report.size() == 2);
     assert_line_contains(
         dynamic_array_source_owner.semantic_planned_drop_report,
