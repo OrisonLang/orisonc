@@ -48,6 +48,9 @@ representation.
 - LLVM IR emission records dynamic-array runtime operation requests separately from prelude emission. The collection
   pass currently returns an empty set until construction/lowering support has a proven reason to request allocation,
   growth, or deallocation declarations.
+- Dynamic-array construction planning is metadata-only until construction lowering is enabled: it derives the finite
+  `allocate` request operands from `DynamicArray<T>` source type metadata, the lowered element type, target-layout
+  element size, and explicit initial capacity.
 
 ## Follow-up work
 

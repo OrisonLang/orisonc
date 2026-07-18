@@ -144,6 +144,30 @@ int main() {
     assert(record_size.has_value());
     assert(*record_size == 16);
 
+    auto dynamic_array_plan = orison::lowering::plan_dynamic_array_construction(
+        "DynamicArray<Payload>",
+        8,
+        context
+    );
+    assert(dynamic_array_plan.has_value());
+    assert(dynamic_array_plan->source_type_name == "DynamicArray<Payload>");
+    assert(dynamic_array_plan->element_source_type_name == "Payload");
+    assert(dynamic_array_plan->element_llvm_type == "%record.Payload");
+    assert(dynamic_array_plan->element_size_bytes == 16);
+    assert(dynamic_array_plan->initial_capacity == 8);
+    assert(dynamic_array_plan->operation == orison::lowering::DynamicArrayRuntimeOperation::allocate);
+    auto dynamic_array_scalar_plan = orison::lowering::plan_dynamic_array_construction(
+        "DynamicArray<UInt32>",
+        4,
+        context
+    );
+    assert(dynamic_array_scalar_plan.has_value());
+    assert(dynamic_array_scalar_plan->element_llvm_type == "i32");
+    assert(dynamic_array_scalar_plan->element_size_bytes == 4);
+    assert(dynamic_array_scalar_plan->initial_capacity == 4);
+    assert(!orison::lowering::plan_dynamic_array_construction("Array<UInt32, 4>", 4, context).has_value());
+    assert(!orison::lowering::plan_dynamic_array_construction("DynamicArray<Unknown>", 4, context).has_value());
+
     auto record_struct_size = orison::lowering::lowered_struct_size_bytes({"i8", "%record.Payload"}, context);
     assert(record_struct_size.has_value());
     assert(*record_struct_size == 24);

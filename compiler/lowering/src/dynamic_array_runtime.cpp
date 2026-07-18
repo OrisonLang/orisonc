@@ -1,6 +1,7 @@
 #include "orison/lowering/dynamic_array_runtime.hpp"
 
 #include "orison/lowering/source_type_queries.hpp"
+#include "orison/lowering/target_layout.hpp"
 
 #include <sstream>
 
@@ -45,6 +46,36 @@ auto dynamic_array_runtime_call(
         };
     }
     return {};
+}
+
+auto plan_dynamic_array_construction(
+    std::string_view source_type_name,
+    std::size_t initial_capacity,
+    LoweringContext const& context,
+    TargetLayout const& layout
+) -> std::optional<DynamicArrayConstructionPlan> {
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
+        return std::nullopt;
+    }
+
+    auto element_llvm_type = llvm_type_for_source_type_name(sequence->element_source_type_name, context);
+    if (!element_llvm_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto element_size = lowered_type_size_bytes(*element_llvm_type, context, layout);
+    if (!element_size.has_value()) {
+        return std::nullopt;
+    }
+
+    return DynamicArrayConstructionPlan {
+        .source_type_name = std::string {source_type_name},
+        .element_source_type_name = sequence->element_source_type_name,
+        .element_llvm_type = *element_llvm_type,
+        .element_size_bytes = *element_size,
+        .initial_capacity = initial_capacity,
+    };
 }
 
 auto format_dynamic_array_runtime_request(
