@@ -1,5 +1,6 @@
 #include "orison/lowering/dynamic_array_runtime.hpp"
 
+#include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/target_layout.hpp"
 
@@ -25,6 +26,13 @@ auto has_reported_symbol(
         }
     }
     return false;
+}
+
+auto descriptor_storage_name_for_owner(std::string_view owner_name) -> std::string {
+    if (owner_name.empty()) {
+        return {};
+    }
+    return llvm_local_value_name(std::string {owner_name} + ".addr");
 }
 
 }  // namespace
@@ -111,6 +119,7 @@ auto plan_dynamic_array_descriptor_cleanup(
         .source_type_name = std::string {source_type_name},
         .element_source_type_name = sequence->element_source_type_name,
         .element_llvm_type = *element_llvm_type,
+        .descriptor_storage_name = descriptor_storage_name_for_owner(owner_name),
         .element_size_bytes = *element_size,
     };
 }
@@ -151,6 +160,9 @@ auto format_dynamic_array_descriptor_cleanup_plan(
     }
     output << " element " << plan.element_source_type_name;
     output << " lowers to " << plan.element_llvm_type;
+    if (!plan.descriptor_storage_name.empty()) {
+        output << " descriptor " << plan.descriptor_storage_name;
+    }
     output << " element_size " << plan.element_size_bytes;
     output << " (metadata only)";
     return output.str();

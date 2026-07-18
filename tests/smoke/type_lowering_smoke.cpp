@@ -171,17 +171,18 @@ int main() {
     assert(dynamic_array_cleanup_plan->source_type_name == "DynamicArray<Payload>");
     assert(dynamic_array_cleanup_plan->element_source_type_name == "Payload");
     assert(dynamic_array_cleanup_plan->element_llvm_type == "%record.Payload");
+    assert(dynamic_array_cleanup_plan->descriptor_storage_name == "%items.addr");
     assert(dynamic_array_cleanup_plan->element_size_bytes == 16);
     assert(
         orison::lowering::format_dynamic_array_descriptor_cleanup_plan(*dynamic_array_cleanup_plan) ==
         "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
-        "lowers to %record.Payload element_size 16 (metadata only)"
+        "lowers to %record.Payload descriptor %items.addr element_size 16 (metadata only)"
     );
     assert(
         orison::lowering::format_dynamic_array_descriptor_cleanup_plan_report({*dynamic_array_cleanup_plan}) ==
         std::vector<std::string>({
             "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
-            "lowers to %record.Payload element_size 16 (metadata only)"
+            "lowers to %record.Payload descriptor %items.addr element_size 16 (metadata only)"
         })
     );
     assert(

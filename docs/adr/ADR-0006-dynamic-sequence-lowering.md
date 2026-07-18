@@ -120,6 +120,9 @@ representation.
 - Lowering now has a separate disabled descriptor-cleanup plan derived from semantic descriptor origins. This preserves
   the distinction between source-owned descriptor cleanup and allocation/construction planning while feeding the same
   metadata-only element-drop readiness path under test control.
+- Descriptor-cleanup plans also record the expected local descriptor storage name, such as `%items.addr`, so future
+  cleanup lowering can attach to the real addressable descriptor. This is still metadata-only and does not emit the
+  local descriptor allocation or cleanup IR.
 
 ## Follow-up work
 

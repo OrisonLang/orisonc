@@ -50,6 +50,7 @@ struct DynamicArrayDescriptorCleanupPlan {
     std::string source_type_name;
     std::string element_source_type_name;
     std::string element_llvm_type;
+    std::string descriptor_storage_name;
     std::size_t element_size_bytes = 0;
 };
 

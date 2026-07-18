@@ -677,12 +677,13 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(blocked.dynamic_array_construction_plans.empty());
     assert(blocked.dynamic_array_runtime_operations.empty());
     assert(blocked.dynamic_array_descriptor_cleanup_plans.size() == 1);
+    assert(blocked.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_name == "%items.addr");
     auto cleanup_report = blocked.dynamic_array_descriptor_cleanup_plan_report();
     assert(cleanup_report.size() == 1);
     assert(
         cleanup_report.front() ==
         "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
-        "lowers to %record.Payload element_size 8 (metadata only)"
+        "lowers to %record.Payload descriptor %items.addr element_size 8 (metadata only)"
     );
     assert(blocked.planned_drop_actions.size() == 1);
     assert(blocked.planned_drop_actions.front().capture_name == "items.element");
@@ -737,6 +738,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(authorized.ir_text.find("declare void @__orison_drop.Payload") != std::string::npos);
     assert(authorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(authorized.ir_text.find("__orison_dynamic_array_allocate") == std::string::npos);
+    assert(authorized.ir_text.find("%items.addr = alloca { ptr, i64, i64 }") == std::string::npos);
 }
 
 void test_dynamic_array_element_drop_readiness_requires_semantic_authorization() {
