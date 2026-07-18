@@ -3,6 +3,7 @@
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/for_loop_lowering.hpp"
 #include "orison/lowering/function_emitter.hpp"
@@ -211,6 +212,46 @@ auto is_thread_join_expression(
     return state.thread_bindings.contains(expression.left->left->text);
 }
 
+auto emit_test_only_bound_dynamic_array_parameter_cleanups(
+    EmissionContext const& context,
+    FunctionLoweringSession const& session,
+    std::ostringstream& output
+) -> bool {
+    if (!context.options.test_only_enable_dynamic_array_parameter_descriptors ||
+        !context.options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
+        return true;
+    }
+
+    auto emitted_count = std::size_t {0};
+    for (auto const& [name, source_type_name] : session.state.source_type_names) {
+        auto sequence = dynamic_sequence_source_type(source_type_name);
+        if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array ||
+            !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+            continue;
+        }
+
+        auto storage = aggregate_storage_for_name(name, session.state);
+        if (!storage.has_value()) {
+            continue;
+        }
+
+        auto plan = plan_dynamic_array_descriptor_cleanup(name, source_type_name, context.lowering);
+        if (!plan.has_value()) {
+            return false;
+        }
+        plan->descriptor_storage_name = std::move(*storage);
+        plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
+
+        auto prefix = "%" + name + ".dynamic_array_cleanup" + std::to_string(emitted_count++);
+        output << emit_dynamic_array_descriptor_load_cleanup_sequence(
+            *plan,
+            prefix + ".descriptor",
+            prefix
+        );
+    }
+    return true;
+}
+
 auto emit_function_return_cleanup(
     EmissionContext const& context,
     FunctionLoweringSession& session,
@@ -218,14 +259,17 @@ auto emit_function_return_cleanup(
     std::ostringstream& output
 ) -> bool {
     emit_abandoned_concurrency_handle_cleanup(session, output);
-    return emit_deferred_cleanup_to_depth(
+    if (!emit_deferred_cleanup_to_depth(
         0,
         context,
         session,
         diagnostics,
         output,
         lower_unit_deferred_cleanup_block
-    );
+    )) {
+        return false;
+    }
+    return emit_test_only_bound_dynamic_array_parameter_cleanups(context, session, output);
 }
 
 auto infer_unit_expression_type(

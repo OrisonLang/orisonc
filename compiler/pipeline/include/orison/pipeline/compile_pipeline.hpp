@@ -20,6 +20,7 @@ struct CompilePipelineOptions {
     std::vector<lowering::TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
     bool test_only_derive_dynamic_array_cleanup_from_semantics = false;
     bool test_only_enable_dynamic_array_parameter_descriptors = false;
+    bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
     bool test_only_render_dynamic_array_element_drop_walks = false;
 };
 

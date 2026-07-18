@@ -515,6 +515,17 @@ auto LlvmIrEmitter::emit(
         if (result.has_errors()) {
             return result;
         }
+        if (options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
+            for (auto const& plan : result.dynamic_array_descriptor_cleanup_plans) {
+                if (plan.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor) {
+                    result.dynamic_array_runtime_operations.push_back(
+                        DynamicArrayRuntimeOperation::deallocate
+                    );
+                    break;
+                }
+            }
+        }
     }
     if (options.test_only_render_dynamic_array_element_drop_walks) {
         auto dynamic_array_drop_cleanups =

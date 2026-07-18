@@ -135,6 +135,9 @@ representation.
 - A test-only dynamic-array parameter descriptor seam can lower `DynamicArray<T>` parameters as `{ ptr, i64, i64 }`,
   spill them to `%name.addr`, and mark matching semantic descriptor-origin cleanup plans as bound. The default
   production path still rejects `DynamicArray<T>` lowered function signatures.
+- A second test-only seam can emit bound scalar/non-owning dynamic-array parameter cleanup at normal function returns:
+  it loads the descriptor from `%name.addr` and calls `__orison_dynamic_array_deallocate` before `ret`. Owned element
+  cleanup emission remains disabled until element drop authorization and sequencing are complete.
 
 ## Follow-up work
 

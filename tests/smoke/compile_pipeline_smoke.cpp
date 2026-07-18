@@ -306,6 +306,42 @@ auto main() -> int {
         std::string::npos
     );
 
+    auto scalar_dynamic_array_path =
+        smoke_temp_root / "orison_pipeline_scalar_dynamic_array_parameter_descriptor.or";
+    {
+        auto scalar_dynamic_array_source = std::ofstream(scalar_dynamic_array_path);
+        scalar_dynamic_array_source
+            << "package demo.pipeline.dynamicarrayscalar\n"
+            << "\n"
+            << "function use_words(words: DynamicArray<UInt32>) -> UInt32\n"
+            << "    1 as UInt32\n";
+    }
+    auto scalar_dynamic_array_cleanup = pipeline.emit_llvm(
+        scalar_dynamic_array_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+        }
+    );
+    assert(!scalar_dynamic_array_cleanup.has_errors());
+    assert(scalar_dynamic_array_cleanup.dynamic_array_descriptor_cleanup_plan_report.size() == 1);
+    assert_line_contains(
+        scalar_dynamic_array_cleanup.dynamic_array_descriptor_cleanup_plan_report,
+        0,
+        "descriptor %words.addr bound"
+    );
+    assert(
+        scalar_dynamic_array_cleanup.ir_text.find("declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)") !=
+        std::string::npos
+    );
+    assert(
+        scalar_dynamic_array_cleanup.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %words.dynamic_array_cleanup0.cleanup.data, i64 4, "
+            "i64 %words.dynamic_array_cleanup0.cleanup.capacity)"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {
