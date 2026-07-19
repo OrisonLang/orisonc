@@ -81,16 +81,21 @@ int main() {
         orison::lowering::DynamicArrayRuntimeOperation::allocate
     );
     assert(dynamic_array_allocate.symbol_name == "__orison_dynamic_array_allocate");
-    assert(dynamic_array_allocate.return_type == orison::lowering::dynamic_array_descriptor_llvm_type());
-    assert(dynamic_array_allocate.parameter_types == std::vector<std::string_view>({"i64", "i64"}));
+    assert(dynamic_array_allocate.return_type == "void");
+    assert(dynamic_array_allocate.parameter_types == std::vector<std::string>({
+        "ptr sret({ ptr, i64, i64 })",
+        "i64",
+        "i64",
+    }));
 
     auto dynamic_array_grow = orison::lowering::dynamic_array_runtime_call(
         orison::lowering::DynamicArrayRuntimeOperation::grow
     );
     assert(dynamic_array_grow.symbol_name == "__orison_dynamic_array_grow");
-    assert(dynamic_array_grow.return_type == orison::lowering::dynamic_array_descriptor_llvm_type());
-    assert(dynamic_array_grow.parameter_types == std::vector<std::string_view>({
-        orison::lowering::dynamic_array_descriptor_llvm_type(),
+    assert(dynamic_array_grow.return_type == "void");
+    assert(dynamic_array_grow.parameter_types == std::vector<std::string>({
+        "ptr sret({ ptr, i64, i64 })",
+        "ptr byval({ ptr, i64, i64 })",
         "i64",
         "i64",
     }));
@@ -100,7 +105,7 @@ int main() {
     );
     assert(dynamic_array_deallocate.symbol_name == "__orison_dynamic_array_deallocate");
     assert(dynamic_array_deallocate.return_type == "void");
-    assert(dynamic_array_deallocate.parameter_types == std::vector<std::string_view>({"ptr", "i64", "i64"}));
+    assert(dynamic_array_deallocate.parameter_types == std::vector<std::string>({"ptr", "i64", "i64"}));
 
     auto dynamic_array_bounds_failed = orison::lowering::dynamic_array_runtime_call(
         orison::lowering::DynamicArrayRuntimeOperation::bounds_failed
@@ -125,8 +130,10 @@ int main() {
         orison::lowering::DynamicArrayRuntimeOperation::capacity_failed,
     });
     assert(dynamic_array_report == std::vector<std::string>({
-        "dynamic array runtime __orison_dynamic_array_allocate returns { ptr, i64, i64 } params i64 i64",
-        "dynamic array runtime __orison_dynamic_array_grow returns { ptr, i64, i64 } params { ptr, i64, i64 } i64 i64",
+        "dynamic array runtime __orison_dynamic_array_allocate returns void "
+        "params ptr sret({ ptr, i64, i64 }) i64 i64",
+        "dynamic array runtime __orison_dynamic_array_grow returns void "
+        "params ptr sret({ ptr, i64, i64 }) ptr byval({ ptr, i64, i64 }) i64 i64",
         "dynamic array runtime __orison_dynamic_array_deallocate returns void params ptr i64 i64",
         "dynamic array runtime __orison_dynamic_array_bounds_failed returns void params",
         "dynamic array runtime __orison_dynamic_array_capacity_failed returns void params",
@@ -236,7 +243,9 @@ int main() {
     );
     assert(
         orison::lowering::emit_dynamic_array_allocation_call(*dynamic_array_plan, "%array") ==
-        "  %array = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 16, i64 8)\n"
+        "  %array.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_allocate(ptr sret({ ptr, i64, i64 }) %array.addr, i64 16, i64 8)\n"
+        "  %array = load { ptr, i64, i64 }, ptr %array.addr\n"
     );
     assert(
         orison::lowering::emit_dynamic_array_descriptor_binding(*dynamic_array_plan, "%array.addr", "%array") ==
@@ -250,8 +259,12 @@ int main() {
             "%array",
             "%array.grow.next.capacity"
         ) ==
-        "  %array.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
-        "({ ptr, i64, i64 } %array, i64 16, i64 %array.grow.next.capacity)\n"
+        "  %array.grown.input = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %array, ptr %array.grown.input\n"
+        "  %array.grown.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }) %array.grown.addr, "
+        "ptr byval({ ptr, i64, i64 }) %array.grown.input, i64 16, i64 %array.grow.next.capacity)\n"
+        "  %array.grown = load { ptr, i64, i64 }, ptr %array.grown.addr\n"
     );
     assert(
         orison::lowering::emit_dynamic_array_deallocation_call(
@@ -368,8 +381,12 @@ int main() {
             "%array"
         ) ==
         "  %array.grow.next.capacity = mul i64 %array.capacity, 2\n"
-        "  %array.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
-        "({ ptr, i64, i64 } %array, i64 16, i64 %array.grow.next.capacity)\n"
+        "  %array.grown.input = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %array, ptr %array.grown.input\n"
+        "  %array.grown.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }) %array.grown.addr, "
+        "ptr byval({ ptr, i64, i64 }) %array.grown.input, i64 16, i64 %array.grow.next.capacity)\n"
+        "  %array.grown = load { ptr, i64, i64 }, ptr %array.grown.addr\n"
         "  store { ptr, i64, i64 } %array.grown, ptr %array.addr\n"
     );
     assert(
@@ -388,8 +405,12 @@ int main() {
         "  br i1 %array.append.has_capacity, label %array.append.ready, label %array.grow\n"
         "array.grow:\n"
         "  %array.grow.next.capacity = mul i64 %array.capacity, 2\n"
-        "  %array.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
-        "({ ptr, i64, i64 } %array, i64 16, i64 %array.grow.next.capacity)\n"
+        "  %array.grown.input = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %array, ptr %array.grown.input\n"
+        "  %array.grown.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }) %array.grown.addr, "
+        "ptr byval({ ptr, i64, i64 }) %array.grown.input, i64 16, i64 %array.grow.next.capacity)\n"
+        "  %array.grown = load { ptr, i64, i64 }, ptr %array.grown.addr\n"
         "  store { ptr, i64, i64 } %array.grown, ptr %array.addr\n"
         "  br label %array.append.ready\n"
         "array.append.ready:\n"

@@ -19,11 +19,12 @@ auto has_emitted_symbol(
     return false;
 }
 
+template <typename ParameterTypes>
 void emit_declaration(
     std::ostringstream& output,
     std::string_view return_type,
     std::string_view symbol_name,
-    std::vector<std::string_view> const& parameter_types
+    ParameterTypes const& parameter_types
 ) {
     output << "declare " << return_type << " @" << symbol_name << "(";
     for (auto index = std::size_t {0}; index < parameter_types.size(); ++index) {
@@ -120,7 +121,7 @@ auto emit_module_prelude(
         if (has_emitted_symbol(emitted_drop_symbols, declaration.symbol_name)) {
             continue;
         }
-        emit_declaration(output, "void", declaration.symbol_name, {"ptr"});
+        emit_declaration(output, "void", declaration.symbol_name, std::vector<std::string_view> {"ptr"});
         emitted_drop_symbols.push_back(declaration.symbol_name);
     }
     if (!emitted_drop_symbols.empty()) {

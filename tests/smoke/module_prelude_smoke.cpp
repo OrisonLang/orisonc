@@ -80,8 +80,9 @@ int main() {
     );
     assert(
         dynamic_array_prelude ==
-        "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)\n"
-        "declare { ptr, i64, i64 } @__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)\n"
+        "declare void @__orison_dynamic_array_allocate(ptr sret({ ptr, i64, i64 }), i64, i64)\n"
+        "declare void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }), "
+        "ptr byval({ ptr, i64, i64 }), i64, i64)\n"
         "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)\n"
         "declare void @__orison_dynamic_array_bounds_failed()\n"
         "declare void @__orison_dynamic_array_capacity_failed()\n"

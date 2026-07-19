@@ -354,21 +354,26 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(runtime_report.size() == 3);
     assert(
         runtime_report[0] ==
-        "dynamic array runtime __orison_dynamic_array_allocate returns { ptr, i64, i64 } params i64 i64"
+        "dynamic array runtime __orison_dynamic_array_allocate returns void "
+        "params ptr sret({ ptr, i64, i64 }) i64 i64"
     );
     assert(
         runtime_report[1] ==
-        "dynamic array runtime __orison_dynamic_array_grow returns { ptr, i64, i64 } "
-        "params { ptr, i64, i64 } i64 i64"
+        "dynamic array runtime __orison_dynamic_array_grow returns void "
+        "params ptr sret({ ptr, i64, i64 }) ptr byval({ ptr, i64, i64 }) i64 i64"
     );
     assert(
         runtime_report[2] ==
         "dynamic array runtime __orison_dynamic_array_deallocate returns void params ptr i64 i64"
     );
-    assert_ir_contains(result, "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)");
     assert_ir_contains(
         result,
-        "declare { ptr, i64, i64 } @__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)"
+        "declare void @__orison_dynamic_array_allocate(ptr sret({ ptr, i64, i64 }), i64, i64)"
+    );
+    assert_ir_contains(
+        result,
+        "declare void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }), "
+        "ptr byval({ ptr, i64, i64 }), i64, i64)"
     );
     assert_ir_contains(result, "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)");
     assert(result.ir_text.find("call { ptr, i64, i64 } @__orison_dynamic_array_allocate") == std::string::npos);
@@ -377,13 +382,22 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(result.test_only_dynamic_array_allocation_call_ir.size() == 1);
     assert(
         result.test_only_dynamic_array_allocation_call_ir.front() ==
-        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 4)\n"
+        "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_allocate("
+        "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 4)\n"
+        "  %dynamic_array_alloc0 = load { ptr, i64, i64 }, ptr %dynamic_array_alloc0.addr\n"
     );
     assert(result.test_only_dynamic_array_grow_call_ir.size() == 1);
     assert(
         result.test_only_dynamic_array_grow_call_ir.front() ==
-        "  %dynamic_array0.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
-        "({ ptr, i64, i64 } %dynamic_array_alloc0, i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+        "  %dynamic_array0.grown.input = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.grown.input\n"
+        "  %dynamic_array0.grown.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_grow("
+        "ptr sret({ ptr, i64, i64 }) %dynamic_array0.grown.addr, "
+        "ptr byval({ ptr, i64, i64 }) %dynamic_array0.grown.input, "
+        "i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+        "  %dynamic_array0.grown = load { ptr, i64, i64 }, ptr %dynamic_array0.grown.addr\n"
     );
     assert(result.test_only_dynamic_array_deallocation_call_ir.size() == 1);
     assert(
@@ -474,8 +488,14 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(
         result.test_only_dynamic_array_grow_sequence_ir.front() ==
         "  %dynamic_array0.grow.next.capacity = mul i64 %dynamic_array0.capacity, 2\n"
-        "  %dynamic_array0.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
-        "({ ptr, i64, i64 } %dynamic_array_alloc0, i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+        "  %dynamic_array0.grown.input = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.grown.input\n"
+        "  %dynamic_array0.grown.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_grow("
+        "ptr sret({ ptr, i64, i64 }) %dynamic_array0.grown.addr, "
+        "ptr byval({ ptr, i64, i64 }) %dynamic_array0.grown.input, "
+        "i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+        "  %dynamic_array0.grown = load { ptr, i64, i64 }, ptr %dynamic_array0.grown.addr\n"
         "  store { ptr, i64, i64 } %dynamic_array0.grown, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("%dynamic_array0.grown = call") == std::string::npos);
@@ -488,8 +508,14 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "label %dynamic_array0.grow\n"
         "dynamic_array0.grow:\n"
         "  %dynamic_array0.grow.next.capacity = mul i64 %dynamic_array0.capacity, 2\n"
-        "  %dynamic_array0.grown = call { ptr, i64, i64 } @__orison_dynamic_array_grow"
-        "({ ptr, i64, i64 } %dynamic_array_alloc0, i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+        "  %dynamic_array0.grown.input = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.grown.input\n"
+        "  %dynamic_array0.grown.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_grow("
+        "ptr sret({ ptr, i64, i64 }) %dynamic_array0.grown.addr, "
+        "ptr byval({ ptr, i64, i64 }) %dynamic_array0.grown.input, "
+        "i64 4, i64 %dynamic_array0.grow.next.capacity)\n"
+        "  %dynamic_array0.grown = load { ptr, i64, i64 }, ptr %dynamic_array0.grown.addr\n"
         "  store { ptr, i64, i64 } %dynamic_array0.grown, ptr %dynamic_array0.addr\n"
         "  br label %dynamic_array0.append.ready\n"
         "dynamic_array0.append.ready:\n"
@@ -583,17 +609,20 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     );
     assert_ir_contains(
         production_construction,
-        "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)"
+        "declare void @__orison_dynamic_array_allocate(ptr sret({ ptr, i64, i64 }), i64, i64)"
     );
     assert(production_construction.dynamic_array_allocation_call_ir.size() == 1);
     assert(
         production_construction.dynamic_array_allocation_call_ir.front() ==
-        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 4)\n"
+        "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_allocate("
+        "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 4)\n"
+        "  %dynamic_array_alloc0 = load { ptr, i64, i64 }, ptr %dynamic_array_alloc0.addr\n"
     );
     assert(production_construction.test_only_dynamic_array_allocation_call_ir.empty());
     assert(
         production_construction.ir_text.find(
-            "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
+            "call void @__orison_dynamic_array_allocate"
         ) == std::string::npos
     );
 
@@ -632,16 +661,19 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(source_construction.dynamic_array_allocation_call_ir.size() == 1);
     assert(
         source_construction.dynamic_array_allocation_call_ir.front() ==
-        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+        "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_allocate("
+        "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 0)\n"
+        "  %dynamic_array_alloc0 = load { ptr, i64, i64 }, ptr %dynamic_array_alloc0.addr\n"
     );
     assert(source_construction.test_only_dynamic_array_allocation_call_ir.empty());
     assert_ir_contains(
         source_construction,
-        "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)"
+        "declare void @__orison_dynamic_array_allocate(ptr sret({ ptr, i64, i64 }), i64, i64)"
     );
     assert(
         source_construction.ir_text.find(
-            "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
+            "call void @__orison_dynamic_array_allocate"
         ) == std::string::npos
     );
 
@@ -665,11 +697,14 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(placed_source_construction.dynamic_array_runtime_operations.size() == 2);
     assert_ir_contains(
         placed_source_construction,
-        "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)"
+        "declare void @__orison_dynamic_array_allocate(ptr sret({ ptr, i64, i64 }), i64, i64)"
     );
     assert_ir_contains(
         placed_source_construction,
-        "  %items.dynamic_array_alloc = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+        "  %items.dynamic_array_alloc.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_allocate("
+        "ptr sret({ ptr, i64, i64 }) %items.dynamic_array_alloc.addr, i64 4, i64 0)\n"
+        "  %items.dynamic_array_alloc = load { ptr, i64, i64 }, ptr %items.dynamic_array_alloc.addr\n"
     );
     assert_ir_contains(
         placed_source_construction,
@@ -678,7 +713,10 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     );
     assert_ir_contains(
         placed_source_construction,
-        "  %words.dynamic_array_alloc = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+        "  %words.dynamic_array_alloc.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_allocate("
+        "ptr sret({ ptr, i64, i64 }) %words.dynamic_array_alloc.addr, i64 4, i64 0)\n"
+        "  %words.dynamic_array_alloc = load { ptr, i64, i64 }, ptr %words.dynamic_array_alloc.addr\n"
     );
     assert_ir_contains(
         placed_source_construction,

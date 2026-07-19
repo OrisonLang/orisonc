@@ -699,6 +699,24 @@ add_test(
     COMMAND orison_concurrency_runtime_abi_smoke
 )
 
+add_executable(orison_dynamic_array_runtime_abi_smoke
+    smoke/dynamic_array_runtime_abi_smoke.cpp
+)
+
+target_link_libraries(orison_dynamic_array_runtime_abi_smoke
+    PRIVATE
+        orison_link
+        orison_lowering
+        orison_runtime_concurrency
+)
+
+target_compile_features(orison_dynamic_array_runtime_abi_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_dynamic_array_runtime_abi_smoke
+    COMMAND orison_dynamic_array_runtime_abi_smoke
+)
+
 add_executable(orison_concurrency_plan_smoke
     smoke/concurrency_plan_smoke.cpp
 )

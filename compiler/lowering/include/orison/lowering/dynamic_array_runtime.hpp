@@ -41,7 +41,7 @@ enum class DynamicArrayDescriptorStorageStatus {
 struct DynamicArrayRuntimeCall {
     std::string_view symbol_name;
     std::string_view return_type;
-    std::vector<std::string_view> parameter_types;
+    std::vector<std::string> parameter_types;
 };
 
 struct DynamicArrayConstructionPlan {

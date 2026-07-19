@@ -2,6 +2,8 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
+#include <limits>
 
 using OrisonConcurrencyEntry = void (*)(void* environment, void* result_storage);
 using OrisonConcurrencyCleanup = void (*)(void* environment);
@@ -18,6 +20,30 @@ struct OrisonConcurrencyStart {
     void* environment;
     void* result_storage;
 };
+
+struct OrisonDynamicArrayDescriptor {
+    void* data;
+    std::uint64_t length;
+    std::uint64_t capacity;
+};
+
+auto orison_dynamic_array_byte_count(
+    std::uint64_t element_size,
+    std::uint64_t capacity
+) -> std::size_t
+{
+    if (capacity == 0) {
+        return 0;
+    }
+    if (element_size == 0) {
+        std::abort();
+    }
+    auto const max_size = static_cast<std::uint64_t>(std::numeric_limits<std::size_t>::max());
+    if (element_size > max_size / capacity) {
+        std::abort();
+    }
+    return static_cast<std::size_t>(element_size * capacity);
+}
 
 #ifdef ORISON_RUNTIME_TESTING
 bool force_thread_create_failure = false;
@@ -150,6 +176,80 @@ extern "C" auto __orison_concurrency_handle_destroy(void* raw_handle) -> void
 extern "C" auto __orison_concurrency_spawn_failed() -> void
 {
     std::abort();
+}
+
+extern "C" auto __orison_dynamic_array_allocate(
+    std::uint64_t element_size,
+    std::uint64_t initial_capacity
+) -> OrisonDynamicArrayDescriptor
+{
+    auto byte_count = orison_dynamic_array_byte_count(element_size, initial_capacity);
+    if (byte_count == 0) {
+        return OrisonDynamicArrayDescriptor {
+            .data = nullptr,
+            .length = 0,
+            .capacity = 0,
+        };
+    }
+
+    auto* data = std::calloc(1, byte_count);
+    if (data == nullptr) {
+        std::abort();
+    }
+    return OrisonDynamicArrayDescriptor {
+        .data = data,
+        .length = 0,
+        .capacity = initial_capacity,
+    };
+}
+
+extern "C" auto __orison_dynamic_array_grow(
+    OrisonDynamicArrayDescriptor descriptor,
+    std::uint64_t element_size,
+    std::uint64_t next_capacity
+) -> OrisonDynamicArrayDescriptor
+{
+    if (descriptor.length > descriptor.capacity || next_capacity < descriptor.length) {
+        std::abort();
+    }
+
+    auto next_byte_count = orison_dynamic_array_byte_count(element_size, next_capacity);
+    if (next_byte_count == 0) {
+        std::free(descriptor.data);
+        return OrisonDynamicArrayDescriptor {
+            .data = nullptr,
+            .length = 0,
+            .capacity = 0,
+        };
+    }
+
+    auto* next_data = std::calloc(1, next_byte_count);
+    if (next_data == nullptr) {
+        std::abort();
+    }
+
+    auto initialized_byte_count = orison_dynamic_array_byte_count(element_size, descriptor.length);
+    if (initialized_byte_count != 0) {
+        std::memcpy(next_data, descriptor.data, initialized_byte_count);
+    }
+    std::free(descriptor.data);
+
+    return OrisonDynamicArrayDescriptor {
+        .data = next_data,
+        .length = descriptor.length,
+        .capacity = next_capacity,
+    };
+}
+
+extern "C" auto __orison_dynamic_array_deallocate(
+    void* data,
+    std::uint64_t element_size,
+    std::uint64_t capacity
+) -> void
+{
+    static_cast<void>(element_size);
+    static_cast<void>(capacity);
+    std::free(data);
 }
 
 extern "C" auto __orison_dynamic_array_bounds_failed() -> void

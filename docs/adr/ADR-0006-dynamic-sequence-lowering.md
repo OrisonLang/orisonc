@@ -24,10 +24,11 @@ representation.
 - Dynamic-array lowering requires a unique owning descriptor, an allocator/runtime allocation path, a proven
   `0 <= length <= capacity` descriptor invariant, and an element drop walk for initialized elements before lowered
   signatures can be enabled.
-- Dynamic-array runtime ABI entry points are finite and internal: `__orison_dynamic_array_allocate(i64, i64)`,
-  `__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)`, and
-  `__orison_dynamic_array_deallocate(ptr, i64, i64)`. The `i64` parameters are element size/capacity-style scalar
-  values chosen by lowering, not source-level variadic or spread arguments.
+- Dynamic-array runtime ABI entry points are finite and internal: conceptual descriptor-returning allocation and growth
+  map to concrete LLVM C ABI calls using `sret({ ptr, i64, i64 })`, grow receives the prior descriptor through
+  `byval({ ptr, i64, i64 })`, and deallocation remains `__orison_dynamic_array_deallocate(ptr, i64, i64)`. The `i64`
+  parameters are element size/capacity-style scalar values chosen by lowering, not source-level variadic or spread
+  arguments.
 - Shared/exclusive access is tracked as source-type metadata, not by inventing different LLVM pointer spellings.
 - The current fixed-array-only `for` lowering diagnostic remains valid until loop lowering consumes this model and
   emits descriptor-aware indexing and bounds.
@@ -81,10 +82,10 @@ representation.
 - A disabled append sequence renderer composes append capacity checking, element addressing at current length, element
   store, descriptor length update, and descriptor write-back in order. The snippet remains outside module IR until
   dynamic-array mutation lowering is authorized.
-- A disabled grow-call renderer pins the finite runtime call shape for capacity-failure handling as
-  `__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)`. A disabled grow sequence currently doubles capacity,
-  calls grow with the element size and next capacity, and writes the returned descriptor back to the local slot. The
-  snippet remains outside module IR until dynamic-array growth semantics are authorized.
+- A disabled grow-call renderer pins the finite runtime call shape for capacity-failure handling as a C-compatible
+  `sret` result plus `byval` prior descriptor. A disabled grow sequence currently doubles capacity, calls grow with the
+  element size and next capacity, loads the returned descriptor, and writes it back to the local slot. The snippet
+  remains outside module IR until dynamic-array growth semantics are authorized.
 - A disabled append-with-grow sequence renderer pins the future branch shape for append mutation: check capacity,
   branch to grow only when needed, join on an active descriptor value, then perform the append store and descriptor
   update. The snippet remains outside module IR until dynamic-array control-flow and growth semantics are authorized.
@@ -243,6 +244,10 @@ representation.
   checking `length < capacity`, trapping through `__orison_dynamic_array_capacity_failed()` on capacity failure,
   storing the element at the current length, incrementing length, and writing the descriptor back. Growth remains a
   separate disabled step.
+- The C++ runtime now implements the finite internal dynamic-array ABI. Allocation returns `{data, 0, capacity}`,
+  zero-capacity allocation returns `{null, 0, 0}`, grow copies exactly initialized bytes and preserves length, and
+  deallocation releases the backing storage. LLVM emission uses C-compatible `sret`/`byval` call shapes for descriptor
+  values, making emitted dynamic-array runtime calls linkable without adding source syntax or enabling growth lowering.
 - The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
   dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
   compatibility alias for existing focused fixtures.

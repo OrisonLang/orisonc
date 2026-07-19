@@ -35,6 +35,18 @@ auto descriptor_storage_name_for_owner(std::string_view owner_name) -> std::stri
     return llvm_local_value_name(std::string {owner_name} + ".addr");
 }
 
+auto dynamic_array_descriptor_sret_parameter() -> std::string {
+    auto output = std::ostringstream {};
+    output << "ptr sret(" << dynamic_array_descriptor_llvm_type() << ")";
+    return output.str();
+}
+
+auto dynamic_array_descriptor_byval_parameter() -> std::string {
+    auto output = std::ostringstream {};
+    output << "ptr byval(" << dynamic_array_descriptor_llvm_type() << ")";
+    return output.str();
+}
+
 auto format_dynamic_array_descriptor_storage_status(
     DynamicArrayDescriptorStorageStatus status
 ) -> std::string_view {
@@ -58,14 +70,19 @@ auto dynamic_array_runtime_call(
     case DynamicArrayRuntimeOperation::allocate:
         return DynamicArrayRuntimeCall {
             .symbol_name = "__orison_dynamic_array_allocate",
-            .return_type = dynamic_array_descriptor_llvm_type(),
-            .parameter_types = {"i64", "i64"},
+            .return_type = "void",
+            .parameter_types = {dynamic_array_descriptor_sret_parameter(), "i64", "i64"},
         };
     case DynamicArrayRuntimeOperation::grow:
         return DynamicArrayRuntimeCall {
             .symbol_name = "__orison_dynamic_array_grow",
-            .return_type = dynamic_array_descriptor_llvm_type(),
-            .parameter_types = {dynamic_array_descriptor_llvm_type(), "i64", "i64"},
+            .return_type = "void",
+            .parameter_types = {
+                dynamic_array_descriptor_sret_parameter(),
+                dynamic_array_descriptor_byval_parameter(),
+                "i64",
+                "i64",
+            },
         };
     case DynamicArrayRuntimeOperation::deallocate:
         return DynamicArrayRuntimeCall {
@@ -215,10 +232,13 @@ auto emit_dynamic_array_allocation_call(
 ) -> std::string {
     auto runtime_call = dynamic_array_runtime_call(DynamicArrayRuntimeOperation::allocate);
     auto output = std::ostringstream {};
-    output << "  " << result_name << " = call " << runtime_call.return_type;
-    output << " @" << runtime_call.symbol_name;
-    output << "(i64 " << plan.element_size_bytes;
+    output << "  " << result_name << ".addr = alloca " << dynamic_array_descriptor_llvm_type() << "\n";
+    output << "  call " << runtime_call.return_type << " @" << runtime_call.symbol_name;
+    output << "(ptr sret(" << dynamic_array_descriptor_llvm_type() << ") " << result_name << ".addr";
+    output << ", i64 " << plan.element_size_bytes;
     output << ", i64 " << plan.initial_capacity << ")\n";
+    output << "  " << result_name << " = load " << dynamic_array_descriptor_llvm_type();
+    output << ", ptr " << result_name << ".addr\n";
     return output.str();
 }
 
@@ -230,11 +250,17 @@ auto emit_dynamic_array_grow_call(
 ) -> std::string {
     auto runtime_call = dynamic_array_runtime_call(DynamicArrayRuntimeOperation::grow);
     auto output = std::ostringstream {};
-    output << "  " << result_name << " = call " << runtime_call.return_type;
-    output << " @" << runtime_call.symbol_name;
-    output << "(" << dynamic_array_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << "  " << result_name << ".input = alloca " << dynamic_array_descriptor_llvm_type() << "\n";
+    output << "  store " << dynamic_array_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", ptr " << result_name << ".input\n";
+    output << "  " << result_name << ".addr = alloca " << dynamic_array_descriptor_llvm_type() << "\n";
+    output << "  call " << runtime_call.return_type << " @" << runtime_call.symbol_name;
+    output << "(ptr sret(" << dynamic_array_descriptor_llvm_type() << ") " << result_name << ".addr";
+    output << ", ptr byval(" << dynamic_array_descriptor_llvm_type() << ") " << result_name << ".input";
     output << ", i64 " << plan.element_size_bytes;
     output << ", i64 " << next_capacity_name << ")\n";
+    output << "  " << result_name << " = load " << dynamic_array_descriptor_llvm_type();
+    output << ", ptr " << result_name << ".addr\n";
     return output.str();
 }
 

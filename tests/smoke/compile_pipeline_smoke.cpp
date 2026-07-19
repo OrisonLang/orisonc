@@ -669,11 +669,14 @@ auto main() -> int {
     assert(dynamic_array_owned_construction_gate.dynamic_array_allocation_call_ir.size() == 1);
     assert(
         dynamic_array_owned_construction_gate.dynamic_array_allocation_call_ir.front() ==
-        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 8, i64 2)\n"
+        "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_allocate("
+        "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 8, i64 2)\n"
+        "  %dynamic_array_alloc0 = load { ptr, i64, i64 }, ptr %dynamic_array_alloc0.addr\n"
     );
     assert(
         dynamic_array_owned_construction_gate.ir_text.find(
-            "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
+            "call void @__orison_dynamic_array_allocate"
         ) == std::string::npos
     );
     assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
@@ -726,11 +729,14 @@ auto main() -> int {
     assert(dynamic_array_source_construction.dynamic_array_allocation_call_ir.size() == 1);
     assert(
         dynamic_array_source_construction.dynamic_array_allocation_call_ir.front() ==
-        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+        "  %dynamic_array_alloc0.addr = alloca { ptr, i64, i64 }\n"
+        "  call void @__orison_dynamic_array_allocate("
+        "ptr sret({ ptr, i64, i64 }) %dynamic_array_alloc0.addr, i64 4, i64 0)\n"
+        "  %dynamic_array_alloc0 = load { ptr, i64, i64 }, ptr %dynamic_array_alloc0.addr\n"
     );
     assert(
         dynamic_array_source_construction.ir_text.find(
-            "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
+            "call void @__orison_dynamic_array_allocate"
         ) == std::string::npos
     );
 
@@ -760,7 +766,10 @@ auto main() -> int {
     );
     assert(
         dynamic_array_placed_construction.ir_text.find(
-            "  %items.dynamic_array_alloc = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+            "  %items.dynamic_array_alloc.addr = alloca { ptr, i64, i64 }\n"
+            "  call void @__orison_dynamic_array_allocate("
+            "ptr sret({ ptr, i64, i64 }) %items.dynamic_array_alloc.addr, i64 4, i64 0)\n"
+            "  %items.dynamic_array_alloc = load { ptr, i64, i64 }, ptr %items.dynamic_array_alloc.addr\n"
         ) != std::string::npos
     );
     assert(
