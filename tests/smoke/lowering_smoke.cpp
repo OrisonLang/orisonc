@@ -690,6 +690,14 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         "dynamic array descriptor cleanup DynamicArray<Payload> owner items element Payload "
         "lowers to %record.Payload descriptor %items.addr predicted element_size 8 (metadata only)"
     );
+    auto obligation_report = blocked.dynamic_array_cleanup_obligation_report();
+    assert(obligation_report.size() == 1);
+    assert(
+        obligation_report.front() ==
+        "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0 owner items "
+        "source DynamicArray<Payload> element Payload descriptor %items.addr actions 1 "
+        "descriptor deallocation required (metadata only)"
+    );
     assert(blocked.planned_drop_actions.size() == 1);
     assert(blocked.planned_drop_actions.front().capture_name == "items.element");
     assert(blocked.planned_drop_actions.front().source_type_name == "Payload");
@@ -798,6 +806,14 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
     assert(
         result.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
         orison::lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local
+    );
+    auto obligation_report = result.dynamic_array_cleanup_obligation_report();
+    assert(obligation_report.size() == 1);
+    assert(
+        obligation_report.front() ==
+        "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0 owner items "
+        "source DynamicArray<UInt32> element UInt32 descriptor %items.addr actions 0 "
+        "descriptor deallocation required (metadata only)"
     );
     assert(result.planned_drop_actions.empty());
     assert(result.planned_drop_declarations.empty());

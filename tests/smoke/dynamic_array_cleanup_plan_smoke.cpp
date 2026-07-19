@@ -162,11 +162,64 @@ void test_authorizes_owned_element_cleanup() {
     assert(state.next_temporary_index == 1);
 }
 
+void test_plans_descriptor_cleanup_obligations() {
+    auto lowering = test_context();
+    auto scalar_plan = orison::lowering::plan_dynamic_array_descriptor_cleanup(
+        "numbers",
+        "DynamicArray<UInt32>",
+        lowering
+    );
+    auto owned_plan = orison::lowering::plan_dynamic_array_descriptor_cleanup(
+        "items",
+        "DynamicArray<Payload>",
+        lowering
+    );
+    assert(scalar_plan.has_value());
+    assert(owned_plan.has_value());
+
+    auto obligations = orison::lowering::plan_dynamic_array_descriptor_cleanup_obligations(
+        {*scalar_plan, *owned_plan},
+        3
+    );
+    assert(obligations.size() == 2);
+    assert(obligations[0].cleanup_symbol_name == "__orison_dynamic_array_cleanup.3");
+    assert(obligations[0].descriptor_cleanup.owner_name == "numbers");
+    assert(obligations[0].actions.empty());
+    assert(obligations[0].requires_descriptor_deallocation);
+    assert(obligations[1].cleanup_symbol_name == "__orison_dynamic_array_cleanup.4");
+    assert(obligations[1].descriptor_cleanup.owner_name == "items");
+    assert(obligations[1].actions.size() == 1);
+    assert(obligations[1].actions.front().capture_name == "items.element");
+    assert(obligations[1].actions.front().symbol_name == "__orison_drop.Payload");
+
+    auto cleanup = orison::lowering::drop_cleanup_for_dynamic_array_cleanup_obligation(obligations[1]);
+    assert(cleanup.cleanup_symbol_name == "__orison_dynamic_array_cleanup.4");
+    assert(cleanup.actions.size() == 1);
+    assert(cleanup.requires_semantic_authorization);
+    assert(cleanup.requires_descriptor_deallocation);
+
+    auto report = orison::lowering::format_dynamic_array_cleanup_obligation_report(obligations);
+    assert(report.size() == 2);
+    assert(
+        report[0] ==
+        "dynamic array cleanup obligation __orison_dynamic_array_cleanup.3 owner numbers "
+        "source DynamicArray<UInt32> element UInt32 descriptor %numbers.addr actions 0 "
+        "descriptor deallocation required (metadata only)"
+    );
+    assert(
+        report[1] ==
+        "dynamic array cleanup obligation __orison_dynamic_array_cleanup.4 owner items "
+        "source DynamicArray<Payload> element Payload descriptor %items.addr actions 1 "
+        "descriptor deallocation required (metadata only)"
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
     test_plans_bound_dynamic_array_parameter_cleanups_in_name_order();
     test_suppresses_unauthorized_owned_element_cleanup();
     test_authorizes_owned_element_cleanup();
+    test_plans_descriptor_cleanup_obligations();
     return 0;
 }

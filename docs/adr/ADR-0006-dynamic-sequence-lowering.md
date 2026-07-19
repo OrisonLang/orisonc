@@ -165,6 +165,9 @@ representation.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.
+- Semantic descriptor-origin cleanup now produces explicit dynamic-array cleanup obligation records before those records
+  are converted into the generic drop-readiness model. This keeps production-facing cleanup obligations inspectable
+  while actual `DynamicArray<T>` signature lowering remains disabled by default.
 
 ## Follow-up work
 

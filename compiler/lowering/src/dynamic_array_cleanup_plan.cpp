@@ -15,6 +15,27 @@
 namespace orison::lowering {
 namespace {
 
+auto dynamic_array_cleanup_symbol_name(std::size_t ordinal) -> std::string {
+    auto output = std::ostringstream {};
+    output << "__orison_dynamic_array_cleanup." << ordinal;
+    return output.str();
+}
+
+auto dynamic_array_descriptor_element_drop_action(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::size_t ordinal
+) -> PlannedDropAction {
+    auto capture_name = !plan.owner_name.empty()
+        ? plan.owner_name + ".element"
+        : "dynamic_array_descriptor" + std::to_string(ordinal) + ".element";
+    return PlannedDropAction {
+        .capture_name = std::move(capture_name),
+        .source_type_name = plan.element_source_type_name,
+        .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
+        .field_index = ordinal,
+    };
+}
+
 auto dynamic_array_parameter_drop_action(
     std::string_view name,
     DynamicArrayDescriptorCleanupPlan const& plan
@@ -130,6 +151,72 @@ auto authorized_element_drop_symbol_name(
 }
 
 }  // namespace
+
+auto plan_dynamic_array_descriptor_cleanup_obligation(
+    DynamicArrayDescriptorCleanupPlan const& plan,
+    std::size_t ordinal
+) -> DynamicArrayCleanupObligation {
+    auto obligation = DynamicArrayCleanupObligation {
+        .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
+        .descriptor_cleanup = plan,
+        .requires_descriptor_deallocation = true,
+    };
+    if (!is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
+        obligation.actions.push_back(dynamic_array_descriptor_element_drop_action(plan, ordinal));
+    }
+    return obligation;
+}
+
+auto plan_dynamic_array_descriptor_cleanup_obligations(
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& plans,
+    std::size_t ordinal_offset
+) -> std::vector<DynamicArrayCleanupObligation> {
+    auto obligations = std::vector<DynamicArrayCleanupObligation> {};
+    obligations.reserve(plans.size());
+    for (auto index = std::size_t {0}; index < plans.size(); ++index) {
+        obligations.push_back(plan_dynamic_array_descriptor_cleanup_obligation(plans[index], ordinal_offset + index));
+    }
+    return obligations;
+}
+
+auto drop_cleanup_for_dynamic_array_cleanup_obligation(
+    DynamicArrayCleanupObligation const& obligation
+) -> ConcurrencyDropCleanupPlan {
+    return ConcurrencyDropCleanupPlan {
+        .cleanup_symbol_name = obligation.cleanup_symbol_name,
+        .actions = obligation.actions,
+        .requires_semantic_authorization = true,
+        .requires_descriptor_deallocation = obligation.requires_descriptor_deallocation,
+    };
+}
+
+auto format_dynamic_array_cleanup_obligation(
+    DynamicArrayCleanupObligation const& obligation
+) -> std::string {
+    auto const& plan = obligation.descriptor_cleanup;
+    auto output = std::ostringstream {};
+    output << "dynamic array cleanup obligation " << obligation.cleanup_symbol_name;
+    output << " owner " << plan.owner_name;
+    output << " source " << plan.source_type_name;
+    output << " element " << plan.element_source_type_name;
+    output << " descriptor " << plan.descriptor_storage_name;
+    output << " actions " << obligation.actions.size();
+    output << " descriptor deallocation ";
+    output << (obligation.requires_descriptor_deallocation ? "required" : "not required");
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_dynamic_array_cleanup_obligation_report(
+    std::vector<DynamicArrayCleanupObligation> const& obligations
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(obligations.size());
+    for (auto const& obligation : obligations) {
+        report.push_back(format_dynamic_array_cleanup_obligation(obligation));
+    }
+    return report;
+}
 
 auto plan_bound_dynamic_array_parameter_cleanups(
     LoweringEmissionContext const& context,

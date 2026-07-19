@@ -1,6 +1,7 @@
 #include "orison/lowering/llvm_ir_emitter.hpp"
 
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
@@ -267,36 +268,6 @@ auto collect_dynamic_array_element_drop_cleanups(
     return cleanups;
 }
 
-auto dynamic_array_element_drop_action(
-    DynamicArrayDescriptorCleanupPlan const& plan,
-    std::size_t ordinal
-) -> PlannedDropAction {
-    auto capture_name = !plan.owner_name.empty()
-        ? plan.owner_name + ".element"
-        : "dynamic_array_descriptor" + std::to_string(ordinal) + ".element";
-    return PlannedDropAction {
-        .capture_name = std::move(capture_name),
-        .source_type_name = plan.element_source_type_name,
-        .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
-        .field_index = ordinal,
-    };
-}
-
-auto dynamic_array_element_drop_cleanup(
-    DynamicArrayDescriptorCleanupPlan const& plan,
-    std::size_t ordinal
-) -> ConcurrencyDropCleanupPlan {
-    auto cleanup = ConcurrencyDropCleanupPlan {
-        .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(ordinal),
-        .requires_semantic_authorization = true,
-        .requires_descriptor_deallocation = true,
-    };
-    if (!is_scalar_or_nonowning_source_type(plan.element_source_type_name)) {
-        cleanup.actions.push_back(dynamic_array_element_drop_action(plan, ordinal));
-    }
-    return cleanup;
-}
-
 auto collect_dynamic_array_descriptor_cleanup_plans(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result,
@@ -321,18 +292,6 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
         plans.push_back(std::move(*plan));
     }
     return plans;
-}
-
-auto collect_dynamic_array_descriptor_drop_cleanups(
-    std::vector<DynamicArrayDescriptorCleanupPlan> const& plans,
-    std::size_t ordinal_offset
-) -> std::vector<ConcurrencyDropCleanupPlan> {
-    auto cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
-    for (auto index = std::size_t {0}; index < plans.size(); ++index) {
-        auto cleanup = dynamic_array_element_drop_cleanup(plans[index], ordinal_offset + index);
-        cleanups.push_back(std::move(cleanup));
-    }
-    return cleanups;
 }
 
 void add_dynamic_array_planned_drop_declarations(
@@ -375,6 +334,10 @@ auto LlvmIrEmissionResult::dynamic_array_construction_plan_report() const -> std
 
 auto LlvmIrEmissionResult::dynamic_array_descriptor_cleanup_plan_report() const -> std::vector<std::string> {
     return format_dynamic_array_descriptor_cleanup_plan_report(dynamic_array_descriptor_cleanup_plans);
+}
+
+auto LlvmIrEmissionResult::dynamic_array_cleanup_obligation_report() const -> std::vector<std::string> {
+    return format_dynamic_array_cleanup_obligation_report(dynamic_array_cleanup_obligations);
 }
 
 auto LlvmIrEmissionResult::dynamic_array_runtime_request_report() const -> std::vector<std::string> {
@@ -515,6 +478,10 @@ auto LlvmIrEmitter::emit(
         if (result.has_errors()) {
             return result;
         }
+        result.dynamic_array_cleanup_obligations = plan_dynamic_array_descriptor_cleanup_obligations(
+            result.dynamic_array_descriptor_cleanup_plans,
+            result.dynamic_array_construction_plans.size()
+        );
         if (options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
             for (auto const& plan : result.dynamic_array_descriptor_cleanup_plans) {
                 if (plan.descriptor_storage_status ==
@@ -534,11 +501,13 @@ auto LlvmIrEmitter::emit(
                 result.dynamic_array_construction_plans,
                 options.test_only_dynamic_array_construction_requests
             );
-        auto dynamic_array_descriptor_drop_cleanups =
-            collect_dynamic_array_descriptor_drop_cleanups(
-                result.dynamic_array_descriptor_cleanup_plans,
-                result.dynamic_array_construction_plans.size()
+        auto dynamic_array_descriptor_drop_cleanups = std::vector<ConcurrencyDropCleanupPlan> {};
+        dynamic_array_descriptor_drop_cleanups.reserve(result.dynamic_array_cleanup_obligations.size());
+        for (auto const& obligation : result.dynamic_array_cleanup_obligations) {
+            dynamic_array_descriptor_drop_cleanups.push_back(
+                drop_cleanup_for_dynamic_array_cleanup_obligation(obligation)
             );
+        }
         dynamic_array_drop_cleanups.insert(
             dynamic_array_drop_cleanups.end(),
             std::make_move_iterator(dynamic_array_descriptor_drop_cleanups.begin()),
