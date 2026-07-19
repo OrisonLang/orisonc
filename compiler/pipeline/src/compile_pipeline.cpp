@@ -249,6 +249,8 @@ auto CompilePipeline::emit_llvm(
         options.dynamic_array_production_signature_lowering_enabled;
     emission_options.enable_dynamic_array_construction_lowering =
         options.dynamic_array_production_construction_lowering_enabled;
+    emission_options.enable_dynamic_array_index_lowering =
+        options.dynamic_array_production_index_lowering_enabled;
     emission_options.test_only_emit_bound_dynamic_array_parameter_cleanups =
         options.test_only_emit_bound_dynamic_array_parameter_cleanups;
     emission_options.enable_dynamic_array_cleanup_emission =

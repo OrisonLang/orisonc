@@ -749,6 +749,57 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(return_instruction != std::string::npos);
     assert(items_cleanup < words_cleanup);
     assert(words_cleanup < return_instruction);
+
+    auto placed_source_index_read = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    items[0]\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_index_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!placed_source_index_read.has_errors());
+    assert_ir_contains(
+        placed_source_index_read,
+        "  %items.dynamic_array_index0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_index_read,
+        "  %items.dynamic_array_index0.length = extractvalue { ptr, i64, i64 } "
+        "%items.dynamic_array_index0.descriptor, 1\n"
+    );
+    assert_ir_contains(
+        placed_source_index_read,
+        "  %items.dynamic_array_index0.in_bounds = icmp ult i64 0, %items.dynamic_array_index0.length\n"
+    );
+    assert_ir_contains(
+        placed_source_index_read,
+        "  %items.dynamic_array_index0.data = extractvalue { ptr, i64, i64 } "
+        "%items.dynamic_array_index0.descriptor, 0\n"
+    );
+    assert_ir_contains(
+        placed_source_index_read,
+        "  %items.dynamic_array_index0.element.addr = getelementptr i32, ptr "
+        "%items.dynamic_array_index0.data, i64 0\n"
+    );
+    assert_ir_contains(
+        placed_source_index_read,
+        "  %items.dynamic_array_index0.value = load i32, ptr %items.dynamic_array_index0.element.addr\n"
+    );
+    auto index_load = placed_source_index_read.ir_text.find("%items.dynamic_array_index0.value = load i32");
+    auto index_cleanup = placed_source_index_read.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto index_return = placed_source_index_read.ir_text.find("ret i32 %items.dynamic_array_index0.value");
+    assert(index_load != std::string::npos);
+    assert(index_cleanup != std::string::npos);
+    assert(index_return != std::string::npos);
+    assert(index_load < index_cleanup);
+    assert(index_cleanup < index_return);
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

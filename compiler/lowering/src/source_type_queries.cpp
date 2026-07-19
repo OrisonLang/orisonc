@@ -579,9 +579,14 @@ auto source_type_name_for_expression(
 
         auto indexed_source_type = pointer_pointee_source_type_name(*base_source_type);
         auto array_element = array_element_source_type_name(indexed_source_type.value_or(*base_source_type));
-        return array_element.has_value()
-            ? std::move(array_element)
-            : view_element_source_type_name(indexed_source_type.value_or(*base_source_type));
+        if (array_element.has_value()) {
+            return std::move(array_element);
+        }
+        auto view_element = view_element_source_type_name(indexed_source_type.value_or(*base_source_type));
+        if (view_element.has_value()) {
+            return view_element;
+        }
+        return dynamic_array_element_source_type_name(indexed_source_type.value_or(*base_source_type));
     }
 
     if (expression.kind == syntax::ExpressionKind::ternary && expression.right != nullptr &&

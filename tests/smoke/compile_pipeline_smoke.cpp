@@ -808,6 +808,48 @@ auto main() -> int {
     assert(local_return != std::string::npos);
     assert(local_cleanup < local_return);
 
+    auto dynamic_array_local_index_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_local_index.or";
+    {
+        auto local_index_source = std::ofstream(dynamic_array_local_index_path);
+        local_index_source
+            << "package demo.pipeline.dynamicarraylocalindex\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    items[0]\n";
+    }
+    auto dynamic_array_local_index = pipeline.emit_llvm(
+        dynamic_array_local_index_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!dynamic_array_local_index.has_errors());
+    assert(
+        dynamic_array_local_index.ir_text.find(
+            "  %items.dynamic_array_index0.in_bounds = icmp ult i64 0, %items.dynamic_array_index0.length\n"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_index.ir_text.find(
+            "  %items.dynamic_array_index0.value = load i32, ptr %items.dynamic_array_index0.element.addr\n"
+        ) != std::string::npos
+    );
+    auto pipeline_index_load =
+        dynamic_array_local_index.ir_text.find("%items.dynamic_array_index0.value = load i32");
+    auto pipeline_index_cleanup =
+        dynamic_array_local_index.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto pipeline_index_return =
+        dynamic_array_local_index.ir_text.find("ret i32 %items.dynamic_array_index0.value");
+    assert(pipeline_index_load != std::string::npos);
+    assert(pipeline_index_cleanup != std::string::npos);
+    assert(pipeline_index_return != std::string::npos);
+    assert(pipeline_index_load < pipeline_index_cleanup);
+    assert(pipeline_index_cleanup < pipeline_index_return);
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

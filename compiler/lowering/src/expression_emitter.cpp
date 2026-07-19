@@ -6,6 +6,7 @@
 #include "orison/lowering/conditional_plan.hpp"
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -1677,6 +1678,102 @@ auto lower_temporary_aggregate_path_read(
     );
 }
 
+auto lower_dynamic_array_index_read(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (!context.options.enable_dynamic_array_index_lowering ||
+        expression.kind != syntax::ExpressionKind::index_access ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name ||
+        expression.arguments.size() != 1) {
+        return std::nullopt;
+    }
+
+    auto const& owner_name = expression.left->text;
+    auto source_type = session.state.source_type_names.find(owner_name);
+    if (source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+    auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
+    if (!element_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto storage = aggregate_storage_for_name(owner_name, session.state);
+    if (!storage.has_value()) {
+        return std::nullopt;
+    }
+
+    auto plan = plan_dynamic_array_descriptor_cleanup(
+        owner_name,
+        source_type->second,
+        context.lowering
+    );
+    if (!plan.has_value()) {
+        return std::nullopt;
+    }
+    auto element_signedness = integer_signedness_for(syntax::TypeSyntax {
+        .name = *element_source_type,
+    });
+    if (plan->element_llvm_type != expected_llvm_type || element_signedness != expected_signedness) {
+        return std::nullopt;
+    }
+
+    auto lowered_index = lowered_expression(
+        expression.arguments.front(),
+        "i64",
+        IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_index.has_value()) {
+        return std::nullopt;
+    }
+
+    auto prefix = "%" + owner_name + ".dynamic_array_index" +
+        std::to_string(session.state.next_temporary_index++);
+    output << emit_dynamic_array_descriptor_load(
+        prefix + ".descriptor",
+        *storage
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".length",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".in_bounds",
+        lowered_index->value,
+        prefix + ".length",
+        DynamicArrayBoundsCheckKind::index_within_length
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".data",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_element_address(
+        *plan,
+        prefix + ".element.addr",
+        prefix + ".data",
+        lowered_index->value
+    );
+    output << "  " << prefix << ".value = load " << plan->element_llvm_type;
+    output << ", ptr " << prefix << ".element.addr\n";
+
+    return LoweredExpression {
+        .type = plan->element_llvm_type,
+        .value = prefix + ".value",
+        .signedness = element_signedness,
+    };
+}
+
 auto emit_null_safe_empty_result(
     MaybeValueAbi const& result_abi,
     FunctionLoweringState& state,
@@ -2272,6 +2369,17 @@ auto lowered_expression(
             output
         )) {
         return aggregate_path_read;
+    }
+
+    if (auto dynamic_array_index_read = lower_dynamic_array_index_read(
+            expression,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        )) {
+        return dynamic_array_index_read;
     }
 
     if (auto null_safe_access = lower_null_safe_member_access_expression(
