@@ -72,6 +72,18 @@ executable. The same file can be inspected with `--emit-llvm` or compiled with `
 Focused examples for the language-tour sections live under `examples/tour_*.or`. See `examples/README.md` for
 the feature and validation matrix, including the runnable C `printf` hello-world example.
 
+## Dynamic-Array Cleanup Audit Demo
+
+The checked-in report-only fixture for the dynamic-array cleanup audit chain is
+`tests/fixtures/dynamic_array_cleanup_audit.or`. Inspect the full metadata chain with:
+
+```sh
+build/tools/orisonc/orisonc --dynamic-array-cleanup-audit tests/fixtures/dynamic_array_cleanup_audit.or
+```
+
+This prints semantic descriptor origins, descriptor cleanup plans, cleanup obligations, sequence plans, verification,
+emission gate, and capability proof in order. It does not enable production `DynamicArray<T>` cleanup by default.
+
 ## Repository expectations
 
 The repository should evolve toward a layout similar to:
