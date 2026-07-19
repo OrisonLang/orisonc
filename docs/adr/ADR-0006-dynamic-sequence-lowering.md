@@ -216,6 +216,9 @@ representation.
   lowering, and cleanup emission gates are explicitly enabled.
 - Those production-readiness blockers are explicit pipeline options, all defaulting to disabled. Tests can flip them
   independently to audit readiness transitions without changing the default production behavior.
+- The production signature blocker now maps to a default-disabled lowering option that enables dynamic-array parameter
+  descriptors as `{ ptr, i64, i64 }`. The older test-only descriptor seam remains as a compatibility alias for existing
+  smoke fixtures, and construction/cleanup production gates remain separate.
 - Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
   `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
   compilation continues to leave source Drop lowering disabled.

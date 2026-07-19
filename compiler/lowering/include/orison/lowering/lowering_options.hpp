@@ -20,6 +20,7 @@ struct LlvmIrEmissionOptions {
     std::vector<TestOnlyDynamicArrayConstructionRequest> test_only_dynamic_array_construction_requests;
     bool test_only_derive_dynamic_array_cleanup_from_semantics = false;
     bool test_only_enable_dynamic_array_parameter_descriptors = false;
+    bool enable_dynamic_array_parameter_descriptors = false;
     bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
     bool test_only_render_dynamic_array_allocation_calls = false;
     bool test_only_render_dynamic_array_grow_calls = false;
@@ -40,5 +41,12 @@ struct LlvmIrEmissionOptions {
     bool test_only_render_dynamic_array_element_drop_walks = false;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
+
+inline auto dynamic_array_parameter_descriptors_enabled(
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    return options.enable_dynamic_array_parameter_descriptors ||
+        options.test_only_enable_dynamic_array_parameter_descriptors;
+}
 
 }  // namespace orison::lowering

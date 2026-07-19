@@ -435,7 +435,7 @@ auto plan_bound_dynamic_array_parameter_cleanups(
     FunctionLoweringSession const& session
 ) -> std::optional<std::vector<BoundDynamicArrayParameterCleanupPlan>> {
     auto plans = std::vector<BoundDynamicArrayParameterCleanupPlan> {};
-    if (!context.options.test_only_enable_dynamic_array_parameter_descriptors ||
+    if (!dynamic_array_parameter_descriptors_enabled(context.options) ||
         !context.options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
         return plans;
     }
@@ -546,7 +546,7 @@ auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
         obligations.push_back(plan.sequence_plan.obligation);
     }
     return prove_dynamic_array_cleanup_emission_capability(
-        context.options.test_only_enable_dynamic_array_parameter_descriptors &&
+        dynamic_array_parameter_descriptors_enabled(context.options) &&
             context.options.test_only_emit_bound_dynamic_array_parameter_cleanups,
         descriptor_cleanup_plans,
         sequence_verifications,

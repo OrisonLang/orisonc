@@ -245,6 +245,8 @@ auto CompilePipeline::emit_llvm(
         options.test_only_derive_dynamic_array_cleanup_from_semantics;
     emission_options.test_only_enable_dynamic_array_parameter_descriptors =
         options.test_only_enable_dynamic_array_parameter_descriptors;
+    emission_options.enable_dynamic_array_parameter_descriptors =
+        options.dynamic_array_production_signature_lowering_enabled;
     emission_options.test_only_emit_bound_dynamic_array_parameter_cleanups =
         options.test_only_emit_bound_dynamic_array_parameter_cleanups;
     emission_options.test_only_render_dynamic_array_element_drop_walks =

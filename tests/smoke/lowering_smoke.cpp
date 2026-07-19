@@ -913,6 +913,26 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         ) != std::string::npos
     );
 
+    auto production_signature_bound = lower_source(
+        path,
+        source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+        }
+    );
+
+    assert(!production_signature_bound.has_errors());
+    assert_ir_contains(production_signature_bound, "define i32 @use_items({ ptr, i64, i64 } %items)");
+    assert_ir_contains(production_signature_bound, "  %items.addr = alloca { ptr, i64, i64 }");
+    assert_ir_contains(production_signature_bound, "  store { ptr, i64, i64 } %items, ptr %items.addr");
+    assert(production_signature_bound.dynamic_array_descriptor_cleanup_plans.size() == 1);
+    assert(
+        production_signature_bound.dynamic_array_descriptor_cleanup_plans.front().descriptor_storage_status ==
+        orison::lowering::DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor
+    );
+    assert(production_signature_bound.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
+
     auto bound = lower_source(
         path,
         source,

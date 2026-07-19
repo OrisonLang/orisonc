@@ -94,7 +94,7 @@ auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) 
     return !function.generic_parameters.empty();
 }
 
-void enable_test_only_dynamic_array_parameter_descriptors(
+void enable_dynamic_array_parameter_descriptors(
     syntax::ModuleSyntax const& module,
     LoweringContext& context
 ) {
@@ -118,7 +118,7 @@ void enable_test_only_dynamic_array_parameter_descriptors(
     }
 }
 
-auto has_bound_test_only_dynamic_array_parameter_descriptor(
+auto has_bound_dynamic_array_parameter_descriptor(
     semantics::DynamicArrayDescriptorOrigin const& origin,
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
@@ -286,7 +286,7 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
             diagnostics.error(origin.line, "dynamic array descriptor cleanup could not be planned");
             continue;
         }
-        if (has_bound_test_only_dynamic_array_parameter_descriptor(origin, module, context)) {
+        if (has_bound_dynamic_array_parameter_descriptor(origin, module, context)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
         }
         plan->source_line = origin.line;
@@ -439,8 +439,8 @@ auto LlvmIrEmitter::emit(
     if (result.has_errors()) {
         return result;
     }
-    if (options.test_only_enable_dynamic_array_parameter_descriptors) {
-        enable_test_only_dynamic_array_parameter_descriptors(module, context);
+    if (dynamic_array_parameter_descriptors_enabled(options)) {
+        enable_dynamic_array_parameter_descriptors(module, context);
     }
     auto string_constants = collect_string_constants(module);
     auto emission_context = LoweringEmissionContext {
@@ -510,7 +510,7 @@ auto LlvmIrEmitter::emit(
         );
         if (options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
             result.dynamic_array_cleanup_emission_capability = prove_dynamic_array_cleanup_emission_capability(
-                options.test_only_enable_dynamic_array_parameter_descriptors &&
+                dynamic_array_parameter_descriptors_enabled(options) &&
                     options.test_only_emit_bound_dynamic_array_parameter_cleanups,
                 result.dynamic_array_descriptor_cleanup_plans,
                 result.dynamic_array_cleanup_sequence_verifications,
