@@ -162,6 +162,9 @@ representation.
 - Bound dynamic-array parameter cleanup planning is now isolated from function emission in a dedicated lowering module.
   Function returns delegate to that planner after concurrency and `defer` cleanup, preserving the existing test-only
   sequencing while giving production enablement a single audited attachment point.
+- Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
+  suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
+  deallocation.
 
 ## Follow-up work
 
