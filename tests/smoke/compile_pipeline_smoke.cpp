@@ -1,6 +1,9 @@
+#include "orison/lowering/llvm_object_emitter.hpp"
+#include "orison/link/host_linker.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
 
 #include <cassert>
+#include <cstdlib>
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
@@ -908,7 +911,7 @@ auto main() -> int {
     assert_line_contains(
         dynamic_array_local_append.dynamic_array_runtime_request_report,
         1,
-        "__orison_dynamic_array_capacity_failed"
+        "__orison_dynamic_array_grow"
     );
     assert(
         dynamic_array_local_append.ir_text.find(
@@ -918,10 +921,33 @@ auto main() -> int {
     );
     assert(
         dynamic_array_local_append.ir_text.find(
+            "  %items.dynamic_array_append0.next.capacity = select i1 %items.dynamic_array_append0.capacity.is_zero, "
+            "i64 1, i64 %items.dynamic_array_append0.doubled.capacity\n"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_append.ir_text.find(
+            "  call void @__orison_dynamic_array_grow("
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_append.ir_text.find(
             "  store i32 7, ptr %items.dynamic_array_append0.element.addr\n"
         ) != std::string::npos
     );
-    assert(dynamic_array_local_append.ir_text.find("__orison_dynamic_array_grow") == std::string::npos);
+    assert(dynamic_array_local_append.ir_text.find("__orison_dynamic_array_capacity_failed") == std::string::npos);
+    auto dynamic_array_local_append_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(dynamic_array_local_append.ir_text);
+    assert(!dynamic_array_local_append_object.has_errors());
+    auto dynamic_array_local_append_executable = smoke_temp_root / "dynamic_array_local_append";
+    auto dynamic_array_local_append_link = orison::link::HostLinker {}.link(
+        dynamic_array_local_append_object.object_bytes,
+        dynamic_array_local_append_executable
+    );
+    assert(!dynamic_array_local_append_link.has_errors());
+    auto dynamic_array_local_append_status = std::system(dynamic_array_local_append_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_local_append_status));
+    assert(WEXITSTATUS(dynamic_array_local_append_status) == 0);
 
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,

@@ -1264,6 +1264,7 @@ add_executable(orison_pipeline_smoke
 
 target_link_libraries(orison_pipeline_smoke
     PRIVATE
+        orison_link
         orison_pipeline
 )
 

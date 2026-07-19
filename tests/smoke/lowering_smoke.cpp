@@ -873,7 +873,8 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(!placed_source_append.has_errors());
     assert_ir_contains(
         placed_source_append,
-        "declare void @__orison_dynamic_array_capacity_failed()"
+        "declare void @__orison_dynamic_array_grow(ptr sret({ ptr, i64, i64 }), "
+        "ptr byval({ ptr, i64, i64 }), i64, i64)"
     );
     assert_ir_contains(
         placed_source_append,
@@ -886,15 +887,39 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     );
     assert_ir_contains(
         placed_source_append,
-        "dynamic_array.append.out_of_capacity.0:\n"
-        "  call void @__orison_dynamic_array_capacity_failed()\n"
-        "  unreachable\n"
+        "dynamic_array.append.grow.0:\n"
+        "  %items.dynamic_array_append0.capacity.is_zero = icmp eq i64 %items.dynamic_array_append0.capacity, 0\n"
+        "  %items.dynamic_array_append0.doubled.capacity = mul i64 %items.dynamic_array_append0.capacity, 2\n"
+        "  %items.dynamic_array_append0.next.capacity = select i1 %items.dynamic_array_append0.capacity.is_zero, "
+        "i64 1, i64 %items.dynamic_array_append0.doubled.capacity\n"
+    );
+    assert_ir_contains(
+        placed_source_append,
+        "  call void @__orison_dynamic_array_grow("
+        "ptr sret({ ptr, i64, i64 }) %items.dynamic_array_append0.grown.addr, "
+        "ptr byval({ ptr, i64, i64 }) %items.dynamic_array_append0.grown.input, "
+        "i64 4, i64 %items.dynamic_array_append0.next.capacity)\n"
+    );
+    assert_ir_contains(
+        placed_source_append,
+        "dynamic_array.append.ready.0:\n"
+        "  %items.dynamic_array_append0.active = phi { ptr, i64, i64 } "
+    );
+    assert_ir_contains(
+        placed_source_append,
+        "  %items.dynamic_array_append0.active.data = extractvalue "
+        "{ ptr, i64, i64 } %items.dynamic_array_append0.active, 0\n"
+        "  %items.dynamic_array_append0.active.length = extractvalue "
+        "{ ptr, i64, i64 } %items.dynamic_array_append0.active, 1\n"
+    );
+    assert_ir_contains(
+        placed_source_append,
         "dynamic_array.append.ready.0:\n"
     );
     assert_ir_contains(
         placed_source_append,
-        "  %items.dynamic_array_append0.element.addr = getelementptr i32, ptr %items.dynamic_array_append0.data, "
-        "i64 %items.dynamic_array_append0.length\n"
+        "  %items.dynamic_array_append0.element.addr = getelementptr i32, ptr "
+        "%items.dynamic_array_append0.active.data, i64 %items.dynamic_array_append0.active.length\n"
     );
     assert_ir_contains(
         placed_source_append,
@@ -902,13 +927,13 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     );
     assert_ir_contains(
         placed_source_append,
-        "  %items.dynamic_array_append0.next.length = add i64 %items.dynamic_array_append0.length, 1\n"
+        "  %items.dynamic_array_append0.next.length = add i64 %items.dynamic_array_append0.active.length, 1\n"
     );
     assert_ir_contains(
         placed_source_append,
         "  store { ptr, i64, i64 } %items.dynamic_array_append0.updated, ptr %items.addr\n"
     );
-    assert(placed_source_append.ir_text.find("__orison_dynamic_array_grow") == std::string::npos);
+    assert(placed_source_append.ir_text.find("__orison_dynamic_array_capacity_failed") == std::string::npos);
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

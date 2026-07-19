@@ -313,7 +313,7 @@ auto collect_dynamic_array_runtime_operations(
             operations.push_back(DynamicArrayRuntimeOperation::bounds_failed);
         }
         if (options.enable_dynamic_array_append_lowering && source_plan_offset < plans.size()) {
-            operations.push_back(DynamicArrayRuntimeOperation::capacity_failed);
+            operations.push_back(DynamicArrayRuntimeOperation::grow);
         }
         if (dynamic_array_cleanup_emission_enabled(options) && source_plan_offset < plans.size()) {
             operations.push_back(DynamicArrayRuntimeOperation::deallocate);

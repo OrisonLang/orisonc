@@ -913,25 +913,48 @@ auto lower_dynamic_array_push_statement(
         prefix + ".capacity",
         DynamicArrayBoundsCheckKind::append_has_capacity
     );
+    auto const append_entry_block = session.state.current_block;
     auto block_index = next_llvm_block_index(session.state.next_block_index);
     auto append_block = llvm_block_name("dynamic_array.append.ready", block_index);
-    auto failure_block = llvm_block_name("dynamic_array.append.out_of_capacity", block_index);
+    auto grow_block = llvm_block_name("dynamic_array.append.grow", block_index);
     emit_llvm_conditional_branch(
         output,
         prefix + ".has_capacity",
         append_block,
-        failure_block
+        grow_block
     );
-    emit_llvm_block_label(output, failure_block);
-    output << "  call void @__orison_dynamic_array_capacity_failed()\n";
-    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, grow_block);
+    output << "  " << prefix << ".capacity.is_zero = icmp eq i64 " << prefix << ".capacity, 0\n";
+    output << "  " << prefix << ".doubled.capacity = mul i64 " << prefix << ".capacity, 2\n";
+    output << "  " << prefix << ".next.capacity = select i1 " << prefix << ".capacity.is_zero";
+    output << ", i64 1, i64 " << prefix << ".doubled.capacity\n";
+    output << emit_dynamic_array_grow_call(
+        *plan,
+        prefix + ".grown",
+        prefix + ".descriptor",
+        prefix + ".next.capacity"
+    );
+    output << "  br label %" << append_block << "\n";
     emit_llvm_block_label(output, append_block);
     session.state.current_block = append_block;
+    output << "  " << prefix << ".active = phi " << dynamic_array_descriptor_llvm_type();
+    output << " [ " << prefix << ".descriptor, %" << append_entry_block << " ],";
+    output << " [ " << prefix << ".grown, %" << grow_block << " ]\n";
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".active.data",
+        prefix + ".active",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".active.length",
+        prefix + ".active",
+        DynamicArrayDescriptorField::length
+    );
     output << emit_dynamic_array_element_address(
         *plan,
         prefix + ".element.addr",
-        prefix + ".data",
-        prefix + ".length"
+        prefix + ".active.data",
+        prefix + ".active.length"
     );
     output << emit_dynamic_array_element_store(
         *plan,
@@ -941,8 +964,8 @@ auto lower_dynamic_array_push_statement(
     output << emit_dynamic_array_descriptor_length_update(
         prefix + ".updated",
         prefix + ".next.length",
-        prefix + ".descriptor",
-        prefix + ".length"
+        prefix + ".active",
+        prefix + ".active.length"
     );
     output << emit_dynamic_array_descriptor_write_back(
         prefix + ".updated",

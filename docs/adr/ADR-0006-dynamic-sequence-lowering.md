@@ -247,7 +247,11 @@ representation.
 - The C++ runtime now implements the finite internal dynamic-array ABI. Allocation returns `{data, 0, capacity}`,
   zero-capacity allocation returns `{null, 0, 0}`, grow copies exactly initialized bytes and preserves length, and
   deallocation releases the backing storage. LLVM emission uses C-compatible `sret`/`byval` call shapes for descriptor
-  values, making emitted dynamic-array runtime calls linkable without adding source syntax or enabling growth lowering.
+  values, making emitted dynamic-array runtime calls linkable without adding source syntax.
+- Production-gated append now grows instead of trapping on full capacity. The append branch grows zero-capacity
+  descriptors to capacity `1`, doubles nonzero capacity, joins on the active descriptor, stores the element, increments
+  length, and writes the descriptor back. The capacity-failure trap remains available for future impossible-capacity
+  diagnostics but is no longer requested by ordinary append lowering.
 - The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
   dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
   compatibility alias for existing focused fixtures.
