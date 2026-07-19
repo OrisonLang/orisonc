@@ -596,6 +596,54 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
         ) == std::string::npos
     );
+
+    auto source_construction = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function build_items<T>() -> UInt32\n"
+        "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    1 as UInt32\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    0 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+        }
+    );
+
+    assert(!source_construction.has_errors());
+    assert(source_construction.dynamic_array_construction_plans.size() == 1);
+    assert(source_construction.dynamic_array_construction_plans.front().owner_name == "items");
+    assert(source_construction.dynamic_array_construction_plans.front().source_type_name == "DynamicArray<UInt32>");
+    assert(source_construction.dynamic_array_construction_plans.front().initial_capacity == 0);
+    assert(source_construction.dynamic_array_runtime_operations.size() == 1);
+    assert(
+        source_construction.dynamic_array_runtime_operations.front() ==
+        orison::lowering::DynamicArrayRuntimeOperation::allocate
+    );
+    auto source_plan_report = source_construction.dynamic_array_construction_plan_report();
+    assert(source_plan_report.size() == 1);
+    assert(
+        source_plan_report.front() ==
+        "dynamic array construction DynamicArray<UInt32> owner items element UInt32 lowers to i32 "
+        "element_size 4 initial_capacity 0 requests __orison_dynamic_array_allocate (metadata only)"
+    );
+    assert(source_construction.dynamic_array_allocation_call_ir.size() == 1);
+    assert(
+        source_construction.dynamic_array_allocation_call_ir.front() ==
+        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+    );
+    assert(source_construction.test_only_dynamic_array_allocation_call_ir.empty());
+    assert_ir_contains(
+        source_construction,
+        "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)"
+    );
+    assert(
+        source_construction.ir_text.find(
+            "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
+        ) == std::string::npos
+    );
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

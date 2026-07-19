@@ -142,6 +142,9 @@ auto format_dynamic_array_construction_plan(
     auto runtime_call = dynamic_array_runtime_call(plan.operation);
     auto output = std::ostringstream {};
     output << "dynamic array construction " << plan.source_type_name;
+    if (!plan.owner_name.empty()) {
+        output << " owner " << plan.owner_name;
+    }
     output << " element " << plan.element_source_type_name;
     output << " lowers to " << plan.element_llvm_type;
     output << " element_size " << plan.element_size_bytes;

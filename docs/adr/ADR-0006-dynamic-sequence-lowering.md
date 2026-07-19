@@ -223,6 +223,10 @@ representation.
   calls from internal construction plans. Until source construction placement is implemented, these calls remain
   observable artifacts outside module IR; runtime declarations and construction reports are still emitted from the
   requested operations.
+- Production construction discovery can now derive plans from existing source syntax: an annotated local
+  `DynamicArray<T>` binding initialized with `DynamicArray()`. The plan records the source owner and an initial
+  capacity of zero; allocation calls still remain outside module IR until dynamic-array local storage placement is
+  implemented.
 - The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
   dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
   compatibility alias for existing focused fixtures.

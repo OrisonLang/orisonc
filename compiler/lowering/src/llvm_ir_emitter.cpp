@@ -182,13 +182,134 @@ auto collect_concurrency_runtime_operations(syntax::ModuleSyntax const& module)
     return operations;
 }
 
+auto is_dynamic_array_default_constructor(syntax::ExpressionSyntax const& expression) -> bool {
+    return expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name &&
+        expression.left->text == "DynamicArray" &&
+        expression.arguments.empty();
+}
+
+auto is_dynamic_array_source_type(syntax::TypeSyntax const& type) -> bool {
+    auto sequence = dynamic_sequence_source_type(render_source_type_name(type));
+    return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
+}
+
+void collect_source_dynamic_array_construction_plans(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::vector<DynamicArrayConstructionPlan>& plans
+);
+
+void collect_source_dynamic_array_construction_plans(
+    syntax::StatementSyntax const& statement,
+    LoweringContext const& context,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::vector<DynamicArrayConstructionPlan>& plans
+) {
+    if ((statement.kind == syntax::StatementKind::let_binding ||
+         statement.kind == syntax::StatementKind::var_binding) &&
+        !statement.annotated_type.name.empty() &&
+        is_dynamic_array_source_type(statement.annotated_type) &&
+        is_dynamic_array_default_constructor(statement.expression)) {
+        auto plan = plan_dynamic_array_construction(
+            render_source_type_name(statement.annotated_type),
+            0,
+            context
+        );
+        if (!plan.has_value()) {
+            diagnostics.error(statement.line, "source dynamic array construction could not be planned");
+        } else {
+            plan->owner_name = statement.name;
+            plans.push_back(std::move(*plan));
+        }
+    }
+
+    collect_source_dynamic_array_construction_plans(statement.expression, context, diagnostics, plans);
+    collect_source_dynamic_array_construction_plans(statement.assignment_target, context, diagnostics, plans);
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_source_dynamic_array_construction_plans(nested_statement, context, diagnostics, plans);
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_source_dynamic_array_construction_plans(alternate_statement, context, diagnostics, plans);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        collect_source_dynamic_array_construction_plans(switch_case.pattern, context, diagnostics, plans);
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_source_dynamic_array_construction_plans(*case_statement, context, diagnostics, plans);
+            }
+        }
+    }
+}
+
+void collect_source_dynamic_array_construction_plans(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::vector<DynamicArrayConstructionPlan>& plans
+) {
+    for (auto const& argument : expression.arguments) {
+        collect_source_dynamic_array_construction_plans(argument, context, diagnostics, plans);
+    }
+    for (auto const& nested_statement : expression.nested_statements) {
+        if (nested_statement != nullptr) {
+            collect_source_dynamic_array_construction_plans(*nested_statement, context, diagnostics, plans);
+        }
+    }
+    if (expression.left != nullptr) {
+        collect_source_dynamic_array_construction_plans(*expression.left, context, diagnostics, plans);
+    }
+    if (expression.right != nullptr) {
+        collect_source_dynamic_array_construction_plans(*expression.right, context, diagnostics, plans);
+    }
+    if (expression.alternate != nullptr) {
+        collect_source_dynamic_array_construction_plans(*expression.alternate, context, diagnostics, plans);
+    }
+}
+
+void collect_source_dynamic_array_construction_plans(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::vector<DynamicArrayConstructionPlan>& plans
+) {
+    auto collect_from_function = [&](syntax::FunctionSyntax const& function) {
+        for (auto const& statement : function.body_statements) {
+            collect_source_dynamic_array_construction_plans(statement, context, diagnostics, plans);
+        }
+    };
+    for (auto const& function : module.functions) {
+        collect_from_function(function);
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            collect_from_function(method);
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            collect_from_function(method);
+        }
+    }
+}
+
 auto collect_dynamic_array_runtime_operations(
     LlvmIrEmissionOptions const& options,
+    syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     diagnostics::DiagnosticBag& diagnostics,
     std::vector<DynamicArrayConstructionPlan>& plans
 ) -> std::vector<DynamicArrayRuntimeOperation> {
     auto operations = std::vector<DynamicArrayRuntimeOperation> {};
+    if (options.enable_dynamic_array_construction_lowering) {
+        auto source_plan_offset = plans.size();
+        collect_source_dynamic_array_construction_plans(module, context, diagnostics, plans);
+        for (auto index = source_plan_offset; index < plans.size(); ++index) {
+            operations.push_back(plans[index].operation);
+        }
+    }
     for (auto const& request : options.test_only_dynamic_array_construction_requests) {
         auto plan = plan_dynamic_array_construction(
             request.source_type_name,
@@ -199,6 +320,7 @@ auto collect_dynamic_array_runtime_operations(
             diagnostics.error(1, "test-only dynamic array construction request could not be planned");
             continue;
         }
+        plan->owner_name = request.owner_name;
         operations.push_back(plan->operation);
         if (options.test_only_render_dynamic_array_grow_calls ||
             options.test_only_render_dynamic_array_grow_sequences ||
@@ -481,6 +603,7 @@ auto LlvmIrEmitter::emit(
     output << emit_record_layouts(module, context);
     result.dynamic_array_runtime_operations = collect_dynamic_array_runtime_operations(
         options,
+        module,
         context,
         result.diagnostics,
         result.dynamic_array_construction_plans

@@ -690,6 +690,50 @@ auto main() -> int {
         "[production cleanup emission missing]"
     );
 
+    auto dynamic_array_source_construction_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_source_construction.or";
+    {
+        auto source_construction_source = std::ofstream(dynamic_array_source_construction_path);
+        source_construction_source
+            << "package demo.pipeline.dynamicarraysourceconstruction\n"
+            << "\n"
+            << "function build_items<T>() -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    1 as UInt32\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    0 as UInt32\n";
+    }
+    auto dynamic_array_source_construction = pipeline.emit_llvm(
+        dynamic_array_source_construction_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_construction_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_source_construction.has_errors());
+    assert(dynamic_array_source_construction.dynamic_array_construction_plan_report.size() == 1);
+    assert(
+        dynamic_array_source_construction.dynamic_array_construction_plan_report.front() ==
+        "dynamic array construction DynamicArray<UInt32> owner items element UInt32 lowers to i32 "
+        "element_size 4 initial_capacity 0 requests __orison_dynamic_array_allocate (metadata only)"
+    );
+    assert(dynamic_array_source_construction.dynamic_array_runtime_request_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_source_construction.dynamic_array_runtime_request_report,
+        0,
+        "__orison_dynamic_array_allocate"
+    );
+    assert(dynamic_array_source_construction.dynamic_array_allocation_call_ir.size() == 1);
+    assert(
+        dynamic_array_source_construction.dynamic_array_allocation_call_ir.front() ==
+        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+    );
+    assert(
+        dynamic_array_source_construction.ir_text.find(
+            "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
+        ) == std::string::npos
+    );
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

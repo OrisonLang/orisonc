@@ -42,6 +42,7 @@ struct DynamicArrayRuntimeCall {
 };
 
 struct DynamicArrayConstructionPlan {
+    std::string owner_name;
     std::string source_type_name;
     std::string element_source_type_name;
     std::string element_llvm_type;
