@@ -201,6 +201,9 @@ representation.
 - The driver now exposes a report-only `--dynamic-array-cleanup-capability <file>` surface that runs the same internal
   metadata seams and prints the cleanup-emission capability report without exposing new source syntax or production
   cleanup behavior.
+- Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
+  `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
+  compilation continues to leave source Drop lowering disabled.
 
 ## Follow-up work
 

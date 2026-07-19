@@ -62,6 +62,15 @@ auto emit_llvm_report(std::filesystem::path const& source_path, auto report_sele
     return emit_llvm_report(source_path, pipeline::CompilePipelineOptions {}, report_selector);
 }
 
+auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions {
+    return pipeline::CompilePipelineOptions {
+        .test_only_enable_source_drop_lowering = true,
+        .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+        .test_only_enable_dynamic_array_parameter_descriptors = true,
+        .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+    };
+}
+
 auto analyze_report(std::filesystem::path const& source_path, auto report_selector) -> CompileResult {
     pipeline::CompilePipeline pipeline;
     auto result = pipeline.analyze(source_path);
@@ -375,11 +384,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-sequence-verification") {
         return emit_llvm_report(
             std::filesystem::path(args[2]),
-            pipeline::CompilePipelineOptions {
-                .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-                .test_only_enable_dynamic_array_parameter_descriptors = true,
-                .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
-            },
+            dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
                 return result.dynamic_array_cleanup_sequence_verification_report;
             }
@@ -389,11 +394,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-emission-gate") {
         return emit_llvm_report(
             std::filesystem::path(args[2]),
-            pipeline::CompilePipelineOptions {
-                .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-                .test_only_enable_dynamic_array_parameter_descriptors = true,
-                .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
-            },
+            dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
                 return result.dynamic_array_cleanup_emission_gate_report;
             }
@@ -403,11 +404,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-capability") {
         return emit_llvm_report(
             std::filesystem::path(args[2]),
-            pipeline::CompilePipelineOptions {
-                .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-                .test_only_enable_dynamic_array_parameter_descriptors = true,
-                .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
-            },
+            dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
                 return result.dynamic_array_cleanup_emission_capability_report;
             }

@@ -528,6 +528,46 @@ int main() {
         std::string::npos
     );
 
+    auto dynamic_array_authorized_cleanup_capability_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_dynamic_array_authorized_cleanup.or";
+    std::filesystem::remove(dynamic_array_authorized_cleanup_capability_path, remove_error);
+    write_fixture(
+        dynamic_array_authorized_cleanup_capability_path,
+        "demo.dynamicarrayauthorizedcleanup",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "interface Drop",
+            "    function drop(this: exclusive This) -> Unit",
+            "implements Drop for Payload",
+            "    function drop(this: exclusive This) -> Unit",
+            "        return",
+            "function use_items(items: DynamicArray<Payload>) -> UInt32",
+            "    1 as UInt32",
+        }
+    );
+    auto dynamic_array_authorized_cleanup_sequence_verification =
+        run_dynamic_array_cleanup_sequence_verification(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_authorized_cleanup_sequence_verification,
+        {"dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed"}
+    );
+    auto dynamic_array_authorized_cleanup_emission_gate =
+        run_dynamic_array_cleanup_emission_gate(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_authorized_cleanup_emission_gate,
+        {"dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed"}
+    );
+    auto dynamic_array_authorized_cleanup_capability =
+        run_dynamic_array_cleanup_capability(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_authorized_cleanup_capability,
+        {
+            "dynamic array cleanup emission capability proven",
+            "[element cleanup ok]",
+        }
+    );
+
     auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);
     assert_success_with_stdout_contains(
         multi_planned_drop_report,

@@ -132,9 +132,13 @@ auto CompilePipeline::analyze(
         result.semantic_result.planned_drop_sites,
         semantic_drop_implementations
     );
+    auto const source_drop_lowering_gate = options.test_only_enable_source_drop_lowering
+                                              ? semantics::SourceDropLoweringGate::enabled
+                                              : semantics::SourceDropLoweringGate::disabled;
     result.semantic_drop_lowering_authorizations = semantics::authorize_drop_lowerings(
         result.semantic_result.planned_drop_sites,
-        semantic_drop_implementations
+        semantic_drop_implementations,
+        source_drop_lowering_gate
     );
     result.semantic_drop_lowering_authorization_report =
         semantics::format_drop_lowering_authorization_report(result.semantic_drop_lowering_authorizations);
