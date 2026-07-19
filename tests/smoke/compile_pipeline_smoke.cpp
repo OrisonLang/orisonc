@@ -558,6 +558,54 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto scalar_dynamic_array_parameter_for_path =
+        smoke_temp_root / "orison_pipeline_scalar_dynamic_array_parameter_for.or";
+    {
+        auto parameter_for_source = std::ofstream(scalar_dynamic_array_parameter_for_path);
+        parameter_for_source
+            << "package demo.pipeline.dynamicarrayparameterfor\n"
+            << "\n"
+            << "function sum_words(words: DynamicArray<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for word in words\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto scalar_dynamic_array_parameter_for = pipeline.emit_llvm(
+        scalar_dynamic_array_parameter_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!scalar_dynamic_array_parameter_for.has_errors());
+    assert(scalar_dynamic_array_parameter_for.dynamic_array_runtime_request_report.size() == 1);
+    assert_line_contains(
+        scalar_dynamic_array_parameter_for.dynamic_array_runtime_request_report,
+        0,
+        "__orison_dynamic_array_deallocate"
+    );
+    assert(
+        scalar_dynamic_array_parameter_for.ir_text.find(
+            "define i32 @sum_words({ ptr, i64, i64 } %words)"
+        ) != std::string::npos
+    );
+    assert(
+        scalar_dynamic_array_parameter_for.ir_text.find(
+            "%words.dynamic_array_for0.value = load i32, ptr %words.dynamic_array_for0.element.addr"
+        ) != std::string::npos
+    );
+    assert(
+        scalar_dynamic_array_parameter_for.ir_text.find(
+            "ret i32 %tmp"
+        ) != std::string::npos
+    );
+    auto scalar_dynamic_array_parameter_for_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(scalar_dynamic_array_parameter_for.ir_text);
+    assert(!scalar_dynamic_array_parameter_for_object.has_errors());
+
     auto dynamic_array_blocked_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

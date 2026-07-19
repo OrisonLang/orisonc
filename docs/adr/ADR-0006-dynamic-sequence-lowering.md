@@ -282,6 +282,10 @@ representation.
   bounds-check/data-projection/element-load sequence used by local descriptors before descriptor cleanup. Runtime
   prelude collection now detects parameter-only dynamic-array index reads so `__orison_dynamic_array_bounds_failed()`
   is declared even when no source construction plan exists.
+- Production-gated scalar/non-owning dynamic-array parameter iteration is now pinned through the same descriptor spill
+  path: `for item in items` over a `DynamicArray<UInt32>` parameter reloads `%items.addr`, projects data/length, emits
+  the runtime `index < length` loop, loads each scalar element into the loop binding, and delays descriptor cleanup
+  until the function-exit cleanup hook.
 
 ## Follow-up work
 

@@ -1699,6 +1699,65 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(parameter_index_return != std::string::npos);
     assert(parameter_index_load < parameter_index_cleanup);
     assert(parameter_index_cleanup < parameter_index_return);
+
+    auto production_parameter_for = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "function sum_words(words: DynamicArray<UInt32>) -> UInt32\n"
+        "    var total = 0 as UInt32\n"
+        "    for word in words\n"
+        "        total = total + word\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!production_parameter_for.has_errors());
+    assert_ir_contains(production_parameter_for, "define i32 @sum_words({ ptr, i64, i64 } %words)");
+    assert_ir_contains(
+        production_parameter_for,
+        "  %words.dynamic_array_for0.descriptor = load { ptr, i64, i64 }, ptr %words.addr\n"
+    );
+    assert_ir_contains(
+        production_parameter_for,
+        "for.condition.0:\n"
+        "  %words.dynamic_array_for0.index = phi i64 [ 0, %entry ], "
+        "[ %words.dynamic_array_for0.next.index, %for.continue.0 ]\n"
+    );
+    assert_ir_contains(
+        production_parameter_for,
+        "  %words.dynamic_array_for0.element.addr = getelementptr i32, ptr %words.dynamic_array_for0.data, "
+        "i64 %words.dynamic_array_for0.index\n"
+    );
+    assert_ir_contains(
+        production_parameter_for,
+        "  %words.dynamic_array_for0.value = load i32, ptr %words.dynamic_array_for0.element.addr\n"
+    );
+    auto parameter_for_descriptor =
+        production_parameter_for.ir_text.find("%words.dynamic_array_for0.descriptor");
+    auto parameter_for_condition = production_parameter_for.ir_text.find("for.condition.0:");
+    auto parameter_for_load =
+        production_parameter_for.ir_text.find("%words.dynamic_array_for0.value = load i32");
+    auto parameter_for_continue = production_parameter_for.ir_text.find("for.continue.0:");
+    auto parameter_for_cleanup =
+        production_parameter_for.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto parameter_for_return = production_parameter_for.ir_text.rfind("ret i32 %tmp");
+    assert(parameter_for_descriptor != std::string::npos);
+    assert(parameter_for_condition != std::string::npos);
+    assert(parameter_for_load != std::string::npos);
+    assert(parameter_for_continue != std::string::npos);
+    assert(parameter_for_cleanup != std::string::npos);
+    assert(parameter_for_return != std::string::npos);
+    assert(parameter_for_descriptor < parameter_for_condition);
+    assert(parameter_for_condition < parameter_for_load);
+    assert(parameter_for_load < parameter_for_continue);
+    assert(parameter_for_continue < parameter_for_cleanup);
+    assert(parameter_for_cleanup < parameter_for_return);
 }
 
 void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
