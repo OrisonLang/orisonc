@@ -698,6 +698,13 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
         "source DynamicArray<Payload> element Payload descriptor %items.addr origin line 8 actions 1 "
         "descriptor deallocation required (metadata only)"
     );
+    auto sequence_report = blocked.dynamic_array_cleanup_sequence_plan_report();
+    assert(sequence_report.size() == 1);
+    assert(
+        sequence_report.front() ==
+        "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0 owner items phases "
+        "[load descriptor] [drop initialized elements] [deallocate descriptor storage] (metadata only)"
+    );
     assert(blocked.planned_drop_actions.size() == 1);
     assert(blocked.planned_drop_actions.front().capture_name == "items.element");
     assert(blocked.planned_drop_actions.front().source_type_name == "Payload");
@@ -815,6 +822,13 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
         "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0 owner items "
         "source DynamicArray<UInt32> element UInt32 descriptor %items.addr origin line 4 actions 0 "
         "descriptor deallocation required (metadata only)"
+    );
+    auto sequence_report = result.dynamic_array_cleanup_sequence_plan_report();
+    assert(sequence_report.size() == 1);
+    assert(
+        sequence_report.front() ==
+        "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0 owner items phases "
+        "[load descriptor] [deallocate descriptor storage] (metadata only)"
     );
     assert(result.planned_drop_actions.empty());
     assert(result.planned_drop_declarations.empty());

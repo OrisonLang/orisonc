@@ -25,6 +25,7 @@ struct LlvmIrEmissionResult {
     std::vector<DynamicArrayConstructionPlan> dynamic_array_construction_plans;
     std::vector<DynamicArrayDescriptorCleanupPlan> dynamic_array_descriptor_cleanup_plans;
     std::vector<DynamicArrayCleanupObligation> dynamic_array_cleanup_obligations;
+    std::vector<DynamicArrayCleanupSequencePlan> dynamic_array_cleanup_sequence_plans;
     std::vector<std::string> test_only_dynamic_array_allocation_call_ir;
     std::vector<std::string> test_only_dynamic_array_grow_call_ir;
     std::vector<std::string> test_only_dynamic_array_deallocation_call_ir;
@@ -50,6 +51,7 @@ struct LlvmIrEmissionResult {
     auto dynamic_array_construction_plan_report() const -> std::vector<std::string>;
     auto dynamic_array_descriptor_cleanup_plan_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_obligation_report() const -> std::vector<std::string>;
+    auto dynamic_array_cleanup_sequence_plan_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;

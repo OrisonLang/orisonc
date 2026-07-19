@@ -303,6 +303,12 @@ auto main() -> int {
         0,
         "owner items source DynamicArray<Payload> element Payload descriptor %items.addr origin line 6 actions 1"
     );
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_sequence_plan_report,
+        0,
+        "[load descriptor] [drop initialized elements] [deallocate descriptor storage]"
+    );
     assert(
         dynamic_array_bound_descriptor.ir_text.find("define i32 @use_items({ ptr, i64, i64 } %items)") !=
         std::string::npos
@@ -367,6 +373,12 @@ auto main() -> int {
         scalar_dynamic_array_cleanup.dynamic_array_descriptor_cleanup_plan_report,
         0,
         "descriptor %words.addr bound"
+    );
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_plan_report.size() == 1);
+    assert_line_contains(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_plan_report,
+        0,
+        "[load descriptor] [deallocate descriptor storage]"
     );
     assert(
         scalar_dynamic_array_cleanup.ir_text.find("declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)") !=

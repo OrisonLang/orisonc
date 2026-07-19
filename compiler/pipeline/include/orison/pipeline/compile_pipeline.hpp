@@ -40,6 +40,7 @@ struct CompilePipelineResult {
     std::vector<std::string> semantic_drop_resolution_summary_report;
     std::vector<std::string> dynamic_array_descriptor_cleanup_plan_report;
     std::vector<std::string> dynamic_array_cleanup_obligation_report;
+    std::vector<std::string> dynamic_array_cleanup_sequence_plan_report;
     std::vector<std::string> planned_drop_report;
     std::vector<std::string> emitted_drop_declaration_report;
     std::vector<std::string> planned_drop_action_report;

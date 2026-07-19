@@ -191,6 +191,34 @@ auto drop_cleanup_for_dynamic_array_cleanup_obligation(
     };
 }
 
+auto plan_dynamic_array_cleanup_sequence(
+    DynamicArrayCleanupObligation const& obligation
+) -> DynamicArrayCleanupSequencePlan {
+    auto phases = std::vector<std::string> {};
+    phases.push_back("load descriptor");
+    if (!obligation.actions.empty()) {
+        phases.push_back("drop initialized elements");
+    }
+    if (obligation.requires_descriptor_deallocation) {
+        phases.push_back("deallocate descriptor storage");
+    }
+    return DynamicArrayCleanupSequencePlan {
+        .obligation = obligation,
+        .phases = std::move(phases),
+    };
+}
+
+auto plan_dynamic_array_cleanup_sequences(
+    std::vector<DynamicArrayCleanupObligation> const& obligations
+) -> std::vector<DynamicArrayCleanupSequencePlan> {
+    auto plans = std::vector<DynamicArrayCleanupSequencePlan> {};
+    plans.reserve(obligations.size());
+    for (auto const& obligation : obligations) {
+        plans.push_back(plan_dynamic_array_cleanup_sequence(obligation));
+    }
+    return plans;
+}
+
 auto format_dynamic_array_cleanup_obligation(
     DynamicArrayCleanupObligation const& obligation
 ) -> std::string {
@@ -218,6 +246,31 @@ auto format_dynamic_array_cleanup_obligation_report(
     report.reserve(obligations.size());
     for (auto const& obligation : obligations) {
         report.push_back(format_dynamic_array_cleanup_obligation(obligation));
+    }
+    return report;
+}
+
+auto format_dynamic_array_cleanup_sequence_plan(
+    DynamicArrayCleanupSequencePlan const& plan
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "dynamic array cleanup sequence " << plan.obligation.cleanup_symbol_name;
+    output << " owner " << plan.obligation.descriptor_cleanup.owner_name;
+    output << " phases";
+    for (auto const& phase : plan.phases) {
+        output << " [" << phase << "]";
+    }
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_dynamic_array_cleanup_sequence_plan_report(
+    std::vector<DynamicArrayCleanupSequencePlan> const& plans
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(plans.size());
+    for (auto const& plan : plans) {
+        report.push_back(format_dynamic_array_cleanup_sequence_plan(plan));
     }
     return report;
 }

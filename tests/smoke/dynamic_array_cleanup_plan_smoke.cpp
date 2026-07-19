@@ -200,6 +200,16 @@ void test_plans_descriptor_cleanup_obligations() {
     assert(cleanup.requires_semantic_authorization);
     assert(cleanup.requires_descriptor_deallocation);
 
+    auto sequence_plans = orison::lowering::plan_dynamic_array_cleanup_sequences(obligations);
+    assert(sequence_plans.size() == 2);
+    assert(sequence_plans[0].phases.size() == 2);
+    assert(sequence_plans[0].phases[0] == "load descriptor");
+    assert(sequence_plans[0].phases[1] == "deallocate descriptor storage");
+    assert(sequence_plans[1].phases.size() == 3);
+    assert(sequence_plans[1].phases[0] == "load descriptor");
+    assert(sequence_plans[1].phases[1] == "drop initialized elements");
+    assert(sequence_plans[1].phases[2] == "deallocate descriptor storage");
+
     auto report = orison::lowering::format_dynamic_array_cleanup_obligation_report(obligations);
     assert(report.size() == 2);
     assert(
@@ -213,6 +223,19 @@ void test_plans_descriptor_cleanup_obligations() {
         "dynamic array cleanup obligation __orison_dynamic_array_cleanup.4 owner items "
         "source DynamicArray<Payload> element Payload descriptor %items.addr origin line 22 actions 1 "
         "descriptor deallocation required (metadata only)"
+    );
+
+    auto sequence_report = orison::lowering::format_dynamic_array_cleanup_sequence_plan_report(sequence_plans);
+    assert(sequence_report.size() == 2);
+    assert(
+        sequence_report[0] ==
+        "dynamic array cleanup sequence __orison_dynamic_array_cleanup.3 owner numbers phases "
+        "[load descriptor] [deallocate descriptor storage] (metadata only)"
+    );
+    assert(
+        sequence_report[1] ==
+        "dynamic array cleanup sequence __orison_dynamic_array_cleanup.4 owner items phases "
+        "[load descriptor] [drop initialized elements] [deallocate descriptor storage] (metadata only)"
     );
 }
 

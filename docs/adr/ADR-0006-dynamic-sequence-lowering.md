@@ -171,6 +171,9 @@ representation.
 - Dynamic-array cleanup obligations now preserve the semantic descriptor-origin line and propagate it to planned
   element-drop actions. Pipeline reports can correlate blocked dynamic-array element cleanup back to the source owner
   and declaration line without enabling production cleanup emission.
+- Dynamic-array cleanup obligations now also produce production-disabled sequencing plans. The sequence explicitly
+  orders descriptor load, optional initialized-element drop walking, and descriptor deallocation while remaining
+  metadata-only until allocation, construction, and ownership invariants are production-enabled.
 
 ## Follow-up work
 

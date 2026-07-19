@@ -20,6 +20,11 @@ struct DynamicArrayCleanupObligation {
     bool requires_descriptor_deallocation = true;
 };
 
+struct DynamicArrayCleanupSequencePlan {
+    DynamicArrayCleanupObligation obligation;
+    std::vector<std::string> phases;
+};
+
 struct BoundDynamicArrayParameterCleanupPlan {
     DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
     std::optional<std::string> element_drop_symbol_name;
@@ -39,12 +44,28 @@ auto drop_cleanup_for_dynamic_array_cleanup_obligation(
     DynamicArrayCleanupObligation const& obligation
 ) -> ConcurrencyDropCleanupPlan;
 
+auto plan_dynamic_array_cleanup_sequence(
+    DynamicArrayCleanupObligation const& obligation
+) -> DynamicArrayCleanupSequencePlan;
+
+auto plan_dynamic_array_cleanup_sequences(
+    std::vector<DynamicArrayCleanupObligation> const& obligations
+) -> std::vector<DynamicArrayCleanupSequencePlan>;
+
 auto format_dynamic_array_cleanup_obligation(
     DynamicArrayCleanupObligation const& obligation
 ) -> std::string;
 
 auto format_dynamic_array_cleanup_obligation_report(
     std::vector<DynamicArrayCleanupObligation> const& obligations
+) -> std::vector<std::string>;
+
+auto format_dynamic_array_cleanup_sequence_plan(
+    DynamicArrayCleanupSequencePlan const& plan
+) -> std::string;
+
+auto format_dynamic_array_cleanup_sequence_plan_report(
+    std::vector<DynamicArrayCleanupSequencePlan> const& plans
 ) -> std::vector<std::string>;
 
 auto plan_bound_dynamic_array_parameter_cleanups(
