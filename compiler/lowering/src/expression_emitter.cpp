@@ -11,6 +11,7 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
+#include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/maybe_value_emitter.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
@@ -1753,6 +1754,19 @@ auto lower_dynamic_array_index_read(
         prefix + ".length",
         DynamicArrayBoundsCheckKind::index_within_length
     );
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto value_block = llvm_block_name("dynamic_array.index.in_bounds", block_index);
+    auto failure_block = llvm_block_name("dynamic_array.index.out_of_bounds", block_index);
+    emit_llvm_conditional_branch(
+        output,
+        prefix + ".in_bounds",
+        value_block,
+        failure_block
+    );
+    emit_llvm_block_label(output, failure_block);
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, value_block);
+    session.state.current_block = value_block;
     output << emit_dynamic_array_descriptor_field_projection(
         prefix + ".data",
         prefix + ".descriptor",

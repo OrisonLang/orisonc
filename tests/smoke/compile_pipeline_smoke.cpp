@@ -835,6 +835,19 @@ auto main() -> int {
     );
     assert(
         dynamic_array_local_index.ir_text.find(
+            "  br i1 %items.dynamic_array_index0.in_bounds, label %dynamic_array.index.in_bounds.0, "
+            "label %dynamic_array.index.out_of_bounds.0\n"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_index.ir_text.find(
+            "dynamic_array.index.out_of_bounds.0:\n"
+            "  unreachable\n"
+            "dynamic_array.index.in_bounds.0:\n"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_index.ir_text.find(
             "  %items.dynamic_array_index0.value = load i32, ptr %items.dynamic_array_index0.element.addr\n"
         ) != std::string::npos
     );

@@ -236,6 +236,9 @@ representation.
 - Production-gated local index reads now lower `items[index]` for constructed local `DynamicArray<T>` descriptors by
   loading the descriptor, projecting length/data, emitting an unsigned `index < length` bounds predicate, computing the
   element address, and loading the scalar element. Bounds-failure branching/trapping remains separate disabled work.
+- Local dynamic-array index reads now consume that bounds predicate as control flow: in-bounds execution continues to
+  the data projection, address calculation, and scalar load, while out-of-bounds execution branches to an explicit
+  `unreachable` block. A richer panic/trap runtime remains future work.
 - The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
   dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
   compatibility alias for existing focused fixtures.

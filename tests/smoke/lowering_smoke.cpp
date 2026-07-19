@@ -780,6 +780,17 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     );
     assert_ir_contains(
         placed_source_index_read,
+        "  br i1 %items.dynamic_array_index0.in_bounds, label %dynamic_array.index.in_bounds.0, "
+        "label %dynamic_array.index.out_of_bounds.0\n"
+    );
+    assert_ir_contains(
+        placed_source_index_read,
+        "dynamic_array.index.out_of_bounds.0:\n"
+        "  unreachable\n"
+        "dynamic_array.index.in_bounds.0:\n"
+    );
+    assert_ir_contains(
+        placed_source_index_read,
         "  %items.dynamic_array_index0.data = extractvalue { ptr, i64, i64 } "
         "%items.dynamic_array_index0.descriptor, 0\n"
     );
