@@ -59,6 +59,7 @@ struct DynamicArrayDescriptorCleanupPlan {
     DynamicArrayDescriptorStorageStatus descriptor_storage_status =
         DynamicArrayDescriptorStorageStatus::predicted_owner_local;
     std::size_t element_size_bytes = 0;
+    std::size_t source_line = 0;
 };
 
 auto dynamic_array_runtime_call(

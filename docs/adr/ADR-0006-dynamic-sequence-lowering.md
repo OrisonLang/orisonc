@@ -168,6 +168,9 @@ representation.
 - Semantic descriptor-origin cleanup now produces explicit dynamic-array cleanup obligation records before those records
   are converted into the generic drop-readiness model. This keeps production-facing cleanup obligations inspectable
   while actual `DynamicArray<T>` signature lowering remains disabled by default.
+- Dynamic-array cleanup obligations now preserve the semantic descriptor-origin line and propagate it to planned
+  element-drop actions. Pipeline reports can correlate blocked dynamic-array element cleanup back to the source owner
+  and declaration line without enabling production cleanup emission.
 
 ## Follow-up work
 

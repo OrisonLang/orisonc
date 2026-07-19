@@ -695,7 +695,7 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(
         obligation_report.front() ==
         "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0 owner items "
-        "source DynamicArray<Payload> element Payload descriptor %items.addr actions 1 "
+        "source DynamicArray<Payload> element Payload descriptor %items.addr origin line 8 actions 1 "
         "descriptor deallocation required (metadata only)"
     );
     assert(blocked.planned_drop_actions.size() == 1);
@@ -758,7 +758,8 @@ void test_derives_dynamic_array_element_cleanup_from_semantic_descriptor_origin(
     assert(authorized_action_report.size() == 1);
     assert(
         authorized_action_report.front() ==
-        "planned drop action __orison_drop.Payload for capture items.element: Payload field 0 (metadata only)"
+        "planned drop action __orison_drop.Payload for capture items.element: Payload field 0 "
+        "discovered at line 8 (metadata only)"
     );
     assert(authorized.ir_text.find("declare void @__orison_drop.Payload") != std::string::npos);
     assert(authorized.ir_text.find("call void @__orison_drop.Payload") == std::string::npos);
@@ -812,7 +813,7 @@ void test_derives_dynamic_array_deallocation_only_cleanup_from_scalar_descriptor
     assert(
         obligation_report.front() ==
         "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0 owner items "
-        "source DynamicArray<UInt32> element UInt32 descriptor %items.addr actions 0 "
+        "source DynamicArray<UInt32> element UInt32 descriptor %items.addr origin line 4 actions 0 "
         "descriptor deallocation required (metadata only)"
     );
     assert(result.planned_drop_actions.empty());

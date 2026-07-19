@@ -176,6 +176,7 @@ void test_plans_descriptor_cleanup_obligations() {
     );
     assert(scalar_plan.has_value());
     assert(owned_plan.has_value());
+    owned_plan->source_line = 22;
 
     auto obligations = orison::lowering::plan_dynamic_array_descriptor_cleanup_obligations(
         {*scalar_plan, *owned_plan},
@@ -191,6 +192,7 @@ void test_plans_descriptor_cleanup_obligations() {
     assert(obligations[1].actions.size() == 1);
     assert(obligations[1].actions.front().capture_name == "items.element");
     assert(obligations[1].actions.front().symbol_name == "__orison_drop.Payload");
+    assert(obligations[1].actions.front().discovery_line == 22);
 
     auto cleanup = orison::lowering::drop_cleanup_for_dynamic_array_cleanup_obligation(obligations[1]);
     assert(cleanup.cleanup_symbol_name == "__orison_dynamic_array_cleanup.4");
@@ -209,7 +211,7 @@ void test_plans_descriptor_cleanup_obligations() {
     assert(
         report[1] ==
         "dynamic array cleanup obligation __orison_dynamic_array_cleanup.4 owner items "
-        "source DynamicArray<Payload> element Payload descriptor %items.addr actions 1 "
+        "source DynamicArray<Payload> element Payload descriptor %items.addr origin line 22 actions 1 "
         "descriptor deallocation required (metadata only)"
     );
 }

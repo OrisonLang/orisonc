@@ -187,6 +187,8 @@ auto CompilePipeline::emit_llvm(
     result.ir_text = std::move(emission.ir_text);
     result.dynamic_array_descriptor_cleanup_plan_report =
         emission.dynamic_array_descriptor_cleanup_plan_report();
+    result.dynamic_array_cleanup_obligation_report =
+        emission.dynamic_array_cleanup_obligation_report();
     result.planned_drop_report = emission.planned_drop_report();
     result.emitted_drop_declaration_report = emission.emitted_drop_declaration_report();
     result.planned_drop_action_report = emission.planned_drop_action_report();

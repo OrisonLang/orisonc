@@ -297,6 +297,12 @@ auto main() -> int {
         0,
         "descriptor %items.addr bound"
     );
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_obligation_report,
+        0,
+        "owner items source DynamicArray<Payload> element Payload descriptor %items.addr origin line 6 actions 1"
+    );
     assert(
         dynamic_array_bound_descriptor.ir_text.find("define i32 @use_items({ ptr, i64, i64 } %items)") !=
         std::string::npos
@@ -304,6 +310,37 @@ auto main() -> int {
     assert(
         dynamic_array_bound_descriptor.ir_text.find("store { ptr, i64, i64 } %items, ptr %items.addr") !=
         std::string::npos
+    );
+
+    auto dynamic_array_source_correlated_cleanup = pipeline.emit_llvm(
+        dynamic_array_source_owner_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_render_dynamic_array_element_drop_walks = true,
+        }
+    );
+    assert(!dynamic_array_source_correlated_cleanup.has_errors());
+    assert(dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report.size() == 2);
+    assert_line_contains(
+        dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
+        0,
+        "drop readiness source correlations actions 1 semantic sites"
+    );
+    assert_line_contains(
+        dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
+        1,
+        "__orison_dynamic_array_cleanup.0 __orison_drop.Payload for Payload capture items.element field 0 action line 6"
+    );
+    assert_line_contains(
+        dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
+        1,
+        "semantic owner items.element site line 6"
+    );
+    assert_line_contains(
+        dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
+        1,
+        "declaration missing"
     );
 
     auto scalar_dynamic_array_path =

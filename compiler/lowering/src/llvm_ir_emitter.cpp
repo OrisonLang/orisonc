@@ -289,6 +289,7 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
         if (has_bound_test_only_dynamic_array_parameter_descriptor(origin, module, context)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
         }
+        plan->source_line = origin.line;
         plans.push_back(std::move(*plan));
     }
     return plans;

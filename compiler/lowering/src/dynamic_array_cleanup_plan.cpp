@@ -33,6 +33,7 @@ auto dynamic_array_descriptor_element_drop_action(
         .source_type_name = plan.element_source_type_name,
         .symbol_name = semantics::drop_abi_symbol_name(plan.element_source_type_name),
         .field_index = ordinal,
+        .discovery_line = plan.source_line,
     };
 }
 
@@ -200,6 +201,9 @@ auto format_dynamic_array_cleanup_obligation(
     output << " source " << plan.source_type_name;
     output << " element " << plan.element_source_type_name;
     output << " descriptor " << plan.descriptor_storage_name;
+    if (plan.source_line != 0) {
+        output << " origin line " << plan.source_line;
+    }
     output << " actions " << obligation.actions.size();
     output << " descriptor deallocation ";
     output << (obligation.requires_descriptor_deallocation ? "required" : "not required");
