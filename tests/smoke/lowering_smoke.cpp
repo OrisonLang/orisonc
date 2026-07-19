@@ -934,6 +934,69 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "  store { ptr, i64, i64 } %items.dynamic_array_append0.updated, ptr %items.addr\n"
     );
     assert(placed_source_append.ir_text.find("__orison_dynamic_array_capacity_failed") == std::string::npos);
+
+    auto placed_source_append_index = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    items.push(7 as UInt32)\n"
+        "    items[0]\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_index_lowering = true,
+            .enable_dynamic_array_append_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!placed_source_append_index.has_errors());
+    assert(placed_source_append_index.dynamic_array_runtime_operations.size() == 4);
+    assert(
+        placed_source_append_index.dynamic_array_runtime_operations[1] ==
+        orison::lowering::DynamicArrayRuntimeOperation::bounds_failed
+    );
+    assert(
+        placed_source_append_index.dynamic_array_runtime_operations[2] ==
+        orison::lowering::DynamicArrayRuntimeOperation::grow
+    );
+    assert_ir_contains(
+        placed_source_append_index,
+        "  store i32 7, ptr %items.dynamic_array_append0.element.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_append_index,
+        "  %items.dynamic_array_index1.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_append_index,
+        "  %items.dynamic_array_index1.value = load i32, ptr %items.dynamic_array_index1.element.addr\n"
+    );
+    auto append_index_store = placed_source_append_index.ir_text.find(
+        "store i32 7, ptr %items.dynamic_array_append0.element.addr"
+    );
+    auto append_index_descriptor_reload = placed_source_append_index.ir_text.find(
+        "%items.dynamic_array_index1.descriptor = load { ptr, i64, i64 }, ptr %items.addr"
+    );
+    auto append_index_load = placed_source_append_index.ir_text.find(
+        "%items.dynamic_array_index1.value = load i32"
+    );
+    auto append_index_cleanup = placed_source_append_index.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate"
+    );
+    auto append_index_return = placed_source_append_index.ir_text.find(
+        "ret i32 %items.dynamic_array_index1.value"
+    );
+    assert(append_index_store != std::string::npos);
+    assert(append_index_descriptor_reload != std::string::npos);
+    assert(append_index_load != std::string::npos);
+    assert(append_index_cleanup != std::string::npos);
+    assert(append_index_return != std::string::npos);
+    assert(append_index_store < append_index_descriptor_reload);
+    assert(append_index_descriptor_reload < append_index_load);
+    assert(append_index_load < append_index_cleanup);
+    assert(append_index_cleanup < append_index_return);
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

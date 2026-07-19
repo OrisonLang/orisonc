@@ -9,6 +9,7 @@
 #include <fstream>
 #include <string>
 #include <string_view>
+#include <sys/wait.h>
 #include <vector>
 #include <unistd.h>
 
@@ -948,6 +949,71 @@ auto main() -> int {
     auto dynamic_array_local_append_status = std::system(dynamic_array_local_append_executable.string().c_str());
     assert(WIFEXITED(dynamic_array_local_append_status));
     assert(WEXITSTATUS(dynamic_array_local_append_status) == 0);
+
+    auto dynamic_array_append_index_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_append_index.or";
+    {
+        auto append_index_source = std::ofstream(dynamic_array_append_index_path);
+        append_index_source
+            << "package demo.pipeline.dynamicarrayappendindex\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    items.push(7 as UInt32)\n"
+            << "    items[0]\n";
+    }
+    auto dynamic_array_append_index = pipeline.emit_llvm(
+        dynamic_array_append_index_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!dynamic_array_append_index.has_errors());
+    assert(dynamic_array_append_index.dynamic_array_runtime_request_report.size() == 4);
+    assert_line_contains(
+        dynamic_array_append_index.dynamic_array_runtime_request_report,
+        1,
+        "__orison_dynamic_array_bounds_failed"
+    );
+    assert_line_contains(
+        dynamic_array_append_index.dynamic_array_runtime_request_report,
+        2,
+        "__orison_dynamic_array_grow"
+    );
+    auto append_store = dynamic_array_append_index.ir_text.find(
+        "  store i32 7, ptr %items.dynamic_array_append0.element.addr\n"
+    );
+    auto index_load = dynamic_array_append_index.ir_text.find(
+        "  %items.dynamic_array_index1.value = load i32, ptr %items.dynamic_array_index1.element.addr\n"
+    );
+    auto append_index_cleanup = dynamic_array_append_index.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate"
+    );
+    auto append_index_return = dynamic_array_append_index.ir_text.find(
+        "ret i32 %items.dynamic_array_index1.value"
+    );
+    assert(append_store != std::string::npos);
+    assert(index_load != std::string::npos);
+    assert(append_index_cleanup != std::string::npos);
+    assert(append_index_return != std::string::npos);
+    assert(append_store < index_load);
+    assert(index_load < append_index_cleanup);
+    assert(append_index_cleanup < append_index_return);
+    auto dynamic_array_append_index_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(dynamic_array_append_index.ir_text);
+    assert(!dynamic_array_append_index_object.has_errors());
+    auto dynamic_array_append_index_executable = smoke_temp_root / "dynamic_array_append_index";
+    auto dynamic_array_append_index_link = orison::link::HostLinker {}.link(
+        dynamic_array_append_index_object.object_bytes,
+        dynamic_array_append_index_executable
+    );
+    assert(!dynamic_array_append_index_link.has_errors());
+    auto dynamic_array_append_index_status = std::system(dynamic_array_append_index_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_append_index_status));
+    assert(WEXITSTATUS(dynamic_array_append_index_status) == 7);
 
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,

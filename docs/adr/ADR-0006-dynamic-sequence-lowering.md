@@ -252,6 +252,9 @@ representation.
   descriptors to capacity `1`, doubles nonzero capacity, joins on the active descriptor, stores the element, increments
   length, and writes the descriptor back. The capacity-failure trap remains available for future impossible-capacity
   diagnostics but is no longer requested by ordinary append lowering.
+- Source-level append followed by index read is now pinned end-to-end: `items.push(value)` writes the updated
+  descriptor back, a later `items[index]` reloads that descriptor from local storage, and pipeline smoke verifies the
+  generated object links/runs against the runtime and returns the appended scalar value.
 - The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
   dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
   compatibility alias for existing focused fixtures.
