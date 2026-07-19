@@ -109,18 +109,27 @@ int main() {
     assert(dynamic_array_bounds_failed.return_type == "void");
     assert(dynamic_array_bounds_failed.parameter_types.empty());
 
+    auto dynamic_array_capacity_failed = orison::lowering::dynamic_array_runtime_call(
+        orison::lowering::DynamicArrayRuntimeOperation::capacity_failed
+    );
+    assert(dynamic_array_capacity_failed.symbol_name == "__orison_dynamic_array_capacity_failed");
+    assert(dynamic_array_capacity_failed.return_type == "void");
+    assert(dynamic_array_capacity_failed.parameter_types.empty());
+
     auto dynamic_array_report = orison::lowering::format_dynamic_array_runtime_request_report({
         orison::lowering::DynamicArrayRuntimeOperation::allocate,
         orison::lowering::DynamicArrayRuntimeOperation::grow,
         orison::lowering::DynamicArrayRuntimeOperation::allocate,
         orison::lowering::DynamicArrayRuntimeOperation::deallocate,
         orison::lowering::DynamicArrayRuntimeOperation::bounds_failed,
+        orison::lowering::DynamicArrayRuntimeOperation::capacity_failed,
     });
     assert(dynamic_array_report == std::vector<std::string>({
         "dynamic array runtime __orison_dynamic_array_allocate returns { ptr, i64, i64 } params i64 i64",
         "dynamic array runtime __orison_dynamic_array_grow returns { ptr, i64, i64 } params { ptr, i64, i64 } i64 i64",
         "dynamic array runtime __orison_dynamic_array_deallocate returns void params ptr i64 i64",
         "dynamic array runtime __orison_dynamic_array_bounds_failed returns void params",
+        "dynamic array runtime __orison_dynamic_array_capacity_failed returns void params",
     }));
     assert(orison::lowering::format_dynamic_array_runtime_request_report({}).empty());
 

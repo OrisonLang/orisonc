@@ -239,6 +239,10 @@ representation.
 - Local dynamic-array index reads now consume that bounds predicate as control flow: in-bounds execution continues to
   the data projection, address calculation, and scalar load, while out-of-bounds execution calls the finite
   `__orison_dynamic_array_bounds_failed()` runtime trap before `unreachable`.
+- Production-gated no-growth append now lowers `items.push(value)` for mutable local `DynamicArray<T>` descriptors by
+  checking `length < capacity`, trapping through `__orison_dynamic_array_capacity_failed()` on capacity failure,
+  storing the element at the current length, incrementing length, and writing the descriptor back. Growth remains a
+  separate disabled step.
 - The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
   dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
   compatibility alias for existing focused fixtures.

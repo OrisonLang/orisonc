@@ -874,6 +874,46 @@ auto main() -> int {
     assert(pipeline_index_load < pipeline_index_cleanup);
     assert(pipeline_index_cleanup < pipeline_index_return);
 
+    auto dynamic_array_local_append_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_local_append.or";
+    {
+        auto local_append_source = std::ofstream(dynamic_array_local_append_path);
+        local_append_source
+            << "package demo.pipeline.dynamicarraylocalappend\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    items.push(7 as UInt32)\n"
+            << "    0 as UInt32\n";
+    }
+    auto dynamic_array_local_append = pipeline.emit_llvm(
+        dynamic_array_local_append_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!dynamic_array_local_append.has_errors());
+    assert(dynamic_array_local_append.dynamic_array_runtime_request_report.size() == 3);
+    assert_line_contains(
+        dynamic_array_local_append.dynamic_array_runtime_request_report,
+        1,
+        "__orison_dynamic_array_capacity_failed"
+    );
+    assert(
+        dynamic_array_local_append.ir_text.find(
+            "  %items.dynamic_array_append0.has_capacity = icmp ult i64 %items.dynamic_array_append0.length, "
+            "%items.dynamic_array_append0.capacity\n"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_append.ir_text.find(
+            "  store i32 7, ptr %items.dynamic_array_append0.element.addr\n"
+        ) != std::string::npos
+    );
+    assert(dynamic_array_local_append.ir_text.find("__orison_dynamic_array_grow") == std::string::npos);
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

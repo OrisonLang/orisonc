@@ -156,3 +156,8 @@ extern "C" auto __orison_dynamic_array_bounds_failed() -> void
 {
     std::abort();
 }
+
+extern "C" auto __orison_dynamic_array_capacity_failed() -> void
+{
+    std::abort();
+}

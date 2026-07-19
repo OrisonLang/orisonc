@@ -79,6 +79,12 @@ auto dynamic_array_runtime_call(
             .return_type = "void",
             .parameter_types = {},
         };
+    case DynamicArrayRuntimeOperation::capacity_failed:
+        return DynamicArrayRuntimeCall {
+            .symbol_name = "__orison_dynamic_array_capacity_failed",
+            .return_type = "void",
+            .parameter_types = {},
+        };
     }
     return {};
 }

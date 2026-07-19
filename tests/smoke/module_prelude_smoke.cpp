@@ -75,6 +75,7 @@ int main() {
             DynamicArrayRuntimeOperation::allocate,
             DynamicArrayRuntimeOperation::deallocate,
             DynamicArrayRuntimeOperation::bounds_failed,
+            DynamicArrayRuntimeOperation::capacity_failed,
         }
     );
     assert(
@@ -83,6 +84,7 @@ int main() {
         "declare { ptr, i64, i64 } @__orison_dynamic_array_grow({ ptr, i64, i64 }, i64, i64)\n"
         "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)\n"
         "declare void @__orison_dynamic_array_bounds_failed()\n"
+        "declare void @__orison_dynamic_array_capacity_failed()\n"
         "\n"
     );
 

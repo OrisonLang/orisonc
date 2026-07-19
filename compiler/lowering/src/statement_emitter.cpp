@@ -819,6 +819,138 @@ auto lower_void_member_call_statement(
     return true;
 }
 
+auto lower_dynamic_array_push_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> bool {
+    auto const& expression = statement.expression;
+    if (!context.options.enable_dynamic_array_append_lowering ||
+        expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::member_access ||
+        expression.left->text != "push" ||
+        expression.left->left == nullptr ||
+        expression.left->left->kind != syntax::ExpressionKind::name ||
+        expression.arguments.size() != 1) {
+        return false;
+    }
+
+    auto const& owner_name = expression.left->left->text;
+    if (!session.state.mutable_bindings.contains(owner_name)) {
+        return false;
+    }
+    auto source_type = session.state.source_type_names.find(owner_name);
+    if (source_type == session.state.source_type_names.end()) {
+        return false;
+    }
+    auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
+    if (!element_source_type.has_value()) {
+        return false;
+    }
+    auto storage = aggregate_storage_for_name(owner_name, session.state);
+    if (!storage.has_value()) {
+        return false;
+    }
+    auto plan = plan_dynamic_array_construction(source_type->second, 0, context.lowering);
+    if (!plan.has_value()) {
+        diagnostics.error(statement.line, "source dynamic array append could not be planned");
+        return true;
+    }
+    plan->owner_name = owner_name;
+
+    auto value_type = lowered_type_for_source_type_name(*element_source_type, context.lowering);
+    if (!value_type.has_value()) {
+        diagnostics.error(statement.line, "source dynamic array append element type is not lowerable");
+        return true;
+    }
+    auto value = lower_expression(
+        expression.arguments.front(),
+        value_type->type,
+        value_type->signedness,
+        context,
+        session,
+        output,
+        std::optional<std::string_view> {*element_source_type}
+    );
+    if (!value.has_value()) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering dynamic array push argument failed",
+                session.failures.expression
+            )
+        );
+        return true;
+    }
+
+    auto prefix = "%" + owner_name + ".dynamic_array_append" +
+        std::to_string(session.state.next_temporary_index++);
+    output << emit_dynamic_array_descriptor_load(
+        prefix + ".descriptor",
+        *storage
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".data",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".length",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".capacity",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::capacity
+    );
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".has_capacity",
+        prefix + ".length",
+        prefix + ".capacity",
+        DynamicArrayBoundsCheckKind::append_has_capacity
+    );
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto append_block = llvm_block_name("dynamic_array.append.ready", block_index);
+    auto failure_block = llvm_block_name("dynamic_array.append.out_of_capacity", block_index);
+    emit_llvm_conditional_branch(
+        output,
+        prefix + ".has_capacity",
+        append_block,
+        failure_block
+    );
+    emit_llvm_block_label(output, failure_block);
+    output << "  call void @__orison_dynamic_array_capacity_failed()\n";
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, append_block);
+    session.state.current_block = append_block;
+    output << emit_dynamic_array_element_address(
+        *plan,
+        prefix + ".element.addr",
+        prefix + ".data",
+        prefix + ".length"
+    );
+    output << emit_dynamic_array_element_store(
+        *plan,
+        value->value,
+        prefix + ".element.addr"
+    );
+    output << emit_dynamic_array_descriptor_length_update(
+        prefix + ".updated",
+        prefix + ".next.length",
+        prefix + ".descriptor",
+        prefix + ".length"
+    );
+    output << emit_dynamic_array_descriptor_write_back(
+        prefix + ".updated",
+        *storage
+    );
+    return true;
+}
+
 }  // namespace
 
 auto value_expression_for(
@@ -1191,6 +1323,9 @@ auto lower_call_statement(
     }
     if (statement.expression.left != nullptr &&
         statement.expression.left->kind == syntax::ExpressionKind::member_access) {
+        if (lower_dynamic_array_push_statement(statement, context, session, diagnostics, output)) {
+            return !diagnostics.has_errors();
+        }
         auto resolved = resolve_member_call(statement.expression, context, session.state);
         auto function = diagnose_member_call_statement(statement, resolved, diagnostics);
         if (function == nullptr) {

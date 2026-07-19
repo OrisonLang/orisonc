@@ -46,6 +46,7 @@ struct CompilePipelineOptions {
     bool dynamic_array_production_signature_lowering_enabled = false;
     bool dynamic_array_production_construction_lowering_enabled = false;
     bool dynamic_array_production_index_lowering_enabled = false;
+    bool dynamic_array_production_append_lowering_enabled = false;
     bool dynamic_array_production_cleanup_emission_enabled = false;
 };
 
