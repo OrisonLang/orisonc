@@ -209,6 +209,8 @@ representation.
 - The driver now exposes report-only `--dynamic-array-cleanup-audit <file>` output that concatenates semantic
   descriptor origins, descriptor cleanup plans, cleanup obligations, sequence plans, verification, emission gate, and
   capability proof in that order for single-command inspection.
+- `tests/fixtures/dynamic_array_cleanup_audit.or` is the checked-in positive audit fixture for this report chain. It
+  keeps the CLI demo stable while production `DynamicArray<T>` cleanup remains disabled by default.
 - Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
   `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
   compilation continues to leave source Drop lowering disabled.

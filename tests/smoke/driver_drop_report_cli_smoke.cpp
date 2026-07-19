@@ -691,23 +691,7 @@ int main() {
     );
 
     auto dynamic_array_authorized_cleanup_capability_path =
-        std::filesystem::temp_directory_path() / "orison_driver_drop_report_dynamic_array_authorized_cleanup.or";
-    std::filesystem::remove(dynamic_array_authorized_cleanup_capability_path, remove_error);
-    write_fixture(
-        dynamic_array_authorized_cleanup_capability_path,
-        "demo.dynamicarrayauthorizedcleanup",
-        {
-            "record Payload",
-            "    public value: Int64",
-            "interface Drop",
-            "    function drop(this: exclusive This) -> Unit",
-            "implements Drop for Payload",
-            "    function drop(this: exclusive This) -> Unit",
-            "        return",
-            "function use_items(items: DynamicArray<Payload>) -> UInt32",
-            "    1 as UInt32",
-        }
-    );
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "dynamic_array_cleanup_audit.or";
     auto dynamic_array_authorized_descriptor_origins =
         run_semantic_dynamic_array_descriptor_origins(app, dynamic_array_authorized_cleanup_capability_path);
     assert_success_with_stdout_contains(
