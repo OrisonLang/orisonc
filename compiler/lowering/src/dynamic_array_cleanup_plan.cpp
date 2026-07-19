@@ -463,14 +463,49 @@ auto plan_bound_dynamic_array_parameter_cleanups(
     return plans;
 }
 
+auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
+    LoweringEmissionContext const& context,
+    std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans
+) -> DynamicArrayCleanupEmissionCapability {
+    auto capability = DynamicArrayCleanupEmissionCapability {
+        .test_only_enabled = context.options.test_only_enable_dynamic_array_parameter_descriptors &&
+            context.options.test_only_emit_bound_dynamic_array_parameter_cleanups,
+        .descriptor_storage_bound = std::ranges::all_of(plans, [](auto const& plan) {
+            return plan.descriptor_cleanup.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
+                !plan.descriptor_cleanup.descriptor_storage_name.empty();
+        }),
+        .sequence_verified = std::ranges::all_of(plans, [](auto const& plan) {
+            return dynamic_array_cleanup_sequence_verification_passed(plan.sequence_verification);
+        }),
+        .element_cleanup_authorized_or_not_required = std::ranges::all_of(plans, [](auto const& plan) {
+            return is_scalar_or_nonowning_source_type(plan.descriptor_cleanup.element_source_type_name) ||
+                plan.element_drop_symbol_name.has_value();
+        }),
+        .descriptor_deallocation_authorized = std::ranges::all_of(plans, [](auto const& plan) {
+            return plan.sequence_plan.obligation.requires_descriptor_deallocation;
+        }),
+    };
+    return capability;
+}
+
+auto dynamic_array_cleanup_emission_capability_proven(
+    DynamicArrayCleanupEmissionCapability const& capability
+) -> bool {
+    return capability.test_only_enabled &&
+        capability.descriptor_storage_bound &&
+        capability.sequence_verified &&
+        capability.element_cleanup_authorized_or_not_required &&
+        capability.descriptor_deallocation_authorized;
+}
+
 auto emit_bound_dynamic_array_parameter_cleanup_plans(
+    DynamicArrayCleanupEmissionCapability const& capability,
     std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans,
     FunctionLoweringSession& session,
     std::ostream& output
 ) -> bool {
-    if (!std::ranges::all_of(plans, [](auto const& plan) {
-            return dynamic_array_cleanup_sequence_verification_passed(plan.sequence_verification);
-        })) {
+    if (!dynamic_array_cleanup_emission_capability_proven(capability)) {
         return false;
     }
 
@@ -503,8 +538,12 @@ auto emit_bound_dynamic_array_parameter_cleanups(
     if (!plans.has_value()) {
         return false;
     }
+    if (plans->empty()) {
+        return true;
+    }
 
-    return emit_bound_dynamic_array_parameter_cleanup_plans(*plans, session, output);
+    auto capability = prove_bound_dynamic_array_parameter_cleanup_emission_capability(context, *plans);
+    return emit_bound_dynamic_array_parameter_cleanup_plans(capability, *plans, session, output);
 }
 
 }  // namespace orison::lowering

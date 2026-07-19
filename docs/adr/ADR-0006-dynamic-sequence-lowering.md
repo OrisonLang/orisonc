@@ -183,6 +183,9 @@ representation.
 - Lowering and pipeline results now expose a metadata-only dynamic-array cleanup emission-gate report derived from the
   sequence verifier, so allowed or blocked cleanup rendering is visible without converting verifier failures into
   source diagnostics or enabling production cleanup emission.
+- Bound dynamic-array parameter cleanup rendering now requires a single internal cleanup-emission capability object.
+  The capability proves test-only enablement, bound descriptor storage, verified sequence metadata, element cleanup
+  authorization or non-requirement, and descriptor deallocation authorization before any cleanup IR is written.
 
 ## Follow-up work
 

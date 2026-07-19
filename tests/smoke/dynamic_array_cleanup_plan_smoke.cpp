@@ -82,6 +82,16 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
         (*plans)[1].sequence_verification
     ));
+    auto capability = orison::lowering::prove_bound_dynamic_array_parameter_cleanup_emission_capability(
+        context,
+        *plans
+    );
+    assert(capability.test_only_enabled);
+    assert(capability.descriptor_storage_bound);
+    assert(capability.sequence_verified);
+    assert(capability.element_cleanup_authorized_or_not_required);
+    assert(capability.descriptor_deallocation_authorized);
+    assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
 
     auto output = std::ostringstream {};
     assert(orison::lowering::emit_bound_dynamic_array_parameter_cleanups(context, session, output));
@@ -97,8 +107,15 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
 
     auto malformed_plans = *plans;
     malformed_plans[1].sequence_verification.errors.push_back("test malformed cleanup order");
+    auto blocked_capability = orison::lowering::prove_bound_dynamic_array_parameter_cleanup_emission_capability(
+        context,
+        malformed_plans
+    );
+    assert(!blocked_capability.sequence_verified);
+    assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     auto blocked_output = std::ostringstream {};
     assert(!orison::lowering::emit_bound_dynamic_array_parameter_cleanup_plans(
+        blocked_capability,
         malformed_plans,
         session,
         blocked_output
@@ -171,6 +188,12 @@ void test_authorizes_owned_element_cleanup() {
     assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
         plans->front().sequence_verification
     ));
+    auto capability = orison::lowering::prove_bound_dynamic_array_parameter_cleanup_emission_capability(
+        context,
+        *plans
+    );
+    assert(capability.element_cleanup_authorized_or_not_required);
+    assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
 
     auto output = std::ostringstream {};
     assert(orison::lowering::emit_bound_dynamic_array_parameter_cleanups(context, session, output));
