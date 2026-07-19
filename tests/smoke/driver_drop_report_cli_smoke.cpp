@@ -162,6 +162,11 @@ auto run_dynamic_array_cleanup_capability(orison::driver::CompilerApp const& app
     return run_single_file_command(app, "--dynamic-array-cleanup-capability", path);
 }
 
+auto run_dynamic_array_cleanup_audit(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-cleanup-audit", path);
+}
+
 void assert_failure_with_no_stdout_contains(
     orison::driver::CompileResult const& result,
     std::string_view expected_message
@@ -179,6 +184,20 @@ void assert_success_with_stdout_contains(
     assert(result.stderr_text.empty());
     for (auto expected_fragment : expected_fragments) {
         assert(result.stdout_text.find(expected_fragment) != std::string::npos);
+    }
+}
+
+void assert_success_with_stdout_contains_in_order(
+    orison::driver::CompileResult const& result,
+    std::initializer_list<std::string_view> expected_fragments
+) {
+    assert(result.exit_code == 0);
+    assert(result.stderr_text.empty());
+    auto search_offset = std::size_t {0};
+    for (auto expected_fragment : expected_fragments) {
+        auto found = result.stdout_text.find(expected_fragment, search_offset);
+        assert(found != std::string::npos);
+        search_offset = found + expected_fragment.size();
     }
 }
 
@@ -265,6 +284,12 @@ int main() {
         run_dynamic_array_cleanup_capability(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         dynamic_array_cleanup_capability_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto dynamic_array_cleanup_audit_failure =
+        run_dynamic_array_cleanup_audit(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        dynamic_array_cleanup_audit_failure,
         "lowering does not yet support this return expression"
     );
     auto drop_readiness_relations_failure = run_drop_readiness_relations(app, emit_failure_path);
@@ -538,6 +563,14 @@ int main() {
             "[element cleanup ok]",
         }
     );
+    auto empty_dynamic_array_cleanup_audit = run_dynamic_array_cleanup_audit(app, clean_emit_path);
+    assert_success_with_stdout_contains(
+        empty_dynamic_array_cleanup_audit,
+        {
+            "dynamic array cleanup emission capability proven",
+            "[element cleanup ok]",
+        }
+    );
 
     auto dynamic_array_blocked_cleanup_capability_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_dynamic_array_cleanup_capability.or";
@@ -613,6 +646,21 @@ int main() {
             "[element cleanup missing]",
         }
     );
+    auto dynamic_array_blocked_cleanup_audit =
+        run_dynamic_array_cleanup_audit(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains_in_order(
+        dynamic_array_blocked_cleanup_audit,
+        {
+            "dynamic array descriptor origin DynamicArray<Payload>",
+            "dynamic array descriptor cleanup DynamicArray<Payload>",
+            "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
+            "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
+            "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
+            "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
+            "dynamic array cleanup emission capability blocked",
+            "[element cleanup missing]",
+        }
+    );
     assert(
         dynamic_array_blocked_cleanup_capability.stdout_text.find("call void @__orison_drop.Payload") ==
         std::string::npos
@@ -635,6 +683,10 @@ int main() {
     );
     assert(
         dynamic_array_blocked_cleanup_emission_gate.stdout_text.find("call void @__orison_drop.Payload") ==
+        std::string::npos
+    );
+    assert(
+        dynamic_array_blocked_cleanup_audit.stdout_text.find("call void @__orison_drop.Payload") ==
         std::string::npos
     );
 
@@ -713,6 +765,21 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_authorized_cleanup_capability,
         {
+            "dynamic array cleanup emission capability proven",
+            "[element cleanup ok]",
+        }
+    );
+    auto dynamic_array_authorized_cleanup_audit =
+        run_dynamic_array_cleanup_audit(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains_in_order(
+        dynamic_array_authorized_cleanup_audit,
+        {
+            "dynamic array descriptor origin DynamicArray<Payload>",
+            "dynamic array descriptor cleanup DynamicArray<Payload>",
+            "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
+            "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
+            "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
+            "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "dynamic array cleanup emission capability proven",
             "[element cleanup ok]",
         }
