@@ -404,6 +404,17 @@ auto main() -> int {
         0,
         "__orison_dynamic_array_cleanup.0 allowed"
     );
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_report.size() == 1);
+    assert_line_contains(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_report,
+        0,
+        "capability proven"
+    );
+    assert_line_contains(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_report,
+        0,
+        "[element cleanup ok]"
+    );
     assert(
         scalar_dynamic_array_cleanup.ir_text.find("declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)") !=
         std::string::npos
@@ -437,6 +448,17 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_owned_cleanup.has_errors());
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_report,
+        0,
+        "capability proven"
+    );
+    assert_line_contains(
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_report,
+        0,
+        "[element cleanup ok]"
+    );
     assert(dynamic_array_owned_cleanup.drop_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_owned_cleanup.drop_readiness_summary.cleanup_blocked == 0);
     assert(

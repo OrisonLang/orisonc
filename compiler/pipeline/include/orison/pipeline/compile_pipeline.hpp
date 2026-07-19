@@ -43,6 +43,7 @@ struct CompilePipelineResult {
     std::vector<std::string> dynamic_array_cleanup_sequence_plan_report;
     std::vector<std::string> dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> dynamic_array_cleanup_emission_gate_report;
+    std::vector<std::string> dynamic_array_cleanup_emission_capability_report;
     std::vector<std::string> planned_drop_report;
     std::vector<std::string> emitted_drop_declaration_report;
     std::vector<std::string> planned_drop_action_report;

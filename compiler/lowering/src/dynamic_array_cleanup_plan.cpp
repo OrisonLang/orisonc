@@ -499,6 +499,24 @@ auto dynamic_array_cleanup_emission_capability_proven(
         capability.descriptor_deallocation_authorized;
 }
 
+auto format_dynamic_array_cleanup_emission_capability(
+    DynamicArrayCleanupEmissionCapability const& capability
+) -> std::string {
+    auto const status = [](bool value) {
+        return value ? "ok" : "missing";
+    };
+    auto output = std::ostringstream {};
+    output << "dynamic array cleanup emission capability ";
+    output << (dynamic_array_cleanup_emission_capability_proven(capability) ? "proven" : "blocked");
+    output << " [test-only " << status(capability.test_only_enabled) << "]";
+    output << " [descriptor storage " << status(capability.descriptor_storage_bound) << "]";
+    output << " [sequence verification " << status(capability.sequence_verified) << "]";
+    output << " [element cleanup " << status(capability.element_cleanup_authorized_or_not_required) << "]";
+    output << " [descriptor deallocation " << status(capability.descriptor_deallocation_authorized) << "]";
+    output << " (metadata only)";
+    return output.str();
+}
+
 auto emit_bound_dynamic_array_parameter_cleanup_plans(
     DynamicArrayCleanupEmissionCapability const& capability,
     std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans,

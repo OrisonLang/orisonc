@@ -195,6 +195,8 @@ auto CompilePipeline::emit_llvm(
         emission.dynamic_array_cleanup_sequence_verification_report();
     result.dynamic_array_cleanup_emission_gate_report =
         emission.dynamic_array_cleanup_emission_gate_report();
+    result.dynamic_array_cleanup_emission_capability_report =
+        emission.dynamic_array_cleanup_emission_capability_report();
     result.planned_drop_report = emission.planned_drop_report();
     result.emitted_drop_declaration_report = emission.emitted_drop_declaration_report();
     result.planned_drop_action_report = emission.planned_drop_action_report();

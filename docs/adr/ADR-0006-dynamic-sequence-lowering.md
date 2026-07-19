@@ -186,6 +186,9 @@ representation.
 - Bound dynamic-array parameter cleanup rendering now requires a single internal cleanup-emission capability object.
   The capability proves test-only enablement, bound descriptor storage, verified sequence metadata, element cleanup
   authorization or non-requirement, and descriptor deallocation authorization before any cleanup IR is written.
+- Lowering and pipeline results now expose a metadata-only cleanup-emission capability report that lists each invariant
+  as present or missing. This keeps blocked cleanup emission explainable while preserving the production-disabled
+  boundary.
 
 ## Follow-up work
 

@@ -129,6 +129,10 @@ auto dynamic_array_cleanup_emission_capability_proven(
     DynamicArrayCleanupEmissionCapability const& capability
 ) -> bool;
 
+auto format_dynamic_array_cleanup_emission_capability(
+    DynamicArrayCleanupEmissionCapability const& capability
+) -> std::string;
+
 auto emit_bound_dynamic_array_parameter_cleanups(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,

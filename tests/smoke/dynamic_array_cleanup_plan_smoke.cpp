@@ -92,6 +92,11 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(capability.element_cleanup_authorized_or_not_required);
     assert(capability.descriptor_deallocation_authorized);
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
+    assert(
+        orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
+        "dynamic array cleanup emission capability proven [test-only ok] [descriptor storage ok] "
+        "[sequence verification ok] [element cleanup ok] [descriptor deallocation ok] (metadata only)"
+    );
 
     auto output = std::ostringstream {};
     assert(orison::lowering::emit_bound_dynamic_array_parameter_cleanups(context, session, output));
@@ -113,6 +118,11 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     );
     assert(!blocked_capability.sequence_verified);
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
+    assert(
+        orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability) ==
+        "dynamic array cleanup emission capability blocked [test-only ok] [descriptor storage ok] "
+        "[sequence verification missing] [element cleanup ok] [descriptor deallocation ok] (metadata only)"
+    );
     auto blocked_output = std::ostringstream {};
     assert(!orison::lowering::emit_bound_dynamic_array_parameter_cleanup_plans(
         blocked_capability,

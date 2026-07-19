@@ -9,6 +9,7 @@
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/syntax/module_parser.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -27,6 +28,7 @@ struct LlvmIrEmissionResult {
     std::vector<DynamicArrayCleanupObligation> dynamic_array_cleanup_obligations;
     std::vector<DynamicArrayCleanupSequencePlan> dynamic_array_cleanup_sequence_plans;
     std::vector<DynamicArrayCleanupSequenceVerification> dynamic_array_cleanup_sequence_verifications;
+    std::optional<DynamicArrayCleanupEmissionCapability> dynamic_array_cleanup_emission_capability;
     std::vector<std::string> test_only_dynamic_array_allocation_call_ir;
     std::vector<std::string> test_only_dynamic_array_grow_call_ir;
     std::vector<std::string> test_only_dynamic_array_deallocation_call_ir;
@@ -55,6 +57,7 @@ struct LlvmIrEmissionResult {
     auto dynamic_array_cleanup_sequence_plan_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_sequence_verification_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_emission_gate_report() const -> std::vector<std::string>;
+    auto dynamic_array_cleanup_emission_capability_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;
