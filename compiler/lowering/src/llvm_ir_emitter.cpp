@@ -561,14 +561,18 @@ auto LlvmIrEmitter::emit(
             result.drop_cleanups.push_back(std::move(cleanup));
         }
     }
-    if (options.test_only_render_dynamic_array_allocation_calls) {
+    if (dynamic_array_allocation_calls_enabled(options)) {
         for (auto index = std::size_t {0}; index < result.dynamic_array_construction_plans.size(); ++index) {
-            result.test_only_dynamic_array_allocation_call_ir.push_back(
-                emit_dynamic_array_allocation_call(
-                    result.dynamic_array_construction_plans[index],
-                    "%dynamic_array_alloc" + std::to_string(index)
-                )
+            auto call_ir = emit_dynamic_array_allocation_call(
+                result.dynamic_array_construction_plans[index],
+                "%dynamic_array_alloc" + std::to_string(index)
             );
+            if (options.enable_dynamic_array_construction_lowering) {
+                result.dynamic_array_allocation_call_ir.push_back(call_ir);
+            }
+            if (options.test_only_render_dynamic_array_allocation_calls) {
+                result.test_only_dynamic_array_allocation_call_ir.push_back(std::move(call_ir));
+            }
         }
     }
     if (options.test_only_render_dynamic_array_grow_calls) {

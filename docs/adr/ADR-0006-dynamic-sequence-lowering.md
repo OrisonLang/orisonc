@@ -219,6 +219,10 @@ representation.
 - The production signature blocker now maps to a default-disabled lowering option that enables dynamic-array parameter
   descriptors as `{ ptr, i64, i64 }`. The older test-only descriptor seam remains as a compatibility alias for existing
   smoke fixtures, and construction/cleanup production gates remain separate.
+- The production construction blocker now maps to a default-disabled lowering option that renders finite allocation
+  calls from internal construction plans. Until source construction placement is implemented, these calls remain
+  observable artifacts outside module IR; runtime declarations and construction reports are still emitted from the
+  requested operations.
 - Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
   `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
   compilation continues to leave source Drop lowering disabled.

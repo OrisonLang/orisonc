@@ -556,6 +556,46 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(readiness_summary.cleanup_authorized == 0);
     assert(readiness_summary.cleanup_blocked == 0);
     assert(result.drop_readiness_snapshot_report().front().find("cleanup authorizations 0") != std::string::npos);
+
+    auto production_construction = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    1 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_dynamic_array_construction_requests = {
+                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+                    .source_type_name = "DynamicArray<UInt32>",
+                    .initial_capacity = 4,
+                },
+            },
+            .enable_dynamic_array_construction_lowering = true,
+        }
+    );
+
+    assert(!production_construction.has_errors());
+    assert(production_construction.dynamic_array_construction_plans.size() == 1);
+    assert(production_construction.dynamic_array_runtime_operations.size() == 1);
+    assert(
+        production_construction.dynamic_array_runtime_operations.front() ==
+        orison::lowering::DynamicArrayRuntimeOperation::allocate
+    );
+    assert_ir_contains(
+        production_construction,
+        "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)"
+    );
+    assert(production_construction.dynamic_array_allocation_call_ir.size() == 1);
+    assert(
+        production_construction.dynamic_array_allocation_call_ir.front() ==
+        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 4)\n"
+    );
+    assert(production_construction.test_only_dynamic_array_allocation_call_ir.empty());
+    assert(
+        production_construction.ir_text.find(
+            "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
+        ) == std::string::npos
+    );
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

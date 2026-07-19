@@ -63,6 +63,9 @@ struct CompilePipelineResult {
     std::vector<std::string> semantic_drop_lowering_authorization_report;
     std::vector<std::string> semantic_drop_resolution_summary_report;
     std::vector<std::string> dynamic_array_descriptor_cleanup_plan_report;
+    std::vector<std::string> dynamic_array_construction_plan_report;
+    std::vector<std::string> dynamic_array_runtime_request_report;
+    std::vector<std::string> dynamic_array_allocation_call_ir;
     std::vector<std::string> dynamic_array_cleanup_obligation_report;
     std::vector<std::string> dynamic_array_cleanup_sequence_plan_report;
     std::vector<std::string> dynamic_array_cleanup_sequence_verification_report;

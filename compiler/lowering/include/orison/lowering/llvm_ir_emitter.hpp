@@ -29,6 +29,7 @@ struct LlvmIrEmissionResult {
     std::vector<DynamicArrayCleanupSequencePlan> dynamic_array_cleanup_sequence_plans;
     std::vector<DynamicArrayCleanupSequenceVerification> dynamic_array_cleanup_sequence_verifications;
     std::optional<DynamicArrayCleanupEmissionCapability> dynamic_array_cleanup_emission_capability;
+    std::vector<std::string> dynamic_array_allocation_call_ir;
     std::vector<std::string> test_only_dynamic_array_allocation_call_ir;
     std::vector<std::string> test_only_dynamic_array_grow_call_ir;
     std::vector<std::string> test_only_dynamic_array_deallocation_call_ir;

@@ -21,6 +21,7 @@ struct LlvmIrEmissionOptions {
     bool test_only_derive_dynamic_array_cleanup_from_semantics = false;
     bool test_only_enable_dynamic_array_parameter_descriptors = false;
     bool enable_dynamic_array_parameter_descriptors = false;
+    bool enable_dynamic_array_construction_lowering = false;
     bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
     bool test_only_render_dynamic_array_allocation_calls = false;
     bool test_only_render_dynamic_array_grow_calls = false;
@@ -47,6 +48,13 @@ inline auto dynamic_array_parameter_descriptors_enabled(
 ) -> bool {
     return options.enable_dynamic_array_parameter_descriptors ||
         options.test_only_enable_dynamic_array_parameter_descriptors;
+}
+
+inline auto dynamic_array_allocation_calls_enabled(
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    return options.enable_dynamic_array_construction_lowering ||
+        options.test_only_render_dynamic_array_allocation_calls;
 }
 
 }  // namespace orison::lowering

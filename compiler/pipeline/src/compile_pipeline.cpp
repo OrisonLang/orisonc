@@ -247,6 +247,8 @@ auto CompilePipeline::emit_llvm(
         options.test_only_enable_dynamic_array_parameter_descriptors;
     emission_options.enable_dynamic_array_parameter_descriptors =
         options.dynamic_array_production_signature_lowering_enabled;
+    emission_options.enable_dynamic_array_construction_lowering =
+        options.dynamic_array_production_construction_lowering_enabled;
     emission_options.test_only_emit_bound_dynamic_array_parameter_cleanups =
         options.test_only_emit_bound_dynamic_array_parameter_cleanups;
     emission_options.test_only_render_dynamic_array_element_drop_walks =
@@ -257,6 +259,12 @@ auto CompilePipeline::emit_llvm(
         return result;
     }
     result.ir_text = std::move(emission.ir_text);
+    result.dynamic_array_construction_plan_report =
+        emission.dynamic_array_construction_plan_report();
+    result.dynamic_array_runtime_request_report =
+        emission.dynamic_array_runtime_request_report();
+    result.dynamic_array_allocation_call_ir =
+        std::move(emission.dynamic_array_allocation_call_ir);
     result.dynamic_array_descriptor_cleanup_plan_report =
         emission.dynamic_array_descriptor_cleanup_plan_report();
     result.dynamic_array_cleanup_obligation_report =

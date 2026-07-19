@@ -624,6 +624,72 @@ auto main() -> int {
         "[production construction missing]"
     );
 
+    auto dynamic_array_owned_construction_gate = pipeline.emit_llvm(
+        dynamic_array_source_owner_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "items.element",
+                        .site_line = 6,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+            .test_only_dynamic_array_construction_requests = {
+                orison::lowering::TestOnlyDynamicArrayConstructionRequest {
+                    .source_type_name = "DynamicArray<Payload>",
+                    .owner_name = "items",
+                    .initial_capacity = 2,
+                },
+            },
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_construction_gate.has_errors());
+    assert(dynamic_array_owned_construction_gate.dynamic_array_construction_plan_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_owned_construction_gate.dynamic_array_construction_plan_report,
+        0,
+        "requests __orison_dynamic_array_allocate"
+    );
+    assert(dynamic_array_owned_construction_gate.dynamic_array_runtime_request_report.size() == 2);
+    assert_line_contains(
+        dynamic_array_owned_construction_gate.dynamic_array_runtime_request_report,
+        0,
+        "__orison_dynamic_array_allocate"
+    );
+    assert(dynamic_array_owned_construction_gate.dynamic_array_allocation_call_ir.size() == 1);
+    assert(
+        dynamic_array_owned_construction_gate.dynamic_array_allocation_call_ir.front() ==
+        "  %dynamic_array_alloc0 = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 8, i64 2)\n"
+    );
+    assert(
+        dynamic_array_owned_construction_gate.ir_text.find(
+            "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
+        ) == std::string::npos
+    );
+    assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
+        dynamic_array_owned_construction_gate.dynamic_array_cleanup_production_readiness
+    ));
+    assert_line_contains(
+        dynamic_array_owned_construction_gate.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[production construction ok]"
+    );
+    assert_line_contains(
+        dynamic_array_owned_construction_gate.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[production cleanup emission missing]"
+    );
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
