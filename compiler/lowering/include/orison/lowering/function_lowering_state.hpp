@@ -1,5 +1,6 @@
 #pragma once
 
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/lowered_value.hpp"
 
 #include <cstddef>
@@ -54,6 +55,7 @@ struct FunctionLoweringState {
     std::vector<std::string> thread_binding_order;
     std::vector<std::string> task_binding_order;
     std::unordered_map<std::string, std::string> source_type_names;
+    std::vector<DynamicArrayDescriptorCleanupPlan> dynamic_array_local_cleanup_plans;
     std::unordered_map<std::string, std::size_t> local_name_counts;
     std::vector<DeferredCleanupScopeState> defer_cleanup_scopes;
     std::vector<std::string> pending_function_definitions;

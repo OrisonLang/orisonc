@@ -37,6 +37,13 @@ struct BoundDynamicArrayParameterCleanupPlan {
     DynamicArrayCleanupSequenceVerification sequence_verification;
 };
 
+struct LocalDynamicArrayCleanupPlan {
+    DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
+    std::optional<std::string> element_drop_symbol_name;
+    DynamicArrayCleanupSequencePlan sequence_plan;
+    DynamicArrayCleanupSequenceVerification sequence_verification;
+};
+
 struct DynamicArrayCleanupEmissionCapability {
     bool emission_enabled = false;
     bool descriptor_storage_bound = false;
@@ -125,6 +132,16 @@ auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
     std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans
 ) -> DynamicArrayCleanupEmissionCapability;
 
+auto plan_local_dynamic_array_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::vector<LocalDynamicArrayCleanupPlan>>;
+
+auto prove_local_dynamic_array_cleanup_emission_capability(
+    LoweringEmissionContext const& context,
+    std::vector<LocalDynamicArrayCleanupPlan> const& plans
+) -> DynamicArrayCleanupEmissionCapability;
+
 auto prove_dynamic_array_cleanup_emission_capability(
     bool emission_enabled,
     std::vector<DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plans,
@@ -142,6 +159,12 @@ auto format_dynamic_array_cleanup_emission_capability(
 ) -> std::string;
 
 auto emit_bound_dynamic_array_parameter_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool;
+
+auto emit_local_dynamic_array_cleanups(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
     std::ostream& output

@@ -82,6 +82,7 @@ auto lower_dynamic_array_default_construction(
         statement.name + ".addr",
         session.state.local_name_counts
     );
+    auto storage_name = storage;
     output << emit_dynamic_array_allocation_call(*plan, allocation);
     output << emit_dynamic_array_descriptor_binding(*plan, storage, allocation);
 
@@ -93,7 +94,7 @@ auto lower_dynamic_array_default_construction(
     if (mutable_binding) {
         session.state.mutable_bindings[statement.name] = MutableBinding {
             .type = std::move(lowered_type),
-            .storage = std::move(storage),
+            .storage = storage_name,
         };
     } else {
         session.state.immutable_bindings[statement.name] = LoweredExpression {
@@ -103,10 +104,23 @@ auto lower_dynamic_array_default_construction(
         };
         session.state.addressable_bindings[statement.name] = AddressableBinding {
             .type = std::move(lowered_type),
-            .storage = std::move(storage),
+            .storage = storage_name,
         };
     }
     session.state.source_type_names[statement.name] = std::move(source_type_name);
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        statement.name,
+        session.state.source_type_names[statement.name],
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        diagnostics.error(statement.line, "source dynamic array cleanup could not be planned");
+        return true;
+    }
+    cleanup_plan->descriptor_storage_name = std::move(storage_name);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = statement.line;
+    session.state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
     return true;
 }
 

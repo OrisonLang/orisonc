@@ -687,6 +687,68 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     );
     assert(placed_source_construction.ir_text.find("__orison_dynamic_array_grow") == std::string::npos);
     assert(placed_source_construction.ir_text.find("__orison_dynamic_array_deallocate") == std::string::npos);
+
+    auto placed_source_cleanup = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    var words: DynamicArray<UInt32> = DynamicArray()\n"
+        "    0 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!placed_source_cleanup.has_errors());
+    assert(placed_source_cleanup.dynamic_array_runtime_operations.size() == 3);
+    assert(
+        placed_source_cleanup.dynamic_array_runtime_operations[0] ==
+        orison::lowering::DynamicArrayRuntimeOperation::allocate
+    );
+    assert(
+        placed_source_cleanup.dynamic_array_runtime_operations[1] ==
+        orison::lowering::DynamicArrayRuntimeOperation::allocate
+    );
+    assert(
+        placed_source_cleanup.dynamic_array_runtime_operations[2] ==
+        orison::lowering::DynamicArrayRuntimeOperation::deallocate
+    );
+    assert_ir_contains(
+        placed_source_cleanup,
+        "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)"
+    );
+    assert_ir_contains(
+        placed_source_cleanup,
+        "  %items.dynamic_array_cleanup0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_cleanup,
+        "  call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 4, "
+        "i64 %items.dynamic_array_cleanup0.cleanup.capacity)\n"
+    );
+    assert_ir_contains(
+        placed_source_cleanup,
+        "  %words.dynamic_array_cleanup1.descriptor = load { ptr, i64, i64 }, ptr %words.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_cleanup,
+        "  call void @__orison_dynamic_array_deallocate(ptr %words.dynamic_array_cleanup1.cleanup.data, i64 4, "
+        "i64 %words.dynamic_array_cleanup1.cleanup.capacity)\n"
+    );
+    auto items_cleanup = placed_source_cleanup.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto words_cleanup = placed_source_cleanup.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate",
+        items_cleanup + 1
+    );
+    auto return_instruction = placed_source_cleanup.ir_text.find("ret i32 0");
+    assert(items_cleanup != std::string::npos);
+    assert(words_cleanup != std::string::npos);
+    assert(return_instruction != std::string::npos);
+    assert(items_cleanup < words_cleanup);
+    assert(words_cleanup < return_instruction);
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

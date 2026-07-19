@@ -309,6 +309,9 @@ auto collect_dynamic_array_runtime_operations(
         for (auto index = source_plan_offset; index < plans.size(); ++index) {
             operations.push_back(plans[index].operation);
         }
+        if (dynamic_array_cleanup_emission_enabled(options) && source_plan_offset < plans.size()) {
+            operations.push_back(DynamicArrayRuntimeOperation::deallocate);
+        }
     }
     for (auto const& request : options.test_only_dynamic_array_construction_requests) {
         auto plan = plan_dynamic_array_construction(

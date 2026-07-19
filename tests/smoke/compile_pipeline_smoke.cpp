@@ -772,6 +772,42 @@ auto main() -> int {
     assert(dynamic_array_placed_construction.ir_text.find("__orison_dynamic_array_grow") == std::string::npos);
     assert(dynamic_array_placed_construction.ir_text.find("__orison_dynamic_array_deallocate") == std::string::npos);
 
+    auto dynamic_array_local_cleanup = pipeline.emit_llvm(
+        dynamic_array_placed_construction_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!dynamic_array_local_cleanup.has_errors());
+    assert(dynamic_array_local_cleanup.dynamic_array_runtime_request_report.size() == 2);
+    assert_line_contains(
+        dynamic_array_local_cleanup.dynamic_array_runtime_request_report,
+        0,
+        "__orison_dynamic_array_allocate"
+    );
+    assert_line_contains(
+        dynamic_array_local_cleanup.dynamic_array_runtime_request_report,
+        1,
+        "__orison_dynamic_array_deallocate"
+    );
+    assert(
+        dynamic_array_local_cleanup.ir_text.find(
+            "  %items.dynamic_array_cleanup0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_cleanup.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 4, "
+            "i64 %items.dynamic_array_cleanup0.cleanup.capacity)\n"
+        ) != std::string::npos
+    );
+    auto local_cleanup = dynamic_array_local_cleanup.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto local_return = dynamic_array_local_cleanup.ir_text.find("ret i32 0");
+    assert(local_cleanup != std::string::npos);
+    assert(local_return != std::string::npos);
+    assert(local_cleanup < local_return);
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

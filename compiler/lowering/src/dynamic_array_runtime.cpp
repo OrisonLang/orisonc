@@ -43,6 +43,8 @@ auto format_dynamic_array_descriptor_storage_status(
         return "predicted";
     case DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor:
         return "bound";
+    case DynamicArrayDescriptorStorageStatus::lowered_local_descriptor:
+        return "local";
     }
     return "unknown";
 }

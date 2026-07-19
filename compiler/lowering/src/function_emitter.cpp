@@ -231,6 +231,9 @@ auto emit_function_return_cleanup(
     )) {
         return false;
     }
+    if (!emit_local_dynamic_array_cleanups(context, session, output)) {
+        return false;
+    }
     return emit_bound_dynamic_array_parameter_cleanups(context, session, output);
 }
 

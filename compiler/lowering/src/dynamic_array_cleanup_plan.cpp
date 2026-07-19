@@ -188,6 +188,28 @@ auto synthetic_dynamic_array_parameter_cleanup_authorizations(
     return authorizations;
 }
 
+auto authorized_descriptor_element_drop_symbol_name(
+    DynamicArrayCleanupObligation const& obligation,
+    LlvmIrEmissionOptions const& options
+) -> std::optional<std::string> {
+    if (obligation.actions.empty()) {
+        return std::nullopt;
+    }
+    auto cleanup = drop_cleanup_for_dynamic_array_cleanup_obligation(obligation);
+    auto declarations = declared_drop_declarations_for_authorized_semantic_drops(
+        options.semantic_drop_lowering_authorizations
+    );
+    auto authorization = plan_drop_cleanup_authorization(
+        cleanup,
+        declarations,
+        options.semantic_drop_lowering_authorizations
+    );
+    if (!authorization.authorized) {
+        return std::nullopt;
+    }
+    return obligation.actions.front().symbol_name;
+}
+
 }  // namespace
 
 auto plan_dynamic_array_descriptor_cleanup_obligation(
@@ -510,9 +532,12 @@ auto prove_dynamic_array_cleanup_emission_capability(
     return DynamicArrayCleanupEmissionCapability {
         .emission_enabled = emission_enabled,
         .descriptor_storage_bound = std::ranges::all_of(descriptor_cleanup_plans, [](auto const& plan) {
-            return plan.descriptor_storage_status ==
-                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
-                !plan.descriptor_storage_name.empty();
+            auto storage_status_bound =
+                plan.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor ||
+                plan.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+            return storage_status_bound && !plan.descriptor_storage_name.empty();
         }),
         .sequence_verified = dynamic_array_cleanup_sequence_verification_report_passed(sequence_verifications),
         .element_cleanup_authorized_or_not_required = std::ranges::all_of(obligations, [&](auto const& obligation) {
@@ -555,6 +580,68 @@ auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
     );
 }
 
+auto plan_local_dynamic_array_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::vector<LocalDynamicArrayCleanupPlan>> {
+    auto plans = std::vector<LocalDynamicArrayCleanupPlan> {};
+    if (!context.options.enable_dynamic_array_construction_lowering ||
+        !dynamic_array_cleanup_emission_enabled(context.options)) {
+        return plans;
+    }
+
+    for (auto const& descriptor_cleanup : session.state.dynamic_array_local_cleanup_plans) {
+        auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
+            descriptor_cleanup,
+            plans.size()
+        );
+        auto drop_symbol_name = std::optional<std::string> {};
+        if (!obligation.actions.empty()) {
+            drop_symbol_name = authorized_descriptor_element_drop_symbol_name(
+                obligation,
+                context.options
+            );
+            if (!drop_symbol_name.has_value()) {
+                continue;
+            }
+        }
+        auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
+        auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
+        plans.push_back(LocalDynamicArrayCleanupPlan {
+            .descriptor_cleanup = descriptor_cleanup,
+            .element_drop_symbol_name = std::move(drop_symbol_name),
+            .sequence_plan = std::move(sequence_plan),
+            .sequence_verification = std::move(sequence_verification),
+        });
+    }
+    return plans;
+}
+
+auto prove_local_dynamic_array_cleanup_emission_capability(
+    LoweringEmissionContext const& context,
+    std::vector<LocalDynamicArrayCleanupPlan> const& plans
+) -> DynamicArrayCleanupEmissionCapability {
+    auto descriptor_cleanup_plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
+    auto sequence_verifications = std::vector<DynamicArrayCleanupSequenceVerification> {};
+    auto obligations = std::vector<DynamicArrayCleanupObligation> {};
+    descriptor_cleanup_plans.reserve(plans.size());
+    sequence_verifications.reserve(plans.size());
+    obligations.reserve(plans.size());
+    for (auto const& plan : plans) {
+        descriptor_cleanup_plans.push_back(plan.descriptor_cleanup);
+        sequence_verifications.push_back(plan.sequence_verification);
+        obligations.push_back(plan.sequence_plan.obligation);
+    }
+    return prove_dynamic_array_cleanup_emission_capability(
+        context.options.enable_dynamic_array_construction_lowering &&
+            dynamic_array_cleanup_emission_enabled(context.options),
+        descriptor_cleanup_plans,
+        sequence_verifications,
+        obligations,
+        context.options.semantic_drop_lowering_authorizations
+    );
+}
+
 auto dynamic_array_cleanup_emission_capability_proven(
     DynamicArrayCleanupEmissionCapability const& capability
 ) -> bool {
@@ -594,6 +681,44 @@ auto emit_bound_dynamic_array_parameter_cleanup_plans(
     }
 
     for (auto const& plan : plans) {
+        auto prefix = "%" + plan.descriptor_cleanup.owner_name + ".dynamic_array_cleanup" +
+            std::to_string(session.state.next_temporary_index++);
+        auto label_prefix = prefix.substr(1);
+        output << "  br label %" << label_prefix << ".cleanup.entry\n";
+        output << label_prefix << ".cleanup.entry:\n";
+        output << emit_dynamic_array_descriptor_load(
+            prefix + ".descriptor",
+            plan.descriptor_cleanup.descriptor_storage_name
+        );
+        output << emit_dynamic_array_descriptor_cleanup_sequence_with_optional_drop_calls(
+            plan.descriptor_cleanup,
+            prefix + ".descriptor",
+            prefix,
+            plan.element_drop_symbol_name
+        );
+    }
+    return true;
+}
+
+auto emit_local_dynamic_array_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool {
+    auto plans = plan_local_dynamic_array_cleanups(context, session);
+    if (!plans.has_value()) {
+        return false;
+    }
+    if (plans->empty()) {
+        return true;
+    }
+
+    auto capability = prove_local_dynamic_array_cleanup_emission_capability(context, *plans);
+    if (!dynamic_array_cleanup_emission_capability_proven(capability)) {
+        return false;
+    }
+
+    for (auto const& plan : *plans) {
         auto prefix = "%" + plan.descriptor_cleanup.owner_name + ".dynamic_array_cleanup" +
             std::to_string(session.state.next_temporary_index++);
         auto label_prefix = prefix.substr(1);
