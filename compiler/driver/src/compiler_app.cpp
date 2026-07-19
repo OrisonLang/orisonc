@@ -32,6 +32,9 @@ auto usage_text() -> std::string {
            "--drop-cleanup-authorization <file> | --drop-readiness <file> | "
            "--drop-readiness-summary <file> | --drop-readiness-relations <file> | "
            "--drop-readiness-blockers <file> | --drop-readiness-source-correlations <file> | "
+           "--dynamic-array-descriptor-cleanup-plan <file> | "
+           "--dynamic-array-cleanup-obligations <file> | "
+           "--dynamic-array-cleanup-sequence-plan <file> | "
            "--dynamic-array-cleanup-sequence-verification <file> | "
            "--dynamic-array-cleanup-emission-gate <file> | "
            "--dynamic-array-cleanup-capability <file> | "
@@ -379,6 +382,36 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
             return result.drop_readiness_source_correlation_report;
         });
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-descriptor-cleanup-plan") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            dynamic_array_cleanup_report_options(),
+            [](auto const& result) -> auto const& {
+                return result.dynamic_array_descriptor_cleanup_plan_report;
+            }
+        );
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-obligations") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            dynamic_array_cleanup_report_options(),
+            [](auto const& result) -> auto const& {
+                return result.dynamic_array_cleanup_obligation_report;
+            }
+        );
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-sequence-plan") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            dynamic_array_cleanup_report_options(),
+            [](auto const& result) -> auto const& {
+                return result.dynamic_array_cleanup_sequence_plan_report;
+            }
+        );
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-sequence-verification") {

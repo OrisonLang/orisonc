@@ -115,6 +115,27 @@ auto run_drop_readiness_source_correlations(orison::driver::CompilerApp const& a
     return run_single_file_command(app, "--drop-readiness-source-correlations", path);
 }
 
+auto run_dynamic_array_descriptor_cleanup_plan(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-descriptor-cleanup-plan", path);
+}
+
+auto run_dynamic_array_cleanup_obligations(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-cleanup-obligations", path);
+}
+
+auto run_dynamic_array_cleanup_sequence_plan(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-cleanup-sequence-plan", path);
+}
+
 auto run_dynamic_array_cleanup_sequence_verification(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& path
@@ -213,6 +234,24 @@ int main() {
         run_dynamic_array_cleanup_emission_gate(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         dynamic_array_cleanup_emission_gate_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto dynamic_array_descriptor_cleanup_plan_failure =
+        run_dynamic_array_descriptor_cleanup_plan(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        dynamic_array_descriptor_cleanup_plan_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto dynamic_array_cleanup_obligations_failure =
+        run_dynamic_array_cleanup_obligations(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        dynamic_array_cleanup_obligations_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto dynamic_array_cleanup_sequence_plan_failure =
+        run_dynamic_array_cleanup_sequence_plan(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        dynamic_array_cleanup_sequence_plan_failure,
         "lowering does not yet support this return expression"
     );
     auto dynamic_array_cleanup_capability_failure =
@@ -466,6 +505,15 @@ int main() {
         empty_drop_readiness_source,
         {"drop readiness source correlations actions 0 semantic sites 0"}
     );
+    auto empty_dynamic_array_descriptor_cleanup_plan =
+        run_dynamic_array_descriptor_cleanup_plan(app, clean_emit_path);
+    assert_success_with_empty_stdout(empty_dynamic_array_descriptor_cleanup_plan);
+    auto empty_dynamic_array_cleanup_obligations =
+        run_dynamic_array_cleanup_obligations(app, clean_emit_path);
+    assert_success_with_empty_stdout(empty_dynamic_array_cleanup_obligations);
+    auto empty_dynamic_array_cleanup_sequence_plan =
+        run_dynamic_array_cleanup_sequence_plan(app, clean_emit_path);
+    assert_success_with_empty_stdout(empty_dynamic_array_cleanup_sequence_plan);
     auto empty_dynamic_array_cleanup_sequence_verification =
         run_dynamic_array_cleanup_sequence_verification(app, clean_emit_path);
     assert_success_with_empty_stdout(empty_dynamic_array_cleanup_sequence_verification);
@@ -494,6 +542,35 @@ int main() {
             "    1 as UInt32",
         }
     );
+    auto dynamic_array_blocked_descriptor_cleanup_plan =
+        run_dynamic_array_descriptor_cleanup_plan(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_descriptor_cleanup_plan,
+        {
+            "dynamic array descriptor cleanup DynamicArray<Payload>",
+            "owner items",
+            "descriptor %items.addr bound",
+        }
+    );
+    auto dynamic_array_blocked_cleanup_obligations =
+        run_dynamic_array_cleanup_obligations(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_cleanup_obligations,
+        {
+            "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
+            "owner items",
+            "element Payload",
+        }
+    );
+    auto dynamic_array_blocked_cleanup_sequence_plan =
+        run_dynamic_array_cleanup_sequence_plan(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_cleanup_sequence_plan,
+        {
+            "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
+            "[load descriptor] [drop initialized elements] [deallocate descriptor storage]",
+        }
+    );
     auto dynamic_array_blocked_cleanup_sequence_verification =
         run_dynamic_array_cleanup_sequence_verification(app, dynamic_array_blocked_cleanup_capability_path);
     assert_success_with_stdout_contains(
@@ -517,6 +594,18 @@ int main() {
     );
     assert(
         dynamic_array_blocked_cleanup_capability.stdout_text.find("call void @__orison_drop.Payload") ==
+        std::string::npos
+    );
+    assert(
+        dynamic_array_blocked_descriptor_cleanup_plan.stdout_text.find("call void @__orison_drop.Payload") ==
+        std::string::npos
+    );
+    assert(
+        dynamic_array_blocked_cleanup_obligations.stdout_text.find("call void @__orison_drop.Payload") ==
+        std::string::npos
+    );
+    assert(
+        dynamic_array_blocked_cleanup_sequence_plan.stdout_text.find("call void @__orison_drop.Payload") ==
         std::string::npos
     );
     assert(
@@ -544,6 +633,35 @@ int main() {
             "        return",
             "function use_items(items: DynamicArray<Payload>) -> UInt32",
             "    1 as UInt32",
+        }
+    );
+    auto dynamic_array_authorized_descriptor_cleanup_plan =
+        run_dynamic_array_descriptor_cleanup_plan(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_authorized_descriptor_cleanup_plan,
+        {
+            "dynamic array descriptor cleanup DynamicArray<Payload>",
+            "owner items",
+            "descriptor %items.addr bound",
+        }
+    );
+    auto dynamic_array_authorized_cleanup_obligations =
+        run_dynamic_array_cleanup_obligations(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_authorized_cleanup_obligations,
+        {
+            "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
+            "owner items",
+            "element Payload",
+        }
+    );
+    auto dynamic_array_authorized_cleanup_sequence_plan =
+        run_dynamic_array_cleanup_sequence_plan(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_authorized_cleanup_sequence_plan,
+        {
+            "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
+            "[load descriptor] [drop initialized elements] [deallocate descriptor storage]",
         }
     );
     auto dynamic_array_authorized_cleanup_sequence_verification =
