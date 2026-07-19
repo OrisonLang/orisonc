@@ -997,6 +997,58 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(append_index_descriptor_reload < append_index_load);
     assert(append_index_load < append_index_cleanup);
     assert(append_index_cleanup < append_index_return);
+
+    auto placed_source_append_length = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> IntSize\n"
+        "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    items.push(7 as UInt32)\n"
+        "    items.length()\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_length_lowering = true,
+            .enable_dynamic_array_append_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!placed_source_append_length.has_errors());
+    assert(placed_source_append_length.dynamic_array_runtime_operations.size() == 3);
+    assert_ir_contains(
+        placed_source_append_length,
+        "  %items.dynamic_array_length1.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_append_length,
+        "  %items.dynamic_array_length1.value = extractvalue { ptr, i64, i64 } "
+        "%items.dynamic_array_length1.descriptor, 1\n"
+    );
+    auto append_length_store = placed_source_append_length.ir_text.find(
+        "store i32 7, ptr %items.dynamic_array_append0.element.addr"
+    );
+    auto append_length_descriptor_reload = placed_source_append_length.ir_text.find(
+        "%items.dynamic_array_length1.descriptor = load { ptr, i64, i64 }, ptr %items.addr"
+    );
+    auto append_length_value = placed_source_append_length.ir_text.find(
+        "%items.dynamic_array_length1.value = extractvalue { ptr, i64, i64 }"
+    );
+    auto append_length_cleanup = placed_source_append_length.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate"
+    );
+    auto append_length_return = placed_source_append_length.ir_text.find(
+        "ret i64 %items.dynamic_array_length1.value"
+    );
+    assert(append_length_store != std::string::npos);
+    assert(append_length_descriptor_reload != std::string::npos);
+    assert(append_length_value != std::string::npos);
+    assert(append_length_cleanup != std::string::npos);
+    assert(append_length_return != std::string::npos);
+    assert(append_length_store < append_length_descriptor_reload);
+    assert(append_length_descriptor_reload < append_length_value);
+    assert(append_length_value < append_length_cleanup);
+    assert(append_length_cleanup < append_length_return);
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

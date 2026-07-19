@@ -1082,6 +1082,11 @@ private:
         if (!parsed_receiver_type.has_value()) {
             return {};
         }
+        if (method_name == "length" && arguments.empty() &&
+            source_type_base_name(receiver_type) == "DynamicArray" &&
+            parsed_receiver_type->generic_arguments.size() == 1) {
+            return "IntSize";
+        }
 
         for (auto const& signature : method_return_signatures_) {
             if (signature.method_name == method_name) {

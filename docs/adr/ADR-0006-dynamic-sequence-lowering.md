@@ -261,10 +261,14 @@ representation.
 - Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
   `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
   compilation continues to leave source Drop lowering disabled.
+- Production-gated `DynamicArray<T>.length()` now resolves semantically to `IntSize` and lowers by reloading the local
+  descriptor and projecting its length field. This is an internal descriptor read, not a runtime call; scalar lowering
+  now maps `IntSize`/`UIntSize` to pointer-width `i64` in the current target model, and pipeline smoke verifies append
+  followed by `length()` links/runs against the runtime and returns the initialized element count.
 
 ## Follow-up work
 
-- Implement the dynamic-array runtime entry points, construction lowering, and element cleanup lowering.
+- Implement element cleanup lowering for owned dynamic-array elements.
 - Enable `DynamicArray<T>` lowered signatures only after semantic ownership/drop analysis proves unique ownership,
   initialized length, capacity bounds, and deterministic cleanup.
 - Extend `for ... in` lowering to consume dynamic sequence descriptors after descriptor ABI support is in place.

@@ -382,6 +382,24 @@ auto inferred_expression_type(
         return lowered_type_for_source_type_name(*source_type, context.lowering);
     }
 
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::member_access &&
+        expression.left->left != nullptr &&
+        expression.left->left->kind == syntax::ExpressionKind::name &&
+        expression.left->text == "length" &&
+        expression.arguments.empty()) {
+        auto const& owner_name = expression.left->left->text;
+        auto source_type = state.source_type_names.find(owner_name);
+        if (source_type != state.source_type_names.end() &&
+            dynamic_array_element_source_type_name(source_type->second).has_value()) {
+            return LoweredType {
+                .type = "i64",
+                .signedness = IntegerSignedness::signed_integer,
+            };
+        }
+    }
+
     if (expression.kind == syntax::ExpressionKind::cast) {
         return lowered_type_for_source_type_name(expression.text, context.lowering);
     }
@@ -1789,6 +1807,58 @@ auto lower_dynamic_array_index_read(
     };
 }
 
+auto lower_dynamic_array_length_call(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (!context.options.enable_dynamic_array_length_lowering ||
+        expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::member_access ||
+        expression.left->left == nullptr ||
+        expression.left->left->kind != syntax::ExpressionKind::name ||
+        expression.left->text != "length" ||
+        !expression.arguments.empty() ||
+        expected_llvm_type != "i64" ||
+        expected_signedness != IntegerSignedness::signed_integer) {
+        return std::nullopt;
+    }
+
+    auto const& owner_name = expression.left->left->text;
+    auto source_type = session.state.source_type_names.find(owner_name);
+    if (source_type == session.state.source_type_names.end() ||
+        !dynamic_array_element_source_type_name(source_type->second).has_value()) {
+        return std::nullopt;
+    }
+
+    auto storage = aggregate_storage_for_name(owner_name, session.state);
+    if (!storage.has_value()) {
+        return std::nullopt;
+    }
+
+    auto prefix = "%" + owner_name + ".dynamic_array_length" +
+        std::to_string(session.state.next_temporary_index++);
+    output << emit_dynamic_array_descriptor_load(
+        prefix + ".descriptor",
+        *storage
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".value",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+
+    return LoweredExpression {
+        .type = "i64",
+        .value = prefix + ".value",
+        .signedness = IntegerSignedness::signed_integer,
+    };
+}
+
 auto emit_null_safe_empty_result(
     MaybeValueAbi const& result_abi,
     FunctionLoweringState& state,
@@ -2395,6 +2465,17 @@ auto lowered_expression(
             output
         )) {
         return dynamic_array_index_read;
+    }
+
+    if (auto dynamic_array_length_call = lower_dynamic_array_length_call(
+            expression,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        )) {
+        return dynamic_array_length_call;
     }
 
     if (auto null_safe_access = lower_null_safe_member_access_expression(
