@@ -189,6 +189,9 @@ representation.
 - Lowering and pipeline results now expose a metadata-only cleanup-emission capability report that lists each invariant
   as present or missing. This keeps blocked cleanup emission explainable while preserving the production-disabled
   boundary.
+- Function cleanup emission and LLVM/pipeline capability reporting now use the same cleanup-emission capability proof
+  helper, preventing the renderer gate and report from drifting as dynamic-array cleanup moves toward production
+  readiness.
 
 ## Follow-up work
 

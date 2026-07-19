@@ -36,28 +36,6 @@ auto can_emit_record_layout(syntax::RecordSyntax const& record, LoweredRecordLay
     return true;
 }
 
-auto dynamic_array_cleanup_action_authorized(
-    PlannedDropAction const& action,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
-) -> bool {
-    return std::ranges::any_of(authorizations, [&](auto const& authorization) {
-        return authorization.authorized &&
-            authorization.site.abi_symbol_name == action.symbol_name &&
-            authorization.site.source_type_name == action.source_type_name &&
-            authorization.site.owner_name == action.capture_name;
-    });
-}
-
-auto dynamic_array_cleanup_obligation_element_cleanup_authorized_or_not_required(
-    DynamicArrayCleanupObligation const& obligation,
-    std::vector<semantics::DropLoweringAuthorization> const& authorizations
-) -> bool {
-    return obligation.actions.empty() ||
-        std::ranges::all_of(obligation.actions, [&](auto const& action) {
-            return dynamic_array_cleanup_action_authorized(action, authorizations);
-        });
-}
-
 auto emit_record_layouts(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
@@ -531,30 +509,14 @@ auto LlvmIrEmitter::emit(
             result.dynamic_array_cleanup_sequence_plans
         );
         if (options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
-            result.dynamic_array_cleanup_emission_capability = DynamicArrayCleanupEmissionCapability {
-                .test_only_enabled = options.test_only_enable_dynamic_array_parameter_descriptors &&
+            result.dynamic_array_cleanup_emission_capability = prove_dynamic_array_cleanup_emission_capability(
+                options.test_only_enable_dynamic_array_parameter_descriptors &&
                     options.test_only_emit_bound_dynamic_array_parameter_cleanups,
-                .descriptor_storage_bound =
-                    std::ranges::all_of(result.dynamic_array_descriptor_cleanup_plans, [](auto const& plan) {
-                        return plan.descriptor_storage_status ==
-                                DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
-                            !plan.descriptor_storage_name.empty();
-                    }),
-                .sequence_verified = dynamic_array_cleanup_sequence_verification_report_passed(
-                    result.dynamic_array_cleanup_sequence_verifications
-                ),
-                .element_cleanup_authorized_or_not_required =
-                    std::ranges::all_of(result.dynamic_array_cleanup_obligations, [&](auto const& obligation) {
-                        return dynamic_array_cleanup_obligation_element_cleanup_authorized_or_not_required(
-                            obligation,
-                            result.semantic_drop_lowering_authorizations
-                        );
-                    }),
-                .descriptor_deallocation_authorized =
-                    std::ranges::all_of(result.dynamic_array_cleanup_obligations, [](auto const& obligation) {
-                        return obligation.requires_descriptor_deallocation;
-                    }),
-            };
+                result.dynamic_array_descriptor_cleanup_plans,
+                result.dynamic_array_cleanup_sequence_verifications,
+                result.dynamic_array_cleanup_obligations,
+                result.semantic_drop_lowering_authorizations
+            );
             for (auto const& plan : result.dynamic_array_descriptor_cleanup_plans) {
                 if (plan.descriptor_storage_status ==
                     DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor) {

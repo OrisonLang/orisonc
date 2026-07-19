@@ -151,6 +151,43 @@ auto authorized_element_drop_symbol_name(
     return action.symbol_name;
 }
 
+auto dynamic_array_cleanup_action_authorized(
+    PlannedDropAction const& action,
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+) -> bool {
+    return std::ranges::any_of(authorizations, [&](auto const& authorization) {
+        return authorization.authorized &&
+            authorization.site.abi_symbol_name == action.symbol_name &&
+            authorization.site.source_type_name == action.source_type_name &&
+            authorization.site.owner_name == action.capture_name;
+    });
+}
+
+auto synthetic_dynamic_array_parameter_cleanup_authorizations(
+    std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans
+) -> std::vector<semantics::DropLoweringAuthorization> {
+    auto authorizations = std::vector<semantics::DropLoweringAuthorization> {};
+    for (auto const& plan : plans) {
+        if (!plan.element_drop_symbol_name.has_value()) {
+            continue;
+        }
+        for (auto const& action : plan.sequence_plan.obligation.actions) {
+            authorizations.push_back(semantics::DropLoweringAuthorization {
+                .site = semantics::PlannedDropSite {
+                    .source_type_name = action.source_type_name,
+                    .abi_symbol_name = action.symbol_name,
+                    .owner_name = action.capture_name,
+                    .site_line = action.discovery_line,
+                },
+                .semantic_resolved = true,
+                .source_drop_lowering_enabled = true,
+                .authorized = true,
+            });
+        }
+    }
+    return authorizations;
+}
+
 }  // namespace
 
 auto plan_dynamic_array_descriptor_cleanup_obligation(
@@ -463,30 +500,59 @@ auto plan_bound_dynamic_array_parameter_cleanups(
     return plans;
 }
 
+auto prove_dynamic_array_cleanup_emission_capability(
+    bool test_only_enabled,
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plans,
+    std::vector<DynamicArrayCleanupSequenceVerification> const& sequence_verifications,
+    std::vector<DynamicArrayCleanupObligation> const& obligations,
+    std::vector<semantics::DropLoweringAuthorization> const& semantic_drop_lowering_authorizations
+) -> DynamicArrayCleanupEmissionCapability {
+    return DynamicArrayCleanupEmissionCapability {
+        .test_only_enabled = test_only_enabled,
+        .descriptor_storage_bound = std::ranges::all_of(descriptor_cleanup_plans, [](auto const& plan) {
+            return plan.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
+                !plan.descriptor_storage_name.empty();
+        }),
+        .sequence_verified = dynamic_array_cleanup_sequence_verification_report_passed(sequence_verifications),
+        .element_cleanup_authorized_or_not_required = std::ranges::all_of(obligations, [&](auto const& obligation) {
+            return obligation.actions.empty() ||
+                std::ranges::all_of(obligation.actions, [&](auto const& action) {
+                    return dynamic_array_cleanup_action_authorized(
+                        action,
+                        semantic_drop_lowering_authorizations
+                    );
+                });
+        }),
+        .descriptor_deallocation_authorized = std::ranges::all_of(obligations, [](auto const& obligation) {
+            return obligation.requires_descriptor_deallocation;
+        }),
+    };
+}
+
 auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
     LoweringEmissionContext const& context,
     std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans
 ) -> DynamicArrayCleanupEmissionCapability {
-    auto capability = DynamicArrayCleanupEmissionCapability {
-        .test_only_enabled = context.options.test_only_enable_dynamic_array_parameter_descriptors &&
+    auto descriptor_cleanup_plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
+    auto sequence_verifications = std::vector<DynamicArrayCleanupSequenceVerification> {};
+    auto obligations = std::vector<DynamicArrayCleanupObligation> {};
+    descriptor_cleanup_plans.reserve(plans.size());
+    sequence_verifications.reserve(plans.size());
+    obligations.reserve(plans.size());
+    for (auto const& plan : plans) {
+        descriptor_cleanup_plans.push_back(plan.descriptor_cleanup);
+        sequence_verifications.push_back(plan.sequence_verification);
+        obligations.push_back(plan.sequence_plan.obligation);
+    }
+    return prove_dynamic_array_cleanup_emission_capability(
+        context.options.test_only_enable_dynamic_array_parameter_descriptors &&
             context.options.test_only_emit_bound_dynamic_array_parameter_cleanups,
-        .descriptor_storage_bound = std::ranges::all_of(plans, [](auto const& plan) {
-            return plan.descriptor_cleanup.descriptor_storage_status ==
-                    DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
-                !plan.descriptor_cleanup.descriptor_storage_name.empty();
-        }),
-        .sequence_verified = std::ranges::all_of(plans, [](auto const& plan) {
-            return dynamic_array_cleanup_sequence_verification_passed(plan.sequence_verification);
-        }),
-        .element_cleanup_authorized_or_not_required = std::ranges::all_of(plans, [](auto const& plan) {
-            return is_scalar_or_nonowning_source_type(plan.descriptor_cleanup.element_source_type_name) ||
-                plan.element_drop_symbol_name.has_value();
-        }),
-        .descriptor_deallocation_authorized = std::ranges::all_of(plans, [](auto const& plan) {
-            return plan.sequence_plan.obligation.requires_descriptor_deallocation;
-        }),
-    };
-    return capability;
+        descriptor_cleanup_plans,
+        sequence_verifications,
+        obligations,
+        synthetic_dynamic_array_parameter_cleanup_authorizations(plans)
+    );
 }
 
 auto dynamic_array_cleanup_emission_capability_proven(

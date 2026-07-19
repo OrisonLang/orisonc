@@ -204,6 +204,15 @@ void test_authorizes_owned_element_cleanup() {
     );
     assert(capability.element_cleanup_authorized_or_not_required);
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
+    auto shared_capability = orison::lowering::prove_dynamic_array_cleanup_emission_capability(
+        true,
+        {plans->front().descriptor_cleanup},
+        {plans->front().sequence_verification},
+        {plans->front().sequence_plan.obligation},
+        context.options.semantic_drop_lowering_authorizations
+    );
+    assert(shared_capability.element_cleanup_authorized_or_not_required);
+    assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(shared_capability));
 
     auto output = std::ostringstream {};
     assert(orison::lowering::emit_bound_dynamic_array_parameter_cleanups(context, session, output));

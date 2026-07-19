@@ -125,6 +125,14 @@ auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
     std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans
 ) -> DynamicArrayCleanupEmissionCapability;
 
+auto prove_dynamic_array_cleanup_emission_capability(
+    bool test_only_enabled,
+    std::vector<DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plans,
+    std::vector<DynamicArrayCleanupSequenceVerification> const& sequence_verifications,
+    std::vector<DynamicArrayCleanupObligation> const& obligations,
+    std::vector<semantics::DropLoweringAuthorization> const& semantic_drop_lowering_authorizations
+) -> DynamicArrayCleanupEmissionCapability;
+
 auto dynamic_array_cleanup_emission_capability_proven(
     DynamicArrayCleanupEmissionCapability const& capability
 ) -> bool;
