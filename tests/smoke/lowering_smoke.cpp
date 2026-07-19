@@ -1022,8 +1022,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         source,
         orison::lowering::LlvmIrEmissionOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_cleanup_emission = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
         }
     );

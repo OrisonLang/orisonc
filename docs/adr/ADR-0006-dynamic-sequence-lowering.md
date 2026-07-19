@@ -223,6 +223,9 @@ representation.
   calls from internal construction plans. Until source construction placement is implemented, these calls remain
   observable artifacts outside module IR; runtime declarations and construction reports are still emitted from the
   requested operations.
+- The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
+  dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
+  compatibility alias for existing focused fixtures.
 - Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
   `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
   compilation continues to leave source Drop lowering disabled.

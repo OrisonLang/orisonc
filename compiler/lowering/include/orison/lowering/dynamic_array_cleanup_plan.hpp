@@ -38,7 +38,7 @@ struct BoundDynamicArrayParameterCleanupPlan {
 };
 
 struct DynamicArrayCleanupEmissionCapability {
-    bool test_only_enabled = false;
+    bool emission_enabled = false;
     bool descriptor_storage_bound = false;
     bool sequence_verified = false;
     bool element_cleanup_authorized_or_not_required = false;
@@ -126,7 +126,7 @@ auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
 ) -> DynamicArrayCleanupEmissionCapability;
 
 auto prove_dynamic_array_cleanup_emission_capability(
-    bool test_only_enabled,
+    bool emission_enabled,
     std::vector<DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plans,
     std::vector<DynamicArrayCleanupSequenceVerification> const& sequence_verifications,
     std::vector<DynamicArrayCleanupObligation> const& obligations,

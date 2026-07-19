@@ -707,7 +707,6 @@ auto main() -> int {
                 },
             },
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_production_signature_lowering_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,

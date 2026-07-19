@@ -436,7 +436,7 @@ auto plan_bound_dynamic_array_parameter_cleanups(
 ) -> std::optional<std::vector<BoundDynamicArrayParameterCleanupPlan>> {
     auto plans = std::vector<BoundDynamicArrayParameterCleanupPlan> {};
     if (!dynamic_array_parameter_descriptors_enabled(context.options) ||
-        !context.options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
+        !dynamic_array_cleanup_emission_enabled(context.options)) {
         return plans;
     }
 
@@ -501,14 +501,14 @@ auto plan_bound_dynamic_array_parameter_cleanups(
 }
 
 auto prove_dynamic_array_cleanup_emission_capability(
-    bool test_only_enabled,
+    bool emission_enabled,
     std::vector<DynamicArrayDescriptorCleanupPlan> const& descriptor_cleanup_plans,
     std::vector<DynamicArrayCleanupSequenceVerification> const& sequence_verifications,
     std::vector<DynamicArrayCleanupObligation> const& obligations,
     std::vector<semantics::DropLoweringAuthorization> const& semantic_drop_lowering_authorizations
 ) -> DynamicArrayCleanupEmissionCapability {
     return DynamicArrayCleanupEmissionCapability {
-        .test_only_enabled = test_only_enabled,
+        .emission_enabled = emission_enabled,
         .descriptor_storage_bound = std::ranges::all_of(descriptor_cleanup_plans, [](auto const& plan) {
             return plan.descriptor_storage_status ==
                     DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor &&
@@ -547,7 +547,7 @@ auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
     }
     return prove_dynamic_array_cleanup_emission_capability(
         dynamic_array_parameter_descriptors_enabled(context.options) &&
-            context.options.test_only_emit_bound_dynamic_array_parameter_cleanups,
+            dynamic_array_cleanup_emission_enabled(context.options),
         descriptor_cleanup_plans,
         sequence_verifications,
         obligations,
@@ -558,7 +558,7 @@ auto prove_bound_dynamic_array_parameter_cleanup_emission_capability(
 auto dynamic_array_cleanup_emission_capability_proven(
     DynamicArrayCleanupEmissionCapability const& capability
 ) -> bool {
-    return capability.test_only_enabled &&
+    return capability.emission_enabled &&
         capability.descriptor_storage_bound &&
         capability.sequence_verified &&
         capability.element_cleanup_authorized_or_not_required &&
@@ -574,7 +574,7 @@ auto format_dynamic_array_cleanup_emission_capability(
     auto output = std::ostringstream {};
     output << "dynamic array cleanup emission capability ";
     output << (dynamic_array_cleanup_emission_capability_proven(capability) ? "proven" : "blocked");
-    output << " [test-only " << status(capability.test_only_enabled) << "]";
+    output << " [emission " << status(capability.emission_enabled) << "]";
     output << " [descriptor storage " << status(capability.descriptor_storage_bound) << "]";
     output << " [sequence verification " << status(capability.sequence_verified) << "]";
     output << " [element cleanup " << status(capability.element_cleanup_authorized_or_not_required) << "]";

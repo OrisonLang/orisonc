@@ -508,10 +508,10 @@ auto LlvmIrEmitter::emit(
         result.dynamic_array_cleanup_sequence_verifications = verify_dynamic_array_cleanup_sequence_plans(
             result.dynamic_array_cleanup_sequence_plans
         );
-        if (options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
+        if (dynamic_array_cleanup_emission_enabled(options)) {
             result.dynamic_array_cleanup_emission_capability = prove_dynamic_array_cleanup_emission_capability(
                 dynamic_array_parameter_descriptors_enabled(options) &&
-                    options.test_only_emit_bound_dynamic_array_parameter_cleanups,
+                    dynamic_array_cleanup_emission_enabled(options),
                 result.dynamic_array_descriptor_cleanup_plans,
                 result.dynamic_array_cleanup_sequence_verifications,
                 result.dynamic_array_cleanup_obligations,
@@ -529,7 +529,7 @@ auto LlvmIrEmitter::emit(
         }
     }
     if (options.test_only_render_dynamic_array_element_drop_walks ||
-        options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
+        dynamic_array_cleanup_emission_enabled(options)) {
         auto dynamic_array_drop_cleanups =
             collect_dynamic_array_element_drop_cleanups(
                 result.dynamic_array_construction_plans,

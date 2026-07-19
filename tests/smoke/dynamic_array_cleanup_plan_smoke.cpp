@@ -62,8 +62,8 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
         .lowering = lowering,
         .string_constants = strings,
         .options = orison::lowering::LlvmIrEmissionOptions {
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_cleanup_emission = true,
         },
     };
 
@@ -86,7 +86,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
         context,
         *plans
     );
-    assert(capability.test_only_enabled);
+    assert(capability.emission_enabled);
     assert(capability.descriptor_storage_bound);
     assert(capability.sequence_verified);
     assert(capability.element_cleanup_authorized_or_not_required);
@@ -94,7 +94,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
-        "dynamic array cleanup emission capability proven [test-only ok] [descriptor storage ok] "
+        "dynamic array cleanup emission capability proven [emission ok] [descriptor storage ok] "
         "[sequence verification ok] [element cleanup ok] [descriptor deallocation ok] (metadata only)"
     );
 
@@ -120,7 +120,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability) ==
-        "dynamic array cleanup emission capability blocked [test-only ok] [descriptor storage ok] "
+        "dynamic array cleanup emission capability blocked [emission ok] [descriptor storage ok] "
         "[sequence verification missing] [element cleanup ok] [descriptor deallocation ok] (metadata only)"
     );
     auto blocked_output = std::ostringstream {};

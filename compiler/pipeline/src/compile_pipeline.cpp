@@ -251,6 +251,8 @@ auto CompilePipeline::emit_llvm(
         options.dynamic_array_production_construction_lowering_enabled;
     emission_options.test_only_emit_bound_dynamic_array_parameter_cleanups =
         options.test_only_emit_bound_dynamic_array_parameter_cleanups;
+    emission_options.enable_dynamic_array_cleanup_emission =
+        options.dynamic_array_production_cleanup_emission_enabled;
     emission_options.test_only_render_dynamic_array_element_drop_walks =
         options.test_only_render_dynamic_array_element_drop_walks;
     auto emission = emitter.emit(result.parse_result.module, result.semantic_result, emission_options);
