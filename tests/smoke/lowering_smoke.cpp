@@ -1622,6 +1622,83 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(cleanup_call != std::string::npos);
     assert(return_instruction != std::string::npos);
     assert(cleanup_call < return_instruction);
+
+    auto production_parameter_length = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "function use_words(words: DynamicArray<UInt32>) -> IntSize\n"
+        "    words.length()\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_length_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!production_parameter_length.has_errors());
+    assert_ir_contains(production_parameter_length, "define i64 @use_words({ ptr, i64, i64 } %words)");
+    assert_ir_contains(
+        production_parameter_length,
+        "  %words.dynamic_array_length0.descriptor = load { ptr, i64, i64 }, ptr %words.addr\n"
+    );
+    assert_ir_contains(
+        production_parameter_length,
+        "  %words.dynamic_array_length0.value = extractvalue { ptr, i64, i64 } "
+        "%words.dynamic_array_length0.descriptor, 1\n"
+    );
+    auto parameter_length_load =
+        production_parameter_length.ir_text.find("%words.dynamic_array_length0.value = extractvalue");
+    auto parameter_length_cleanup =
+        production_parameter_length.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto parameter_length_return =
+        production_parameter_length.ir_text.find("ret i64 %words.dynamic_array_length0.value");
+    assert(parameter_length_load != std::string::npos);
+    assert(parameter_length_cleanup != std::string::npos);
+    assert(parameter_length_return != std::string::npos);
+    assert(parameter_length_load < parameter_length_cleanup);
+    assert(parameter_length_cleanup < parameter_length_return);
+
+    auto production_parameter_index = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "function use_words(words: DynamicArray<UInt32>) -> UInt32\n"
+        "    words[0]\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_index_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!production_parameter_index.has_errors());
+    assert_ir_contains(production_parameter_index, "define i32 @use_words({ ptr, i64, i64 } %words)");
+    assert_ir_contains(
+        production_parameter_index,
+        "  %words.dynamic_array_index0.descriptor = load { ptr, i64, i64 }, ptr %words.addr\n"
+    );
+    assert_ir_contains(
+        production_parameter_index,
+        "  %words.dynamic_array_index0.in_bounds = icmp ult i64 0, %words.dynamic_array_index0.length\n"
+    );
+    assert_ir_contains(
+        production_parameter_index,
+        "  %words.dynamic_array_index0.value = load i32, ptr %words.dynamic_array_index0.element.addr\n"
+    );
+    auto parameter_index_load =
+        production_parameter_index.ir_text.find("%words.dynamic_array_index0.value = load i32");
+    auto parameter_index_cleanup =
+        production_parameter_index.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto parameter_index_return =
+        production_parameter_index.ir_text.find("ret i32 %words.dynamic_array_index0.value");
+    assert(parameter_index_load != std::string::npos);
+    assert(parameter_index_cleanup != std::string::npos);
+    assert(parameter_index_return != std::string::npos);
+    assert(parameter_index_load < parameter_index_cleanup);
+    assert(parameter_index_cleanup < parameter_index_return);
 }
 
 void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {

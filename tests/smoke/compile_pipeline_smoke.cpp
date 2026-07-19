@@ -479,6 +479,85 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto scalar_dynamic_array_parameter_length_path =
+        smoke_temp_root / "orison_pipeline_scalar_dynamic_array_parameter_length.or";
+    {
+        auto parameter_length_source = std::ofstream(scalar_dynamic_array_parameter_length_path);
+        parameter_length_source
+            << "package demo.pipeline.dynamicarrayparameterlength\n"
+            << "\n"
+            << "function use_words(words: DynamicArray<UInt32>) -> IntSize\n"
+            << "    words.length()\n";
+    }
+    auto scalar_dynamic_array_parameter_length = pipeline.emit_llvm(
+        scalar_dynamic_array_parameter_length_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_production_length_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!scalar_dynamic_array_parameter_length.has_errors());
+    assert(
+        scalar_dynamic_array_parameter_length.ir_text.find(
+            "define i64 @use_words({ ptr, i64, i64 } %words)"
+        ) != std::string::npos
+    );
+    assert(
+        scalar_dynamic_array_parameter_length.ir_text.find(
+            "%words.dynamic_array_length0.value = extractvalue { ptr, i64, i64 } "
+            "%words.dynamic_array_length0.descriptor, 1"
+        ) != std::string::npos
+    );
+    assert(
+        scalar_dynamic_array_parameter_length.ir_text.find(
+            "ret i64 %words.dynamic_array_length0.value"
+        ) != std::string::npos
+    );
+
+    auto scalar_dynamic_array_parameter_index_path =
+        smoke_temp_root / "orison_pipeline_scalar_dynamic_array_parameter_index.or";
+    {
+        auto parameter_index_source = std::ofstream(scalar_dynamic_array_parameter_index_path);
+        parameter_index_source
+            << "package demo.pipeline.dynamicarrayparameterindex\n"
+            << "\n"
+            << "function use_words(words: DynamicArray<UInt32>) -> UInt32\n"
+            << "    words[0]\n";
+    }
+    auto scalar_dynamic_array_parameter_index = pipeline.emit_llvm(
+        scalar_dynamic_array_parameter_index_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_production_index_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!scalar_dynamic_array_parameter_index.has_errors());
+    assert(scalar_dynamic_array_parameter_index.dynamic_array_runtime_request_report.size() == 2);
+    assert_line_contains(
+        scalar_dynamic_array_parameter_index.dynamic_array_runtime_request_report,
+        0,
+        "__orison_dynamic_array_bounds_failed"
+    );
+    assert(
+        scalar_dynamic_array_parameter_index.ir_text.find(
+            "define i32 @use_words({ ptr, i64, i64 } %words)"
+        ) != std::string::npos
+    );
+    assert(
+        scalar_dynamic_array_parameter_index.ir_text.find(
+            "%words.dynamic_array_index0.in_bounds = icmp ult i64 0, %words.dynamic_array_index0.length"
+        ) != std::string::npos
+    );
+    assert(
+        scalar_dynamic_array_parameter_index.ir_text.find(
+            "ret i32 %words.dynamic_array_index0.value"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_blocked_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

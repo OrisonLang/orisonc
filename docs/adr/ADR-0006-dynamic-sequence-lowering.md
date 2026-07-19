@@ -277,6 +277,11 @@ representation.
   `DynamicArray<UInt32>` parameters lower to `{ ptr, i64, i64 }` and can emit descriptor cleanup under the production
   signature/cleanup gates, while owned-element parameters such as `DynamicArray<Payload>` remain rejected unless the
   explicit test-only descriptor seam is used for internal cleanup-readiness coverage.
+- Production-gated scalar/non-owning dynamic-array parameter reads are now pinned: descriptor parameters are spilled to
+  `%name.addr`, `.length()` reloads and projects the length field, and `items[index]` emits the same finite
+  bounds-check/data-projection/element-load sequence used by local descriptors before descriptor cleanup. Runtime
+  prelude collection now detects parameter-only dynamic-array index reads so `__orison_dynamic_array_bounds_failed()`
+  is declared even when no source construction plan exists.
 
 ## Follow-up work
 

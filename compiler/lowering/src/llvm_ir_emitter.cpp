@@ -200,6 +200,95 @@ auto is_dynamic_array_source_type(syntax::TypeSyntax const& type) -> bool {
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
 }
 
+void collect_dynamic_array_owner_names(
+    syntax::StatementSyntax const& statement,
+    std::unordered_set<std::string>& owner_names
+) {
+    if ((statement.kind == syntax::StatementKind::let_binding ||
+         statement.kind == syntax::StatementKind::var_binding) &&
+        !statement.name.empty() &&
+        !statement.annotated_type.name.empty() &&
+        is_dynamic_array_source_type(statement.annotated_type)) {
+        owner_names.insert(statement.name);
+    }
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_dynamic_array_owner_names(nested_statement, owner_names);
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_dynamic_array_owner_names(alternate_statement, owner_names);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_dynamic_array_owner_names(*case_statement, owner_names);
+            }
+        }
+    }
+}
+
+auto has_dynamic_array_index_read(
+    syntax::FunctionSyntax const& function
+) -> bool {
+    auto owner_names = std::unordered_set<std::string> {};
+    for (auto const& parameter : function.parameters) {
+        if (!parameter.name.empty() && is_dynamic_array_source_type(parameter.type)) {
+            owner_names.insert(parameter.name);
+        }
+    }
+    for (auto const& statement : function.body_statements) {
+        collect_dynamic_array_owner_names(statement, owner_names);
+    }
+    if (owner_names.empty()) {
+        return false;
+    }
+
+    auto found = false;
+    walk_function_expressions(function, [&owner_names, &found](syntax::ExpressionSyntax const& expression) {
+        if (found ||
+            expression.kind != syntax::ExpressionKind::index_access ||
+            expression.left == nullptr ||
+            expression.left->kind != syntax::ExpressionKind::name) {
+            return;
+        }
+        found = owner_names.contains(expression.left->text);
+    });
+    return found;
+}
+
+auto has_dynamic_array_index_read(
+    syntax::ModuleSyntax const& module
+) -> bool {
+    for (auto const& function : module.functions) {
+        if (has_dynamic_array_index_read(function)) {
+            return true;
+        }
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            if (has_dynamic_array_index_read(method)) {
+                return true;
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            if (has_dynamic_array_index_read(method)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void push_dynamic_array_runtime_operation_once(
+    std::vector<DynamicArrayRuntimeOperation>& operations,
+    DynamicArrayRuntimeOperation operation
+) {
+    if (std::ranges::find(operations, operation) == operations.end()) {
+        operations.push_back(operation);
+    }
+}
+
 void collect_source_dynamic_array_construction_plans(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
@@ -315,14 +404,17 @@ auto collect_dynamic_array_runtime_operations(
             operations.push_back(plans[index].operation);
         }
         if (options.enable_dynamic_array_index_lowering && source_plan_offset < plans.size()) {
-            operations.push_back(DynamicArrayRuntimeOperation::bounds_failed);
+            push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
         }
         if (options.enable_dynamic_array_append_lowering && source_plan_offset < plans.size()) {
-            operations.push_back(DynamicArrayRuntimeOperation::grow);
+            push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::grow);
         }
         if (dynamic_array_cleanup_emission_enabled(options) && source_plan_offset < plans.size()) {
-            operations.push_back(DynamicArrayRuntimeOperation::deallocate);
+            push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
         }
+    }
+    if (options.enable_dynamic_array_index_lowering && has_dynamic_array_index_read(module)) {
+        push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
     }
     for (auto const& request : options.test_only_dynamic_array_construction_requests) {
         auto plan = plan_dynamic_array_construction(
@@ -335,15 +427,15 @@ auto collect_dynamic_array_runtime_operations(
             continue;
         }
         plan->owner_name = request.owner_name;
-        operations.push_back(plan->operation);
+        push_dynamic_array_runtime_operation_once(operations, plan->operation);
         if (options.test_only_render_dynamic_array_grow_calls ||
             options.test_only_render_dynamic_array_grow_sequences ||
             options.test_only_render_dynamic_array_append_with_grow_sequences) {
-            operations.push_back(DynamicArrayRuntimeOperation::grow);
+            push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::grow);
         }
         if (options.test_only_render_dynamic_array_deallocation_calls ||
             options.test_only_render_dynamic_array_cleanup_sequences) {
-            operations.push_back(DynamicArrayRuntimeOperation::deallocate);
+            push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
         }
         plans.push_back(std::move(*plan));
     }
