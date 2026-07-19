@@ -265,10 +265,15 @@ representation.
   descriptor and projecting its length field. This is an internal descriptor read, not a runtime call; scalar lowering
   now maps `IntSize`/`UIntSize` to pointer-width `i64` in the current target model, and pipeline smoke verifies append
   followed by `length()` links/runs against the runtime and returns the initialized element count.
+- Production-gated `for item in items` now lowers for named local `DynamicArray<T>` descriptors. The loop loads the
+  descriptor once, projects data and length, emits a runtime `index < length` loop, loads each initialized element into
+  the loop binding, and reuses the existing `break`/`continue` targets. Dynamic-array parameter, view, and computed
+  iterable lowering remain separate work.
 
 ## Follow-up work
 
 - Implement element cleanup lowering for owned dynamic-array elements.
 - Enable `DynamicArray<T>` lowered signatures only after semantic ownership/drop analysis proves unique ownership,
   initialized length, capacity bounds, and deterministic cleanup.
-- Extend `for ... in` lowering to consume dynamic sequence descriptors after descriptor ABI support is in place.
+- Extend `for ... in` lowering beyond named local dynamic-array descriptors to consume view descriptors, dynamic-array
+  parameters, and computed dynamic iterables.

@@ -3,6 +3,7 @@
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
@@ -34,6 +35,156 @@ auto plan_for_loop_blocks(FunctionLoweringState& state, std::size_t iteration_co
 
 auto next_for_iteration_target(ForLoopBlockPlan const& plan, std::size_t index)
     -> std::string const&;
+
+template <typename LowerBody>
+auto lower_dynamic_array_for_statement(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    LowerBody&& lower_body
+) -> StatementFlow {
+    if (!context.options.enable_dynamic_array_for_lowering ||
+        statement.expression.kind != syntax::ExpressionKind::name) {
+        diagnostics.error(
+            statement.line,
+            "lowering dynamic-array for statements currently requires a named local DynamicArray iterable"
+        );
+        return StatementFlow::failed;
+    }
+
+    auto const& owner_name = statement.expression.text;
+    auto source_type = session.state.source_type_names.find(owner_name);
+    if (source_type == session.state.source_type_names.end()) {
+        diagnostics.error(
+            statement.line,
+            "lowering dynamic-array for statements currently requires a named local DynamicArray iterable"
+        );
+        return StatementFlow::failed;
+    }
+
+    auto element_source_type_name = dynamic_array_element_source_type_name(source_type->second);
+    if (!element_source_type_name.has_value()) {
+        diagnostics.error(
+            statement.line,
+            "lowering dynamic-array for statements currently requires a DynamicArray iterable"
+        );
+        return StatementFlow::failed;
+    }
+
+    auto element_type = lowered_type_for_source_type_name(*element_source_type_name, context.lowering);
+    if (!element_type.has_value()) {
+        diagnostics.error(
+            statement.line,
+            "lowering dynamic-array for statements currently requires a lowerable element type"
+        );
+        return StatementFlow::failed;
+    }
+
+    auto storage = aggregate_storage_for_name(owner_name, session.state);
+    if (!storage.has_value()) {
+        diagnostics.error(
+            statement.line,
+            "lowering dynamic-array for statements currently requires local descriptor storage"
+        );
+        return StatementFlow::failed;
+    }
+
+    auto plan = plan_dynamic_array_descriptor_cleanup(
+        owner_name,
+        source_type->second,
+        context.lowering
+    );
+    if (!plan.has_value()) {
+        diagnostics.error(
+            statement.line,
+            "lowering dynamic-array for statements currently requires descriptor metadata"
+        );
+        return StatementFlow::failed;
+    }
+
+    auto prefix = "%" + owner_name + ".dynamic_array_for" +
+        std::to_string(session.state.next_temporary_index++);
+    auto incoming_block = session.state.current_block;
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto condition_block = llvm_block_name("for.condition", block_index);
+    auto body_block = llvm_block_name("for.body", block_index);
+    auto continue_block = llvm_block_name("for.continue", block_index);
+    auto exit_block = llvm_block_name("for.exit", block_index);
+
+    output << emit_dynamic_array_descriptor_load(prefix + ".descriptor", *storage);
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".data",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".length",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    emit_llvm_branch(output, condition_block);
+
+    emit_llvm_block_label(output, condition_block);
+    session.state.current_block = condition_block;
+    output << "  " << prefix << ".index = phi i64 [ 0, %" << incoming_block << " ], [ "
+           << prefix << ".next.index, %" << continue_block << " ]\n";
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".more",
+        prefix + ".index",
+        prefix + ".length",
+        DynamicArrayBoundsCheckKind::index_within_length
+    );
+    emit_llvm_conditional_branch(output, prefix + ".more", body_block, exit_block);
+
+    auto loop_scope = BranchBindingScope(session.state);
+    emit_llvm_block_label(output, body_block);
+    session.state.current_block = body_block;
+    output << emit_dynamic_array_element_address(
+        *plan,
+        prefix + ".element.addr",
+        prefix + ".data",
+        prefix + ".index"
+    );
+    output << "  " << prefix << ".value = load " << plan->element_llvm_type;
+    output << ", ptr " << prefix << ".element.addr\n";
+    session.state.immutable_bindings[statement.name] = LoweredExpression {
+        .type = element_type->type,
+        .value = prefix + ".value",
+        .signedness = element_type->signedness,
+    };
+    session.state.source_type_names[statement.name] = *element_source_type_name;
+    bind_addressable_aggregate_value(
+        statement.name,
+        session.state.immutable_bindings.at(statement.name),
+        session,
+        output
+    );
+
+    auto loop_targets = LoopTargets {
+        .break_target = exit_block,
+        .continue_target = continue_block,
+        .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
+    };
+    [[maybe_unused]] auto target_scope = LoopTargetScope {session.state, std::move(loop_targets)};
+    auto body_flow = lower_body();
+    if (body_flow == StatementFlow::failed) {
+        return StatementFlow::failed;
+    }
+    if (body_flow == StatementFlow::falls_through) {
+        emit_llvm_branch(output, continue_block);
+    }
+
+    emit_llvm_block_label(output, continue_block);
+    session.state.current_block = continue_block;
+    output << "  " << prefix << ".next.index = add i64 " << prefix << ".index, 1\n";
+    emit_llvm_branch(output, condition_block);
+
+    emit_llvm_block_label(output, exit_block);
+    session.state.current_block = exit_block;
+    return StatementFlow::falls_through;
+}
 
 template <typename LowerBody>
 auto lower_fixed_array_for_statement(

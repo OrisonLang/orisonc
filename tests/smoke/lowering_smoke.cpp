@@ -1049,6 +1049,99 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(append_length_descriptor_reload < append_length_value);
     assert(append_length_value < append_length_cleanup);
     assert(append_length_cleanup < append_length_return);
+
+    auto placed_source_append_for = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    var total = 0 as UInt32\n"
+        "    items.push(7 as UInt32)\n"
+        "    items.push(9 as UInt32)\n"
+        "    for item in items\n"
+        "        total = total + item\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_append_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!placed_source_append_for.has_errors());
+    assert(placed_source_append_for.dynamic_array_runtime_operations.size() == 3);
+    assert_ir_contains(
+        placed_source_append_for,
+        "  %items.dynamic_array_for2.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_append_for,
+        "for.condition.2:\n"
+        "  %items.dynamic_array_for2.index = phi i64 [ 0, %dynamic_array.append.ready.1 ], "
+        "[ %items.dynamic_array_for2.next.index, %for.continue.2 ]\n"
+    );
+    assert_ir_contains(
+        placed_source_append_for,
+        "  %items.dynamic_array_for2.more = icmp ult i64 %items.dynamic_array_for2.index, "
+        "%items.dynamic_array_for2.length\n"
+    );
+    assert_ir_contains(
+        placed_source_append_for,
+        "  %items.dynamic_array_for2.element.addr = getelementptr i32, ptr %items.dynamic_array_for2.data, "
+        "i64 %items.dynamic_array_for2.index\n"
+    );
+    assert_ir_contains(
+        placed_source_append_for,
+        "  %items.dynamic_array_for2.value = load i32, ptr %items.dynamic_array_for2.element.addr\n"
+    );
+    auto for_descriptor = placed_source_append_for.ir_text.find("%items.dynamic_array_for2.descriptor");
+    auto for_condition = placed_source_append_for.ir_text.find("for.condition.2:");
+    auto for_load = placed_source_append_for.ir_text.find("%items.dynamic_array_for2.value = load i32");
+    auto for_continue = placed_source_append_for.ir_text.find("for.continue.2:");
+    auto for_cleanup = placed_source_append_for.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto for_return = placed_source_append_for.ir_text.find("ret i32 %tmp");
+    assert(for_descriptor != std::string::npos);
+    assert(for_condition != std::string::npos);
+    assert(for_load != std::string::npos);
+    assert(for_continue != std::string::npos);
+    assert(for_cleanup != std::string::npos);
+    assert(for_return != std::string::npos);
+    assert(for_descriptor < for_condition);
+    assert(for_condition < for_load);
+    assert(for_load < for_continue);
+    assert(for_continue < for_cleanup);
+    assert(for_cleanup < for_return);
+
+    auto placed_source_while_append_for = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    var total = 0 as UInt32\n"
+        "    items.push(4 as UInt32)\n"
+        "    while total < 1 as UInt32\n"
+        "        for item in items\n"
+        "            total = total + item\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_append_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!placed_source_while_append_for.has_errors());
+    assert(placed_source_while_append_for.ir_text.find("while.condition.") != std::string::npos);
+    assert(placed_source_while_append_for.ir_text.find("for.condition.") != std::string::npos);
+    assert(
+        placed_source_while_append_for.ir_text.find(
+            "getelementptr i32, ptr %items.dynamic_array_for"
+        ) != std::string::npos
+    );
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

@@ -1077,6 +1077,54 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_append_length_status));
     assert(WEXITSTATUS(dynamic_array_append_length_status) == 1);
 
+    auto dynamic_array_append_for_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_append_for.or";
+    {
+        auto append_for_source = std::ofstream(dynamic_array_append_for_path);
+        append_for_source
+            << "package demo.pipeline.dynamicarrayappendfor\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    var total = 0 as UInt32\n"
+            << "    items.push(7 as UInt32)\n"
+            << "    items.push(9 as UInt32)\n"
+            << "    for item in items\n"
+            << "        total = total + item\n"
+            << "    total\n";
+    }
+    auto dynamic_array_append_for = pipeline.emit_llvm(
+        dynamic_array_append_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+            .dynamic_array_production_append_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!dynamic_array_append_for.has_errors());
+    assert(dynamic_array_append_for.dynamic_array_runtime_request_report.size() == 3);
+    assert(dynamic_array_append_for.ir_text.find("for.condition.") != std::string::npos);
+    assert(dynamic_array_append_for.ir_text.find("for.continue.") != std::string::npos);
+    assert(
+        dynamic_array_append_for.ir_text.find(
+            "getelementptr i32, ptr %items.dynamic_array_for2.data, i64 %items.dynamic_array_for2.index"
+        ) != std::string::npos
+    );
+    assert(dynamic_array_append_for.ir_text.find("__orison_dynamic_array_bounds_failed") == std::string::npos);
+    auto dynamic_array_append_for_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(dynamic_array_append_for.ir_text);
+    assert(!dynamic_array_append_for_object.has_errors());
+    auto dynamic_array_append_for_executable = smoke_temp_root / "dynamic_array_append_for";
+    auto dynamic_array_append_for_link = orison::link::HostLinker {}.link(
+        dynamic_array_append_for_object.object_bytes,
+        dynamic_array_append_for_executable
+    );
+    assert(!dynamic_array_append_for_link.has_errors());
+    auto dynamic_array_append_for_status = std::system(dynamic_array_append_for_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_append_for_status));
+    assert(WEXITSTATUS(dynamic_array_append_for_status) == 16);
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

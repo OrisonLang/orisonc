@@ -253,6 +253,8 @@ auto CompilePipeline::emit_llvm(
         options.dynamic_array_production_index_lowering_enabled;
     emission_options.enable_dynamic_array_length_lowering =
         options.dynamic_array_production_length_lowering_enabled;
+    emission_options.enable_dynamic_array_for_lowering =
+        options.dynamic_array_production_for_lowering_enabled;
     emission_options.enable_dynamic_array_append_lowering =
         options.dynamic_array_production_append_lowering_enabled;
     emission_options.test_only_emit_bound_dynamic_array_parameter_cleanups =

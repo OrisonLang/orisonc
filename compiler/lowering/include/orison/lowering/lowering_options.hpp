@@ -24,6 +24,7 @@ struct LlvmIrEmissionOptions {
     bool enable_dynamic_array_construction_lowering = false;
     bool enable_dynamic_array_index_lowering = false;
     bool enable_dynamic_array_length_lowering = false;
+    bool enable_dynamic_array_for_lowering = false;
     bool enable_dynamic_array_append_lowering = false;
     bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
     bool enable_dynamic_array_cleanup_emission = false;

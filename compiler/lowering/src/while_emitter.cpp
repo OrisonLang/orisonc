@@ -144,6 +144,28 @@ auto lower_while_body_for(
     std::ostringstream& output
 ) -> StatementFlow {
     if (statement.expression.kind != syntax::ExpressionKind::array_literal) {
+        auto source_type_name =
+            source_type_name_for_expression(statement.expression, context.lowering, session.state);
+        if (source_type_name.has_value() &&
+            dynamic_array_element_source_type_name(*source_type_name).has_value() &&
+            context.options.enable_dynamic_array_for_lowering) {
+            return lower_dynamic_array_for_statement(
+                statement,
+                context,
+                session,
+                diagnostics,
+                output,
+                [&]() {
+                    return lower_while_body_block(
+                        statement.nested_statements,
+                        context,
+                        session,
+                        diagnostics,
+                        output
+                    );
+                }
+            );
+        }
         return lower_fixed_array_for_statement(
             statement,
             context,
