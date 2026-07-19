@@ -192,6 +192,9 @@ representation.
 - Function cleanup emission and LLVM/pipeline capability reporting now use the same cleanup-emission capability proof
   helper, preventing the renderer gate and report from drifting as dynamic-array cleanup moves toward production
   readiness.
+- Pipeline smoke coverage now pins the blocked capability-report path for requested owned-element dynamic-array cleanup
+  without semantic drop authorization: the report identifies missing element cleanup and no owned-element drop call is
+  emitted.
 
 ## Follow-up work
 

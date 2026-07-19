@@ -426,6 +426,33 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto dynamic_array_blocked_owned_cleanup = pipeline.emit_llvm(
+        dynamic_array_source_owner_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+        }
+    );
+    assert(!dynamic_array_blocked_owned_cleanup.has_errors());
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_report,
+        0,
+        "capability blocked"
+    );
+    assert_line_contains(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_report,
+        0,
+        "[element cleanup missing]"
+    );
+    assert(dynamic_array_blocked_owned_cleanup.drop_readiness_summary.cleanup_authorized == 0);
+    assert(dynamic_array_blocked_owned_cleanup.drop_readiness_summary.cleanup_blocked == 1);
+    assert(
+        dynamic_array_blocked_owned_cleanup.ir_text.find("call void @__orison_drop.Payload") ==
+        std::string::npos
+    );
+
     auto dynamic_array_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
