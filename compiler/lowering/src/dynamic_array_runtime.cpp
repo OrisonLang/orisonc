@@ -73,6 +73,12 @@ auto dynamic_array_runtime_call(
             .return_type = "void",
             .parameter_types = {"ptr", "i64", "i64"},
         };
+    case DynamicArrayRuntimeOperation::bounds_failed:
+        return DynamicArrayRuntimeCall {
+            .symbol_name = "__orison_dynamic_array_bounds_failed",
+            .return_type = "void",
+            .parameter_types = {},
+        };
     }
     return {};
 }

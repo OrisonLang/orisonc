@@ -828,6 +828,16 @@ auto main() -> int {
         }
     );
     assert(!dynamic_array_local_index.has_errors());
+    assert(dynamic_array_local_index.dynamic_array_runtime_request_report.size() == 3);
+    assert_line_contains(
+        dynamic_array_local_index.dynamic_array_runtime_request_report,
+        1,
+        "__orison_dynamic_array_bounds_failed"
+    );
+    assert(
+        dynamic_array_local_index.ir_text.find("declare void @__orison_dynamic_array_bounds_failed()") !=
+        std::string::npos
+    );
     assert(
         dynamic_array_local_index.ir_text.find(
             "  %items.dynamic_array_index0.in_bounds = icmp ult i64 0, %items.dynamic_array_index0.length\n"
@@ -842,6 +852,7 @@ auto main() -> int {
     assert(
         dynamic_array_local_index.ir_text.find(
             "dynamic_array.index.out_of_bounds.0:\n"
+            "  call void @__orison_dynamic_array_bounds_failed()\n"
             "  unreachable\n"
             "dynamic_array.index.in_bounds.0:\n"
         ) != std::string::npos

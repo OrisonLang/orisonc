@@ -16,6 +16,7 @@ enum class DynamicArrayRuntimeOperation {
     allocate,
     grow,
     deallocate,
+    bounds_failed,
 };
 
 enum class DynamicArrayDescriptorField {

@@ -309,6 +309,9 @@ auto collect_dynamic_array_runtime_operations(
         for (auto index = source_plan_offset; index < plans.size(); ++index) {
             operations.push_back(plans[index].operation);
         }
+        if (options.enable_dynamic_array_index_lowering && source_plan_offset < plans.size()) {
+            operations.push_back(DynamicArrayRuntimeOperation::bounds_failed);
+        }
         if (dynamic_array_cleanup_emission_enabled(options) && source_plan_offset < plans.size()) {
             operations.push_back(DynamicArrayRuntimeOperation::deallocate);
         }

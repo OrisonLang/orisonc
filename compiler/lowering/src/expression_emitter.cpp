@@ -1764,6 +1764,7 @@ auto lower_dynamic_array_index_read(
         failure_block
     );
     emit_llvm_block_label(output, failure_block);
+    output << "  call void @__orison_dynamic_array_bounds_failed()\n";
     emit_llvm_unreachable(output);
     emit_llvm_block_label(output, value_block);
     session.state.current_block = value_block;

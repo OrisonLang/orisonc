@@ -767,6 +767,10 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(!placed_source_index_read.has_errors());
     assert_ir_contains(
         placed_source_index_read,
+        "declare void @__orison_dynamic_array_bounds_failed()"
+    );
+    assert_ir_contains(
+        placed_source_index_read,
         "  %items.dynamic_array_index0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert_ir_contains(
@@ -786,6 +790,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert_ir_contains(
         placed_source_index_read,
         "dynamic_array.index.out_of_bounds.0:\n"
+        "  call void @__orison_dynamic_array_bounds_failed()\n"
         "  unreachable\n"
         "dynamic_array.index.in_bounds.0:\n"
     );
