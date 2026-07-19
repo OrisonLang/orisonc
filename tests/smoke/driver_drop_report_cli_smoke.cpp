@@ -75,6 +75,13 @@ auto run_semantic_drop_summary(orison::driver::CompilerApp const& app, std::file
     return run_single_file_command(app, "--semantic-drop-summary", path);
 }
 
+auto run_semantic_dynamic_array_descriptor_origins(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--semantic-dynamic-array-descriptor-origins", path);
+}
+
 auto run_planned_drop_actions(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     return run_single_file_command(app, "--planned-drop-actions", path);
@@ -477,6 +484,9 @@ int main() {
     assert_success_with_empty_stdout(empty_semantic_drop_lowering_authorization);
     auto empty_semantic_drop_summary = run_semantic_drop_summary(app, clean_emit_path);
     assert_success_with_empty_stdout(empty_semantic_drop_summary);
+    auto empty_semantic_dynamic_array_descriptor_origins =
+        run_semantic_dynamic_array_descriptor_origins(app, clean_emit_path);
+    assert_success_with_empty_stdout(empty_semantic_dynamic_array_descriptor_origins);
     auto empty_planned_drop_actions = run_planned_drop_actions(app, clean_emit_path);
     assert_success_with_empty_stdout(empty_planned_drop_actions);
     auto empty_emitted_drops = run_emitted_drops(app, clean_emit_path);
@@ -540,6 +550,17 @@ int main() {
             "    public value: Int64",
             "function use_items(items: DynamicArray<Payload>) -> UInt32",
             "    1 as UInt32",
+        }
+    );
+    auto dynamic_array_blocked_descriptor_origins =
+        run_semantic_dynamic_array_descriptor_origins(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_descriptor_origins,
+        {
+            "dynamic array descriptor origin DynamicArray<Payload>",
+            "owner items",
+            "element Payload",
+            "(metadata only)",
         }
     );
     auto dynamic_array_blocked_descriptor_cleanup_plan =
@@ -633,6 +654,17 @@ int main() {
             "        return",
             "function use_items(items: DynamicArray<Payload>) -> UInt32",
             "    1 as UInt32",
+        }
+    );
+    auto dynamic_array_authorized_descriptor_origins =
+        run_semantic_dynamic_array_descriptor_origins(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_authorized_descriptor_origins,
+        {
+            "dynamic array descriptor origin DynamicArray<Payload>",
+            "owner items",
+            "element Payload",
+            "(metadata only)",
         }
     );
     auto dynamic_array_authorized_descriptor_cleanup_plan =

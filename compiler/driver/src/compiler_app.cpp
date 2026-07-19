@@ -27,7 +27,7 @@ auto usage_text() -> std::string {
     return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
            "--semantic-drop-diagnostics <file> | --semantic-drop-lowering-authorization <file> | "
-           "--semantic-drop-summary <file> | "
+           "--semantic-drop-summary <file> | --semantic-dynamic-array-descriptor-origins <file> | "
            "--planned-drops <file> | --planned-drop-actions <file> | --emitted-drops <file> | "
            "--drop-cleanup-authorization <file> | --drop-readiness <file> | "
            "--drop-readiness-summary <file> | --drop-readiness-relations <file> | "
@@ -333,6 +333,12 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (args.size() == 3 && std::string_view(args[1]) == "--semantic-drop-summary") {
         return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
             return result.semantic_drop_resolution_summary_report;
+        });
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--semantic-dynamic-array-descriptor-origins") {
+        return analyze_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
+            return result.semantic_dynamic_array_descriptor_origin_report;
         });
     }
 

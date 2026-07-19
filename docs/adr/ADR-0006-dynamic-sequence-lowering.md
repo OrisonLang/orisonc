@@ -195,6 +195,8 @@ representation.
 - Pipeline smoke coverage now pins the blocked capability-report path for requested owned-element dynamic-array cleanup
   without semantic drop authorization: the report identifies missing element cleanup and no owned-element drop call is
   emitted.
+- The driver now exposes report-only `--semantic-dynamic-array-descriptor-origins <file>` output so source-derived
+  dynamic-array descriptor origins can be inspected before the lowering cleanup-plan reports consume them.
 - The driver now exposes report-only `--dynamic-array-descriptor-cleanup-plan <file>`,
   `--dynamic-array-cleanup-obligations <file>`, and `--dynamic-array-cleanup-sequence-plan <file>` surfaces so the
   metadata chain leading into cleanup verification is inspectable from the CLI.
