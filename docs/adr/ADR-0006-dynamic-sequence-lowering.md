@@ -214,6 +214,8 @@ representation.
 - The pipeline now exposes a single dynamic-array cleanup production-readiness predicate/report. It can see the
   metadata chain and cleanup capability proof, but remains blocked until production signature lowering, construction
   lowering, and cleanup emission gates are explicitly enabled.
+- Those production-readiness blockers are explicit pipeline options, all defaulting to disabled. Tests can flip them
+  independently to audit readiness transitions without changing the default production behavior.
 - Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
   `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
   compilation continues to leave source Drop lowering disabled.

@@ -51,7 +51,8 @@ auto report_contains(std::vector<std::string> const& lines, std::string_view fra
 }
 
 auto plan_dynamic_array_cleanup_production_readiness(
-    CompilePipelineResult const& result
+    CompilePipelineResult const& result,
+    CompilePipelineOptions const& options
 ) -> DynamicArrayCleanupProductionReadiness {
     return DynamicArrayCleanupProductionReadiness {
         .descriptor_origins_available = !result.semantic_dynamic_array_descriptor_origin_report.empty(),
@@ -63,9 +64,12 @@ auto plan_dynamic_array_cleanup_production_readiness(
             !report_contains(result.dynamic_array_cleanup_sequence_verification_report, " failed"),
         .cleanup_capability_proven =
             report_contains(result.dynamic_array_cleanup_emission_capability_report, "capability proven"),
-        .production_signature_lowering_enabled = false,
-        .production_construction_lowering_enabled = false,
-        .production_cleanup_emission_enabled = false,
+        .production_signature_lowering_enabled =
+            options.dynamic_array_production_signature_lowering_enabled,
+        .production_construction_lowering_enabled =
+            options.dynamic_array_production_construction_lowering_enabled,
+        .production_cleanup_emission_enabled =
+            options.dynamic_array_production_cleanup_emission_enabled,
     };
 }
 
@@ -264,7 +268,7 @@ auto CompilePipeline::emit_llvm(
     result.dynamic_array_cleanup_emission_capability_report =
         emission.dynamic_array_cleanup_emission_capability_report();
     result.dynamic_array_cleanup_production_readiness =
-        plan_dynamic_array_cleanup_production_readiness(result);
+        plan_dynamic_array_cleanup_production_readiness(result, options);
     result.dynamic_array_cleanup_production_readiness_report = {
         format_dynamic_array_cleanup_production_readiness(result.dynamic_array_cleanup_production_readiness),
     };

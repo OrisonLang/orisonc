@@ -551,6 +551,82 @@ auto main() -> int {
         "[production signatures missing]"
     );
 
+    auto dynamic_array_owned_signature_gate_only = pipeline.emit_llvm(
+        dynamic_array_source_owner_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "items.element",
+                        .site_line = 6,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .dynamic_array_production_signature_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_signature_gate_only.has_errors());
+    assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
+        dynamic_array_owned_signature_gate_only.dynamic_array_cleanup_production_readiness
+    ));
+    assert_line_contains(
+        dynamic_array_owned_signature_gate_only.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[production signatures ok]"
+    );
+    assert_line_contains(
+        dynamic_array_owned_signature_gate_only.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[production construction missing]"
+    );
+
+    auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
+        dynamic_array_source_owner_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "items.element",
+                        .site_line = 6,
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_production_ready.has_errors());
+    assert(orison::pipeline::dynamic_array_cleanup_production_ready(
+        dynamic_array_owned_production_ready.dynamic_array_cleanup_production_readiness
+    ));
+    assert_line_contains(
+        dynamic_array_owned_production_ready.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "production readiness ready"
+    );
+    assert_line_contains(
+        dynamic_array_owned_production_ready.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[production cleanup emission ok]"
+    );
+
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,
         orison::pipeline::CompilePipelineOptions {
