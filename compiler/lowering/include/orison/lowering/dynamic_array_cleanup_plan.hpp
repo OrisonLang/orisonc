@@ -25,6 +25,11 @@ struct DynamicArrayCleanupSequencePlan {
     std::vector<std::string> phases;
 };
 
+struct DynamicArrayCleanupSequenceVerification {
+    std::string cleanup_symbol_name;
+    std::vector<std::string> errors;
+};
+
 struct BoundDynamicArrayParameterCleanupPlan {
     DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
     std::optional<std::string> element_drop_symbol_name;
@@ -66,6 +71,30 @@ auto format_dynamic_array_cleanup_sequence_plan(
 
 auto format_dynamic_array_cleanup_sequence_plan_report(
     std::vector<DynamicArrayCleanupSequencePlan> const& plans
+) -> std::vector<std::string>;
+
+auto verify_dynamic_array_cleanup_sequence_plan(
+    DynamicArrayCleanupSequencePlan const& plan
+) -> DynamicArrayCleanupSequenceVerification;
+
+auto verify_dynamic_array_cleanup_sequence_plans(
+    std::vector<DynamicArrayCleanupSequencePlan> const& plans
+) -> std::vector<DynamicArrayCleanupSequenceVerification>;
+
+auto dynamic_array_cleanup_sequence_verification_passed(
+    DynamicArrayCleanupSequenceVerification const& verification
+) -> bool;
+
+auto dynamic_array_cleanup_sequence_verification_report_passed(
+    std::vector<DynamicArrayCleanupSequenceVerification> const& verifications
+) -> bool;
+
+auto format_dynamic_array_cleanup_sequence_verification(
+    DynamicArrayCleanupSequenceVerification const& verification
+) -> std::string;
+
+auto format_dynamic_array_cleanup_sequence_verification_report(
+    std::vector<DynamicArrayCleanupSequenceVerification> const& verifications
 ) -> std::vector<std::string>;
 
 auto plan_bound_dynamic_array_parameter_cleanups(

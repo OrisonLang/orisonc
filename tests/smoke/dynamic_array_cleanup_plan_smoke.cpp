@@ -237,6 +237,44 @@ void test_plans_descriptor_cleanup_obligations() {
         "dynamic array cleanup sequence __orison_dynamic_array_cleanup.4 owner items phases "
         "[load descriptor] [drop initialized elements] [deallocate descriptor storage] (metadata only)"
     );
+
+    auto verifications = orison::lowering::verify_dynamic_array_cleanup_sequence_plans(sequence_plans);
+    assert(verifications.size() == 2);
+    assert(orison::lowering::dynamic_array_cleanup_sequence_verification_report_passed(verifications));
+    auto verification_report =
+        orison::lowering::format_dynamic_array_cleanup_sequence_verification_report(verifications);
+    assert(verification_report.size() == 2);
+    assert(
+        verification_report[0] ==
+        "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.3 passed (metadata only)"
+    );
+    assert(
+        verification_report[1] ==
+        "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.4 passed (metadata only)"
+    );
+
+    auto malformed_owned = sequence_plans[1];
+    malformed_owned.phases = {"load descriptor", "deallocate descriptor storage"};
+    auto malformed_owned_verification =
+        orison::lowering::verify_dynamic_array_cleanup_sequence_plan(malformed_owned);
+    assert(!orison::lowering::dynamic_array_cleanup_sequence_verification_passed(malformed_owned_verification));
+    assert(malformed_owned_verification.errors.size() == 1);
+    assert(
+        malformed_owned_verification.errors.front() ==
+        "owned element cleanup requires initialized-element drop phase"
+    );
+
+    auto malformed_scalar = sequence_plans[0];
+    malformed_scalar.phases = {"drop initialized elements", "deallocate descriptor storage"};
+    auto malformed_scalar_report = orison::lowering::format_dynamic_array_cleanup_sequence_verification(
+        orison::lowering::verify_dynamic_array_cleanup_sequence_plan(malformed_scalar)
+    );
+    assert(
+        malformed_scalar_report ==
+        "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.3 failed "
+        "[first phase must load descriptor] [scalar or non-owning cleanup must not drop initialized elements] "
+        "[initialized-element drop phase must follow descriptor load] (metadata only)"
+    );
 }
 
 }  // namespace

@@ -174,6 +174,9 @@ representation.
 - Dynamic-array cleanup obligations now also produce production-disabled sequencing plans. The sequence explicitly
   orders descriptor load, optional initialized-element drop walking, and descriptor deallocation while remaining
   metadata-only until allocation, construction, and ownership invariants are production-enabled.
+- Dynamic-array cleanup sequence plans now have a disabled verifier that checks descriptor load first, optional
+  initialized-element drop ordering, and descriptor deallocation last. Verification reports remain metadata-only and do
+  not enable production cleanup emission.
 
 ## Follow-up work
 

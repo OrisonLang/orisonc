@@ -345,6 +345,10 @@ auto LlvmIrEmissionResult::dynamic_array_cleanup_sequence_plan_report() const ->
     return format_dynamic_array_cleanup_sequence_plan_report(dynamic_array_cleanup_sequence_plans);
 }
 
+auto LlvmIrEmissionResult::dynamic_array_cleanup_sequence_verification_report() const -> std::vector<std::string> {
+    return format_dynamic_array_cleanup_sequence_verification_report(dynamic_array_cleanup_sequence_verifications);
+}
+
 auto LlvmIrEmissionResult::dynamic_array_runtime_request_report() const -> std::vector<std::string> {
     return format_dynamic_array_runtime_request_report(dynamic_array_runtime_operations);
 }
@@ -489,6 +493,9 @@ auto LlvmIrEmitter::emit(
         );
         result.dynamic_array_cleanup_sequence_plans = plan_dynamic_array_cleanup_sequences(
             result.dynamic_array_cleanup_obligations
+        );
+        result.dynamic_array_cleanup_sequence_verifications = verify_dynamic_array_cleanup_sequence_plans(
+            result.dynamic_array_cleanup_sequence_plans
         );
         if (options.test_only_emit_bound_dynamic_array_parameter_cleanups) {
             for (auto const& plan : result.dynamic_array_descriptor_cleanup_plans) {

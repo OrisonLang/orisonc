@@ -275,6 +275,96 @@ auto format_dynamic_array_cleanup_sequence_plan_report(
     return report;
 }
 
+auto verify_dynamic_array_cleanup_sequence_plan(
+    DynamicArrayCleanupSequencePlan const& plan
+) -> DynamicArrayCleanupSequenceVerification {
+    auto verification = DynamicArrayCleanupSequenceVerification {
+        .cleanup_symbol_name = plan.obligation.cleanup_symbol_name,
+    };
+    auto const& phases = plan.phases;
+    if (phases.empty()) {
+        verification.errors.push_back("missing cleanup phases");
+        return verification;
+    }
+    if (phases.front() != "load descriptor") {
+        verification.errors.push_back("first phase must load descriptor");
+    }
+    if (plan.obligation.requires_descriptor_deallocation) {
+        if (phases.back() != "deallocate descriptor storage") {
+            verification.errors.push_back("last phase must deallocate descriptor storage");
+        }
+    }
+    auto drop_phase = std::ranges::find(phases, "drop initialized elements");
+    auto has_drop_phase = drop_phase != phases.end();
+    if (!plan.obligation.actions.empty() && !has_drop_phase) {
+        verification.errors.push_back("owned element cleanup requires initialized-element drop phase");
+    }
+    if (plan.obligation.actions.empty() && has_drop_phase) {
+        verification.errors.push_back("scalar or non-owning cleanup must not drop initialized elements");
+    }
+    if (has_drop_phase) {
+        if (drop_phase == phases.begin()) {
+            verification.errors.push_back("initialized-element drop phase must follow descriptor load");
+        }
+        auto deallocate_phase = std::ranges::find(phases, "deallocate descriptor storage");
+        if (deallocate_phase != phases.end() && deallocate_phase < drop_phase) {
+            verification.errors.push_back("initialized-element drop phase must precede descriptor deallocation");
+        }
+    }
+    return verification;
+}
+
+auto verify_dynamic_array_cleanup_sequence_plans(
+    std::vector<DynamicArrayCleanupSequencePlan> const& plans
+) -> std::vector<DynamicArrayCleanupSequenceVerification> {
+    auto verifications = std::vector<DynamicArrayCleanupSequenceVerification> {};
+    verifications.reserve(plans.size());
+    for (auto const& plan : plans) {
+        verifications.push_back(verify_dynamic_array_cleanup_sequence_plan(plan));
+    }
+    return verifications;
+}
+
+auto dynamic_array_cleanup_sequence_verification_passed(
+    DynamicArrayCleanupSequenceVerification const& verification
+) -> bool {
+    return verification.errors.empty();
+}
+
+auto dynamic_array_cleanup_sequence_verification_report_passed(
+    std::vector<DynamicArrayCleanupSequenceVerification> const& verifications
+) -> bool {
+    return std::ranges::all_of(verifications, dynamic_array_cleanup_sequence_verification_passed);
+}
+
+auto format_dynamic_array_cleanup_sequence_verification(
+    DynamicArrayCleanupSequenceVerification const& verification
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "dynamic array cleanup sequence verification " << verification.cleanup_symbol_name;
+    if (verification.errors.empty()) {
+        output << " passed (metadata only)";
+        return output.str();
+    }
+    output << " failed";
+    for (auto const& error : verification.errors) {
+        output << " [" << error << "]";
+    }
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_dynamic_array_cleanup_sequence_verification_report(
+    std::vector<DynamicArrayCleanupSequenceVerification> const& verifications
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(verifications.size());
+    for (auto const& verification : verifications) {
+        report.push_back(format_dynamic_array_cleanup_sequence_verification(verification));
+    }
+    return report;
+}
+
 auto plan_bound_dynamic_array_parameter_cleanups(
     LoweringEmissionContext const& context,
     FunctionLoweringSession const& session
