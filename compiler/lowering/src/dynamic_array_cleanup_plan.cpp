@@ -365,6 +365,34 @@ auto format_dynamic_array_cleanup_sequence_verification_report(
     return report;
 }
 
+auto format_dynamic_array_cleanup_emission_gate(
+    DynamicArrayCleanupSequenceVerification const& verification
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "dynamic array cleanup emission gate " << verification.cleanup_symbol_name;
+    if (dynamic_array_cleanup_sequence_verification_passed(verification)) {
+        output << " allowed (metadata only)";
+        return output.str();
+    }
+    output << " blocked";
+    for (auto const& error : verification.errors) {
+        output << " [" << error << "]";
+    }
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_dynamic_array_cleanup_emission_gate_report(
+    std::vector<DynamicArrayCleanupSequenceVerification> const& verifications
+) -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    report.reserve(verifications.size());
+    for (auto const& verification : verifications) {
+        report.push_back(format_dynamic_array_cleanup_emission_gate(verification));
+    }
+    return report;
+}
+
 auto plan_bound_dynamic_array_parameter_cleanups(
     LoweringEmissionContext const& context,
     FunctionLoweringSession const& session

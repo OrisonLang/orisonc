@@ -54,6 +54,7 @@ struct LlvmIrEmissionResult {
     auto dynamic_array_cleanup_obligation_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_sequence_plan_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_sequence_verification_report() const -> std::vector<std::string>;
+    auto dynamic_array_cleanup_emission_gate_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;

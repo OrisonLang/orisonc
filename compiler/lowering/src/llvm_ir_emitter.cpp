@@ -349,6 +349,10 @@ auto LlvmIrEmissionResult::dynamic_array_cleanup_sequence_verification_report() 
     return format_dynamic_array_cleanup_sequence_verification_report(dynamic_array_cleanup_sequence_verifications);
 }
 
+auto LlvmIrEmissionResult::dynamic_array_cleanup_emission_gate_report() const -> std::vector<std::string> {
+    return format_dynamic_array_cleanup_emission_gate_report(dynamic_array_cleanup_sequence_verifications);
+}
+
 auto LlvmIrEmissionResult::dynamic_array_runtime_request_report() const -> std::vector<std::string> {
     return format_dynamic_array_runtime_request_report(dynamic_array_runtime_operations);
 }

@@ -99,6 +99,14 @@ auto format_dynamic_array_cleanup_sequence_verification_report(
     std::vector<DynamicArrayCleanupSequenceVerification> const& verifications
 ) -> std::vector<std::string>;
 
+auto format_dynamic_array_cleanup_emission_gate(
+    DynamicArrayCleanupSequenceVerification const& verification
+) -> std::string;
+
+auto format_dynamic_array_cleanup_emission_gate_report(
+    std::vector<DynamicArrayCleanupSequenceVerification> const& verifications
+) -> std::vector<std::string>;
+
 auto plan_bound_dynamic_array_parameter_cleanups(
     LoweringEmissionContext const& context,
     FunctionLoweringSession const& session

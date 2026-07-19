@@ -273,6 +273,16 @@ void test_plans_descriptor_cleanup_obligations() {
         verification_report[1] ==
         "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.4 passed (metadata only)"
     );
+    auto gate_report = orison::lowering::format_dynamic_array_cleanup_emission_gate_report(verifications);
+    assert(gate_report.size() == 2);
+    assert(
+        gate_report[0] ==
+        "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.3 allowed (metadata only)"
+    );
+    assert(
+        gate_report[1] ==
+        "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.4 allowed (metadata only)"
+    );
 
     auto malformed_owned = sequence_plans[1];
     malformed_owned.phases = {"load descriptor", "deallocate descriptor storage"};
@@ -283,6 +293,13 @@ void test_plans_descriptor_cleanup_obligations() {
     assert(
         malformed_owned_verification.errors.front() ==
         "owned element cleanup requires initialized-element drop phase"
+    );
+    auto malformed_owned_gate_report =
+        orison::lowering::format_dynamic_array_cleanup_emission_gate(malformed_owned_verification);
+    assert(
+        malformed_owned_gate_report ==
+        "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.4 blocked "
+        "[owned element cleanup requires initialized-element drop phase] (metadata only)"
     );
 
     auto malformed_scalar = sequence_plans[0];

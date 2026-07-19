@@ -315,6 +315,12 @@ auto main() -> int {
         0,
         "__orison_dynamic_array_cleanup.0 passed"
     );
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_emission_gate_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_bound_descriptor.dynamic_array_cleanup_emission_gate_report,
+        0,
+        "__orison_dynamic_array_cleanup.0 allowed"
+    );
     assert(
         dynamic_array_bound_descriptor.ir_text.find("define i32 @use_items({ ptr, i64, i64 } %items)") !=
         std::string::npos
@@ -391,6 +397,12 @@ auto main() -> int {
         scalar_dynamic_array_cleanup.dynamic_array_cleanup_sequence_verification_report,
         0,
         "__orison_dynamic_array_cleanup.0 passed"
+    );
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_gate_report.size() == 1);
+    assert_line_contains(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_gate_report,
+        0,
+        "__orison_dynamic_array_cleanup.0 allowed"
     );
     assert(
         scalar_dynamic_array_cleanup.ir_text.find("declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)") !=

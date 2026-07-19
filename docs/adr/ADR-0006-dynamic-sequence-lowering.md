@@ -180,6 +180,9 @@ representation.
 - The test-only bound dynamic-array parameter cleanup renderer now consumes the sequence verifier before emitting any
   cleanup IR. Malformed sequence metadata blocks rendering before partial cleanup output or temporary allocation can
   occur.
+- Lowering and pipeline results now expose a metadata-only dynamic-array cleanup emission-gate report derived from the
+  sequence verifier, so allowed or blocked cleanup rendering is visible without converting verifier failures into
+  source diagnostics or enabling production cleanup emission.
 
 ## Follow-up work
 
