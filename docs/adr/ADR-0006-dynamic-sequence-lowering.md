@@ -269,10 +269,13 @@ representation.
   descriptor once, projects data and length, emits a runtime `index < length` loop, loads each initialized element into
   the loop binding, and reuses the existing `break`/`continue` targets. Dynamic-array parameter, view, and computed
   iterable lowering remain separate work.
+- Local owned-element dynamic-array cleanup is now pinned with source-level coverage: with an authorized `Drop`
+  implementation for the element type, local descriptor cleanup emits an initialized-element drop walk before backing
+  storage deallocation. Without element cleanup authorization, owned-element local cleanup remains blocked rather than
+  silently deallocating initialized owned elements.
 
 ## Follow-up work
 
-- Implement element cleanup lowering for owned dynamic-array elements.
 - Enable `DynamicArray<T>` lowered signatures only after semantic ownership/drop analysis proves unique ownership,
   initialized length, capacity bounds, and deterministic cleanup.
 - Extend `for ... in` lowering beyond named local dynamic-array descriptors to consume view descriptors, dynamic-array

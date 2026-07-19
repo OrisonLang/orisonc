@@ -1125,6 +1125,63 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_append_for_status));
     assert(WEXITSTATUS(dynamic_array_append_for_status) == 16);
 
+    auto dynamic_array_local_owned_cleanup_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_local_owned_cleanup.or";
+    {
+        auto local_owned_cleanup_source = std::ofstream(dynamic_array_local_owned_cleanup_path);
+        local_owned_cleanup_source
+            << "package demo.pipeline.dynamicarraylocalownedcleanup\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    let items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    1 as UInt32\n";
+    }
+    auto dynamic_array_local_owned_cleanup = pipeline.emit_llvm(
+        dynamic_array_local_owned_cleanup_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_source_drop_lowering = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!dynamic_array_local_owned_cleanup.has_errors());
+    assert(dynamic_array_local_owned_cleanup.semantic_drop_lowering_authorizations.size() == 2);
+    assert(dynamic_array_local_owned_cleanup.dynamic_array_runtime_request_report.size() == 2);
+    assert(
+        dynamic_array_local_owned_cleanup.ir_text.find("declare void @__orison_drop.Payload(ptr)") !=
+        std::string::npos
+    );
+    assert(
+        dynamic_array_local_owned_cleanup.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_local_owned_cleanup.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
+            "i64 %items.dynamic_array_cleanup0.cleanup.capacity)"
+        ) != std::string::npos
+    );
+    auto local_owned_drop = dynamic_array_local_owned_cleanup.ir_text.find("call void @__orison_drop.Payload");
+    auto local_owned_deallocate =
+        dynamic_array_local_owned_cleanup.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto local_owned_return = dynamic_array_local_owned_cleanup.ir_text.find("ret i32 1");
+    assert(local_owned_drop != std::string::npos);
+    assert(local_owned_deallocate != std::string::npos);
+    assert(local_owned_return != std::string::npos);
+    assert(local_owned_drop < local_owned_deallocate);
+    assert(local_owned_deallocate < local_owned_return);
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
