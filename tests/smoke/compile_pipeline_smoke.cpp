@@ -734,6 +734,44 @@ auto main() -> int {
         ) == std::string::npos
     );
 
+    auto dynamic_array_placed_construction_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_placed_construction.or";
+    {
+        auto placed_construction_source = std::ofstream(dynamic_array_placed_construction_path);
+        placed_construction_source
+            << "package demo.pipeline.dynamicarrayplacedconstruction\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    0 as UInt32\n";
+    }
+    auto dynamic_array_placed_construction = pipeline.emit_llvm(
+        dynamic_array_placed_construction_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_construction_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_placed_construction.has_errors());
+    assert(dynamic_array_placed_construction.dynamic_array_construction_plan_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_placed_construction.dynamic_array_construction_plan_report,
+        0,
+        "owner items"
+    );
+    assert(
+        dynamic_array_placed_construction.ir_text.find(
+            "  %items.dynamic_array_alloc = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_placed_construction.ir_text.find(
+            "  %items.addr = alloca { ptr, i64, i64 }\n"
+            "  store { ptr, i64, i64 } %items.dynamic_array_alloc, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(dynamic_array_placed_construction.ir_text.find("__orison_dynamic_array_grow") == std::string::npos);
+    assert(dynamic_array_placed_construction.ir_text.find("__orison_dynamic_array_deallocate") == std::string::npos);
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

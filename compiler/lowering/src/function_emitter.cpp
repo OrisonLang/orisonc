@@ -1050,6 +1050,7 @@ void emit_function_body(
                         )) {
                         return;
                     }
+                    continue;
                 } else if (is_concurrency_expression(statement.expression)) {
                     diagnostics.error(
                         statement.line,

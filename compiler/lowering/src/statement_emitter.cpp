@@ -6,6 +6,7 @@
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_cfg.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -32,6 +33,81 @@ auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
 
 auto is_task_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::task;
+}
+
+auto is_dynamic_array_default_constructor(syntax::ExpressionSyntax const& expression) -> bool {
+    return expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name &&
+        expression.left->text == "DynamicArray" &&
+        expression.arguments.empty();
+}
+
+auto is_dynamic_array_source_type(std::string_view source_type_name) -> bool {
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
+}
+
+auto lower_dynamic_array_default_construction(
+    syntax::StatementSyntax const& statement,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output,
+    bool mutable_binding
+) -> bool {
+    if (!context.options.enable_dynamic_array_construction_lowering ||
+        statement.annotated_type.name.empty()) {
+        return false;
+    }
+
+    auto source_type_name = render_source_type_name(statement.annotated_type);
+    if (!is_dynamic_array_source_type(source_type_name) ||
+        !is_dynamic_array_default_constructor(statement.expression)) {
+        return false;
+    }
+
+    auto plan = plan_dynamic_array_construction(source_type_name, 0, context.lowering);
+    if (!plan.has_value()) {
+        diagnostics.error(statement.line, "source dynamic array construction could not be planned");
+        return true;
+    }
+    plan->owner_name = statement.name;
+
+    auto allocation = next_llvm_local_value_name(
+        statement.name + ".dynamic_array_alloc",
+        session.state.local_name_counts
+    );
+    auto storage = next_llvm_local_value_name(
+        statement.name + ".addr",
+        session.state.local_name_counts
+    );
+    output << emit_dynamic_array_allocation_call(*plan, allocation);
+    output << emit_dynamic_array_descriptor_binding(*plan, storage, allocation);
+
+    auto descriptor_type = std::string {dynamic_array_descriptor_llvm_type()};
+    auto lowered_type = LoweredType {
+        .type = descriptor_type,
+        .signedness = IntegerSignedness::not_integer,
+    };
+    if (mutable_binding) {
+        session.state.mutable_bindings[statement.name] = MutableBinding {
+            .type = std::move(lowered_type),
+            .storage = std::move(storage),
+        };
+    } else {
+        session.state.immutable_bindings[statement.name] = LoweredExpression {
+            .type = descriptor_type,
+            .value = allocation,
+            .signedness = IntegerSignedness::not_integer,
+        };
+        session.state.addressable_bindings[statement.name] = AddressableBinding {
+            .type = std::move(lowered_type),
+            .storage = std::move(storage),
+        };
+    }
+    session.state.source_type_names[statement.name] = std::move(source_type_name);
+    return true;
 }
 
 auto binary_instruction_for_assignment_operator(
@@ -750,6 +826,17 @@ auto lower_let_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
+    if (lower_dynamic_array_default_construction(
+            statement,
+            context,
+            session,
+            diagnostics,
+            output,
+            false
+        )) {
+        return !diagnostics.has_errors();
+    }
+
     if (is_thread_expression(statement.expression)) {
         return lower_thread_let_statement(
             statement,
@@ -852,6 +939,17 @@ auto lower_var_statement(
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output
 ) -> bool {
+    if (lower_dynamic_array_default_construction(
+            statement,
+            context,
+            session,
+            diagnostics,
+            output,
+            true
+        )) {
+        return !diagnostics.has_errors();
+    }
+
     auto type = LoweredType {
         .type = std::string(fallback_llvm_type),
         .signedness = fallback_signedness,

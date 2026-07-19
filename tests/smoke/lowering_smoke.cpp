@@ -644,6 +644,49 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
             "call { ptr, i64, i64 } @__orison_dynamic_array_allocate"
         ) == std::string::npos
     );
+
+    auto placed_source_construction = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    var words: DynamicArray<UInt32> = DynamicArray()\n"
+        "    0 as UInt32\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+        }
+    );
+
+    assert(!placed_source_construction.has_errors());
+    assert(placed_source_construction.dynamic_array_construction_plans.size() == 2);
+    assert(placed_source_construction.dynamic_array_construction_plans[0].owner_name == "items");
+    assert(placed_source_construction.dynamic_array_construction_plans[1].owner_name == "words");
+    assert(placed_source_construction.dynamic_array_runtime_operations.size() == 2);
+    assert_ir_contains(
+        placed_source_construction,
+        "declare { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64, i64)"
+    );
+    assert_ir_contains(
+        placed_source_construction,
+        "  %items.dynamic_array_alloc = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+    );
+    assert_ir_contains(
+        placed_source_construction,
+        "  %items.addr = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %items.dynamic_array_alloc, ptr %items.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_construction,
+        "  %words.dynamic_array_alloc = call { ptr, i64, i64 } @__orison_dynamic_array_allocate(i64 4, i64 0)\n"
+    );
+    assert_ir_contains(
+        placed_source_construction,
+        "  %words.addr = alloca { ptr, i64, i64 }\n"
+        "  store { ptr, i64, i64 } %words.dynamic_array_alloc, ptr %words.addr\n"
+    );
+    assert(placed_source_construction.ir_text.find("__orison_dynamic_array_grow") == std::string::npos);
+    assert(placed_source_construction.ir_text.find("__orison_dynamic_array_deallocate") == std::string::npos);
 }
 
 void test_collects_test_only_dynamic_array_element_drop_readiness_metadata() {

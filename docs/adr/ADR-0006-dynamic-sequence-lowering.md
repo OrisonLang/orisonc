@@ -227,6 +227,9 @@ representation.
   `DynamicArray<T>` binding initialized with `DynamicArray()`. The plan records the source owner and an initial
   capacity of zero; allocation calls still remain outside module IR until dynamic-array local storage placement is
   implemented.
+- Production-gated local descriptor placement now lowers that default construction form into function IR as an
+  allocation call followed by local descriptor storage. Dynamic-array indexing, growth, append, and local cleanup remain
+  separate disabled work.
 - The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
   dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
   compatibility alias for existing focused fixtures.
