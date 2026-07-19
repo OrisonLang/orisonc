@@ -177,6 +177,9 @@ representation.
 - Dynamic-array cleanup sequence plans now have a disabled verifier that checks descriptor load first, optional
   initialized-element drop ordering, and descriptor deallocation last. Verification reports remain metadata-only and do
   not enable production cleanup emission.
+- The test-only bound dynamic-array parameter cleanup renderer now consumes the sequence verifier before emitting any
+  cleanup IR. Malformed sequence metadata blocks rendering before partial cleanup output or temporary allocation can
+  occur.
 
 ## Follow-up work
 

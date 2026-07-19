@@ -73,9 +73,15 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert((*plans)[0].descriptor_cleanup.owner_name == "a_items");
     assert((*plans)[0].descriptor_cleanup.descriptor_storage_name == "%a_items.addr");
     assert(!(*plans)[0].element_drop_symbol_name.has_value());
+    assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
+        (*plans)[0].sequence_verification
+    ));
     assert((*plans)[1].descriptor_cleanup.owner_name == "z_items");
     assert((*plans)[1].descriptor_cleanup.descriptor_storage_name == "%z_items.addr");
     assert(!(*plans)[1].element_drop_symbol_name.has_value());
+    assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
+        (*plans)[1].sequence_verification
+    ));
 
     auto output = std::ostringstream {};
     assert(orison::lowering::emit_bound_dynamic_array_parameter_cleanups(context, session, output));
@@ -87,6 +93,17 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(a_cleanup < z_cleanup);
     assert(ir.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(ir.find("call void @__orison_dynamic_array_deallocate") != std::string::npos);
+    assert(state.next_temporary_index == 2);
+
+    auto malformed_plans = *plans;
+    malformed_plans[1].sequence_verification.errors.push_back("test malformed cleanup order");
+    auto blocked_output = std::ostringstream {};
+    assert(!orison::lowering::emit_bound_dynamic_array_parameter_cleanup_plans(
+        malformed_plans,
+        session,
+        blocked_output
+    ));
+    assert(blocked_output.str().empty());
     assert(state.next_temporary_index == 2);
 }
 
@@ -150,6 +167,10 @@ void test_authorizes_owned_element_cleanup() {
     assert(plans->front().descriptor_cleanup.owner_name == "items");
     assert(plans->front().descriptor_cleanup.element_source_type_name == "Payload");
     assert(plans->front().element_drop_symbol_name == "__orison_drop.Payload");
+    assert(plans->front().sequence_plan.phases.size() == 3);
+    assert(orison::lowering::dynamic_array_cleanup_sequence_verification_passed(
+        plans->front().sequence_verification
+    ));
 
     auto output = std::ostringstream {};
     assert(orison::lowering::emit_bound_dynamic_array_parameter_cleanups(context, session, output));

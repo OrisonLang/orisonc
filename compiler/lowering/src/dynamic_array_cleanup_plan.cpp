@@ -413,25 +413,40 @@ auto plan_bound_dynamic_array_parameter_cleanups(
             }
         }
 
+        auto actions = std::vector<PlannedDropAction> {};
+        if (drop_symbol_name.has_value()) {
+            actions.push_back(dynamic_array_parameter_drop_action(name, *descriptor_cleanup));
+        }
+        auto obligation = DynamicArrayCleanupObligation {
+            .cleanup_symbol_name = dynamic_array_cleanup_symbol_name(plans.size()),
+            .descriptor_cleanup = *descriptor_cleanup,
+            .actions = std::move(actions),
+            .requires_descriptor_deallocation = true,
+        };
+        auto sequence_plan = plan_dynamic_array_cleanup_sequence(obligation);
+        auto sequence_verification = verify_dynamic_array_cleanup_sequence_plan(sequence_plan);
         plans.push_back(BoundDynamicArrayParameterCleanupPlan {
             .descriptor_cleanup = std::move(*descriptor_cleanup),
             .element_drop_symbol_name = std::move(drop_symbol_name),
+            .sequence_plan = std::move(sequence_plan),
+            .sequence_verification = std::move(sequence_verification),
         });
     }
     return plans;
 }
 
-auto emit_bound_dynamic_array_parameter_cleanups(
-    LoweringEmissionContext const& context,
+auto emit_bound_dynamic_array_parameter_cleanup_plans(
+    std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans,
     FunctionLoweringSession& session,
     std::ostream& output
 ) -> bool {
-    auto plans = plan_bound_dynamic_array_parameter_cleanups(context, session);
-    if (!plans.has_value()) {
+    if (!std::ranges::all_of(plans, [](auto const& plan) {
+            return dynamic_array_cleanup_sequence_verification_passed(plan.sequence_verification);
+        })) {
         return false;
     }
 
-    for (auto const& plan : *plans) {
+    for (auto const& plan : plans) {
         auto prefix = "%" + plan.descriptor_cleanup.owner_name + ".dynamic_array_cleanup" +
             std::to_string(session.state.next_temporary_index++);
         auto label_prefix = prefix.substr(1);
@@ -449,6 +464,19 @@ auto emit_bound_dynamic_array_parameter_cleanups(
         );
     }
     return true;
+}
+
+auto emit_bound_dynamic_array_parameter_cleanups(
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool {
+    auto plans = plan_bound_dynamic_array_parameter_cleanups(context, session);
+    if (!plans.has_value()) {
+        return false;
+    }
+
+    return emit_bound_dynamic_array_parameter_cleanup_plans(*plans, session, output);
 }
 
 }  // namespace orison::lowering

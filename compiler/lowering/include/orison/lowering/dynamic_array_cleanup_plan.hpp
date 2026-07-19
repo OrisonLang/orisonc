@@ -33,6 +33,8 @@ struct DynamicArrayCleanupSequenceVerification {
 struct BoundDynamicArrayParameterCleanupPlan {
     DynamicArrayDescriptorCleanupPlan descriptor_cleanup;
     std::optional<std::string> element_drop_symbol_name;
+    DynamicArrayCleanupSequencePlan sequence_plan;
+    DynamicArrayCleanupSequenceVerification sequence_verification;
 };
 
 auto plan_dynamic_array_descriptor_cleanup_obligation(
@@ -104,6 +106,12 @@ auto plan_bound_dynamic_array_parameter_cleanups(
 
 auto emit_bound_dynamic_array_parameter_cleanups(
     LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) -> bool;
+
+auto emit_bound_dynamic_array_parameter_cleanup_plans(
+    std::vector<BoundDynamicArrayParameterCleanupPlan> const& plans,
     FunctionLoweringSession& session,
     std::ostream& output
 ) -> bool;
