@@ -38,7 +38,8 @@ auto usage_text() -> std::string {
            "--dynamic-array-cleanup-sequence-plan <file> | "
            "--dynamic-array-cleanup-sequence-verification <file> | "
            "--dynamic-array-cleanup-emission-gate <file> | "
-           "--dynamic-array-cleanup-capability <file> | --dynamic-array-cleanup-audit <file> | "
+           "--dynamic-array-cleanup-capability <file> | "
+           "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
@@ -88,6 +89,7 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, result.dynamic_array_cleanup_sequence_verification_report);
     append_report_lines(report, result.dynamic_array_cleanup_emission_gate_report);
     append_report_lines(report, result.dynamic_array_cleanup_emission_capability_report);
+    append_report_lines(report, result.dynamic_array_cleanup_production_readiness_report);
     return report;
 }
 
@@ -463,6 +465,16 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
                 return result.dynamic_array_cleanup_emission_capability_report;
+            }
+        );
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-production-readiness") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            dynamic_array_cleanup_report_options(),
+            [](auto const& result) -> auto const& {
+                return result.dynamic_array_cleanup_production_readiness_report;
             }
         );
     }

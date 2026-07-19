@@ -211,6 +211,9 @@ representation.
   capability proof in that order for single-command inspection.
 - `tests/fixtures/dynamic_array_cleanup_audit.or` is the checked-in positive audit fixture for this report chain. It
   keeps the CLI demo stable while production `DynamicArray<T>` cleanup remains disabled by default.
+- The pipeline now exposes a single dynamic-array cleanup production-readiness predicate/report. It can see the
+  metadata chain and cleanup capability proof, but remains blocked until production signature lowering, construction
+  lowering, and cleanup emission gates are explicitly enabled.
 - Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
   `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
   compilation continues to leave source Drop lowering disabled.

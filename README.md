@@ -82,7 +82,8 @@ build/tools/orisonc/orisonc --dynamic-array-cleanup-audit tests/fixtures/dynamic
 ```
 
 This prints semantic descriptor origins, descriptor cleanup plans, cleanup obligations, sequence plans, verification,
-emission gate, and capability proof in order. It does not enable production `DynamicArray<T>` cleanup by default.
+emission gate, capability proof, and production-readiness status in order. It does not enable production
+`DynamicArray<T>` cleanup by default.
 
 ## Repository expectations
 

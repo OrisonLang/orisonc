@@ -13,6 +13,26 @@
 
 namespace orison::pipeline {
 
+struct DynamicArrayCleanupProductionReadiness {
+    bool descriptor_origins_available = false;
+    bool descriptor_cleanup_plans_available = false;
+    bool cleanup_obligations_available = false;
+    bool sequence_verification_available = false;
+    bool sequence_verification_passed = false;
+    bool cleanup_capability_proven = false;
+    bool production_signature_lowering_enabled = false;
+    bool production_construction_lowering_enabled = false;
+    bool production_cleanup_emission_enabled = false;
+};
+
+auto dynamic_array_cleanup_production_ready(
+    DynamicArrayCleanupProductionReadiness const& readiness
+) -> bool;
+
+auto format_dynamic_array_cleanup_production_readiness(
+    DynamicArrayCleanupProductionReadiness const& readiness
+) -> std::string;
+
 struct CompilePipelineOptions {
     std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
     std::vector<semantics::DropImplementationCandidate> test_only_semantic_drop_implementation_candidates;
@@ -45,6 +65,8 @@ struct CompilePipelineResult {
     std::vector<std::string> dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> dynamic_array_cleanup_emission_gate_report;
     std::vector<std::string> dynamic_array_cleanup_emission_capability_report;
+    DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
+    std::vector<std::string> dynamic_array_cleanup_production_readiness_report;
     std::vector<std::string> planned_drop_report;
     std::vector<std::string> emitted_drop_declaration_report;
     std::vector<std::string> planned_drop_action_report;

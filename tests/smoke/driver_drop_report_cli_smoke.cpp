@@ -162,6 +162,13 @@ auto run_dynamic_array_cleanup_capability(orison::driver::CompilerApp const& app
     return run_single_file_command(app, "--dynamic-array-cleanup-capability", path);
 }
 
+auto run_dynamic_array_cleanup_production_readiness(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-cleanup-production-readiness", path);
+}
+
 auto run_dynamic_array_cleanup_audit(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     return run_single_file_command(app, "--dynamic-array-cleanup-audit", path);
@@ -290,6 +297,12 @@ int main() {
         run_dynamic_array_cleanup_audit(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         dynamic_array_cleanup_audit_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto dynamic_array_cleanup_production_readiness_failure =
+        run_dynamic_array_cleanup_production_readiness(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        dynamic_array_cleanup_production_readiness_failure,
         "lowering does not yet support this return expression"
     );
     auto drop_readiness_relations_failure = run_drop_readiness_relations(app, emit_failure_path);
@@ -571,6 +584,16 @@ int main() {
             "[element cleanup ok]",
         }
     );
+    auto empty_dynamic_array_cleanup_production_readiness =
+        run_dynamic_array_cleanup_production_readiness(app, clean_emit_path);
+    assert_success_with_stdout_contains(
+        empty_dynamic_array_cleanup_production_readiness,
+        {
+            "dynamic array cleanup production readiness blocked",
+            "[descriptor origins missing]",
+            "[production cleanup emission missing]",
+        }
+    );
 
     auto dynamic_array_blocked_cleanup_capability_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_dynamic_array_cleanup_capability.or";
@@ -659,6 +682,19 @@ int main() {
             "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "dynamic array cleanup emission capability blocked",
             "[element cleanup missing]",
+            "dynamic array cleanup production readiness blocked",
+            "[cleanup capability missing]",
+        }
+    );
+    auto dynamic_array_blocked_production_readiness =
+        run_dynamic_array_cleanup_production_readiness(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_production_readiness,
+        {
+            "dynamic array cleanup production readiness blocked",
+            "[descriptor origins ok]",
+            "[cleanup capability missing]",
+            "[production signatures missing]",
         }
     );
     assert(
@@ -766,6 +802,20 @@ int main() {
             "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "dynamic array cleanup emission capability proven",
             "[element cleanup ok]",
+            "dynamic array cleanup production readiness blocked",
+            "[production signatures missing]",
+        }
+    );
+    auto dynamic_array_authorized_production_readiness =
+        run_dynamic_array_cleanup_production_readiness(app, dynamic_array_authorized_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_authorized_production_readiness,
+        {
+            "dynamic array cleanup production readiness blocked",
+            "[cleanup capability ok]",
+            "[production signatures missing]",
+            "[production construction missing]",
+            "[production cleanup emission missing]",
         }
     );
 

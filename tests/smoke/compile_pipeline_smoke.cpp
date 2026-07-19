@@ -89,6 +89,20 @@ auto main() -> int {
         "drop readiness source correlations actions 0 semantic sites 0"
     );
     assert(ir.dynamic_array_descriptor_cleanup_plan_report.empty());
+    assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
+        ir.dynamic_array_cleanup_production_readiness
+    ));
+    assert(ir.dynamic_array_cleanup_production_readiness_report.size() == 1);
+    assert_line_contains(
+        ir.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "production readiness blocked"
+    );
+    assert_line_contains(
+        ir.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[descriptor origins missing]"
+    );
 
     auto drop_readiness_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
@@ -452,6 +466,20 @@ auto main() -> int {
         dynamic_array_blocked_owned_cleanup.ir_text.find("call void @__orison_drop.Payload") ==
         std::string::npos
     );
+    assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness
+    ));
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "production readiness blocked"
+    );
+    assert_line_contains(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[cleanup capability missing]"
+    );
 
     auto dynamic_array_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
@@ -502,6 +530,25 @@ auto main() -> int {
             "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
             "i64 %items.dynamic_array_cleanup0.cleanup.capacity)"
         ) != std::string::npos
+    );
+    assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness
+    ));
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "production readiness blocked"
+    );
+    assert_line_contains(
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[cleanup capability ok]"
+    );
+    assert_line_contains(
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "[production signatures missing]"
     );
 
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
