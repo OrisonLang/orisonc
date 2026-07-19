@@ -195,6 +195,9 @@ representation.
 - Pipeline smoke coverage now pins the blocked capability-report path for requested owned-element dynamic-array cleanup
   without semantic drop authorization: the report identifies missing element cleanup and no owned-element drop call is
   emitted.
+- The driver now exposes report-only `--dynamic-array-cleanup-sequence-verification <file>` and
+  `--dynamic-array-cleanup-emission-gate <file>` surfaces that print the raw sequence verifier and verifier-derived
+  emission gate for the same internal metadata seams used by cleanup capability reporting.
 - The driver now exposes a report-only `--dynamic-array-cleanup-capability <file>` surface that runs the same internal
   metadata seams and prints the cleanup-emission capability report without exposing new source syntax or production
   cleanup behavior.

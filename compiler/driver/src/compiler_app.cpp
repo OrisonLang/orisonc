@@ -32,6 +32,8 @@ auto usage_text() -> std::string {
            "--drop-cleanup-authorization <file> | --drop-readiness <file> | "
            "--drop-readiness-summary <file> | --drop-readiness-relations <file> | "
            "--drop-readiness-blockers <file> | --drop-readiness-source-correlations <file> | "
+           "--dynamic-array-cleanup-sequence-verification <file> | "
+           "--dynamic-array-cleanup-emission-gate <file> | "
            "--dynamic-array-cleanup-capability <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
@@ -368,6 +370,34 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
             return result.drop_readiness_source_correlation_report;
         });
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-sequence-verification") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            pipeline::CompilePipelineOptions {
+                .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+                .test_only_enable_dynamic_array_parameter_descriptors = true,
+                .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            },
+            [](auto const& result) -> auto const& {
+                return result.dynamic_array_cleanup_sequence_verification_report;
+            }
+        );
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-emission-gate") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            pipeline::CompilePipelineOptions {
+                .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+                .test_only_enable_dynamic_array_parameter_descriptors = true,
+                .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            },
+            [](auto const& result) -> auto const& {
+                return result.dynamic_array_cleanup_emission_gate_report;
+            }
+        );
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-capability") {

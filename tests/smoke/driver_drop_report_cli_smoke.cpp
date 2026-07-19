@@ -115,6 +115,20 @@ auto run_drop_readiness_source_correlations(orison::driver::CompilerApp const& a
     return run_single_file_command(app, "--drop-readiness-source-correlations", path);
 }
 
+auto run_dynamic_array_cleanup_sequence_verification(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-cleanup-sequence-verification", path);
+}
+
+auto run_dynamic_array_cleanup_emission_gate(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-cleanup-emission-gate", path);
+}
+
 auto run_dynamic_array_cleanup_capability(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
     -> orison::driver::CompileResult {
     return run_single_file_command(app, "--dynamic-array-cleanup-capability", path);
@@ -187,6 +201,18 @@ int main() {
     auto emitted_drops_failure = run_emitted_drops(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         emitted_drops_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto dynamic_array_cleanup_sequence_verification_failure =
+        run_dynamic_array_cleanup_sequence_verification(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        dynamic_array_cleanup_sequence_verification_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto dynamic_array_cleanup_emission_gate_failure =
+        run_dynamic_array_cleanup_emission_gate(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        dynamic_array_cleanup_emission_gate_failure,
         "lowering does not yet support this return expression"
     );
     auto dynamic_array_cleanup_capability_failure =
@@ -440,6 +466,12 @@ int main() {
         empty_drop_readiness_source,
         {"drop readiness source correlations actions 0 semantic sites 0"}
     );
+    auto empty_dynamic_array_cleanup_sequence_verification =
+        run_dynamic_array_cleanup_sequence_verification(app, clean_emit_path);
+    assert_success_with_empty_stdout(empty_dynamic_array_cleanup_sequence_verification);
+    auto empty_dynamic_array_cleanup_emission_gate =
+        run_dynamic_array_cleanup_emission_gate(app, clean_emit_path);
+    assert_success_with_empty_stdout(empty_dynamic_array_cleanup_emission_gate);
     auto empty_dynamic_array_cleanup_capability = run_dynamic_array_cleanup_capability(app, clean_emit_path);
     assert_success_with_stdout_contains(
         empty_dynamic_array_cleanup_capability,
@@ -462,6 +494,18 @@ int main() {
             "    1 as UInt32",
         }
     );
+    auto dynamic_array_blocked_cleanup_sequence_verification =
+        run_dynamic_array_cleanup_sequence_verification(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_cleanup_sequence_verification,
+        {"dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed"}
+    );
+    auto dynamic_array_blocked_cleanup_emission_gate =
+        run_dynamic_array_cleanup_emission_gate(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_cleanup_emission_gate,
+        {"dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed"}
+    );
     auto dynamic_array_blocked_cleanup_capability =
         run_dynamic_array_cleanup_capability(app, dynamic_array_blocked_cleanup_capability_path);
     assert_success_with_stdout_contains(
@@ -473,6 +517,14 @@ int main() {
     );
     assert(
         dynamic_array_blocked_cleanup_capability.stdout_text.find("call void @__orison_drop.Payload") ==
+        std::string::npos
+    );
+    assert(
+        dynamic_array_blocked_cleanup_sequence_verification.stdout_text.find("call void @__orison_drop.Payload") ==
+        std::string::npos
+    );
+    assert(
+        dynamic_array_blocked_cleanup_emission_gate.stdout_text.find("call void @__orison_drop.Payload") ==
         std::string::npos
     );
 
