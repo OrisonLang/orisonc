@@ -1519,6 +1519,30 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(production_signature_bound.ir_text.find("call void @__orison_dynamic_array_deallocate") == std::string::npos);
 
+    auto owned_parameter_source = std::string {
+        "package demo.dynamicarray\n"
+        "\n"
+        "record Payload\n"
+        "    public value: Int64\n"
+        "\n"
+        "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+        "    1 as UInt32\n"
+    };
+    auto production_owned_rejected = lower_source(
+        path,
+        owned_parameter_source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+        }
+    );
+    assert(production_owned_rejected.has_errors());
+    assert(
+        production_owned_rejected.render(path.string()).find(
+            "lowering does not yet support this function parameter type"
+        ) != std::string::npos
+    );
+
     auto bound = lower_source(
         path,
         source,

@@ -96,7 +96,8 @@ auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) 
 
 void enable_dynamic_array_parameter_descriptors(
     syntax::ModuleSyntax const& module,
-    LoweringContext& context
+    LoweringContext& context,
+    LlvmIrEmissionOptions const& options
 ) {
     for (auto const& function : module.functions) {
         auto signature = context.functions.find(function.name);
@@ -110,6 +111,10 @@ void enable_dynamic_array_parameter_descriptors(
             auto source_type_name = render_source_type_name(function.parameters[index].type);
             auto sequence = dynamic_sequence_source_type(source_type_name);
             if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
+                continue;
+            }
+            if (!options.test_only_enable_dynamic_array_parameter_descriptors &&
+                !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
                 continue;
             }
             signature->second.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
@@ -571,7 +576,7 @@ auto LlvmIrEmitter::emit(
         return result;
     }
     if (dynamic_array_parameter_descriptors_enabled(options)) {
-        enable_dynamic_array_parameter_descriptors(module, context);
+        enable_dynamic_array_parameter_descriptors(module, context, options);
     }
     auto string_constants = collect_string_constants(module);
     auto emission_context = LoweringEmissionContext {

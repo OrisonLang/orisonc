@@ -348,41 +348,18 @@ auto main() -> int {
         std::string::npos
     );
 
-    auto dynamic_array_production_signature_descriptor = pipeline.emit_llvm(
+    auto dynamic_array_owned_production_signature_descriptor = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
             .dynamic_array_production_signature_lowering_enabled = true,
         }
     );
-    assert(!dynamic_array_production_signature_descriptor.has_errors());
-    assert_line_contains(
-        dynamic_array_production_signature_descriptor.dynamic_array_descriptor_cleanup_plan_report,
-        0,
-        "descriptor %items.addr bound"
-    );
+    assert(dynamic_array_owned_production_signature_descriptor.has_errors());
     assert(
-        dynamic_array_production_signature_descriptor.ir_text.find(
-            "define i32 @use_items({ ptr, i64, i64 } %items)"
+        dynamic_array_owned_production_signature_descriptor.error_text.find(
+            "lowering does not yet support this function parameter type"
         ) != std::string::npos
-    );
-    assert(
-        dynamic_array_production_signature_descriptor.ir_text.find(
-            "store { ptr, i64, i64 } %items, ptr %items.addr"
-        ) != std::string::npos
-    );
-    assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
-        dynamic_array_production_signature_descriptor.dynamic_array_cleanup_production_readiness
-    ));
-    assert_line_contains(
-        dynamic_array_production_signature_descriptor.dynamic_array_cleanup_production_readiness_report,
-        0,
-        "[production signatures ok]"
-    );
-    assert_line_contains(
-        dynamic_array_production_signature_descriptor.dynamic_array_cleanup_production_readiness_report,
-        0,
-        "[cleanup capability missing]"
     );
 
     auto dynamic_array_source_correlated_cleanup = pipeline.emit_llvm(
@@ -481,6 +458,27 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto scalar_dynamic_array_production_signature = pipeline.emit_llvm(
+        scalar_dynamic_array_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!scalar_dynamic_array_production_signature.has_errors());
+    assert(
+        scalar_dynamic_array_production_signature.ir_text.find(
+            "define i32 @use_words({ ptr, i64, i64 } %words)"
+        ) != std::string::npos
+    );
+    assert(
+        scalar_dynamic_array_production_signature.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %words.dynamic_array_cleanup0.cleanup.data, i64 4, "
+            "i64 %words.dynamic_array_cleanup0.cleanup.capacity)"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_blocked_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
@@ -520,6 +518,21 @@ auto main() -> int {
         dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
         0,
         "[cleanup capability missing]"
+    );
+
+    auto dynamic_array_owned_production_signature_rejected = pipeline.emit_llvm(
+        dynamic_array_source_owner_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_production_signature_rejected.has_errors());
+    assert(
+        dynamic_array_owned_production_signature_rejected.error_text.find(
+            "lowering does not yet support this function parameter type"
+        ) != std::string::npos
     );
 
     auto dynamic_array_owned_cleanup = pipeline.emit_llvm(
@@ -609,6 +622,7 @@ auto main() -> int {
                 },
             },
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_production_signature_lowering_enabled = true,
         }
@@ -652,6 +666,7 @@ auto main() -> int {
                 },
             },
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_production_signature_lowering_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
@@ -1182,7 +1197,7 @@ auto main() -> int {
     assert(local_owned_drop < local_owned_deallocate);
     assert(local_owned_deallocate < local_owned_return);
 
-    auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
+    auto dynamic_array_owned_production_ready_rejected = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
@@ -1204,19 +1219,11 @@ auto main() -> int {
             .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
-    assert(!dynamic_array_owned_production_ready.has_errors());
-    assert(orison::pipeline::dynamic_array_cleanup_production_ready(
-        dynamic_array_owned_production_ready.dynamic_array_cleanup_production_readiness
-    ));
-    assert_line_contains(
-        dynamic_array_owned_production_ready.dynamic_array_cleanup_production_readiness_report,
-        0,
-        "production readiness ready"
-    );
-    assert_line_contains(
-        dynamic_array_owned_production_ready.dynamic_array_cleanup_production_readiness_report,
-        0,
-        "[production cleanup emission ok]"
+    assert(dynamic_array_owned_production_ready_rejected.has_errors());
+    assert(
+        dynamic_array_owned_production_ready_rejected.error_text.find(
+            "lowering does not yet support this function parameter type"
+        ) != std::string::npos
     );
 
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(

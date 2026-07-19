@@ -273,10 +273,14 @@ representation.
   implementation for the element type, local descriptor cleanup emits an initialized-element drop walk before backing
   storage deallocation. Without element cleanup authorization, owned-element local cleanup remains blocked rather than
   silently deallocating initialized owned elements.
+- Production-gated dynamic-array parameter descriptor lowering is now limited to scalar or non-owning element types.
+  `DynamicArray<UInt32>` parameters lower to `{ ptr, i64, i64 }` and can emit descriptor cleanup under the production
+  signature/cleanup gates, while owned-element parameters such as `DynamicArray<Payload>` remain rejected unless the
+  explicit test-only descriptor seam is used for internal cleanup-readiness coverage.
 
 ## Follow-up work
 
-- Enable `DynamicArray<T>` lowered signatures only after semantic ownership/drop analysis proves unique ownership,
-  initialized length, capacity bounds, and deterministic cleanup.
+- Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
+  analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
 - Extend `for ... in` lowering beyond named local dynamic-array descriptors to consume view descriptors, dynamic-array
   parameters, and computed dynamic iterables.
