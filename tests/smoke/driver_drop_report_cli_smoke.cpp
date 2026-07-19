@@ -115,6 +115,11 @@ auto run_drop_readiness_source_correlations(orison::driver::CompilerApp const& a
     return run_single_file_command(app, "--drop-readiness-source-correlations", path);
 }
 
+auto run_dynamic_array_cleanup_capability(orison::driver::CompilerApp const& app, std::filesystem::path const& path)
+    -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--dynamic-array-cleanup-capability", path);
+}
+
 void assert_failure_with_no_stdout_contains(
     orison::driver::CompileResult const& result,
     std::string_view expected_message
@@ -182,6 +187,12 @@ int main() {
     auto emitted_drops_failure = run_emitted_drops(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         emitted_drops_failure,
+        "lowering does not yet support this return expression"
+    );
+    auto dynamic_array_cleanup_capability_failure =
+        run_dynamic_array_cleanup_capability(app, emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        dynamic_array_cleanup_capability_failure,
         "lowering does not yet support this return expression"
     );
     auto drop_readiness_relations_failure = run_drop_readiness_relations(app, emit_failure_path);
@@ -428,6 +439,41 @@ int main() {
     assert_success_with_stdout_contains(
         empty_drop_readiness_source,
         {"drop readiness source correlations actions 0 semantic sites 0"}
+    );
+    auto empty_dynamic_array_cleanup_capability = run_dynamic_array_cleanup_capability(app, clean_emit_path);
+    assert_success_with_stdout_contains(
+        empty_dynamic_array_cleanup_capability,
+        {
+            "dynamic array cleanup emission capability proven",
+            "[element cleanup ok]",
+        }
+    );
+
+    auto dynamic_array_blocked_cleanup_capability_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_dynamic_array_cleanup_capability.or";
+    std::filesystem::remove(dynamic_array_blocked_cleanup_capability_path, remove_error);
+    write_fixture(
+        dynamic_array_blocked_cleanup_capability_path,
+        "demo.dynamicarraycleanupcapability",
+        {
+            "record Payload",
+            "    public value: Int64",
+            "function use_items(items: DynamicArray<Payload>) -> UInt32",
+            "    1 as UInt32",
+        }
+    );
+    auto dynamic_array_blocked_cleanup_capability =
+        run_dynamic_array_cleanup_capability(app, dynamic_array_blocked_cleanup_capability_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_blocked_cleanup_capability,
+        {
+            "dynamic array cleanup emission capability blocked",
+            "[element cleanup missing]",
+        }
+    );
+    assert(
+        dynamic_array_blocked_cleanup_capability.stdout_text.find("call void @__orison_drop.Payload") ==
+        std::string::npos
     );
 
     auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);

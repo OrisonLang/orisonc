@@ -32,12 +32,17 @@ auto usage_text() -> std::string {
            "--drop-cleanup-authorization <file> | --drop-readiness <file> | "
            "--drop-readiness-summary <file> | --drop-readiness-relations <file> | "
            "--drop-readiness-blockers <file> | --drop-readiness-source-correlations <file> | "
+           "--dynamic-array-cleanup-capability <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
-auto emit_llvm_report(std::filesystem::path const& source_path, auto report_selector) -> CompileResult {
+auto emit_llvm_report(
+    std::filesystem::path const& source_path,
+    pipeline::CompilePipelineOptions const& options,
+    auto report_selector
+) -> CompileResult {
     pipeline::CompilePipeline pipeline;
-    auto result = pipeline.emit_llvm(source_path);
+    auto result = pipeline.emit_llvm(source_path, options);
     if (result.has_errors()) {
         return CompileResult {
             .exit_code = 1,
@@ -49,6 +54,10 @@ auto emit_llvm_report(std::filesystem::path const& source_path, auto report_sele
         .exit_code = 0,
         .stdout_text = render_report_lines(report_selector(result)),
     };
+}
+
+auto emit_llvm_report(std::filesystem::path const& source_path, auto report_selector) -> CompileResult {
+    return emit_llvm_report(source_path, pipeline::CompilePipelineOptions {}, report_selector);
 }
 
 auto analyze_report(std::filesystem::path const& source_path, auto report_selector) -> CompileResult {
@@ -359,6 +368,20 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return emit_llvm_report(std::filesystem::path(args[2]), [](auto const& result) -> auto const& {
             return result.drop_readiness_source_correlation_report;
         });
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-capability") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            pipeline::CompilePipelineOptions {
+                .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+                .test_only_enable_dynamic_array_parameter_descriptors = true,
+                .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            },
+            [](auto const& result) -> auto const& {
+                return result.dynamic_array_cleanup_emission_capability_report;
+            }
+        );
     }
 
     if (args.size() == 5 && std::string_view(args[1]) == "--emit-object" &&
