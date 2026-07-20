@@ -51,6 +51,7 @@ auto report_contains(std::vector<std::string> const& lines, std::string_view fra
 }
 
 auto dynamic_array_construction_lowering_enabled(CompilePipelineOptions const& options) -> bool;
+auto dynamic_array_parameter_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_index_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_length_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_for_lowering_enabled(CompilePipelineOptions const& options) -> bool;
@@ -72,7 +73,7 @@ auto plan_dynamic_array_cleanup_production_readiness(
         .cleanup_capability_proven =
             report_contains(result.dynamic_array_cleanup_emission_capability_report, "capability proven"),
         .production_signature_lowering_enabled =
-            options.dynamic_array_production_signature_lowering_enabled,
+            dynamic_array_parameter_lowering_enabled(options),
         .production_construction_lowering_enabled =
             dynamic_array_construction_lowering_enabled(options),
         .production_cleanup_emission_enabled =
@@ -85,18 +86,26 @@ auto dynamic_array_construction_lowering_enabled(CompilePipelineOptions const& o
         options.dynamic_array_production_construction_lowering_enabled;
 }
 
+auto dynamic_array_parameter_lowering_enabled(CompilePipelineOptions const& options) -> bool {
+    return options.dynamic_array_parameter_lowering_enabled ||
+        options.dynamic_array_production_signature_lowering_enabled;
+}
+
 auto dynamic_array_index_lowering_enabled(CompilePipelineOptions const& options) -> bool {
     return options.dynamic_array_local_lowering_enabled ||
+        options.dynamic_array_parameter_lowering_enabled ||
         options.dynamic_array_production_index_lowering_enabled;
 }
 
 auto dynamic_array_length_lowering_enabled(CompilePipelineOptions const& options) -> bool {
     return options.dynamic_array_local_lowering_enabled ||
+        options.dynamic_array_parameter_lowering_enabled ||
         options.dynamic_array_production_length_lowering_enabled;
 }
 
 auto dynamic_array_for_lowering_enabled(CompilePipelineOptions const& options) -> bool {
     return options.dynamic_array_local_lowering_enabled ||
+        options.dynamic_array_parameter_lowering_enabled ||
         options.dynamic_array_production_for_lowering_enabled;
 }
 
@@ -107,6 +116,7 @@ auto dynamic_array_append_lowering_enabled(CompilePipelineOptions const& options
 
 auto dynamic_array_cleanup_emission_enabled(CompilePipelineOptions const& options) -> bool {
     return options.dynamic_array_local_lowering_enabled ||
+        options.dynamic_array_parameter_lowering_enabled ||
         options.dynamic_array_production_cleanup_emission_enabled;
 }
 
@@ -283,7 +293,7 @@ auto CompilePipeline::emit_llvm(
     emission_options.test_only_enable_dynamic_array_parameter_descriptors =
         options.test_only_enable_dynamic_array_parameter_descriptors;
     emission_options.enable_dynamic_array_parameter_descriptors =
-        options.dynamic_array_production_signature_lowering_enabled;
+        dynamic_array_parameter_lowering_enabled(options);
     emission_options.enable_dynamic_array_construction_lowering =
         dynamic_array_construction_lowering_enabled(options);
     emission_options.enable_dynamic_array_index_lowering =

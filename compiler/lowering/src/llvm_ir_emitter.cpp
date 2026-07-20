@@ -400,6 +400,50 @@ auto has_dynamic_array_append_call(
     return false;
 }
 
+auto has_lowerable_dynamic_array_parameter(
+    syntax::FunctionSyntax const& function,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    for (auto const& parameter : function.parameters) {
+        auto source_type_name = render_source_type_name(parameter.type);
+        auto sequence = dynamic_sequence_source_type(source_type_name);
+        if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
+            continue;
+        }
+        if (options.test_only_enable_dynamic_array_parameter_descriptors ||
+            is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto has_lowerable_dynamic_array_parameter(
+    syntax::ModuleSyntax const& module,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    for (auto const& function : module.functions) {
+        if (has_lowerable_dynamic_array_parameter(function, options)) {
+            return true;
+        }
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            if (has_lowerable_dynamic_array_parameter(method, options)) {
+                return true;
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            if (has_lowerable_dynamic_array_parameter(method, options)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 auto has_view_index_read(
     syntax::ModuleSyntax const& module
 ) -> bool {
@@ -564,6 +608,11 @@ auto collect_dynamic_array_runtime_operations(
     }
     if (options.enable_dynamic_array_index_lowering && has_dynamic_array_index_read(module)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
+    }
+    if (dynamic_array_parameter_descriptors_enabled(options) &&
+        dynamic_array_cleanup_emission_enabled(options) &&
+        has_lowerable_dynamic_array_parameter(module, options)) {
+        push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
     }
     if (has_view_index_read(module)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);

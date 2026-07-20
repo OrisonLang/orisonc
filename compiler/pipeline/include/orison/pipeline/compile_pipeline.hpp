@@ -44,6 +44,7 @@ struct CompilePipelineOptions {
     bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
     bool test_only_render_dynamic_array_element_drop_walks = false;
     bool dynamic_array_local_lowering_enabled = true;
+    bool dynamic_array_parameter_lowering_enabled = true;
     bool dynamic_array_production_signature_lowering_enabled = false;
     bool dynamic_array_production_construction_lowering_enabled = false;
     bool dynamic_array_production_index_lowering_enabled = false;

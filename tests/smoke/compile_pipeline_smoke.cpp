@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <sys/wait.h>
@@ -21,7 +22,27 @@ void assert_line_contains(
     std::string_view expected_fragment
 ) {
     assert(index < lines.size());
+    if (lines[index].find(expected_fragment) == std::string::npos) {
+        std::cerr << "expected report line " << index << " to contain '" << expected_fragment
+                  << "', actual line: '" << lines[index] << "'\n";
+    }
     assert(lines[index].find(expected_fragment) != std::string::npos);
+}
+
+void assert_any_line_contains(
+    std::vector<std::string> const& lines,
+    std::string_view expected_fragment
+) {
+    for (auto const& line : lines) {
+        if (line.find(expected_fragment) != std::string::npos) {
+            return;
+        }
+    }
+    std::cerr << "expected any report line to contain '" << expected_fragment << "'\n";
+    for (auto const& line : lines) {
+        std::cerr << "actual line: '" << line << "'\n";
+    }
+    assert(false);
 }
 
 }  // namespace
@@ -306,6 +327,7 @@ auto main() -> int {
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .dynamic_array_parameter_lowering_enabled = false,
         }
     );
     assert(!dynamic_array_bound_descriptor.has_errors());
@@ -352,7 +374,7 @@ auto main() -> int {
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_parameter_lowering_enabled = true,
         }
     );
     assert(dynamic_array_owned_production_signature_descriptor.has_errors());
@@ -368,6 +390,7 @@ auto main() -> int {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_render_dynamic_array_element_drop_walks = true,
+            .dynamic_array_parameter_lowering_enabled = false,
         }
     );
     assert(!dynamic_array_source_correlated_cleanup.has_errors());
@@ -407,8 +430,6 @@ auto main() -> int {
         scalar_dynamic_array_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .test_only_enable_dynamic_array_parameter_descriptors = true,
-            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
         }
     );
     assert(!scalar_dynamic_array_cleanup.has_errors());
@@ -462,8 +483,6 @@ auto main() -> int {
         scalar_dynamic_array_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .dynamic_array_production_signature_lowering_enabled = true,
-            .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
     assert(!scalar_dynamic_array_production_signature.has_errors());
@@ -493,9 +512,6 @@ auto main() -> int {
         scalar_dynamic_array_parameter_length_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .dynamic_array_production_signature_lowering_enabled = true,
-            .dynamic_array_production_length_lowering_enabled = true,
-            .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
     assert(!scalar_dynamic_array_parameter_length.has_errors());
@@ -530,9 +546,6 @@ auto main() -> int {
         scalar_dynamic_array_parameter_index_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .dynamic_array_production_signature_lowering_enabled = true,
-            .dynamic_array_production_index_lowering_enabled = true,
-            .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
     assert(!scalar_dynamic_array_parameter_index.has_errors());
@@ -575,6 +588,7 @@ auto main() -> int {
         scalar_dynamic_array_parameter_for_path,
         orison::pipeline::CompilePipelineOptions {
             .dynamic_array_local_lowering_enabled = false,
+            .dynamic_array_parameter_lowering_enabled = false,
             .dynamic_array_production_signature_lowering_enabled = true,
         }
     );
@@ -589,9 +603,6 @@ auto main() -> int {
         scalar_dynamic_array_parameter_for_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .dynamic_array_production_signature_lowering_enabled = true,
-            .dynamic_array_production_for_lowering_enabled = true,
-            .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
     assert(!scalar_dynamic_array_parameter_for.has_errors());
@@ -776,6 +787,7 @@ auto main() -> int {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .dynamic_array_parameter_lowering_enabled = false,
         }
     );
     assert(!dynamic_array_blocked_owned_cleanup.has_errors());
@@ -815,7 +827,7 @@ auto main() -> int {
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_parameter_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
@@ -845,6 +857,7 @@ auto main() -> int {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .dynamic_array_parameter_lowering_enabled = false,
         }
     );
     assert(!dynamic_array_owned_cleanup.has_errors());
@@ -916,6 +929,7 @@ auto main() -> int {
             .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_local_lowering_enabled = false,
+            .dynamic_array_parameter_lowering_enabled = false,
             .dynamic_array_production_signature_lowering_enabled = true,
         }
     );
@@ -961,6 +975,7 @@ auto main() -> int {
             .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
             .dynamic_array_local_lowering_enabled = false,
+            .dynamic_array_parameter_lowering_enabled = false,
             .dynamic_array_production_signature_lowering_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
         }
@@ -973,9 +988,8 @@ auto main() -> int {
         "requests __orison_dynamic_array_allocate"
     );
     assert(dynamic_array_owned_construction_gate.dynamic_array_runtime_request_report.size() == 2);
-    assert_line_contains(
+    assert_any_line_contains(
         dynamic_array_owned_construction_gate.dynamic_array_runtime_request_report,
-        0,
         "__orison_dynamic_array_allocate"
     );
     assert(dynamic_array_owned_construction_gate.dynamic_array_allocation_call_ir.size() == 1);
@@ -1023,6 +1037,7 @@ auto main() -> int {
         dynamic_array_source_construction_path,
         orison::pipeline::CompilePipelineOptions {
             .dynamic_array_local_lowering_enabled = false,
+            .dynamic_array_parameter_lowering_enabled = false,
             .dynamic_array_production_construction_lowering_enabled = true,
         }
     );
@@ -1068,6 +1083,7 @@ auto main() -> int {
         dynamic_array_placed_construction_path,
         orison::pipeline::CompilePipelineOptions {
             .dynamic_array_local_lowering_enabled = false,
+            .dynamic_array_parameter_lowering_enabled = false,
             .dynamic_array_production_construction_lowering_enabled = true,
         }
     );
@@ -1478,7 +1494,7 @@ auto main() -> int {
                 },
             },
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
-            .dynamic_array_production_signature_lowering_enabled = true,
+            .dynamic_array_parameter_lowering_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
         }

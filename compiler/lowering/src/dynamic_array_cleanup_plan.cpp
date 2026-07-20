@@ -462,11 +462,7 @@ auto plan_bound_dynamic_array_parameter_cleanups(
         return plans;
     }
 
-    auto names = std::vector<std::string> {};
-    names.reserve(session.state.source_type_names.size());
-    for (auto const& [name, _] : session.state.source_type_names) {
-        names.push_back(name);
-    }
+    auto names = session.state.parameter_names;
     std::ranges::sort(names);
 
     for (auto const& name : names) {

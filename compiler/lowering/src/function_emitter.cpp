@@ -975,6 +975,7 @@ void emit_function_body(
         .enclosing_symbol_name = signature.symbol_name,
     };
     for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+        state.parameter_names.push_back(function.parameters[index].name);
         state.local_name_counts[function.parameters[index].name] = 1;
         state.immutable_bindings.emplace(function.parameters[index].name, LoweredExpression {
             .type = signature.parameter_types[index],

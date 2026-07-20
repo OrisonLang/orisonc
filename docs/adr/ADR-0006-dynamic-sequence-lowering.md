@@ -299,8 +299,11 @@ representation.
   DynamicArray-specific option names are intentionally gate-oriented rather than loop-shape-oriented.
 - Local `DynamicArray<T>` lowering is now available on the default compile path for constructed local descriptors:
   default construction, append with growth, checked scalar index reads, length reads, descriptor `for` loops, and local
-  descriptor cleanup are enabled together. Lowered `DynamicArray<T>` parameter signatures remain separately gated, and
-  owned-element cleanup still requires semantic drop authorization before element drop calls are emitted.
+  descriptor cleanup are enabled together.
+- Scalar/non-owning `DynamicArray<T>` parameter lowering is now available on the default compile path: descriptor
+  signatures, parameter cleanup, `.length()`, checked index reads, and descriptor `for` loops move together. Owned
+  element parameters such as `DynamicArray<Payload>` remain rejected on the production path until ownership/drop proof
+  is complete; the test-only descriptor seam remains available for internal cleanup-readiness coverage.
 
 ## Follow-up work
 
