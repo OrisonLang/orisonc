@@ -574,6 +574,7 @@ auto main() -> int {
     auto scalar_dynamic_array_parameter_for_without_gate = pipeline.emit_llvm(
         scalar_dynamic_array_parameter_for_path,
         orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_production_signature_lowering_enabled = true,
         }
     );
@@ -914,6 +915,7 @@ auto main() -> int {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_production_signature_lowering_enabled = true,
         }
     );
@@ -958,6 +960,7 @@ auto main() -> int {
             .test_only_derive_dynamic_array_cleanup_from_semantics = true,
             .test_only_enable_dynamic_array_parameter_descriptors = true,
             .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_production_signature_lowering_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
         }
@@ -1019,6 +1022,7 @@ auto main() -> int {
     auto dynamic_array_source_construction = pipeline.emit_llvm(
         dynamic_array_source_construction_path,
         orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_production_construction_lowering_enabled = true,
         }
     );
@@ -1063,6 +1067,7 @@ auto main() -> int {
     auto dynamic_array_placed_construction = pipeline.emit_llvm(
         dynamic_array_placed_construction_path,
         orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_production_construction_lowering_enabled = true,
         }
     );
@@ -1204,14 +1209,7 @@ auto main() -> int {
             << "    items.push(7 as UInt32)\n"
             << "    0 as UInt32\n";
     }
-    auto dynamic_array_local_append = pipeline.emit_llvm(
-        dynamic_array_local_append_path,
-        orison::pipeline::CompilePipelineOptions {
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_append_lowering_enabled = true,
-            .dynamic_array_production_cleanup_emission_enabled = true,
-        }
-    );
+    auto dynamic_array_local_append = pipeline.emit_llvm(dynamic_array_local_append_path);
     assert(!dynamic_array_local_append.has_errors());
     assert(dynamic_array_local_append.dynamic_array_runtime_request_report.size() == 3);
     assert_line_contains(
@@ -1267,15 +1265,7 @@ auto main() -> int {
             << "    items.push(7 as UInt32)\n"
             << "    items[0]\n";
     }
-    auto dynamic_array_append_index = pipeline.emit_llvm(
-        dynamic_array_append_index_path,
-        orison::pipeline::CompilePipelineOptions {
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_index_lowering_enabled = true,
-            .dynamic_array_production_append_lowering_enabled = true,
-            .dynamic_array_production_cleanup_emission_enabled = true,
-        }
-    );
+    auto dynamic_array_append_index = pipeline.emit_llvm(dynamic_array_append_index_path);
     assert(!dynamic_array_append_index.has_errors());
     assert(dynamic_array_append_index.dynamic_array_runtime_request_report.size() == 4);
     assert_line_contains(
@@ -1332,15 +1322,7 @@ auto main() -> int {
             << "    items.push(7 as UInt32)\n"
             << "    items.length()\n";
     }
-    auto dynamic_array_append_length = pipeline.emit_llvm(
-        dynamic_array_append_length_path,
-        orison::pipeline::CompilePipelineOptions {
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_length_lowering_enabled = true,
-            .dynamic_array_production_append_lowering_enabled = true,
-            .dynamic_array_production_cleanup_emission_enabled = true,
-        }
-    );
+    auto dynamic_array_append_length = pipeline.emit_llvm(dynamic_array_append_length_path);
     assert(!dynamic_array_append_length.has_errors());
     assert(dynamic_array_append_length.dynamic_array_runtime_request_report.size() == 3);
     assert_line_contains(
@@ -1398,15 +1380,7 @@ auto main() -> int {
             << "        total = total + item\n"
             << "    total\n";
     }
-    auto dynamic_array_append_for = pipeline.emit_llvm(
-        dynamic_array_append_for_path,
-        orison::pipeline::CompilePipelineOptions {
-            .dynamic_array_production_construction_lowering_enabled = true,
-            .dynamic_array_production_for_lowering_enabled = true,
-            .dynamic_array_production_append_lowering_enabled = true,
-            .dynamic_array_production_cleanup_emission_enabled = true,
-        }
-    );
+    auto dynamic_array_append_for = pipeline.emit_llvm(dynamic_array_append_for_path);
     assert(!dynamic_array_append_for.has_errors());
     assert(dynamic_array_append_for.dynamic_array_runtime_request_report.size() == 3);
     assert(dynamic_array_append_for.ir_text.find("for.condition.") != std::string::npos);

@@ -1,0 +1,18 @@
+package examples.dynamicarray
+
+function first_value() -> UInt32
+    var items: DynamicArray<UInt32> = DynamicArray()
+    items.push(7 as UInt32)
+    items[0]
+
+function counted_sum() -> UInt32
+    var items: DynamicArray<UInt32> = DynamicArray()
+    var total = 0 as UInt32
+    items.push(7 as UInt32)
+    items.push(9 as UInt32)
+    for item in items
+        total = total + item
+    total
+
+function main() -> UInt32
+    0 as UInt32

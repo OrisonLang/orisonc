@@ -294,11 +294,13 @@ representation.
   `exclusive.View<T>` use the same read-only descriptor ABI for length, checked index reads, and descriptor-loop
   iteration. Exclusive View mutation remains future work rather than an implicit side effect of read support.
 - View descriptor-loop lowering is now available on the default compile path for named `View<T>`, `shared.View<T>`,
-  and `exclusive.View<T>` iterables. Owned `DynamicArray<T>` descriptor-loop lowering remains behind the explicit
-  production gate because it still carries ownership, storage, capacity, and cleanup obligations that non-owning views
-  do not.
+  and `exclusive.View<T>` iterables.
 - Shared descriptor-loop lowering now emits neutral `sequence_for` temporary names in generated LLVM IR. The remaining
   DynamicArray-specific option names are intentionally gate-oriented rather than loop-shape-oriented.
+- Local `DynamicArray<T>` lowering is now available on the default compile path for constructed local descriptors:
+  default construction, append with growth, checked scalar index reads, length reads, descriptor `for` loops, and local
+  descriptor cleanup are enabled together. Lowered `DynamicArray<T>` parameter signatures remain separately gated, and
+  owned-element cleanup still requires semantic drop authorization before element drop calls are emitted.
 
 ## Follow-up work
 

@@ -289,6 +289,38 @@ auto has_dynamic_array_index_read(
     return found;
 }
 
+auto has_dynamic_array_append_call(
+    syntax::FunctionSyntax const& function
+) -> bool {
+    auto owner_names = std::unordered_set<std::string> {};
+    for (auto const& parameter : function.parameters) {
+        if (!parameter.name.empty() && is_dynamic_array_source_type(parameter.type)) {
+            owner_names.insert(parameter.name);
+        }
+    }
+    for (auto const& statement : function.body_statements) {
+        collect_dynamic_array_owner_names(statement, owner_names);
+    }
+    if (owner_names.empty()) {
+        return false;
+    }
+
+    auto found = false;
+    walk_function_expressions(function, [&owner_names, &found](syntax::ExpressionSyntax const& expression) {
+        if (found ||
+            expression.kind != syntax::ExpressionKind::call ||
+            expression.left == nullptr ||
+            expression.left->kind != syntax::ExpressionKind::member_access ||
+            expression.left->text != "push" ||
+            expression.left->left == nullptr ||
+            expression.left->left->kind != syntax::ExpressionKind::name) {
+            return;
+        }
+        found = owner_names.contains(expression.left->left->text);
+    });
+    return found;
+}
+
 auto has_view_index_read(
     syntax::FunctionSyntax const& function
 ) -> bool {
@@ -336,6 +368,31 @@ auto has_dynamic_array_index_read(
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
             if (has_dynamic_array_index_read(method)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+auto has_dynamic_array_append_call(
+    syntax::ModuleSyntax const& module
+) -> bool {
+    for (auto const& function : module.functions) {
+        if (has_dynamic_array_append_call(function)) {
+            return true;
+        }
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            if (has_dynamic_array_append_call(method)) {
+                return true;
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            if (has_dynamic_array_append_call(method)) {
                 return true;
             }
         }
@@ -491,10 +548,14 @@ auto collect_dynamic_array_runtime_operations(
         for (auto index = source_plan_offset; index < plans.size(); ++index) {
             operations.push_back(plans[index].operation);
         }
-        if (options.enable_dynamic_array_index_lowering && source_plan_offset < plans.size()) {
+        if (options.enable_dynamic_array_index_lowering &&
+            source_plan_offset < plans.size() &&
+            has_dynamic_array_index_read(module)) {
             push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
         }
-        if (options.enable_dynamic_array_append_lowering && source_plan_offset < plans.size()) {
+        if (options.enable_dynamic_array_append_lowering &&
+            source_plan_offset < plans.size() &&
+            has_dynamic_array_append_call(module)) {
             push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::grow);
         }
         if (dynamic_array_cleanup_emission_enabled(options) && source_plan_offset < plans.size()) {

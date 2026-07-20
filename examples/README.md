@@ -17,6 +17,8 @@
 `local_inferred_nested_record_let.or` demonstrates nested immutable record field access from an inferred constructor binding.
 `local_inferred_record_array_let.or` demonstrates array-field index access from an inferred record constructor binding.
 `local_inferred_array_let.or` demonstrates an immutable fixed-array `let` whose type is inferred from explicit elements.
+`local_dynamic_array_append.or` demonstrates local `DynamicArray<UInt32>` construction, append/grow, index read,
+iteration, and cleanup on the default compiler path.
 `local_inferred_nested_array_let.or` demonstrates a nested immutable fixed-array `let` inferred from explicit elements.
 `local_inferred_array_record_let.or` demonstrates record-field access from an inferred fixed array of records.
 `local_inferred_nested_mixed_let.or` demonstrates record-field access through an inferred record's fixed-array field.
@@ -93,6 +95,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_inferred_nested_record_let.or` | inferred nested immutable record `let` field access | backend |
 | `local_inferred_record_array_let.or` | inferred immutable record array-field index access | backend |
 | `local_inferred_array_let.or` | inferred immutable fixed-array `let` binding | backend |
+| `local_dynamic_array_append.or` | local `DynamicArray<UInt32>` construction, append/grow, checked index read, iteration, and cleanup | backend |
 | `local_inferred_nested_array_let.or` | inferred nested immutable fixed-array `let` binding | backend |
 | `local_inferred_array_record_let.or` | inferred immutable array-of-record field access | backend |
 | `local_inferred_nested_mixed_let.or` | inferred immutable record-field/array-index/record-field access | backend |
@@ -144,9 +147,10 @@ enforces these levels so an example cannot silently drift out of sync with the c
 Use `minimal.or` for the smallest compile/link/run demonstration.
 
 Use `local_record_field_assignment.or` and `pointer_record_field_assignment.or` for aggregate-assignment pipeline
-coverage. Use `concurrency_task_main.or` and `concurrency_thread_main.or` for task/thread pipeline coverage. The
-canonical pipeline smoke pins those files through `--emit-llvm`, `--emit-object`, `run`, and retained `--build`
-executable paths. The focused minimal demo smoke owns the full `minimal.or` compile/link/run workflow.
+coverage. Use `local_dynamic_array_append.or` for the local growable-sequence pipeline. Use
+`concurrency_task_main.or` and `concurrency_thread_main.or` for task/thread pipeline coverage. The canonical pipeline
+smoke pins those files through `--emit-llvm`, `--emit-object`, `run`, and retained `--build` executable paths. The
+focused minimal demo smoke owns the full `minimal.or` compile/link/run workflow.
 
 Run only these canonical pipeline demos with:
 
@@ -202,6 +206,15 @@ build/tools/orisonc/orisonc --build examples/view_descriptor_reads.or -o build/v
 ```
 
 It validates read-only `shared.View<T>`/`exclusive.View<T>` descriptor `.length()`, checked indexing, and iteration.
+
+Run the local DynamicArray demo with:
+
+```sh
+build/tools/orisonc/orisonc run examples/local_dynamic_array_append.or
+```
+
+It validates local `DynamicArray<UInt32>` construction, append/grow, checked indexing, iteration, and cleanup on the
+default compiler path.
 
 Run the nested aggregate assignment demo with:
 

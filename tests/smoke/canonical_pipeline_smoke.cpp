@@ -114,9 +114,10 @@ auto main() -> int {
     auto smoke_temp_root_text = smoke_temp_root.string();
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
-    constexpr auto backend_demos = std::array<PipelineDemo, 5> {
+    constexpr auto backend_demos = std::array<PipelineDemo, 6> {
         PipelineDemo {"concurrency_task_main.or", "call ptr @__orison_task_spawn"},
         PipelineDemo {"concurrency_thread_main.or", "call ptr @__orison_thread_spawn"},
+        PipelineDemo {"local_dynamic_array_append.or", "call void @__orison_dynamic_array_grow"},
         PipelineDemo {"local_record_field_assignment.or", "store i32 8, ptr %tmp"},
         PipelineDemo {"pointer_record_field_assignment.or", "store i32 8, ptr %tmp"},
         PipelineDemo {"view_descriptor_reads.or", "%values.sequence_for0.value = load i32"},
