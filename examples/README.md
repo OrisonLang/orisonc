@@ -49,6 +49,7 @@
 `local_record_array_for.or` demonstrates non-literal fixed-array iteration over a nested record-backed array.
 `local_record_index_for.or` demonstrates non-literal fixed-array iteration over an indexed nested array source.
 `local_record_index_field_for.or` demonstrates non-literal fixed-array iteration over an array in an indexed record field.
+`view_descriptor_reads.or` demonstrates read-only View descriptor `.length()`, checked indexing, and iteration.
 `local_ternary_array_for.or` demonstrates fixed-array iteration over a ternary-selected array.
 `local_ternary_array_literal_for.or` demonstrates fixed-array iteration over ternary-selected array literals.
 `local_ternary_record_array_literal_for.or` demonstrates fixed-array iteration over ternary-selected record array literals.
@@ -124,6 +125,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_record_array_for.or` | nested record-backed fixed-array iteration | backend |
 | `local_record_index_for.or` | indexed nested fixed-array iteration | backend |
 | `local_record_index_field_for.or` | indexed record-field fixed-array iteration | backend |
+| `view_descriptor_reads.or` | `shared.View<T>`/`exclusive.View<T>` descriptor length, checked index reads, and iteration | backend |
 | `local_ternary_array_for.or` | ternary-selected fixed-array iteration | backend |
 | `local_ternary_array_literal_for.or` | ternary-selected fixed-array literal iteration | backend |
 | `local_ternary_record_array_literal_for.or` | ternary-selected record array literal iteration | backend |

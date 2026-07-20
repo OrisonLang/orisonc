@@ -1,4 +1,5 @@
 #include "orison/pipeline/compile_pipeline.hpp"
+#include "orison/lowering/llvm_object_emitter.hpp"
 
 #include <array>
 #include <cassert>
@@ -95,6 +96,21 @@ auto main() -> int {
         assert(!backend.has_errors());
         assert(!backend.object_bytes.empty());
     }
+
+    auto view_descriptor_ir = pipeline.emit_llvm(
+        examples / "view_descriptor_reads.or",
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!view_descriptor_ir.has_errors());
+    assert(view_descriptor_ir.ir_text.find("define i64 @count({ ptr, i64 } %values)") != std::string::npos);
+    assert(view_descriptor_ir.ir_text.find("define i32 @first({ ptr, i64 } %values)") != std::string::npos);
+    assert(view_descriptor_ir.ir_text.find("define i32 @sum({ ptr, i64 } %values)") != std::string::npos);
+    auto view_descriptor_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(view_descriptor_ir.ir_text);
+    assert(!view_descriptor_object.has_errors());
+    assert(!view_descriptor_object.object_bytes.empty());
 
     auto ordinary_pointer_path = std::filesystem::temp_directory_path() / "orison_string_pointer_boundary.or";
     {
