@@ -43,6 +43,24 @@ auto run_emit_object(
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
+auto run_dynamic_sequence_for_emit_object(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& output_path
+) -> orison::driver::CompileResult {
+    auto source_path_text = source_path.string();
+    auto output_path_text = output_path.string();
+    std::array<char const*, 6> argv {
+        "orisonc",
+        "--enable-dynamic-sequence-for-lowering",
+        "--emit-object",
+        source_path_text.c_str(),
+        "-o",
+        output_path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 auto run_build(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& source_path,
@@ -116,6 +134,28 @@ auto main() -> int {
     assert(object_write_failure.exit_code == 1);
     assert(object_write_failure.stdout_text.empty());
     assert(object_write_failure.stderr_text == "error: unable to write object file\n");
+
+    auto view_descriptor_path = smoke_temp_root / "view_descriptor_reads.or";
+    write_fixture(
+        view_descriptor_path,
+        "demo.viewdescriptor",
+        {
+            "function count(values: shared.View<UInt32>) -> IntSize",
+            "    values.length()",
+            "function first(values: exclusive.View<UInt32>) -> UInt32",
+            "    values[0]",
+            "function sum(values: shared.View<UInt32>) -> UInt32",
+            "    var total = 0 as UInt32",
+            "    for item in values",
+            "        total = total + item",
+            "    total",
+        }
+    );
+    auto view_descriptor_object_path = smoke_temp_root / "view_descriptor_reads.o";
+    auto view_descriptor_object_result =
+        run_dynamic_sequence_for_emit_object(app, view_descriptor_path, view_descriptor_object_path);
+    assert_success_with_empty_stdout(view_descriptor_object_result);
+    assert(std::filesystem::file_size(view_descriptor_object_path) > 0);
 
     auto executable_path = smoke_temp_root / "artifact_scalar";
     auto build_result = run_build(app, scalar_path, executable_path);

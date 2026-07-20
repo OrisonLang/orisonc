@@ -25,7 +25,8 @@ auto render_report_lines(std::vector<std::string> const& lines) -> std::string {
 }
 
 auto usage_text() -> std::string {
-    return "usage: orisonc --version | run <file> | --parse <file> | --emit-llvm <file> | "
+    return "usage: orisonc [--enable-dynamic-sequence-for-lowering] "
+           "--version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
            "--semantic-drop-diagnostics <file> | --semantic-drop-lowering-authorization <file> | "
            "--semantic-drop-summary <file> | --semantic-dynamic-array-descriptor-origins <file> | "
@@ -41,6 +42,12 @@ auto usage_text() -> std::string {
            "--dynamic-array-cleanup-capability <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
+}
+
+auto command_options(bool enable_dynamic_sequence_for_lowering) -> pipeline::CompilePipelineOptions {
+    return pipeline::CompilePipelineOptions {
+        .dynamic_array_production_for_lowering_enabled = enable_dynamic_sequence_for_lowering,
+    };
 }
 
 auto emit_llvm_report(
@@ -279,13 +286,22 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 }  // namespace
 
 auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
-    if (args.size() > 1 && std::string_view(args[1]) == "--version") {
+    auto command_index = std::size_t {1};
+    auto enable_dynamic_sequence_for_lowering = false;
+    if (args.size() > command_index &&
+        std::string_view(args[command_index]) == "--enable-dynamic-sequence-for-lowering") {
+        enable_dynamic_sequence_for_lowering = true;
+        ++command_index;
+    }
+    auto options = command_options(enable_dynamic_sequence_for_lowering);
+
+    if (args.size() > command_index && std::string_view(args[command_index]) == "--version") {
         return CompileResult {.exit_code = 0, .stdout_text = "orisonc 0.1.0-dev\n"};
     }
 
-    if (args.size() == 3 && std::string_view(args[1]) == "run") {
+    if (args.size() == command_index + 2 && std::string_view(args[command_index]) == "run") {
         pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_object(std::filesystem::path(args[2]));
+        auto result = pipeline.emit_object(std::filesystem::path(args[command_index + 1]), options);
         if (result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
@@ -304,9 +320,9 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return CompileResult {.exit_code = run_result.exit_code};
     }
 
-    if (args.size() == 3 && std::string_view(args[1]) == "--emit-llvm") {
+    if (args.size() == command_index + 2 && std::string_view(args[command_index]) == "--emit-llvm") {
         pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_llvm(std::filesystem::path(args[2]));
+        auto result = pipeline.emit_llvm(std::filesystem::path(args[command_index + 1]), options);
         if (result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
@@ -489,10 +505,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         );
     }
 
-    if (args.size() == 5 && std::string_view(args[1]) == "--emit-object" &&
-        std::string_view(args[3]) == "-o") {
+    if (args.size() == command_index + 4 && std::string_view(args[command_index]) == "--emit-object" &&
+        std::string_view(args[command_index + 2]) == "-o") {
         pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_object(std::filesystem::path(args[2]));
+        auto result = pipeline.emit_object(std::filesystem::path(args[command_index + 1]), options);
         if (result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
@@ -500,7 +516,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             };
         }
 
-        auto output_path = std::filesystem::path(args[4]);
+        auto output_path = std::filesystem::path(args[command_index + 3]);
         auto output = std::ofstream(output_path, std::ios::out | std::ios::binary | std::ios::trunc);
         if (!output) {
             return CompileResult {
@@ -522,10 +538,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return CompileResult {.exit_code = 0};
     }
 
-    if (args.size() == 5 && std::string_view(args[1]) == "--build" &&
-        std::string_view(args[3]) == "-o") {
+    if (args.size() == command_index + 4 && std::string_view(args[command_index]) == "--build" &&
+        std::string_view(args[command_index + 2]) == "-o") {
         pipeline::CompilePipeline pipeline;
-        auto result = pipeline.emit_object(std::filesystem::path(args[2]));
+        auto result = pipeline.emit_object(std::filesystem::path(args[command_index + 1]), options);
         if (result.has_errors()) {
             return CompileResult {
                 .exit_code = 1,
@@ -536,7 +552,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         link::HostLinker linker;
         auto link_result = linker.link(
             result.object_bytes,
-            std::filesystem::path(args[4]),
+            std::filesystem::path(args[command_index + 3]),
             result.link_libraries
         );
         if (link_result.has_errors()) {

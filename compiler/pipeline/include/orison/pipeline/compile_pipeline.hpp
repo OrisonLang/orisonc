@@ -108,6 +108,10 @@ public:
         CompilePipelineOptions const& options
     ) const -> CompilePipelineResult;
     auto emit_object(std::filesystem::path const& source_path) const -> CompilePipelineResult;
+    auto emit_object(
+        std::filesystem::path const& source_path,
+        CompilePipelineOptions const& options
+    ) const -> CompilePipelineResult;
 };
 
 }  // namespace orison::pipeline

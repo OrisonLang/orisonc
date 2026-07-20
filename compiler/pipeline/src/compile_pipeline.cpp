@@ -312,7 +312,14 @@ auto CompilePipeline::emit_llvm(
 }
 
 auto CompilePipeline::emit_object(std::filesystem::path const& source_path) const -> CompilePipelineResult {
-    auto result = emit_llvm(source_path);
+    return emit_object(source_path, CompilePipelineOptions {});
+}
+
+auto CompilePipeline::emit_object(
+    std::filesystem::path const& source_path,
+    CompilePipelineOptions const& options
+) const -> CompilePipelineResult {
+    auto result = emit_llvm(source_path, options);
     if (result.has_errors()) {
         return result;
     }

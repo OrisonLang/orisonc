@@ -194,6 +194,14 @@ build/tools/orisonc/orisonc run examples/ffi_aggregate_scalar_parameters.or
 
 It calls a fixed-parameter `printf` adapter where the value argument comes from an aggregate.
 
+Run the View descriptor read demo with:
+
+```sh
+build/tools/orisonc/orisonc --enable-dynamic-sequence-for-lowering --emit-object examples/view_descriptor_reads.or -o build/view_descriptor_reads.o
+```
+
+It validates read-only `shared.View<T>`/`exclusive.View<T>` descriptor `.length()`, checked indexing, and iteration.
+
 Run the nested aggregate assignment demo with:
 
 ```sh
