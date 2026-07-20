@@ -94,6 +94,38 @@ auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) 
     return !function.generic_parameters.empty();
 }
 
+auto has_authorized_dynamic_array_owned_element_cleanup(
+    std::string const& owner_name,
+    std::string const& element_source_type_name,
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+) -> bool {
+    auto const expected_owner_name = owner_name + ".element";
+    auto const expected_symbol_name = "__orison_drop." + element_source_type_name;
+    return std::ranges::any_of(
+        authorizations,
+        [&](semantics::DropLoweringAuthorization const& authorization) {
+            return authorization.authorized &&
+                authorization.site.owner_name == expected_owner_name &&
+                authorization.site.source_type_name == element_source_type_name &&
+                authorization.site.abi_symbol_name == expected_symbol_name;
+        }
+    );
+}
+
+auto can_lower_dynamic_array_parameter_descriptor(
+    syntax::ParameterSyntax const& parameter,
+    DynamicSequenceSourceType const& sequence,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    return options.test_only_enable_dynamic_array_parameter_descriptors ||
+        is_scalar_or_nonowning_source_type(sequence.element_source_type_name) ||
+        has_authorized_dynamic_array_owned_element_cleanup(
+            parameter.name,
+            sequence.element_source_type_name,
+            options.semantic_drop_lowering_authorizations
+        );
+}
+
 void enable_dynamic_array_parameter_descriptors(
     syntax::ModuleSyntax const& module,
     LoweringContext& context,
@@ -113,8 +145,7 @@ void enable_dynamic_array_parameter_descriptors(
             if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
                 continue;
             }
-            if (!options.test_only_enable_dynamic_array_parameter_descriptors &&
-                !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+            if (!can_lower_dynamic_array_parameter_descriptor(function.parameters[index], *sequence, options)) {
                 continue;
             }
             signature->second.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
@@ -410,8 +441,7 @@ auto has_lowerable_dynamic_array_parameter(
         if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
             continue;
         }
-        if (options.test_only_enable_dynamic_array_parameter_descriptors ||
-            is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        if (can_lower_dynamic_array_parameter_descriptor(parameter, *sequence, options)) {
             return true;
         }
     }

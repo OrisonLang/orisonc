@@ -1479,7 +1479,7 @@ auto main() -> int {
     assert(local_owned_drop < local_owned_deallocate);
     assert(local_owned_deallocate < local_owned_return);
 
-    auto dynamic_array_owned_production_ready_rejected = pipeline.emit_llvm(
+    auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_semantic_drop_lowering_authorizations = {
@@ -1501,13 +1501,46 @@ auto main() -> int {
             .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
-    assert(dynamic_array_owned_production_ready_rejected.has_errors());
+    assert(!dynamic_array_owned_production_ready.has_errors());
+    assert(dynamic_array_owned_production_ready.drop_readiness_summary.cleanup_authorized == 1);
+    assert(dynamic_array_owned_production_ready.drop_readiness_summary.cleanup_blocked == 0);
+    assert(dynamic_array_owned_production_ready.dynamic_array_runtime_request_report.size() == 1);
+    assert_line_contains(
+        dynamic_array_owned_production_ready.dynamic_array_runtime_request_report,
+        0,
+        "dynamic array runtime __orison_dynamic_array_deallocate"
+    );
     assert(
-        dynamic_array_owned_production_ready_rejected.error_text.find(
-            "lowering DynamicArray parameter 'items' with owned element type Payload requires ownership/drop proof "
-            "before production lowering"
+        dynamic_array_owned_production_ready.ir_text.find("define i32 @use_items({ ptr, i64, i64 } %items)") !=
+        std::string::npos
+    );
+    assert(
+        dynamic_array_owned_production_ready.ir_text.find("declare void @__orison_drop.Payload(ptr)") !=
+        std::string::npos
+    );
+    assert(
+        dynamic_array_owned_production_ready.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
         ) != std::string::npos
     );
+    assert(
+        dynamic_array_owned_production_ready.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
+            "i64 %items.dynamic_array_cleanup0.cleanup.capacity)"
+        ) != std::string::npos
+    );
+    auto parameter_owned_drop = dynamic_array_owned_production_ready.ir_text.find(
+        "call void @__orison_drop.Payload"
+    );
+    auto parameter_owned_deallocate = dynamic_array_owned_production_ready.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate"
+    );
+    auto parameter_owned_return = dynamic_array_owned_production_ready.ir_text.find("ret i32 1");
+    assert(parameter_owned_drop != std::string::npos);
+    assert(parameter_owned_deallocate != std::string::npos);
+    assert(parameter_owned_return != std::string::npos);
+    assert(parameter_owned_drop < parameter_owned_deallocate);
+    assert(parameter_owned_deallocate < parameter_owned_return);
 
     auto dynamic_array_authorized_readiness = pipeline.emit_llvm(
         dynamic_array_drop_report_path,

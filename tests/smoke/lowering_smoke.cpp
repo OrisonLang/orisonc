@@ -1838,6 +1838,28 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
     assert(return_instruction != std::string::npos);
     assert(drop_call < deallocate_call);
     assert(deallocate_call < return_instruction);
+
+    auto production_options = orison::lowering::LlvmIrEmissionOptions {
+        .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+        .enable_dynamic_array_parameter_descriptors = true,
+        .enable_dynamic_array_cleanup_emission = true,
+        .semantic_drop_lowering_authorizations = options.semantic_drop_lowering_authorizations,
+    };
+    auto production_authorized = lower_source(path, source, production_options);
+    assert(!production_authorized.has_errors());
+    assert_ir_contains(production_authorized, "define i32 @use_items({ ptr, i64, i64 } %items)");
+    assert_ir_contains(production_authorized, "declare void @__orison_drop.Payload(ptr)");
+    assert_ir_contains(
+        production_authorized,
+        "  call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)\n"
+    );
+    assert_ir_contains(
+        production_authorized,
+        "  call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
+        "i64 %items.dynamic_array_cleanup0.cleanup.capacity)\n"
+    );
+    assert(production_authorized.drop_readiness_summary().cleanup_authorized == 1);
+    assert(production_authorized.drop_readiness_summary().cleanup_blocked == 0);
 }
 
 void test_emits_authorized_owned_local_dynamic_array_cleanup() {

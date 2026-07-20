@@ -309,6 +309,9 @@ representation.
   the production rejection boundary for owned-element parameters.
 - Owned-element `DynamicArray<T>` parameter rejection now reports the specific parameter name and element type that
   needs ownership/drop proof, rather than falling through to the generic unsupported-parameter diagnostic.
+- Production dynamic-array parameter descriptor lowering can now consume positive semantic drop authorization for an
+  owned element site named `owner.element`. Scalar/non-owning parameters still lower directly; owned-element parameters
+  still reject by default unless the semantic/source-drop proof path authorizes the element cleanup ABI.
 
 ## Follow-up work
 
