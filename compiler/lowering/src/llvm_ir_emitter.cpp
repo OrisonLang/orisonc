@@ -896,11 +896,12 @@ auto LlvmIrEmissionResult::drop_readiness_relation_report() const -> std::vector
     return format_drop_readiness_relation_report(drop_readiness_snapshot());
 }
 
-auto LlvmIrEmitter::emit(
+auto emit_module(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result,
-    LlvmIrEmissionOptions const& options
-) const -> LlvmIrEmissionResult {
+    LlvmIrEmissionOptions const& options,
+    bool metadata_only
+) -> LlvmIrEmissionResult {
     auto result = LlvmIrEmissionResult {};
     result.semantic_drop_lowering_authorizations = options.semantic_drop_lowering_authorizations;
     if (semantic_result.has_errors()) {
@@ -1312,7 +1313,7 @@ auto LlvmIrEmitter::emit(
             );
         }
     }
-    if (options.emit_metadata_only) {
+    if (metadata_only) {
         result.ir_text = output.str();
         return result;
     }
@@ -1391,6 +1392,22 @@ auto LlvmIrEmitter::emit(
         }
     }
     return result;
+}
+
+auto LlvmIrEmitter::emit(
+    syntax::ModuleSyntax const& module,
+    semantics::SemanticAnalysisResult const& semantic_result,
+    LlvmIrEmissionOptions const& options
+) const -> LlvmIrEmissionResult {
+    return emit_module(module, semantic_result, options, false);
+}
+
+auto LlvmIrEmitter::emit_metadata(
+    syntax::ModuleSyntax const& module,
+    semantics::SemanticAnalysisResult const& semantic_result,
+    LlvmIrEmissionOptions const& options
+) const -> LlvmIrEmissionResult {
+    return emit_module(module, semantic_result, options, true);
 }
 
 }  // namespace orison::lowering

@@ -1338,3 +1338,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-19: dynamic-array cleanup audit/report paths now run metadata-only emission and mark parameter-origin
   descriptor cleanup plans as `audit`, removing the need to lower parameter descriptor signatures just to inspect
   cleanup capability.
+- 2026-07-19: dynamic-array cleanup audit/report commands now use a dedicated pipeline metadata collection path rather
+  than a normal LLVM emission option flag, keeping report collection separate from full IR generation.

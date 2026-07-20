@@ -23,7 +23,6 @@ struct LlvmIrEmissionOptions {
     bool test_only_enable_dynamic_array_parameter_descriptors = false;
     bool enable_dynamic_array_parameter_descriptor_audit_bindings = false;
     bool enable_dynamic_array_parameter_descriptors = false;
-    bool emit_metadata_only = false;
     bool enable_dynamic_array_construction_lowering = false;
     bool enable_dynamic_array_index_lowering = false;
     bool enable_dynamic_array_length_lowering = false;

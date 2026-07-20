@@ -45,7 +45,6 @@ struct CompilePipelineOptions {
     bool test_only_enable_dynamic_array_parameter_descriptors = false;
     bool dynamic_array_parameter_descriptor_audit_bindings_enabled = false;
     bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
-    bool emit_metadata_only = false;
     bool test_only_render_dynamic_array_element_drop_walks = false;
     bool dynamic_array_local_lowering_enabled = true;
     bool dynamic_array_parameter_lowering_enabled = true;
@@ -115,6 +114,10 @@ public:
     ) const -> CompilePipelineResult;
     auto emit_object(std::filesystem::path const& source_path) const -> CompilePipelineResult;
     auto emit_object(
+        std::filesystem::path const& source_path,
+        CompilePipelineOptions const& options
+    ) const -> CompilePipelineResult;
+    auto collect_dynamic_array_cleanup_metadata(
         std::filesystem::path const& source_path,
         CompilePipelineOptions const& options
     ) const -> CompilePipelineResult;

@@ -317,6 +317,8 @@ representation.
 - Dynamic-array cleanup report paths no longer require the parameter descriptor signature bypass. Report emission can
   stop after metadata collection, and parameter-origin descriptor cleanup plans can be marked `audit` to prove report
   storage inspectability without claiming a lowered function ABI.
+- Dynamic-array cleanup report commands now call a dedicated pipeline metadata collection path, backed by
+  `LlvmIrEmitter::emit_metadata`, instead of passing a metadata-only flag through normal LLVM emission options.
 
 ## Follow-up work
 

@@ -72,8 +72,27 @@ auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions 
         .source_drop_lowering_enabled = true,
         .dynamic_array_descriptor_cleanup_planning_enabled = true,
         .dynamic_array_parameter_descriptor_audit_bindings_enabled = true,
-        .emit_metadata_only = true,
         .dynamic_array_production_cleanup_emission_enabled = true,
+    };
+}
+
+auto dynamic_array_cleanup_report(
+    std::filesystem::path const& source_path,
+    pipeline::CompilePipelineOptions const& options,
+    auto report_selector
+) -> CompileResult {
+    pipeline::CompilePipeline pipeline;
+    auto result = pipeline.collect_dynamic_array_cleanup_metadata(source_path, options);
+    if (result.has_errors()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = std::move(result.error_text),
+        };
+    }
+
+    return CompileResult {
+        .exit_code = 0,
+        .stdout_text = render_report_lines(report_selector(result)),
     };
 }
 
@@ -414,7 +433,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-descriptor-cleanup-plan") {
-        return emit_llvm_report(
+        return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
@@ -424,7 +443,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-obligations") {
-        return emit_llvm_report(
+        return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
@@ -434,7 +453,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-sequence-plan") {
-        return emit_llvm_report(
+        return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
@@ -444,7 +463,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-sequence-verification") {
-        return emit_llvm_report(
+        return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
@@ -454,7 +473,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-emission-gate") {
-        return emit_llvm_report(
+        return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
@@ -464,7 +483,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-capability") {
-        return emit_llvm_report(
+        return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
@@ -474,7 +493,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-production-readiness") {
-        return emit_llvm_report(
+        return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
@@ -484,7 +503,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-audit") {
-        return emit_llvm_report(
+        return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
             [](auto const& result) {

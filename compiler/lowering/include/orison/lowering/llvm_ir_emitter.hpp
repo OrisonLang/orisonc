@@ -77,6 +77,11 @@ public:
         semantics::SemanticAnalysisResult const& semantic_result,
         LlvmIrEmissionOptions const& options = {}
     ) const -> LlvmIrEmissionResult;
+    auto emit_metadata(
+        syntax::ModuleSyntax const& module,
+        semantics::SemanticAnalysisResult const& semantic_result,
+        LlvmIrEmissionOptions const& options = {}
+    ) const -> LlvmIrEmissionResult;
 };
 
 }  // namespace orison::lowering
