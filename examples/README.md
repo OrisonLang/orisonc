@@ -198,6 +198,7 @@ Run the View descriptor read demo with:
 
 ```sh
 build/tools/orisonc/orisonc --emit-object examples/view_descriptor_reads.or -o build/view_descriptor_reads.o
+build/tools/orisonc/orisonc --build examples/view_descriptor_reads.or -o build/view_descriptor_reads
 ```
 
 It validates read-only `shared.View<T>`/`exclusive.View<T>` descriptor `.length()`, checked indexing, and iteration.

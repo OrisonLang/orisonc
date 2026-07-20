@@ -11,3 +11,6 @@ function sum(values: shared.View<UInt32>) -> UInt32
     for item in values
         total = total + item
     total
+
+function main() -> UInt32
+    0 as UInt32

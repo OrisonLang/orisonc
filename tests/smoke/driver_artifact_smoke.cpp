@@ -131,6 +131,8 @@ auto main() -> int {
             "    for item in values",
             "        total = total + item",
             "    total",
+            "function main() -> UInt32",
+            "    0 as UInt32",
         }
     );
     auto view_descriptor_object_path = smoke_temp_root / "view_descriptor_reads.o";
@@ -138,6 +140,14 @@ auto main() -> int {
         run_emit_object(app, view_descriptor_path, view_descriptor_object_path);
     assert_success_with_empty_stdout(view_descriptor_object_result);
     assert(std::filesystem::file_size(view_descriptor_object_path) > 0);
+
+    auto view_descriptor_executable_path = smoke_temp_root / "view_descriptor_reads";
+    auto view_descriptor_build_result =
+        run_build(app, view_descriptor_path, view_descriptor_executable_path);
+    assert_success_with_empty_stdout(view_descriptor_build_result);
+    auto view_descriptor_status = std::system(view_descriptor_executable_path.string().c_str());
+    assert(WIFEXITED(view_descriptor_status));
+    assert(WEXITSTATUS(view_descriptor_status) == 0);
 
     auto executable_path = smoke_temp_root / "artifact_scalar";
     auto build_result = run_build(app, scalar_path, executable_path);
