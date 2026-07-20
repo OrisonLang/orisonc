@@ -70,9 +70,9 @@ auto emit_llvm_report(std::filesystem::path const& source_path, auto report_sele
 auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions {
     return pipeline::CompilePipelineOptions {
         .source_drop_lowering_enabled = true,
-        .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+        .dynamic_array_descriptor_cleanup_planning_enabled = true,
         .test_only_enable_dynamic_array_parameter_descriptors = true,
-        .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+        .dynamic_array_production_cleanup_emission_enabled = true,
     };
 }
 

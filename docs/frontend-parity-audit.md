@@ -1333,3 +1333,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-19: `CompilePipelineOptions` now exposes `source_drop_lowering_enabled` as the production-facing,
   disabled-by-default source Drop lowering gate. The previous `test_only_enable_source_drop_lowering` option remains an
   internal compatibility alias, while dynamic-array cleanup audit/report paths now use the production-facing gate.
+- 2026-07-19: dynamic-array cleanup audit/report paths now use production-facing descriptor cleanup planning and cleanup
+  emission gates. The only retained internal bypass is parameter descriptor binding for blocked owned-parameter audit
+  fixtures, so reports can show missing element cleanup proof instead of stopping at signature rejection.

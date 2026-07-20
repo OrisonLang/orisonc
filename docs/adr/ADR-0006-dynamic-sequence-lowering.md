@@ -312,6 +312,9 @@ representation.
 - Production dynamic-array parameter descriptor lowering can now consume positive semantic drop authorization for an
   owned element site named `owner.element`. Scalar/non-owning parameters still lower directly; owned-element parameters
   still reject by default unless the semantic/source-drop proof path authorizes the element cleanup ABI.
+- Dynamic-array cleanup report paths now use production-facing descriptor cleanup planning and cleanup-emission gates.
+  The report path still keeps an internal parameter-descriptor bypass so blocked owned-parameter cleanup audits can
+  inspect missing element cleanup proof instead of failing earlier at normal production signature rejection.
 
 ## Follow-up work
 

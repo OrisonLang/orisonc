@@ -948,7 +948,7 @@ auto LlvmIrEmitter::emit(
     if (result.has_errors()) {
         return result;
     }
-    if (options.test_only_derive_dynamic_array_cleanup_from_semantics) {
+    if (dynamic_array_descriptor_cleanup_planning_enabled(options)) {
         result.dynamic_array_descriptor_cleanup_plans = collect_dynamic_array_descriptor_cleanup_plans(
             module,
             semantic_result,

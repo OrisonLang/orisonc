@@ -58,6 +58,7 @@ auto dynamic_array_for_lowering_enabled(CompilePipelineOptions const& options) -
 auto dynamic_array_append_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_cleanup_emission_enabled(CompilePipelineOptions const& options) -> bool;
 auto source_drop_lowering_enabled(CompilePipelineOptions const& options) -> bool;
+auto dynamic_array_descriptor_cleanup_planning_enabled(CompilePipelineOptions const& options) -> bool;
 
 auto plan_dynamic_array_cleanup_production_readiness(
     CompilePipelineResult const& result,
@@ -124,6 +125,11 @@ auto dynamic_array_cleanup_emission_enabled(CompilePipelineOptions const& option
 auto source_drop_lowering_enabled(CompilePipelineOptions const& options) -> bool {
     return options.source_drop_lowering_enabled ||
         options.test_only_enable_source_drop_lowering;
+}
+
+auto dynamic_array_descriptor_cleanup_planning_enabled(CompilePipelineOptions const& options) -> bool {
+    return options.dynamic_array_descriptor_cleanup_planning_enabled ||
+        options.test_only_derive_dynamic_array_cleanup_from_semantics;
 }
 
 }  // namespace
@@ -296,6 +302,8 @@ auto CompilePipeline::emit_llvm(
         options.test_only_dynamic_array_construction_requests;
     emission_options.test_only_derive_dynamic_array_cleanup_from_semantics =
         options.test_only_derive_dynamic_array_cleanup_from_semantics;
+    emission_options.enable_dynamic_array_descriptor_cleanup_planning =
+        dynamic_array_descriptor_cleanup_planning_enabled(options);
     emission_options.test_only_enable_dynamic_array_parameter_descriptors =
         options.test_only_enable_dynamic_array_parameter_descriptors;
     emission_options.enable_dynamic_array_parameter_descriptors =
