@@ -58,7 +58,7 @@ inline auto emit_view_descriptor_field_projection(
 }
 
 template <typename LowerBody>
-auto lower_dynamic_array_for_statement(
+auto lower_sequence_for_statement(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
@@ -127,7 +127,7 @@ auto lower_dynamic_array_for_statement(
         return StatementFlow::failed;
     }
 
-    auto prefix = "%" + owner_name + ".dynamic_array_for" +
+    auto prefix = "%" + owner_name + ".sequence_for" +
         std::to_string(session.state.next_temporary_index++);
     auto incoming_block = session.state.current_block;
     auto block_index = next_llvm_block_index(session.state.next_block_index);

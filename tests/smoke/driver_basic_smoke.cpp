@@ -107,7 +107,7 @@ int main() {
     );
     assert(
         view_descriptor.stdout_text.find(
-            "%values.dynamic_array_for0.value = load i32, ptr %values.dynamic_array_for0.element.addr"
+            "%values.sequence_for0.value = load i32, ptr %values.sequence_for0.element.addr"
         ) != std::string::npos
     );
 

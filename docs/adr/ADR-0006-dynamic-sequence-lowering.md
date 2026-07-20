@@ -297,6 +297,8 @@ representation.
   and `exclusive.View<T>` iterables. Owned `DynamicArray<T>` descriptor-loop lowering remains behind the explicit
   production gate because it still carries ownership, storage, capacity, and cleanup obligations that non-owning views
   do not.
+- Shared descriptor-loop lowering now emits neutral `sequence_for` temporary names in generated LLVM IR. The remaining
+  DynamicArray-specific option names are intentionally gate-oriented rather than loop-shape-oriented.
 
 ## Follow-up work
 

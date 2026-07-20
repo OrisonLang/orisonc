@@ -607,7 +607,7 @@ auto main() -> int {
     );
     assert(
         scalar_dynamic_array_parameter_for.ir_text.find(
-            "%words.dynamic_array_for0.value = load i32, ptr %words.dynamic_array_for0.element.addr"
+            "%words.sequence_for0.value = load i32, ptr %words.sequence_for0.element.addr"
         ) != std::string::npos
     );
     assert(
@@ -681,12 +681,7 @@ auto main() -> int {
             << "        total = total + item\n"
             << "    total\n";
     }
-    auto view_parameter_for = pipeline.emit_llvm(
-        view_parameter_for_path,
-        orison::pipeline::CompilePipelineOptions {
-            .dynamic_array_production_for_lowering_enabled = true,
-        }
-    );
+    auto view_parameter_for = pipeline.emit_llvm(view_parameter_for_path);
     assert(!view_parameter_for.has_errors());
     assert(view_parameter_for.dynamic_array_runtime_request_report.empty());
     assert(
@@ -694,7 +689,7 @@ auto main() -> int {
     );
     assert(
         view_parameter_for.ir_text.find(
-            "%values.dynamic_array_for0.value = load i32, ptr %values.dynamic_array_for0.element.addr"
+            "%values.sequence_for0.value = load i32, ptr %values.sequence_for0.element.addr"
         ) != std::string::npos
     );
     auto view_parameter_for_object =
@@ -765,17 +760,12 @@ auto main() -> int {
             << "        total = total + item\n"
             << "    total\n";
     }
-    auto shared_view_parameter_for = pipeline.emit_llvm(
-        shared_view_parameter_for_path,
-        orison::pipeline::CompilePipelineOptions {
-            .dynamic_array_production_for_lowering_enabled = true,
-        }
-    );
+    auto shared_view_parameter_for = pipeline.emit_llvm(shared_view_parameter_for_path);
     assert(!shared_view_parameter_for.has_errors());
     assert(shared_view_parameter_for.dynamic_array_runtime_request_report.empty());
     assert(
         shared_view_parameter_for.ir_text.find(
-            "%values.dynamic_array_for0.value = load i32, ptr %values.dynamic_array_for0.element.addr"
+            "%values.sequence_for0.value = load i32, ptr %values.sequence_for0.element.addr"
         ) != std::string::npos
     );
 
@@ -1423,7 +1413,7 @@ auto main() -> int {
     assert(dynamic_array_append_for.ir_text.find("for.continue.") != std::string::npos);
     assert(
         dynamic_array_append_for.ir_text.find(
-            "getelementptr i32, ptr %items.dynamic_array_for2.data, i64 %items.dynamic_array_for2.index"
+            "getelementptr i32, ptr %items.sequence_for2.data, i64 %items.sequence_for2.index"
         ) != std::string::npos
     );
     assert(dynamic_array_append_for.ir_text.find("__orison_dynamic_array_bounds_failed") == std::string::npos);

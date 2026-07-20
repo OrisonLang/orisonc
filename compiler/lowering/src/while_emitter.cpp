@@ -152,7 +152,7 @@ auto lower_while_body_for(
         if (dynamic_sequence.has_value() &&
             (dynamic_sequence_for_lowering_enabled(*dynamic_sequence, context.options) ||
              dynamic_sequence->kind == DynamicSequenceKind::dynamic_array)) {
-            return lower_dynamic_array_for_statement(
+            return lower_sequence_for_statement(
                 statement,
                 context,
                 session,

@@ -1074,31 +1074,31 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(placed_source_append_for.dynamic_array_runtime_operations.size() == 3);
     assert_ir_contains(
         placed_source_append_for,
-        "  %items.dynamic_array_for2.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        "  %items.sequence_for2.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert_ir_contains(
         placed_source_append_for,
         "for.condition.2:\n"
-        "  %items.dynamic_array_for2.index = phi i64 [ 0, %dynamic_array.append.ready.1 ], "
-        "[ %items.dynamic_array_for2.next.index, %for.continue.2 ]\n"
+        "  %items.sequence_for2.index = phi i64 [ 0, %dynamic_array.append.ready.1 ], "
+        "[ %items.sequence_for2.next.index, %for.continue.2 ]\n"
     );
     assert_ir_contains(
         placed_source_append_for,
-        "  %items.dynamic_array_for2.more = icmp ult i64 %items.dynamic_array_for2.index, "
-        "%items.dynamic_array_for2.length\n"
+        "  %items.sequence_for2.more = icmp ult i64 %items.sequence_for2.index, "
+        "%items.sequence_for2.length\n"
     );
     assert_ir_contains(
         placed_source_append_for,
-        "  %items.dynamic_array_for2.element.addr = getelementptr i32, ptr %items.dynamic_array_for2.data, "
-        "i64 %items.dynamic_array_for2.index\n"
+        "  %items.sequence_for2.element.addr = getelementptr i32, ptr %items.sequence_for2.data, "
+        "i64 %items.sequence_for2.index\n"
     );
     assert_ir_contains(
         placed_source_append_for,
-        "  %items.dynamic_array_for2.value = load i32, ptr %items.dynamic_array_for2.element.addr\n"
+        "  %items.sequence_for2.value = load i32, ptr %items.sequence_for2.element.addr\n"
     );
-    auto for_descriptor = placed_source_append_for.ir_text.find("%items.dynamic_array_for2.descriptor");
+    auto for_descriptor = placed_source_append_for.ir_text.find("%items.sequence_for2.descriptor");
     auto for_condition = placed_source_append_for.ir_text.find("for.condition.2:");
-    auto for_load = placed_source_append_for.ir_text.find("%items.dynamic_array_for2.value = load i32");
+    auto for_load = placed_source_append_for.ir_text.find("%items.sequence_for2.value = load i32");
     auto for_continue = placed_source_append_for.ir_text.find("for.continue.2:");
     auto for_cleanup = placed_source_append_for.ir_text.find("call void @__orison_dynamic_array_deallocate");
     auto for_return = placed_source_append_for.ir_text.find("ret i32 %tmp");
@@ -1139,7 +1139,7 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(placed_source_while_append_for.ir_text.find("for.condition.") != std::string::npos);
     assert(
         placed_source_while_append_for.ir_text.find(
-            "getelementptr i32, ptr %items.dynamic_array_for"
+            "getelementptr i32, ptr %items.sequence_for"
         ) != std::string::npos
     );
 }
@@ -1721,28 +1721,28 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert_ir_contains(production_parameter_for, "define i32 @sum_words({ ptr, i64, i64 } %words)");
     assert_ir_contains(
         production_parameter_for,
-        "  %words.dynamic_array_for0.descriptor = load { ptr, i64, i64 }, ptr %words.addr\n"
+        "  %words.sequence_for0.descriptor = load { ptr, i64, i64 }, ptr %words.addr\n"
     );
     assert_ir_contains(
         production_parameter_for,
         "for.condition.0:\n"
-        "  %words.dynamic_array_for0.index = phi i64 [ 0, %entry ], "
-        "[ %words.dynamic_array_for0.next.index, %for.continue.0 ]\n"
+        "  %words.sequence_for0.index = phi i64 [ 0, %entry ], "
+        "[ %words.sequence_for0.next.index, %for.continue.0 ]\n"
     );
     assert_ir_contains(
         production_parameter_for,
-        "  %words.dynamic_array_for0.element.addr = getelementptr i32, ptr %words.dynamic_array_for0.data, "
-        "i64 %words.dynamic_array_for0.index\n"
+        "  %words.sequence_for0.element.addr = getelementptr i32, ptr %words.sequence_for0.data, "
+        "i64 %words.sequence_for0.index\n"
     );
     assert_ir_contains(
         production_parameter_for,
-        "  %words.dynamic_array_for0.value = load i32, ptr %words.dynamic_array_for0.element.addr\n"
+        "  %words.sequence_for0.value = load i32, ptr %words.sequence_for0.element.addr\n"
     );
     auto parameter_for_descriptor =
-        production_parameter_for.ir_text.find("%words.dynamic_array_for0.descriptor");
+        production_parameter_for.ir_text.find("%words.sequence_for0.descriptor");
     auto parameter_for_condition = production_parameter_for.ir_text.find("for.condition.0:");
     auto parameter_for_load =
-        production_parameter_for.ir_text.find("%words.dynamic_array_for0.value = load i32");
+        production_parameter_for.ir_text.find("%words.sequence_for0.value = load i32");
     auto parameter_for_continue = production_parameter_for.ir_text.find("for.continue.0:");
     auto parameter_for_cleanup =
         production_parameter_for.ir_text.find("call void @__orison_dynamic_array_deallocate");
@@ -8209,27 +8209,25 @@ void test_emit_view_for_iterable_lowering() {
         "    for item in values\n"
         "        total = total + item\n"
         "    total\n",
-        orison::lowering::LlvmIrEmissionOptions {
-            .enable_dynamic_array_for_lowering = true,
-        }
+        orison::lowering::LlvmIrEmissionOptions {}
     );
 
     assert(!result.has_errors());
     assert_ir_contains(result, "define i32 @sum({ ptr, i64 } %values)");
-    assert_ir_contains(result, "  %values.dynamic_array_for0.descriptor = load { ptr, i64 }, ptr %values.addr\n");
+    assert_ir_contains(result, "  %values.sequence_for0.descriptor = load { ptr, i64 }, ptr %values.addr\n");
     assert_ir_contains(
         result,
-        "  %values.dynamic_array_for0.length = extractvalue { ptr, i64 } %values.dynamic_array_for0.descriptor, 1\n"
+        "  %values.sequence_for0.length = extractvalue { ptr, i64 } %values.sequence_for0.descriptor, 1\n"
     );
     assert_ir_contains(
         result,
-        "  %values.dynamic_array_for0.more = icmp ult i64 %values.dynamic_array_for0.index, "
-        "%values.dynamic_array_for0.length\n"
+        "  %values.sequence_for0.more = icmp ult i64 %values.sequence_for0.index, "
+        "%values.sequence_for0.length\n"
     );
     assert_ir_contains(
         result,
-        "  %values.dynamic_array_for0.element.addr = getelementptr i32, ptr %values.dynamic_array_for0.data, "
-        "i64 %values.dynamic_array_for0.index\n"
+        "  %values.sequence_for0.element.addr = getelementptr i32, ptr %values.sequence_for0.data, "
+        "i64 %values.sequence_for0.index\n"
     );
 }
 
@@ -8316,20 +8314,18 @@ void test_emit_access_qualified_view_parameter_lowering() {
         "    for item in values\n"
         "        total = total + item\n"
         "    total\n",
-        orison::lowering::LlvmIrEmissionOptions {
-            .enable_dynamic_array_for_lowering = true,
-        }
+        orison::lowering::LlvmIrEmissionOptions {}
     );
 
     assert(!shared_for_result.has_errors());
     assert_ir_contains(shared_for_result, "define i32 @sum({ ptr, i64 } %values)");
     assert_ir_contains(
         shared_for_result,
-        "  %values.dynamic_array_for0.descriptor = load { ptr, i64 }, ptr %values.addr\n"
+        "  %values.sequence_for0.descriptor = load { ptr, i64 }, ptr %values.addr\n"
     );
     assert_ir_contains(
         shared_for_result,
-        "  %values.dynamic_array_for0.value = load i32, ptr %values.dynamic_array_for0.element.addr\n"
+        "  %values.sequence_for0.value = load i32, ptr %values.sequence_for0.element.addr\n"
     );
 }
 
