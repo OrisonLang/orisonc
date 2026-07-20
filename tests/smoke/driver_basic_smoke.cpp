@@ -44,6 +44,20 @@ auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path
     return run_single_file_command(app, "--emit-llvm", path);
 }
 
+auto run_dynamic_array_for_emit_llvm(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    auto path_text = path.string();
+    std::array<char const*, 4> argv {
+        "orisonc",
+        "--enable-dynamic-array-for-lowering",
+        "--emit-llvm",
+        path_text.c_str()
+    };
+    return app.run(std::span<char const* const>(argv.data(), argv.size()));
+}
+
 void assert_failure_with_no_stdout_contains(
     orison::driver::CompileResult const& result,
     std::string_view expected_message
@@ -109,6 +123,30 @@ int main() {
         view_descriptor.stdout_text.find(
             "%values.sequence_for0.value = load i32, ptr %values.sequence_for0.element.addr"
         ) != std::string::npos
+    );
+
+    auto view_descriptor_with_dynamic_array_flag =
+        run_dynamic_array_for_emit_llvm(app, view_descriptor_path);
+    assert(view_descriptor_with_dynamic_array_flag.exit_code == 0);
+    assert(view_descriptor_with_dynamic_array_flag.stderr_text.empty());
+    assert(
+        view_descriptor_with_dynamic_array_flag.stdout_text.find(
+            "%values.sequence_for0.value = load i32, ptr %values.sequence_for0.element.addr"
+        ) != std::string::npos
+    );
+
+    std::array<char const*, 2> unknown_flag_argv {
+        "orisonc",
+        "--unknown-option"
+    };
+    auto unknown_flag =
+        app.run(std::span<char const* const>(
+            unknown_flag_argv.data(),
+            unknown_flag_argv.size()
+        ));
+    assert_failure_with_no_stdout_contains(
+        unknown_flag,
+        "usage: orisonc [--enable-dynamic-array-for-lowering]"
     );
 
     auto emit_failure_path =

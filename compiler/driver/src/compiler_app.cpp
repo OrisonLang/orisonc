@@ -25,7 +25,7 @@ auto render_report_lines(std::vector<std::string> const& lines) -> std::string {
 }
 
 auto usage_text() -> std::string {
-    return "usage: orisonc [--enable-dynamic-sequence-for-lowering] "
+    return "usage: orisonc [--enable-dynamic-array-for-lowering] "
            "--version | run <file> | --parse <file> | --emit-llvm <file> | "
            "--semantic-planned-drops <file> | --semantic-drop-resolution <file> | "
            "--semantic-drop-diagnostics <file> | --semantic-drop-lowering-authorization <file> | "
@@ -44,9 +44,9 @@ auto usage_text() -> std::string {
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
 
-auto command_options(bool enable_dynamic_sequence_for_lowering) -> pipeline::CompilePipelineOptions {
+auto command_options(bool enable_dynamic_array_for_lowering) -> pipeline::CompilePipelineOptions {
     return pipeline::CompilePipelineOptions {
-        .dynamic_array_production_for_lowering_enabled = enable_dynamic_sequence_for_lowering,
+        .dynamic_array_production_for_lowering_enabled = enable_dynamic_array_for_lowering,
     };
 }
 
@@ -287,13 +287,13 @@ auto render_expression(orison::syntax::ExpressionSyntax const& expression) -> st
 
 auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult {
     auto command_index = std::size_t {1};
-    auto enable_dynamic_sequence_for_lowering = false;
+    auto enable_dynamic_array_for_lowering = false;
     if (args.size() > command_index &&
-        std::string_view(args[command_index]) == "--enable-dynamic-sequence-for-lowering") {
-        enable_dynamic_sequence_for_lowering = true;
+        std::string_view(args[command_index]) == "--enable-dynamic-array-for-lowering") {
+        enable_dynamic_array_for_lowering = true;
         ++command_index;
     }
-    auto options = command_options(enable_dynamic_sequence_for_lowering);
+    auto options = command_options(enable_dynamic_array_for_lowering);
 
     if (args.size() > command_index && std::string_view(args[command_index]) == "--version") {
         return CompileResult {.exit_code = 0, .stdout_text = "orisonc 0.1.0-dev\n"};
