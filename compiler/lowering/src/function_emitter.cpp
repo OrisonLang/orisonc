@@ -464,9 +464,12 @@ auto lower_unit_for_statement(
     if (statement.expression.kind != syntax::ExpressionKind::array_literal) {
         auto source_type_name =
             source_type_name_for_expression(statement.expression, context.lowering, session.state);
-        if (source_type_name.has_value() &&
-            dynamic_sequence_source_type(*source_type_name).has_value() &&
-            context.options.enable_dynamic_array_for_lowering) {
+        auto dynamic_sequence = source_type_name.has_value()
+            ? dynamic_sequence_source_type(*source_type_name)
+            : std::nullopt;
+        if (dynamic_sequence.has_value() &&
+            (dynamic_sequence_for_lowering_enabled(*dynamic_sequence, context.options) ||
+             dynamic_sequence->kind == DynamicSequenceKind::dynamic_array)) {
             return lower_dynamic_array_for_statement(
                 statement,
                 context,

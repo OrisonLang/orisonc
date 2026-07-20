@@ -37,6 +37,14 @@ auto plan_for_loop_blocks(FunctionLoweringState& state, std::size_t iteration_co
 auto next_for_iteration_target(ForLoopBlockPlan const& plan, std::size_t index)
     -> std::string const&;
 
+inline auto dynamic_sequence_for_lowering_enabled(
+    DynamicSequenceSourceType const& sequence,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    return sequence.kind != DynamicSequenceKind::dynamic_array ||
+        options.enable_dynamic_array_for_lowering;
+}
+
 inline auto emit_view_descriptor_field_projection(
     std::string_view result_name,
     std::string_view descriptor_value_name,
@@ -58,8 +66,7 @@ auto lower_dynamic_array_for_statement(
     std::ostringstream& output,
     LowerBody&& lower_body
 ) -> StatementFlow {
-    if (!context.options.enable_dynamic_array_for_lowering ||
-        statement.expression.kind != syntax::ExpressionKind::name) {
+    if (statement.expression.kind != syntax::ExpressionKind::name) {
         diagnostics.error(
             statement.line,
             "lowering dynamic-sequence for statements currently requires a named iterable"
@@ -82,6 +89,13 @@ auto lower_dynamic_array_for_statement(
         diagnostics.error(
             statement.line,
             "lowering dynamic-sequence for statements currently requires a DynamicArray or View iterable"
+        );
+        return StatementFlow::failed;
+    }
+    if (!dynamic_sequence_for_lowering_enabled(*sequence, context.options)) {
+        diagnostics.error(
+            statement.line,
+            "lowering DynamicArray for statements currently requires explicit production enablement"
         );
         return StatementFlow::failed;
     }

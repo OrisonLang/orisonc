@@ -97,12 +97,7 @@ auto main() -> int {
         assert(!backend.object_bytes.empty());
     }
 
-    auto view_descriptor_ir = pipeline.emit_llvm(
-        examples / "view_descriptor_reads.or",
-        orison::pipeline::CompilePipelineOptions {
-            .dynamic_array_production_for_lowering_enabled = true,
-        }
-    );
+    auto view_descriptor_ir = pipeline.emit_llvm(examples / "view_descriptor_reads.or");
     assert(!view_descriptor_ir.has_errors());
     assert(view_descriptor_ir.ir_text.find("define i64 @count({ ptr, i64 } %values)") != std::string::npos);
     assert(view_descriptor_ir.ir_text.find("define i32 @first({ ptr, i64 } %values)") != std::string::npos);

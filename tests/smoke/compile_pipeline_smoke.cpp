@@ -571,6 +571,19 @@ auto main() -> int {
             << "        total = total + word\n"
             << "    total\n";
     }
+    auto scalar_dynamic_array_parameter_for_without_gate = pipeline.emit_llvm(
+        scalar_dynamic_array_parameter_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_signature_lowering_enabled = true,
+        }
+    );
+    assert(scalar_dynamic_array_parameter_for_without_gate.has_errors());
+    assert(
+        scalar_dynamic_array_parameter_for_without_gate.error_text.find(
+            "lowering DynamicArray for statements currently requires explicit production enablement"
+        ) != std::string::npos
+    );
+
     auto scalar_dynamic_array_parameter_for = pipeline.emit_llvm(
         scalar_dynamic_array_parameter_for_path,
         orison::pipeline::CompilePipelineOptions {

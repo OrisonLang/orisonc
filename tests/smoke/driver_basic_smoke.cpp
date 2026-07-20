@@ -44,20 +44,6 @@ auto run_emit_llvm(orison::driver::CompilerApp const& app, std::filesystem::path
     return run_single_file_command(app, "--emit-llvm", path);
 }
 
-auto run_dynamic_sequence_for_emit_llvm(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& path
-) -> orison::driver::CompileResult {
-    auto path_text = path.string();
-    std::array<char const*, 4> argv {
-        "orisonc",
-        "--enable-dynamic-sequence-for-lowering",
-        "--emit-llvm",
-        path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
-}
-
 void assert_failure_with_no_stdout_contains(
     orison::driver::CompileResult const& result,
     std::string_view expected_message
@@ -112,21 +98,15 @@ int main() {
     );
 
     auto view_descriptor_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "view_descriptor_reads.or";
-    auto view_descriptor_without_gate = run_emit_llvm(app, view_descriptor_path);
-    assert_failure_with_no_stdout_contains(
-        view_descriptor_without_gate,
-        "lowering for statements currently requires a fixed-size array iterable"
-    );
-
-    auto view_descriptor_with_gate = run_dynamic_sequence_for_emit_llvm(app, view_descriptor_path);
-    assert(view_descriptor_with_gate.exit_code == 0);
-    assert(view_descriptor_with_gate.stderr_text.empty());
+    auto view_descriptor = run_emit_llvm(app, view_descriptor_path);
+    assert(view_descriptor.exit_code == 0);
+    assert(view_descriptor.stderr_text.empty());
     assert(
-        view_descriptor_with_gate.stdout_text.find("define i32 @sum({ ptr, i64 } %values)") !=
+        view_descriptor.stdout_text.find("define i32 @sum({ ptr, i64 } %values)") !=
         std::string::npos
     );
     assert(
-        view_descriptor_with_gate.stdout_text.find(
+        view_descriptor.stdout_text.find(
             "%values.dynamic_array_for0.value = load i32, ptr %values.dynamic_array_for0.element.addr"
         ) != std::string::npos
     );

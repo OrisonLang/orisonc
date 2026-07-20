@@ -43,24 +43,6 @@ auto run_emit_object(
     return app.run(std::span<char const* const>(argv.data(), argv.size()));
 }
 
-auto run_dynamic_sequence_for_emit_object(
-    orison::driver::CompilerApp const& app,
-    std::filesystem::path const& source_path,
-    std::filesystem::path const& output_path
-) -> orison::driver::CompileResult {
-    auto source_path_text = source_path.string();
-    auto output_path_text = output_path.string();
-    std::array<char const*, 6> argv {
-        "orisonc",
-        "--enable-dynamic-sequence-for-lowering",
-        "--emit-object",
-        source_path_text.c_str(),
-        "-o",
-        output_path_text.c_str()
-    };
-    return app.run(std::span<char const* const>(argv.data(), argv.size()));
-}
-
 auto run_build(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& source_path,
@@ -153,7 +135,7 @@ auto main() -> int {
     );
     auto view_descriptor_object_path = smoke_temp_root / "view_descriptor_reads.o";
     auto view_descriptor_object_result =
-        run_dynamic_sequence_for_emit_object(app, view_descriptor_path, view_descriptor_object_path);
+        run_emit_object(app, view_descriptor_path, view_descriptor_object_path);
     assert_success_with_empty_stdout(view_descriptor_object_result);
     assert(std::filesystem::file_size(view_descriptor_object_path) > 0);
 
