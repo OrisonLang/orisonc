@@ -43,7 +43,9 @@ struct CompilePipelineOptions {
     bool test_only_derive_dynamic_array_cleanup_from_semantics = false;
     bool dynamic_array_descriptor_cleanup_planning_enabled = false;
     bool test_only_enable_dynamic_array_parameter_descriptors = false;
+    bool dynamic_array_parameter_descriptor_audit_bindings_enabled = false;
     bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
+    bool emit_metadata_only = false;
     bool test_only_render_dynamic_array_element_drop_walks = false;
     bool dynamic_array_local_lowering_enabled = true;
     bool dynamic_array_parameter_lowering_enabled = true;

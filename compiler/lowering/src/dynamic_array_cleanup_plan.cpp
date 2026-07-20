@@ -528,7 +528,9 @@ auto prove_dynamic_array_cleanup_emission_capability(
     return DynamicArrayCleanupEmissionCapability {
         .emission_enabled = emission_enabled,
         .descriptor_storage_bound = std::ranges::all_of(descriptor_cleanup_plans, [](auto const& plan) {
-            auto storage_status_bound =
+        auto storage_status_bound =
+            plan.descriptor_storage_status ==
+                    DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor ||
                 plan.descriptor_storage_status ==
                     DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor ||
                 plan.descriptor_storage_status ==

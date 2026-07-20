@@ -259,51 +259,36 @@ int main() {
     );
     auto dynamic_array_cleanup_sequence_verification_failure =
         run_dynamic_array_cleanup_sequence_verification(app, emit_failure_path);
-    assert_failure_with_no_stdout_contains(
-        dynamic_array_cleanup_sequence_verification_failure,
-        "lowering does not yet support this return expression"
-    );
+    assert_success_with_empty_stdout(dynamic_array_cleanup_sequence_verification_failure);
     auto dynamic_array_cleanup_emission_gate_failure =
         run_dynamic_array_cleanup_emission_gate(app, emit_failure_path);
-    assert_failure_with_no_stdout_contains(
-        dynamic_array_cleanup_emission_gate_failure,
-        "lowering does not yet support this return expression"
-    );
+    assert_success_with_empty_stdout(dynamic_array_cleanup_emission_gate_failure);
     auto dynamic_array_descriptor_cleanup_plan_failure =
         run_dynamic_array_descriptor_cleanup_plan(app, emit_failure_path);
-    assert_failure_with_no_stdout_contains(
-        dynamic_array_descriptor_cleanup_plan_failure,
-        "lowering does not yet support this return expression"
-    );
+    assert_success_with_empty_stdout(dynamic_array_descriptor_cleanup_plan_failure);
     auto dynamic_array_cleanup_obligations_failure =
         run_dynamic_array_cleanup_obligations(app, emit_failure_path);
-    assert_failure_with_no_stdout_contains(
-        dynamic_array_cleanup_obligations_failure,
-        "lowering does not yet support this return expression"
-    );
+    assert_success_with_empty_stdout(dynamic_array_cleanup_obligations_failure);
     auto dynamic_array_cleanup_sequence_plan_failure =
         run_dynamic_array_cleanup_sequence_plan(app, emit_failure_path);
-    assert_failure_with_no_stdout_contains(
-        dynamic_array_cleanup_sequence_plan_failure,
-        "lowering does not yet support this return expression"
-    );
+    assert_success_with_empty_stdout(dynamic_array_cleanup_sequence_plan_failure);
     auto dynamic_array_cleanup_capability_failure =
         run_dynamic_array_cleanup_capability(app, emit_failure_path);
-    assert_failure_with_no_stdout_contains(
+    assert_success_with_stdout_contains(
         dynamic_array_cleanup_capability_failure,
-        "lowering does not yet support this return expression"
+        {"dynamic array cleanup emission capability proven"}
     );
     auto dynamic_array_cleanup_audit_failure =
         run_dynamic_array_cleanup_audit(app, emit_failure_path);
-    assert_failure_with_no_stdout_contains(
+    assert_success_with_stdout_contains(
         dynamic_array_cleanup_audit_failure,
-        "lowering does not yet support this return expression"
+        {"dynamic array cleanup production readiness blocked"}
     );
     auto dynamic_array_cleanup_production_readiness_failure =
         run_dynamic_array_cleanup_production_readiness(app, emit_failure_path);
-    assert_failure_with_no_stdout_contains(
+    assert_success_with_stdout_contains(
         dynamic_array_cleanup_production_readiness_failure,
-        "lowering does not yet support this return expression"
+        {"dynamic array cleanup production readiness blocked"}
     );
     auto drop_readiness_relations_failure = run_drop_readiness_relations(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
@@ -626,7 +611,7 @@ int main() {
         {
             "dynamic array descriptor cleanup DynamicArray<Payload>",
             "owner items",
-            "descriptor %items.addr bound",
+            "descriptor %items.addr audit",
         }
     );
     auto dynamic_array_blocked_cleanup_obligations =

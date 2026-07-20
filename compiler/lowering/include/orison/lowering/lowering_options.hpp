@@ -21,7 +21,9 @@ struct LlvmIrEmissionOptions {
     bool test_only_derive_dynamic_array_cleanup_from_semantics = false;
     bool enable_dynamic_array_descriptor_cleanup_planning = false;
     bool test_only_enable_dynamic_array_parameter_descriptors = false;
+    bool enable_dynamic_array_parameter_descriptor_audit_bindings = false;
     bool enable_dynamic_array_parameter_descriptors = false;
+    bool emit_metadata_only = false;
     bool enable_dynamic_array_construction_lowering = false;
     bool enable_dynamic_array_index_lowering = false;
     bool enable_dynamic_array_length_lowering = false;
@@ -61,6 +63,12 @@ inline auto dynamic_array_descriptor_cleanup_planning_enabled(
 ) -> bool {
     return options.enable_dynamic_array_descriptor_cleanup_planning ||
         options.test_only_derive_dynamic_array_cleanup_from_semantics;
+}
+
+inline auto dynamic_array_parameter_descriptor_audit_bindings_enabled(
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    return options.enable_dynamic_array_parameter_descriptor_audit_bindings;
 }
 
 inline auto dynamic_array_allocation_calls_enabled(

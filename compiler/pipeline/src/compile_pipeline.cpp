@@ -306,8 +306,11 @@ auto CompilePipeline::emit_llvm(
         dynamic_array_descriptor_cleanup_planning_enabled(options);
     emission_options.test_only_enable_dynamic_array_parameter_descriptors =
         options.test_only_enable_dynamic_array_parameter_descriptors;
+    emission_options.enable_dynamic_array_parameter_descriptor_audit_bindings =
+        options.dynamic_array_parameter_descriptor_audit_bindings_enabled;
     emission_options.enable_dynamic_array_parameter_descriptors =
         dynamic_array_parameter_lowering_enabled(options);
+    emission_options.emit_metadata_only = options.emit_metadata_only;
     emission_options.enable_dynamic_array_construction_lowering =
         dynamic_array_construction_lowering_enabled(options);
     emission_options.enable_dynamic_array_index_lowering =

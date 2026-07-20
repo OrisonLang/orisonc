@@ -313,8 +313,10 @@ representation.
   owned element site named `owner.element`. Scalar/non-owning parameters still lower directly; owned-element parameters
   still reject by default unless the semantic/source-drop proof path authorizes the element cleanup ABI.
 - Dynamic-array cleanup report paths now use production-facing descriptor cleanup planning and cleanup-emission gates.
-  The report path still keeps an internal parameter-descriptor bypass so blocked owned-parameter cleanup audits can
-  inspect missing element cleanup proof instead of failing earlier at normal production signature rejection.
+  They no longer need the parameter-descriptor signature bypass to inspect missing element cleanup proof.
+- Dynamic-array cleanup report paths no longer require the parameter descriptor signature bypass. Report emission can
+  stop after metadata collection, and parameter-origin descriptor cleanup plans can be marked `audit` to prove report
+  storage inspectability without claiming a lowered function ABI.
 
 ## Follow-up work
 

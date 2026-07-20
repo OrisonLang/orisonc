@@ -1334,5 +1334,7 @@ This file tracks which source-language frontend slices are reflected in the curr
   disabled-by-default source Drop lowering gate. The previous `test_only_enable_source_drop_lowering` option remains an
   internal compatibility alias, while dynamic-array cleanup audit/report paths now use the production-facing gate.
 - 2026-07-19: dynamic-array cleanup audit/report paths now use production-facing descriptor cleanup planning and cleanup
-  emission gates. The only retained internal bypass is parameter descriptor binding for blocked owned-parameter audit
-  fixtures, so reports can show missing element cleanup proof instead of stopping at signature rejection.
+  emission gates, so reports can show missing element cleanup proof instead of stopping at signature rejection.
+- 2026-07-19: dynamic-array cleanup audit/report paths now run metadata-only emission and mark parameter-origin
+  descriptor cleanup plans as `audit`, removing the need to lower parameter descriptor signatures just to inspect
+  cleanup capability.

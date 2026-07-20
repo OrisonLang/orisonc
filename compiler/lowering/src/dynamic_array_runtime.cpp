@@ -53,6 +53,8 @@ auto format_dynamic_array_descriptor_storage_status(
     switch (status) {
     case DynamicArrayDescriptorStorageStatus::predicted_owner_local:
         return "predicted";
+    case DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor:
+        return "audit";
     case DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor:
         return "bound";
     case DynamicArrayDescriptorStorageStatus::lowered_local_descriptor:

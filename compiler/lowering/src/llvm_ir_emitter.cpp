@@ -182,6 +182,23 @@ auto has_bound_dynamic_array_parameter_descriptor(
     return false;
 }
 
+auto has_dynamic_array_parameter_descriptor_origin(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    syntax::ModuleSyntax const& module
+) -> bool {
+    for (auto const& function : module.functions) {
+        for (auto const& parameter : function.parameters) {
+            if (parameter.name != origin.owner_name) {
+                continue;
+            }
+            if (render_source_type_name(parameter.type) == origin.source_type_name) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void collect_concurrency_runtime_operations(
     syntax::ExpressionSyntax const& expression,
     std::vector<ConcurrencyRuntimeOperation>& operations
@@ -731,6 +748,7 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result,
     LoweringContext const& context,
+    LlvmIrEmissionOptions const& options,
     diagnostics::DiagnosticBag& diagnostics
 ) -> std::vector<DynamicArrayDescriptorCleanupPlan> {
     auto plans = std::vector<DynamicArrayDescriptorCleanupPlan> {};
@@ -747,6 +765,9 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
         }
         if (has_bound_dynamic_array_parameter_descriptor(origin, module, context)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
+        } else if (dynamic_array_parameter_descriptor_audit_bindings_enabled(options) &&
+            has_dynamic_array_parameter_descriptor_origin(origin, module)) {
+            plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor;
         }
         plan->source_line = origin.line;
         plans.push_back(std::move(*plan));
@@ -953,6 +974,7 @@ auto LlvmIrEmitter::emit(
             module,
             semantic_result,
             context,
+            options,
             result.diagnostics
         );
         if (result.has_errors()) {
@@ -979,6 +1001,8 @@ auto LlvmIrEmitter::emit(
             );
             for (auto const& plan : result.dynamic_array_descriptor_cleanup_plans) {
                 if (plan.descriptor_storage_status ==
+                        DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor ||
+                    plan.descriptor_storage_status ==
                     DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor) {
                     push_dynamic_array_runtime_operation_once(
                         result.dynamic_array_runtime_operations,
@@ -1287,6 +1311,10 @@ auto LlvmIrEmitter::emit(
                 )
             );
         }
+    }
+    if (options.emit_metadata_only) {
+        result.ir_text = output.str();
+        return result;
     }
     output << emit_module_prelude(
         string_constants,
