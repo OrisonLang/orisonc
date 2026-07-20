@@ -380,7 +380,8 @@ auto main() -> int {
     assert(dynamic_array_owned_production_signature_descriptor.has_errors());
     assert(
         dynamic_array_owned_production_signature_descriptor.error_text.find(
-            "lowering does not yet support this function parameter type"
+            "lowering DynamicArray parameter 'items' with owned element type Payload requires ownership/drop proof "
+            "before production lowering"
         ) != std::string::npos
     );
 
@@ -834,7 +835,8 @@ auto main() -> int {
     assert(dynamic_array_owned_production_signature_rejected.has_errors());
     assert(
         dynamic_array_owned_production_signature_rejected.error_text.find(
-            "lowering does not yet support this function parameter type"
+            "lowering DynamicArray parameter 'items' with owned element type Payload requires ownership/drop proof "
+            "before production lowering"
         ) != std::string::npos
     );
 
@@ -1502,7 +1504,8 @@ auto main() -> int {
     assert(dynamic_array_owned_production_ready_rejected.has_errors());
     assert(
         dynamic_array_owned_production_ready_rejected.error_text.find(
-            "lowering does not yet support this function parameter type"
+            "lowering DynamicArray parameter 'items' with owned element type Payload requires ownership/drop proof "
+            "before production lowering"
         ) != std::string::npos
     );
 

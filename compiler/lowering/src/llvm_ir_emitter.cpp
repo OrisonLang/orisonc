@@ -950,7 +950,8 @@ auto LlvmIrEmitter::emit(
             for (auto const& plan : result.dynamic_array_descriptor_cleanup_plans) {
                 if (plan.descriptor_storage_status ==
                     DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor) {
-                    result.dynamic_array_runtime_operations.push_back(
+                    push_dynamic_array_runtime_operation_once(
+                        result.dynamic_array_runtime_operations,
                         DynamicArrayRuntimeOperation::deallocate
                     );
                     break;

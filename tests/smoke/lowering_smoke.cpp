@@ -1539,7 +1539,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(production_owned_rejected.has_errors());
     assert(
         production_owned_rejected.render(path.string()).find(
-            "lowering does not yet support this function parameter type"
+            "lowering DynamicArray parameter 'items' with owned element type Payload requires ownership/drop proof "
+            "before production lowering"
         ) != std::string::npos
     );
 

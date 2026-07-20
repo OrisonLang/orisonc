@@ -132,7 +132,7 @@ auto main() -> int {
     assert(owned_dynamic_array_parameter.has_errors());
     assert(
         owned_dynamic_array_parameter.error_text.find(
-            "lowering does not yet support this function parameter type"
+            "lowering DynamicArray parameter 'items' with owned element type Payload requires ownership/drop proof before production lowering"
         ) != std::string::npos
     );
 

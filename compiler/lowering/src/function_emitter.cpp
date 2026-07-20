@@ -288,6 +288,21 @@ auto unsupported_choice_abi_diagnostic(
     return "lowering does not yet support " + source_type_name + " as " + std::string(role) + ": " + reason;
 }
 
+auto unsupported_dynamic_array_parameter_diagnostic(
+    syntax::ParameterSyntax const& parameter
+) -> std::optional<std::string> {
+    auto source_type_name = render_source_type_name(parameter.type);
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() ||
+        sequence->kind != DynamicSequenceKind::dynamic_array ||
+        is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        return std::nullopt;
+    }
+
+    return "lowering DynamicArray parameter '" + parameter.name + "' with owned element type " +
+        sequence->element_source_type_name + " requires ownership/drop proof before production lowering";
+}
+
 auto infer_unit_binding_type(
     syntax::StatementSyntax const& statement,
     EmissionContext const& context,
@@ -948,8 +963,15 @@ void emit_function_body(
         diagnostics.error(function.line, "lowering does not yet support this function parameter type");
         return;
     }
-    for (auto const& parameter_type : signature.parameter_types) {
+    for (auto index = std::size_t {0}; index < signature.parameter_types.size(); ++index) {
+        auto const& parameter_type = signature.parameter_types[index];
         if (parameter_type.empty() || parameter_type == "void") {
+            if (index < function.parameters.size()) {
+                if (auto diagnostic = unsupported_dynamic_array_parameter_diagnostic(function.parameters[index])) {
+                    diagnostics.error(function.line, *diagnostic);
+                    return;
+                }
+            }
             diagnostics.error(function.line, "lowering does not yet support this function parameter type");
             return;
         }

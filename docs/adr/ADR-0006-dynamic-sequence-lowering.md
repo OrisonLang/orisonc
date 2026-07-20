@@ -307,6 +307,8 @@ representation.
 - `examples/dynamic_array_parameter_reads.or` is the checked-in scalar parameter descriptor demo. It is covered by
   examples and canonical pipeline smoke tests, while `tests/fixtures/dynamic_array_owned_parameter_rejected.or` pins
   the production rejection boundary for owned-element parameters.
+- Owned-element `DynamicArray<T>` parameter rejection now reports the specific parameter name and element type that
+  needs ownership/drop proof, rather than falling through to the generic unsupported-parameter diagnostic.
 
 ## Follow-up work
 
