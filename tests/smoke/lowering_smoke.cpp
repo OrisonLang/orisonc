@@ -8198,7 +8198,7 @@ void test_emit_bare_nested_generic_record_array_literal_for_item_field_return() 
     assert_returns_lowered_tmp(result);
 }
 
-void test_reject_view_for_iterable_lowering() {
+void test_emit_view_for_iterable_lowering() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_view_for_iterable.or";
     auto result = lower_source(
         path,
@@ -8208,14 +8208,28 @@ void test_reject_view_for_iterable_lowering() {
         "    var total: UInt32 = 0 as UInt32\n"
         "    for item in values\n"
         "        total = total + item\n"
-        "    total\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_for_lowering = true,
+        }
     );
 
-    assert(result.has_errors());
-    assert(result.diagnostics.entries().size() == 1);
-    assert(
-        result.diagnostics.entries().front().message ==
-        "lowering for statements currently requires a fixed-size array iterable"
+    assert(!result.has_errors());
+    assert_ir_contains(result, "define i32 @sum({ ptr, i64 } %values)");
+    assert_ir_contains(result, "  %values.dynamic_array_for0.descriptor = load { ptr, i64 }, ptr %values.addr\n");
+    assert_ir_contains(
+        result,
+        "  %values.dynamic_array_for0.length = extractvalue { ptr, i64 } %values.dynamic_array_for0.descriptor, 1\n"
+    );
+    assert_ir_contains(
+        result,
+        "  %values.dynamic_array_for0.more = icmp ult i64 %values.dynamic_array_for0.index, "
+        "%values.dynamic_array_for0.length\n"
+    );
+    assert_ir_contains(
+        result,
+        "  %values.dynamic_array_for0.element.addr = getelementptr i32, ptr %values.dynamic_array_for0.data, "
+        "i64 %values.dynamic_array_for0.index\n"
     );
 }
 
@@ -8231,9 +8245,31 @@ void test_emit_view_parameter_index_lowering() {
 
     assert(!result.has_errors());
     assert_ir_contains(result, "define i32 @first({ ptr, i64 } %values)");
-    assert_ir_contains(result, " = extractvalue { ptr, i64 } %values, 0");
-    assert_ir_contains(result, " = getelementptr i32, ptr %tmp");
-    assert_ir_contains(result, " = load i32, ptr %tmp");
+    assert_ir_contains(result, "declare void @__orison_dynamic_array_bounds_failed()");
+    assert_ir_contains(result, "  %view_index1.data = extractvalue { ptr, i64 } %values, 0\n");
+    assert_ir_contains(result, "  %view_index1.length = extractvalue { ptr, i64 } %values, 1\n");
+    assert_ir_contains(result, "  %view_index1.in_bounds = icmp ult i64 0, %view_index1.length\n");
+    assert_ir_contains(result, "view.index.out_of_bounds.0:\n");
+    assert_ir_contains(result, "  call void @__orison_dynamic_array_bounds_failed()\n");
+    assert_ir_contains(result, "view.index.in_bounds.0:\n");
+    assert_ir_contains(result, "  %view_index1.element.addr = getelementptr i32, ptr %view_index1.data, i64 0\n");
+    assert_ir_contains(result, "  %view_index1.value = load i32, ptr %view_index1.element.addr\n");
+}
+
+void test_emit_view_parameter_length_lowering() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_view_parameter_length.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function count(values: View<UInt32>) -> IntSize\n"
+        "    values.length()\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "define i64 @count({ ptr, i64 } %values)");
+    assert_ir_contains(result, "  %view_length0.value = extractvalue { ptr, i64 } %values, 1\n");
+    assert_ir_contains(result, "ret i64 %view_length0.value");
 }
 
 void test_reject_underconstrained_generic_record_array_literal_for_item_field_return() {
@@ -12934,8 +12970,9 @@ auto main() -> int {
     test_emit_nested_generic_record_for_item_field_return();
     test_emit_bare_generic_record_array_literal_for_item_field_return();
     test_emit_bare_nested_generic_record_array_literal_for_item_field_return();
-    test_reject_view_for_iterable_lowering();
+    test_emit_view_for_iterable_lowering();
     test_emit_view_parameter_index_lowering();
+    test_emit_view_parameter_length_lowering();
     test_reject_underconstrained_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_nested_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_generic_record_inferred_let_binding();

@@ -465,7 +465,7 @@ auto lower_unit_for_statement(
         auto source_type_name =
             source_type_name_for_expression(statement.expression, context.lowering, session.state);
         if (source_type_name.has_value() &&
-            dynamic_array_element_source_type_name(*source_type_name).has_value() &&
+            dynamic_sequence_source_type(*source_type_name).has_value() &&
             context.options.enable_dynamic_array_for_lowering) {
             return lower_dynamic_array_for_statement(
                 statement,

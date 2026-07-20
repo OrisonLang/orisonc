@@ -606,6 +606,88 @@ auto main() -> int {
         orison::lowering::LlvmObjectEmitter {}.emit(scalar_dynamic_array_parameter_for.ir_text);
     assert(!scalar_dynamic_array_parameter_for_object.has_errors());
 
+    auto view_parameter_length_path = smoke_temp_root / "orison_pipeline_view_parameter_length.or";
+    {
+        auto view_length_source = std::ofstream(view_parameter_length_path);
+        view_length_source
+            << "package demo.pipeline.viewlength\n"
+            << "\n"
+            << "function count(values: View<UInt32>) -> IntSize\n"
+            << "    values.length()\n";
+    }
+    auto view_parameter_length = pipeline.emit_llvm(view_parameter_length_path);
+    assert(!view_parameter_length.has_errors());
+    assert(view_parameter_length.dynamic_array_runtime_request_report.empty());
+    assert(
+        view_parameter_length.ir_text.find("define i64 @count({ ptr, i64 } %values)") !=
+        std::string::npos
+    );
+    assert(
+        view_parameter_length.ir_text.find("%view_length0.value = extractvalue { ptr, i64 } %values, 1") !=
+        std::string::npos
+    );
+
+    auto view_parameter_index_path = smoke_temp_root / "orison_pipeline_view_parameter_index.or";
+    {
+        auto view_index_source = std::ofstream(view_parameter_index_path);
+        view_index_source
+            << "package demo.pipeline.viewindex\n"
+            << "\n"
+            << "function first(values: View<UInt32>) -> UInt32\n"
+            << "    values[0]\n";
+    }
+    auto view_parameter_index = pipeline.emit_llvm(view_parameter_index_path);
+    assert(!view_parameter_index.has_errors());
+    assert(view_parameter_index.dynamic_array_runtime_request_report.size() == 1);
+    assert_line_contains(
+        view_parameter_index.dynamic_array_runtime_request_report,
+        0,
+        "__orison_dynamic_array_bounds_failed"
+    );
+    assert(
+        view_parameter_index.ir_text.find("define i32 @first({ ptr, i64 } %values)") !=
+        std::string::npos
+    );
+    assert(
+        view_parameter_index.ir_text.find("%view_index1.in_bounds = icmp ult i64 0, %view_index1.length") !=
+        std::string::npos
+    );
+    auto view_parameter_index_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(view_parameter_index.ir_text);
+    assert(!view_parameter_index_object.has_errors());
+
+    auto view_parameter_for_path = smoke_temp_root / "orison_pipeline_view_parameter_for.or";
+    {
+        auto view_for_source = std::ofstream(view_parameter_for_path);
+        view_for_source
+            << "package demo.pipeline.viewfor\n"
+            << "\n"
+            << "function sum(values: View<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for item in values\n"
+            << "        total = total + item\n"
+            << "    total\n";
+    }
+    auto view_parameter_for = pipeline.emit_llvm(
+        view_parameter_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!view_parameter_for.has_errors());
+    assert(view_parameter_for.dynamic_array_runtime_request_report.empty());
+    assert(
+        view_parameter_for.ir_text.find("define i32 @sum({ ptr, i64 } %values)") != std::string::npos
+    );
+    assert(
+        view_parameter_for.ir_text.find(
+            "%values.dynamic_array_for0.value = load i32, ptr %values.dynamic_array_for0.element.addr"
+        ) != std::string::npos
+    );
+    auto view_parameter_for_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(view_parameter_for.ir_text);
+    assert(!view_parameter_for_object.has_errors());
+
     auto dynamic_array_blocked_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

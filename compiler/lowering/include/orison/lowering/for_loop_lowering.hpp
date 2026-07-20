@@ -20,6 +20,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -36,6 +37,18 @@ auto plan_for_loop_blocks(FunctionLoweringState& state, std::size_t iteration_co
 auto next_for_iteration_target(ForLoopBlockPlan const& plan, std::size_t index)
     -> std::string const&;
 
+inline auto emit_view_descriptor_field_projection(
+    std::string_view result_name,
+    std::string_view descriptor_value_name,
+    std::size_t field_index
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << result_name << " = extractvalue ";
+    output << view_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", " << field_index << "\n";
+    return output.str();
+}
+
 template <typename LowerBody>
 auto lower_dynamic_array_for_statement(
     syntax::StatementSyntax const& statement,
@@ -49,7 +62,7 @@ auto lower_dynamic_array_for_statement(
         statement.expression.kind != syntax::ExpressionKind::name) {
         diagnostics.error(
             statement.line,
-            "lowering dynamic-array for statements currently requires a named local DynamicArray iterable"
+            "lowering dynamic-sequence for statements currently requires a named iterable"
         );
         return StatementFlow::failed;
     }
@@ -59,25 +72,25 @@ auto lower_dynamic_array_for_statement(
     if (source_type == session.state.source_type_names.end()) {
         diagnostics.error(
             statement.line,
-            "lowering dynamic-array for statements currently requires a named local DynamicArray iterable"
+            "lowering dynamic-sequence for statements currently requires a named iterable"
         );
         return StatementFlow::failed;
     }
 
-    auto element_source_type_name = dynamic_array_element_source_type_name(source_type->second);
-    if (!element_source_type_name.has_value()) {
+    auto sequence = dynamic_sequence_source_type(source_type->second);
+    if (!sequence.has_value()) {
         diagnostics.error(
             statement.line,
-            "lowering dynamic-array for statements currently requires a DynamicArray iterable"
+            "lowering dynamic-sequence for statements currently requires a DynamicArray or View iterable"
         );
         return StatementFlow::failed;
     }
 
-    auto element_type = lowered_type_for_source_type_name(*element_source_type_name, context.lowering);
+    auto element_type = lowered_type_for_source_type_name(sequence->element_source_type_name, context.lowering);
     if (!element_type.has_value()) {
         diagnostics.error(
             statement.line,
-            "lowering dynamic-array for statements currently requires a lowerable element type"
+            "lowering dynamic-sequence for statements currently requires a lowerable element type"
         );
         return StatementFlow::failed;
     }
@@ -86,20 +99,16 @@ auto lower_dynamic_array_for_statement(
     if (!storage.has_value()) {
         diagnostics.error(
             statement.line,
-            "lowering dynamic-array for statements currently requires local descriptor storage"
+            "lowering dynamic-sequence for statements currently requires descriptor storage"
         );
         return StatementFlow::failed;
     }
 
-    auto plan = plan_dynamic_array_descriptor_cleanup(
-        owner_name,
-        source_type->second,
-        context.lowering
-    );
-    if (!plan.has_value()) {
+    auto element_llvm_type = llvm_type_for_source_type_name(sequence->element_source_type_name, context.lowering);
+    if (!element_llvm_type.has_value()) {
         diagnostics.error(
             statement.line,
-            "lowering dynamic-array for statements currently requires descriptor metadata"
+            "lowering dynamic-sequence for statements currently requires descriptor metadata"
         );
         return StatementFlow::failed;
     }
@@ -113,17 +122,24 @@ auto lower_dynamic_array_for_statement(
     auto continue_block = llvm_block_name("for.continue", block_index);
     auto exit_block = llvm_block_name("for.exit", block_index);
 
-    output << emit_dynamic_array_descriptor_load(prefix + ".descriptor", *storage);
-    output << emit_dynamic_array_descriptor_field_projection(
-        prefix + ".data",
-        prefix + ".descriptor",
-        DynamicArrayDescriptorField::data
-    );
-    output << emit_dynamic_array_descriptor_field_projection(
-        prefix + ".length",
-        prefix + ".descriptor",
-        DynamicArrayDescriptorField::length
-    );
+    if (sequence->kind == DynamicSequenceKind::dynamic_array) {
+        output << emit_dynamic_array_descriptor_load(prefix + ".descriptor", *storage);
+        output << emit_dynamic_array_descriptor_field_projection(
+            prefix + ".data",
+            prefix + ".descriptor",
+            DynamicArrayDescriptorField::data
+        );
+        output << emit_dynamic_array_descriptor_field_projection(
+            prefix + ".length",
+            prefix + ".descriptor",
+            DynamicArrayDescriptorField::length
+        );
+    } else {
+        output << "  " << prefix << ".descriptor = load " << view_descriptor_llvm_type();
+        output << ", ptr " << *storage << "\n";
+        output << emit_view_descriptor_field_projection(prefix + ".data", prefix + ".descriptor", 0);
+        output << emit_view_descriptor_field_projection(prefix + ".length", prefix + ".descriptor", 1);
+    }
     emit_llvm_branch(output, condition_block);
 
     emit_llvm_block_label(output, condition_block);
@@ -141,20 +157,16 @@ auto lower_dynamic_array_for_statement(
     auto loop_scope = BranchBindingScope(session.state);
     emit_llvm_block_label(output, body_block);
     session.state.current_block = body_block;
-    output << emit_dynamic_array_element_address(
-        *plan,
-        prefix + ".element.addr",
-        prefix + ".data",
-        prefix + ".index"
-    );
-    output << "  " << prefix << ".value = load " << plan->element_llvm_type;
+    output << "  " << prefix << ".element.addr = getelementptr " << *element_llvm_type;
+    output << ", ptr " << prefix << ".data, i64 " << prefix << ".index\n";
+    output << "  " << prefix << ".value = load " << *element_llvm_type;
     output << ", ptr " << prefix << ".element.addr\n";
     session.state.immutable_bindings[statement.name] = LoweredExpression {
         .type = element_type->type,
         .value = prefix + ".value",
         .signedness = element_type->signedness,
     };
-    session.state.source_type_names[statement.name] = *element_source_type_name;
+    session.state.source_type_names[statement.name] = sequence->element_source_type_name;
     bind_addressable_aggregate_value(
         statement.name,
         session.state.immutable_bindings.at(statement.name),

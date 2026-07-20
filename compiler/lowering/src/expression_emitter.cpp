@@ -392,7 +392,8 @@ auto inferred_expression_type(
         auto const& owner_name = expression.left->left->text;
         auto source_type = state.source_type_names.find(owner_name);
         if (source_type != state.source_type_names.end() &&
-            dynamic_array_element_source_type_name(source_type->second).has_value()) {
+            (dynamic_array_element_source_type_name(source_type->second).has_value() ||
+             view_element_source_type_name(source_type->second).has_value())) {
             return LoweredType {
                 .type = "i64",
                 .signedness = IntegerSignedness::signed_integer,
@@ -1859,6 +1860,152 @@ auto lower_dynamic_array_length_call(
     };
 }
 
+auto emit_view_descriptor_field_projection(
+    std::string_view result_name,
+    std::string_view descriptor_value_name,
+    std::size_t field_index
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << result_name << " = extractvalue ";
+    output << view_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", " << field_index << "\n";
+    return output.str();
+}
+
+auto lower_view_index_read(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::index_access ||
+        expression.left == nullptr ||
+        expression.arguments.size() != 1) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_name_for_expression(*expression.left, context, session.state);
+    if (!base_source_type.has_value()) {
+        return std::nullopt;
+    }
+    auto element_source_type = view_element_source_type_name(*base_source_type);
+    if (!element_source_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto element_llvm_type = llvm_type_for_source_type_name(*element_source_type, context.lowering);
+    auto element_signedness = integer_signedness_for(syntax::TypeSyntax {
+        .name = *element_source_type,
+    });
+    if (!element_llvm_type.has_value() ||
+        *element_llvm_type != expected_llvm_type ||
+        element_signedness != expected_signedness) {
+        return std::nullopt;
+    }
+
+    auto lowered_base = lowered_expression(
+        *expression.left,
+        std::string {view_descriptor_llvm_type()},
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_base.has_value()) {
+        return std::nullopt;
+    }
+
+    auto lowered_index = lowered_expression(
+        expression.arguments.front(),
+        "i64",
+        IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_index.has_value()) {
+        return std::nullopt;
+    }
+
+    auto prefix = "%view_index" + std::to_string(session.state.next_temporary_index++);
+    output << emit_view_descriptor_field_projection(prefix + ".data", lowered_base->value, 0);
+    output << emit_view_descriptor_field_projection(prefix + ".length", lowered_base->value, 1);
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".in_bounds",
+        lowered_index->value,
+        prefix + ".length",
+        DynamicArrayBoundsCheckKind::index_within_length
+    );
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto value_block = llvm_block_name("view.index.in_bounds", block_index);
+    auto failure_block = llvm_block_name("view.index.out_of_bounds", block_index);
+    emit_llvm_conditional_branch(output, prefix + ".in_bounds", value_block, failure_block);
+    emit_llvm_block_label(output, failure_block);
+    output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, value_block);
+    session.state.current_block = value_block;
+    output << "  " << prefix << ".element.addr = getelementptr " << *element_llvm_type;
+    output << ", ptr " << prefix << ".data, i64 " << lowered_index->value << "\n";
+    output << "  " << prefix << ".value = load " << *element_llvm_type;
+    output << ", ptr " << prefix << ".element.addr\n";
+
+    return LoweredExpression {
+        .type = *element_llvm_type,
+        .value = prefix + ".value",
+        .signedness = element_signedness,
+    };
+}
+
+auto lower_view_length_call(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    if (expression.kind != syntax::ExpressionKind::call ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::member_access ||
+        expression.left->text != "length" ||
+        expression.left->left == nullptr ||
+        !expression.arguments.empty() ||
+        expected_llvm_type != "i64" ||
+        expected_signedness != IntegerSignedness::signed_integer) {
+        return std::nullopt;
+    }
+
+    auto base_source_type = source_type_name_for_expression(*expression.left->left, context, session.state);
+    if (!base_source_type.has_value() ||
+        !view_element_source_type_name(*base_source_type).has_value()) {
+        return std::nullopt;
+    }
+
+    auto lowered_base = lowered_expression(
+        *expression.left->left,
+        std::string {view_descriptor_llvm_type()},
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_base.has_value()) {
+        return std::nullopt;
+    }
+
+    auto prefix = "%view_length" + std::to_string(session.state.next_temporary_index++);
+    output << emit_view_descriptor_field_projection(prefix + ".value", lowered_base->value, 1);
+
+    return LoweredExpression {
+        .type = "i64",
+        .value = prefix + ".value",
+        .signedness = IntegerSignedness::signed_integer,
+    };
+}
+
 auto emit_null_safe_empty_result(
     MaybeValueAbi const& result_abi,
     FunctionLoweringState& state,
@@ -2476,6 +2623,28 @@ auto lowered_expression(
             output
         )) {
         return dynamic_array_length_call;
+    }
+
+    if (auto view_index_read = lower_view_index_read(
+            expression,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        )) {
+        return view_index_read;
+    }
+
+    if (auto view_length_call = lower_view_length_call(
+            expression,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        )) {
+        return view_length_call;
     }
 
     if (auto null_safe_access = lower_null_safe_member_access_expression(

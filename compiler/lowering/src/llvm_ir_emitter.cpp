@@ -200,6 +200,14 @@ auto is_dynamic_array_source_type(syntax::TypeSyntax const& type) -> bool {
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
 }
 
+auto is_view_source_type(syntax::TypeSyntax const& type) -> bool {
+    auto sequence = dynamic_sequence_source_type(render_source_type_name(type));
+    return sequence.has_value() &&
+        (sequence->kind == DynamicSequenceKind::view ||
+         sequence->kind == DynamicSequenceKind::shared_view ||
+         sequence->kind == DynamicSequenceKind::exclusive_view);
+}
+
 void collect_dynamic_array_owner_names(
     syntax::StatementSyntax const& statement,
     std::unordered_set<std::string>& owner_names
@@ -226,6 +234,32 @@ void collect_dynamic_array_owner_names(
     }
 }
 
+void collect_view_owner_names(
+    syntax::StatementSyntax const& statement,
+    std::unordered_set<std::string>& owner_names
+) {
+    if ((statement.kind == syntax::StatementKind::let_binding ||
+         statement.kind == syntax::StatementKind::var_binding) &&
+        !statement.name.empty() &&
+        !statement.annotated_type.name.empty() &&
+        is_view_source_type(statement.annotated_type)) {
+        owner_names.insert(statement.name);
+    }
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_view_owner_names(nested_statement, owner_names);
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_view_owner_names(alternate_statement, owner_names);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_view_owner_names(*case_statement, owner_names);
+            }
+        }
+    }
+}
+
 auto has_dynamic_array_index_read(
     syntax::FunctionSyntax const& function
 ) -> bool {
@@ -237,6 +271,35 @@ auto has_dynamic_array_index_read(
     }
     for (auto const& statement : function.body_statements) {
         collect_dynamic_array_owner_names(statement, owner_names);
+    }
+    if (owner_names.empty()) {
+        return false;
+    }
+
+    auto found = false;
+    walk_function_expressions(function, [&owner_names, &found](syntax::ExpressionSyntax const& expression) {
+        if (found ||
+            expression.kind != syntax::ExpressionKind::index_access ||
+            expression.left == nullptr ||
+            expression.left->kind != syntax::ExpressionKind::name) {
+            return;
+        }
+        found = owner_names.contains(expression.left->text);
+    });
+    return found;
+}
+
+auto has_view_index_read(
+    syntax::FunctionSyntax const& function
+) -> bool {
+    auto owner_names = std::unordered_set<std::string> {};
+    for (auto const& parameter : function.parameters) {
+        if (!parameter.name.empty() && is_view_source_type(parameter.type)) {
+            owner_names.insert(parameter.name);
+        }
+    }
+    for (auto const& statement : function.body_statements) {
+        collect_view_owner_names(statement, owner_names);
     }
     if (owner_names.empty()) {
         return false;
@@ -273,6 +336,31 @@ auto has_dynamic_array_index_read(
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
             if (has_dynamic_array_index_read(method)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+auto has_view_index_read(
+    syntax::ModuleSyntax const& module
+) -> bool {
+    for (auto const& function : module.functions) {
+        if (has_view_index_read(function)) {
+            return true;
+        }
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            if (has_view_index_read(method)) {
+                return true;
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            if (has_view_index_read(method)) {
                 return true;
             }
         }
@@ -414,6 +502,9 @@ auto collect_dynamic_array_runtime_operations(
         }
     }
     if (options.enable_dynamic_array_index_lowering && has_dynamic_array_index_read(module)) {
+        push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
+    }
+    if (has_view_index_read(module)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
     }
     for (auto const& request : options.test_only_dynamic_array_construction_requests) {

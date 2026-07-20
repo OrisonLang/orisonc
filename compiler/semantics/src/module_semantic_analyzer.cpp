@@ -1083,7 +1083,8 @@ private:
             return {};
         }
         if (method_name == "length" && arguments.empty() &&
-            source_type_base_name(receiver_type) == "DynamicArray" &&
+            (source_type_base_name(receiver_type) == "DynamicArray" ||
+             source_type_base_name(receiver_type) == "View") &&
             parsed_receiver_type->generic_arguments.size() == 1) {
             return "IntSize";
         }

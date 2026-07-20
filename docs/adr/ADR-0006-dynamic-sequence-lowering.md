@@ -286,10 +286,13 @@ representation.
   path: `for item in items` over a `DynamicArray<UInt32>` parameter reloads `%items.addr`, projects data/length, emits
   the runtime `index < length` loop, loads each scalar element into the loop binding, and delays descriptor cleanup
   until the function-exit cleanup hook.
+- View read-only descriptor parity is now pinned for parameter descriptors. `View<T>`/`shared.View<T>`/`exclusive.View<T>`
+  lower as `{ ptr, i64 }`; `.length()` projects the length field, `items[index]` emits a finite bounds check and traps
+  through `__orison_dynamic_array_bounds_failed()` on failure, and `for item in items` reuses the descriptor-loop
+  lowering without ownership cleanup or capacity handling.
 
 ## Follow-up work
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Extend `for ... in` lowering beyond named local dynamic-array descriptors to consume view descriptors, dynamic-array
-  parameters, and computed dynamic iterables.
+- Extend `for ... in` lowering beyond named descriptor-backed dynamic sequences to consume computed dynamic iterables.
