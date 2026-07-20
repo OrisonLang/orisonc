@@ -3,6 +3,7 @@ add_library(orison_pipeline STATIC
     src/dynamic_array_cleanup_readiness.cpp
     src/drop_readiness_source_correlation_report.cpp
     src/lowering_emission_options.cpp
+    src/semantic_drop_reports.cpp
 )
 
 target_include_directories(orison_pipeline
