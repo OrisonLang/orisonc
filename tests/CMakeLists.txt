@@ -1389,6 +1389,7 @@ add_executable(orison_examples_smoke
 
 target_link_libraries(orison_examples_smoke
     PRIVATE
+        orison_driver
         orison_pipeline
 )
 

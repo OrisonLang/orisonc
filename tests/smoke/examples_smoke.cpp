@@ -1,3 +1,4 @@
+#include "orison/driver/compiler_app.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 
@@ -6,9 +7,32 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <span>
 #include <string>
 #include <string_view>
+#include <sys/wait.h>
 #include <unistd.h>
+
+namespace {
+
+auto build_example(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& source_path,
+    std::filesystem::path const& executable_path
+) -> orison::driver::CompileResult {
+    auto source_path_text = source_path.string();
+    auto executable_path_text = executable_path.string();
+    auto args = std::array<char const*, 5> {
+        "orisonc",
+        "--build",
+        source_path_text.c_str(),
+        "-o",
+        executable_path_text.c_str(),
+    };
+    return app.run(std::span<char const* const>(args.data(), args.size()));
+}
+
+}  // namespace
 
 auto main() -> int {
     auto original_temp_root = std::filesystem::temp_directory_path();
@@ -106,6 +130,18 @@ auto main() -> int {
         orison::lowering::LlvmObjectEmitter {}.emit(view_descriptor_ir.ir_text);
     assert(!view_descriptor_object.has_errors());
     assert(!view_descriptor_object.object_bytes.empty());
+    auto view_descriptor_executable_path = smoke_temp_root / "view_descriptor_reads";
+    auto view_descriptor_build = build_example(
+        orison::driver::CompilerApp {},
+        examples / "view_descriptor_reads.or",
+        view_descriptor_executable_path
+    );
+    assert(view_descriptor_build.exit_code == 0);
+    assert(view_descriptor_build.stdout_text.empty());
+    assert(view_descriptor_build.stderr_text.empty());
+    auto view_descriptor_status = std::system(view_descriptor_executable_path.string().c_str());
+    assert(WIFEXITED(view_descriptor_status));
+    assert(WEXITSTATUS(view_descriptor_status) == 0);
 
     auto ordinary_pointer_path = std::filesystem::temp_directory_path() / "orison_string_pointer_boundary.or";
     {
