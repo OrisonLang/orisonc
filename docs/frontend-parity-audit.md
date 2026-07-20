@@ -1330,3 +1330,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-06-15: order-sensitive regressions now also pin recursive defer replay on `for` continue exits and `repeat` break exits.
 - 2026-06-15: order-sensitive regressions now also pin recursive defer replay through nested `unsafe` blocks that contain loop-control exits.
 - 2026-06-15: LLVM `while`, `repeat`, and `for` bodies now also accept nested `unsafe` blocks, reusing the existing cleanup replay path so `defer` blocks inside `unsafe` continue to run before `break` and `continue`.
+- 2026-07-19: `CompilePipelineOptions` now exposes `source_drop_lowering_enabled` as the production-facing,
+  disabled-by-default source Drop lowering gate. The previous `test_only_enable_source_drop_lowering` option remains an
+  internal compatibility alias, while dynamic-array cleanup audit/report paths now use the production-facing gate.

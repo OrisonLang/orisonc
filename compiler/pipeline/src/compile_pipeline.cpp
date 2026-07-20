@@ -57,6 +57,7 @@ auto dynamic_array_length_lowering_enabled(CompilePipelineOptions const& options
 auto dynamic_array_for_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_append_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 auto dynamic_array_cleanup_emission_enabled(CompilePipelineOptions const& options) -> bool;
+auto source_drop_lowering_enabled(CompilePipelineOptions const& options) -> bool;
 
 auto plan_dynamic_array_cleanup_production_readiness(
     CompilePipelineResult const& result,
@@ -118,6 +119,11 @@ auto dynamic_array_cleanup_emission_enabled(CompilePipelineOptions const& option
     return options.dynamic_array_local_lowering_enabled ||
         options.dynamic_array_parameter_lowering_enabled ||
         options.dynamic_array_production_cleanup_emission_enabled;
+}
+
+auto source_drop_lowering_enabled(CompilePipelineOptions const& options) -> bool {
+    return options.source_drop_lowering_enabled ||
+        options.test_only_enable_source_drop_lowering;
 }
 
 }  // namespace
@@ -245,7 +251,7 @@ auto CompilePipeline::analyze(
         result.semantic_result.planned_drop_sites,
         semantic_drop_implementations
     );
-    auto const source_drop_lowering_gate = options.test_only_enable_source_drop_lowering
+    auto const source_drop_lowering_gate = source_drop_lowering_enabled(options)
                                               ? semantics::SourceDropLoweringGate::enabled
                                               : semantics::SourceDropLoweringGate::disabled;
     result.semantic_drop_lowering_authorizations = semantics::authorize_drop_lowerings(

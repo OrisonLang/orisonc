@@ -591,7 +591,7 @@ int main() {
         {
             "dynamic array cleanup production readiness blocked",
             "[descriptor origins missing]",
-            "[production cleanup emission missing]",
+            "[production cleanup emission ok]",
         }
     );
 
@@ -684,6 +684,7 @@ int main() {
             "[element cleanup missing]",
             "dynamic array cleanup production readiness blocked",
             "[cleanup capability missing]",
+            "[production signatures ok]",
         }
     );
     auto dynamic_array_blocked_production_readiness =
@@ -694,7 +695,7 @@ int main() {
             "dynamic array cleanup production readiness blocked",
             "[descriptor origins ok]",
             "[cleanup capability missing]",
-            "[production signatures missing]",
+            "[production signatures ok]",
         }
     );
     assert(
@@ -802,8 +803,8 @@ int main() {
             "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "dynamic array cleanup emission capability proven",
             "[element cleanup ok]",
-            "dynamic array cleanup production readiness blocked",
-            "[production signatures missing]",
+            "dynamic array cleanup production readiness ready",
+            "[production signatures ok]",
         }
     );
     auto dynamic_array_authorized_production_readiness =
@@ -811,11 +812,11 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_authorized_production_readiness,
         {
-            "dynamic array cleanup production readiness blocked",
+            "dynamic array cleanup production readiness ready",
             "[cleanup capability ok]",
-            "[production signatures missing]",
-            "[production construction missing]",
-            "[production cleanup emission missing]",
+            "[production signatures ok]",
+            "[production construction ok]",
+            "[production cleanup emission ok]",
         }
     );
 

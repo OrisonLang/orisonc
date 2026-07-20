@@ -258,9 +258,9 @@ representation.
 - The production cleanup-emission blocker now maps to a default-disabled lowering option that can prove and emit bound
   dynamic-array parameter cleanup without relying on the older test-only cleanup flag. The test-only flag remains as a
   compatibility alias for existing focused fixtures.
-- Dynamic-array cleanup report surfaces opt into a test-only source-derived Drop lowering gate, allowing proven
-  `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default production
-  compilation continues to leave source Drop lowering disabled.
+- Dynamic-array cleanup report surfaces opt into the explicit source-derived Drop lowering gate, allowing proven
+  `implements Drop for T` fixtures to demonstrate authorized owned-element cleanup capability while default compilation
+  continues to leave source Drop lowering disabled until requested by a compiler/pipeline option.
 - Production-gated `DynamicArray<T>.length()` now resolves semantically to `IntSize` and lowers by reloading the local
   descriptor and projecting its length field. This is an internal descriptor read, not a runtime call; scalar lowering
   now maps `IntSize`/`UIntSize` to pointer-width `i64` in the current target model, and pipeline smoke verifies append

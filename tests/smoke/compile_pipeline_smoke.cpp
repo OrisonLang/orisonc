@@ -1446,7 +1446,7 @@ auto main() -> int {
     auto dynamic_array_local_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_local_owned_cleanup_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_source_drop_lowering = true,
+            .source_drop_lowering_enabled = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
         }
@@ -1830,6 +1830,21 @@ auto main() -> int {
     assert(!parsed_drop_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
     assert(!parsed_drop_ir.semantic_drop_lowering_authorizations.front().authorized);
     assert(parsed_drop_ir.ir_text.find("__orison_drop.Payload") == std::string::npos);
+    auto parsed_drop_source_lowering_ir = pipeline.emit_llvm(
+        parsed_drop_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!parsed_drop_source_lowering_ir.has_errors());
+    assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.size() == 1);
+    assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.front().semantic_resolved);
+    assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
+    assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.front().authorized);
+    assert(
+        parsed_drop_source_lowering_ir.ir_text.find("declare void @__orison_drop.Payload(ptr)") !=
+        std::string::npos
+    );
 
     auto parsed_drop_readiness_path =
         std::filesystem::temp_directory_path() / "orison_pipeline_parsed_drop_readiness.or";
