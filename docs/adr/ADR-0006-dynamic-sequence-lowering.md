@@ -290,6 +290,9 @@ representation.
   lower as `{ ptr, i64 }`; `.length()` projects the length field, `items[index]` emits a finite bounds check and traps
   through `__orison_dynamic_array_bounds_failed()` on failure, and `for item in items` reuses the descriptor-loop
   lowering without ownership cleanup or capacity handling.
+- Access-qualified View descriptor parity is covered explicitly in smoke tests: `shared.View<T>` and
+  `exclusive.View<T>` use the same read-only descriptor ABI for length, checked index reads, and descriptor-loop
+  iteration. Exclusive View mutation remains future work rather than an implicit side effect of read support.
 
 ## Follow-up work
 

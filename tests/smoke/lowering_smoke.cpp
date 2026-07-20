@@ -8272,6 +8272,67 @@ void test_emit_view_parameter_length_lowering() {
     assert_ir_contains(result, "ret i64 %view_length0.value");
 }
 
+void test_emit_access_qualified_view_parameter_lowering() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_access_qualified_view_parameter.or";
+    auto shared_result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function count(values: shared.View<UInt32>) -> IntSize\n"
+        "    values.length()\n"
+    );
+
+    assert(!shared_result.has_errors());
+    assert_ir_contains(shared_result, "define i64 @count({ ptr, i64 } %values)");
+    assert_ir_contains(shared_result, "  %view_length0.value = extractvalue { ptr, i64 } %values, 1\n");
+
+    auto exclusive_index_result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function first(values: exclusive.View<UInt32>) -> UInt32\n"
+        "    values[0]\n"
+    );
+
+    assert(!exclusive_index_result.has_errors());
+    assert_ir_contains(exclusive_index_result, "define i32 @first({ ptr, i64 } %values)");
+    assert_ir_contains(exclusive_index_result, "declare void @__orison_dynamic_array_bounds_failed()");
+    assert_ir_contains(
+        exclusive_index_result,
+        "  %view_index1.in_bounds = icmp ult i64 0, %view_index1.length\n"
+    );
+    assert_ir_contains(
+        exclusive_index_result,
+        "  %view_index1.value = load i32, ptr %view_index1.element.addr\n"
+    );
+
+    auto shared_for_result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function sum(values: shared.View<UInt32>) -> UInt32\n"
+        "    var total = 0 as UInt32\n"
+        "    for item in values\n"
+        "        total = total + item\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_for_lowering = true,
+        }
+    );
+
+    assert(!shared_for_result.has_errors());
+    assert_ir_contains(shared_for_result, "define i32 @sum({ ptr, i64 } %values)");
+    assert_ir_contains(
+        shared_for_result,
+        "  %values.dynamic_array_for0.descriptor = load { ptr, i64 }, ptr %values.addr\n"
+    );
+    assert_ir_contains(
+        shared_for_result,
+        "  %values.dynamic_array_for0.value = load i32, ptr %values.dynamic_array_for0.element.addr\n"
+    );
+}
+
 void test_reject_underconstrained_generic_record_array_literal_for_item_field_return() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_underconstrained_generic_record_array_literal_for_item_field.or";
@@ -12973,6 +13034,7 @@ auto main() -> int {
     test_emit_view_for_iterable_lowering();
     test_emit_view_parameter_index_lowering();
     test_emit_view_parameter_length_lowering();
+    test_emit_access_qualified_view_parameter_lowering();
     test_reject_underconstrained_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_nested_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_generic_record_inferred_let_binding();
