@@ -1,6 +1,7 @@
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/link/host_linker.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
+#include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
 
 #include <cassert>
 #include <cstdlib>
@@ -415,6 +416,40 @@ auto main() -> int {
         dynamic_array_source_correlated_cleanup.drop_readiness_source_correlation_report,
         1,
         "declaration missing"
+    );
+
+    auto cleanup_metadata_options = orison::pipeline::CompilePipelineOptions {
+        .source_drop_lowering_enabled = true,
+        .dynamic_array_descriptor_cleanup_planning_enabled = true,
+        .dynamic_array_parameter_descriptor_audit_bindings_enabled = true,
+        .dynamic_array_production_cleanup_emission_enabled = true,
+    };
+    auto cleanup_metadata_facade = pipeline.collect_dynamic_array_cleanup_metadata(
+        dynamic_array_source_owner_path,
+        cleanup_metadata_options
+    );
+    auto cleanup_metadata_collector =
+        orison::pipeline::DynamicArrayCleanupMetadataCollector(pipeline).collect(
+            dynamic_array_source_owner_path,
+            cleanup_metadata_options
+        );
+    assert(!cleanup_metadata_facade.has_errors());
+    assert(!cleanup_metadata_collector.has_errors());
+    assert(
+        cleanup_metadata_collector.dynamic_array_cleanup_obligation_report ==
+        cleanup_metadata_facade.dynamic_array_cleanup_obligation_report
+    );
+    assert(
+        cleanup_metadata_collector.dynamic_array_cleanup_sequence_verification_report ==
+        cleanup_metadata_facade.dynamic_array_cleanup_sequence_verification_report
+    );
+    assert(
+        cleanup_metadata_collector.dynamic_array_cleanup_emission_capability_report ==
+        cleanup_metadata_facade.dynamic_array_cleanup_emission_capability_report
+    );
+    assert(
+        cleanup_metadata_collector.dynamic_array_cleanup_production_readiness_report ==
+        cleanup_metadata_facade.dynamic_array_cleanup_production_readiness_report
     );
 
     auto scalar_dynamic_array_path =

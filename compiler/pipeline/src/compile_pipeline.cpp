@@ -2,6 +2,7 @@
 
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
+#include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
 #include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 
 #include <algorithm>
@@ -406,11 +407,14 @@ auto CompilePipeline::emit_llvm(
     return result;
 }
 
-auto CompilePipeline::collect_dynamic_array_cleanup_metadata(
+DynamicArrayCleanupMetadataCollector::DynamicArrayCleanupMetadataCollector(CompilePipeline const& pipeline)
+    : pipeline_(pipeline) {}
+
+auto DynamicArrayCleanupMetadataCollector::collect(
     std::filesystem::path const& source_path,
     CompilePipelineOptions const& options
 ) const -> CompilePipelineResult {
-    auto result = analyze(source_path, options);
+    auto result = pipeline_.analyze(source_path, options);
     if (result.has_errors()) {
         return result;
     }
@@ -425,6 +429,13 @@ auto CompilePipeline::collect_dynamic_array_cleanup_metadata(
     }
     copy_lowering_emission_reports(result, std::move(emission), options);
     return result;
+}
+
+auto CompilePipeline::collect_dynamic_array_cleanup_metadata(
+    std::filesystem::path const& source_path,
+    CompilePipelineOptions const& options
+) const -> CompilePipelineResult {
+    return DynamicArrayCleanupMetadataCollector(*this).collect(source_path, options);
 }
 
 auto CompilePipeline::emit_object(std::filesystem::path const& source_path) const -> CompilePipelineResult {
