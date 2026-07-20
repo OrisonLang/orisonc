@@ -21,9 +21,10 @@ auto main() -> int {
 
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     orison::pipeline::CompilePipeline pipeline;
-    constexpr auto backend_examples = std::array<std::string_view, 69> {
+    constexpr auto backend_examples = std::array<std::string_view, 70> {
         "concurrency_task_main.or",
         "concurrency_thread_main.or",
+        "dynamic_array_parameter_reads.or",
         "ffi_aggregate_scalar_parameters.or",
         "ffi_fixed_parameters.or",
         "local_helper_array_for.or",
@@ -107,6 +108,33 @@ auto main() -> int {
         orison::lowering::LlvmObjectEmitter {}.emit(view_descriptor_ir.ir_text);
     assert(!view_descriptor_object.has_errors());
     assert(!view_descriptor_object.object_bytes.empty());
+
+    auto dynamic_array_parameter_ir = pipeline.emit_llvm(examples / "dynamic_array_parameter_reads.or");
+    assert(!dynamic_array_parameter_ir.has_errors());
+    assert(
+        dynamic_array_parameter_ir.ir_text.find("define i64 @count({ ptr, i64, i64 } %values)") !=
+        std::string::npos
+    );
+    assert(
+        dynamic_array_parameter_ir.ir_text.find(
+            "%values.dynamic_array_index0.in_bounds = icmp ult i64 0, %values.dynamic_array_index0.length"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_parameter_ir.ir_text.find(
+            "%values.sequence_for0.value = load i32, ptr %values.sequence_for0.element.addr"
+        ) != std::string::npos
+    );
+
+    auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
+    auto owned_dynamic_array_parameter =
+        pipeline.emit_llvm(fixtures / "dynamic_array_owned_parameter_rejected.or");
+    assert(owned_dynamic_array_parameter.has_errors());
+    assert(
+        owned_dynamic_array_parameter.error_text.find(
+            "lowering does not yet support this function parameter type"
+        ) != std::string::npos
+    );
 
     auto ordinary_pointer_path = std::filesystem::temp_directory_path() / "orison_string_pointer_boundary.or";
     {

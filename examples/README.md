@@ -1,6 +1,8 @@
 # Orison Examples
 
 `minimal.or` is the stable backend demo and must compile, link, and run with exit status `0`.
+`dynamic_array_parameter_reads.or` demonstrates scalar `DynamicArray<UInt32>` parameter descriptor `.length()`,
+checked indexing, iteration, and parameter cleanup on the default compiler path.
 `ffi_fixed_parameters.or` demonstrates a finite C FFI contract with two explicit `Pointer<Byte>` parameters.
 `ffi_aggregate_scalar_parameters.or` demonstrates a finite C FFI contract with an aggregate-derived scalar parameter.
 `nested_pointer_aggregate_assignment.or` demonstrates nested pointer-backed aggregate assignment on records and fixed arrays.
@@ -67,6 +69,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 
 | Example | Demonstrates | Current validation |
 | --- | --- | --- |
+| `dynamic_array_parameter_reads.or` | scalar `DynamicArray<UInt32>` parameter descriptor length, checked index reads, iteration, and cleanup | backend |
 | `ffi_aggregate_scalar_parameters.or` | C FFI with an aggregate-derived scalar fixed parameter | backend |
 | `tour_01_packages_imports.or` | `package`, `import`, `from`, `as`, `type` | backend |
 | `tour_02_records_choices.or` | visibility, `record`, `choice`, constructors, generics | backend |
@@ -148,6 +151,7 @@ Use `minimal.or` for the smallest compile/link/run demonstration.
 
 Use `local_record_field_assignment.or` and `pointer_record_field_assignment.or` for aggregate-assignment pipeline
 coverage. Use `local_dynamic_array_append.or` for the local growable-sequence pipeline. Use
+`dynamic_array_parameter_reads.or` for scalar growable-sequence parameter descriptor coverage. Use
 `concurrency_task_main.or` and `concurrency_thread_main.or` for task/thread pipeline coverage. The canonical pipeline
 smoke pins those files through `--emit-llvm`, `--emit-object`, `run`, and retained `--build` executable paths. The
 focused minimal demo smoke owns the full `minimal.or` compile/link/run workflow.
@@ -215,6 +219,15 @@ build/tools/orisonc/orisonc run examples/local_dynamic_array_append.or
 
 It validates local `DynamicArray<UInt32>` construction, append/grow, checked indexing, iteration, and cleanup on the
 default compiler path.
+
+Run the scalar DynamicArray parameter demo with:
+
+```sh
+build/tools/orisonc/orisonc --emit-llvm examples/dynamic_array_parameter_reads.or
+```
+
+It validates scalar `DynamicArray<UInt32>` parameter descriptors, cleanup, `.length()`, checked indexing, and
+descriptor iteration on the default compiler path.
 
 Run the nested aggregate assignment demo with:
 

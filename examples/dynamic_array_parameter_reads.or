@@ -1,0 +1,16 @@
+package examples.dynamicarrayparams
+
+function count(values: DynamicArray<UInt32>) -> IntSize
+    values.length()
+
+function first(values: DynamicArray<UInt32>) -> UInt32
+    values[0]
+
+function sum(values: DynamicArray<UInt32>) -> UInt32
+    var total = 0 as UInt32
+    for value in values
+        total = total + value
+    total
+
+function main() -> UInt32
+    0 as UInt32
