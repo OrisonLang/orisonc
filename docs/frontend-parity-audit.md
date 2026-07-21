@@ -49,6 +49,11 @@ This file tracks which source-language frontend slices are reflected in the curr
   smoke now links and runs the source-drop owned-parameter path for an empty local `DynamicArray<Payload>` passed to
   `use_items`. Initialized owned transfer still needs move/consume analysis before the caller can safely suppress local
   descriptor cleanup after passing ownership to the callee.
+- 2026-07-20: straight-line owned local `DynamicArray<T>` calls now mark exact source-typed local arguments as consumed
+  when passed to owned dynamic-array parameters, and local cleanup planning skips those transferred owners. Pipeline
+  smoke now links and runs an initialized `DynamicArray<Payload>` local passed to `use_items` with only the callee-side
+  descriptor cleanup remaining. Broader ownership diagnostics for post-move uses, branch joins, and parameter
+  forwarding remain pending.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

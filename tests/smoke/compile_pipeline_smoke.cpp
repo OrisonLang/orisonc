@@ -1514,12 +1514,12 @@ auto main() -> int {
     assert(local_owned_drop < local_owned_deallocate);
     assert(local_owned_deallocate < local_owned_return);
 
-    auto dynamic_array_owned_parameter_empty_run_path =
-        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_empty_run.or";
+    auto dynamic_array_owned_parameter_initialized_run_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_initialized_run.or";
     {
-        auto owned_parameter_empty_run_source = std::ofstream(dynamic_array_owned_parameter_empty_run_path);
-        owned_parameter_empty_run_source
-            << "package demo.pipeline.dynamicarrayownedparameteremptyrun\n"
+        auto owned_parameter_initialized_run_source = std::ofstream(dynamic_array_owned_parameter_initialized_run_path);
+        owned_parameter_initialized_run_source
+            << "package demo.pipeline.dynamicarrayownedparameterinitializedrun\n"
             << "\n"
             << "record Payload\n"
             << "    public value: Int64\n"
@@ -1536,27 +1536,46 @@ auto main() -> int {
             << "\n"
             << "function main() -> UInt32\n"
             << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    items.push(Payload(7))\n"
             << "    use_items(items)\n";
     }
-    auto dynamic_array_owned_parameter_empty_run = pipeline.emit_object(
-        dynamic_array_owned_parameter_empty_run_path,
+    auto dynamic_array_owned_parameter_initialized_ir = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_initialized_run_path,
         orison::pipeline::CompilePipelineOptions {
             .source_drop_lowering_enabled = true,
         }
     );
-    assert(!dynamic_array_owned_parameter_empty_run.has_errors());
-    assert(!dynamic_array_owned_parameter_empty_run.object_bytes.empty());
-    auto dynamic_array_owned_parameter_empty_run_executable =
-        smoke_temp_root / "dynamic_array_owned_parameter_empty_run";
-    auto dynamic_array_owned_parameter_empty_run_link = orison::link::HostLinker {}.link(
-        dynamic_array_owned_parameter_empty_run.object_bytes,
-        dynamic_array_owned_parameter_empty_run_executable
+    assert(!dynamic_array_owned_parameter_initialized_ir.has_errors());
+    auto initialized_transfer_deallocate =
+        dynamic_array_owned_parameter_initialized_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate"
+        );
+    assert(initialized_transfer_deallocate != std::string::npos);
+    assert(
+        dynamic_array_owned_parameter_initialized_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate",
+            initialized_transfer_deallocate + 1
+        ) == std::string::npos
     );
-    assert(!dynamic_array_owned_parameter_empty_run_link.has_errors());
-    auto dynamic_array_owned_parameter_empty_run_status =
-        std::system(dynamic_array_owned_parameter_empty_run_executable.string().c_str());
-    assert(WIFEXITED(dynamic_array_owned_parameter_empty_run_status));
-    assert(WEXITSTATUS(dynamic_array_owned_parameter_empty_run_status) == 0);
+    auto dynamic_array_owned_parameter_initialized_run = pipeline.emit_object(
+        dynamic_array_owned_parameter_initialized_run_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_parameter_initialized_run.has_errors());
+    assert(!dynamic_array_owned_parameter_initialized_run.object_bytes.empty());
+    auto dynamic_array_owned_parameter_initialized_run_executable =
+        smoke_temp_root / "dynamic_array_owned_parameter_initialized_run";
+    auto dynamic_array_owned_parameter_initialized_run_link = orison::link::HostLinker {}.link(
+        dynamic_array_owned_parameter_initialized_run.object_bytes,
+        dynamic_array_owned_parameter_initialized_run_executable
+    );
+    assert(!dynamic_array_owned_parameter_initialized_run_link.has_errors());
+    auto dynamic_array_owned_parameter_initialized_run_status =
+        std::system(dynamic_array_owned_parameter_initialized_run_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_owned_parameter_initialized_run_status));
+    assert(WEXITSTATUS(dynamic_array_owned_parameter_initialized_run_status) == 0);
 
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,

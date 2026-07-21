@@ -19,6 +19,7 @@ int main() {
     });
     state.source_type_names["outer"] = "Outer";
     state.source_type_names["outer_mutable"] = "OuterMutable";
+    state.consumed_owned_dynamic_array_locals.insert("outer_items");
     state.local_name_counts["outer"] = 1;
     state.next_temporary_index = 4;
     state.next_block_index = 2;
@@ -38,6 +39,7 @@ int main() {
         });
         state.source_type_names["branch"] = "Branch";
         state.source_type_names["branch_mutable"] = "BranchMutable";
+        state.consumed_owned_dynamic_array_locals.insert("branch_items");
         state.local_name_counts["branch"] = 1;
         state.next_temporary_index = 5;
         state.next_block_index = 3;
@@ -55,6 +57,9 @@ int main() {
         assert(state.source_type_names.contains("outer_mutable"));
         assert(!state.source_type_names.contains("branch"));
         assert(!state.source_type_names.contains("branch_mutable"));
+        assert(state.consumed_owned_dynamic_array_locals.size() == 1);
+        assert(state.consumed_owned_dynamic_array_locals.contains("outer_items"));
+        assert(!state.consumed_owned_dynamic_array_locals.contains("branch_items"));
         assert(state.local_name_counts.contains("branch"));
         assert(state.next_temporary_index == 5);
         assert(state.next_block_index == 3);
@@ -73,6 +78,7 @@ int main() {
         });
         state.source_type_names["sibling"] = "Sibling";
         state.source_type_names["sibling_mutable"] = "SiblingMutable";
+        state.consumed_owned_dynamic_array_locals.insert("sibling_items");
     }
 
     assert(state.immutable_bindings.size() == 1);
@@ -86,6 +92,9 @@ int main() {
     assert(state.source_type_names.contains("outer_mutable"));
     assert(!state.source_type_names.contains("sibling"));
     assert(!state.source_type_names.contains("sibling_mutable"));
+    assert(state.consumed_owned_dynamic_array_locals.size() == 1);
+    assert(state.consumed_owned_dynamic_array_locals.contains("outer_items"));
+    assert(!state.consumed_owned_dynamic_array_locals.contains("sibling_items"));
     assert(state.local_name_counts.contains("branch"));
     assert(state.next_temporary_index == 5);
     assert(state.next_block_index == 3);
@@ -105,6 +114,7 @@ int main() {
         });
         state.source_type_names["unwound"] = "Unwound";
         state.source_type_names["unwound_mutable"] = "UnwoundMutable";
+        state.consumed_owned_dynamic_array_locals.insert("unwound_items");
         throw std::runtime_error("test unwind");
     } catch (std::runtime_error const&) {
     }
@@ -119,5 +129,8 @@ int main() {
     assert(state.source_type_names.contains("outer_mutable"));
     assert(!state.source_type_names.contains("unwound"));
     assert(!state.source_type_names.contains("unwound_mutable"));
+    assert(state.consumed_owned_dynamic_array_locals.size() == 1);
+    assert(state.consumed_owned_dynamic_array_locals.contains("outer_items"));
+    assert(!state.consumed_owned_dynamic_array_locals.contains("unwound_items"));
     return 0;
 }

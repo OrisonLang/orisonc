@@ -3,6 +3,7 @@
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 
 #include <cstddef>
 #include <span>
@@ -43,6 +44,59 @@ auto append_call_arguments(
         }
         output << arguments[index].type << " " << arguments[index].value;
     }
+}
+
+auto is_owned_dynamic_array_source_type(std::string_view source_type_name) -> bool {
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array &&
+        sequence->owns_storage;
+}
+
+auto has_local_dynamic_array_cleanup_plan(
+    FunctionLoweringSession const& session,
+    std::string_view owner_name
+) -> bool {
+    for (auto const& plan : session.state.dynamic_array_local_cleanup_plans) {
+        if (plan.owner_name == owner_name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto is_function_parameter_name(
+    FunctionLoweringSession const& session,
+    std::string_view name
+) -> bool {
+    for (auto const& parameter_name : session.state.parameter_names) {
+        if (parameter_name == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto consumed_owned_dynamic_array_local_argument_name(
+    syntax::ExpressionSyntax const& argument,
+    std::optional<std::string_view> expected_source_type,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (!expected_source_type.has_value() ||
+        !is_owned_dynamic_array_source_type(*expected_source_type) ||
+        argument.kind != syntax::ExpressionKind::name ||
+        is_function_parameter_name(session, argument.text) ||
+        !has_local_dynamic_array_cleanup_plan(session, argument.text)) {
+        return std::nullopt;
+    }
+
+    auto actual_source_type = session.state.source_type_names.find(argument.text);
+    if (actual_source_type == session.state.source_type_names.end() ||
+        actual_source_type->second != *expected_source_type ||
+        !is_owned_dynamic_array_source_type(actual_source_type->second)) {
+        return std::nullopt;
+    }
+
+    return argument.text;
 }
 
 auto lower_call_arguments_impl(
@@ -96,20 +150,21 @@ auto lower_call_arguments_impl(
     }
 
     for (auto index = std::size_t {0}; index < arguments.size(); ++index) {
+        auto const actual_parameter_index = index + parameter_index;
+        auto const expected_source_type = expected_source_type_for_parameter(actual_parameter_index);
         auto argument = lower_expression(
             arguments[index],
-            function.parameter_types[index + parameter_index],
-            function.parameter_signedness[index + parameter_index],
+            function.parameter_types[actual_parameter_index],
+            function.parameter_signedness[actual_parameter_index],
             context,
             session,
             output,
-            expected_source_type_for_parameter(index + parameter_index)
+            expected_source_type
         );
         if (!argument.has_value()) {
             return std::nullopt;
         }
 
-        auto const actual_parameter_index = index + parameter_index;
         auto promotion = actual_parameter_index >= function.fixed_abi_parameter_count
             ? c_abi_promotion_for(argument->type)
             : CAbiPromotion::none;
@@ -136,6 +191,13 @@ auto lower_call_arguments_impl(
                 .value = std::move(temporary_name),
                 .signedness = IntegerSignedness::not_integer,
             };
+        }
+        if (auto consumed_name = consumed_owned_dynamic_array_local_argument_name(
+                arguments[index],
+                expected_source_type,
+                session
+            )) {
+            session.state.consumed_owned_dynamic_array_locals.insert(std::move(*consumed_name));
         }
         lowered_arguments.push_back(std::move(*argument));
     }

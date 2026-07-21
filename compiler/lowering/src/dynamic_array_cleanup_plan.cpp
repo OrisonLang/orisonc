@@ -589,6 +589,9 @@ auto plan_local_dynamic_array_cleanups(
     }
 
     for (auto const& descriptor_cleanup : session.state.dynamic_array_local_cleanup_plans) {
+        if (session.state.consumed_owned_dynamic_array_locals.contains(descriptor_cleanup.owner_name)) {
+            continue;
+        }
         auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
             descriptor_cleanup,
             plans.size()

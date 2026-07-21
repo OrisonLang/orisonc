@@ -41,6 +41,7 @@ void bind_dynamic_array_parameter(
     std::string name,
     std::string source_type_name
 ) {
+    state.parameter_names.push_back(name);
     state.source_type_names.emplace(name, source_type_name);
     state.addressable_bindings.emplace(name, orison::lowering::AddressableBinding {
         .type = orison::lowering::LoweredType {
@@ -225,6 +226,44 @@ void test_authorizes_owned_element_cleanup() {
     assert(state.next_temporary_index == 1);
 }
 
+void test_skips_consumed_owned_dynamic_array_local_cleanup() {
+    auto lowering = test_context();
+    auto strings = orison::lowering::StringConstantTable {};
+    auto state = orison::lowering::FunctionLoweringState {};
+    auto failures = orison::lowering::LoweringFailures {};
+    auto numbers_cleanup = orison::lowering::plan_dynamic_array_descriptor_cleanup(
+        "numbers",
+        "DynamicArray<UInt32>",
+        lowering
+    );
+    auto items_cleanup = orison::lowering::plan_dynamic_array_descriptor_cleanup(
+        "items",
+        "DynamicArray<Payload>",
+        lowering
+    );
+    assert(numbers_cleanup.has_value());
+    assert(items_cleanup.has_value());
+    numbers_cleanup->descriptor_storage_name = "%numbers.addr";
+    items_cleanup->descriptor_storage_name = "%items.addr";
+    state.dynamic_array_local_cleanup_plans.push_back(std::move(*numbers_cleanup));
+    state.dynamic_array_local_cleanup_plans.push_back(std::move(*items_cleanup));
+    state.consumed_owned_dynamic_array_locals.insert("items");
+    auto session = test_session(state, failures);
+    auto context = orison::lowering::LoweringEmissionContext {
+        .lowering = lowering,
+        .string_constants = strings,
+        .options = orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        },
+    };
+
+    auto plans = orison::lowering::plan_local_dynamic_array_cleanups(context, session);
+    assert(plans.has_value());
+    assert(plans->size() == 1);
+    assert(plans->front().descriptor_cleanup.owner_name == "numbers");
+}
+
 void test_plans_descriptor_cleanup_obligations() {
     auto lowering = test_context();
     auto scalar_plan = orison::lowering::plan_dynamic_array_descriptor_cleanup(
@@ -363,6 +402,7 @@ auto main() -> int {
     test_plans_bound_dynamic_array_parameter_cleanups_in_name_order();
     test_suppresses_unauthorized_owned_element_cleanup();
     test_authorizes_owned_element_cleanup();
+    test_skips_consumed_owned_dynamic_array_local_cleanup();
     test_plans_descriptor_cleanup_obligations();
     return 0;
 }
