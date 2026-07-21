@@ -44,6 +44,11 @@ This file tracks which source-language frontend slices are reflected in the curr
   owned-element `DynamicArray<T>` parameter path. With the production-facing source Drop lowering gate enabled,
   `implements Drop for Payload` authorizes `items.element`, the parameter lowers as `{ ptr, i64, i64 }`, and generated
   IR orders initialized-element drop calls before dynamic-array descriptor deallocation and return.
+- 2026-07-20: pipeline smoke now retains object output for the source-drop owned-parameter path with an empty local
+  `DynamicArray<Payload>` passed to `use_items`. Full executable linking remains blocked because source `implements
+  Drop` currently authorizes calls to `__orison_drop.Payload` but does not yet emit a matching drop ABI body.
+  Initialized owned transfer also still needs move/consume analysis before the caller can safely suppress local
+  descriptor cleanup after passing ownership to the callee.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

@@ -1514,6 +1514,39 @@ auto main() -> int {
     assert(local_owned_drop < local_owned_deallocate);
     assert(local_owned_deallocate < local_owned_return);
 
+    auto dynamic_array_owned_parameter_empty_object_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_empty_object.or";
+    {
+        auto owned_parameter_empty_object_source = std::ofstream(dynamic_array_owned_parameter_empty_object_path);
+        owned_parameter_empty_object_source
+            << "package demo.pipeline.dynamicarrayownedparameteremptyobject\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+            << "    0 as UInt32\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    use_items(items)\n";
+    }
+    auto dynamic_array_owned_parameter_empty_object = pipeline.emit_object(
+        dynamic_array_owned_parameter_empty_object_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_parameter_empty_object.has_errors());
+    assert(!dynamic_array_owned_parameter_empty_object.object_bytes.empty());
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {
