@@ -7,8 +7,9 @@
 namespace orison::lowering {
 namespace {
 
+template <typename Symbols>
 auto has_emitted_symbol(
-    std::vector<std::string_view> const& emitted_symbols,
+    Symbols const& emitted_symbols,
     std::string_view symbol_name
 ) -> bool {
     for (auto emitted_symbol : emitted_symbols) {
@@ -43,7 +44,8 @@ auto emit_module_prelude(
     std::vector<LoweredFunctionSignature> const& foreign_declarations,
     std::vector<ConcurrencyRuntimeOperation> const& concurrency_runtime_operations,
     std::vector<PlannedDropDeclaration> const& planned_drop_declarations,
-    std::vector<DynamicArrayRuntimeOperation> const& dynamic_array_runtime_operations
+    std::vector<DynamicArrayRuntimeOperation> const& dynamic_array_runtime_operations,
+    std::vector<std::string> const& source_defined_drop_symbols
 ) -> std::string {
     auto output = std::ostringstream {};
     for (auto const& constant : string_constants.constants) {
@@ -116,6 +118,9 @@ auto emit_module_prelude(
     auto emitted_drop_symbols = std::vector<std::string_view> {};
     for (auto const& declaration : planned_drop_declarations) {
         if (!declaration.emit_declaration) {
+            continue;
+        }
+        if (has_emitted_symbol(source_defined_drop_symbols, declaration.symbol_name)) {
             continue;
         }
         if (has_emitted_symbol(emitted_drop_symbols, declaration.symbol_name)) {

@@ -1490,7 +1490,7 @@ auto main() -> int {
     assert(dynamic_array_local_owned_cleanup.semantic_drop_lowering_authorizations.size() == 2);
     assert(dynamic_array_local_owned_cleanup.dynamic_array_runtime_request_report.size() == 2);
     assert(
-        dynamic_array_local_owned_cleanup.ir_text.find("declare void @__orison_drop.Payload(ptr)") !=
+        dynamic_array_local_owned_cleanup.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
         std::string::npos
     );
     assert(
@@ -1514,12 +1514,12 @@ auto main() -> int {
     assert(local_owned_drop < local_owned_deallocate);
     assert(local_owned_deallocate < local_owned_return);
 
-    auto dynamic_array_owned_parameter_empty_object_path =
-        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_empty_object.or";
+    auto dynamic_array_owned_parameter_empty_run_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_empty_run.or";
     {
-        auto owned_parameter_empty_object_source = std::ofstream(dynamic_array_owned_parameter_empty_object_path);
-        owned_parameter_empty_object_source
-            << "package demo.pipeline.dynamicarrayownedparameteremptyobject\n"
+        auto owned_parameter_empty_run_source = std::ofstream(dynamic_array_owned_parameter_empty_run_path);
+        owned_parameter_empty_run_source
+            << "package demo.pipeline.dynamicarrayownedparameteremptyrun\n"
             << "\n"
             << "record Payload\n"
             << "    public value: Int64\n"
@@ -1538,14 +1538,25 @@ auto main() -> int {
             << "    var items: DynamicArray<Payload> = DynamicArray()\n"
             << "    use_items(items)\n";
     }
-    auto dynamic_array_owned_parameter_empty_object = pipeline.emit_object(
-        dynamic_array_owned_parameter_empty_object_path,
+    auto dynamic_array_owned_parameter_empty_run = pipeline.emit_object(
+        dynamic_array_owned_parameter_empty_run_path,
         orison::pipeline::CompilePipelineOptions {
             .source_drop_lowering_enabled = true,
         }
     );
-    assert(!dynamic_array_owned_parameter_empty_object.has_errors());
-    assert(!dynamic_array_owned_parameter_empty_object.object_bytes.empty());
+    assert(!dynamic_array_owned_parameter_empty_run.has_errors());
+    assert(!dynamic_array_owned_parameter_empty_run.object_bytes.empty());
+    auto dynamic_array_owned_parameter_empty_run_executable =
+        smoke_temp_root / "dynamic_array_owned_parameter_empty_run";
+    auto dynamic_array_owned_parameter_empty_run_link = orison::link::HostLinker {}.link(
+        dynamic_array_owned_parameter_empty_run.object_bytes,
+        dynamic_array_owned_parameter_empty_run_executable
+    );
+    assert(!dynamic_array_owned_parameter_empty_run_link.has_errors());
+    auto dynamic_array_owned_parameter_empty_run_status =
+        std::system(dynamic_array_owned_parameter_empty_run_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_owned_parameter_empty_run_status));
+    assert(WEXITSTATUS(dynamic_array_owned_parameter_empty_run_status) == 0);
 
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
@@ -1910,7 +1921,7 @@ auto main() -> int {
     assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.front().source_drop_lowering_enabled);
     assert(parsed_drop_source_lowering_ir.semantic_drop_lowering_authorizations.front().authorized);
     assert(
-        parsed_drop_source_lowering_ir.ir_text.find("declare void @__orison_drop.Payload(ptr)") !=
+        parsed_drop_source_lowering_ir.ir_text.find("define void @__orison_drop.Payload(ptr %value)") !=
         std::string::npos
     );
 

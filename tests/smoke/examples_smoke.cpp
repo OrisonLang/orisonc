@@ -150,6 +150,11 @@ auto main() -> int {
     );
     assert(
         owned_dynamic_array_parameter_source_drop.ir_text.find(
+            "define void @__orison_drop.Payload(ptr %value)"
+        ) != std::string::npos
+    );
+    assert(
+        owned_dynamic_array_parameter_source_drop.ir_text.find(
             "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
         ) != std::string::npos
     );

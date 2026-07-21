@@ -11520,6 +11520,7 @@ void test_emit_allowed_record_capture_drop_abi_calls() {
         "drop readiness summary semantic authorized 0 blocked 0 emitted declarations 1 cleanup authorized 1 blocked 0"
     );
     assert(result.ir_text.find("declare void @__orison_drop.Payload(ptr)\n\n") != std::string::npos);
+    assert(result.ir_text.find("define void @__orison_drop.Payload(ptr %value)") == std::string::npos);
     auto readiness_report = result.drop_readiness_snapshot_report();
     assert(readiness_report.size() == 3);
     assert(

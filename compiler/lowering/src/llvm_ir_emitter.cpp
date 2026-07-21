@@ -94,6 +94,68 @@ auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) 
     return !function.generic_parameters.empty();
 }
 
+auto has_authorized_source_drop_definition(
+    semantics::DropImplementation const& implementation,
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+) -> bool {
+    if (implementation.origin != semantics::DropImplementationOrigin::source_derived ||
+        !implementation.proven ||
+        !implementation.body.finite) {
+        return false;
+    }
+    return std::ranges::any_of(
+        authorizations,
+        [&](semantics::DropLoweringAuthorization const& authorization) {
+            return authorization.authorized &&
+                authorization.site.source_type_name == implementation.source_type_name &&
+                authorization.site.abi_symbol_name == implementation.abi_symbol_name;
+        }
+    );
+}
+
+auto emit_source_drop_definitions(
+    syntax::ModuleSyntax const& module,
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+) -> std::string {
+    auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
+    auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto emitted_symbols = std::vector<std::string> {};
+    auto output = std::ostringstream {};
+    for (auto const& implementation : implementations) {
+        if (!has_authorized_source_drop_definition(implementation, authorizations)) {
+            continue;
+        }
+        if (std::ranges::find(emitted_symbols, implementation.abi_symbol_name) != emitted_symbols.end()) {
+            continue;
+        }
+        output << "define void @" << implementation.abi_symbol_name << "(ptr %value) {\n";
+        output << "entry:\n";
+        output << "  ret void\n";
+        output << "}\n\n";
+        emitted_symbols.push_back(implementation.abi_symbol_name);
+    }
+    return output.str();
+}
+
+auto collect_source_drop_definition_symbols(
+    syntax::ModuleSyntax const& module,
+    std::vector<semantics::DropLoweringAuthorization> const& authorizations
+) -> std::vector<std::string> {
+    auto candidates = semantics::collect_source_derived_drop_implementation_candidates(module);
+    auto implementations = semantics::collect_source_derived_drop_implementations(candidates);
+    auto symbols = std::vector<std::string> {};
+    for (auto const& implementation : implementations) {
+        if (!has_authorized_source_drop_definition(implementation, authorizations)) {
+            continue;
+        }
+        if (std::ranges::find(symbols, implementation.abi_symbol_name) != symbols.end()) {
+            continue;
+        }
+        symbols.push_back(implementation.abi_symbol_name);
+    }
+    return symbols;
+}
+
 auto has_authorized_dynamic_array_owned_element_cleanup(
     std::string const& owner_name,
     std::string const& element_source_type_name,
@@ -1317,13 +1379,17 @@ auto emit_module(
         result.ir_text = output.str();
         return result;
     }
+    auto source_defined_drop_symbols =
+        collect_source_drop_definition_symbols(module, result.semantic_drop_lowering_authorizations);
     output << emit_module_prelude(
         string_constants,
         context.foreign_declarations,
         collect_concurrency_runtime_operations(module),
         result.planned_drop_declarations,
-        result.dynamic_array_runtime_operations
+        result.dynamic_array_runtime_operations,
+        source_defined_drop_symbols
     );
+    output << emit_source_drop_definitions(module, result.semantic_drop_lowering_authorizations);
     for (auto const& function : module.functions) {
         if (is_uninstantiated_generic_function(function)) {
             continue;
