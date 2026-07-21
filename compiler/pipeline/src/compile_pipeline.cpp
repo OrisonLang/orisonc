@@ -1,15 +1,10 @@
 #include "orison/pipeline/compile_pipeline.hpp"
 
-#include "orison/lowering/llvm_ir_emitter.hpp"
-#include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
 
 #include "link_library_collection.hpp"
-#include "lowering_emission_reports.hpp"
-#include "lowering_emission_options.hpp"
+#include "llvm_emission_stage.hpp"
 #include "semantic_drop_reports.hpp"
-
-#include <utility>
 
 namespace orison::pipeline {
 
@@ -57,20 +52,7 @@ auto CompilePipeline::emit_llvm(
     std::filesystem::path const& source_path,
     CompilePipelineOptions const& options
 ) const -> CompilePipelineResult {
-    auto result = analyze(source_path, options);
-    if (result.has_errors()) {
-        return result;
-    }
-
-    lowering::LlvmIrEmitter emitter;
-    auto emission_options = build_lowering_emission_options(result, options, LoweringEmissionMode::full_ir);
-    auto emission = emitter.emit(result.parse_result.module, result.semantic_result, emission_options);
-    if (emission.has_errors()) {
-        result.error_text = emission.render(result.source_file->path().string());
-        return result;
-    }
-    populate_lowering_emission_reports(result, std::move(emission), options);
-    return result;
+    return run_llvm_emission_stage(*this, source_path, options);
 }
 
 auto CompilePipeline::collect_dynamic_array_cleanup_metadata(
@@ -88,19 +70,7 @@ auto CompilePipeline::emit_object(
     std::filesystem::path const& source_path,
     CompilePipelineOptions const& options
 ) const -> CompilePipelineResult {
-    auto result = emit_llvm(source_path, options);
-    if (result.has_errors()) {
-        return result;
-    }
-
-    lowering::LlvmObjectEmitter emitter;
-    auto emission = emitter.emit(result.ir_text);
-    if (emission.has_errors()) {
-        result.error_text = emission.diagnostics.render(result.source_file->path().string());
-        return result;
-    }
-    result.object_bytes = std::move(emission.object_bytes);
-    return result;
+    return run_object_emission_stage(*this, source_path, options);
 }
 
 }  // namespace orison::pipeline
