@@ -1684,6 +1684,161 @@ auto main() -> int {
         std::string::npos
     );
 
+    auto dynamic_array_owned_parameter_branch_join_run_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_branch_join_run.or";
+    {
+        auto branch_join_source = std::ofstream(dynamic_array_owned_parameter_branch_join_run_path);
+        branch_join_source
+            << "package demo.pipeline.dynamicarrayownedparameterbranchjoinrun\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+            << "    0 as UInt32\n"
+            << "\n"
+            << "function choose(flag: Bool, items: DynamicArray<Payload>) -> UInt32\n"
+            << "    if flag\n"
+            << "        use_items(items)\n"
+            << "    else\n"
+            << "        use_items(items)\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    items.push(Payload(7))\n"
+            << "    choose(true, items)\n";
+    }
+    auto dynamic_array_owned_parameter_branch_join_ir = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_branch_join_run_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_parameter_branch_join_ir.has_errors());
+    auto branch_join_deallocate =
+        dynamic_array_owned_parameter_branch_join_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate"
+        );
+    assert(branch_join_deallocate != std::string::npos);
+    assert(
+        dynamic_array_owned_parameter_branch_join_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate",
+            branch_join_deallocate + 1
+        ) == std::string::npos
+    );
+    auto dynamic_array_owned_parameter_branch_join_run = pipeline.emit_object(
+        dynamic_array_owned_parameter_branch_join_run_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_parameter_branch_join_run.has_errors());
+    assert(!dynamic_array_owned_parameter_branch_join_run.object_bytes.empty());
+    auto dynamic_array_owned_parameter_branch_join_run_executable =
+        smoke_temp_root / "dynamic_array_owned_parameter_branch_join_run";
+    auto dynamic_array_owned_parameter_branch_join_run_link = orison::link::HostLinker {}.link(
+        dynamic_array_owned_parameter_branch_join_run.object_bytes,
+        dynamic_array_owned_parameter_branch_join_run_executable
+    );
+    assert(!dynamic_array_owned_parameter_branch_join_run_link.has_errors());
+    auto dynamic_array_owned_parameter_branch_join_run_status =
+        std::system(dynamic_array_owned_parameter_branch_join_run_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_owned_parameter_branch_join_run_status));
+    assert(WEXITSTATUS(dynamic_array_owned_parameter_branch_join_run_status) == 0);
+
+    auto dynamic_array_owned_parameter_branch_mismatch_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_branch_mismatch.or";
+    {
+        auto branch_mismatch_source = std::ofstream(dynamic_array_owned_parameter_branch_mismatch_path);
+        branch_mismatch_source
+            << "package demo.pipeline.dynamicarrayownedparameterbranchmismatch\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+            << "    0 as UInt32\n"
+            << "\n"
+            << "function choose(flag: Bool, items: DynamicArray<Payload>) -> UInt32\n"
+            << "    if flag\n"
+            << "        use_items(items)\n"
+            << "    else\n"
+            << "        0 as UInt32\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    items.push(Payload(7))\n"
+            << "    choose(true, items)\n";
+    }
+    auto dynamic_array_owned_parameter_branch_mismatch = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_branch_mismatch_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_parameter_branch_mismatch.has_errors());
+    assert(
+        dynamic_array_owned_parameter_branch_mismatch.error_text.find("if branch ownership mismatch") !=
+        std::string::npos
+    );
+
+    auto dynamic_array_owned_parameter_statement_branch_mismatch_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_statement_branch_mismatch.or";
+    {
+        auto statement_branch_mismatch_source =
+            std::ofstream(dynamic_array_owned_parameter_statement_branch_mismatch_path);
+        statement_branch_mismatch_source
+            << "package demo.pipeline.dynamicarrayownedparameterstatementbranchmismatch\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+            << "    0 as UInt32\n"
+            << "\n"
+            << "function main() -> IntSize\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    items.push(Payload(7))\n"
+            << "    if true\n"
+            << "        let result: UInt32 = use_items(items)\n"
+            << "    else\n"
+            << "        let result: UInt32 = 0 as UInt32\n"
+            << "    items.length()\n";
+    }
+    auto dynamic_array_owned_parameter_statement_branch_mismatch = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_statement_branch_mismatch_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_parameter_statement_branch_mismatch.has_errors());
+    assert(
+        dynamic_array_owned_parameter_statement_branch_mismatch.error_text.find(
+            "if branch ownership mismatch"
+        ) != std::string::npos
+    );
+
     auto dynamic_array_owned_parameter_second_use_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_second_use.or";
     {

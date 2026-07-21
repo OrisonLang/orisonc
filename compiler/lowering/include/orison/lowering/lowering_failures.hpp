@@ -39,6 +39,7 @@ enum class ControlFlowLoweringFailureReason {
     if_then_arm_failure,
     if_else_arm_failure,
     if_branch_type_mismatch,
+    if_branch_ownership_mismatch,
     invalid_switch_shape,
     switch_subject_type_failure,
     switch_subject_failure,
@@ -46,6 +47,7 @@ enum class ControlFlowLoweringFailureReason {
     unsupported_switch_pattern,
     switch_case_failure,
     switch_case_type_mismatch,
+    switch_case_ownership_mismatch,
 };
 
 struct ControlFlowLoweringFailure {

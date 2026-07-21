@@ -20,7 +20,9 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace orison::lowering {
 namespace {
@@ -140,6 +142,7 @@ auto lower_final_if_statement(
         std::ostringstream& output;
         BranchBindingScope& binding_scope;
         std::optional<std::string_view> expected_source_type_name;
+        std::vector<std::unordered_set<std::string>> consumed_bindings_by_arm;
     };
     auto arm_context = ArmContext {
         .statement = statement,
@@ -161,7 +164,7 @@ auto lower_final_if_statement(
             .context = &arm_context,
             .lower_then = [](void* opaque) {
                 auto& arm = *static_cast<ArmContext*>(opaque);
-                return lower_value_statement_block(
+                auto value = lower_value_statement_block(
                     arm.statement.nested_statements,
                     arm.expected_llvm_type,
                     arm.expected_signedness,
@@ -173,13 +176,19 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                if (value.has_value()) {
+                    arm.consumed_bindings_by_arm.push_back(
+                        arm.session.state.consumed_owned_dynamic_array_bindings
+                    );
+                }
+                return value;
             },
             .between_arms = [](void* opaque) {
                 static_cast<ArmContext*>(opaque)->binding_scope.reset();
             },
             .lower_else = [](void* opaque) {
                 auto& arm = *static_cast<ArmContext*>(opaque);
-                return lower_value_statement_block(
+                auto value = lower_value_statement_block(
                     arm.statement.alternate_statements,
                     arm.expected_llvm_type,
                     arm.expected_signedness,
@@ -191,6 +200,12 @@ auto lower_final_if_statement(
                     lower_unit_deferred_cleanup_block,
                     arm.expected_source_type_name
                 );
+                if (value.has_value()) {
+                    arm.consumed_bindings_by_arm.push_back(
+                        arm.session.state.consumed_owned_dynamic_array_bindings
+                    );
+                }
+                return value;
             },
         }
     );
@@ -219,6 +234,17 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
+    auto merged_consumed_bindings =
+        merge_consumed_owned_dynamic_array_bindings(arm_context.consumed_bindings_by_arm);
+    if (!merged_consumed_bindings.has_value()) {
+        record_control_flow_lowering_failure(
+            failures,
+            ControlFlowLoweringFailureReason::if_branch_ownership_mismatch,
+            "owned DynamicArray moves must match across all continuing branches"
+        );
+        return std::nullopt;
+    }
+    binding_scope.commit_consumed_owned_dynamic_array_bindings(std::move(*merged_consumed_bindings));
     return result.value;
 }
 
@@ -307,6 +333,7 @@ auto lower_final_switch_statement(
         LoweredExpression const& original_subject;
         std::optional<std::string_view> expected_source_type_name;
         std::optional<std::string_view> subject_source_type_name;
+        std::vector<std::unordered_set<std::string>> consumed_bindings_by_case;
     };
     auto case_context = CaseContext {
         .expected_llvm_type = expected_llvm_type,
@@ -341,7 +368,7 @@ auto lower_final_switch_statement(
             },
             .lower_case = [](void* opaque, LoweredSwitchCasePlan const& planned_case) {
                 auto& current = *static_cast<CaseContext*>(opaque);
-                return lower_value_statement_block(
+                auto value = lower_value_statement_block(
                     planned_case.syntax->statements,
                     current.expected_llvm_type,
                     current.expected_signedness,
@@ -353,6 +380,12 @@ auto lower_final_switch_statement(
                     lower_unit_deferred_cleanup_block,
                     current.expected_source_type_name
                 );
+                if (value.has_value()) {
+                    current.consumed_bindings_by_case.push_back(
+                        current.session.state.consumed_owned_dynamic_array_bindings
+                    );
+                }
+                return value;
             },
         }
     );
@@ -383,6 +416,17 @@ auto lower_final_switch_statement(
         );
         return std::nullopt;
     }
+    auto merged_consumed_bindings =
+        merge_consumed_owned_dynamic_array_bindings(case_context.consumed_bindings_by_case);
+    if (!merged_consumed_bindings.has_value()) {
+        record_control_flow_lowering_failure(
+            failures,
+            ControlFlowLoweringFailureReason::switch_case_ownership_mismatch,
+            "owned DynamicArray moves must match across all continuing cases"
+        );
+        return std::nullopt;
+    }
+    binding_scope.commit_consumed_owned_dynamic_array_bindings(std::move(*merged_consumed_bindings));
     return result.value;
 }
 

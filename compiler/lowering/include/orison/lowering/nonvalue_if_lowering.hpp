@@ -14,6 +14,9 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace orison::lowering {
 
@@ -51,6 +54,7 @@ auto lower_nonvalue_if_statement(
     );
     auto const has_else = !statement.alternate_statements.empty();
     auto binding_scope = BranchBindingScope(session.state);
+    auto fallthrough_consumed_bindings = std::vector<std::unordered_set<std::string>> {};
     emit_llvm_conditional_branch(
         output,
         condition->value,
@@ -65,6 +69,7 @@ auto lower_nonvalue_if_statement(
         return StatementFlow::failed;
     }
     if (then_flow == StatementFlow::falls_through) {
+        fallthrough_consumed_bindings.push_back(session.state.consumed_owned_dynamic_array_bindings);
         emit_llvm_branch(output, plan.merge_block);
     }
 
@@ -78,8 +83,11 @@ auto lower_nonvalue_if_statement(
             return StatementFlow::failed;
         }
         if (else_flow == StatementFlow::falls_through) {
+            fallthrough_consumed_bindings.push_back(session.state.consumed_owned_dynamic_array_bindings);
             emit_llvm_branch(output, plan.merge_block);
         }
+    } else {
+        fallthrough_consumed_bindings.push_back(binding_scope.saved_consumed_owned_dynamic_array_bindings());
     }
 
     auto const fully_terminated =
@@ -88,7 +96,15 @@ auto lower_nonvalue_if_statement(
         return StatementFlow::terminated;
     }
 
-    binding_scope.reset();
+    auto merged_consumed_bindings = merge_consumed_owned_dynamic_array_bindings(fallthrough_consumed_bindings);
+    if (!merged_consumed_bindings.has_value()) {
+        diagnostics.error(
+            statement.line,
+            "if branch ownership mismatch: owned DynamicArray moves must match across all continuing branches"
+        );
+        return StatementFlow::failed;
+    }
+    binding_scope.commit_consumed_owned_dynamic_array_bindings(std::move(*merged_consumed_bindings));
     emit_llvm_block_label(output, plan.merge_block);
     session.state.current_block = plan.merge_block;
     return fully_terminated ? StatementFlow::terminated : StatementFlow::falls_through;

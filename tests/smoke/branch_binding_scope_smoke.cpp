@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <utility>
 
 int main() {
     auto state = orison::lowering::FunctionLoweringState {};
@@ -132,5 +133,24 @@ int main() {
     assert(state.consumed_owned_dynamic_array_bindings.size() == 1);
     assert(state.consumed_owned_dynamic_array_bindings.contains("outer_items"));
     assert(!state.consumed_owned_dynamic_array_bindings.contains("unwound_items"));
+
+    {
+        auto scope = orison::lowering::BranchBindingScope(state);
+        auto matching_merge = orison::lowering::merge_consumed_owned_dynamic_array_bindings({
+            {"outer_items", "joined_items"},
+            {"outer_items", "joined_items"},
+        });
+        assert(matching_merge.has_value());
+        scope.commit_consumed_owned_dynamic_array_bindings(std::move(*matching_merge));
+    }
+    assert(state.consumed_owned_dynamic_array_bindings.size() == 2);
+    assert(state.consumed_owned_dynamic_array_bindings.contains("outer_items"));
+    assert(state.consumed_owned_dynamic_array_bindings.contains("joined_items"));
+
+    auto mismatched_merge = orison::lowering::merge_consumed_owned_dynamic_array_bindings({
+        {"outer_items", "joined_items"},
+        {"outer_items"},
+    });
+    assert(!mismatched_merge.has_value());
     return 0;
 }

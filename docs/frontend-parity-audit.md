@@ -60,6 +60,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-21: owned `DynamicArray<T>` parameter forwarding now uses the same consumed-binding tracking as local moves:
   forwarding an owned parameter to another owned-parameter function suppresses cleanup in the forwarding function, while
   later parameter reuse is rejected with `use after move`. Branch-join ownership analysis remains pending.
+- 2026-07-21: final and non-value branch joins now require matching consumed owned `DynamicArray<T>` binding state
+  across every continuing arm/case. Matching moves in all arms remain valid and suppress post-branch cleanup, while
+  move/no-move branch mismatches are rejected instead of emitting unconditional cleanup or suppression.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

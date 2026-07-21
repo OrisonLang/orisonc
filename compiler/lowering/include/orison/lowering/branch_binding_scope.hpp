@@ -2,9 +2,11 @@
 
 #include "orison/lowering/function_lowering_state.hpp"
 
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
 namespace orison::lowering {
 
@@ -19,6 +21,9 @@ public:
     auto operator=(BranchBindingScope&&) -> BranchBindingScope& = delete;
 
     void reset();
+    void commit_consumed_owned_dynamic_array_bindings(std::unordered_set<std::string> bindings);
+    [[nodiscard]] auto saved_consumed_owned_dynamic_array_bindings() const
+        -> std::unordered_set<std::string> const&;
 
 private:
     FunctionLoweringState& state_;
@@ -28,5 +33,9 @@ private:
     std::unordered_map<std::string, std::string> saved_source_type_names_;
     std::unordered_set<std::string> saved_consumed_owned_dynamic_array_bindings_;
 };
+
+auto merge_consumed_owned_dynamic_array_bindings(
+    std::vector<std::unordered_set<std::string>> const& branch_bindings
+) -> std::optional<std::unordered_set<std::string>>;
 
 }  // namespace orison::lowering

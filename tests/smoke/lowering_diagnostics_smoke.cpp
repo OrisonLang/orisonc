@@ -109,6 +109,7 @@ int main() {
         std::pair {ControlFlowLoweringFailureReason::if_then_arm_failure, "if then arm lowering failed"},
         std::pair {ControlFlowLoweringFailureReason::if_else_arm_failure, "if else arm lowering failed"},
         std::pair {ControlFlowLoweringFailureReason::if_branch_type_mismatch, "if branch type mismatch"},
+        std::pair {ControlFlowLoweringFailureReason::if_branch_ownership_mismatch, "if branch ownership mismatch"},
         std::pair {ControlFlowLoweringFailureReason::invalid_switch_shape, "invalid final switch shape"},
         std::pair {ControlFlowLoweringFailureReason::switch_subject_type_failure, "switch subject type is not lowerable"},
         std::pair {ControlFlowLoweringFailureReason::switch_subject_failure, "switch subject lowering failed"},
@@ -116,6 +117,10 @@ int main() {
         std::pair {ControlFlowLoweringFailureReason::unsupported_switch_pattern, "switch pattern lowering failed"},
         std::pair {ControlFlowLoweringFailureReason::switch_case_failure, "switch case lowering failed"},
         std::pair {ControlFlowLoweringFailureReason::switch_case_type_mismatch, "switch case type mismatch"},
+        std::pair {
+            ControlFlowLoweringFailureReason::switch_case_ownership_mismatch,
+            "switch case ownership mismatch"
+        },
     };
     for (auto const& [reason, expected] : control_flow_cases) {
         assert(

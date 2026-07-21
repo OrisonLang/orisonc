@@ -184,6 +184,9 @@ auto render_control_flow_lowering_failure(
     case ControlFlowLoweringFailureReason::if_branch_type_mismatch:
         prefix = "if branch type mismatch";
         break;
+    case ControlFlowLoweringFailureReason::if_branch_ownership_mismatch:
+        prefix = "if branch ownership mismatch";
+        break;
     case ControlFlowLoweringFailureReason::invalid_switch_shape:
         prefix = "invalid final switch shape";
         break;
@@ -204,6 +207,9 @@ auto render_control_flow_lowering_failure(
         break;
     case ControlFlowLoweringFailureReason::switch_case_type_mismatch:
         prefix = "switch case type mismatch";
+        break;
+    case ControlFlowLoweringFailureReason::switch_case_ownership_mismatch:
+        prefix = "switch case ownership mismatch";
         break;
     }
     return append_lowering_detail(std::move(prefix), failure.detail);
