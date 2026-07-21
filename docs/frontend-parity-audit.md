@@ -40,6 +40,10 @@ This file tracks which source-language frontend slices are reflected in the curr
   already has an authorization seam keyed to `owner.element`, but default compilation still rejects those parameters
   until source-derived Drop proof, initialized-element cleanup ordering, and descriptor deallocation are all proven
   together.
+- 2026-07-20: `tests/fixtures/dynamic_array_owned_parameter_source_drop.or` now pins the first source-backed positive
+  owned-element `DynamicArray<T>` parameter path. With the production-facing source Drop lowering gate enabled,
+  `implements Drop for Payload` authorizes `items.element`, the parameter lowers as `{ ptr, i64, i64 }`, and generated
+  IR orders initialized-element drop calls before dynamic-array descriptor deallocation and return.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

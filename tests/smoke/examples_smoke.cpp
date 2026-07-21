@@ -136,6 +136,40 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto owned_dynamic_array_parameter_source_drop = pipeline.emit_llvm(
+        fixtures / "dynamic_array_owned_parameter_source_drop.or",
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!owned_dynamic_array_parameter_source_drop.has_errors());
+    assert(
+        owned_dynamic_array_parameter_source_drop.ir_text.find(
+            "define i32 @use_items({ ptr, i64, i64 } %items)"
+        ) != std::string::npos
+    );
+    assert(
+        owned_dynamic_array_parameter_source_drop.ir_text.find(
+            "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup0.drop.element.addr)"
+        ) != std::string::npos
+    );
+    assert(
+        owned_dynamic_array_parameter_source_drop.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
+            "i64 %items.dynamic_array_cleanup0.cleanup.capacity)"
+        ) != std::string::npos
+    );
+    auto owned_parameter_drop =
+        owned_dynamic_array_parameter_source_drop.ir_text.find("call void @__orison_drop.Payload");
+    auto owned_parameter_deallocate =
+        owned_dynamic_array_parameter_source_drop.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto owned_parameter_return = owned_dynamic_array_parameter_source_drop.ir_text.find("ret i32 1");
+    assert(owned_parameter_drop != std::string::npos);
+    assert(owned_parameter_deallocate != std::string::npos);
+    assert(owned_parameter_return != std::string::npos);
+    assert(owned_parameter_drop < owned_parameter_deallocate);
+    assert(owned_parameter_deallocate < owned_parameter_return);
+
     auto ordinary_pointer_path = std::filesystem::temp_directory_path() / "orison_string_pointer_boundary.or";
     {
         std::ofstream source(ordinary_pointer_path);
