@@ -1,7 +1,6 @@
 #include "orison/pipeline/compile_pipeline.hpp"
 
-#include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
-
+#include "dynamic_array_cleanup_metadata_stage.hpp"
 #include "llvm_emission_stage.hpp"
 #include "semantic_analysis_stage.hpp"
 
@@ -37,7 +36,7 @@ auto CompilePipeline::collect_dynamic_array_cleanup_metadata(
     std::filesystem::path const& source_path,
     CompilePipelineOptions const& options
 ) const -> CompilePipelineResult {
-    return DynamicArrayCleanupMetadataCollector(*this).collect(source_path, options);
+    return run_dynamic_array_cleanup_metadata_stage(*this, source_path, options);
 }
 
 auto CompilePipeline::emit_object(std::filesystem::path const& source_path) const -> CompilePipelineResult {
