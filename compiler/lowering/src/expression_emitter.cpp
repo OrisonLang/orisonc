@@ -35,6 +35,31 @@ namespace {
 
 using EmissionContext = LoweringEmissionContext;
 
+auto moved_owned_dynamic_array_local_name(
+    std::string_view owner_name,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    auto name = std::string(owner_name);
+    auto source_type = state.source_type_names.find(name);
+    if (source_type == state.source_type_names.end() ||
+        !dynamic_array_element_source_type_name(source_type->second).has_value() ||
+        !state.consumed_owned_dynamic_array_locals.contains(name)) {
+        return std::nullopt;
+    }
+    return name;
+}
+
+auto record_use_after_move_failure(
+    LoweringFailures& failures,
+    std::string_view owner_name
+) -> void {
+    record_expression_lowering_failure(
+        failures,
+        ExpressionLoweringFailureReason::use_after_move,
+        std::string(owner_name)
+    );
+}
+
 auto digit_value_for_base(char character, int base) -> std::optional<std::uint64_t> {
     auto value = std::optional<std::uint64_t> {};
     if (character >= '0' && character <= '9') {
@@ -1715,6 +1740,10 @@ auto lower_dynamic_array_index_read(
     }
 
     auto const& owner_name = expression.left->text;
+    if (auto moved_name = moved_owned_dynamic_array_local_name(owner_name, session.state)) {
+        record_use_after_move_failure(session.failures, *moved_name);
+        return std::nullopt;
+    }
     auto source_type = session.state.source_type_names.find(owner_name);
     if (source_type == session.state.source_type_names.end()) {
         return std::nullopt;
@@ -1830,6 +1859,10 @@ auto lower_dynamic_array_length_call(
     }
 
     auto const& owner_name = expression.left->left->text;
+    if (auto moved_name = moved_owned_dynamic_array_local_name(owner_name, session.state)) {
+        record_use_after_move_failure(session.failures, *moved_name);
+        return std::nullopt;
+    }
     auto source_type = session.state.source_type_names.find(owner_name);
     if (source_type == session.state.source_type_names.end() ||
         !dynamic_array_element_source_type_name(source_type->second).has_value()) {
@@ -2528,6 +2561,10 @@ auto lowered_expression(
     }
 
     if (expression.kind == syntax::ExpressionKind::name) {
+        if (auto moved_name = moved_owned_dynamic_array_local_name(expression.text, state)) {
+            record_use_after_move_failure(failures, *moved_name);
+            return std::nullopt;
+        }
         auto binding = state.immutable_bindings.find(expression.text);
         if (binding == state.immutable_bindings.end()) {
             auto mutable_binding = state.mutable_bindings.find(expression.text);

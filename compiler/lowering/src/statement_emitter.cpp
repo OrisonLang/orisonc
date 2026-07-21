@@ -43,6 +43,17 @@ auto is_dynamic_array_default_constructor(syntax::ExpressionSyntax const& expres
         expression.arguments.empty();
 }
 
+auto is_moved_owned_dynamic_array_local(
+    std::string_view owner_name,
+    FunctionLoweringState const& state
+) -> bool {
+    auto name = std::string(owner_name);
+    auto source_type = state.source_type_names.find(name);
+    return source_type != state.source_type_names.end() &&
+        dynamic_array_element_source_type_name(source_type->second).has_value() &&
+        state.consumed_owned_dynamic_array_locals.contains(name);
+}
+
 auto is_dynamic_array_source_type(std::string_view source_type_name) -> bool {
     auto sequence = dynamic_sequence_source_type(source_type_name);
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
@@ -839,6 +850,10 @@ auto lower_dynamic_array_push_statement(
     }
 
     auto const& owner_name = expression.left->left->text;
+    if (is_moved_owned_dynamic_array_local(owner_name, session.state)) {
+        diagnostics.error(statement.line, "use after move: " + owner_name);
+        return true;
+    }
     if (!session.state.mutable_bindings.contains(owner_name)) {
         return false;
     }

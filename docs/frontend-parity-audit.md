@@ -54,6 +54,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   smoke now links and runs an initialized `DynamicArray<Payload>` local passed to `use_items` with only the callee-side
   descriptor cleanup remaining. Broader ownership diagnostics for post-move uses, branch joins, and parameter
   forwarding remain pending.
+- 2026-07-20: straight-line post-move diagnostics now reject additional uses of a consumed owned local
+  `DynamicArray<T>` through repeated owned calls, `length()` reads, and `push(...)` mutation. This remains a local
+  descriptor ownership check rather than full borrow/move analysis across branch joins or parameter forwarding.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

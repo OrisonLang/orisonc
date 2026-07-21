@@ -17,6 +17,7 @@ enum class ExpressionLoweringFailureReason {
     unsupported_cast,
     unsupported_operator,
     unsupported_concurrency_expression,
+    use_after_move,
     cannot_infer_operand_type,
     branch_type_mismatch,
     generic_record_constructor_inference_failed,
