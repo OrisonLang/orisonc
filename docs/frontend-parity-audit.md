@@ -26,12 +26,20 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction and assignment outside the pinned
-  scalar, record, and fixed-array paths; dynamic-array ABI/signature lowering; view and future standard-library
-  iterator abstractions beyond the current pinned fixed-array-only `for` lowering diagnostic; and production backend
-  completeness beyond the current LLVM/object/link/run smoke paths
+  scalar, record, and fixed-array paths; owned-element `DynamicArray<T>` parameter lowering until source-drop proof is
+  complete; computed dynamic iterables beyond named descriptor-backed `DynamicArray<T>`/`View<T>` paths; mutable
+  `exclusive.View<T>` operations; future standard-library iterator abstractions; and production backend completeness
+  beyond the current LLVM/object/link/run smoke paths
 
 ## Latest update
 
+- 2026-07-20: pipeline/lowering boundary review after the pipeline facade extraction found the next highest-payoff
+  implementation gap is not another facade split. The current default backend path covers local `DynamicArray<UInt32>`,
+  scalar/non-owning `DynamicArray<T>` parameters, and read-only `View<T>` descriptor length/index/iteration. The
+  remaining dynamic-sequence blocker is owned-element `DynamicArray<T>` parameters on the production path: lowering
+  already has an authorization seam keyed to `owner.element`, but default compilation still rejects those parameters
+  until source-derived Drop proof, initialized-element cleanup ordering, and descriptor deallocation are all proven
+  together.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.
