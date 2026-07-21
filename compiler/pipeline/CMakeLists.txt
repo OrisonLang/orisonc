@@ -7,6 +7,7 @@ add_library(orison_pipeline STATIC
     src/llvm_emission_stage.cpp
     src/lowering_emission_reports.cpp
     src/lowering_emission_options.cpp
+    src/semantic_analysis_stage.cpp
     src/semantic_drop_reports.cpp
 )
 

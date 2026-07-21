@@ -2,9 +2,8 @@
 
 #include "orison/pipeline/dynamic_array_cleanup_metadata.hpp"
 
-#include "link_library_collection.hpp"
 #include "llvm_emission_stage.hpp"
-#include "semantic_drop_reports.hpp"
+#include "semantic_analysis_stage.hpp"
 
 namespace orison::pipeline {
 
@@ -20,28 +19,7 @@ auto CompilePipeline::analyze(
     std::filesystem::path const& source_path,
     CompilePipelineOptions const& options
 ) const -> CompilePipelineResult {
-    auto result = CompilePipelineResult {};
-    result.source_file = source::SourceFile::read(source_path);
-    if (!result.source_file.has_value()) {
-        result.error_text = "error: unable to read source file\n";
-        return result;
-    }
-
-    syntax::ModuleParser parser;
-    result.parse_result = parser.parse(*result.source_file);
-    if (result.parse_result.diagnostics.has_errors()) {
-        result.error_text = result.parse_result.diagnostics.render(result.source_file->path().string());
-        return result;
-    }
-    collect_link_libraries(result.parse_result.module, result.link_libraries);
-
-    semantics::ModuleSemanticAnalyzer semantic_analyzer;
-    result.semantic_result = semantic_analyzer.analyze(result.parse_result.module);
-    if (result.semantic_result.has_errors()) {
-        result.error_text = result.semantic_result.render(result.source_file->path().string());
-    }
-    populate_semantic_drop_reports(result, options);
-    return result;
+    return run_semantic_analysis_stage(source_path, options);
 }
 
 auto CompilePipeline::emit_llvm(std::filesystem::path const& source_path) const -> CompilePipelineResult {
