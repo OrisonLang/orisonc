@@ -1577,6 +1577,113 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_owned_parameter_initialized_run_status));
     assert(WEXITSTATUS(dynamic_array_owned_parameter_initialized_run_status) == 0);
 
+    auto dynamic_array_owned_parameter_forwarding_run_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_forwarding_run.or";
+    {
+        auto forwarding_run_source = std::ofstream(dynamic_array_owned_parameter_forwarding_run_path);
+        forwarding_run_source
+            << "package demo.pipeline.dynamicarrayownedparameterforwardingrun\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+            << "    0 as UInt32\n"
+            << "\n"
+            << "function forward_items(items: DynamicArray<Payload>) -> UInt32\n"
+            << "    use_items(items)\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    items.push(Payload(7))\n"
+            << "    forward_items(items)\n";
+    }
+    auto dynamic_array_owned_parameter_forwarding_ir = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_forwarding_run_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_parameter_forwarding_ir.has_errors());
+    auto forwarding_deallocate =
+        dynamic_array_owned_parameter_forwarding_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate"
+        );
+    assert(forwarding_deallocate != std::string::npos);
+    assert(
+        dynamic_array_owned_parameter_forwarding_ir.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate",
+            forwarding_deallocate + 1
+        ) == std::string::npos
+    );
+    auto dynamic_array_owned_parameter_forwarding_run = pipeline.emit_object(
+        dynamic_array_owned_parameter_forwarding_run_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(!dynamic_array_owned_parameter_forwarding_run.has_errors());
+    assert(!dynamic_array_owned_parameter_forwarding_run.object_bytes.empty());
+    auto dynamic_array_owned_parameter_forwarding_run_executable =
+        smoke_temp_root / "dynamic_array_owned_parameter_forwarding_run";
+    auto dynamic_array_owned_parameter_forwarding_run_link = orison::link::HostLinker {}.link(
+        dynamic_array_owned_parameter_forwarding_run.object_bytes,
+        dynamic_array_owned_parameter_forwarding_run_executable
+    );
+    assert(!dynamic_array_owned_parameter_forwarding_run_link.has_errors());
+    auto dynamic_array_owned_parameter_forwarding_run_status =
+        std::system(dynamic_array_owned_parameter_forwarding_run_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_owned_parameter_forwarding_run_status));
+    assert(WEXITSTATUS(dynamic_array_owned_parameter_forwarding_run_status) == 0);
+
+    auto dynamic_array_owned_parameter_forwarding_reuse_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_forwarding_reuse.or";
+    {
+        auto forwarding_reuse_source = std::ofstream(dynamic_array_owned_parameter_forwarding_reuse_path);
+        forwarding_reuse_source
+            << "package demo.pipeline.dynamicarrayownedparameterforwardingreuse\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
+            << "    0 as UInt32\n"
+            << "\n"
+            << "function forward_items(items: DynamicArray<Payload>) -> IntSize\n"
+            << "    let result: UInt32 = use_items(items)\n"
+            << "    items.length()\n"
+            << "\n"
+            << "function main() -> IntSize\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    items.push(Payload(7))\n"
+            << "    forward_items(items)\n";
+    }
+    auto dynamic_array_owned_parameter_forwarding_reuse = pipeline.emit_llvm(
+        dynamic_array_owned_parameter_forwarding_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_parameter_forwarding_reuse.has_errors());
+    assert(
+        dynamic_array_owned_parameter_forwarding_reuse.error_text.find("use after move: items") !=
+        std::string::npos
+    );
+
     auto dynamic_array_owned_parameter_second_use_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_owned_parameter_second_use.or";
     {

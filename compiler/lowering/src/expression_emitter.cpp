@@ -35,7 +35,7 @@ namespace {
 
 using EmissionContext = LoweringEmissionContext;
 
-auto moved_owned_dynamic_array_local_name(
+auto moved_owned_dynamic_array_binding_name(
     std::string_view owner_name,
     FunctionLoweringState const& state
 ) -> std::optional<std::string> {
@@ -43,7 +43,7 @@ auto moved_owned_dynamic_array_local_name(
     auto source_type = state.source_type_names.find(name);
     if (source_type == state.source_type_names.end() ||
         !dynamic_array_element_source_type_name(source_type->second).has_value() ||
-        !state.consumed_owned_dynamic_array_locals.contains(name)) {
+        !state.consumed_owned_dynamic_array_bindings.contains(name)) {
         return std::nullopt;
     }
     return name;
@@ -1740,7 +1740,7 @@ auto lower_dynamic_array_index_read(
     }
 
     auto const& owner_name = expression.left->text;
-    if (auto moved_name = moved_owned_dynamic_array_local_name(owner_name, session.state)) {
+    if (auto moved_name = moved_owned_dynamic_array_binding_name(owner_name, session.state)) {
         record_use_after_move_failure(session.failures, *moved_name);
         return std::nullopt;
     }
@@ -1859,7 +1859,7 @@ auto lower_dynamic_array_length_call(
     }
 
     auto const& owner_name = expression.left->left->text;
-    if (auto moved_name = moved_owned_dynamic_array_local_name(owner_name, session.state)) {
+    if (auto moved_name = moved_owned_dynamic_array_binding_name(owner_name, session.state)) {
         record_use_after_move_failure(session.failures, *moved_name);
         return std::nullopt;
     }
@@ -2561,7 +2561,7 @@ auto lowered_expression(
     }
 
     if (expression.kind == syntax::ExpressionKind::name) {
-        if (auto moved_name = moved_owned_dynamic_array_local_name(expression.text, state)) {
+        if (auto moved_name = moved_owned_dynamic_array_binding_name(expression.text, state)) {
             record_use_after_move_failure(failures, *moved_name);
             return std::nullopt;
         }

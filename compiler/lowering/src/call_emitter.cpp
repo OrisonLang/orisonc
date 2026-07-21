@@ -64,7 +64,7 @@ auto has_local_dynamic_array_cleanup_plan(
     return false;
 }
 
-auto is_function_parameter_name(
+auto has_function_parameter_name(
     FunctionLoweringSession const& session,
     std::string_view name
 ) -> bool {
@@ -76,7 +76,15 @@ auto is_function_parameter_name(
     return false;
 }
 
-auto consumed_owned_dynamic_array_local_argument_name(
+auto has_dynamic_array_cleanup_owner(
+    FunctionLoweringSession const& session,
+    std::string_view owner_name
+) -> bool {
+    return has_local_dynamic_array_cleanup_plan(session, owner_name) ||
+        has_function_parameter_name(session, owner_name);
+}
+
+auto consumed_owned_dynamic_array_argument_name(
     syntax::ExpressionSyntax const& argument,
     std::optional<std::string_view> expected_source_type,
     FunctionLoweringSession const& session
@@ -84,8 +92,7 @@ auto consumed_owned_dynamic_array_local_argument_name(
     if (!expected_source_type.has_value() ||
         !is_owned_dynamic_array_source_type(*expected_source_type) ||
         argument.kind != syntax::ExpressionKind::name ||
-        is_function_parameter_name(session, argument.text) ||
-        !has_local_dynamic_array_cleanup_plan(session, argument.text)) {
+        !has_dynamic_array_cleanup_owner(session, argument.text)) {
         return std::nullopt;
     }
 
@@ -192,12 +199,12 @@ auto lower_call_arguments_impl(
                 .signedness = IntegerSignedness::not_integer,
             };
         }
-        if (auto consumed_name = consumed_owned_dynamic_array_local_argument_name(
+        if (auto consumed_name = consumed_owned_dynamic_array_argument_name(
                 arguments[index],
                 expected_source_type,
                 session
             )) {
-            session.state.consumed_owned_dynamic_array_locals.insert(std::move(*consumed_name));
+            session.state.consumed_owned_dynamic_array_bindings.insert(std::move(*consumed_name));
         }
         lowered_arguments.push_back(std::move(*argument));
     }

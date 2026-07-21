@@ -247,7 +247,7 @@ void test_skips_consumed_owned_dynamic_array_local_cleanup() {
     items_cleanup->descriptor_storage_name = "%items.addr";
     state.dynamic_array_local_cleanup_plans.push_back(std::move(*numbers_cleanup));
     state.dynamic_array_local_cleanup_plans.push_back(std::move(*items_cleanup));
-    state.consumed_owned_dynamic_array_locals.insert("items");
+    state.consumed_owned_dynamic_array_bindings.insert("items");
     auto session = test_session(state, failures);
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
@@ -262,6 +262,42 @@ void test_skips_consumed_owned_dynamic_array_local_cleanup() {
     assert(plans.has_value());
     assert(plans->size() == 1);
     assert(plans->front().descriptor_cleanup.owner_name == "numbers");
+}
+
+void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
+    auto lowering = test_context();
+    auto strings = orison::lowering::StringConstantTable {};
+    auto state = orison::lowering::FunctionLoweringState {};
+    auto failures = orison::lowering::LoweringFailures {};
+    bind_dynamic_array_parameter(state, "forwarded", "DynamicArray<Payload>");
+    bind_dynamic_array_parameter(state, "retained", "DynamicArray<Payload>");
+    state.consumed_owned_dynamic_array_bindings.insert("forwarded");
+    auto session = test_session(state, failures);
+    auto context = orison::lowering::LoweringEmissionContext {
+        .lowering = lowering,
+        .string_constants = strings,
+        .options = orison::lowering::LlvmIrEmissionOptions {
+            .test_only_enable_dynamic_array_parameter_descriptors = true,
+            .test_only_emit_bound_dynamic_array_parameter_cleanups = true,
+            .semantic_drop_lowering_authorizations = {
+                orison::semantics::DropLoweringAuthorization {
+                    .site = orison::semantics::PlannedDropSite {
+                        .source_type_name = "Payload",
+                        .abi_symbol_name = "__orison_drop.Payload",
+                        .owner_name = "retained.element",
+                    },
+                    .semantic_resolved = true,
+                    .source_drop_lowering_enabled = true,
+                    .authorized = true,
+                },
+            },
+        },
+    };
+
+    auto plans = orison::lowering::plan_bound_dynamic_array_parameter_cleanups(context, session);
+    assert(plans.has_value());
+    assert(plans->size() == 1);
+    assert(plans->front().descriptor_cleanup.owner_name == "retained");
 }
 
 void test_plans_descriptor_cleanup_obligations() {
@@ -403,6 +439,7 @@ auto main() -> int {
     test_suppresses_unauthorized_owned_element_cleanup();
     test_authorizes_owned_element_cleanup();
     test_skips_consumed_owned_dynamic_array_local_cleanup();
+    test_skips_consumed_owned_dynamic_array_parameter_cleanup();
     test_plans_descriptor_cleanup_obligations();
     return 0;
 }

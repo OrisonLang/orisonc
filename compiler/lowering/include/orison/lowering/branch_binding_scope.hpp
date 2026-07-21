@@ -26,7 +26,7 @@ private:
     std::unordered_map<std::string, MutableBinding> saved_mutable_bindings_;
     std::unordered_map<std::string, AddressableBinding> saved_addressable_bindings_;
     std::unordered_map<std::string, std::string> saved_source_type_names_;
-    std::unordered_set<std::string> saved_consumed_owned_dynamic_array_locals_;
+    std::unordered_set<std::string> saved_consumed_owned_dynamic_array_bindings_;
 };
 
 }  // namespace orison::lowering

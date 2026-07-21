@@ -466,6 +466,9 @@ auto plan_bound_dynamic_array_parameter_cleanups(
     std::ranges::sort(names);
 
     for (auto const& name : names) {
+        if (session.state.consumed_owned_dynamic_array_bindings.contains(name)) {
+            continue;
+        }
         auto const& source_type_name = session.state.source_type_names.at(name);
         auto sequence = dynamic_sequence_source_type(source_type_name);
         if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
@@ -589,7 +592,7 @@ auto plan_local_dynamic_array_cleanups(
     }
 
     for (auto const& descriptor_cleanup : session.state.dynamic_array_local_cleanup_plans) {
-        if (session.state.consumed_owned_dynamic_array_locals.contains(descriptor_cleanup.owner_name)) {
+        if (session.state.consumed_owned_dynamic_array_bindings.contains(descriptor_cleanup.owner_name)) {
             continue;
         }
         auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(
