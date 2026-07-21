@@ -8,8 +8,17 @@
 
 namespace orison::lowering {
 
+struct LoweringContext;
+
 struct OwnershipTransferState {
     std::unordered_set<std::string> consumed_owned_bindings;
+};
+
+struct OwnedAggregateMemberTransfer {
+    std::string binding_name;
+    std::string owner_name;
+    std::string member_name;
+    std::string source_type_name;
 };
 
 auto mark_owned_binding_consumed(
@@ -25,5 +34,30 @@ auto is_owned_binding_consumed(
 auto merge_ownership_transfer_states(
     std::vector<OwnershipTransferState> const& branch_states
 ) -> std::optional<OwnershipTransferState>;
+
+auto owned_binding_member_name(
+    std::string_view owner_name,
+    std::string_view member_name
+) -> std::string;
+
+auto is_owned_transfer_source_type(
+    std::string_view source_type_name,
+    LoweringContext const& context
+) -> bool;
+
+auto owned_record_field_transfer(
+    std::string_view owner_name,
+    std::string_view owner_source_type_name,
+    std::string_view field_name,
+    LoweringContext const& context
+) -> std::optional<OwnedAggregateMemberTransfer>;
+
+auto owned_choice_payload_transfer(
+    std::string_view owner_name,
+    std::string_view choice_source_type_name,
+    std::string_view variant_name,
+    std::string_view payload_name,
+    LoweringContext const& context
+) -> std::optional<OwnedAggregateMemberTransfer>;
 
 }  // namespace orison::lowering

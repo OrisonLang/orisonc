@@ -4,6 +4,7 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/lowering_failure_rendering.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -45,6 +46,12 @@ int main() {
                   "record Device\n"
                   "    registers: UartRegisters\n"
                   "    buffer: Buffer\n"
+                  "\n"
+                  "record OwnedPayload\n"
+                  "    items: DynamicArray<UInt32>\n"
+                  "\n"
+                  "record OwnedBox\n"
+                  "    payload: OwnedPayload\n"
                   "\n"
                   "function choose(flag: Bool, left: UInt32, right: UInt32) -> UInt32\n"
                   "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n"
@@ -588,6 +595,51 @@ int main() {
         "  %tmp4 = extractvalue %record.UartRegisters %tmp3, 1\n"
         "  %tmp5 = add i32 %tmp1, %tmp4\n"
     );
+
+    auto moved_owned_field_state = orison::lowering::FunctionLoweringState {};
+    moved_owned_field_state.addressable_bindings.emplace("box", orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = "%record.OwnedBox",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        .storage = "%box.addr",
+    });
+    moved_owned_field_state.source_type_names.emplace("box", "OwnedBox");
+    orison::lowering::mark_owned_binding_consumed(
+        moved_owned_field_state.ownership_transfers,
+        "box.payload"
+    );
+    auto moved_owned_field_failures = orison::lowering::LoweringFailures {};
+    auto moved_owned_field_session = orison::lowering::FunctionLoweringSession {
+        .state = moved_owned_field_state,
+        .failures = moved_owned_field_failures,
+    };
+    auto moved_owned_field_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::member_access,
+        .text = "payload",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "box",
+            }
+        ),
+    };
+    output = {};
+    auto moved_owned_field_lowered = orison::lowering::lower_expression(
+        moved_owned_field_access,
+        "%record.OwnedPayload",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        moved_owned_field_session,
+        output
+    );
+    assert(!moved_owned_field_lowered.has_value());
+    assert(output.str().empty());
+    assert(
+        moved_owned_field_failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::use_after_move
+    );
+    assert(moved_owned_field_failures.expression.detail == "box.payload");
 
     auto missing_member_state = orison::lowering::FunctionLoweringState {};
     missing_member_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {

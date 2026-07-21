@@ -169,6 +169,9 @@ representation.
 - Consumed owned binding tracking has been extracted into a reusable lowering ownership-transfer state. Dynamic arrays
   remain the first integrated cleanup consumer, but the branch-join and post-move diagnostic machinery no longer depends
   on a dynamic-array-specific function-state field.
+- The reusable ownership-transfer state now also derives stable owned aggregate member keys for record fields and choice
+  payloads. Record-field reads consume those keys for use-after-move diagnostics before aggregate IR is emitted; source
+  syntax that produces aggregate-field moves remains separate future work.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.

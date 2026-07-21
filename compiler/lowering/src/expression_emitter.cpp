@@ -1562,6 +1562,23 @@ auto lower_aggregate_path_read_from_storage(
         return std::nullopt;
     }
 
+    if (!path.steps.empty() &&
+        path.base_expression != nullptr &&
+        path.base_expression->kind == syntax::ExpressionKind::name &&
+        path.steps.front().kind == AggregatePathStepKind::member) {
+        auto transfer = owned_record_field_transfer(
+            path.base_expression->text,
+            base_source_type_name,
+            path.steps.front().field_name,
+            context.lowering
+        );
+        if (transfer.has_value() &&
+            is_owned_binding_consumed(session.state.ownership_transfers, transfer->binding_name)) {
+            record_use_after_move_failure(session.failures, transfer->binding_name);
+            return std::nullopt;
+        }
+    }
+
     for (auto const& step : path.steps) {
         if (step.kind == AggregatePathStepKind::member) {
             auto result = advance_aggregate_path_member_with_temporary(
@@ -2724,6 +2741,20 @@ auto lowered_expression(
                 expression.text
             );
             return std::nullopt;
+        }
+
+        if (expression.left->kind == syntax::ExpressionKind::name) {
+            auto transfer = owned_record_field_transfer(
+                expression.left->text,
+                *base_source_type,
+                expression.text,
+                context.lowering
+            );
+            if (transfer.has_value() &&
+                is_owned_binding_consumed(state.ownership_transfers, transfer->binding_name)) {
+                record_use_after_move_failure(session.failures, transfer->binding_name);
+                return std::nullopt;
+            }
         }
 
         auto base_llvm_type = llvm_type_for_source_type_name(*base_source_type, context.lowering);
