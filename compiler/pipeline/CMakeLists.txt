@@ -1,5 +1,6 @@
 add_library(orison_pipeline STATIC
     src/compile_pipeline.cpp
+    src/dynamic_array_cleanup_metadata.cpp
     src/dynamic_array_cleanup_readiness.cpp
     src/drop_readiness_source_correlation_report.cpp
     src/link_library_collection.cpp
