@@ -166,6 +166,9 @@ representation.
 - Branch joins for owned dynamic-array transfer now require every continuing branch/case to agree on the consumed
   binding set before cleanup planning observes the post-branch state. Matching moves across all continuing paths are
   accepted; move/no-move mismatches are rejected rather than choosing an unsafe unconditional cleanup policy.
+- Consumed owned binding tracking has been extracted into a reusable lowering ownership-transfer state. Dynamic arrays
+  remain the first integrated cleanup consumer, but the branch-join and post-move diagnostic machinery no longer depends
+  on a dynamic-array-specific function-state field.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.

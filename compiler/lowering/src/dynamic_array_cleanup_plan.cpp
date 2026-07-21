@@ -3,6 +3,7 @@
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/drop_metadata.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
 #include "orison/semantics/drop_model.hpp"
@@ -466,7 +467,7 @@ auto plan_bound_dynamic_array_parameter_cleanups(
     std::ranges::sort(names);
 
     for (auto const& name : names) {
-        if (session.state.consumed_owned_dynamic_array_bindings.contains(name)) {
+        if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
             continue;
         }
         auto const& source_type_name = session.state.source_type_names.at(name);
@@ -592,7 +593,7 @@ auto plan_local_dynamic_array_cleanups(
     }
 
     for (auto const& descriptor_cleanup : session.state.dynamic_array_local_cleanup_plans) {
-        if (session.state.consumed_owned_dynamic_array_bindings.contains(descriptor_cleanup.owner_name)) {
+        if (is_owned_binding_consumed(session.state.ownership_transfers, descriptor_cleanup.owner_name)) {
             continue;
         }
         auto obligation = plan_dynamic_array_descriptor_cleanup_obligation(

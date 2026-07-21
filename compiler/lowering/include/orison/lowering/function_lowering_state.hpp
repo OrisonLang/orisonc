@@ -2,11 +2,11 @@
 
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/lowered_value.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 
 #include <cstddef>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 namespace orison::syntax {
@@ -58,7 +58,7 @@ struct FunctionLoweringState {
     std::unordered_map<std::string, std::string> source_type_names;
     std::vector<std::string> parameter_names;
     std::vector<DynamicArrayDescriptorCleanupPlan> dynamic_array_local_cleanup_plans;
-    std::unordered_set<std::string> consumed_owned_dynamic_array_bindings;
+    OwnershipTransferState ownership_transfers;
     std::unordered_map<std::string, std::size_t> local_name_counts;
     std::vector<DeferredCleanupScopeState> defer_cleanup_scopes;
     std::vector<std::string> pending_function_definitions;

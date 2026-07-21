@@ -20,7 +20,7 @@ int main() {
     });
     state.source_type_names["outer"] = "Outer";
     state.source_type_names["outer_mutable"] = "OuterMutable";
-    state.consumed_owned_dynamic_array_bindings.insert("outer_items");
+    state.ownership_transfers.consumed_owned_bindings.insert("outer_items");
     state.local_name_counts["outer"] = 1;
     state.next_temporary_index = 4;
     state.next_block_index = 2;
@@ -40,7 +40,7 @@ int main() {
         });
         state.source_type_names["branch"] = "Branch";
         state.source_type_names["branch_mutable"] = "BranchMutable";
-        state.consumed_owned_dynamic_array_bindings.insert("branch_items");
+        state.ownership_transfers.consumed_owned_bindings.insert("branch_items");
         state.local_name_counts["branch"] = 1;
         state.next_temporary_index = 5;
         state.next_block_index = 3;
@@ -58,9 +58,9 @@ int main() {
         assert(state.source_type_names.contains("outer_mutable"));
         assert(!state.source_type_names.contains("branch"));
         assert(!state.source_type_names.contains("branch_mutable"));
-        assert(state.consumed_owned_dynamic_array_bindings.size() == 1);
-        assert(state.consumed_owned_dynamic_array_bindings.contains("outer_items"));
-        assert(!state.consumed_owned_dynamic_array_bindings.contains("branch_items"));
+        assert(state.ownership_transfers.consumed_owned_bindings.size() == 1);
+        assert(state.ownership_transfers.consumed_owned_bindings.contains("outer_items"));
+        assert(!state.ownership_transfers.consumed_owned_bindings.contains("branch_items"));
         assert(state.local_name_counts.contains("branch"));
         assert(state.next_temporary_index == 5);
         assert(state.next_block_index == 3);
@@ -79,7 +79,7 @@ int main() {
         });
         state.source_type_names["sibling"] = "Sibling";
         state.source_type_names["sibling_mutable"] = "SiblingMutable";
-        state.consumed_owned_dynamic_array_bindings.insert("sibling_items");
+        state.ownership_transfers.consumed_owned_bindings.insert("sibling_items");
     }
 
     assert(state.immutable_bindings.size() == 1);
@@ -93,9 +93,9 @@ int main() {
     assert(state.source_type_names.contains("outer_mutable"));
     assert(!state.source_type_names.contains("sibling"));
     assert(!state.source_type_names.contains("sibling_mutable"));
-    assert(state.consumed_owned_dynamic_array_bindings.size() == 1);
-    assert(state.consumed_owned_dynamic_array_bindings.contains("outer_items"));
-    assert(!state.consumed_owned_dynamic_array_bindings.contains("sibling_items"));
+    assert(state.ownership_transfers.consumed_owned_bindings.size() == 1);
+    assert(state.ownership_transfers.consumed_owned_bindings.contains("outer_items"));
+    assert(!state.ownership_transfers.consumed_owned_bindings.contains("sibling_items"));
     assert(state.local_name_counts.contains("branch"));
     assert(state.next_temporary_index == 5);
     assert(state.next_block_index == 3);
@@ -115,7 +115,7 @@ int main() {
         });
         state.source_type_names["unwound"] = "Unwound";
         state.source_type_names["unwound_mutable"] = "UnwoundMutable";
-        state.consumed_owned_dynamic_array_bindings.insert("unwound_items");
+        state.ownership_transfers.consumed_owned_bindings.insert("unwound_items");
         throw std::runtime_error("test unwind");
     } catch (std::runtime_error const&) {
     }
@@ -130,26 +130,26 @@ int main() {
     assert(state.source_type_names.contains("outer_mutable"));
     assert(!state.source_type_names.contains("unwound"));
     assert(!state.source_type_names.contains("unwound_mutable"));
-    assert(state.consumed_owned_dynamic_array_bindings.size() == 1);
-    assert(state.consumed_owned_dynamic_array_bindings.contains("outer_items"));
-    assert(!state.consumed_owned_dynamic_array_bindings.contains("unwound_items"));
+    assert(state.ownership_transfers.consumed_owned_bindings.size() == 1);
+    assert(state.ownership_transfers.consumed_owned_bindings.contains("outer_items"));
+    assert(!state.ownership_transfers.consumed_owned_bindings.contains("unwound_items"));
 
     {
         auto scope = orison::lowering::BranchBindingScope(state);
-        auto matching_merge = orison::lowering::merge_consumed_owned_dynamic_array_bindings({
-            {"outer_items", "joined_items"},
-            {"outer_items", "joined_items"},
+        auto matching_merge = orison::lowering::merge_ownership_transfer_states({
+            orison::lowering::OwnershipTransferState {.consumed_owned_bindings = {"outer_items", "joined_items"}},
+            orison::lowering::OwnershipTransferState {.consumed_owned_bindings = {"outer_items", "joined_items"}},
         });
         assert(matching_merge.has_value());
-        scope.commit_consumed_owned_dynamic_array_bindings(std::move(*matching_merge));
+        scope.commit_ownership_transfers(std::move(*matching_merge));
     }
-    assert(state.consumed_owned_dynamic_array_bindings.size() == 2);
-    assert(state.consumed_owned_dynamic_array_bindings.contains("outer_items"));
-    assert(state.consumed_owned_dynamic_array_bindings.contains("joined_items"));
+    assert(state.ownership_transfers.consumed_owned_bindings.size() == 2);
+    assert(state.ownership_transfers.consumed_owned_bindings.contains("outer_items"));
+    assert(state.ownership_transfers.consumed_owned_bindings.contains("joined_items"));
 
-    auto mismatched_merge = orison::lowering::merge_consumed_owned_dynamic_array_bindings({
-        {"outer_items", "joined_items"},
-        {"outer_items"},
+    auto mismatched_merge = orison::lowering::merge_ownership_transfer_states({
+        orison::lowering::OwnershipTransferState {.consumed_owned_bindings = {"outer_items", "joined_items"}},
+        orison::lowering::OwnershipTransferState {.consumed_owned_bindings = {"outer_items"}},
     });
     assert(!mismatched_merge.has_value());
     return 0;

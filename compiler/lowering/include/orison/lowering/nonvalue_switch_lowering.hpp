@@ -10,6 +10,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/maybe_switch_lowering.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/switch_plan.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -17,7 +18,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -100,7 +100,7 @@ auto lower_nonvalue_switch_statement(
     emit_llvm_switch(output, switch_subject.type, switch_subject.value, plan.default_block, switch_targets);
 
     auto all_cases_terminated = true;
-    auto fallthrough_consumed_bindings = std::vector<std::unordered_set<std::string>> {};
+    auto fallthrough_ownership_transfers = std::vector<OwnershipTransferState> {};
     for (auto const& planned_case : plan.cases) {
         binding_scope.reset();
         emit_llvm_block_label(output, planned_case.block);
@@ -112,7 +112,7 @@ auto lower_nonvalue_switch_statement(
             return StatementFlow::failed;
         }
         if (case_flow == StatementFlow::falls_through) {
-            fallthrough_consumed_bindings.push_back(session.state.consumed_owned_dynamic_array_bindings);
+            fallthrough_ownership_transfers.push_back(session.state.ownership_transfers);
             emit_llvm_branch(output, plan.merge_block);
             all_cases_terminated = false;
         }
@@ -127,15 +127,15 @@ auto lower_nonvalue_switch_statement(
         return StatementFlow::terminated;
     }
 
-    auto merged_consumed_bindings = merge_consumed_owned_dynamic_array_bindings(fallthrough_consumed_bindings);
-    if (!merged_consumed_bindings.has_value()) {
+    auto merged_transfers = merge_ownership_transfer_states(fallthrough_ownership_transfers);
+    if (!merged_transfers.has_value()) {
         diagnostics.error(
             statement.line,
             "switch case ownership mismatch: owned DynamicArray moves must match across all continuing cases"
         );
         return StatementFlow::failed;
     }
-    binding_scope.commit_consumed_owned_dynamic_array_bindings(std::move(*merged_consumed_bindings));
+    binding_scope.commit_ownership_transfers(std::move(*merged_transfers));
     emit_llvm_block_label(output, plan.merge_block);
     session.state.current_block = plan.merge_block;
     return StatementFlow::falls_through;

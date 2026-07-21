@@ -247,7 +247,7 @@ void test_skips_consumed_owned_dynamic_array_local_cleanup() {
     items_cleanup->descriptor_storage_name = "%items.addr";
     state.dynamic_array_local_cleanup_plans.push_back(std::move(*numbers_cleanup));
     state.dynamic_array_local_cleanup_plans.push_back(std::move(*items_cleanup));
-    state.consumed_owned_dynamic_array_bindings.insert("items");
+    state.ownership_transfers.consumed_owned_bindings.insert("items");
     auto session = test_session(state, failures);
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,
@@ -271,7 +271,7 @@ void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
     auto failures = orison::lowering::LoweringFailures {};
     bind_dynamic_array_parameter(state, "forwarded", "DynamicArray<Payload>");
     bind_dynamic_array_parameter(state, "retained", "DynamicArray<Payload>");
-    state.consumed_owned_dynamic_array_bindings.insert("forwarded");
+    state.ownership_transfers.consumed_owned_bindings.insert("forwarded");
     auto session = test_session(state, failures);
     auto context = orison::lowering::LoweringEmissionContext {
         .lowering = lowering,

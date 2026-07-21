@@ -651,6 +651,22 @@ add_test(
     COMMAND orison_lowering_smoke
 )
 
+add_executable(orison_ownership_transfer_smoke
+    smoke/ownership_transfer_smoke.cpp
+)
+
+target_link_libraries(orison_ownership_transfer_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_ownership_transfer_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_ownership_transfer_smoke
+    COMMAND orison_ownership_transfer_smoke
+)
+
 add_executable(orison_c_abi_adapter_smoke
     smoke/c_abi_adapter_smoke.cpp
 )

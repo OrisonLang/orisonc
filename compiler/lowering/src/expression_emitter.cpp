@@ -15,6 +15,7 @@
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/maybe_value_emitter.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/lowering/type_lowering.hpp"
@@ -43,7 +44,7 @@ auto moved_owned_dynamic_array_binding_name(
     auto source_type = state.source_type_names.find(name);
     if (source_type == state.source_type_names.end() ||
         !dynamic_array_element_source_type_name(source_type->second).has_value() ||
-        !state.consumed_owned_dynamic_array_bindings.contains(name)) {
+        !is_owned_binding_consumed(state.ownership_transfers, name)) {
         return std::nullopt;
     }
     return name;

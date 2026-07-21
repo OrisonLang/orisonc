@@ -3,6 +3,7 @@
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
 #include <cstddef>
@@ -204,7 +205,7 @@ auto lower_call_arguments_impl(
                 expected_source_type,
                 session
             )) {
-            session.state.consumed_owned_dynamic_array_bindings.insert(std::move(*consumed_name));
+            mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));
         }
         lowered_arguments.push_back(std::move(*argument));
     }

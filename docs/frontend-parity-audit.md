@@ -63,6 +63,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-21: final and non-value branch joins now require matching consumed owned `DynamicArray<T>` binding state
   across every continuing arm/case. Matching moves in all arms remain valid and suppress post-branch cleanup, while
   move/no-move branch mismatches are rejected instead of emitting unconditional cleanup or suppression.
+- 2026-07-21: consumed owned binding tracking now lives in a reusable lowering ownership-transfer state instead of a
+  dynamic-array-specific function state field. `DynamicArray<T>` remains the first producer/consumer, but branch joins,
+  post-move diagnostics, and cleanup suppression now depend on a generic consumed-owned-binding API.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

@@ -9,12 +9,12 @@
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -54,7 +54,7 @@ auto lower_nonvalue_if_statement(
     );
     auto const has_else = !statement.alternate_statements.empty();
     auto binding_scope = BranchBindingScope(session.state);
-    auto fallthrough_consumed_bindings = std::vector<std::unordered_set<std::string>> {};
+    auto fallthrough_ownership_transfers = std::vector<OwnershipTransferState> {};
     emit_llvm_conditional_branch(
         output,
         condition->value,
@@ -69,7 +69,7 @@ auto lower_nonvalue_if_statement(
         return StatementFlow::failed;
     }
     if (then_flow == StatementFlow::falls_through) {
-        fallthrough_consumed_bindings.push_back(session.state.consumed_owned_dynamic_array_bindings);
+        fallthrough_ownership_transfers.push_back(session.state.ownership_transfers);
         emit_llvm_branch(output, plan.merge_block);
     }
 
@@ -83,11 +83,11 @@ auto lower_nonvalue_if_statement(
             return StatementFlow::failed;
         }
         if (else_flow == StatementFlow::falls_through) {
-            fallthrough_consumed_bindings.push_back(session.state.consumed_owned_dynamic_array_bindings);
+            fallthrough_ownership_transfers.push_back(session.state.ownership_transfers);
             emit_llvm_branch(output, plan.merge_block);
         }
     } else {
-        fallthrough_consumed_bindings.push_back(binding_scope.saved_consumed_owned_dynamic_array_bindings());
+        fallthrough_ownership_transfers.push_back(binding_scope.saved_ownership_transfers());
     }
 
     auto const fully_terminated =
@@ -96,15 +96,15 @@ auto lower_nonvalue_if_statement(
         return StatementFlow::terminated;
     }
 
-    auto merged_consumed_bindings = merge_consumed_owned_dynamic_array_bindings(fallthrough_consumed_bindings);
-    if (!merged_consumed_bindings.has_value()) {
+    auto merged_transfers = merge_ownership_transfer_states(fallthrough_ownership_transfers);
+    if (!merged_transfers.has_value()) {
         diagnostics.error(
             statement.line,
             "if branch ownership mismatch: owned DynamicArray moves must match across all continuing branches"
         );
         return StatementFlow::failed;
     }
-    binding_scope.commit_consumed_owned_dynamic_array_bindings(std::move(*merged_consumed_bindings));
+    binding_scope.commit_ownership_transfers(std::move(*merged_transfers));
     emit_llvm_block_label(output, plan.merge_block);
     session.state.current_block = plan.merge_block;
     return fully_terminated ? StatementFlow::terminated : StatementFlow::falls_through;

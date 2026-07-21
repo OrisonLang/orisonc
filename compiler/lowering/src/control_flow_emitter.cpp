@@ -8,6 +8,7 @@
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/maybe_switch_lowering.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_emitter.hpp"
 #include "orison/lowering/string_constants.hpp"
@@ -20,7 +21,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -142,7 +142,7 @@ auto lower_final_if_statement(
         std::ostringstream& output;
         BranchBindingScope& binding_scope;
         std::optional<std::string_view> expected_source_type_name;
-        std::vector<std::unordered_set<std::string>> consumed_bindings_by_arm;
+        std::vector<OwnershipTransferState> ownership_transfers_by_arm;
     };
     auto arm_context = ArmContext {
         .statement = statement,
@@ -177,9 +177,7 @@ auto lower_final_if_statement(
                     arm.expected_source_type_name
                 );
                 if (value.has_value()) {
-                    arm.consumed_bindings_by_arm.push_back(
-                        arm.session.state.consumed_owned_dynamic_array_bindings
-                    );
+                    arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
                 }
                 return value;
             },
@@ -201,9 +199,7 @@ auto lower_final_if_statement(
                     arm.expected_source_type_name
                 );
                 if (value.has_value()) {
-                    arm.consumed_bindings_by_arm.push_back(
-                        arm.session.state.consumed_owned_dynamic_array_bindings
-                    );
+                    arm.ownership_transfers_by_arm.push_back(arm.session.state.ownership_transfers);
                 }
                 return value;
             },
@@ -234,9 +230,9 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
-    auto merged_consumed_bindings =
-        merge_consumed_owned_dynamic_array_bindings(arm_context.consumed_bindings_by_arm);
-    if (!merged_consumed_bindings.has_value()) {
+    auto merged_transfers =
+        merge_ownership_transfer_states(arm_context.ownership_transfers_by_arm);
+    if (!merged_transfers.has_value()) {
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_branch_ownership_mismatch,
@@ -244,7 +240,7 @@ auto lower_final_if_statement(
         );
         return std::nullopt;
     }
-    binding_scope.commit_consumed_owned_dynamic_array_bindings(std::move(*merged_consumed_bindings));
+    binding_scope.commit_ownership_transfers(std::move(*merged_transfers));
     return result.value;
 }
 
@@ -333,7 +329,7 @@ auto lower_final_switch_statement(
         LoweredExpression const& original_subject;
         std::optional<std::string_view> expected_source_type_name;
         std::optional<std::string_view> subject_source_type_name;
-        std::vector<std::unordered_set<std::string>> consumed_bindings_by_case;
+        std::vector<OwnershipTransferState> ownership_transfers_by_case;
     };
     auto case_context = CaseContext {
         .expected_llvm_type = expected_llvm_type,
@@ -381,9 +377,7 @@ auto lower_final_switch_statement(
                     current.expected_source_type_name
                 );
                 if (value.has_value()) {
-                    current.consumed_bindings_by_case.push_back(
-                        current.session.state.consumed_owned_dynamic_array_bindings
-                    );
+                    current.ownership_transfers_by_case.push_back(current.session.state.ownership_transfers);
                 }
                 return value;
             },
@@ -416,9 +410,9 @@ auto lower_final_switch_statement(
         );
         return std::nullopt;
     }
-    auto merged_consumed_bindings =
-        merge_consumed_owned_dynamic_array_bindings(case_context.consumed_bindings_by_case);
-    if (!merged_consumed_bindings.has_value()) {
+    auto merged_transfers =
+        merge_ownership_transfer_states(case_context.ownership_transfers_by_case);
+    if (!merged_transfers.has_value()) {
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_case_ownership_mismatch,
@@ -426,7 +420,7 @@ auto lower_final_switch_statement(
         );
         return std::nullopt;
     }
-    binding_scope.commit_consumed_owned_dynamic_array_bindings(std::move(*merged_consumed_bindings));
+    binding_scope.commit_ownership_transfers(std::move(*merged_transfers));
     return result.value;
 }
 

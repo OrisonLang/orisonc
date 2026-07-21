@@ -14,6 +14,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
 
@@ -51,7 +52,7 @@ auto is_moved_owned_dynamic_array_binding(
     auto source_type = state.source_type_names.find(name);
     return source_type != state.source_type_names.end() &&
         dynamic_array_element_source_type_name(source_type->second).has_value() &&
-        state.consumed_owned_dynamic_array_bindings.contains(name);
+        is_owned_binding_consumed(state.ownership_transfers, name);
 }
 
 auto is_dynamic_array_source_type(std::string_view source_type_name) -> bool {
