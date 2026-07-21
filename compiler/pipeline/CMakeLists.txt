@@ -2,6 +2,7 @@ add_library(orison_pipeline STATIC
     src/compile_pipeline.cpp
     src/dynamic_array_cleanup_readiness.cpp
     src/drop_readiness_source_correlation_report.cpp
+    src/link_library_collection.cpp
     src/lowering_emission_reports.cpp
     src/lowering_emission_options.cpp
     src/semantic_drop_reports.cpp
