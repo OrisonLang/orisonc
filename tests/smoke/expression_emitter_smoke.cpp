@@ -708,6 +708,42 @@ int main() {
     );
     assert(moved_nested_field_failures.expression.detail == "nested.inner.payload");
 
+    auto moved_choice_payload_state = orison::lowering::FunctionLoweringState {};
+    moved_choice_payload_state.immutable_bindings.emplace("maybe", orison::lowering::LoweredExpression {
+        .type = "{ i32, %record.OwnedPayload }",
+        .value = "%maybe",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    moved_choice_payload_state.source_type_names.emplace("maybe", "MaybeOwnedPayload");
+    orison::lowering::mark_owned_binding_consumed(
+        moved_choice_payload_state.ownership_transfers,
+        "maybe.Some.value"
+    );
+    auto moved_choice_payload_failures = orison::lowering::LoweringFailures {};
+    auto moved_choice_payload_session = orison::lowering::FunctionLoweringSession {
+        .state = moved_choice_payload_state,
+        .failures = moved_choice_payload_failures,
+    };
+    output = {};
+    auto moved_choice_payload_lowered = orison::lowering::lower_expression(
+        orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "maybe",
+        },
+        "{ i32, %record.OwnedPayload }",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        moved_choice_payload_session,
+        output
+    );
+    assert(!moved_choice_payload_lowered.has_value());
+    assert(output.str().empty());
+    assert(
+        moved_choice_payload_failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::use_after_move
+    );
+    assert(moved_choice_payload_failures.expression.detail == "maybe.Some.value");
+
     auto missing_member_state = orison::lowering::FunctionLoweringState {};
     missing_member_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {
         .type = "i32",

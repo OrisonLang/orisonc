@@ -32,6 +32,11 @@ auto is_owned_binding_consumed(
     std::string_view binding_name
 ) -> bool;
 
+auto consumed_owned_binding_or_descendant_name(
+    OwnershipTransferState const& state,
+    std::string_view binding_name
+) -> std::optional<std::string>;
+
 auto merge_ownership_transfer_states(
     std::vector<OwnershipTransferState> const& branch_states
 ) -> std::optional<OwnershipTransferState>;

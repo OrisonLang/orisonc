@@ -179,6 +179,8 @@ representation.
   Paths that include indexing remain excluded until element-level ownership transfer has dedicated safety rules.
 - Choice constructor-pattern payload binding now produces owned payload transfer keys for named choice subjects, such as
   `maybe.Some.value`, without changing switch pattern syntax, planning, or exhaustiveness behavior.
+- Whole-binding expression reads now check consumed owned descendant keys. Reusing a choice after an owned payload
+  destructure is rejected with the precise consumed payload key, while preserving the existing branch-join set model.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.

@@ -1,5 +1,6 @@
 #include "orison/lowering/ownership_transfer.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <string_view>
 #include <unordered_set>
@@ -84,6 +85,29 @@ auto is_owned_binding_consumed(
     std::string_view binding_name
 ) -> bool {
     return state.consumed_owned_bindings.contains(std::string(binding_name));
+}
+
+auto consumed_owned_binding_or_descendant_name(
+    OwnershipTransferState const& state,
+    std::string_view binding_name
+) -> std::optional<std::string> {
+    if (is_owned_binding_consumed(state, binding_name)) {
+        return std::string {binding_name};
+    }
+
+    auto descendant_prefix = std::string {binding_name};
+    descendant_prefix += ".";
+    auto matches = std::vector<std::string> {};
+    for (auto const& consumed_name : state.consumed_owned_bindings) {
+        if (consumed_name.starts_with(descendant_prefix)) {
+            matches.push_back(consumed_name);
+        }
+    }
+    if (matches.empty()) {
+        return std::nullopt;
+    }
+    std::ranges::sort(matches);
+    return matches.front();
 }
 
 auto merge_ownership_transfer_states(

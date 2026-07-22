@@ -17,6 +17,14 @@ int main() {
     orison::lowering::mark_owned_binding_consumed(transfers, "items");
     assert(orison::lowering::is_owned_binding_consumed(transfers, "items"));
     assert(!orison::lowering::is_owned_binding_consumed(transfers, "other"));
+    assert(orison::lowering::consumed_owned_binding_or_descendant_name(transfers, "items") == "items");
+    assert(!orison::lowering::consumed_owned_binding_or_descendant_name(transfers, "other").has_value());
+
+    orison::lowering::mark_owned_binding_consumed(transfers, "maybe.Some.value");
+    assert(
+        orison::lowering::consumed_owned_binding_or_descendant_name(transfers, "maybe") ==
+        "maybe.Some.value"
+    );
 
     auto matching = orison::lowering::merge_ownership_transfer_states({
         transfers,
