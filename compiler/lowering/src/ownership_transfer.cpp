@@ -43,28 +43,14 @@ auto is_owned_transfer_source_type_impl(
         return owns;
     }
 
-    if (auto record = context.records.find(source_type_key); record != context.records.end()) {
-        for (auto const& field : record->second.fields) {
-            if (is_owned_transfer_source_type_impl(field.source_type_name, context, visiting)) {
-                visiting.erase(source_type_key);
-                return true;
-            }
-        }
+    if (context.records.contains(source_type_key)) {
         visiting.erase(source_type_key);
-        return false;
+        return true;
     }
 
-    if (auto choice = context.choices.find(source_type_key); choice != context.choices.end()) {
-        for (auto const& variant : choice->second.variants) {
-            for (auto const& payload : variant.payloads) {
-                if (is_owned_transfer_source_type_impl(payload.source_type_name, context, visiting)) {
-                    visiting.erase(source_type_key);
-                    return true;
-                }
-            }
-        }
+    if (context.choices.contains(source_type_key)) {
         visiting.erase(source_type_key);
-        return false;
+        return true;
     }
 
     visiting.erase(source_type_key);

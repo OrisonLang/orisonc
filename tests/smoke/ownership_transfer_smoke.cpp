@@ -130,6 +130,7 @@ int main() {
     assert(orison::lowering::is_owned_transfer_source_type("DynamicArray<UInt32>", context));
     assert(orison::lowering::is_owned_transfer_source_type("Payload", context));
     assert(orison::lowering::is_owned_transfer_source_type("Box", context));
+    assert(orison::lowering::is_owned_transfer_source_type("MaybePayload", context));
 
     auto scalar_field = orison::lowering::owned_record_field_transfer("box", "Box", "count", context);
     assert(!scalar_field.has_value());

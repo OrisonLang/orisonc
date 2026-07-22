@@ -598,13 +598,7 @@ auto llvm_field_type_for(
 }
 
 auto is_supported_choice_payload_llvm_type(std::string_view type) -> bool {
-    return type == "i1" ||
-           type == "i8" ||
-           type == "i16" ||
-           type == "i32" ||
-           type == "i64" ||
-           type == "float" ||
-           type == "double";
+    return !type.empty() && type != "void";
 }
 
 auto collect_record_layout(
@@ -680,8 +674,8 @@ auto collect_choice_layout(
     layout.variants.reserve(choice.variants.size());
     auto payload_llvm_type = std::optional<std::string> {};
     auto has_payload = false;
-    auto supports_scalar_payload_abi = choice.generic_parameters.empty();
-    if (!supports_scalar_payload_abi) {
+    auto supports_single_payload_abi = choice.generic_parameters.empty();
+    if (!supports_single_payload_abi) {
         layout.unsupported_abi_reason = "generic choices do not yet have a lowered choice ABI";
     }
     for (auto variant_index = std::size_t {0}; variant_index < choice.variants.size(); ++variant_index) {
@@ -691,7 +685,7 @@ auto collect_choice_layout(
             .tag = variant_index,
         };
         if (variant.payloads.size() > 1) {
-            supports_scalar_payload_abi = false;
+            supports_single_payload_abi = false;
             if (layout.unsupported_abi_reason.empty()) {
                 layout.unsupported_abi_reason = "variants with multiple payloads do not yet have a lowered choice ABI";
             }
@@ -702,19 +696,19 @@ auto collect_choice_layout(
             auto const& payload = variant.payloads[payload_index];
             auto payload_llvm = llvm_field_type_for(payload.type, record_names);
             if (!is_supported_choice_payload_llvm_type(payload_llvm)) {
-                supports_scalar_payload_abi = false;
+                supports_single_payload_abi = false;
                 if (layout.unsupported_abi_reason.empty()) {
                     layout.unsupported_abi_reason =
                         "choice payload type '" + render_source_type_name(payload.type) +
-                        "' does not yet have a scalar lowered choice ABI";
+                        "' does not yet have a lowered choice ABI";
                 }
             } else if (!payload_llvm_type.has_value()) {
                 payload_llvm_type = payload_llvm;
             } else if (*payload_llvm_type != payload_llvm) {
-                supports_scalar_payload_abi = false;
+                supports_single_payload_abi = false;
                 if (layout.unsupported_abi_reason.empty()) {
                     layout.unsupported_abi_reason =
-                        "choice payload variants must share one scalar LLVM payload type";
+                        "choice payload variants must share one LLVM payload type";
                 }
             }
             lowered_variant.payloads.push_back(LoweredChoicePayload {
@@ -726,7 +720,7 @@ auto collect_choice_layout(
         }
         layout.variants.push_back(std::move(lowered_variant));
     }
-    if (supports_scalar_payload_abi) {
+    if (supports_single_payload_abi) {
         layout.llvm_type_name = has_payload ? "{ i32, " + *payload_llvm_type + " }" : "i32";
         layout.unsupported_abi_reason.clear();
     }

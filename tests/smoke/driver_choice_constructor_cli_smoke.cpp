@@ -2182,6 +2182,30 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_payload_run.or",
         sourced_scalar_choice_maybe_record_maybe_nested_array_payload_lines
     );
+    auto consumed_choice_payload_local_reuse_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "record Payload",
+        "    value: UInt32",
+        "choice Holder",
+        "    Loaded(payload: Payload)",
+        "    Empty",
+        "function consume_payload(payload: Payload) -> UInt32",
+        "    payload.value",
+        "function main() -> UInt32",
+        "    let holder: Holder = Loaded(Payload(1 as UInt32))",
+        "    switch holder",
+        "        Loaded(payload) =>",
+        "            let consumed: UInt32 = consume_payload(payload)",
+        "            let reused: Holder = holder",
+        "            consumed",
+        "        Empty => 2 as UInt32",
+    };
+    assert_cli_emit_llvm_failure(
+        executable,
+        smoke_temp_root / "orison_cli_consumed_choice_payload_local_reuse.or",
+        consumed_choice_payload_local_reuse_lines,
+        "use after move: holder.Loaded.payload"
+    );
     auto sourced_scalar_choice_maybe_record_nested_array_assignment_lines = std::vector<std::string_view> {
         "package demo.cli",
         "choice LocalStatus",
@@ -6791,7 +6815,7 @@ auto main() -> int {
         "lowering does not yet support PairStatus as function return type: "
         "variants with multiple payloads do not yet have a lowered choice ABI"
     );
-    assert_cli_emit_llvm_failure(
+    assert_cli_emit_llvm_success(
         executable,
         smoke_temp_root / "orison_cli_aggregate_payload_choice_emit.or",
         std::vector<std::string_view> {
@@ -6804,8 +6828,14 @@ auto main() -> int {
             "function make_status() -> PayloadStatus",
             "    Ready(Payload(7 as UInt32))",
         },
-        "lowering does not yet support PayloadStatus as function return type: "
-        "choice payload type 'Payload' does not yet have a scalar lowered choice ABI"
+        {
+            "%record.Payload = type { i32 }",
+            "define { i32, %record.Payload } @make_status()",
+            "insertvalue %record.Payload undef, i32 7, 0",
+            "insertvalue { i32, %record.Payload } undef, i32 0, 0",
+            "insertvalue { i32, %record.Payload }",
+            "ret { i32, %record.Payload }",
+        }
     );
     assert_cli_emit_llvm_failure(
         executable,

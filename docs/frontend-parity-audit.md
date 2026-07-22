@@ -81,6 +81,12 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-21: expression lowering now rejects whole-binding reuse when any owned descendant key has been consumed.
   After destructuring an owned choice payload, later reads or moves of the original choice binding fail with the precise
   consumed payload key, such as `maybe.Some.value`.
+- 2026-07-21: driver-level choice coverage now pins the same post-destructure diagnostic through source lowering:
+  after `switch holder` binds and consumes `Loaded(payload: Payload)`, rebinding `holder` fails with
+  `use after move: holder.Loaded.payload`.
+- 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
+  `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
+  choice ABI lowering remain unsupported.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

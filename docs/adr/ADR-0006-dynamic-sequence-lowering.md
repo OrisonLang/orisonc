@@ -181,6 +181,10 @@ representation.
   `maybe.Some.value`, without changing switch pattern syntax, planning, or exhaustiveness behavior.
 - Whole-binding expression reads now check consumed owned descendant keys. Reusing a choice after an owned payload
   destructure is rejected with the precise consumed payload key, while preserving the existing branch-join set model.
+- Driver-level source coverage now pins that post-destructure failure for a named choice payload carrying a lowerable
+  record: `Loaded(payload)` consumption rejects later `holder` reuse with `holder.Loaded.payload`.
+- Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
+  Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.
