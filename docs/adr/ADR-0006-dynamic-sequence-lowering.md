@@ -214,6 +214,8 @@ representation.
   `nested.box.payload` after balanced `if` and `switch` transfers.
 - Driver aggregate-field coverage now pins nested aggregate-descendant `if` and `switch` ownership mismatch
   diagnostics for `nested.box.payload`.
+- Driver aggregate-field coverage now pins scalar-terminal nested member call success for `nested.box.count`, proving
+  scalar field arguments do not trigger ownership-transfer diagnostics.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

@@ -75,6 +75,23 @@ int main() {
         }
         return lines;
     };
+    auto scalar_nested_member_call_cli_lines = [] {
+        return std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "    count: UInt32",
+            "record Nested",
+            "    box: Box",
+            "function consume_count(count: UInt32) -> UInt32",
+            "    count",
+            "function main() -> UInt32",
+            "    let nested: Nested = Nested(Box(Payload(1 as UInt32), 7 as UInt32))",
+            "    consume_count(nested.box.count)",
+        };
+    };
 
     assert_cli_parse_failure(
         executable,
@@ -382,6 +399,18 @@ int main() {
         aggregate_ownership_cli_lines(true, true, true, true),
         "use after move: nested.box.payload"
     );
+    auto nested_scalar_member_call_path =
+        std::filesystem::temp_directory_path() / "orison_cli_nested_scalar_member_call_success.or";
+    assert_cli_parse_success(
+        executable,
+        nested_scalar_member_call_path,
+        scalar_nested_member_call_cli_lines()
+    );
+    auto nested_scalar_member_call_output =
+        read_command_output(executable.string() + " --emit-llvm " + nested_scalar_member_call_path.string());
+    assert(nested_scalar_member_call_output.find("call i32 @consume_count(i32") != std::string::npos);
+    assert(nested_scalar_member_call_output.find("ownership mismatch") == std::string::npos);
+    assert(nested_scalar_member_call_output.find("use after move") == std::string::npos);
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_call_argument_nested_array_record_choice_ternary_field_type.or",
