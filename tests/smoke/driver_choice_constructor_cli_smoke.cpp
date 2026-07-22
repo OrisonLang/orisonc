@@ -2182,6 +2182,36 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_payload_run.or",
         sourced_scalar_choice_maybe_record_maybe_nested_array_payload_lines
     );
+    auto choice_payload_parameter_forward_success_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "record Payload",
+        "    value: UInt32",
+        "choice Holder",
+        "    Loaded(payload: Payload)",
+        "    Empty",
+        "function classify(holder: Holder) -> UInt32",
+        "    191 as UInt32",
+        "function main() -> UInt32",
+        "    let holder: Holder = Loaded(Payload(191 as UInt32))",
+        "    classify(holder) - 191 as UInt32",
+    };
+    assert_cli_emit_llvm_success(
+        executable,
+        smoke_temp_root / "orison_cli_choice_payload_parameter_forward_success_emit.or",
+        choice_payload_parameter_forward_success_lines,
+        {
+            "%record.Payload = type { i32 }",
+            "define i32 @classify({ i32, %record.Payload } %holder)",
+            "define i32 @main()",
+            "call i32 @classify({ i32, %record.Payload }",
+            "ret i32 191",
+        }
+    );
+    assert_cli_run_success(
+        executable,
+        smoke_temp_root / "orison_cli_choice_payload_parameter_forward_success_run.or",
+        choice_payload_parameter_forward_success_lines
+    );
     auto consumed_choice_payload_parameter_reuse_lines = std::vector<std::string_view> {
         "package demo.cli",
         "record Payload",
