@@ -200,6 +200,8 @@ representation.
   matching the broader aggregate-descendant transfer model.
 - Driver aggregate-field coverage now pins that generalized `if branch ownership mismatch` diagnostic for a
   non-`DynamicArray` record-field transfer mismatch across continuing branches.
+- Driver aggregate-field coverage now also pins the generalized `switch case ownership mismatch` diagnostic for a
+  non-`DynamicArray` record-field transfer mismatch across continuing cases.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
