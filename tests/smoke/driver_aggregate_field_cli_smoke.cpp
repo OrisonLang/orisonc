@@ -314,6 +314,53 @@ int main() {
     );
     assert_cli_emit_llvm_failure(
         executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_record_field_if_branch_ownership_mismatch.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "record Nested",
+            "    box: Box",
+            "function consume_payload(payload: Payload) -> UInt32",
+            "    payload.value",
+            "function main(flag: Bool) -> UInt32",
+            "    let nested: Nested = Nested(Box(Payload(1 as UInt32)))",
+            "    if flag",
+            "        let consumed: UInt32 = consume_payload(nested.box.payload)",
+            "    else",
+            "        let fallback: UInt32 = 0 as UInt32",
+            "    0 as UInt32",
+        },
+        "if branch ownership mismatch: owned transfers must match across all continuing branches"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_record_field_switch_case_ownership_mismatch.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "record Nested",
+            "    box: Box",
+            "function consume_payload(payload: Payload) -> UInt32",
+            "    payload.value",
+            "function main(flag: Bool) -> UInt32",
+            "    let nested: Nested = Nested(Box(Payload(1 as UInt32)))",
+            "    switch flag",
+            "        true =>",
+            "            let consumed: UInt32 = consume_payload(nested.box.payload)",
+            "        false =>",
+            "            let fallback: UInt32 = 0 as UInt32",
+            "    0 as UInt32",
+        },
+        "switch case ownership mismatch: owned transfers must match across all continuing cases"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
         std::filesystem::temp_directory_path() / "orison_cli_record_field_if_balanced_post_merge_reuse.or",
         std::vector<std::string_view> {
             "package demo.cli",
