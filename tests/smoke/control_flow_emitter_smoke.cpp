@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include <string_view>
 #include <unistd.h>
 
 int main() {
@@ -201,42 +202,59 @@ int main() {
         .string_constants = orison::lowering::collect_string_constants(aggregate_parse_result.module),
         .options = {},
     };
-    auto seed_aggregate_state = [] {
+    auto seed_aggregate_state = [](
+        std::string_view owner_name,
+        std::string_view source_type_name,
+        std::string_view llvm_type,
+        std::string_view storage_name
+    ) {
         auto aggregate_state = orison::lowering::FunctionLoweringState {};
         aggregate_state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
             .type = "i1",
             .value = "%flag",
             .signedness = orison::lowering::IntegerSignedness::not_integer,
         });
-        aggregate_state.addressable_bindings.emplace("box", orison::lowering::AddressableBinding {
+        aggregate_state.addressable_bindings.emplace(std::string {owner_name}, orison::lowering::AddressableBinding {
             .type = orison::lowering::LoweredType {
-                .type = "%record.Box",
+                .type = std::string {llvm_type},
                 .signedness = orison::lowering::IntegerSignedness::not_integer,
             },
-            .storage = "%box.addr",
+            .storage = std::string {storage_name},
         });
-        aggregate_state.source_type_names.emplace("box", "Box");
+        aggregate_state.source_type_names.emplace(std::string {owner_name}, std::string {source_type_name});
         return aggregate_state;
     };
-    auto seed_nested_aggregate_state = [] {
-        auto aggregate_state = orison::lowering::FunctionLoweringState {};
-        aggregate_state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
-            .type = "i1",
-            .value = "%flag",
-            .signedness = orison::lowering::IntegerSignedness::not_integer,
-        });
-        aggregate_state.addressable_bindings.emplace("nested", orison::lowering::AddressableBinding {
-            .type = orison::lowering::LoweredType {
-                .type = "%record.Nested",
-                .signedness = orison::lowering::IntegerSignedness::not_integer,
+    auto seed_box_state = [&seed_aggregate_state] {
+        return seed_aggregate_state("box", "Box", "%record.Box", "%box.addr");
+    };
+    auto seed_nested_state = [&seed_aggregate_state] {
+        return seed_aggregate_state("nested", "Nested", "%record.Nested", "%nested.addr");
+    };
+    auto assert_post_merge_reuse_failure = [&aggregate_context](
+        orison::lowering::FunctionLoweringSession& session,
+        orison::lowering::LoweringFailures const& failures,
+        std::string_view owner_name,
+        std::string_view expected_llvm_type,
+        std::string_view expected_message
+    ) {
+        auto post_merge_output = std::ostringstream {};
+        auto post_merge_value = orison::lowering::lower_expression(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = std::string {owner_name},
             },
-            .storage = "%nested.addr",
-        });
-        aggregate_state.source_type_names.emplace("nested", "Nested");
-        return aggregate_state;
+            expected_llvm_type,
+            orison::lowering::IntegerSignedness::not_integer,
+            aggregate_context,
+            session,
+            post_merge_output
+        );
+        assert(!post_merge_value.has_value());
+        assert(post_merge_output.str().empty());
+        assert(orison::lowering::render_expression_lowering_failure(failures.expression) == expected_message);
     };
 
-    auto aggregate_if_state = seed_aggregate_state();
+    auto aggregate_if_state = seed_box_state();
     auto aggregate_if_failures = orison::lowering::LoweringFailures {};
     auto aggregate_if_session = orison::lowering::FunctionLoweringSession {
         .state = aggregate_if_state,
@@ -259,7 +277,7 @@ int main() {
     );
 
     aggregate_diagnostics = {};
-    auto aggregate_switch_state = seed_aggregate_state();
+    auto aggregate_switch_state = seed_box_state();
     auto aggregate_switch_failures = orison::lowering::LoweringFailures {};
     auto aggregate_switch_session = orison::lowering::FunctionLoweringSession {
         .state = aggregate_switch_state,
@@ -282,7 +300,7 @@ int main() {
     );
 
     aggregate_diagnostics = {};
-    auto aggregate_if_balanced_state = seed_aggregate_state();
+    auto aggregate_if_balanced_state = seed_box_state();
     auto aggregate_if_balanced_failures = orison::lowering::LoweringFailures {};
     auto aggregate_if_balanced_session = orison::lowering::FunctionLoweringSession {
         .state = aggregate_if_balanced_state,
@@ -304,27 +322,16 @@ int main() {
         aggregate_if_balanced_state.ownership_transfers,
         "box.payload"
     ));
-    auto aggregate_if_post_merge_output = std::ostringstream {};
-    auto aggregate_if_post_merge_box = orison::lowering::lower_expression(
-        orison::syntax::ExpressionSyntax {
-            .kind = orison::syntax::ExpressionKind::name,
-            .text = "box",
-        },
-        "%record.Box",
-        orison::lowering::IntegerSignedness::not_integer,
-        aggregate_context,
+    assert_post_merge_reuse_failure(
         aggregate_if_balanced_session,
-        aggregate_if_post_merge_output
-    );
-    assert(!aggregate_if_post_merge_box.has_value());
-    assert(aggregate_if_post_merge_output.str().empty());
-    assert(
-        orison::lowering::render_expression_lowering_failure(aggregate_if_balanced_failures.expression) ==
+        aggregate_if_balanced_failures,
+        "box",
+        "%record.Box",
         "use after move: box.payload"
     );
 
     aggregate_diagnostics = {};
-    auto aggregate_switch_balanced_state = seed_aggregate_state();
+    auto aggregate_switch_balanced_state = seed_box_state();
     auto aggregate_switch_balanced_failures = orison::lowering::LoweringFailures {};
     auto aggregate_switch_balanced_session = orison::lowering::FunctionLoweringSession {
         .state = aggregate_switch_balanced_state,
@@ -346,27 +353,16 @@ int main() {
         aggregate_switch_balanced_state.ownership_transfers,
         "box.payload"
     ));
-    auto aggregate_switch_post_merge_output = std::ostringstream {};
-    auto aggregate_switch_post_merge_box = orison::lowering::lower_expression(
-        orison::syntax::ExpressionSyntax {
-            .kind = orison::syntax::ExpressionKind::name,
-            .text = "box",
-        },
-        "%record.Box",
-        orison::lowering::IntegerSignedness::not_integer,
-        aggregate_context,
+    assert_post_merge_reuse_failure(
         aggregate_switch_balanced_session,
-        aggregate_switch_post_merge_output
-    );
-    assert(!aggregate_switch_post_merge_box.has_value());
-    assert(aggregate_switch_post_merge_output.str().empty());
-    assert(
-        orison::lowering::render_expression_lowering_failure(aggregate_switch_balanced_failures.expression) ==
+        aggregate_switch_balanced_failures,
+        "box",
+        "%record.Box",
         "use after move: box.payload"
     );
 
     aggregate_diagnostics = {};
-    auto nested_if_state = seed_nested_aggregate_state();
+    auto nested_if_state = seed_nested_state();
     auto nested_if_failures = orison::lowering::LoweringFailures {};
     auto nested_if_session = orison::lowering::FunctionLoweringSession {
         .state = nested_if_state,
@@ -389,7 +385,7 @@ int main() {
     );
 
     aggregate_diagnostics = {};
-    auto nested_switch_state = seed_nested_aggregate_state();
+    auto nested_switch_state = seed_nested_state();
     auto nested_switch_failures = orison::lowering::LoweringFailures {};
     auto nested_switch_session = orison::lowering::FunctionLoweringSession {
         .state = nested_switch_state,
@@ -412,7 +408,7 @@ int main() {
     );
 
     aggregate_diagnostics = {};
-    auto nested_if_balanced_state = seed_nested_aggregate_state();
+    auto nested_if_balanced_state = seed_nested_state();
     auto nested_if_balanced_failures = orison::lowering::LoweringFailures {};
     auto nested_if_balanced_session = orison::lowering::FunctionLoweringSession {
         .state = nested_if_balanced_state,
@@ -434,27 +430,16 @@ int main() {
         nested_if_balanced_state.ownership_transfers,
         "nested.box.payload"
     ));
-    auto nested_if_post_merge_output = std::ostringstream {};
-    auto nested_if_post_merge_value = orison::lowering::lower_expression(
-        orison::syntax::ExpressionSyntax {
-            .kind = orison::syntax::ExpressionKind::name,
-            .text = "nested",
-        },
-        "%record.Nested",
-        orison::lowering::IntegerSignedness::not_integer,
-        aggregate_context,
+    assert_post_merge_reuse_failure(
         nested_if_balanced_session,
-        nested_if_post_merge_output
-    );
-    assert(!nested_if_post_merge_value.has_value());
-    assert(nested_if_post_merge_output.str().empty());
-    assert(
-        orison::lowering::render_expression_lowering_failure(nested_if_balanced_failures.expression) ==
+        nested_if_balanced_failures,
+        "nested",
+        "%record.Nested",
         "use after move: nested.box.payload"
     );
 
     aggregate_diagnostics = {};
-    auto nested_switch_balanced_state = seed_nested_aggregate_state();
+    auto nested_switch_balanced_state = seed_nested_state();
     auto nested_switch_balanced_failures = orison::lowering::LoweringFailures {};
     auto nested_switch_balanced_session = orison::lowering::FunctionLoweringSession {
         .state = nested_switch_balanced_state,
@@ -476,22 +461,11 @@ int main() {
         nested_switch_balanced_state.ownership_transfers,
         "nested.box.payload"
     ));
-    auto nested_switch_post_merge_output = std::ostringstream {};
-    auto nested_switch_post_merge_value = orison::lowering::lower_expression(
-        orison::syntax::ExpressionSyntax {
-            .kind = orison::syntax::ExpressionKind::name,
-            .text = "nested",
-        },
-        "%record.Nested",
-        orison::lowering::IntegerSignedness::not_integer,
-        aggregate_context,
+    assert_post_merge_reuse_failure(
         nested_switch_balanced_session,
-        nested_switch_post_merge_output
-    );
-    assert(!nested_switch_post_merge_value.has_value());
-    assert(nested_switch_post_merge_output.str().empty());
-    assert(
-        orison::lowering::render_expression_lowering_failure(nested_switch_balanced_failures.expression) ==
+        nested_switch_balanced_failures,
+        "nested",
+        "%record.Nested",
         "use after move: nested.box.payload"
     );
 

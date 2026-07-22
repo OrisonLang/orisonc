@@ -119,6 +119,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   mismatch diagnostics for `nested.box.payload`.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
+- 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate
+  states and post-merge reuse diagnostics, reducing fixture drift risk.
 - 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
   `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
   choice ABI lowering remain unsupported.
