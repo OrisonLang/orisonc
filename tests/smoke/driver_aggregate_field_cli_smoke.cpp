@@ -269,6 +269,27 @@ int main() {
             "    let shelf: ChoiceShelf<UInt32> = ChoiceShelf([[flag ? Some(1 as UInt32) : Empty]])"
         )
     );
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_record_field_if_branch_ownership_mismatch.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "function consume_payload(payload: Payload) -> UInt32",
+            "    payload.value",
+            "function main(flag: Bool) -> UInt32",
+            "    let box: Box = Box(Payload(1 as UInt32))",
+            "    if flag",
+            "        let consumed: UInt32 = consume_payload(box.payload)",
+            "    else",
+            "        let fallback: UInt32 = 0 as UInt32",
+            "    0 as UInt32",
+        },
+        "if branch ownership mismatch: owned transfers must match across all continuing branches"
+    );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_call_argument_nested_array_record_choice_ternary_field_type.or",

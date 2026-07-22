@@ -198,6 +198,8 @@ representation.
   carrying parallel switch-specific implementations.
 - Ownership-join mismatch diagnostics now say `owned transfers must match` instead of naming only `DynamicArray`,
   matching the broader aggregate-descendant transfer model.
+- Driver aggregate-field coverage now pins that generalized `if branch ownership mismatch` diagnostic for a
+  non-`DynamicArray` record-field transfer mismatch across continuing branches.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,

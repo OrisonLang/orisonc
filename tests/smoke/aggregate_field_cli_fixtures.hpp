@@ -82,6 +82,25 @@ void assert_cli_parse_success(
     assert(output.find("parsed ") != std::string::npos);
 }
 
+template <typename SourceLines>
+void assert_cli_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    SourceLines const& lines,
+    std::string_view expected_message
+) {
+    {
+        std::ofstream output(path);
+        for (auto line : lines) {
+            output << line << '\n';
+        }
+    }
+
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+}
+
 auto cli_module_lines(std::vector<std::string> body_lines) -> std::vector<std::string> {
     std::vector<std::string> lines {"package demo.cli"};
     lines.insert(lines.end(), body_lines.begin(), body_lines.end());

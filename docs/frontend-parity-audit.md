@@ -101,6 +101,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   instead of carrying parallel switch-specific implementations.
 - 2026-07-21: ownership-join mismatch diagnostics now say `owned transfers must match` instead of naming only
   `DynamicArray`, matching the broader aggregate-descendant transfer model.
+- 2026-07-22: driver aggregate-field coverage now pins that generalized `if branch ownership mismatch` diagnostic for
+  a non-`DynamicArray` record-field transfer mismatch across continuing branches.
 - 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
   `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
   choice ABI lowering remain unsupported.
