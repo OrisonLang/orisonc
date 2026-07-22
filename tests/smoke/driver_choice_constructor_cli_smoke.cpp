@@ -2190,7 +2190,9 @@ auto main() -> int {
         "    Loaded(payload: Payload)",
         "    Empty",
         "function classify(holder: Holder) -> UInt32",
-        "    191 as UInt32",
+        "    switch holder",
+        "        Loaded(payload) => payload.value",
+        "        Empty => 2 as UInt32",
         "function main() -> UInt32",
         "    let holder: Holder = Loaded(Payload(191 as UInt32))",
         "    classify(holder) - 191 as UInt32",
@@ -2204,7 +2206,7 @@ auto main() -> int {
             "define i32 @classify({ i32, %record.Payload } %holder)",
             "define i32 @main()",
             "call i32 @classify({ i32, %record.Payload }",
-            "ret i32 191",
+            "switch i32",
         }
     );
     assert_cli_run_success(

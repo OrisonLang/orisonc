@@ -86,8 +86,11 @@ This file tracks which source-language frontend slices are reflected in the curr
   `use after move: holder.Loaded.payload`.
 - 2026-07-21: contextual function signatures now have driver coverage for module-local choice parameters with aggregate
   payload ABI. `function consume_holder(holder: Holder)` accepts the same `{ i32, %record.Payload }` layout used for
-  choice locals and returns, and a positive runnable fixture now passes `Holder` to `classify(holder)` without
-  destructuring the payload.
+  choice locals and returns, and a positive runnable fixture now passes `Holder` to `classify(holder)` where the callee
+  switches over `Loaded(payload)`.
+- 2026-07-21: final `switch` ownership joins now normalize owned choice-payload destructure keys across continuing
+  cases for the switched subject, so `Loaded(payload)` and `Empty` arms can merge while preserving the post-switch
+  consumed subject state.
 - 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
   `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
   choice ABI lowering remain unsupported.

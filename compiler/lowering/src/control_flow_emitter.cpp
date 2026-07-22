@@ -21,6 +21,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -50,6 +51,56 @@ auto lower_final_switch_statement(
     std::ostringstream& output,
     std::optional<std::string_view> expected_source_type_name
 ) -> std::optional<LoweredExpression>;
+
+auto owned_switch_payload_transfer_names(
+    SwitchPlan const& plan,
+    syntax::ExpressionSyntax const& subject_expression,
+    std::optional<std::string_view> subject_source_type_name,
+    LoweringContext const& context
+) -> std::vector<std::string> {
+    if (!subject_source_type_name.has_value() ||
+        subject_expression.kind != syntax::ExpressionKind::name) {
+        return {};
+    }
+
+    auto names = std::vector<std::string> {};
+    auto seen = std::unordered_set<std::string> {};
+    for (auto const& planned_case : plan.cases) {
+        if (planned_case.syntax == nullptr || planned_case.syntax->is_default) {
+            continue;
+        }
+        auto const& pattern = planned_case.syntax->pattern;
+        if (pattern.kind != syntax::ExpressionKind::call ||
+            pattern.left == nullptr ||
+            pattern.left->kind != syntax::ExpressionKind::name ||
+            pattern.arguments.size() != 1 ||
+            pattern.arguments.front().kind != syntax::ExpressionKind::name) {
+            continue;
+        }
+        auto transfer = owned_choice_payload_transfer(
+            subject_expression.text,
+            *subject_source_type_name,
+            pattern.left->text,
+            pattern.arguments.front().text,
+            context
+        );
+        if (transfer.has_value() && seen.insert(transfer->binding_name).second) {
+            names.push_back(std::move(transfer->binding_name));
+        }
+    }
+    return names;
+}
+
+void normalize_switch_payload_transfers(
+    std::vector<OwnershipTransferState>& states,
+    std::vector<std::string> const& payload_transfer_names
+) {
+    for (auto& state : states) {
+        for (auto const& name : payload_transfer_names) {
+            mark_owned_binding_consumed(state, name);
+        }
+    }
+}
 
 auto lower_nested_final_control_flow(
     syntax::StatementSyntax const& statement,
@@ -413,6 +464,15 @@ auto lower_final_switch_statement(
         );
         return std::nullopt;
     }
+    normalize_switch_payload_transfers(
+        case_context.ownership_transfers_by_case,
+        owned_switch_payload_transfer_names(
+            plan,
+            statement.expression,
+            subject_source_type,
+            context.lowering
+        )
+    );
     auto merged_transfers =
         merge_ownership_transfer_states(case_context.ownership_transfers_by_case);
     if (!merged_transfers.has_value()) {

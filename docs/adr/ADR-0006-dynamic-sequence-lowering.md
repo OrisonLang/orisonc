@@ -185,7 +185,9 @@ representation.
   record: `Loaded(payload)` consumption rejects later `holder` reuse with `holder.Loaded.payload`.
 - Contextual function-signature coverage now pins module-local choice parameters with aggregate payload ABI, so
   `Holder` can be passed as a parameter using the same `{ i32, %record.Payload }` representation as locals and returns.
-  Positive driver coverage passes `Holder` to `classify(holder)` without destructuring the owned payload.
+  Positive driver coverage passes `Holder` to `classify(holder)` where the callee switches over `Loaded(payload)`.
+- Final `switch` ownership joins normalize owned choice-payload destructure keys across continuing cases for the
+  switched subject. This keeps post-switch reuse conservative without rejecting valid variant-specific payload matches.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
