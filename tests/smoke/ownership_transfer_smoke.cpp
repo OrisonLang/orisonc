@@ -2,6 +2,7 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/maybe_switch_lowering.hpp"
+#include "orison/lowering/nonvalue_switch_lowering.hpp"
 #include "orison/lowering/string_constants.hpp"
 
 #include <cassert>
@@ -226,5 +227,41 @@ int main() {
         "  %payload.addr = alloca %record.Payload\n"
         "  store %record.Payload %tmp0, ptr %payload.addr\n"
     );
+
+    auto consumed_case_state = orison::lowering::OwnershipTransferState {};
+    orison::lowering::mark_owned_binding_consumed(consumed_case_state, "holder.Loaded.payload");
+    auto empty_case_state = orison::lowering::OwnershipTransferState {};
+    auto nonvalue_switch_case_states = std::vector<orison::lowering::OwnershipTransferState> {
+        consumed_case_state,
+        empty_case_state,
+    };
+    auto holder_subject = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "holder",
+    };
+    auto consumed_descendants = orison::lowering::consumed_nonvalue_switch_subject_descendant_names(
+        nonvalue_switch_case_states,
+        holder_subject
+    );
+    assert(consumed_descendants.size() == 1);
+    assert(consumed_descendants.front() == "holder.Loaded.payload");
+
+    orison::lowering::normalize_nonvalue_switch_subject_descendant_transfers(
+        nonvalue_switch_case_states,
+        consumed_descendants
+    );
+    auto normalized_merge = orison::lowering::merge_ownership_transfer_states(nonvalue_switch_case_states);
+    assert(normalized_merge.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(*normalized_merge, "holder.Loaded.payload"));
+
+    auto other_subject = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "other",
+    };
+    auto unrelated_descendants = orison::lowering::consumed_nonvalue_switch_subject_descendant_names(
+        nonvalue_switch_case_states,
+        other_subject
+    );
+    assert(unrelated_descendants.empty());
     return 0;
 }

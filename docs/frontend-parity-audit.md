@@ -95,6 +95,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   later read of the original choice subject with `use after move: holder.Loaded.payload`.
 - 2026-07-21: non-value `switch` ownership joins now normalize consumed descendants of the named switched subject,
   including owned choice-payload destructure keys, and driver coverage pins post-switch source reuse as `use after move`.
+- 2026-07-21: ownership-transfer smoke coverage now pins that normalization below the CLI path by merging a consumed
+  `holder.Loaded.payload` case with an otherwise empty continuing case.
 - 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
   `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
   choice ABI lowering remain unsupported.
