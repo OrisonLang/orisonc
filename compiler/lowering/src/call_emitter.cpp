@@ -107,6 +107,39 @@ auto consumed_owned_dynamic_array_argument_name(
     return argument.text;
 }
 
+auto consumed_owned_record_field_argument_name(
+    syntax::ExpressionSyntax const& argument,
+    std::optional<std::string_view> expected_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (!expected_source_type.has_value() ||
+        !is_owned_transfer_source_type(*expected_source_type, context.lowering) ||
+        argument.kind != syntax::ExpressionKind::member_access ||
+        argument.left == nullptr ||
+        argument.left->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto const& owner_name = argument.left->text;
+    auto owner_source_type = session.state.source_type_names.find(owner_name);
+    if (owner_source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+
+    auto transfer = owned_record_field_transfer(
+        owner_name,
+        owner_source_type->second,
+        argument.text,
+        context.lowering
+    );
+    if (!transfer.has_value() || transfer->source_type_name != *expected_source_type) {
+        return std::nullopt;
+    }
+
+    return transfer->binding_name;
+}
+
 auto lower_call_arguments_impl(
     syntax::ExpressionSyntax const* receiver_expression,
     LoweredExpression const* lowered_receiver_expression,
@@ -203,6 +236,14 @@ auto lower_call_arguments_impl(
         if (auto consumed_name = consumed_owned_dynamic_array_argument_name(
                 arguments[index],
                 expected_source_type,
+                session
+            )) {
+            mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));
+        }
+        if (auto consumed_name = consumed_owned_record_field_argument_name(
+                arguments[index],
+                expected_source_type,
+                context,
                 session
             )) {
             mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));

@@ -172,6 +172,9 @@ representation.
 - The reusable ownership-transfer state now also derives stable owned aggregate member keys for record fields and choice
   payloads. Record-field reads consume those keys for use-after-move diagnostics before aggregate IR is emitted; source
   syntax that produces aggregate-field moves remains separate future work.
+- Direct record-field call arguments now produce those member keys when the callee parameter expects the field's owned
+  source type. This gives `box.payload` transfers a source-backed producer while keeping choice-payload production and
+  nested aggregate-field transfer as follow-up work.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.

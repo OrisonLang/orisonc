@@ -1,7 +1,9 @@
 #include "orison/lowering/call_emitter.hpp"
 #include "orison/lowering/c_abi_adapter.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 
 #include <cassert>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -141,5 +143,103 @@ int main() {
     auto member_result = orison::lowering::emit_value_call("%tmp2", scale, *member_arguments, member_output);
     assert(member_result.type == "i32");
     assert(member_output.str() == "  %tmp2 = call i32 @method.UInt32.scale(i32 %value, i32 2)\n");
+
+    auto transfer_context = orison::lowering::LoweringContext {};
+    transfer_context.records.emplace(
+        "Payload",
+        orison::lowering::LoweredRecordLayout {
+            .name = "Payload",
+            .llvm_type_name = "%record.Payload",
+            .fields = {
+                orison::lowering::LoweredRecordField {
+                    .name = "items",
+                    .source_type_name = "DynamicArray<UInt32>",
+                    .llvm_type = "{ ptr, i64, i64 }",
+                    .index = 0,
+                },
+            },
+        }
+    );
+    transfer_context.records.emplace(
+        "Box",
+        orison::lowering::LoweredRecordLayout {
+            .name = "Box",
+            .llvm_type_name = "%record.Box",
+            .fields = {
+                orison::lowering::LoweredRecordField {
+                    .name = "payload",
+                    .source_type_name = "Payload",
+                    .llvm_type = "%record.Payload",
+                    .index = 0,
+                },
+            },
+        }
+    );
+    auto transfer_emission_context = orison::lowering::LoweringEmissionContext {
+        .lowering = transfer_context,
+        .string_constants = member_string_constants,
+        .options = {},
+    };
+    auto consume_payload = LoweredFunctionSignature {
+        .return_type = "void",
+        .parameter_types = {"%record.Payload"},
+        .parameter_source_type_names = {"Payload"},
+        .parameter_signedness = {IntegerSignedness::not_integer},
+        .symbol_name = "consume_payload",
+    };
+    auto transfer_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "consume_payload",
+            }
+        ),
+    };
+    transfer_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::member_access,
+        .text = "payload",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "box",
+            }
+        ),
+    });
+    auto transfer_state = orison::lowering::FunctionLoweringState {};
+    transfer_state.addressable_bindings.emplace("box", orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = "%record.Box",
+            .signedness = IntegerSignedness::not_integer,
+        },
+        .storage = "%box.addr",
+    });
+    transfer_state.source_type_names.emplace("box", "Box");
+    auto transfer_failures = orison::lowering::LoweringFailures {};
+    auto transfer_session = orison::lowering::FunctionLoweringSession {
+        .state = transfer_state,
+        .failures = transfer_failures,
+    };
+    auto transfer_output = std::ostringstream {};
+    auto transfer_arguments = orison::lowering::lower_call_arguments(
+        transfer_call,
+        consume_payload,
+        transfer_emission_context,
+        transfer_session,
+        transfer_output
+    );
+    assert(transfer_arguments.has_value());
+    assert(transfer_arguments->size() == 1);
+    assert((*transfer_arguments)[0].type == "%record.Payload");
+    assert((*transfer_arguments)[0].value == "%tmp1");
+    assert(orison::lowering::is_owned_binding_consumed(
+        transfer_state.ownership_transfers,
+        "box.payload"
+    ));
+    assert(
+        transfer_output.str() ==
+        "  %tmp0 = getelementptr %record.Box, ptr %box.addr, i32 0, i32 0\n"
+        "  %tmp1 = load %record.Payload, ptr %tmp0\n"
+    );
     return 0;
 }
