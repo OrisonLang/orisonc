@@ -151,6 +151,42 @@ int main() {
     assert(nested_field->binding_name == "nested.box.payload");
     assert(nested_field->source_type_name == "Payload");
 
+    auto missing_outer_field_names = std::vector<std::string> {"missing", "payload"};
+    auto missing_outer_field = orison::lowering::owned_record_member_path_transfer(
+        "nested",
+        "NestedBox",
+        missing_outer_field_names,
+        context
+    );
+    assert(!missing_outer_field.has_value());
+
+    auto missing_inner_field_names = std::vector<std::string> {"box", "missing"};
+    auto missing_inner_field = orison::lowering::owned_record_member_path_transfer(
+        "nested",
+        "NestedBox",
+        missing_inner_field_names,
+        context
+    );
+    assert(!missing_inner_field.has_value());
+
+    auto nested_scalar_field_names = std::vector<std::string> {"box", "count"};
+    auto nested_scalar_field = orison::lowering::owned_record_member_path_transfer(
+        "nested",
+        "NestedBox",
+        nested_scalar_field_names,
+        context
+    );
+    assert(!nested_scalar_field.has_value());
+
+    auto nested_cross_scalar_field_names = std::vector<std::string> {"box", "count", "payload"};
+    auto nested_cross_scalar_field = orison::lowering::owned_record_member_path_transfer(
+        "nested",
+        "NestedBox",
+        nested_cross_scalar_field_names,
+        context
+    );
+    assert(!nested_cross_scalar_field.has_value());
+
     auto owned_payload = orison::lowering::owned_choice_payload_transfer(
         "maybe",
         "MaybePayload",
