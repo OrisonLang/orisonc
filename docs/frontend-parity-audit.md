@@ -127,6 +127,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `type 'UInt32' has no member 'payload'` diagnostics before lowering.
 - 2026-07-22: semantic and CLI coverage now reject known record receivers with unknown fields, such as
   `header.missing`, while unresolved placeholder receiver types continue to avoid cascade diagnostics.
+- 2026-07-22: semantic and CLI coverage now pin the same unknown-field diagnostic for concrete generic record
+  receivers such as `Box<UInt32>` through `box.missing`.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

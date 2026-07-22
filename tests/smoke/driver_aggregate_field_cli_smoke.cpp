@@ -473,6 +473,19 @@ int main() {
         },
         "type 'Header' has no member 'missing'"
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_concrete_generic_record_unknown_member_failure.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Box<T>",
+            "    value: T",
+            "function main() -> UInt32",
+            "    let box: Box<UInt32> = Box(1 as UInt32)",
+            "    return box.missing",
+        },
+        "type 'Box<UInt32>' has no member 'missing'"
+    );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_call_argument_nested_array_record_choice_ternary_field_type.or",

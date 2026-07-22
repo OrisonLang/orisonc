@@ -4985,6 +4985,24 @@ void test_declared_record_unknown_member_failure() {
     assert_member_access_unknown_member_diagnostic(path, 6, "Header", "missing");
 }
 
+void test_concrete_generic_record_unknown_member_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_concrete_generic_record_unknown_member_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Box<T>",
+            "    value: T",
+            "function demo() -> UInt32",
+            "    let box: Box<UInt32> = Box(1 as UInt32)",
+            "    return box.missing",
+        }
+    );
+
+    assert_member_access_unknown_member_diagnostic(path, 6, "Box<UInt32>", "missing");
+}
+
 void test_record_constructor_return_expression_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_return_success.or";
     write_header_record_constant_fixture(
@@ -12537,6 +12555,7 @@ int main() {
     test_record_constructor_let_binding_field_type_failure();
     test_nested_scalar_member_continuation_failure();
     test_declared_record_unknown_member_failure();
+    test_concrete_generic_record_unknown_member_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();
     test_generic_record_constructor_repeated_field_success();

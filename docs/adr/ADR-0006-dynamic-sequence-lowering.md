@@ -224,6 +224,8 @@ representation.
   lowering.
 - Semantic and CLI coverage now reject known record receivers with unknown fields, such as `header.missing`, while
   unresolved placeholder receiver types continue to avoid cascade diagnostics.
+- Semantic and CLI coverage now pin the same unknown-field diagnostic for concrete generic record receivers such as
+  `Box<UInt32>` through `box.missing`.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
