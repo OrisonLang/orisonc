@@ -172,6 +172,12 @@ int main() {
                     .llvm_type = "%record.Payload",
                     .index = 0,
                 },
+                orison::lowering::LoweredRecordField {
+                    .name = "count",
+                    .source_type_name = "UInt32",
+                    .llvm_type = "i32",
+                    .index = 1,
+                },
             },
         }
     );
@@ -319,5 +325,131 @@ int main() {
         "  %tmp1 = getelementptr %record.Box, ptr %tmp0, i32 0, i32 0\n"
         "  %tmp2 = load %record.Payload, ptr %tmp1\n"
     );
+
+    auto make_nested_member_call = [](
+        std::vector<std::string_view> member_names
+    ) {
+        assert(!member_names.empty());
+        auto expression = orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "nested",
+        };
+        for (auto member_name : member_names) {
+            expression = orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::member_access,
+                .text = std::string {member_name},
+                .left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(expression)),
+            };
+        }
+
+        auto call = orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::call,
+            .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                orison::syntax::ExpressionSyntax {
+                    .kind = orison::syntax::ExpressionKind::name,
+                    .text = "consume",
+                }
+            ),
+        };
+        call.arguments.push_back(std::move(expression));
+        return call;
+    };
+    auto seed_nested_call_state = [] {
+        auto state = orison::lowering::FunctionLoweringState {};
+        state.addressable_bindings.emplace("nested", orison::lowering::AddressableBinding {
+            .type = orison::lowering::LoweredType {
+                .type = "%record.NestedBox",
+                .signedness = IntegerSignedness::not_integer,
+            },
+            .storage = "%nested.addr",
+        });
+        state.source_type_names.emplace("nested", "NestedBox");
+        return state;
+    };
+    auto consume_scalar = LoweredFunctionSignature {
+        .return_type = "void",
+        .parameter_types = {"i32"},
+        .parameter_source_type_names = {"UInt32"},
+        .parameter_signedness = {IntegerSignedness::unsigned_integer},
+        .symbol_name = "consume_scalar",
+    };
+
+    auto scalar_terminal_state = seed_nested_call_state();
+    auto scalar_terminal_failures = orison::lowering::LoweringFailures {};
+    auto scalar_terminal_session = orison::lowering::FunctionLoweringSession {
+        .state = scalar_terminal_state,
+        .failures = scalar_terminal_failures,
+    };
+    auto scalar_terminal_output = std::ostringstream {};
+    auto scalar_terminal_call = make_nested_member_call({"inner", "count"});
+    auto scalar_terminal_arguments = orison::lowering::lower_call_arguments(
+        scalar_terminal_call,
+        consume_scalar,
+        transfer_emission_context,
+        scalar_terminal_session,
+        scalar_terminal_output
+    );
+    assert(scalar_terminal_arguments.has_value());
+    assert(scalar_terminal_arguments->size() == 1);
+    assert((*scalar_terminal_arguments)[0].type == "i32");
+    assert(!orison::lowering::is_owned_binding_consumed(
+        scalar_terminal_state.ownership_transfers,
+        "nested.inner.count"
+    ));
+    assert(scalar_terminal_state.ownership_transfers.consumed_owned_bindings.empty());
+
+    auto missing_outer_state = seed_nested_call_state();
+    auto missing_outer_failures = orison::lowering::LoweringFailures {};
+    auto missing_outer_session = orison::lowering::FunctionLoweringSession {
+        .state = missing_outer_state,
+        .failures = missing_outer_failures,
+    };
+    auto missing_outer_output = std::ostringstream {};
+    auto missing_outer_call = make_nested_member_call({"missing", "payload"});
+    auto missing_outer_arguments = orison::lowering::lower_call_arguments(
+        missing_outer_call,
+        consume_payload,
+        transfer_emission_context,
+        missing_outer_session,
+        missing_outer_output
+    );
+    assert(!missing_outer_arguments.has_value());
+    assert(missing_outer_state.ownership_transfers.consumed_owned_bindings.empty());
+
+    auto missing_inner_state = seed_nested_call_state();
+    auto missing_inner_failures = orison::lowering::LoweringFailures {};
+    auto missing_inner_session = orison::lowering::FunctionLoweringSession {
+        .state = missing_inner_state,
+        .failures = missing_inner_failures,
+    };
+    auto missing_inner_output = std::ostringstream {};
+    auto missing_inner_call = make_nested_member_call({"inner", "missing"});
+    auto missing_inner_arguments = orison::lowering::lower_call_arguments(
+        missing_inner_call,
+        consume_payload,
+        transfer_emission_context,
+        missing_inner_session,
+        missing_inner_output
+    );
+    assert(!missing_inner_arguments.has_value());
+    assert(missing_inner_state.ownership_transfers.consumed_owned_bindings.empty());
+
+    auto cross_scalar_state = seed_nested_call_state();
+    auto cross_scalar_failures = orison::lowering::LoweringFailures {};
+    auto cross_scalar_session = orison::lowering::FunctionLoweringSession {
+        .state = cross_scalar_state,
+        .failures = cross_scalar_failures,
+    };
+    auto cross_scalar_output = std::ostringstream {};
+    auto cross_scalar_call = make_nested_member_call({"inner", "count", "payload"});
+    auto cross_scalar_arguments = orison::lowering::lower_call_arguments(
+        cross_scalar_call,
+        consume_payload,
+        transfer_emission_context,
+        cross_scalar_session,
+        cross_scalar_output
+    );
+    assert(!cross_scalar_arguments.has_value());
+    assert(cross_scalar_state.ownership_transfers.consumed_owned_bindings.empty());
     return 0;
 }

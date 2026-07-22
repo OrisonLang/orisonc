@@ -222,6 +222,8 @@ representation.
   `nested.box.payload` mismatch/reuse fixtures, reducing CLI fixture drift risk.
 - Ownership-transfer smoke coverage now pins nested record-member transfer rejection for missing fields, scalar
   terminal fields, and paths that attempt to continue through a scalar field.
+- Call-emitter smoke coverage now pins the same nested record-member call-argument transfer boundaries, including
+  scalar terminal success without ownership consumption.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
