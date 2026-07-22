@@ -85,7 +85,7 @@ auto main() -> int {
         run_emit_llvm(app, emit_scalar_member_assignment_failure_path);
     assert_failure_with_no_stdout_contains(
         emit_scalar_member_assignment_failure,
-        "lowering aggregate assignment member target is unsupported"
+        "type 'UInt32' has no member 'status'"
     );
 
     auto emit_scalar_index_assignment_failure_path =

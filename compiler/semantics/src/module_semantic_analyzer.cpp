@@ -272,6 +272,11 @@ private:
         return type_name == "Float32" || type_name == "Float64";
     }
 
+    auto is_primitive_scalar_type_name(std::string const& type_name) const -> bool {
+        return is_integer_type_name(type_name) || is_float_type_name(type_name) || type_name == "Bool" ||
+               type_name == "Text" || type_name == "Unit" || is_address_type_name(type_name);
+    }
+
     struct IntegerTypeInfo {
         int bit_width = 0;
         bool is_fixed_width = false;
@@ -1126,6 +1131,13 @@ private:
             }
         }
         return {};
+    }
+
+    auto has_record_field(
+        std::string const& record_type,
+        std::string const& field_name
+    ) const -> bool {
+        return !find_record_field_type_name(record_type, field_name).empty();
     }
 
     auto record_type_for_declaration(syntax::RecordSyntax const& record) const -> syntax::TypeSyntax {
@@ -2250,6 +2262,25 @@ private:
                 "index access currently requires an integer index expression"
             );
         }
+    }
+
+    void validate_member_access_operand(syntax::ExpressionSyntax const& expression) {
+        if (expression.kind != syntax::ExpressionKind::member_access || !expression.left) {
+            return;
+        }
+
+        auto receiver_type_name = infer_expression_type_name(*expression.left);
+        if (receiver_type_name.empty() || has_record_field(receiver_type_name, expression.text)) {
+            return;
+        }
+        if (!is_primitive_scalar_type_name(receiver_type_name)) {
+            return;
+        }
+
+        diagnostics_.error(
+            expression.line,
+            "type '" + receiver_type_name + "' has no member '" + expression.text + "'"
+        );
     }
 
     auto is_declared_unsafe_call(syntax::ExpressionSyntax const& expression) const -> bool {
@@ -4880,6 +4911,7 @@ private:
 
         validate_pointer_constructor_operands(expression);
         validate_index_access_operands(expression);
+        validate_member_access_operand(expression);
         validate_record_constructor_expression(expression);
         validate_call_argument_types(expression);
 
@@ -4980,7 +5012,13 @@ private:
             analyze_expression(argument, in_async_function);
         }
 
-        if (expression.left) {
+        if (expression.kind == syntax::ExpressionKind::call && expression.left &&
+            (expression.left->kind == syntax::ExpressionKind::member_access ||
+             expression.left->kind == syntax::ExpressionKind::null_safe_member_access)) {
+            if (expression.left->left) {
+                analyze_expression(*expression.left->left, in_async_function, allow_thread_value_name);
+            }
+        } else if (expression.left) {
             auto left_allows_thread_value_name =
                 allow_thread_value_name || (expression.kind == syntax::ExpressionKind::unary && expression.text == "await");
             analyze_expression(*expression.left, in_async_function, left_allows_thread_value_name);

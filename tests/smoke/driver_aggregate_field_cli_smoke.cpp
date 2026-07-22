@@ -458,7 +458,7 @@ int main() {
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_scalar_member_continuation_failure.or",
         scalar_nested_member_transfer_failure_cli_lines("nested.box.count.payload"),
-        "lowering does not yet support this return expression: unsupported expression: payload"
+        "type 'UInt32' has no member 'payload'"
     );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,

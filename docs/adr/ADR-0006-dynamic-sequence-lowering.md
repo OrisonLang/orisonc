@@ -219,6 +219,9 @@ representation.
 - Driver aggregate-field coverage now pins scalar-terminal nested member failure paths for `nested.box.count` and
   `nested.box.count.payload`, proving invalid scalar paths stay out of ownership-transfer diagnostics at the CLI
   lowering boundary.
+- Semantic analysis now rejects scalar member paths such as `total.status` and `nested.box.count.payload` with
+  source-level `type 'UInt32' has no member 'status'` and `type 'UInt32' has no member 'payload'` diagnostics before
+  lowering.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

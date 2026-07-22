@@ -2781,6 +2781,19 @@ void assert_function_argument_type_mismatch_diagnostic(
     );
 }
 
+void assert_member_access_unknown_member_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view receiver_type,
+    std::string_view member_name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "type '" + std::string(receiver_type) + "' has no member '" + std::string(member_name) + "'"
+    );
+}
+
 void assert_method_argument_type_mismatch_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -4931,6 +4944,28 @@ void test_record_constructor_let_binding_field_type_failure() {
     );
 
     assert_record_constructor_field_type_diagnostic(path, 6, "version", "Bool", "UInt16");
+}
+
+void test_nested_scalar_member_continuation_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_nested_scalar_member_continuation_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "    count: UInt32",
+            "record Nested",
+            "    box: Box",
+            "function demo() -> UInt32",
+            "    let nested: Nested = Nested(Box(Payload(1 as UInt32), 7 as UInt32))",
+            "    return nested.box.count.payload",
+        }
+    );
+
+    assert_member_access_unknown_member_diagnostic(path, 11, "UInt32", "payload");
 }
 
 void test_record_constructor_return_expression_success() {
@@ -12483,6 +12518,7 @@ int main() {
     test_record_constructor_constant_initializer_field_type_failure();
     test_record_constructor_let_binding_field_access_success();
     test_record_constructor_let_binding_field_type_failure();
+    test_nested_scalar_member_continuation_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();
     test_generic_record_constructor_repeated_field_success();

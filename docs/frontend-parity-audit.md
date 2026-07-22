@@ -122,6 +122,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-22: driver aggregate-field coverage now pins scalar-terminal nested member failure paths for
   `nested.box.count` and `nested.box.count.payload`, proving invalid scalar paths stay out of ownership-transfer
   diagnostics at the CLI lowering boundary.
+- 2026-07-22: semantic analysis now rejects scalar member paths such as `total.status` and
+  `nested.box.count.payload` with source-level `type 'UInt32' has no member 'status'` and
+  `type 'UInt32' has no member 'payload'` diagnostics before lowering.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

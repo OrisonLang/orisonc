@@ -2509,7 +2509,7 @@ int main() {
                 "    return",
             }
         ),
-        "lowering aggregate assignment member target is unsupported"
+        "type 'UInt32' has no member 'status'"
     );
     assert_cli_emit_llvm_failure(
         executable,
