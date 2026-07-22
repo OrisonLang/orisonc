@@ -145,7 +145,7 @@ auto lower_nonvalue_switch_statement(
     if (!merged_transfers.has_value()) {
         diagnostics.error(
             statement.line,
-            "switch case ownership mismatch: owned DynamicArray moves must match across all continuing cases"
+            "switch case ownership mismatch: owned transfers must match across all continuing cases"
         );
         return StatementFlow::failed;
     }

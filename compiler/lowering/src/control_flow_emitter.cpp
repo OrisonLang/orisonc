@@ -236,7 +236,7 @@ auto lower_final_if_statement(
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::if_branch_ownership_mismatch,
-            "owned DynamicArray moves must match across all continuing branches"
+            "owned transfers must match across all continuing branches"
         );
         return std::nullopt;
     }
@@ -425,7 +425,7 @@ auto lower_final_switch_statement(
         record_control_flow_lowering_failure(
             failures,
             ControlFlowLoweringFailureReason::switch_case_ownership_mismatch,
-            "owned DynamicArray moves must match across all continuing cases"
+            "owned transfers must match across all continuing cases"
         );
         return std::nullopt;
     }

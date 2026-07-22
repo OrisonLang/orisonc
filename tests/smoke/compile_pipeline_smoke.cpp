@@ -1792,8 +1792,9 @@ auto main() -> int {
     );
     assert(dynamic_array_owned_parameter_branch_mismatch.has_errors());
     assert(
-        dynamic_array_owned_parameter_branch_mismatch.error_text.find("if branch ownership mismatch") !=
-        std::string::npos
+        dynamic_array_owned_parameter_branch_mismatch.error_text.find(
+            "if branch ownership mismatch: owned transfers must match across all continuing branches"
+        ) != std::string::npos
     );
 
     auto dynamic_array_owned_parameter_statement_branch_mismatch_path =
@@ -1835,7 +1836,7 @@ auto main() -> int {
     assert(dynamic_array_owned_parameter_statement_branch_mismatch.has_errors());
     assert(
         dynamic_array_owned_parameter_statement_branch_mismatch.error_text.find(
-            "if branch ownership mismatch"
+            "if branch ownership mismatch: owned transfers must match across all continuing branches"
         ) != std::string::npos
     );
 

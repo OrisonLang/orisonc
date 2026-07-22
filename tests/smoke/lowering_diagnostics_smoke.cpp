@@ -143,6 +143,18 @@ int main() {
             "case label"
         ) == "switch pattern lowering failed: case label"
     );
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(
+            ControlFlowLoweringFailureReason::if_branch_ownership_mismatch,
+            "owned transfers must match across all continuing branches"
+        ) == "if branch ownership mismatch: owned transfers must match across all continuing branches"
+    );
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(
+            ControlFlowLoweringFailureReason::switch_case_ownership_mismatch,
+            "owned transfers must match across all continuing cases"
+        ) == "switch case ownership mismatch: owned transfers must match across all continuing cases"
+    );
 
     auto failures = LoweringFailures {};
     assert(orison::lowering::record_expression_lowering_failure(

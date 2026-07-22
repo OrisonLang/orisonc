@@ -100,7 +100,7 @@ auto lower_nonvalue_if_statement(
     if (!merged_transfers.has_value()) {
         diagnostics.error(
             statement.line,
-            "if branch ownership mismatch: owned DynamicArray moves must match across all continuing branches"
+            "if branch ownership mismatch: owned transfers must match across all continuing branches"
         );
         return StatementFlow::failed;
     }
