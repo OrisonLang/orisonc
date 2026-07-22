@@ -10,6 +10,71 @@ int main() {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
+    auto aggregate_ownership_cli_lines = [](
+        bool include_nested,
+        bool use_switch,
+        bool balanced_transfer,
+        bool post_merge_reuse
+    ) {
+        auto lines = std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+        };
+        if (include_nested) {
+            lines.push_back("record Nested");
+            lines.push_back("    box: Box");
+        }
+        lines.push_back("function consume_payload(payload: Payload) -> UInt32");
+        lines.push_back("    payload.value");
+        if (post_merge_reuse) {
+            if (include_nested) {
+                lines.push_back("function consume_nested(nested: Nested) -> UInt32");
+                lines.push_back("    nested.box.payload.value");
+            } else {
+                lines.push_back("function consume_box(box: Box) -> UInt32");
+                lines.push_back("    box.payload.value");
+            }
+        }
+        lines.push_back("function main(flag: Bool) -> UInt32");
+        if (include_nested) {
+            lines.push_back("    let nested: Nested = Nested(Box(Payload(1 as UInt32)))");
+        } else {
+            lines.push_back("    let box: Box = Box(Payload(1 as UInt32))");
+        }
+        if (use_switch) {
+            lines.push_back("    switch flag");
+            lines.push_back("        true =>");
+            lines.push_back(include_nested
+                ? "            let consumed: UInt32 = consume_payload(nested.box.payload)"
+                : "            let consumed: UInt32 = consume_payload(box.payload)");
+            lines.push_back("        false =>");
+            lines.push_back(balanced_transfer
+                ? (include_nested
+                    ? "            let consumed: UInt32 = consume_payload(nested.box.payload)"
+                    : "            let consumed: UInt32 = consume_payload(box.payload)")
+                : "            let fallback: UInt32 = 0 as UInt32");
+        } else {
+            lines.push_back("    if flag");
+            lines.push_back(include_nested
+                ? "        let consumed: UInt32 = consume_payload(nested.box.payload)"
+                : "        let consumed: UInt32 = consume_payload(box.payload)");
+            lines.push_back("    else");
+            lines.push_back(balanced_transfer
+                ? (include_nested
+                    ? "        let consumed: UInt32 = consume_payload(nested.box.payload)"
+                    : "        let consumed: UInt32 = consume_payload(box.payload)")
+                : "        let fallback: UInt32 = 0 as UInt32");
+        }
+        if (post_merge_reuse) {
+            lines.push_back(include_nested ? "    consume_nested(nested)" : "    consume_box(box)");
+        } else {
+            lines.push_back("    0 as UInt32");
+        }
+        return lines;
+    };
 
     assert_cli_parse_failure(
         executable,
@@ -272,189 +337,49 @@ int main() {
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_record_field_if_branch_ownership_mismatch.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "record Payload",
-            "    value: UInt32",
-            "record Box",
-            "    payload: Payload",
-            "function consume_payload(payload: Payload) -> UInt32",
-            "    payload.value",
-            "function main(flag: Bool) -> UInt32",
-            "    let box: Box = Box(Payload(1 as UInt32))",
-            "    if flag",
-            "        let consumed: UInt32 = consume_payload(box.payload)",
-            "    else",
-            "        let fallback: UInt32 = 0 as UInt32",
-            "    0 as UInt32",
-        },
+        aggregate_ownership_cli_lines(false, false, false, false),
         "if branch ownership mismatch: owned transfers must match across all continuing branches"
     );
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_record_field_switch_case_ownership_mismatch.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "record Payload",
-            "    value: UInt32",
-            "record Box",
-            "    payload: Payload",
-            "function consume_payload(payload: Payload) -> UInt32",
-            "    payload.value",
-            "function main(flag: Bool) -> UInt32",
-            "    let box: Box = Box(Payload(1 as UInt32))",
-            "    switch flag",
-            "        true =>",
-            "            let consumed: UInt32 = consume_payload(box.payload)",
-            "        false =>",
-            "            let fallback: UInt32 = 0 as UInt32",
-            "    0 as UInt32",
-        },
+        aggregate_ownership_cli_lines(false, true, false, false),
         "switch case ownership mismatch: owned transfers must match across all continuing cases"
     );
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_record_field_if_branch_ownership_mismatch.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "record Payload",
-            "    value: UInt32",
-            "record Box",
-            "    payload: Payload",
-            "record Nested",
-            "    box: Box",
-            "function consume_payload(payload: Payload) -> UInt32",
-            "    payload.value",
-            "function main(flag: Bool) -> UInt32",
-            "    let nested: Nested = Nested(Box(Payload(1 as UInt32)))",
-            "    if flag",
-            "        let consumed: UInt32 = consume_payload(nested.box.payload)",
-            "    else",
-            "        let fallback: UInt32 = 0 as UInt32",
-            "    0 as UInt32",
-        },
+        aggregate_ownership_cli_lines(true, false, false, false),
         "if branch ownership mismatch: owned transfers must match across all continuing branches"
     );
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_record_field_switch_case_ownership_mismatch.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "record Payload",
-            "    value: UInt32",
-            "record Box",
-            "    payload: Payload",
-            "record Nested",
-            "    box: Box",
-            "function consume_payload(payload: Payload) -> UInt32",
-            "    payload.value",
-            "function main(flag: Bool) -> UInt32",
-            "    let nested: Nested = Nested(Box(Payload(1 as UInt32)))",
-            "    switch flag",
-            "        true =>",
-            "            let consumed: UInt32 = consume_payload(nested.box.payload)",
-            "        false =>",
-            "            let fallback: UInt32 = 0 as UInt32",
-            "    0 as UInt32",
-        },
+        aggregate_ownership_cli_lines(true, true, false, false),
         "switch case ownership mismatch: owned transfers must match across all continuing cases"
     );
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_record_field_if_balanced_post_merge_reuse.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "record Payload",
-            "    value: UInt32",
-            "record Box",
-            "    payload: Payload",
-            "function consume_payload(payload: Payload) -> UInt32",
-            "    payload.value",
-            "function consume_box(box: Box) -> UInt32",
-            "    box.payload.value",
-            "function main(flag: Bool) -> UInt32",
-            "    let box: Box = Box(Payload(1 as UInt32))",
-            "    if flag",
-            "        let consumed: UInt32 = consume_payload(box.payload)",
-            "    else",
-            "        let consumed: UInt32 = consume_payload(box.payload)",
-            "    consume_box(box)",
-        },
+        aggregate_ownership_cli_lines(false, false, true, true),
         "use after move: box.payload"
     );
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_record_field_switch_balanced_post_merge_reuse.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "record Payload",
-            "    value: UInt32",
-            "record Box",
-            "    payload: Payload",
-            "function consume_payload(payload: Payload) -> UInt32",
-            "    payload.value",
-            "function consume_box(box: Box) -> UInt32",
-            "    box.payload.value",
-            "function main(flag: Bool) -> UInt32",
-            "    let box: Box = Box(Payload(1 as UInt32))",
-            "    switch flag",
-            "        true =>",
-            "            let consumed: UInt32 = consume_payload(box.payload)",
-            "        false =>",
-            "            let consumed: UInt32 = consume_payload(box.payload)",
-            "    consume_box(box)",
-        },
+        aggregate_ownership_cli_lines(false, true, true, true),
         "use after move: box.payload"
     );
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_record_field_if_balanced_post_merge_reuse.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "record Payload",
-            "    value: UInt32",
-            "record Box",
-            "    payload: Payload",
-            "record Nested",
-            "    box: Box",
-            "function consume_payload(payload: Payload) -> UInt32",
-            "    payload.value",
-            "function consume_nested(nested: Nested) -> UInt32",
-            "    nested.box.payload.value",
-            "function main(flag: Bool) -> UInt32",
-            "    let nested: Nested = Nested(Box(Payload(1 as UInt32)))",
-            "    if flag",
-            "        let consumed: UInt32 = consume_payload(nested.box.payload)",
-            "    else",
-            "        let consumed: UInt32 = consume_payload(nested.box.payload)",
-            "    consume_nested(nested)",
-        },
+        aggregate_ownership_cli_lines(true, false, true, true),
         "use after move: nested.box.payload"
     );
     assert_cli_emit_llvm_failure(
         executable,
         std::filesystem::temp_directory_path() / "orison_cli_nested_record_field_switch_balanced_post_merge_reuse.or",
-        std::vector<std::string_view> {
-            "package demo.cli",
-            "record Payload",
-            "    value: UInt32",
-            "record Box",
-            "    payload: Payload",
-            "record Nested",
-            "    box: Box",
-            "function consume_payload(payload: Payload) -> UInt32",
-            "    payload.value",
-            "function consume_nested(nested: Nested) -> UInt32",
-            "    nested.box.payload.value",
-            "function main(flag: Bool) -> UInt32",
-            "    let nested: Nested = Nested(Box(Payload(1 as UInt32)))",
-            "    switch flag",
-            "        true =>",
-            "            let consumed: UInt32 = consume_payload(nested.box.payload)",
-            "        false =>",
-            "            let consumed: UInt32 = consume_payload(nested.box.payload)",
-            "    consume_nested(nested)",
-        },
+        aggregate_ownership_cli_lines(true, true, true, true),
         "use after move: nested.box.payload"
     );
     assert_cli_record_field_nested_array_choice_context_failure(

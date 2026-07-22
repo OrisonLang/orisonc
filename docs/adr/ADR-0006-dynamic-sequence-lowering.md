@@ -218,6 +218,8 @@ representation.
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
   post-merge reuse diagnostics, reducing fixture drift risk.
+- Driver aggregate-field ownership smoke coverage now uses shared source-line helpers for `box.payload` and
+  `nested.box.payload` mismatch/reuse fixtures, reducing CLI fixture drift risk.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
