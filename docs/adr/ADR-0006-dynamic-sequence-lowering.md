@@ -206,6 +206,8 @@ representation.
   diagnostics below the CLI layer.
 - Direct control-flow smoke coverage now also pins balanced aggregate-descendant `if` and `switch` ownership joins
   below the CLI layer.
+- Direct control-flow smoke coverage now pins post-merge whole-owner reuse rejection after balanced
+  aggregate-descendant `if` and `switch` transfers.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,

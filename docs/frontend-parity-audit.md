@@ -109,6 +109,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   mismatch diagnostics below the CLI layer.
 - 2026-07-22: direct control-flow smoke coverage now also pins balanced aggregate-descendant `if` and `switch`
   ownership joins below the CLI layer.
+- 2026-07-22: direct control-flow smoke coverage now pins post-merge whole-owner reuse rejection after balanced
+  aggregate-descendant `if` and `switch` transfers.
 - 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
   `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
   choice ABI lowering remain unsupported.

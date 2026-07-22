@@ -267,6 +267,24 @@ int main() {
         aggregate_if_balanced_state.ownership_transfers,
         "box.payload"
     ));
+    auto aggregate_if_post_merge_output = std::ostringstream {};
+    auto aggregate_if_post_merge_box = orison::lowering::lower_expression(
+        orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "box",
+        },
+        "%record.Box",
+        orison::lowering::IntegerSignedness::not_integer,
+        aggregate_context,
+        aggregate_if_balanced_session,
+        aggregate_if_post_merge_output
+    );
+    assert(!aggregate_if_post_merge_box.has_value());
+    assert(aggregate_if_post_merge_output.str().empty());
+    assert(
+        orison::lowering::render_expression_lowering_failure(aggregate_if_balanced_failures.expression) ==
+        "use after move: box.payload"
+    );
 
     aggregate_diagnostics = {};
     auto aggregate_switch_balanced_state = seed_aggregate_state();
@@ -291,6 +309,24 @@ int main() {
         aggregate_switch_balanced_state.ownership_transfers,
         "box.payload"
     ));
+    auto aggregate_switch_post_merge_output = std::ostringstream {};
+    auto aggregate_switch_post_merge_box = orison::lowering::lower_expression(
+        orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "box",
+        },
+        "%record.Box",
+        orison::lowering::IntegerSignedness::not_integer,
+        aggregate_context,
+        aggregate_switch_balanced_session,
+        aggregate_switch_post_merge_output
+    );
+    assert(!aggregate_switch_post_merge_box.has_value());
+    assert(aggregate_switch_post_merge_output.str().empty());
+    assert(
+        orison::lowering::render_expression_lowering_failure(aggregate_switch_balanced_failures.expression) ==
+        "use after move: box.payload"
+    );
 
     auto choice_path = std::filesystem::temp_directory_path() / "orison_control_flow_choice_payload_smoke.or";
     {
