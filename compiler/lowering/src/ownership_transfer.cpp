@@ -5,6 +5,7 @@
 #include <string_view>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/source_type_queries.hpp"
@@ -94,6 +95,40 @@ auto consumed_owned_binding_or_descendant_name(
     }
     std::ranges::sort(matches);
     return matches.front();
+}
+
+auto consumed_owned_descendant_names(
+    std::vector<OwnershipTransferState> const& states,
+    std::string_view owner_name
+) -> std::vector<std::string> {
+    if (owner_name.empty()) {
+        return {};
+    }
+
+    auto descendant_prefix = std::string {owner_name};
+    descendant_prefix += ".";
+    auto names = std::vector<std::string> {};
+    auto seen = std::unordered_set<std::string> {};
+    for (auto const& state : states) {
+        for (auto const& consumed_name : state.consumed_owned_bindings) {
+            if (consumed_name.starts_with(descendant_prefix) && seen.insert(consumed_name).second) {
+                names.push_back(consumed_name);
+            }
+        }
+    }
+    std::ranges::sort(names);
+    return names;
+}
+
+auto normalize_consumed_owned_descendants(
+    std::vector<OwnershipTransferState>& states,
+    std::vector<std::string> const& consumed_descendant_names
+) -> void {
+    for (auto& state : states) {
+        for (auto const& name : consumed_descendant_names) {
+            mark_owned_binding_consumed(state, name);
+        }
+    }
 }
 
 auto merge_ownership_transfer_states(

@@ -194,6 +194,8 @@ representation.
   choice-payload destructure keys, and driver coverage pins post-switch source reuse as the same precise diagnostic.
 - Ownership-transfer smoke coverage pins the normalization below the CLI path by merging a consumed
   `holder.Loaded.payload` case with an otherwise empty continuing case.
+- Final and non-value `switch` joins now share the ownership-transfer descendant normalization helper instead of
+  carrying parallel switch-specific implementations.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,

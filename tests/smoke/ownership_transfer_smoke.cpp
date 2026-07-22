@@ -2,7 +2,6 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/maybe_switch_lowering.hpp"
-#include "orison/lowering/nonvalue_switch_lowering.hpp"
 #include "orison/lowering/string_constants.hpp"
 
 #include <cassert>
@@ -239,14 +238,14 @@ int main() {
         .kind = orison::syntax::ExpressionKind::name,
         .text = "holder",
     };
-    auto consumed_descendants = orison::lowering::consumed_nonvalue_switch_subject_descendant_names(
+    auto consumed_descendants = orison::lowering::consumed_owned_descendant_names(
         nonvalue_switch_case_states,
-        holder_subject
+        holder_subject.text
     );
     assert(consumed_descendants.size() == 1);
     assert(consumed_descendants.front() == "holder.Loaded.payload");
 
-    orison::lowering::normalize_nonvalue_switch_subject_descendant_transfers(
+    orison::lowering::normalize_consumed_owned_descendants(
         nonvalue_switch_case_states,
         consumed_descendants
     );
@@ -258,9 +257,9 @@ int main() {
         .kind = orison::syntax::ExpressionKind::name,
         .text = "other",
     };
-    auto unrelated_descendants = orison::lowering::consumed_nonvalue_switch_subject_descendant_names(
+    auto unrelated_descendants = orison::lowering::consumed_owned_descendant_names(
         nonvalue_switch_case_states,
-        other_subject
+        other_subject.text
     );
     assert(unrelated_descendants.empty());
     return 0;

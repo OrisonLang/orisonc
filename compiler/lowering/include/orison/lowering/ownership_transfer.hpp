@@ -37,6 +37,16 @@ auto consumed_owned_binding_or_descendant_name(
     std::string_view binding_name
 ) -> std::optional<std::string>;
 
+auto consumed_owned_descendant_names(
+    std::vector<OwnershipTransferState> const& states,
+    std::string_view owner_name
+) -> std::vector<std::string>;
+
+auto normalize_consumed_owned_descendants(
+    std::vector<OwnershipTransferState>& states,
+    std::vector<std::string> const& consumed_descendant_names
+) -> void;
+
 auto merge_ownership_transfer_states(
     std::vector<OwnershipTransferState> const& branch_states
 ) -> std::optional<OwnershipTransferState>;
