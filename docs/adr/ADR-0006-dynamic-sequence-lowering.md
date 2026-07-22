@@ -190,6 +190,8 @@ representation.
   switched subject. This keeps post-switch reuse conservative without rejecting valid variant-specific payload matches.
 - Direct control-flow smoke coverage now verifies that post-switch reads of the original choice subject are still
   rejected with the precise consumed payload key.
+- Non-value `switch` ownership joins now normalize consumed descendants of the named switched subject, including owned
+  choice-payload destructure keys, and driver coverage pins post-switch source reuse as the same precise diagnostic.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,

@@ -16,12 +16,46 @@
 #include "orison/syntax/module_parser.hpp"
 
 #include <sstream>
+#include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
 namespace orison::lowering {
+
+inline auto consumed_nonvalue_switch_subject_descendant_names(
+    std::vector<OwnershipTransferState> const& states,
+    syntax::ExpressionSyntax const& subject_expression
+) -> std::vector<std::string> {
+    if (subject_expression.kind != syntax::ExpressionKind::name) {
+        return {};
+    }
+
+    auto names = std::vector<std::string> {};
+    auto seen = std::unordered_set<std::string> {};
+    auto descendant_prefix = subject_expression.text + ".";
+    for (auto const& state : states) {
+        for (auto const& consumed_name : state.consumed_owned_bindings) {
+            if (consumed_name.starts_with(descendant_prefix) && seen.insert(consumed_name).second) {
+                names.push_back(consumed_name);
+            }
+        }
+    }
+    return names;
+}
+
+inline void normalize_nonvalue_switch_subject_descendant_transfers(
+    std::vector<OwnershipTransferState>& states,
+    std::vector<std::string> const& consumed_descendant_names
+) {
+    for (auto& state : states) {
+        for (auto const& name : consumed_descendant_names) {
+            mark_owned_binding_consumed(state, name);
+        }
+    }
+}
 
 template <typename CaseLowerer>
 auto lower_nonvalue_switch_statement(
@@ -135,6 +169,10 @@ auto lower_nonvalue_switch_statement(
         return StatementFlow::terminated;
     }
 
+    normalize_nonvalue_switch_subject_descendant_transfers(
+        fallthrough_ownership_transfers,
+        consumed_nonvalue_switch_subject_descendant_names(fallthrough_ownership_transfers, statement.expression)
+    );
     auto merged_transfers = merge_ownership_transfer_states(fallthrough_ownership_transfers);
     if (!merged_transfers.has_value()) {
         diagnostics.error(
