@@ -145,6 +145,8 @@ int main() {
                   "    value: UInt32\n"
                   "record Box\n"
                   "    payload: Payload\n"
+                  "record Nested\n"
+                  "    box: Box\n"
                   "function consume_payload(payload: Payload) -> UInt32\n"
                   "    payload.value\n"
                   "function choose_if(flag: Bool, box: Box) -> UInt32\n"
@@ -164,7 +166,25 @@ int main() {
                   "function choose_switch_balanced(flag: Bool, box: Box) -> UInt32\n"
                   "    switch flag\n"
                   "        true => consume_payload(box.payload)\n"
-                  "        false => consume_payload(box.payload)\n";
+                  "        false => consume_payload(box.payload)\n"
+                  "function choose_nested_if(flag: Bool, nested: Nested) -> UInt32\n"
+                  "    if flag\n"
+                  "        consume_payload(nested.box.payload)\n"
+                  "    else\n"
+                  "        0 as UInt32\n"
+                  "function choose_nested_switch(flag: Bool, nested: Nested) -> UInt32\n"
+                  "    switch flag\n"
+                  "        true => consume_payload(nested.box.payload)\n"
+                  "        false => 0 as UInt32\n"
+                  "function choose_nested_if_balanced(flag: Bool, nested: Nested) -> UInt32\n"
+                  "    if flag\n"
+                  "        consume_payload(nested.box.payload)\n"
+                  "    else\n"
+                  "        consume_payload(nested.box.payload)\n"
+                  "function choose_nested_switch_balanced(flag: Bool, nested: Nested) -> UInt32\n"
+                  "    switch flag\n"
+                  "        true => consume_payload(nested.box.payload)\n"
+                  "        false => consume_payload(nested.box.payload)\n";
     }
 
     auto aggregate_source = orison::source::SourceFile::read(aggregate_mismatch_path);
@@ -196,6 +216,23 @@ int main() {
             .storage = "%box.addr",
         });
         aggregate_state.source_type_names.emplace("box", "Box");
+        return aggregate_state;
+    };
+    auto seed_nested_aggregate_state = [] {
+        auto aggregate_state = orison::lowering::FunctionLoweringState {};
+        aggregate_state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
+            .type = "i1",
+            .value = "%flag",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        });
+        aggregate_state.addressable_bindings.emplace("nested", orison::lowering::AddressableBinding {
+            .type = orison::lowering::LoweredType {
+                .type = "%record.Nested",
+                .signedness = orison::lowering::IntegerSignedness::not_integer,
+            },
+            .storage = "%nested.addr",
+        });
+        aggregate_state.source_type_names.emplace("nested", "Nested");
         return aggregate_state;
     };
 
@@ -326,6 +363,136 @@ int main() {
     assert(
         orison::lowering::render_expression_lowering_failure(aggregate_switch_balanced_failures.expression) ==
         "use after move: box.payload"
+    );
+
+    aggregate_diagnostics = {};
+    auto nested_if_state = seed_nested_aggregate_state();
+    auto nested_if_failures = orison::lowering::LoweringFailures {};
+    auto nested_if_session = orison::lowering::FunctionLoweringSession {
+        .state = nested_if_state,
+        .failures = nested_if_failures,
+    };
+    auto nested_if_output = std::ostringstream {};
+    auto nested_if_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[5].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        nested_if_session,
+        aggregate_diagnostics,
+        nested_if_output
+    );
+    assert(!nested_if_lowered.has_value());
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(nested_if_failures.control_flow) ==
+        "if branch ownership mismatch: owned transfers must match across all continuing branches"
+    );
+
+    aggregate_diagnostics = {};
+    auto nested_switch_state = seed_nested_aggregate_state();
+    auto nested_switch_failures = orison::lowering::LoweringFailures {};
+    auto nested_switch_session = orison::lowering::FunctionLoweringSession {
+        .state = nested_switch_state,
+        .failures = nested_switch_failures,
+    };
+    auto nested_switch_output = std::ostringstream {};
+    auto nested_switch_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[6].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        nested_switch_session,
+        aggregate_diagnostics,
+        nested_switch_output
+    );
+    assert(!nested_switch_lowered.has_value());
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(nested_switch_failures.control_flow) ==
+        "switch case ownership mismatch: owned transfers must match across all continuing cases"
+    );
+
+    aggregate_diagnostics = {};
+    auto nested_if_balanced_state = seed_nested_aggregate_state();
+    auto nested_if_balanced_failures = orison::lowering::LoweringFailures {};
+    auto nested_if_balanced_session = orison::lowering::FunctionLoweringSession {
+        .state = nested_if_balanced_state,
+        .failures = nested_if_balanced_failures,
+    };
+    auto nested_if_balanced_output = std::ostringstream {};
+    auto nested_if_balanced_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[7].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        nested_if_balanced_session,
+        aggregate_diagnostics,
+        nested_if_balanced_output
+    );
+    assert(!aggregate_diagnostics.has_errors());
+    assert(nested_if_balanced_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        nested_if_balanced_state.ownership_transfers,
+        "nested.box.payload"
+    ));
+    auto nested_if_post_merge_output = std::ostringstream {};
+    auto nested_if_post_merge_value = orison::lowering::lower_expression(
+        orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "nested",
+        },
+        "%record.Nested",
+        orison::lowering::IntegerSignedness::not_integer,
+        aggregate_context,
+        nested_if_balanced_session,
+        nested_if_post_merge_output
+    );
+    assert(!nested_if_post_merge_value.has_value());
+    assert(nested_if_post_merge_output.str().empty());
+    assert(
+        orison::lowering::render_expression_lowering_failure(nested_if_balanced_failures.expression) ==
+        "use after move: nested.box.payload"
+    );
+
+    aggregate_diagnostics = {};
+    auto nested_switch_balanced_state = seed_nested_aggregate_state();
+    auto nested_switch_balanced_failures = orison::lowering::LoweringFailures {};
+    auto nested_switch_balanced_session = orison::lowering::FunctionLoweringSession {
+        .state = nested_switch_balanced_state,
+        .failures = nested_switch_balanced_failures,
+    };
+    auto nested_switch_balanced_output = std::ostringstream {};
+    auto nested_switch_balanced_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[8].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        nested_switch_balanced_session,
+        aggregate_diagnostics,
+        nested_switch_balanced_output
+    );
+    assert(!aggregate_diagnostics.has_errors());
+    assert(nested_switch_balanced_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        nested_switch_balanced_state.ownership_transfers,
+        "nested.box.payload"
+    ));
+    auto nested_switch_post_merge_output = std::ostringstream {};
+    auto nested_switch_post_merge_value = orison::lowering::lower_expression(
+        orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "nested",
+        },
+        "%record.Nested",
+        orison::lowering::IntegerSignedness::not_integer,
+        aggregate_context,
+        nested_switch_balanced_session,
+        nested_switch_post_merge_output
+    );
+    assert(!nested_switch_post_merge_value.has_value());
+    assert(nested_switch_post_merge_output.str().empty());
+    assert(
+        orison::lowering::render_expression_lowering_failure(nested_switch_balanced_failures.expression) ==
+        "use after move: nested.box.payload"
     );
 
     auto choice_path = std::filesystem::temp_directory_path() / "orison_control_flow_choice_payload_smoke.or";
