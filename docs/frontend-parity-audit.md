@@ -82,8 +82,11 @@ This file tracks which source-language frontend slices are reflected in the curr
   After destructuring an owned choice payload, later reads or moves of the original choice binding fail with the precise
   consumed payload key, such as `maybe.Some.value`.
 - 2026-07-21: driver-level choice coverage now pins the same post-destructure diagnostic through source lowering:
-  after `switch holder` binds and consumes `Loaded(payload: Payload)`, rebinding `holder` fails with
+  after `switch holder` binds and consumes `Loaded(payload: Payload)`, parameter forwarding or local rebinding fails with
   `use after move: holder.Loaded.payload`.
+- 2026-07-21: contextual function signatures now have driver coverage for module-local choice parameters with aggregate
+  payload ABI. `function consume_holder(holder: Holder)` accepts the same `{ i32, %record.Payload }` layout used for
+  choice locals and returns.
 - 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
   `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
   choice ABI lowering remain unsupported.

@@ -2182,6 +2182,30 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_sourced_scalar_choice_maybe_record_maybe_nested_array_payload_run.or",
         sourced_scalar_choice_maybe_record_maybe_nested_array_payload_lines
     );
+    auto consumed_choice_payload_parameter_reuse_lines = std::vector<std::string_view> {
+        "package demo.cli",
+        "record Payload",
+        "    value: UInt32",
+        "choice Holder",
+        "    Loaded(payload: Payload)",
+        "    Empty",
+        "function consume_payload(payload: Payload) -> UInt32",
+        "    payload.value",
+        "function consume_holder(holder: Holder) -> UInt32",
+        "    1 as UInt32",
+        "function main(holder: Holder) -> UInt32",
+        "    switch holder",
+        "        Loaded(payload) =>",
+        "            let consumed: UInt32 = consume_payload(payload)",
+        "            consume_holder(holder)",
+        "        Empty => 2 as UInt32",
+    };
+    assert_cli_emit_llvm_failure(
+        executable,
+        smoke_temp_root / "orison_cli_consumed_choice_payload_parameter_reuse.or",
+        consumed_choice_payload_parameter_reuse_lines,
+        "use after move: holder.Loaded.payload"
+    );
     auto consumed_choice_payload_local_reuse_lines = std::vector<std::string_view> {
         "package demo.cli",
         "record Payload",

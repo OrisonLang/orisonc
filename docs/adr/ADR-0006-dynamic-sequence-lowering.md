@@ -183,6 +183,8 @@ representation.
   destructure is rejected with the precise consumed payload key, while preserving the existing branch-join set model.
 - Driver-level source coverage now pins that post-destructure failure for a named choice payload carrying a lowerable
   record: `Loaded(payload)` consumption rejects later `holder` reuse with `holder.Loaded.payload`.
+- Contextual function-signature coverage now pins module-local choice parameters with aggregate payload ABI, so
+  `Holder` can be passed as a parameter using the same `{ i32, %record.Payload }` representation as locals and returns.
 - Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
   Multi-payload variants and generic choice ABI lowering remain unsupported.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
