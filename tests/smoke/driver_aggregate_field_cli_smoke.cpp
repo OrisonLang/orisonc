@@ -359,6 +359,57 @@ int main() {
         },
         "use after move: box.payload"
     );
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_record_field_if_balanced_post_merge_reuse.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "record Nested",
+            "    box: Box",
+            "function consume_payload(payload: Payload) -> UInt32",
+            "    payload.value",
+            "function consume_nested(nested: Nested) -> UInt32",
+            "    nested.box.payload.value",
+            "function main(flag: Bool) -> UInt32",
+            "    let nested: Nested = Nested(Box(Payload(1 as UInt32)))",
+            "    if flag",
+            "        let consumed: UInt32 = consume_payload(nested.box.payload)",
+            "    else",
+            "        let consumed: UInt32 = consume_payload(nested.box.payload)",
+            "    consume_nested(nested)",
+        },
+        "use after move: nested.box.payload"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_record_field_switch_balanced_post_merge_reuse.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "record Nested",
+            "    box: Box",
+            "function consume_payload(payload: Payload) -> UInt32",
+            "    payload.value",
+            "function consume_nested(nested: Nested) -> UInt32",
+            "    nested.box.payload.value",
+            "function main(flag: Bool) -> UInt32",
+            "    let nested: Nested = Nested(Box(Payload(1 as UInt32)))",
+            "    switch flag",
+            "        true =>",
+            "            let consumed: UInt32 = consume_payload(nested.box.payload)",
+            "        false =>",
+            "            let consumed: UInt32 = consume_payload(nested.box.payload)",
+            "    consume_nested(nested)",
+        },
+        "use after move: nested.box.payload"
+    );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_call_argument_nested_array_record_choice_ternary_field_type.or",
