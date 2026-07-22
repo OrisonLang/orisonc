@@ -460,6 +460,19 @@ int main() {
         scalar_nested_member_transfer_failure_cli_lines("nested.box.count.payload"),
         "type 'UInt32' has no member 'payload'"
     );
+    assert_cli_parse_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_declared_record_unknown_member_failure.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Header",
+            "    version: UInt16",
+            "function main() -> UInt16",
+            "    let header = Header(1 as UInt16)",
+            "    return header.missing",
+        },
+        "type 'Header' has no member 'missing'"
+    );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_call_argument_nested_array_record_choice_ternary_field_type.or",

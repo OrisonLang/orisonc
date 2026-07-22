@@ -125,6 +125,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-22: semantic analysis now rejects scalar member paths such as `total.status` and
   `nested.box.count.payload` with source-level `type 'UInt32' has no member 'status'` and
   `type 'UInt32' has no member 'payload'` diagnostics before lowering.
+- 2026-07-22: semantic and CLI coverage now reject known record receivers with unknown fields, such as
+  `header.missing`, while unresolved placeholder receiver types continue to avoid cascade diagnostics.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

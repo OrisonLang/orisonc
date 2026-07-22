@@ -2273,7 +2273,8 @@ private:
         if (receiver_type_name.empty() || has_record_field(receiver_type_name, expression.text)) {
             return;
         }
-        if (!is_primitive_scalar_type_name(receiver_type_name)) {
+        if (!is_primitive_scalar_type_name(receiver_type_name) &&
+            !is_source_declared_record_type_name(receiver_type_name)) {
             return;
         }
 
@@ -5094,6 +5095,11 @@ private:
             }
         }
         return false;
+    }
+
+    auto is_source_declared_record_type_name(std::string const& type_name) const -> bool {
+        auto const base_name = source_type_base_name(type_name);
+        return find_record_declaration_by_name(base_name) != nullptr;
     }
 
     auto is_owned_drop_candidate_type_name(std::string const& type_name) const -> bool {
