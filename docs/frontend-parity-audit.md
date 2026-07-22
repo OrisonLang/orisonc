@@ -75,6 +75,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-21: record-field ownership-transfer production and read diagnostics now support nested member-only aggregate
   paths such as `box.inner.payload`. Index-containing paths remain outside this slice until element ownership transfer
   has a separate proven model.
+- 2026-07-21: choice constructor-pattern payload binding now produces ownership-transfer state for named owned choice
+  subjects. Destructuring a `Some(value: Payload)`-style variant marks keys such as `maybe.Some.value` consumed while
+  leaving switch pattern syntax and exhaustiveness behavior unchanged.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

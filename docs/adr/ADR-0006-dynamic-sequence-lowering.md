@@ -177,6 +177,8 @@ representation.
   index-containing aggregate-field transfer as follow-up work.
 - Record-field transfer production and diagnostics now cover nested member-only paths such as `box.inner.payload`.
   Paths that include indexing remain excluded until element-level ownership transfer has dedicated safety rules.
+- Choice constructor-pattern payload binding now produces owned payload transfer keys for named choice subjects, such as
+  `maybe.Some.value`, without changing switch pattern syntax, planning, or exhaustiveness behavior.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.

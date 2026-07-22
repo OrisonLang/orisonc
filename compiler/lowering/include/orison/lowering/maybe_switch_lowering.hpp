@@ -29,6 +29,7 @@ auto switch_subject_for_emit(
 
 void bind_switch_payload(
     LoweredSwitchCasePlan const& planned_case,
+    syntax::ExpressionSyntax const& subject_expression,
     LoweredExpression const& subject,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,

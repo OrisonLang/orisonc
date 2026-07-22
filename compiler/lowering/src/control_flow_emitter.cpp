@@ -326,6 +326,7 @@ auto lower_final_switch_statement(
         diagnostics::DiagnosticBag& diagnostics;
         std::ostringstream& output;
         BranchBindingScope& binding_scope;
+        syntax::ExpressionSyntax const& subject_expression;
         LoweredExpression const& original_subject;
         std::optional<std::string_view> expected_source_type_name;
         std::optional<std::string_view> subject_source_type_name;
@@ -339,6 +340,7 @@ auto lower_final_switch_statement(
         .diagnostics = diagnostics,
         .output = output,
         .binding_scope = binding_scope,
+        .subject_expression = statement.expression,
         .original_subject = original_subject,
         .expected_source_type_name = expected_source_type_name,
         .subject_source_type_name = subject_source_type,
@@ -355,6 +357,7 @@ auto lower_final_switch_statement(
                 current.binding_scope.reset();
                 bind_switch_payload(
                     planned_case,
+                    current.subject_expression,
                     current.original_subject,
                     current.context,
                     current.session,

@@ -105,7 +105,15 @@ auto lower_nonvalue_switch_statement(
         binding_scope.reset();
         emit_llvm_block_label(output, planned_case.block);
         session.state.current_block = planned_case.block;
-        bind_switch_payload(planned_case, original_subject, context, session, output, subject_source_type);
+        bind_switch_payload(
+            planned_case,
+            statement.expression,
+            original_subject,
+            context,
+            session,
+            output,
+            subject_source_type
+        );
 
         auto case_flow = lower_case(planned_case);
         if (case_flow == StatementFlow::failed) {

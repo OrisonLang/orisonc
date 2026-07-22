@@ -1,7 +1,12 @@
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/lowering_context.hpp"
+#include "orison/lowering/lowering_emission_context.hpp"
+#include "orison/lowering/maybe_switch_lowering.hpp"
+#include "orison/lowering/string_constants.hpp"
 
 #include <cassert>
+#include <memory>
+#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -147,5 +152,70 @@ int main() {
     assert(owned_payload.has_value());
     assert(owned_payload->binding_name == "maybe.Some.value");
     assert(owned_payload->source_type_name == "Payload");
+
+    auto payload_name = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "payload",
+    };
+    auto some_pattern = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "Some",
+            }
+        ),
+    };
+    some_pattern.arguments.push_back(std::move(payload_name));
+    auto switch_case = orison::syntax::SwitchCaseSyntax {
+        .pattern = std::move(some_pattern),
+    };
+    auto planned_case = orison::lowering::LoweredSwitchCasePlan {
+        .syntax = &switch_case,
+        .block = "switch.case.0",
+    };
+    auto subject_expression = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "maybe",
+    };
+    auto switch_state = orison::lowering::FunctionLoweringState {};
+    switch_state.source_type_names.emplace("maybe", "MaybePayload");
+    auto switch_failures = orison::lowering::LoweringFailures {};
+    auto switch_session = orison::lowering::FunctionLoweringSession {
+        .state = switch_state,
+        .failures = switch_failures,
+    };
+    auto strings = orison::lowering::StringConstantTable {};
+    auto emission_context = orison::lowering::LoweringEmissionContext {
+        .lowering = context,
+        .string_constants = strings,
+        .options = {},
+    };
+    auto output = std::ostringstream {};
+    orison::lowering::bind_switch_payload(
+        planned_case,
+        subject_expression,
+        orison::lowering::LoweredExpression {
+            .type = "{ i32, %record.Payload }",
+            .value = "%maybe",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        emission_context,
+        switch_session,
+        output,
+        std::string_view {"MaybePayload"}
+    );
+    assert(orison::lowering::is_owned_binding_consumed(
+        switch_state.ownership_transfers,
+        "maybe.Some.value"
+    ));
+    assert(switch_state.source_type_names.at("payload") == "Payload");
+    assert(switch_state.immutable_bindings.at("payload").type == "%record.Payload");
+    assert(
+        output.str() ==
+        "  %tmp0 = extractvalue { i32, %record.Payload } %maybe, 1\n"
+        "  %payload.addr = alloca %record.Payload\n"
+        "  store %record.Payload %tmp0, ptr %payload.addr\n"
+    );
     return 0;
 }

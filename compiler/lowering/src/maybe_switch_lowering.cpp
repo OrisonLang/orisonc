@@ -3,6 +3,7 @@
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
@@ -45,6 +46,8 @@ auto maybe_payload_binding_name(syntax::ExpressionSyntax const& pattern) -> std:
 
 struct ChoicePayloadBinding {
     std::string binding_name;
+    std::string variant_name;
+    std::string payload_name;
     std::string payload_type;
     std::string source_type_name;
 };
@@ -81,6 +84,8 @@ auto choice_payload_binding_for_switch_case(
         if (variant.name == pattern.left->text && variant.payloads.size() == 1) {
             return ChoicePayloadBinding {
                 .binding_name = pattern.arguments.front().text,
+                .variant_name = variant.name,
+                .payload_name = variant.payloads.front().name,
                 .payload_type = variant.payloads.front().llvm_type,
                 .source_type_name = variant.payloads.front().source_type_name,
             };
@@ -128,6 +133,32 @@ void bind_switch_payload_value(
     };
     session.state.immutable_bindings[binding_name] = lowered_payload;
     bind_addressable_aggregate_value(binding_name, lowered_payload, session, output);
+}
+
+void mark_consumed_choice_payload(
+    syntax::ExpressionSyntax const& subject_expression,
+    ChoicePayloadBinding const& binding,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::optional<std::string_view> subject_source_type_name
+) {
+    if (!subject_source_type_name.has_value() ||
+        subject_expression.kind != syntax::ExpressionKind::name) {
+        return;
+    }
+
+    auto transfer = owned_choice_payload_transfer(
+        subject_expression.text,
+        *subject_source_type_name,
+        binding.variant_name,
+        binding.payload_name,
+        context.lowering
+    );
+    if (!transfer.has_value()) {
+        return;
+    }
+
+    mark_owned_binding_consumed(session.state.ownership_transfers, std::move(transfer->binding_name));
 }
 
 }  // namespace
@@ -179,6 +210,7 @@ auto switch_subject_for_emit(
 
 void bind_switch_payload(
     LoweredSwitchCasePlan const& planned_case,
+    syntax::ExpressionSyntax const& subject_expression,
     LoweredExpression const& subject,
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session,
@@ -219,6 +251,13 @@ void bind_switch_payload(
         return;
     }
 
+    mark_consumed_choice_payload(
+        subject_expression,
+        *choice_binding,
+        context,
+        session,
+        subject_source_type_name
+    );
     bind_switch_payload_value(
         choice_binding->binding_name,
         choice_binding->payload_type,
