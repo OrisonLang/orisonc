@@ -135,6 +135,106 @@ int main() {
         "invalid final if shape: a final if requires non-empty then and else arms"
     );
 
+    auto aggregate_mismatch_path =
+        std::filesystem::temp_directory_path() / "orison_control_flow_aggregate_mismatch_smoke.or";
+    {
+        auto output = std::ofstream(aggregate_mismatch_path);
+        output << "package demo.control_flow_emitter\n"
+                  "\n"
+                  "record Payload\n"
+                  "    value: UInt32\n"
+                  "record Box\n"
+                  "    payload: Payload\n"
+                  "function consume_payload(payload: Payload) -> UInt32\n"
+                  "    payload.value\n"
+                  "function choose_if(flag: Bool, box: Box) -> UInt32\n"
+                  "    if flag\n"
+                  "        consume_payload(box.payload)\n"
+                  "    else\n"
+                  "        0 as UInt32\n"
+                  "function choose_switch(flag: Bool, box: Box) -> UInt32\n"
+                  "    switch flag\n"
+                  "        true => consume_payload(box.payload)\n"
+                  "        false => 0 as UInt32\n";
+    }
+
+    auto aggregate_source = orison::source::SourceFile::read(aggregate_mismatch_path);
+    assert(aggregate_source.has_value());
+    auto aggregate_parse_result = parser.parse(*aggregate_source);
+    assert(!aggregate_parse_result.diagnostics.has_errors());
+
+    auto aggregate_diagnostics = orison::diagnostics::DiagnosticBag {};
+    auto aggregate_lowering =
+        orison::lowering::build_lowering_context(aggregate_parse_result.module, aggregate_diagnostics);
+    assert(!aggregate_diagnostics.has_errors());
+    auto aggregate_context = orison::lowering::LoweringEmissionContext {
+        .lowering = aggregate_lowering,
+        .string_constants = orison::lowering::collect_string_constants(aggregate_parse_result.module),
+        .options = {},
+    };
+    auto seed_aggregate_state = [] {
+        auto aggregate_state = orison::lowering::FunctionLoweringState {};
+        aggregate_state.immutable_bindings.emplace("flag", orison::lowering::LoweredExpression {
+            .type = "i1",
+            .value = "%flag",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        });
+        aggregate_state.addressable_bindings.emplace("box", orison::lowering::AddressableBinding {
+            .type = orison::lowering::LoweredType {
+                .type = "%record.Box",
+                .signedness = orison::lowering::IntegerSignedness::not_integer,
+            },
+            .storage = "%box.addr",
+        });
+        aggregate_state.source_type_names.emplace("box", "Box");
+        return aggregate_state;
+    };
+
+    auto aggregate_if_state = seed_aggregate_state();
+    auto aggregate_if_failures = orison::lowering::LoweringFailures {};
+    auto aggregate_if_session = orison::lowering::FunctionLoweringSession {
+        .state = aggregate_if_state,
+        .failures = aggregate_if_failures,
+    };
+    auto aggregate_if_output = std::ostringstream {};
+    auto aggregate_if_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[1].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        aggregate_if_session,
+        aggregate_diagnostics,
+        aggregate_if_output
+    );
+    assert(!aggregate_if_lowered.has_value());
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(aggregate_if_failures.control_flow) ==
+        "if branch ownership mismatch: owned transfers must match across all continuing branches"
+    );
+
+    aggregate_diagnostics = {};
+    auto aggregate_switch_state = seed_aggregate_state();
+    auto aggregate_switch_failures = orison::lowering::LoweringFailures {};
+    auto aggregate_switch_session = orison::lowering::FunctionLoweringSession {
+        .state = aggregate_switch_state,
+        .failures = aggregate_switch_failures,
+    };
+    auto aggregate_switch_output = std::ostringstream {};
+    auto aggregate_switch_lowered = orison::lowering::lower_final_control_flow_statement(
+        aggregate_parse_result.module.functions[2].body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        aggregate_context,
+        aggregate_switch_session,
+        aggregate_diagnostics,
+        aggregate_switch_output
+    );
+    assert(!aggregate_switch_lowered.has_value());
+    assert(
+        orison::lowering::render_control_flow_lowering_failure(aggregate_switch_failures.control_flow) ==
+        "switch case ownership mismatch: owned transfers must match across all continuing cases"
+    );
+
     auto choice_path = std::filesystem::temp_directory_path() / "orison_control_flow_choice_payload_smoke.or";
     {
         auto output = std::ofstream(choice_path);
@@ -213,6 +313,7 @@ int main() {
         "use after move: holder.Loaded.payload"
     );
     std::filesystem::remove(path);
+    std::filesystem::remove(aggregate_mismatch_path);
     std::filesystem::remove(choice_path);
     std::filesystem::remove_all(smoke_temp_root);
     return 0;

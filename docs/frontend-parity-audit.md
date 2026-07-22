@@ -105,6 +105,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   a non-`DynamicArray` record-field transfer mismatch across continuing branches.
 - 2026-07-22: driver aggregate-field coverage now also pins the generalized `switch case ownership mismatch`
   diagnostic for a non-`DynamicArray` record-field transfer mismatch across continuing cases.
+- 2026-07-22: direct control-flow smoke coverage now pins the same aggregate-descendant `if` and `switch` ownership
+  mismatch diagnostics below the CLI layer.
 - 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
   `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
   choice ABI lowering remain unsupported.
