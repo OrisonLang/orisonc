@@ -119,6 +119,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   mismatch diagnostics for `nested.box.payload`.
 - 2026-07-22: driver aggregate-field coverage now pins scalar-terminal nested member call success for
   `nested.box.count`, proving scalar field arguments do not trigger ownership-transfer diagnostics.
+- 2026-07-22: driver aggregate-field coverage now pins scalar-terminal nested member failure paths for
+  `nested.box.count` and `nested.box.count.payload`, proving invalid scalar paths stay out of ownership-transfer
+  diagnostics at the CLI lowering boundary.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

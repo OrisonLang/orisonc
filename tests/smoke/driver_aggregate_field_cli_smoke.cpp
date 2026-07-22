@@ -92,6 +92,43 @@ int main() {
             "    consume_count(nested.box.count)",
         };
     };
+    auto scalar_nested_member_transfer_failure_cli_lines = [](std::string_view argument) {
+        auto lines = std::vector<std::string> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "    count: UInt32",
+            "record Nested",
+            "    box: Box",
+            "function consume_payload(payload: Payload) -> UInt32",
+            "    payload.value",
+            "function main() -> UInt32",
+            "    let nested: Nested = Nested(Box(Payload(1 as UInt32), 7 as UInt32))",
+        };
+        lines.push_back("    consume_payload(" + std::string(argument) + ")");
+        return lines;
+    };
+    auto assert_cli_emit_llvm_failure_without_ownership_diagnostic = [](
+        std::filesystem::path const& executable,
+        std::filesystem::path const& path,
+        auto const& lines,
+        std::string_view expected_message
+    ) {
+        {
+            std::ofstream output(path);
+            for (auto line : lines) {
+                output << line << '\n';
+            }
+        }
+
+        auto command = executable.string() + " --emit-llvm " + path.string();
+        auto output = read_failing_command_output(command);
+        assert(output.find(expected_message) != std::string::npos);
+        assert(output.find("ownership mismatch") == std::string::npos);
+        assert(output.find("use after move") == std::string::npos);
+    };
 
     assert_cli_parse_failure(
         executable,
@@ -411,6 +448,18 @@ int main() {
     assert(nested_scalar_member_call_output.find("call i32 @consume_count(i32") != std::string::npos);
     assert(nested_scalar_member_call_output.find("ownership mismatch") == std::string::npos);
     assert(nested_scalar_member_call_output.find("use after move") == std::string::npos);
+    assert_cli_emit_llvm_failure_without_ownership_diagnostic(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_scalar_member_to_owned_parameter_failure.or",
+        scalar_nested_member_transfer_failure_cli_lines("nested.box.count"),
+        "function argument 'payload' type 'UInt32' does not match declared type 'Payload'"
+    );
+    assert_cli_emit_llvm_failure_without_ownership_diagnostic(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_nested_scalar_member_continuation_failure.or",
+        scalar_nested_member_transfer_failure_cli_lines("nested.box.count.payload"),
+        "lowering does not yet support this return expression: unsupported expression: payload"
+    );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_call_argument_nested_array_record_choice_ternary_field_type.or",
