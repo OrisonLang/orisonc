@@ -1,9 +1,11 @@
 #include "orison/lowering/control_flow_emitter.hpp"
+#include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
 #include "orison/lowering/lowering_failure_rendering.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/string_constants.hpp"
 #include "orison/source/source_file.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -132,7 +134,86 @@ int main() {
         orison::lowering::render_control_flow_lowering_failure(malformed_failures.control_flow) ==
         "invalid final if shape: a final if requires non-empty then and else arms"
     );
+
+    auto choice_path = std::filesystem::temp_directory_path() / "orison_control_flow_choice_payload_smoke.or";
+    {
+        auto output = std::ofstream(choice_path);
+        output << "package demo.control_flow_emitter\n"
+                  "\n"
+                  "record Payload\n"
+                  "    value: UInt32\n"
+                  "choice Holder\n"
+                  "    Loaded(payload: Payload)\n"
+                  "    Empty\n"
+                  "function classify(holder: Holder) -> UInt32\n"
+                  "    switch holder\n"
+                  "        Loaded(payload) => payload.value\n"
+                  "        Empty => 2 as UInt32\n";
+    }
+
+    auto choice_source = orison::source::SourceFile::read(choice_path);
+    assert(choice_source.has_value());
+    auto choice_parse_result = parser.parse(*choice_source);
+    assert(!choice_parse_result.diagnostics.has_errors());
+
+    auto choice_diagnostics = orison::diagnostics::DiagnosticBag {};
+    auto choice_lowering = orison::lowering::build_lowering_context(choice_parse_result.module, choice_diagnostics);
+    assert(!choice_diagnostics.has_errors());
+    auto choice_context = orison::lowering::LoweringEmissionContext {
+        .lowering = choice_lowering,
+        .string_constants = orison::lowering::collect_string_constants(choice_parse_result.module),
+        .options = {},
+    };
+    auto choice_state = orison::lowering::FunctionLoweringState {};
+    auto choice_failures = orison::lowering::LoweringFailures {};
+    auto choice_session = orison::lowering::FunctionLoweringSession {
+        .state = choice_state,
+        .failures = choice_failures,
+    };
+    choice_state.immutable_bindings.emplace("holder", orison::lowering::LoweredExpression {
+        .type = "{ i32, %record.Payload }",
+        .value = "%holder",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    choice_state.source_type_names.emplace("holder", "Holder");
+
+    auto choice_output = std::ostringstream {};
+    auto choice_lowered = orison::lowering::lower_final_control_flow_statement(
+        choice_parse_result.module.functions.front().body_statements.front(),
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        choice_context,
+        choice_session,
+        choice_diagnostics,
+        choice_output
+    );
+    assert(!choice_diagnostics.has_errors());
+    assert(choice_lowered.has_value());
+    assert(orison::lowering::is_owned_binding_consumed(
+        choice_state.ownership_transfers,
+        "holder.Loaded.payload"
+    ));
+
+    auto post_switch_output = std::ostringstream {};
+    auto post_switch_holder = orison::lowering::lower_expression(
+        orison::syntax::ExpressionSyntax {
+            .kind = orison::syntax::ExpressionKind::name,
+            .text = "holder",
+        },
+        "{ i32, %record.Payload }",
+        orison::lowering::IntegerSignedness::not_integer,
+        choice_context,
+        choice_session,
+        post_switch_output
+    );
+    assert(!post_switch_holder.has_value());
+    assert(post_switch_output.str().empty());
+    assert(
+        orison::lowering::render_expression_lowering_failure(choice_failures.expression) ==
+        "use after move: holder.Loaded.payload"
+    );
     std::filesystem::remove(path);
+    std::filesystem::remove(choice_path);
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

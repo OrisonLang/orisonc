@@ -91,6 +91,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-21: final `switch` ownership joins now normalize owned choice-payload destructure keys across continuing
   cases for the switched subject, so `Loaded(payload)` and `Empty` arms can merge while preserving the post-switch
   consumed subject state.
+- 2026-07-21: direct control-flow smoke coverage now verifies that the normalized final `switch` state still rejects a
+  later read of the original choice subject with `use after move: holder.Loaded.payload`.
 - 2026-07-21: non-generic single-payload choices now accept lowerable aggregate payload ABI shapes, such as
   `{ i32, %record.Payload }`, instead of being limited to scalar LLVM payload types. Multi-payload variants and generic
   choice ABI lowering remain unsupported.
