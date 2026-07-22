@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <utility>
+#include <vector>
 
 int main() {
     auto transfers = orison::lowering::OwnershipTransferState {};
@@ -68,6 +69,21 @@ int main() {
             },
         }
     );
+    context.records.emplace(
+        "NestedBox",
+        orison::lowering::LoweredRecordLayout {
+            .name = "NestedBox",
+            .llvm_type_name = "%record.NestedBox",
+            .fields = {
+                orison::lowering::LoweredRecordField {
+                    .name = "box",
+                    .source_type_name = "Box",
+                    .llvm_type = "%record.Box",
+                    .index = 0,
+                },
+            },
+        }
+    );
     context.choices.emplace(
         "MaybePayload",
         orison::lowering::LoweredChoiceLayout {
@@ -109,6 +125,17 @@ int main() {
     assert(owned_field.has_value());
     assert(owned_field->binding_name == "box.payload");
     assert(owned_field->source_type_name == "Payload");
+
+    auto nested_field_names = std::vector<std::string> {"box", "payload"};
+    auto nested_field = orison::lowering::owned_record_member_path_transfer(
+        "nested",
+        "NestedBox",
+        nested_field_names,
+        context
+    );
+    assert(nested_field.has_value());
+    assert(nested_field->binding_name == "nested.box.payload");
+    assert(nested_field->source_type_name == "Payload");
 
     auto owned_payload = orison::lowering::owned_choice_payload_transfer(
         "maybe",

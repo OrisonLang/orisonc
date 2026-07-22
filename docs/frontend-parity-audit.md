@@ -72,6 +72,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-21: direct record-field call arguments now produce ownership-transfer state when the callee parameter expects
   that owned field type. Passing `box.payload` to an owned `Payload` parameter marks `box.payload` consumed, so later
   record-field reads reuse the same use-after-move diagnostic path.
+- 2026-07-21: record-field ownership-transfer production and read diagnostics now support nested member-only aggregate
+  paths such as `box.inner.payload`. Index-containing paths remain outside this slice until element ownership transfer
+  has a separate proven model.
 - 2026-07-17: dynamic iterable gap boundaries are now pinned: `DynamicArray<UInt32>` remains an unsupported lowered
   function-signature parameter type, while `View<UInt32>` parameters lower far enough to reject `for ... in` with the
   fixed-size-array-only iterable diagnostic instead of implying view iteration support.

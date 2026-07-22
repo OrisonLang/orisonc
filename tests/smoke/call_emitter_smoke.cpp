@@ -175,6 +175,21 @@ int main() {
             },
         }
     );
+    transfer_context.records.emplace(
+        "NestedBox",
+        orison::lowering::LoweredRecordLayout {
+            .name = "NestedBox",
+            .llvm_type_name = "%record.NestedBox",
+            .fields = {
+                orison::lowering::LoweredRecordField {
+                    .name = "inner",
+                    .source_type_name = "Box",
+                    .llvm_type = "%record.Box",
+                    .index = 0,
+                },
+            },
+        }
+    );
     auto transfer_emission_context = orison::lowering::LoweringEmissionContext {
         .lowering = transfer_context,
         .string_constants = member_string_constants,
@@ -240,6 +255,69 @@ int main() {
         transfer_output.str() ==
         "  %tmp0 = getelementptr %record.Box, ptr %box.addr, i32 0, i32 0\n"
         "  %tmp1 = load %record.Payload, ptr %tmp0\n"
+    );
+
+    auto nested_transfer_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "consume_payload",
+            }
+        ),
+    };
+    auto nested_payload_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::member_access,
+        .text = "payload",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::member_access,
+                .text = "inner",
+                .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                    orison::syntax::ExpressionSyntax {
+                        .kind = orison::syntax::ExpressionKind::name,
+                        .text = "nested",
+                    }
+                ),
+            }
+        ),
+    };
+    nested_transfer_call.arguments.push_back(std::move(nested_payload_access));
+    auto nested_transfer_state = orison::lowering::FunctionLoweringState {};
+    nested_transfer_state.addressable_bindings.emplace("nested", orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = "%record.NestedBox",
+            .signedness = IntegerSignedness::not_integer,
+        },
+        .storage = "%nested.addr",
+    });
+    nested_transfer_state.source_type_names.emplace("nested", "NestedBox");
+    auto nested_transfer_failures = orison::lowering::LoweringFailures {};
+    auto nested_transfer_session = orison::lowering::FunctionLoweringSession {
+        .state = nested_transfer_state,
+        .failures = nested_transfer_failures,
+    };
+    transfer_output = {};
+    auto nested_transfer_arguments = orison::lowering::lower_call_arguments(
+        nested_transfer_call,
+        consume_payload,
+        transfer_emission_context,
+        nested_transfer_session,
+        transfer_output
+    );
+    assert(nested_transfer_arguments.has_value());
+    assert(nested_transfer_arguments->size() == 1);
+    assert((*nested_transfer_arguments)[0].type == "%record.Payload");
+    assert((*nested_transfer_arguments)[0].value == "%tmp2");
+    assert(orison::lowering::is_owned_binding_consumed(
+        nested_transfer_state.ownership_transfers,
+        "nested.inner.payload"
+    ));
+    assert(
+        transfer_output.str() ==
+        "  %tmp0 = getelementptr %record.NestedBox, ptr %nested.addr, i32 0, i32 0\n"
+        "  %tmp1 = getelementptr %record.Box, ptr %tmp0, i32 0, i32 0\n"
+        "  %tmp2 = load %record.Payload, ptr %tmp1\n"
     );
     return 0;
 }

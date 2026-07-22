@@ -126,22 +126,49 @@ auto owned_record_field_transfer(
     std::string_view field_name,
     LoweringContext const& context
 ) -> std::optional<OwnedAggregateMemberTransfer> {
-    auto record = context.records.find(std::string {owner_source_type_name});
-    if (record == context.records.end()) {
+    auto field_names = std::vector<std::string> {std::string {field_name}};
+    return owned_record_member_path_transfer(owner_name, owner_source_type_name, field_names, context);
+}
+
+auto owned_record_member_path_transfer(
+    std::string_view owner_name,
+    std::string_view owner_source_type_name,
+    std::span<std::string const> field_names,
+    LoweringContext const& context
+) -> std::optional<OwnedAggregateMemberTransfer> {
+    if (field_names.empty()) {
         return std::nullopt;
     }
 
-    auto const* field = find_record_field(record->second, field_name);
-    if (field == nullptr ||
-        !is_owned_transfer_source_type(field->source_type_name, context)) {
+    auto current_source_type_name = std::string {owner_source_type_name};
+    auto member_name = std::string {};
+    for (auto const& field_name : field_names) {
+        auto record = context.records.find(current_source_type_name);
+        if (record == context.records.end()) {
+            return std::nullopt;
+        }
+
+        auto const* field = find_record_field(record->second, field_name);
+        if (field == nullptr) {
+            return std::nullopt;
+        }
+
+        if (!member_name.empty()) {
+            member_name += ".";
+        }
+        member_name += field_name;
+        current_source_type_name = field->source_type_name;
+    }
+
+    if (!is_owned_transfer_source_type(current_source_type_name, context)) {
         return std::nullopt;
     }
 
     return OwnedAggregateMemberTransfer {
-        .binding_name = owned_binding_member_name(owner_name, field_name),
+        .binding_name = owned_binding_member_name(owner_name, member_name),
         .owner_name = std::string {owner_name},
-        .member_name = std::string {field_name},
-        .source_type_name = field->source_type_name,
+        .member_name = std::move(member_name),
+        .source_type_name = std::move(current_source_type_name),
     };
 }
 

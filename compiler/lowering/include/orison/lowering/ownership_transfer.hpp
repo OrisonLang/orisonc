@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -49,6 +50,13 @@ auto owned_record_field_transfer(
     std::string_view owner_name,
     std::string_view owner_source_type_name,
     std::string_view field_name,
+    LoweringContext const& context
+) -> std::optional<OwnedAggregateMemberTransfer>;
+
+auto owned_record_member_path_transfer(
+    std::string_view owner_name,
+    std::string_view owner_source_type_name,
+    std::span<std::string const> field_names,
     LoweringContext const& context
 ) -> std::optional<OwnedAggregateMemberTransfer>;
 

@@ -61,6 +61,38 @@ auto record_use_after_move_failure(
     );
 }
 
+auto consumed_owned_record_member_path_name(
+    AggregatePath const& path,
+    std::string_view base_source_type_name,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> std::optional<std::string> {
+    if (path.base_expression == nullptr ||
+        path.base_expression->kind != syntax::ExpressionKind::name) {
+        return std::nullopt;
+    }
+
+    auto field_names = std::vector<std::string> {};
+    field_names.reserve(path.steps.size());
+    for (auto const& step : path.steps) {
+        if (step.kind != AggregatePathStepKind::member) {
+            return std::nullopt;
+        }
+        field_names.push_back(step.field_name);
+        auto transfer = owned_record_member_path_transfer(
+            path.base_expression->text,
+            base_source_type_name,
+            field_names,
+            context
+        );
+        if (transfer.has_value() &&
+            is_owned_binding_consumed(state.ownership_transfers, transfer->binding_name)) {
+            return transfer->binding_name;
+        }
+    }
+    return std::nullopt;
+}
+
 auto digit_value_for_base(char character, int base) -> std::optional<std::uint64_t> {
     auto value = std::optional<std::uint64_t> {};
     if (character >= '0' && character <= '9') {
@@ -1562,21 +1594,14 @@ auto lower_aggregate_path_read_from_storage(
         return std::nullopt;
     }
 
-    if (!path.steps.empty() &&
-        path.base_expression != nullptr &&
-        path.base_expression->kind == syntax::ExpressionKind::name &&
-        path.steps.front().kind == AggregatePathStepKind::member) {
-        auto transfer = owned_record_field_transfer(
-            path.base_expression->text,
+    if (auto moved_member_name = consumed_owned_record_member_path_name(
+            path,
             base_source_type_name,
-            path.steps.front().field_name,
-            context.lowering
-        );
-        if (transfer.has_value() &&
-            is_owned_binding_consumed(session.state.ownership_transfers, transfer->binding_name)) {
-            record_use_after_move_failure(session.failures, transfer->binding_name);
-            return std::nullopt;
-        }
+            context.lowering,
+            session.state
+        )) {
+        record_use_after_move_failure(session.failures, *moved_member_name);
+        return std::nullopt;
     }
 
     for (auto const& step : path.steps) {
@@ -2743,17 +2768,20 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        if (expression.left->kind == syntax::ExpressionKind::name) {
-            auto transfer = owned_record_field_transfer(
-                expression.left->text,
-                *base_source_type,
-                expression.text,
-                context.lowering
-            );
-            if (transfer.has_value() &&
-                is_owned_binding_consumed(state.ownership_transfers, transfer->binding_name)) {
-                record_use_after_move_failure(session.failures, transfer->binding_name);
-                return std::nullopt;
+        if (auto path = collect_named_aggregate_path(expression)) {
+            auto path_base_source_type = path->base_expression != nullptr
+                ? source_type_name_for_expression(*path->base_expression, context, state)
+                : std::optional<std::string> {};
+            if (path_base_source_type.has_value()) {
+                if (auto moved_member_name = consumed_owned_record_member_path_name(
+                        *path,
+                        *path_base_source_type,
+                        context.lowering,
+                        state
+                    )) {
+                    record_use_after_move_failure(session.failures, *moved_member_name);
+                    return std::nullopt;
+                }
             }
         }
 

@@ -174,7 +174,9 @@ representation.
   syntax that produces aggregate-field moves remains separate future work.
 - Direct record-field call arguments now produce those member keys when the callee parameter expects the field's owned
   source type. This gives `box.payload` transfers a source-backed producer while keeping choice-payload production and
-  nested aggregate-field transfer as follow-up work.
+  index-containing aggregate-field transfer as follow-up work.
+- Record-field transfer production and diagnostics now cover nested member-only paths such as `box.inner.payload`.
+  Paths that include indexing remain excluded until element-level ownership transfer has dedicated safety rules.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.

@@ -53,6 +53,9 @@ int main() {
                   "record OwnedBox\n"
                   "    payload: OwnedPayload\n"
                   "\n"
+                  "record OwnedNestedBox\n"
+                  "    inner: OwnedBox\n"
+                  "\n"
                   "function choose(flag: Bool, left: UInt32, right: UInt32) -> UInt32\n"
                   "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n"
                   "\n"
@@ -640,6 +643,70 @@ int main() {
         orison::lowering::ExpressionLoweringFailureReason::use_after_move
     );
     assert(moved_owned_field_failures.expression.detail == "box.payload");
+
+    auto moved_nested_field_state = orison::lowering::FunctionLoweringState {};
+    moved_nested_field_state.addressable_bindings.emplace("nested", orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = "%record.OwnedNestedBox",
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        .storage = "%nested.addr",
+    });
+    moved_nested_field_state.source_type_names.emplace("nested", "OwnedNestedBox");
+    orison::lowering::mark_owned_binding_consumed(
+        moved_nested_field_state.ownership_transfers,
+        "nested.inner.payload"
+    );
+    auto moved_nested_field_names = std::vector<std::string> {"inner", "payload"};
+    auto moved_nested_transfer = orison::lowering::owned_record_member_path_transfer(
+        "nested",
+        "OwnedNestedBox",
+        moved_nested_field_names,
+        context.lowering
+    );
+    assert(moved_nested_transfer.has_value());
+    assert(moved_nested_transfer->binding_name == "nested.inner.payload");
+    assert(orison::lowering::is_owned_binding_consumed(
+        moved_nested_field_state.ownership_transfers,
+        moved_nested_transfer->binding_name
+    ));
+    auto moved_nested_field_failures = orison::lowering::LoweringFailures {};
+    auto moved_nested_field_session = orison::lowering::FunctionLoweringSession {
+        .state = moved_nested_field_state,
+        .failures = moved_nested_field_failures,
+    };
+    auto moved_nested_field_access = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::member_access,
+        .text = "payload",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::member_access,
+                .text = "inner",
+                .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+                    orison::syntax::ExpressionSyntax {
+                        .kind = orison::syntax::ExpressionKind::name,
+                        .text = "nested",
+                    }
+                ),
+            }
+        ),
+    };
+    output = {};
+    auto moved_nested_field_lowered = orison::lowering::lower_expression(
+        moved_nested_field_access,
+        "%record.OwnedPayload",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        moved_nested_field_session,
+        output
+    );
+    assert(!moved_nested_field_lowered.has_value());
+    assert(output.str().empty());
+    assert(
+        moved_nested_field_failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::use_after_move
+    );
+    assert(moved_nested_field_failures.expression.detail == "nested.inner.payload");
 
     auto missing_member_state = orison::lowering::FunctionLoweringState {};
     missing_member_state.immutable_bindings.emplace("value", orison::lowering::LoweredExpression {

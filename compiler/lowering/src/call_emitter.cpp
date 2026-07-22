@@ -1,5 +1,6 @@
 #include "orison/lowering/call_emitter.hpp"
 
+#include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/llvm_names.hpp"
@@ -114,23 +115,33 @@ auto consumed_owned_record_field_argument_name(
     FunctionLoweringSession const& session
 ) -> std::optional<std::string> {
     if (!expected_source_type.has_value() ||
-        !is_owned_transfer_source_type(*expected_source_type, context.lowering) ||
-        argument.kind != syntax::ExpressionKind::member_access ||
-        argument.left == nullptr ||
-        argument.left->kind != syntax::ExpressionKind::name) {
+        !is_owned_transfer_source_type(*expected_source_type, context.lowering)) {
         return std::nullopt;
     }
 
-    auto const& owner_name = argument.left->text;
+    auto path = collect_named_aggregate_path(argument);
+    if (!path.has_value() || path->base_expression == nullptr) {
+        return std::nullopt;
+    }
+    auto field_names = std::vector<std::string> {};
+    field_names.reserve(path->steps.size());
+    for (auto const& step : path->steps) {
+        if (step.kind != AggregatePathStepKind::member) {
+            return std::nullopt;
+        }
+        field_names.push_back(step.field_name);
+    }
+
+    auto const& owner_name = path->base_expression->text;
     auto owner_source_type = session.state.source_type_names.find(owner_name);
     if (owner_source_type == session.state.source_type_names.end()) {
         return std::nullopt;
     }
 
-    auto transfer = owned_record_field_transfer(
+    auto transfer = owned_record_member_path_transfer(
         owner_name,
         owner_source_type->second,
-        argument.text,
+        field_names,
         context.lowering
     );
     if (!transfer.has_value() || transfer->source_type_name != *expected_source_type) {
