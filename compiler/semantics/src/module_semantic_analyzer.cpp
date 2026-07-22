@@ -2270,11 +2270,15 @@ private:
         }
 
         auto receiver_type_name = infer_expression_type_name(*expression.left);
-        if (receiver_type_name.empty() || has_record_field(receiver_type_name, expression.text)) {
+        if (receiver_type_name.empty()) {
             return;
         }
-        if (!is_primitive_scalar_type_name(receiver_type_name) &&
-            !is_source_declared_record_type_name(receiver_type_name)) {
+
+        auto record_layout_type_name = record_layout_type_name_for_member_validation(receiver_type_name);
+        if (!record_layout_type_name.empty() && has_record_field(record_layout_type_name, expression.text)) {
+            return;
+        }
+        if (!is_primitive_scalar_type_name(receiver_type_name) && record_layout_type_name.empty()) {
             return;
         }
 
@@ -5100,6 +5104,19 @@ private:
     auto is_source_declared_record_type_name(std::string const& type_name) const -> bool {
         auto const base_name = source_type_base_name(type_name);
         return find_record_declaration_by_name(base_name) != nullptr;
+    }
+
+    auto record_layout_type_name_for_member_validation(std::string const& type_name) const -> std::string {
+        if (is_source_declared_record_type_name(type_name)) {
+            return type_name;
+        }
+
+        auto pointee_type_name = pointer_pointee_type_name(type_name);
+        if (!pointee_type_name.empty() && is_source_declared_record_type_name(pointee_type_name)) {
+            return pointee_type_name;
+        }
+
+        return {};
     }
 
     auto is_owned_drop_candidate_type_name(std::string const& type_name) const -> bool {
