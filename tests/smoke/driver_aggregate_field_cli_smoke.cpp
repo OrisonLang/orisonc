@@ -312,6 +312,53 @@ int main() {
         },
         "switch case ownership mismatch: owned transfers must match across all continuing cases"
     );
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_record_field_if_balanced_post_merge_reuse.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "function consume_payload(payload: Payload) -> UInt32",
+            "    payload.value",
+            "function consume_box(box: Box) -> UInt32",
+            "    box.payload.value",
+            "function main(flag: Bool) -> UInt32",
+            "    let box: Box = Box(Payload(1 as UInt32))",
+            "    if flag",
+            "        let consumed: UInt32 = consume_payload(box.payload)",
+            "    else",
+            "        let consumed: UInt32 = consume_payload(box.payload)",
+            "    consume_box(box)",
+        },
+        "use after move: box.payload"
+    );
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_record_field_switch_balanced_post_merge_reuse.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    value: UInt32",
+            "record Box",
+            "    payload: Payload",
+            "function consume_payload(payload: Payload) -> UInt32",
+            "    payload.value",
+            "function consume_box(box: Box) -> UInt32",
+            "    box.payload.value",
+            "function main(flag: Bool) -> UInt32",
+            "    let box: Box = Box(Payload(1 as UInt32))",
+            "    switch flag",
+            "        true =>",
+            "            let consumed: UInt32 = consume_payload(box.payload)",
+            "        false =>",
+            "            let consumed: UInt32 = consume_payload(box.payload)",
+            "    consume_box(box)",
+        },
+        "use after move: box.payload"
+    );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_call_argument_nested_array_record_choice_ternary_field_type.or",
