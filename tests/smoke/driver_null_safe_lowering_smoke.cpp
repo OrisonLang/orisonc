@@ -417,6 +417,7 @@ auto main() -> int {
             "function main() -> UInt32",
             "    let box: Maybe<Box<UInt32>> = Empty",
             "    let bumped: Maybe<Box<UInt32>> = box?.bump(5 as UInt32)",
+            "    let bumped_value: Maybe<UInt32> = box?.bump(5 as UInt32)?.value",
             "    let pair: Maybe<Array<Box<UInt32>, 2>> = box?.pair(7 as UInt32)",
             "    box?.bump(6 as UInt32)",
             "    box?.pair(8 as UInt32)",
@@ -442,8 +443,10 @@ auto main() -> int {
             "i32 8)",
             "insertvalue { i1, %record.Box_UInt32_ } undef, i1 true, 0",
             "insertvalue { i1, [2 x %record.Box_UInt32_] } undef, i1 true, 0",
+            "insertvalue { i1, i32 } undef, i1 true, 0",
             "phi { i1, %record.Box_UInt32_ }",
             "phi { i1, [2 x %record.Box_UInt32_] }",
+            "phi { i1, i32 }",
             "ret i32 0",
         }
     );

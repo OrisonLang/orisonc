@@ -5275,6 +5275,7 @@ void test_null_safe_concrete_generic_aggregate_method_success() {
             "        return [Box(this.value), Box(this.value + delta)]",
             "function demo() -> Maybe<Box<UInt32>>",
             "    let box: Maybe<Box<UInt32>> = Empty",
+            "    let bumped_value: Maybe<UInt32> = box?.bump(5 as UInt32)?.value",
             "    let pair: Maybe<Array<Box<UInt32>, 2>> = box?.pair(7 as UInt32)",
             "    return box?.bump(5 as UInt32)",
         }
