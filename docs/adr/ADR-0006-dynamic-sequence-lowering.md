@@ -230,6 +230,8 @@ representation.
   `Pointer<Registers>` through `regs.missing`, while preserving valid pointer aggregate field access.
 - Semantic type inference now resolves pointer-backed record fields before validating chained member access, so
   `regs.status.missing` reports `type 'UInt32' has no member 'missing'` before lowering.
+- Semantic and CLI coverage now pin the same pointer-backed field inference for concrete generic records, so
+  `Pointer<Box<UInt32>>.value.missing` resolves `value` to `UInt32` before reporting the missing member.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
