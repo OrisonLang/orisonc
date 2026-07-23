@@ -1579,11 +1579,17 @@ private:
             }
             {
                 auto receiver_type_name = infer_expression_type_name(*expression.left);
-                auto record_layout_type_name = record_layout_type_name_for_member_validation(receiver_type_name);
+                auto record_layout_type_name =
+                    record_layout_type_name_for_member_validation(expression.kind, receiver_type_name);
                 if (record_layout_type_name.empty()) {
                     return {};
                 }
-                return find_record_field_type_name(record_layout_type_name, expression.text);
+                auto field_type_name = find_record_field_type_name(record_layout_type_name, expression.text);
+                if (field_type_name.empty() || expression.kind != syntax::ExpressionKind::null_safe_member_access) {
+                    return field_type_name;
+                }
+                return source_type_base_name(field_type_name) == "Maybe" ? field_type_name
+                                                                         : "Maybe<" + field_type_name + ">";
             }
         case syntax::ExpressionKind::call:
             if (!expression.left) {
@@ -2272,7 +2278,9 @@ private:
     }
 
     void validate_member_access_operand(syntax::ExpressionSyntax const& expression) {
-        if (expression.kind != syntax::ExpressionKind::member_access || !expression.left) {
+        if ((expression.kind != syntax::ExpressionKind::member_access &&
+             expression.kind != syntax::ExpressionKind::null_safe_member_access) ||
+            !expression.left) {
             return;
         }
 
@@ -2281,7 +2289,8 @@ private:
             return;
         }
 
-        auto record_layout_type_name = record_layout_type_name_for_member_validation(receiver_type_name);
+        auto record_layout_type_name =
+            record_layout_type_name_for_member_validation(expression.kind, receiver_type_name);
         if (!record_layout_type_name.empty() && has_record_field(record_layout_type_name, expression.text)) {
             return;
         }
@@ -2291,7 +2300,8 @@ private:
 
         diagnostics_.error(
             expression.line,
-            "type '" + receiver_type_name + "' has no member '" + expression.text + "'"
+            "type '" + member_access_diagnostic_type_name(expression.kind, receiver_type_name) +
+                "' has no member '" + expression.text + "'"
         );
     }
 
@@ -5113,6 +5123,13 @@ private:
         return find_record_declaration_by_name(base_name) != nullptr;
     }
 
+    auto maybe_payload_type_name(std::string const& type_name) const -> std::string {
+        if (source_type_base_name(type_name) != "Maybe") {
+            return {};
+        }
+        return first_generic_argument_type_name(type_name);
+    }
+
     auto record_layout_type_name_for_member_validation(std::string const& type_name) const -> std::string {
         if (is_source_declared_record_type_name(type_name)) {
             return type_name;
@@ -5124,6 +5141,33 @@ private:
         }
 
         return {};
+    }
+
+    auto record_layout_type_name_for_member_validation(
+        syntax::ExpressionKind expression_kind,
+        std::string const& type_name
+    ) const -> std::string {
+        if (expression_kind == syntax::ExpressionKind::null_safe_member_access) {
+            auto payload_type_name = maybe_payload_type_name(type_name);
+            if (!payload_type_name.empty()) {
+                return record_layout_type_name_for_member_validation(payload_type_name);
+            }
+        }
+
+        return record_layout_type_name_for_member_validation(type_name);
+    }
+
+    auto member_access_diagnostic_type_name(
+        syntax::ExpressionKind expression_kind,
+        std::string const& receiver_type_name
+    ) const -> std::string {
+        if (expression_kind == syntax::ExpressionKind::null_safe_member_access) {
+            auto payload_type_name = maybe_payload_type_name(receiver_type_name);
+            if (!payload_type_name.empty()) {
+                return payload_type_name;
+            }
+        }
+        return receiver_type_name;
     }
 
     auto is_owned_drop_candidate_type_name(std::string const& type_name) const -> bool {

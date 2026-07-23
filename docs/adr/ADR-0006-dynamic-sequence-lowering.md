@@ -232,6 +232,8 @@ representation.
   `regs.status.missing` reports `type 'UInt32' has no member 'missing'` before lowering.
 - Semantic and CLI coverage now pin the same pointer-backed field inference for concrete generic records, so
   `Pointer<Box<UInt32>>.value.missing` resolves `value` to `UInt32` before reporting the missing member.
+- Semantic and CLI coverage now reject unknown fields in null-safe member chains, so `user?.profile?.missing` reports
+  `type 'Profile' has no member 'missing'` before lowering.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

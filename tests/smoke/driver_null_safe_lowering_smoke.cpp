@@ -173,6 +173,29 @@ auto main() -> int {
         }
     );
 
+    auto reject_null_safe_unknown_field_path =
+        std::filesystem::temp_directory_path() / "reject_null_safe_unknown_field.or";
+    write_fixture(
+        reject_null_safe_unknown_field_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Profile",
+            "    rating: UInt32",
+            "record User",
+            "    profile: Maybe<Profile>",
+            "function demo() -> Maybe<UInt32>",
+            "    let user: Maybe<User> = Empty",
+            "    return user?.profile?.missing",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_unknown_field_path),
+        "type 'Profile' has no member 'missing'"
+    );
+
     auto emit_null_safe_present_path = std::filesystem::temp_directory_path() /
         "emit_null_safe_present_path.or";
     write_fixture(
