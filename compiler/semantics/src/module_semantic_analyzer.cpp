@@ -1602,7 +1602,14 @@ private:
                     return {};
                 }
 
-                return find_method_return_type_name(receiver_type_name, expression.left->text, expression.arguments);
+                auto return_type_name =
+                    find_method_return_type_name(receiver_type_name, expression.left->text, expression.arguments);
+                if (return_type_name.empty() ||
+                    expression.left->kind != syntax::ExpressionKind::null_safe_member_access) {
+                    return return_type_name;
+                }
+                return source_type_base_name(return_type_name) == "Maybe" ? return_type_name
+                                                                           : "Maybe<" + return_type_name + ">";
             }
             if (expression.left->kind != syntax::ExpressionKind::name) {
                 return {};
@@ -1703,7 +1710,12 @@ private:
             return {};
         }
 
-        return infer_expression_type_name(*callee_expression.left);
+        auto receiver_type_name = infer_expression_type_name(*callee_expression.left);
+        if (callee_expression.kind != syntax::ExpressionKind::null_safe_member_access) {
+            return receiver_type_name;
+        }
+
+        return maybe_payload_type_name(receiver_type_name);
     }
 
     auto merge_value_origins(ValueOriginKind left, ValueOriginKind right) const -> ValueOriginKind {
@@ -2143,7 +2155,22 @@ private:
             return;
         }
 
+        if (expression.left->kind == syntax::ExpressionKind::member_access && expression.left->text == "join") {
+            return;
+        }
+
         auto receiver_type_name = infer_receiver_type_name_for_member_call(*expression.left);
+        if (expression.left->kind == syntax::ExpressionKind::null_safe_member_access && expression.left->left) {
+            auto null_safe_base_type_name = infer_expression_type_name(*expression.left->left);
+            if (!null_safe_base_type_name.empty() && receiver_type_name.empty()) {
+                diagnostics_.error(
+                    expression.line,
+                    "null-safe access requires Maybe base: " + null_safe_base_type_name
+                );
+                return;
+            }
+        }
+
         auto parsed_receiver_type = parse_rendered_type_name(receiver_type_name);
         if (!parsed_receiver_type.has_value()) {
             return;
@@ -2207,6 +2234,14 @@ private:
                 argument_offset
             );
             return;
+        }
+
+        if (expression.left->kind == syntax::ExpressionKind::null_safe_member_access &&
+            find_method_return_type_name(receiver_type_name, expression.left->text, expression.arguments).empty()) {
+            diagnostics_.error(
+                expression.line,
+                "type '" + receiver_type_name + "' has no method '" + expression.left->text + "'"
+            );
         }
     }
 

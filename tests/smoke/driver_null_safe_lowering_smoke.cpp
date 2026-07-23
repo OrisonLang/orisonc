@@ -241,6 +241,48 @@ auto main() -> int {
         "type 'UInt32' has no member 'missing'"
     );
 
+    auto reject_null_safe_concrete_generic_unknown_method_path =
+        std::filesystem::temp_directory_path() / "reject_null_safe_concrete_generic_unknown_method.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_unknown_method_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "function demo() -> Maybe<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.missing()",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_unknown_method_path),
+        "type 'Box<UInt32>' has no method 'missing'"
+    );
+
+    auto reject_null_safe_concrete_generic_scalar_unknown_method_path =
+        std::filesystem::temp_directory_path() / "reject_null_safe_concrete_generic_scalar_unknown_method.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_scalar_unknown_method_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "function demo() -> Maybe<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.value?.missing()",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_scalar_unknown_method_path),
+        "type 'UInt32' has no method 'missing'"
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(

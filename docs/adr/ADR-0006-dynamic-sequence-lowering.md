@@ -240,6 +240,9 @@ representation.
   `null-safe access requires Maybe base: Profile` before lowering.
 - Semantic and CLI coverage now pin concrete generic payload inference in null-safe chains, so
   `box?.value?.missing` through `Maybe<Box<UInt32>>` reports `type 'UInt32' has no member 'missing'` before lowering.
+- Semantic and CLI coverage now unwrap concrete generic `Maybe` payloads for null-safe member-call lookup, so
+  `box?.missing()` reports `type 'Box<UInt32>' has no method 'missing'` and `box?.value?.missing()` reports
+  `type 'UInt32' has no method 'missing'` before lowering.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
