@@ -307,6 +307,55 @@ auto main() -> int {
         "method argument 'delta' type 'Bool' does not match declared type 'UInt32'"
     );
 
+    auto reject_null_safe_concrete_generic_method_missing_argument_path =
+        std::filesystem::temp_directory_path() /
+        "reject_null_safe_concrete_generic_method_missing_argument.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_method_missing_argument_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function scale(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.value + delta",
+            "function demo() -> Maybe<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.scale()",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_method_missing_argument_path),
+        "method 'scale' expects 1 argument but received 0"
+    );
+
+    auto reject_null_safe_concrete_generic_method_extra_argument_path =
+        std::filesystem::temp_directory_path() / "reject_null_safe_concrete_generic_method_extra_argument.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_method_extra_argument_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function scale(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.value + delta",
+            "function demo() -> Maybe<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.scale(1 as UInt32, 2 as UInt32)",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_method_extra_argument_path),
+        "method 'scale' expects 1 argument but received 2"
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(

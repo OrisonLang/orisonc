@@ -2186,10 +2186,11 @@ private:
             return;
         }
 
+        auto const* arity_mismatch = static_cast<MethodReturnSignature const*>(nullptr);
+        auto arity_mismatch_offset = std::size_t {0};
         for (auto const& signature : method_return_signatures_) {
             auto argument_offset = method_argument_offset(signature.parameters);
-            if (signature.method_name != expression.left->text ||
-                signature.parameters.size() != expression.arguments.size() + argument_offset) {
+            if (signature.method_name != expression.left->text) {
                 continue;
             }
 
@@ -2207,6 +2208,12 @@ private:
                     receiver_placeholders,
                     bindings
                 )) {
+                continue;
+            }
+
+            if (signature.parameters.size() != expression.arguments.size() + argument_offset) {
+                arity_mismatch = &signature;
+                arity_mismatch_offset = argument_offset;
                 continue;
             }
 
@@ -2240,6 +2247,18 @@ private:
                 diagnosed_indices,
                 "method",
                 argument_offset
+            );
+            return;
+        }
+
+        if (arity_mismatch != nullptr) {
+            auto expected_count = arity_mismatch->parameters.size() - arity_mismatch_offset;
+            auto actual_count = expression.arguments.size();
+            diagnostics_.error(
+                expression.line,
+                "method '" + expression.left->text + "' expects " +
+                    std::to_string(expected_count) + " argument" + (expected_count == 1 ? "" : "s") +
+                    " but received " + std::to_string(actual_count)
             );
             return;
         }
