@@ -139,6 +139,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `user?.profile?.missing` reports `type 'Profile' has no member 'missing'` before lowering.
 - 2026-07-22: semantic and CLI coverage now reject scalar continuations in null-safe member chains, so
   `user?.profile?.rating?.missing` reports `type 'UInt32' has no member 'missing'` before lowering.
+- 2026-07-22: semantic and CLI coverage now reject null-safe access on non-`Maybe` receivers, so `profile?.rating`
+  reports `null-safe access requires Maybe base: Profile` before lowering.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

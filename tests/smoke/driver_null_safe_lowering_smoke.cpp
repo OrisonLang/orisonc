@@ -219,6 +219,27 @@ auto main() -> int {
         "type 'UInt32' has no member 'missing'"
     );
 
+    auto reject_null_safe_non_maybe_receiver_path =
+        std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
+    write_fixture(
+        reject_null_safe_non_maybe_receiver_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Profile",
+            "    rating: UInt32",
+            "function demo() -> Maybe<UInt32>",
+            "    let profile: Profile = Profile(1 as UInt32)",
+            "    return profile?.rating",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_non_maybe_receiver_path),
+        "null-safe access requires Maybe base: Profile"
+    );
+
     auto emit_null_safe_present_path = std::filesystem::temp_directory_path() /
         "emit_null_safe_present_path.or";
     write_fixture(

@@ -2289,6 +2289,15 @@ private:
             return;
         }
 
+        if (expression.kind == syntax::ExpressionKind::null_safe_member_access &&
+            maybe_payload_type_name(receiver_type_name).empty()) {
+            diagnostics_.error(
+                expression.line,
+                "null-safe access requires Maybe base: " + receiver_type_name
+            );
+            return;
+        }
+
         auto record_layout_type_name =
             record_layout_type_name_for_member_validation(expression.kind, receiver_type_name);
         if (!record_layout_type_name.empty() && has_record_field(record_layout_type_name, expression.text)) {

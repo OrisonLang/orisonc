@@ -5097,6 +5097,26 @@ void test_null_safe_scalar_member_continuation_failure() {
     assert_member_access_unknown_member_diagnostic(path, 11, "UInt32", "missing");
 }
 
+void test_null_safe_non_maybe_receiver_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_null_safe_non_maybe_receiver.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Profile",
+            "    rating: UInt32",
+            "function demo() -> Maybe<UInt32>",
+            "    let profile: Profile = Profile(1 as UInt32)",
+            "    return profile?.rating",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 9, "null-safe access requires Maybe base: Profile");
+}
+
 void test_record_constructor_return_expression_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_return_success.or";
     write_header_record_constant_fixture(
@@ -12655,6 +12675,7 @@ int main() {
     test_concrete_generic_pointer_record_scalar_member_continuation_failure();
     test_null_safe_record_unknown_member_failure();
     test_null_safe_scalar_member_continuation_failure();
+    test_null_safe_non_maybe_receiver_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();
     test_generic_record_constructor_repeated_field_success();
