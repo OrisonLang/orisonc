@@ -2294,14 +2294,14 @@ private:
         if (!record_layout_type_name.empty() && has_record_field(record_layout_type_name, expression.text)) {
             return;
         }
-        if (!is_primitive_scalar_type_name(receiver_type_name) && record_layout_type_name.empty()) {
+        auto diagnostic_type_name = member_access_diagnostic_type_name(expression.kind, receiver_type_name);
+        if (!is_primitive_scalar_type_name(diagnostic_type_name) && record_layout_type_name.empty()) {
             return;
         }
 
         diagnostics_.error(
             expression.line,
-            "type '" + member_access_diagnostic_type_name(expression.kind, receiver_type_name) +
-                "' has no member '" + expression.text + "'"
+            "type '" + diagnostic_type_name + "' has no member '" + expression.text + "'"
         );
     }
 

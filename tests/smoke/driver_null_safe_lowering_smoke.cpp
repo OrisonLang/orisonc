@@ -196,6 +196,29 @@ auto main() -> int {
         "type 'Profile' has no member 'missing'"
     );
 
+    auto reject_null_safe_scalar_continuation_path =
+        std::filesystem::temp_directory_path() / "reject_null_safe_scalar_continuation.or";
+    write_fixture(
+        reject_null_safe_scalar_continuation_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Profile",
+            "    rating: UInt32",
+            "record User",
+            "    profile: Maybe<Profile>",
+            "function demo() -> Maybe<UInt32>",
+            "    let user: Maybe<User> = Empty",
+            "    return user?.profile?.rating?.missing",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_scalar_continuation_path),
+        "type 'UInt32' has no member 'missing'"
+    );
+
     auto emit_null_safe_present_path = std::filesystem::temp_directory_path() /
         "emit_null_safe_present_path.or";
     write_fixture(

@@ -5075,6 +5075,28 @@ void test_null_safe_record_unknown_member_failure() {
     assert_member_access_unknown_member_diagnostic(path, 11, "Profile", "missing");
 }
 
+void test_null_safe_scalar_member_continuation_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_null_safe_scalar_member_continuation.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Profile",
+            "    rating: UInt32",
+            "record User",
+            "    profile: Maybe<Profile>",
+            "function demo() -> Maybe<UInt32>",
+            "    let user: Maybe<User> = Empty",
+            "    return user?.profile?.rating?.missing",
+        }
+    );
+
+    assert_member_access_unknown_member_diagnostic(path, 11, "UInt32", "missing");
+}
+
 void test_record_constructor_return_expression_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_return_success.or";
     write_header_record_constant_fixture(
@@ -12632,6 +12654,7 @@ int main() {
     test_pointer_record_scalar_member_continuation_failure();
     test_concrete_generic_pointer_record_scalar_member_continuation_failure();
     test_null_safe_record_unknown_member_failure();
+    test_null_safe_scalar_member_continuation_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();
     test_generic_record_constructor_repeated_field_success();
