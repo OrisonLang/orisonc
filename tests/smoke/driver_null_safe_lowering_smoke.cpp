@@ -219,6 +219,28 @@ auto main() -> int {
         "type 'UInt32' has no member 'missing'"
     );
 
+    auto reject_null_safe_concrete_generic_scalar_continuation_path =
+        std::filesystem::temp_directory_path() /
+        "reject_null_safe_concrete_generic_scalar_continuation.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_scalar_continuation_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "function demo() -> Maybe<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.value?.missing",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_scalar_continuation_path),
+        "type 'UInt32' has no member 'missing'"
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(

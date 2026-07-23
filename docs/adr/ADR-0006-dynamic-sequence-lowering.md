@@ -238,6 +238,8 @@ representation.
   `user?.profile?.rating?.missing` reports `type 'UInt32' has no member 'missing'` before lowering.
 - Semantic and CLI coverage now reject null-safe access on non-`Maybe` receivers, so `profile?.rating` reports
   `null-safe access requires Maybe base: Profile` before lowering.
+- Semantic and CLI coverage now pin concrete generic payload inference in null-safe chains, so
+  `box?.value?.missing` through `Maybe<Box<UInt32>>` reports `type 'UInt32' has no member 'missing'` before lowering.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
