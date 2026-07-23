@@ -146,6 +146,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-23: semantic and CLI coverage now unwrap concrete generic `Maybe` payloads for null-safe member-call lookup,
   so `box?.missing()` reports `type 'Box<UInt32>' has no method 'missing'` and `box?.value?.missing()` reports
   `type 'UInt32' has no method 'missing'` before lowering.
+- 2026-07-23: semantic and CLI coverage now pin argument checking for concrete generic null-safe member calls, so
+  `box?.scale(true)` through `Maybe<Box<UInt32>>` reports
+  `method argument 'delta' type 'Bool' does not match declared type 'UInt32'` before lowering.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

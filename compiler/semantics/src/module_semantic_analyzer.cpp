@@ -750,7 +750,8 @@ private:
         std::unordered_set<std::string>& placeholders
     ) const {
         for (auto const& argument : type.generic_arguments) {
-            if (argument.generic_arguments.empty()) {
+            if (argument.generic_arguments.empty() && !is_primitive_scalar_type_name(argument.name) &&
+                !is_source_declared_nominal_type(argument.name)) {
                 placeholders.insert(argument.name);
             }
 
@@ -790,6 +791,14 @@ private:
         }
 
         return false;
+    }
+
+    auto method_argument_offset(std::vector<syntax::ParameterSyntax> const& parameters) const -> std::size_t {
+        if (parameters.empty()) {
+            return 0;
+        }
+
+        return parameters.front().name == "this" || is_receiver_self_type_name(parameters.front().type.name) ? 1 : 0;
     }
 
     auto expression_constructor_name(syntax::ExpressionSyntax const& expression) const -> std::string {
@@ -1028,7 +1037,8 @@ private:
             return {};
         }
 
-        if (signature.parameters.size() != arguments.size()) {
+        auto argument_offset = method_argument_offset(signature.parameters);
+        if (signature.parameters.size() != arguments.size() + argument_offset) {
             return render_type_name(substitute_generic_type_bindings(signature.return_type, bindings));
         }
 
@@ -1039,7 +1049,7 @@ private:
             receiver_placeholders.end()
         );
 
-        for (std::size_t index = 0; index < signature.parameters.size(); ++index) {
+        for (std::size_t index = 0; index < arguments.size(); ++index) {
             auto argument_type_name = infer_expression_type_name(arguments[index]);
             if (argument_type_name.empty()) {
                 return render_type_name(substitute_generic_type_bindings(signature.return_type, bindings));
@@ -1048,7 +1058,7 @@ private:
             auto parsed_argument_type = parse_rendered_type_name(argument_type_name);
             if (!parsed_argument_type.has_value() ||
                 !match_generic_type_pattern(
-                    signature.parameters[index].type,
+                    signature.parameters[index + argument_offset].type,
                     *parsed_argument_type,
                     all_generic_parameters,
                     bindings
@@ -2177,9 +2187,7 @@ private:
         }
 
         for (auto const& signature : method_return_signatures_) {
-            auto argument_offset =
-                !signature.parameters.empty() && signature.parameters.front().name == "this" ? std::size_t {1}
-                                                                                              : std::size_t {0};
+            auto argument_offset = method_argument_offset(signature.parameters);
             if (signature.method_name != expression.left->text ||
                 signature.parameters.size() != expression.arguments.size() + argument_offset) {
                 continue;

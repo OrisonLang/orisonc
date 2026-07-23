@@ -283,6 +283,30 @@ auto main() -> int {
         "type 'UInt32' has no method 'missing'"
     );
 
+    auto reject_null_safe_concrete_generic_method_argument_path =
+        std::filesystem::temp_directory_path() / "reject_null_safe_concrete_generic_method_argument.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_method_argument_path,
+        "demo.emit",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function scale(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.value + delta",
+            "function demo() -> Maybe<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.scale(true)",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_method_argument_path),
+        "method argument 'delta' type 'Bool' does not match declared type 'UInt32'"
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(
