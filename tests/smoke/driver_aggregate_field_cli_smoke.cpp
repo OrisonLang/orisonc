@@ -498,6 +498,18 @@ int main() {
         },
         "type 'Pointer<Registers>' has no member 'missing'"
     );
+    assert_cli_emit_llvm_failure(
+        executable,
+        std::filesystem::temp_directory_path() / "orison_cli_pointer_record_scalar_member_continuation.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Registers",
+            "    status: UInt32",
+            "unsafe function demo(regs: Pointer<Registers>) -> UInt32",
+            "    return regs.status.missing",
+        },
+        "type 'UInt32' has no member 'missing'"
+    );
     assert_cli_record_field_nested_array_choice_context_failure(
         executable,
         "orison_cli_call_argument_nested_array_record_choice_ternary_field_type.or",

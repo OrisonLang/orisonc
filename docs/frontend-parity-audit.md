@@ -131,6 +131,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   receivers such as `Box<UInt32>` through `box.missing`.
 - 2026-07-22: semantic and CLI coverage now reject unknown fields on pointer-backed declared-record receivers such as
   `Pointer<Registers>` through `regs.missing`, while preserving existing valid pointer aggregate field access.
+- 2026-07-22: semantic type inference now resolves pointer-backed record fields before validating chained member
+  access, so `regs.status.missing` reports `type 'UInt32' has no member 'missing'` before lowering.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

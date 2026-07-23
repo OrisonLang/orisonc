@@ -1577,7 +1577,14 @@ private:
             if (!expression.left) {
                 return {};
             }
-            return find_record_field_type_name(infer_expression_type_name(*expression.left), expression.text);
+            {
+                auto receiver_type_name = infer_expression_type_name(*expression.left);
+                auto record_layout_type_name = record_layout_type_name_for_member_validation(receiver_type_name);
+                if (record_layout_type_name.empty()) {
+                    return {};
+                }
+                return find_record_field_type_name(record_layout_type_name, expression.text);
+            }
         case syntax::ExpressionKind::call:
             if (!expression.left) {
                 return {};

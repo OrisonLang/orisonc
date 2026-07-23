@@ -5019,6 +5019,23 @@ void test_pointer_record_unknown_member_failure() {
     assert_member_access_unknown_member_diagnostic(path, 5, "Pointer<Registers>", "missing");
 }
 
+void test_pointer_record_scalar_member_continuation_failure() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_pointer_record_scalar_member_continuation.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "record Registers",
+            "    status: UInt32",
+            "unsafe function demo(regs: Pointer<Registers>) -> UInt32",
+            "    return regs.status.missing",
+        }
+    );
+
+    assert_member_access_unknown_member_diagnostic(path, 5, "UInt32", "missing");
+}
+
 void test_record_constructor_return_expression_success() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_record_constructor_return_success.or";
     write_header_record_constant_fixture(
@@ -12573,6 +12590,7 @@ int main() {
     test_declared_record_unknown_member_failure();
     test_concrete_generic_record_unknown_member_failure();
     test_pointer_record_unknown_member_failure();
+    test_pointer_record_scalar_member_continuation_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();
     test_generic_record_constructor_repeated_field_success();
