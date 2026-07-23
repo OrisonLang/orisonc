@@ -5232,6 +5232,30 @@ void test_null_safe_concrete_generic_method_extra_argument_failure() {
     assert_fixture_single_diagnostic(path, 12, "method 'scale' expects 1 argument but received 2");
 }
 
+void test_null_safe_concrete_generic_method_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_null_safe_concrete_generic_method_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function scale(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.value + delta",
+            "function demo() -> Maybe<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.scale(5 as UInt32)",
+        }
+    );
+
+    assert_fixture_success(path);
+}
+
 void test_null_safe_non_maybe_receiver_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_null_safe_non_maybe_receiver.or";
     write_concurrency_fixture(
@@ -12816,6 +12840,7 @@ int main() {
     test_null_safe_concrete_generic_method_argument_failure();
     test_null_safe_concrete_generic_method_missing_argument_failure();
     test_null_safe_concrete_generic_method_extra_argument_failure();
+    test_null_safe_concrete_generic_method_success();
     test_null_safe_non_maybe_receiver_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();

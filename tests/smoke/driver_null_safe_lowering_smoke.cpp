@@ -356,6 +356,48 @@ auto main() -> int {
         "method 'scale' expects 1 argument but received 2"
     );
 
+    auto emit_null_safe_concrete_generic_member_call_path =
+        std::filesystem::temp_directory_path() / "emit_null_safe_concrete_generic_member_call.or";
+    write_fixture(
+        emit_null_safe_concrete_generic_member_call_path,
+        "demo.generic_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function scale(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.value + delta",
+            "function main() -> UInt32",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    let scaled: Maybe<UInt32> = box?.scale(5 as UInt32)",
+            "    box?.scale(6 as UInt32)",
+            "    return 0 as UInt32",
+        }
+    );
+    auto emit_null_safe_concrete_generic_member_call =
+        run_emit_llvm(app, emit_null_safe_concrete_generic_member_call_path);
+    assert_success_with_stdout_contains(
+        emit_null_safe_concrete_generic_member_call,
+        {
+            "%record.Box_UInt32_ = type { i32 }",
+            "define i32 @method.Box_UInt32_.scale(%record.Box_UInt32_ %this, i32 %delta)",
+            "define i32 @main()",
+            "insertvalue { i1, %record.Box_UInt32_ } undef, i1 false, 0",
+            "nullsafe.call.empty.",
+            "nullsafe.call.some.",
+            "nullsafe.call.merge.",
+            "call i32 @method.Box_UInt32_.scale(%record.Box_UInt32_",
+            "call i32 @method.Box_UInt32_.scale(%record.Box_UInt32_ %tmp",
+            "i32 6)",
+            "insertvalue { i1, i32 } undef, i1 true, 0",
+            "phi { i1, i32 }",
+            "ret i32 0",
+        }
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(

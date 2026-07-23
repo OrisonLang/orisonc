@@ -248,6 +248,9 @@ representation.
   `method argument 'delta' type 'Bool' does not match declared type 'UInt32'` before lowering.
 - Semantic and CLI coverage now pin arity checking for concrete generic null-safe member calls, so `box?.scale()` and
   `box?.scale(1 as UInt32, 2 as UInt32)` report expected-versus-actual method argument counts before lowering.
+- Semantic and CLI coverage now pin positive lowering for concrete generic null-safe member calls, so
+  `box?.scale(5 as UInt32)` through `Maybe<Box<UInt32>>` emits the monomorphized `method.Box_UInt32_.scale` call and
+  merges the result as `Maybe<UInt32>`.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
