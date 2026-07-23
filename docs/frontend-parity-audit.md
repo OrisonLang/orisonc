@@ -155,6 +155,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-23: semantic and CLI coverage now pin positive lowering for concrete generic null-safe member calls, so
   `box?.scale(5 as UInt32)` through `Maybe<Box<UInt32>>` emits the monomorphized
   `method.Box_UInt32_.scale` call and merges the result as `Maybe<UInt32>`.
+- 2026-07-23: semantic and CLI coverage now pin aggregate-return lowering for concrete generic null-safe member calls,
+  so `box?.bump(5 as UInt32)` and `box?.pair(7 as UInt32)` wrap `Box<UInt32>` and
+  `Array<Box<UInt32>, 2>` method results in `Maybe` merge IR.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

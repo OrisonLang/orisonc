@@ -398,6 +398,56 @@ auto main() -> int {
         }
     );
 
+    auto emit_null_safe_concrete_generic_aggregate_member_call_path =
+        std::filesystem::temp_directory_path() / "emit_null_safe_concrete_generic_aggregate_member_call.or";
+    write_fixture(
+        emit_null_safe_concrete_generic_aggregate_member_call_path,
+        "demo.generic_aggregate_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function bump(this: shared This, delta: UInt32) -> Box<UInt32>",
+            "        return Box(this.value + delta)",
+            "    function pair(this: shared This, delta: UInt32) -> Array<Box<UInt32>, 2>",
+            "        return [Box(this.value), Box(this.value + delta)]",
+            "function main() -> UInt32",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    let bumped: Maybe<Box<UInt32>> = box?.bump(5 as UInt32)",
+            "    let pair: Maybe<Array<Box<UInt32>, 2>> = box?.pair(7 as UInt32)",
+            "    box?.bump(6 as UInt32)",
+            "    box?.pair(8 as UInt32)",
+            "    return 0 as UInt32",
+        }
+    );
+    auto emit_null_safe_concrete_generic_aggregate_member_call =
+        run_emit_llvm(app, emit_null_safe_concrete_generic_aggregate_member_call_path);
+    assert_success_with_stdout_contains(
+        emit_null_safe_concrete_generic_aggregate_member_call,
+        {
+            "%record.Box_UInt32_ = type { i32 }",
+            "define %record.Box_UInt32_ @method.Box_UInt32_.bump(%record.Box_UInt32_ %this, i32 %delta)",
+            "define [2 x %record.Box_UInt32_] @method.Box_UInt32_.pair(%record.Box_UInt32_ %this, i32 %delta)",
+            "define i32 @main()",
+            "nullsafe.call.empty.",
+            "nullsafe.call.some.",
+            "nullsafe.call.merge.",
+            "call %record.Box_UInt32_ @method.Box_UInt32_.bump(%record.Box_UInt32_",
+            "call %record.Box_UInt32_ @method.Box_UInt32_.bump(%record.Box_UInt32_ %tmp",
+            "i32 6)",
+            "call [2 x %record.Box_UInt32_] @method.Box_UInt32_.pair(%record.Box_UInt32_",
+            "i32 8)",
+            "insertvalue { i1, %record.Box_UInt32_ } undef, i1 true, 0",
+            "insertvalue { i1, [2 x %record.Box_UInt32_] } undef, i1 true, 0",
+            "phi { i1, %record.Box_UInt32_ }",
+            "phi { i1, [2 x %record.Box_UInt32_] }",
+            "ret i32 0",
+        }
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(
