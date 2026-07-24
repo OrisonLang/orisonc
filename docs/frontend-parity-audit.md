@@ -195,6 +195,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   types now lower through an explicit `{ i32, [N x i8] }` tagged payload-buffer ABI. The checked-in
   `local_result_distinct_choice_switch.or` example pins `Result<UInt32, Bool>` construction and switch payload
   recovery through linked execution.
+- 2026-07-24: distinct concrete generic choice payload buffering now sizes record payload variants with full lowering
+  context record layouts. `local_result_distinct_record_choice_switch.or` pins `Result<Payload, Flag>` construction and
+  switch payload recovery through linked execution.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

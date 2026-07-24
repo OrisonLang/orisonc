@@ -1,0 +1,26 @@
+package demo.local_result_distinct_record_choice_switch
+
+record Payload
+    code: UInt32
+
+record Flag
+    enabled: Bool
+
+choice Result<T, E>
+    Ok(value: T)
+    Error(error: E)
+
+function ok_score() -> UInt32
+    let result: Result<Payload, Flag> = Ok(Payload(7 as UInt32))
+    switch result
+        Ok(value) => value.code
+        Error(error) => error.enabled ? 1 as UInt32 : 0 as UInt32
+
+function error_score() -> UInt32
+    let result: Result<Payload, Flag> = Error(Flag(true))
+    switch result
+        Ok(value) => value.code
+        Error(error) => error.enabled ? 1 as UInt32 : 0 as UInt32
+
+function main() -> UInt32
+    ok_score() + error_score() - 8 as UInt32

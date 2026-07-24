@@ -704,7 +704,8 @@ auto collect_choice_layout(
     syntax::ChoiceSyntax const& choice,
     std::unordered_set<std::string> const& record_names,
     std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
-    syntax::TypeSyntax concrete_type = {}
+    syntax::TypeSyntax concrete_type = {},
+    LoweringContext const* sizing_context = nullptr
 ) -> LoweredChoiceLayout {
     auto const is_template_layout = concrete_type.name.empty();
     auto choice_type = concrete_type.name.empty()
@@ -773,7 +774,12 @@ auto collect_choice_layout(
                 has_distinct_payload_types = true;
             }
             if (is_supported_choice_payload_llvm_type(payload_llvm)) {
-                auto payload_size = lowered_type_size_bytes(payload_llvm);
+                auto payload_size = sizing_context == nullptr
+                    ? lowered_type_size_bytes(payload_llvm)
+                    : lowered_type_size_bytes(payload_llvm, *sizing_context);
+                if (!payload_size.has_value()) {
+                    payload_size = lowered_type_size_bytes(payload_llvm);
+                }
                 if (!payload_size.has_value()) {
                     missing_distinct_payload_size = render_source_type_name(substituted_payload_type);
                 } else {
@@ -808,6 +814,61 @@ auto collect_choice_layout(
     return layout;
 }
 
+void collect_all_choice_layouts(
+    syntax::ModuleSyntax const& module,
+    std::vector<syntax::TypeSyntax> const& instantiated_types,
+    std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
+    std::unordered_set<std::string> const& record_names,
+    LoweringContext& context,
+    LoweringContext const* sizing_context = nullptr
+) {
+    context.choices.clear();
+    for (auto const& choice : module.choices) {
+        context.choices.emplace(
+            choice.name,
+            collect_choice_layout(choice, record_names, context.choices, {}, sizing_context)
+        );
+    }
+    for (auto const& type : instantiated_types) {
+        auto choice = generic_choices.find(type.name);
+        if (choice == generic_choices.end()) {
+            continue;
+        }
+        auto source_type_name = render_source_type_name(type);
+        context.choices.emplace(
+            source_type_name,
+            collect_choice_layout(*choice->second, record_names, context.choices, type, sizing_context)
+        );
+    }
+}
+
+void collect_all_record_layouts(
+    syntax::ModuleSyntax const& module,
+    std::vector<syntax::TypeSyntax> const& instantiated_types,
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::unordered_set<std::string> const& record_names,
+    LoweringContext& context
+) {
+    context.records.clear();
+    for (auto const& record : module.records) {
+        if (!record.generic_parameters.empty()) {
+            continue;
+        }
+        context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
+    }
+    for (auto const& type : instantiated_types) {
+        auto record = generic_records.find(type.name);
+        if (record == generic_records.end()) {
+            continue;
+        }
+        auto source_type_name = render_record_type_name(type);
+        context.records.emplace(
+            source_type_name,
+            collect_instantiated_record_layout(type, *record->second, record_names, context.choices)
+        );
+    }
+}
+
 }  // namespace
 
 auto build_lowering_context(
@@ -837,41 +898,10 @@ auto build_lowering_context(
             record_names.insert(render_record_type_name(type));
         }
     }
-    for (auto const& choice : module.choices) {
-        if (!choice.generic_parameters.empty()) {
-            context.choices.emplace(choice.name, collect_choice_layout(choice, record_names, context.choices));
-            continue;
-        }
-        context.choices.emplace(choice.name, collect_choice_layout(choice, record_names, context.choices));
-    }
-    for (auto const& type : instantiated_types) {
-        auto choice = generic_choices.find(type.name);
-        if (choice == generic_choices.end()) {
-            continue;
-        }
-        auto source_type_name = render_source_type_name(type);
-        context.choices.emplace(
-            source_type_name,
-            collect_choice_layout(*choice->second, record_names, context.choices, type)
-        );
-    }
-    for (auto const& record : module.records) {
-        if (!record.generic_parameters.empty()) {
-            continue;
-        }
-        context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
-    }
-    for (auto const& type : instantiated_types) {
-        auto record = generic_records.find(type.name);
-        if (record == generic_records.end()) {
-            continue;
-        }
-        auto source_type_name = render_record_type_name(type);
-        context.records.emplace(
-            source_type_name,
-            collect_instantiated_record_layout(type, *record->second, record_names, context.choices)
-        );
-    }
+    collect_all_choice_layouts(module, instantiated_types, generic_choices, record_names, context);
+    collect_all_record_layouts(module, instantiated_types, generic_records, record_names, context);
+    collect_all_choice_layouts(module, instantiated_types, generic_choices, record_names, context, &context);
+    collect_all_record_layouts(module, instantiated_types, generic_records, record_names, context);
 
     for (auto const& function : module.functions) {
         auto signature = lower_contextual_function_signature(
