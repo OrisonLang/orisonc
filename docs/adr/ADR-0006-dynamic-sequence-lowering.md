@@ -266,6 +266,9 @@ representation.
 - Null-safe plan and expression-emitter coverage now pin `box?.bump(5 as UInt32)?.value` below the CLI layer,
   including the `Box<UInt32>` field segment and monomorphized `method.Box_UInt32_.bump` call feeding a
   `Maybe<UInt32>` merge.
+- Runnable CLI coverage now consumes `box?.bump(5 as UInt32)?.value` through explicit `switch` handling for both
+  present and empty `Maybe<Box<UInt32>>` inputs, pinning the generic null-safe aggregate-return path through linked
+  execution.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
