@@ -306,6 +306,9 @@ representation.
 - Mutable local reassignment now has checked-in backend coverage for multi-payload choice values across `if` and
   `switch` branches. `local_result_multi_payload_choice_reassignment.or` pins stores back into a `Result<UInt32>`
   local before downstream payload-pattern recovery.
+- Record fields containing multi-payload choice values now have checked-in backend coverage through construction,
+  mutable field assignment, and field-access `switch` recovery. `local_result_multi_payload_choice_record_field.or`
+  pins `Holder.result: Result<UInt32>` across record constructors, field stores, calls, and payload binding recovery.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

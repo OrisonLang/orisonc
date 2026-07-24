@@ -33,6 +33,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: record fields containing multi-payload choice values are now pinned through construction, field
+  assignment, and field-access `switch` recovery. `local_result_multi_payload_choice_record_field.or` exercises a
+  `Holder.result: Result<UInt32>` field across ternary record construction, mutable field stores, and payload-pattern
+  recovery from `holder.result`.
 - 2026-07-24: mutable local reassignment is now pinned for multi-payload choice values across `if` and `switch`
   branches. `local_result_multi_payload_choice_reassignment.or` exercises reassignment into a `Result<UInt32>` local
   before downstream payload-pattern recovery.

@@ -1,0 +1,28 @@
+package examples.local_result_multi_payload_choice_record_field
+
+choice Result<T>
+    Ok(left: T, right: T)
+    Error(code: UInt32)
+
+record Holder
+    result: Result<UInt32>
+
+function score(holder: Holder) -> UInt32
+    switch holder.result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function choose(flag: Bool) -> Holder
+    flag ? Holder(Ok(2 as UInt32, 5 as UInt32)) : Holder(Error(1 as UInt32))
+
+function reassign(flag: Bool) -> UInt32
+    var holder: Holder = Holder(Error(1 as UInt32))
+    if flag
+        holder.result = Ok(3 as UInt32, 4 as UInt32)
+    else
+        holder.result = Error(1 as UInt32)
+
+    score(holder)
+
+function main() -> UInt32
+    score(choose(true)) + score(choose(false)) + reassign(true) + reassign(false) - 16 as UInt32
