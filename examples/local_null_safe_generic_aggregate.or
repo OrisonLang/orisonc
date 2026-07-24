@@ -1,0 +1,29 @@
+package demo.local_null_safe_generic_aggregate
+
+choice Maybe<T>
+    Some(value: T)
+    Empty
+
+record Box<T>
+    value: T
+
+extend Box<UInt32>
+    function bump(this: shared This, delta: UInt32) -> Box<UInt32>
+        return Box(this.value + delta)
+
+function present_score() -> UInt32
+    let box: Maybe<Box<UInt32>> = Some(Box(7 as UInt32))
+    let bumped: Maybe<UInt32> = box?.bump(5 as UInt32)?.value
+    switch bumped
+        Some(value) => value
+        Empty => 0 as UInt32
+
+function empty_score() -> UInt32
+    let box: Maybe<Box<UInt32>> = Empty
+    let bumped: Maybe<UInt32> = box?.bump(5 as UInt32)?.value
+    switch bumped
+        Some(value) => 1 as UInt32
+        Empty => 0 as UInt32
+
+function main() -> UInt32
+    present_score() + empty_score() - 12 as UInt32
