@@ -33,6 +33,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: unsupported choice payload ABI diagnostics are now pinned for annotated local `let` and `var` bindings
+  too. The `choice_dynamic_array_payload_let_rejected.or` and
+  `choice_dynamic_array_payload_var_rejected.or` fixtures confirm `Buffered` locals explain that
+  `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
 - 2026-07-24: unsupported choice payload ABI diagnostics are now pinned for function parameter boundaries too. The
   `choice_dynamic_array_payload_parameter_rejected.or` fixture confirms `Buffered` parameters explain that
   `DynamicArray<UInt32>` does not yet have a lowered choice ABI.

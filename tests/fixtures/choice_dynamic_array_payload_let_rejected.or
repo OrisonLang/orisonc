@@ -1,0 +1,9 @@
+package tests.fixtures.choice_dynamic_array_payload_let_rejected
+
+choice Buffered
+    Ready(values: DynamicArray<UInt32>)
+    Empty
+
+function use_buffer() -> UInt32
+    let buffer: Buffered = Empty
+    0 as UInt32
