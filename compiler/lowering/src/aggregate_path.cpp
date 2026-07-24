@@ -225,4 +225,30 @@ auto emit_aggregate_path_cursor_load(
     };
 }
 
+auto render_aggregate_path_error(AggregatePathError error) -> std::string_view {
+    switch (error) {
+    case AggregatePathError::none:
+        return "none";
+    case AggregatePathError::no_steps:
+        return "no aggregate path steps";
+    case AggregatePathError::unsupported_base:
+        return "unsupported aggregate path base";
+    case AggregatePathError::unsupported_source_type:
+        return "unsupported aggregate source type";
+    case AggregatePathError::expected_record:
+        return "expected record";
+    case AggregatePathError::unknown_field:
+        return "unknown field";
+    case AggregatePathError::unsupported_field_type:
+        return "unsupported field type";
+    case AggregatePathError::expected_array:
+        return "expected array";
+    case AggregatePathError::unsupported_element_source_type:
+        return "unsupported element source type";
+    case AggregatePathError::unsupported_element_type:
+        return "unsupported element type";
+    }
+    return "unknown aggregate path error";
+}
+
 }  // namespace orison::lowering

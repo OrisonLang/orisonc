@@ -339,6 +339,9 @@ representation.
 - Aggregate path expression lowering now records a structured `unsupported aggregate path` failure for member/index
   layout failures. Direct expression smoke coverage pins `address_of(device.missing)` as an `unknown field` aggregate
   path failure instead of a generic unsupported-expression detail.
+- Aggregate assignment target diagnostics now use the same aggregate-path error renderer as expression lowering.
+  Statement smoke coverage pins scalar member assignment as `expected record` and scalar index assignment as
+  `expected array`, preserving the concrete path failure at assignment sites.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

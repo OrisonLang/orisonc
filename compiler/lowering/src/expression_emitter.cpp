@@ -1044,32 +1044,6 @@ auto record_unsupported_choice_constructor_abi_failure(
     );
 }
 
-auto aggregate_path_error_detail(AggregatePathError error) -> std::string_view {
-    switch (error) {
-    case AggregatePathError::none:
-        return "none";
-    case AggregatePathError::no_steps:
-        return "no aggregate path steps";
-    case AggregatePathError::unsupported_base:
-        return "unsupported aggregate path base";
-    case AggregatePathError::unsupported_source_type:
-        return "unsupported aggregate source type";
-    case AggregatePathError::expected_record:
-        return "expected record";
-    case AggregatePathError::unknown_field:
-        return "unknown field";
-    case AggregatePathError::unsupported_field_type:
-        return "unsupported field type";
-    case AggregatePathError::expected_array:
-        return "expected array";
-    case AggregatePathError::unsupported_element_source_type:
-        return "unsupported element source type";
-    case AggregatePathError::unsupported_element_type:
-        return "unsupported element type";
-    }
-    return "unknown aggregate path error";
-}
-
 auto record_unsupported_aggregate_path_failure(
     LoweringFailures& failures,
     std::string_view operation,
@@ -1078,7 +1052,7 @@ auto record_unsupported_aggregate_path_failure(
     record_expression_lowering_failure(
         failures,
         ExpressionLoweringFailureReason::unsupported_aggregate_path,
-        std::string(operation) + ": " + std::string(aggregate_path_error_detail(error))
+        std::string(operation) + ": " + std::string(render_aggregate_path_error(error))
     );
 }
 

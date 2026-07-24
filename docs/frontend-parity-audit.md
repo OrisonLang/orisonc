@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: aggregate assignment target diagnostics now reuse the shared aggregate-path error renderer. Statement
+  smoke coverage pins scalar member/index assignment targets as `expected record` and `expected array` failures instead
+  of generic unsupported target messages.
 - 2026-07-24: aggregate path expression lowering now records a structured `unsupported aggregate path` failure for
   member/index layout failures instead of flattening them into generic unsupported-expression details. The expression
   emitter smoke pins `address_of(device.missing)` as `address_of member path: unknown field`.

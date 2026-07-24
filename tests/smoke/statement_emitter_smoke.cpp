@@ -392,7 +392,7 @@ int main() {
     ));
     assert(
         diagnostics.entries().front().message ==
-        "lowering aggregate assignment member target is unsupported"
+        "lowering aggregate assignment member target failed: expected record"
     );
     assert(output.str().empty());
 
@@ -417,7 +417,7 @@ int main() {
     ));
     assert(
         diagnostics.entries().front().message ==
-        "lowering aggregate assignment index target is unsupported"
+        "lowering aggregate assignment index target failed: expected array"
     );
     assert(output.str().empty());
 

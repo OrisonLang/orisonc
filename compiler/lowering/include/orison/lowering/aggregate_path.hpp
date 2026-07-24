@@ -109,4 +109,6 @@ auto emit_aggregate_path_cursor_load(
     std::ostream& output
 ) -> LoweredExpression;
 
+auto render_aggregate_path_error(AggregatePathError error) -> std::string_view;
+
 }  // namespace orison::lowering

@@ -60,6 +60,14 @@ auto is_dynamic_array_source_type(std::string_view source_type_name) -> bool {
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
 }
 
+auto aggregate_assignment_target_failure(
+    std::string_view operation,
+    AggregatePathError error
+) -> std::string {
+    return "lowering aggregate assignment " + std::string(operation) + " failed: " +
+        std::string(render_aggregate_path_error(error));
+}
+
 auto lower_dynamic_array_default_construction(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
@@ -385,7 +393,10 @@ auto lower_assignment_target(
                 output
             );
             if (result.error != AggregatePathError::none) {
-                diagnostics.error(target.line, "lowering aggregate assignment member target is unsupported");
+                diagnostics.error(
+                    target.line,
+                    aggregate_assignment_target_failure("member target", result.error)
+                );
                 return std::nullopt;
             }
             continue;
@@ -423,15 +434,16 @@ auto lower_assignment_target(
             output
         );
         if (result.error == AggregatePathError::unsupported_element_source_type) {
-            diagnostics.error(target.line, "lowering aggregate assignment index source type is unsupported");
+            diagnostics.error(
+                target.line,
+                aggregate_assignment_target_failure("index target", result.error)
+            );
             return std::nullopt;
         }
         if (result.error != AggregatePathError::none) {
             diagnostics.error(
                 target.line,
-                result.error == AggregatePathError::expected_array
-                    ? "lowering aggregate assignment index target is unsupported"
-                    : "lowering aggregate assignment index target type is unsupported"
+                aggregate_assignment_target_failure("index target", result.error)
             );
             return std::nullopt;
         }
