@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 namespace orison::lowering {
 namespace {
@@ -44,12 +45,18 @@ auto maybe_payload_binding_name(syntax::ExpressionSyntax const& pattern) -> std:
     return pattern.arguments.front().text;
 }
 
-struct ChoicePayloadBinding {
+struct ChoicePayloadFieldBinding {
     std::string binding_name;
-    std::string variant_name;
     std::string payload_name;
     std::string payload_type;
     std::string source_type_name;
+    std::size_t payload_index = 0;
+};
+
+struct ChoicePayloadBinding {
+    std::string variant_name;
+    std::string variant_payload_type;
+    std::vector<ChoicePayloadFieldBinding> payloads;
 };
 
 auto choice_payload_binding_for_switch_case(
@@ -61,8 +68,7 @@ auto choice_payload_binding_for_switch_case(
     if (pattern.kind != syntax::ExpressionKind::call ||
         pattern.left == nullptr ||
         pattern.left->kind != syntax::ExpressionKind::name ||
-        pattern.arguments.size() != 1 ||
-        pattern.arguments.front().kind != syntax::ExpressionKind::name) {
+        pattern.arguments.empty()) {
         return std::nullopt;
     }
 
@@ -81,14 +87,25 @@ auto choice_payload_binding_for_switch_case(
     }
 
     for (auto const& variant : choice->variants) {
-        if (variant.name == pattern.left->text && variant.payloads.size() == 1) {
-            return ChoicePayloadBinding {
-                .binding_name = pattern.arguments.front().text,
+        if (variant.name == pattern.left->text && variant.payloads.size() == pattern.arguments.size()) {
+            auto binding = ChoicePayloadBinding {
                 .variant_name = variant.name,
-                .payload_name = variant.payloads.front().name,
-                .payload_type = variant.payloads.front().llvm_type,
-                .source_type_name = variant.payloads.front().source_type_name,
+                .variant_payload_type = variant.lowered_payload_type,
             };
+            binding.payloads.reserve(variant.payloads.size());
+            for (auto index = std::size_t {0}; index < variant.payloads.size(); ++index) {
+                if (pattern.arguments[index].kind != syntax::ExpressionKind::name) {
+                    return std::nullopt;
+                }
+                binding.payloads.push_back(ChoicePayloadFieldBinding {
+                    .binding_name = pattern.arguments[index].text,
+                    .payload_name = variant.payloads[index].name,
+                    .payload_type = variant.payloads[index].llvm_type,
+                    .source_type_name = variant.payloads[index].source_type_name,
+                    .payload_index = variant.payloads[index].index,
+                });
+            }
+            return binding;
         }
     }
     return std::nullopt;
@@ -167,6 +184,66 @@ void bind_switch_payload_value(
     bind_addressable_aggregate_value(binding_name, lowered_payload, session, output);
 }
 
+void bind_switch_payload_field_value(
+    ChoicePayloadFieldBinding const& binding,
+    std::string payload_value,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) {
+    auto payload_signedness = IntegerSignedness::not_integer;
+    if (auto lowered_type = lowered_type_for_source_type_name(binding.source_type_name, context.lowering)) {
+        payload_signedness = lowered_type->signedness;
+    }
+    session.state.source_type_names[binding.binding_name] = binding.source_type_name;
+
+    auto lowered_payload = LoweredExpression {
+        .type = binding.payload_type,
+        .value = std::move(payload_value),
+        .signedness = payload_signedness,
+    };
+    session.state.immutable_bindings[binding.binding_name] = lowered_payload;
+    bind_addressable_aggregate_value(binding.binding_name, lowered_payload, session, output);
+}
+
+void bind_choice_switch_payload_values(
+    ChoicePayloadBinding const& binding,
+    std::string_view payload_field_type,
+    LoweredExpression const& subject,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostream& output
+) {
+    if (binding.payloads.empty() || binding.variant_payload_type.empty()) {
+        return;
+    }
+
+    auto payload = next_llvm_temporary_name(session.state.next_temporary_index);
+    output << "  " << payload << " = extractvalue " << subject.type << " " << subject.value << ", 1\n";
+    auto payload_value = std::move(payload);
+    if (payload_field_type != binding.variant_payload_type) {
+        auto payload_storage = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << payload_storage << " = alloca " << payload_field_type << ", align 8\n";
+        output << "  store " << payload_field_type << " " << payload_value << ", ptr "
+               << payload_storage << ", align 8\n";
+        payload_value = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << payload_value << " = load " << binding.variant_payload_type << ", ptr "
+               << payload_storage << ", align 8\n";
+    }
+
+    if (binding.payloads.size() == 1) {
+        bind_switch_payload_field_value(binding.payloads.front(), std::move(payload_value), context, session, output);
+        return;
+    }
+
+    for (auto const& payload_binding : binding.payloads) {
+        auto payload_field_value = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << payload_field_value << " = extractvalue " << binding.variant_payload_type
+               << " " << payload_value << ", " << payload_binding.payload_index << "\n";
+        bind_switch_payload_field_value(payload_binding, std::move(payload_field_value), context, session, output);
+    }
+}
+
 void mark_consumed_choice_payload(
     syntax::ExpressionSyntax const& subject_expression,
     ChoicePayloadBinding const& binding,
@@ -179,18 +256,20 @@ void mark_consumed_choice_payload(
         return;
     }
 
-    auto transfer = owned_choice_payload_transfer(
-        subject_expression.text,
-        *subject_source_type_name,
-        binding.variant_name,
-        binding.payload_name,
-        context.lowering
-    );
-    if (!transfer.has_value()) {
-        return;
-    }
+    for (auto const& payload : binding.payloads) {
+        auto transfer = owned_choice_payload_transfer(
+            subject_expression.text,
+            *subject_source_type_name,
+            binding.variant_name,
+            payload.payload_name,
+            context.lowering
+        );
+        if (!transfer.has_value()) {
+            continue;
+        }
 
-    mark_owned_binding_consumed(session.state.ownership_transfers, std::move(transfer->binding_name));
+        mark_owned_binding_consumed(session.state.ownership_transfers, std::move(transfer->binding_name));
+    }
 }
 
 }  // namespace
@@ -302,16 +381,7 @@ void bind_switch_payload(
     if (!payload_field_type.has_value()) {
         return;
     }
-    bind_switch_payload_value(
-        choice_binding->binding_name,
-        choice_binding->payload_type,
-        *payload_field_type,
-        std::move(choice_binding->source_type_name),
-        subject,
-        context,
-        session,
-        output
-    );
+    bind_choice_switch_payload_values(*choice_binding, *payload_field_type, subject, context, session, output);
 }
 
 }  // namespace orison::lowering

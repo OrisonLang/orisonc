@@ -6883,7 +6883,7 @@ auto main() -> int {
         },
         "lowering array-literal for statements requires an explicit Array<T, N> source type"
     );
-    assert_cli_emit_llvm_failure(
+    assert_cli_emit_llvm_success(
         executable,
         smoke_temp_root / "orison_cli_multi_payload_choice_emit.or",
         std::vector<std::string_view> {
@@ -6894,8 +6894,14 @@ auto main() -> int {
             "function make_status() -> PairStatus",
             "    Ready(1 as UInt32, 2 as UInt32)",
         },
-        "lowering does not yet support PairStatus as function return type: "
-        "variants with multiple payloads do not yet have a lowered choice ABI"
+        {
+            "define { i32, { i32, i32 } } @make_status()",
+            "insertvalue { i32, { i32, i32 } } undef, i32 0, 0",
+            "insertvalue { i32, i32 } undef, i32 1, 0",
+            "insertvalue { i32, i32 }",
+            "insertvalue { i32, { i32, i32 } }",
+            "ret { i32, { i32, i32 } }",
+        }
     );
     assert_cli_emit_llvm_success(
         executable,

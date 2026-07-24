@@ -344,10 +344,11 @@ int main() {
     auto const& expression_layout = context.choices.at("Expression");
     assert(expression_layout.name == "Expression");
     assert(expression_layout.source_type_name == "Expression");
-    assert(expression_layout.llvm_type_name.empty());
+    assert(expression_layout.llvm_type_name == "{ i32, [8 x i8] }");
     assert(expression_layout.generic_parameters.empty());
     assert(expression_layout.variants.size() == 2);
     assert(expression_layout.variants[0].name == "Int");
+    assert(expression_layout.variants[0].lowered_payload_type == "i64");
     assert(expression_layout.variants[0].tag == 0);
     assert(expression_layout.variants[0].payloads.size() == 1);
     assert(expression_layout.variants[0].payloads[0].name == "value");
@@ -355,6 +356,7 @@ int main() {
     assert(expression_layout.variants[0].payloads[0].llvm_type == "i64");
     assert(expression_layout.variants[0].payloads[0].index == 0);
     assert(expression_layout.variants[1].name == "Add");
+    assert(expression_layout.variants[1].lowered_payload_type == "{ i32, %record.Profile }");
     assert(expression_layout.variants[1].tag == 1);
     assert(expression_layout.variants[1].payloads.size() == 2);
     assert(expression_layout.variants[1].payloads[0].name == "left");

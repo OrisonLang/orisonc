@@ -293,6 +293,10 @@ representation.
 - Distinct concrete generic choice payload buffering now also covers fixed-array payload variants whose elements are
   records. `local_result_array_payload_choice_switch.or` pins `Result<Array<Payload, 2>, Payload>` construction and
   array payload recovery through linked execution.
+- Concrete choice variants with multiple fixed payload fields now lower by aggregating each variant payload before
+  inserting it into the outer tagged choice payload slot. Distinct variant payload shapes still use the same finite
+  `{ i32, [N x i8] }` buffer ABI, and `local_result_multi_payload_choice_switch.or` pins constructor emission plus
+  multi-binding switch recovery through linked execution.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
@@ -303,8 +307,8 @@ representation.
   terminal fields, and paths that attempt to continue through a scalar field.
 - Call-emitter smoke coverage now pins the same nested record-member call-argument transfer boundaries, including
   scalar terminal success without ownership consumption.
-- Non-generic single-payload choices now accept any lowerable single LLVM payload type, including record payloads.
-  Multi-payload variants and generic choice ABI lowering remain unsupported.
+- Non-generic and concrete generic choices now accept any lowerable finite payload aggregate shape, including record,
+  fixed-array, and fixed-arity multi-field variant payloads.
 - Direct planner smoke coverage now pins deterministic owner-name ordering for multiple bound dynamic-array parameters,
   suppression of unauthorized owned-element cleanup, and positive owned-element cleanup authorization before descriptor
   deallocation.

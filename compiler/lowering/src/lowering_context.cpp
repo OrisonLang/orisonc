@@ -648,6 +648,25 @@ auto choice_payload_storage_type(std::size_t size_bytes) -> std::string {
     return "[" + std::to_string(std::max<std::size_t>(size_bytes, 1)) + " x i8]";
 }
 
+auto choice_variant_payload_type(std::vector<LoweredChoicePayload> const& payloads) -> std::string {
+    if (payloads.empty()) {
+        return {};
+    }
+    if (payloads.size() == 1) {
+        return payloads.front().llvm_type;
+    }
+
+    auto payload_type = std::string {"{ "};
+    for (auto index = std::size_t {0}; index < payloads.size(); ++index) {
+        if (index > 0) {
+            payload_type += ", ";
+        }
+        payload_type += payloads[index].llvm_type;
+    }
+    payload_type += " }";
+    return payload_type;
+}
+
 auto collect_record_layout(
     syntax::RecordSyntax const& record,
     std::unordered_set<std::string> const& record_names,
@@ -739,8 +758,8 @@ auto collect_choice_layout(
     auto const is_concrete_instantiation = choice.generic_parameters.empty() ||
         generic_parameter_set(choice).empty() ||
         choice_type.generic_arguments.size() == choice.generic_parameters.size();
-    auto supports_single_payload_abi = choice.generic_parameters.empty() || is_concrete_instantiation;
-    if (!supports_single_payload_abi) {
+    auto supports_payload_abi = choice.generic_parameters.empty() || is_concrete_instantiation;
+    if (!supports_payload_abi) {
         layout.unsupported_abi_reason = "generic choices do not yet have a lowered choice ABI";
     }
     for (auto variant_index = std::size_t {0}; variant_index < choice.variants.size(); ++variant_index) {
@@ -749,12 +768,6 @@ auto collect_choice_layout(
             .name = variant.name,
             .tag = variant_index,
         };
-        if (variant.payloads.size() > 1) {
-            supports_single_payload_abi = false;
-            if (layout.unsupported_abi_reason.empty()) {
-                layout.unsupported_abi_reason = "variants with multiple payloads do not yet have a lowered choice ABI";
-            }
-        }
         lowered_variant.payloads.reserve(variant.payloads.size());
         for (auto payload_index = std::size_t {0}; payload_index < variant.payloads.size(); ++payload_index) {
             has_payload = true;
@@ -762,28 +775,11 @@ auto collect_choice_layout(
             auto substituted_payload_type = substitute_type(payload.type, substitutions);
             auto payload_llvm = llvm_field_type_for(substituted_payload_type, record_names, &choices);
             if (!is_supported_choice_payload_llvm_type(payload_llvm)) {
-                supports_single_payload_abi = false;
+                supports_payload_abi = false;
                 if (layout.unsupported_abi_reason.empty()) {
                     layout.unsupported_abi_reason =
                         "choice payload type '" + render_source_type_name(substituted_payload_type) +
                         "' does not yet have a lowered choice ABI";
-                }
-            } else if (!payload_llvm_type.has_value()) {
-                payload_llvm_type = payload_llvm;
-            } else if (*payload_llvm_type != payload_llvm) {
-                has_distinct_payload_types = true;
-            }
-            if (is_supported_choice_payload_llvm_type(payload_llvm)) {
-                auto payload_size = sizing_context == nullptr
-                    ? lowered_type_size_bytes(payload_llvm)
-                    : lowered_type_size_bytes(payload_llvm, *sizing_context);
-                if (!payload_size.has_value()) {
-                    payload_size = lowered_type_size_bytes(payload_llvm);
-                }
-                if (!payload_size.has_value()) {
-                    missing_distinct_payload_size = render_source_type_name(substituted_payload_type);
-                } else {
-                    max_payload_size_bytes = std::max(max_payload_size_bytes, *payload_size);
                 }
             }
             lowered_variant.payloads.push_back(LoweredChoicePayload {
@@ -793,15 +789,35 @@ auto collect_choice_layout(
                 .index = payload_index,
             });
         }
+        lowered_variant.lowered_payload_type = choice_variant_payload_type(lowered_variant.payloads);
+        if (!lowered_variant.lowered_payload_type.empty()) {
+            if (!payload_llvm_type.has_value()) {
+                payload_llvm_type = lowered_variant.lowered_payload_type;
+            } else if (*payload_llvm_type != lowered_variant.lowered_payload_type) {
+                has_distinct_payload_types = true;
+            }
+
+            auto payload_size = sizing_context == nullptr
+                ? lowered_type_size_bytes(lowered_variant.lowered_payload_type)
+                : lowered_type_size_bytes(lowered_variant.lowered_payload_type, *sizing_context);
+            if (!payload_size.has_value()) {
+                payload_size = lowered_type_size_bytes(lowered_variant.lowered_payload_type);
+            }
+            if (!payload_size.has_value()) {
+                missing_distinct_payload_size = lowered_variant.name;
+            } else {
+                max_payload_size_bytes = std::max(max_payload_size_bytes, *payload_size);
+            }
+        }
         layout.variants.push_back(std::move(lowered_variant));
     }
-    if (supports_single_payload_abi && has_distinct_payload_types && missing_distinct_payload_size.has_value()) {
-        supports_single_payload_abi = false;
+    if (supports_payload_abi && has_distinct_payload_types && missing_distinct_payload_size.has_value()) {
+        supports_payload_abi = false;
         layout.unsupported_abi_reason =
-            "choice payload type '" + *missing_distinct_payload_size +
+            "choice variant '" + *missing_distinct_payload_size +
             "' does not yet have a finite lowered choice ABI size";
     }
-    if (supports_single_payload_abi) {
+    if (supports_payload_abi) {
         layout.llvm_type_name = has_payload
             ? "{ i32, " +
                 (has_distinct_payload_types

@@ -1128,27 +1128,56 @@ auto lower_choice_constructor_expression(
            << variant->tag << ", 0\n";
     auto aggregate_value = std::move(tag_name);
     if (!variant->payloads.empty()) {
-        auto const& payload = variant->payloads.front();
         auto payload_field_type = choice_payload_field_type(*layout);
         if (!payload_field_type.has_value()) {
             return std::nullopt;
         }
-        auto lowered_payload = lowered_expression(
-            arguments->front(),
-            payload.llvm_type,
-            integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
-            context,
-            session,
-            output
-        );
-        if (!lowered_payload.has_value()) {
+        if (variant->lowered_payload_type.empty()) {
             return std::nullopt;
         }
-        auto payload_value = lowered_payload->value;
-        if (*payload_field_type != payload.llvm_type) {
+
+        auto payload_value = std::string {};
+        if (variant->payloads.size() == 1) {
+            auto const& payload = variant->payloads.front();
+            auto lowered_payload = lowered_expression(
+                arguments->front(),
+                payload.llvm_type,
+                integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
+                context,
+                session,
+                output
+            );
+            if (!lowered_payload.has_value()) {
+                return std::nullopt;
+            }
+            payload_value = lowered_payload->value;
+        } else {
+            payload_value = "undef";
+            for (auto index = std::size_t {0}; index < variant->payloads.size(); ++index) {
+                auto const& payload = variant->payloads[index];
+                auto lowered_payload = lowered_expression(
+                    (*arguments)[index],
+                    payload.llvm_type,
+                    integer_signedness_for(syntax::TypeSyntax {.name = payload.source_type_name}),
+                    context,
+                    session,
+                    output
+                );
+                if (!lowered_payload.has_value()) {
+                    return std::nullopt;
+                }
+                auto payload_part_name = next_llvm_temporary_name(session.state.next_temporary_index);
+                output << "  " << payload_part_name << " = insertvalue " << variant->lowered_payload_type
+                       << " " << payload_value << ", " << payload.llvm_type << " "
+                       << lowered_payload->value << ", " << index << "\n";
+                payload_value = std::move(payload_part_name);
+            }
+        }
+
+        if (*payload_field_type != variant->lowered_payload_type) {
             auto payload_storage = next_llvm_temporary_name(session.state.next_temporary_index);
             output << "  " << payload_storage << " = alloca " << *payload_field_type << ", align 8\n";
-            output << "  store " << payload.llvm_type << " " << lowered_payload->value << ", ptr "
+            output << "  store " << variant->lowered_payload_type << " " << payload_value << ", ptr "
                    << payload_storage << ", align 8\n";
             payload_value = next_llvm_temporary_name(session.state.next_temporary_index);
             output << "  " << payload_value << " = load " << *payload_field_type << ", ptr "

@@ -33,6 +33,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: concrete choice variants with multiple fixed payload fields now lower by first building a per-variant
+  payload aggregate and then storing that aggregate in the existing tagged payload-buffer choice ABI when needed.
+  `examples/local_result_multi_payload_choice_switch.or` pins generic `Result<UInt32>` construction plus explicit
+  `switch` recovery of both payload bindings through the backend.
 - 2026-07-20: pipeline/lowering boundary review after the pipeline facade extraction found the next highest-payoff
   implementation gap is not another facade split. The current default backend path covers local `DynamicArray<UInt32>`,
   scalar/non-owning `DynamicArray<T>` parameters, and read-only `View<T>` descriptor length/index/iteration. The

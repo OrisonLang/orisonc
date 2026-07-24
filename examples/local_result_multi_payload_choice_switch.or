@@ -1,0 +1,20 @@
+package examples.local_result_multi_payload_choice_switch
+
+choice Result<T>
+    Ok(left: T, right: T)
+    Error(code: UInt32)
+
+function ok_score() -> UInt32
+    let result: Result<UInt32> = Ok(3 as UInt32, 4 as UInt32)
+    switch result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function error_score() -> UInt32
+    let result: Result<UInt32> = Error(1 as UInt32)
+    switch result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function main() -> UInt32
+    ok_score() + error_score() - 8 as UInt32

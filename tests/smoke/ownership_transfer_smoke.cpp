@@ -106,6 +106,7 @@ int main() {
             .variants = {
                 orison::lowering::LoweredChoiceVariant {
                     .name = "Some",
+                    .lowered_payload_type = "%record.Payload",
                     .tag = 0,
                     .payloads = {
                         orison::lowering::LoweredChoicePayload {

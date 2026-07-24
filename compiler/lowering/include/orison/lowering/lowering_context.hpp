@@ -40,6 +40,7 @@ struct LoweredChoicePayload {
 
 struct LoweredChoiceVariant {
     std::string name;
+    std::string lowered_payload_type;
     std::size_t tag = 0;
     std::vector<LoweredChoicePayload> payloads;
 };
