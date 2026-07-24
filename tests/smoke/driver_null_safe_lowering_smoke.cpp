@@ -140,6 +140,49 @@ auto main() -> int {
 
     auto app = orison::driver::CompilerApp {};
 
+    auto reject_declared_choice_unknown_member_path =
+        std::filesystem::temp_directory_path() / "reject_declared_choice_unknown_member.or";
+    write_fixture(
+        reject_declared_choice_unknown_member_path,
+        "demo.choice_receiver",
+        {
+            "choice Result<T>",
+            "    Ok(value: T)",
+            "    Error(code: UInt32)",
+            "function demo() -> UInt32",
+            "    let result: Result<UInt32> = Ok(7 as UInt32)",
+            "    return result.value",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_declared_choice_unknown_member_path),
+        "type 'Result<UInt32>' has no member 'value'"
+    );
+
+    auto reject_declared_choice_unknown_method_path =
+        std::filesystem::temp_directory_path() / "reject_declared_choice_unknown_method.or";
+    write_fixture(
+        reject_declared_choice_unknown_method_path,
+        "demo.choice_receiver",
+        {
+            "choice Result<T>",
+            "    Ok(value: T)",
+            "    Error(code: UInt32)",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function scale(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.value + delta",
+            "function demo() -> UInt32",
+            "    let result: Result<UInt32> = Ok(7 as UInt32)",
+            "    return result.scale(1 as UInt32)",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_declared_choice_unknown_method_path),
+        "type 'Result<UInt32>' has no method 'scale'"
+    );
+
     auto emit_null_safe_field_path = std::filesystem::temp_directory_path() / "emit_null_safe_field.or";
     write_fixture(
         emit_null_safe_field_path,

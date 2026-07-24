@@ -182,6 +182,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-23: semantic and CLI coverage now reject ordinary method calls after a concrete generic null-safe
   aggregate-return call, so `box?.bump(5 as UInt32).scale(1 as UInt32)` reports that `Maybe<Box<UInt32>>` has no
   `scale` method before lowering.
+- 2026-07-23: semantic and CLI coverage now pin declared choice receiver diagnostics beyond `Maybe<T>`, so
+  `Result<UInt32>.value` and `Result<UInt32>.scale(1 as UInt32)` report missing member/method diagnostics before
+  lowering.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

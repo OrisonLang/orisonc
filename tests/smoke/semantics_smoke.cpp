@@ -5015,6 +5015,47 @@ void test_concrete_generic_record_unknown_member_failure() {
     assert_member_access_unknown_member_diagnostic(path, 6, "Box<UInt32>", "missing");
 }
 
+void test_declared_choice_unknown_member_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_declared_choice_unknown_member_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Result<T>",
+            "    Ok(value: T)",
+            "    Error(code: UInt32)",
+            "function demo() -> UInt32",
+            "    let result: Result<UInt32> = Ok(7 as UInt32)",
+            "    return result.value",
+        }
+    );
+
+    assert_member_access_unknown_member_diagnostic(path, 7, "Result<UInt32>", "value");
+}
+
+void test_declared_choice_unknown_method_failure() {
+    auto path = std::filesystem::temp_directory_path() / "orison_semantics_declared_choice_unknown_method_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Result<T>",
+            "    Ok(value: T)",
+            "    Error(code: UInt32)",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function scale(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.value + delta",
+            "function demo() -> UInt32",
+            "    let result: Result<UInt32> = Ok(7 as UInt32)",
+            "    return result.scale(1 as UInt32)",
+        }
+    );
+
+    assert_fixture_single_diagnostic(path, 12, "type 'Result<UInt32>' has no method 'scale'");
+}
+
 void test_pointer_record_unknown_member_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_pointer_record_unknown_member_failure.or";
     write_concurrency_fixture(
@@ -12943,6 +12984,8 @@ int main() {
     test_nested_scalar_member_continuation_failure();
     test_declared_record_unknown_member_failure();
     test_concrete_generic_record_unknown_member_failure();
+    test_declared_choice_unknown_member_failure();
+    test_declared_choice_unknown_method_failure();
     test_pointer_record_unknown_member_failure();
     test_pointer_record_scalar_member_continuation_failure();
     test_concrete_generic_pointer_record_scalar_member_continuation_failure();
