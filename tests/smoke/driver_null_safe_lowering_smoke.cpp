@@ -476,6 +476,31 @@ auto main() -> int {
         "index access requires Array, View, DynamicArray, or Pointer base: Maybe<Array<Box<UInt32>, 2>>"
     );
 
+    auto reject_null_safe_concrete_generic_aggregate_method_ordinary_field_path =
+        std::filesystem::temp_directory_path() /
+        "reject_null_safe_concrete_generic_aggregate_method_ordinary_field.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_aggregate_method_ordinary_field_path,
+        "demo.generic_aggregate_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function bump(this: shared This, delta: UInt32) -> Box<UInt32>",
+            "        return Box(this.value + delta)",
+            "function demo() -> UInt32",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.bump(5 as UInt32).value",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_aggregate_method_ordinary_field_path),
+        "type 'Maybe<Box<UInt32>>' has no member 'value'"
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(

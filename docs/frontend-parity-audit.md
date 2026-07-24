@@ -176,6 +176,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   linked execution.
 - 2026-07-23: `examples/local_null_safe_generic_aggregate.or` now exposes the same path as a checked-in canonical
   pipeline demo across LLVM emission, object emission, direct `run`, and retained `--build` execution.
+- 2026-07-23: semantic and CLI coverage now reject ordinary field access after a concrete generic null-safe
+  aggregate-return call, so `box?.bump(5 as UInt32).value` reports that `Maybe<Box<UInt32>>` has no `value` member
+  before lowering.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

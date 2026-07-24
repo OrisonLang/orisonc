@@ -5320,6 +5320,30 @@ void test_null_safe_concrete_generic_array_method_direct_index_failure() {
     assert_index_access_base_type_diagnostic(path, 12, "Maybe<Array<Box<UInt32>, 2>>");
 }
 
+void test_null_safe_concrete_generic_aggregate_method_ordinary_field_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_null_safe_concrete_generic_aggregate_method_ordinary_field_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function bump(this: shared This, delta: UInt32) -> Box<UInt32>",
+            "        return Box(this.value + delta)",
+            "function demo() -> UInt32",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.bump(5 as UInt32).value",
+        }
+    );
+
+    assert_member_access_unknown_member_diagnostic(path, 12, "Maybe<Box<UInt32>>", "value");
+}
+
 void test_null_safe_non_maybe_receiver_failure() {
     auto path = std::filesystem::temp_directory_path() / "orison_semantics_null_safe_non_maybe_receiver.or";
     write_concurrency_fixture(
@@ -12907,6 +12931,7 @@ int main() {
     test_null_safe_concrete_generic_method_success();
     test_null_safe_concrete_generic_aggregate_method_success();
     test_null_safe_concrete_generic_array_method_direct_index_failure();
+    test_null_safe_concrete_generic_aggregate_method_ordinary_field_failure();
     test_null_safe_non_maybe_receiver_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();

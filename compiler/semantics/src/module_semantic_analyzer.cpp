@@ -2381,7 +2381,8 @@ private:
             return;
         }
         auto diagnostic_type_name = member_access_diagnostic_type_name(expression.kind, receiver_type_name);
-        if (!is_primitive_scalar_type_name(diagnostic_type_name) && record_layout_type_name.empty()) {
+        if (!is_primitive_scalar_type_name(diagnostic_type_name) && record_layout_type_name.empty() &&
+            !is_source_declared_choice_type_name(diagnostic_type_name)) {
             return;
         }
 
@@ -5207,6 +5208,11 @@ private:
     auto is_source_declared_record_type_name(std::string const& type_name) const -> bool {
         auto const base_name = source_type_base_name(type_name);
         return find_record_declaration_by_name(base_name) != nullptr;
+    }
+
+    auto is_source_declared_choice_type_name(std::string const& type_name) const -> bool {
+        auto parsed_type = parse_rendered_type_name(type_name);
+        return parsed_type.has_value() && is_choice_type(*parsed_type);
     }
 
     auto maybe_payload_type_name(std::string const& type_name) const -> std::string {
