@@ -451,6 +451,31 @@ auto main() -> int {
         }
     );
 
+    auto reject_null_safe_concrete_generic_array_method_direct_index_path =
+        std::filesystem::temp_directory_path() /
+        "reject_null_safe_concrete_generic_array_method_direct_index.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_array_method_direct_index_path,
+        "demo.generic_array_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function pair(this: shared This, delta: UInt32) -> Array<Box<UInt32>, 2>",
+            "        return [Box(this.value), Box(this.value + delta)]",
+            "function demo() -> Box<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.pair(7 as UInt32)[0 as UInt64]",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_array_method_direct_index_path),
+        "index access requires Array, View, DynamicArray, or Pointer base: Maybe<Array<Box<UInt32>, 2>>"
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(

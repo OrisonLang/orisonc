@@ -452,6 +452,10 @@ private:
         return {};
     }
 
+    auto is_indexable_type_name(std::string const& type_name) const -> bool {
+        return is_pointer_type_name(type_name) || !container_element_type_name(type_name).empty();
+    }
+
     auto is_receiver_self_type_name(std::string const& type_name) const -> bool {
         return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
     }
@@ -2328,6 +2332,17 @@ private:
     void validate_index_access_operands(syntax::ExpressionSyntax const& expression) {
         if (expression.kind != syntax::ExpressionKind::index_access || expression.arguments.empty()) {
             return;
+        }
+
+        if (expression.left) {
+            auto base_type_name = infer_expression_type_name(*expression.left);
+            if (!base_type_name.empty() && !is_indexable_type_name(base_type_name)) {
+                diagnostics_.error(
+                    expression.line,
+                    "index access requires Array, View, DynamicArray, or Pointer base: " + base_type_name
+                );
+                return;
+            }
         }
 
         auto index_type_name = infer_expression_type_name(expression.arguments.front());

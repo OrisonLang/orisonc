@@ -2490,6 +2490,18 @@ void assert_index_access_integer_index_diagnostic(std::filesystem::path const& p
     );
 }
 
+void assert_index_access_base_type_diagnostic(
+    std::filesystem::path const& path,
+    std::size_t expected_line,
+    std::string_view base_type_name
+) {
+    assert_fixture_single_diagnostic(
+        path,
+        expected_line,
+        "index access requires Array, View, DynamicArray, or Pointer base: " + std::string(base_type_name)
+    );
+}
+
 void assert_unsafe_function_call_context_diagnostic(
     std::filesystem::path const& path,
     std::size_t expected_line,
@@ -5282,6 +5294,30 @@ void test_null_safe_concrete_generic_aggregate_method_success() {
     );
 
     assert_fixture_success(path);
+}
+
+void test_null_safe_concrete_generic_array_method_direct_index_failure() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_semantics_null_safe_concrete_generic_array_method_direct_index_failure.or";
+    write_concurrency_fixture(
+        path,
+        "demo.records",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function pair(this: shared This, delta: UInt32) -> Array<Box<UInt32>, 2>",
+            "        return [Box(this.value), Box(this.value + delta)]",
+            "function demo() -> Box<UInt32>",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.pair(7 as UInt32)[0 as UInt64]",
+        }
+    );
+
+    assert_index_access_base_type_diagnostic(path, 12, "Maybe<Array<Box<UInt32>, 2>>");
 }
 
 void test_null_safe_non_maybe_receiver_failure() {
@@ -12870,6 +12906,7 @@ int main() {
     test_null_safe_concrete_generic_method_extra_argument_failure();
     test_null_safe_concrete_generic_method_success();
     test_null_safe_concrete_generic_aggregate_method_success();
+    test_null_safe_concrete_generic_array_method_direct_index_failure();
     test_null_safe_non_maybe_receiver_failure();
     test_record_constructor_return_expression_success();
     test_record_constructor_return_expression_arity_failure();

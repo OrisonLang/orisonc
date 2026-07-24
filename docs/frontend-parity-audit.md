@@ -161,6 +161,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-23: semantic and CLI coverage now pin approved chained field access after concrete generic null-safe
   aggregate-return calls, so `box?.bump(5 as UInt32)?.value` lowers to `Maybe<UInt32>` without introducing any
   null-safe index syntax.
+- 2026-07-23: semantic and CLI coverage now reject ordinary indexing on concrete generic null-safe aggregate-return
+  values before lowering, so `box?.pair(7 as UInt32)[0 as UInt64]` reports that
+  `Maybe<Array<Box<UInt32>, 2>>` is not an indexable base.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate

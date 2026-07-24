@@ -104,7 +104,7 @@ auto main() -> int {
         run_emit_llvm(app, emit_scalar_index_assignment_failure_path);
     assert_failure_with_no_stdout_contains(
         emit_scalar_index_assignment_failure,
-        "lowering aggregate assignment index target is unsupported"
+        "index access requires Array, View, DynamicArray, or Pointer base: UInt32"
     );
 
     auto emit_local_record_address_path = std::filesystem::temp_directory_path() / "emit_local_record_address.or";

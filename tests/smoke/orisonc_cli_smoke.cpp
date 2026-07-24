@@ -2522,7 +2522,7 @@ int main() {
                 "    return",
             }
         ),
-        "lowering aggregate assignment index target is unsupported"
+        "index access requires Array, View, DynamicArray, or Pointer base: UInt32"
     );
 
     auto object_path = std::filesystem::temp_directory_path() / "orison_cli_emit_object.o";
