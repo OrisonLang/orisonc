@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: mutable local reassignment is now pinned for multi-payload choice values across `if` and `switch`
+  branches. `local_result_multi_payload_choice_reassignment.or` exercises reassignment into a `Result<UInt32>` local
+  before downstream payload-pattern recovery.
 - 2026-07-24: multi-payload choice values are now pinned through final ternary and `switch` branch production. The
   checked-in `local_result_multi_payload_choice_branch_flow.or` example exercises branch-produced `Result<UInt32>`
   values through function calls and downstream payload-pattern `switch` recovery.

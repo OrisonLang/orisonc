@@ -303,6 +303,9 @@ representation.
 - Final ternary and `switch` branch production now has checked-in backend coverage for the same multi-payload choice
   ABI. `local_result_multi_payload_choice_branch_flow.or` pins branch phi values, call passing, and downstream
   payload-pattern recovery for `Result<UInt32>`.
+- Mutable local reassignment now has checked-in backend coverage for multi-payload choice values across `if` and
+  `switch` branches. `local_result_multi_payload_choice_reassignment.or` pins stores back into a `Result<UInt32>`
+  local before downstream payload-pattern recovery.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

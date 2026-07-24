@@ -1,0 +1,31 @@
+package examples.local_result_multi_payload_choice_reassignment
+
+choice Result<T>
+    Ok(left: T, right: T)
+    Error(code: UInt32)
+
+function choose_with_if(flag: Bool) -> UInt32
+    var result: Result<UInt32> = Error(1 as UInt32)
+    if flag
+        result = Ok(2 as UInt32, 5 as UInt32)
+    else
+        result = Error(1 as UInt32)
+
+    switch result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function choose_with_switch(flag: Bool) -> UInt32
+    var result: Result<UInt32> = Error(1 as UInt32)
+    switch flag
+        true =>
+            result = Ok(3 as UInt32, 4 as UInt32)
+        false =>
+            result = Error(1 as UInt32)
+
+    switch result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function main() -> UInt32
+    choose_with_if(true) + choose_with_if(false) + choose_with_switch(true) + choose_with_switch(false) - 16 as UInt32
