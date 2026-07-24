@@ -300,6 +300,9 @@ representation.
 - Expected-choice semantic validation now treats declared function calls returning the expected choice type as ordinary
   calls rather than choice constructors. `local_result_multi_payload_choice_function_flow.or` pins multi-payload choice
   values across function returns, parameter passing, call arguments, and downstream switch recovery.
+- Final ternary and `switch` branch production now has checked-in backend coverage for the same multi-payload choice
+  ABI. `local_result_multi_payload_choice_branch_flow.or` pins branch phi values, call passing, and downstream
+  payload-pattern recovery for `Result<UInt32>`.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

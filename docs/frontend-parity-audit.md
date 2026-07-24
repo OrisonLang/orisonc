@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: multi-payload choice values are now pinned through final ternary and `switch` branch production. The
+  checked-in `local_result_multi_payload_choice_branch_flow.or` example exercises branch-produced `Result<UInt32>`
+  values through function calls and downstream payload-pattern `switch` recovery.
 - 2026-07-24: expected-choice semantic validation now distinguishes ordinary declared function calls from choice
   constructor calls. `consume(make_ok())` where `make_ok() -> Result<UInt32>` no longer reports an unknown
   constructor, and `local_result_multi_payload_choice_function_flow.or` pins multi-payload choice values across
