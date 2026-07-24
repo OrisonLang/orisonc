@@ -33,6 +33,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: expected-choice semantic validation now distinguishes ordinary declared function calls from choice
+  constructor calls. `consume(make_ok())` where `make_ok() -> Result<UInt32>` no longer reports an unknown
+  constructor, and `local_result_multi_payload_choice_function_flow.or` pins multi-payload choice values across
+  function returns, parameters, calls, and downstream `switch` recovery.
 - 2026-07-24: concrete choice variants with multiple fixed payload fields now lower by first building a per-variant
   payload aggregate and then storing that aggregate in the existing tagged payload-buffer choice ABI when needed.
   `examples/local_result_multi_payload_choice_switch.or` pins generic `Result<UInt32>` construction plus explicit

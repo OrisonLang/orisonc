@@ -297,6 +297,9 @@ representation.
   inserting it into the outer tagged choice payload slot. Distinct variant payload shapes still use the same finite
   `{ i32, [N x i8] }` buffer ABI, and `local_result_multi_payload_choice_switch.or` pins constructor emission plus
   multi-binding switch recovery through linked execution.
+- Expected-choice semantic validation now treats declared function calls returning the expected choice type as ordinary
+  calls rather than choice constructors. `local_result_multi_payload_choice_function_flow.or` pins multi-payload choice
+  values across function returns, parameter passing, call arguments, and downstream switch recovery.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

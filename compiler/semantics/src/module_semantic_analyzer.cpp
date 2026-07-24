@@ -4092,6 +4092,12 @@ private:
         if (!expected_type.has_value() || !is_choice_type(*expected_type)) {
             return false;
         }
+        if (expression.kind == syntax::ExpressionKind::call &&
+            expression.left != nullptr &&
+            expression.left->kind == syntax::ExpressionKind::name &&
+            find_callable_return_type_name(expression.left->text, expression.arguments) == expected_type_name) {
+            return false;
+        }
 
         return validate_constant_choice_constructor_initializer(expression, *expected_type);
     }

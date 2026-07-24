@@ -8230,6 +8230,27 @@ void test_choice_constructor_ternary_call_argument_payload_types() {
     assert_fixture_success(success_path);
 }
 
+void test_choice_typed_call_argument_accepts_function_result_success() {
+    auto path =
+        std::filesystem::temp_directory_path() / "orison_semantics_choice_call_argument_function_result_success.or";
+    write_concurrency_fixture(
+        path,
+        "demo.choices",
+        {
+            "choice Result<T>",
+            "    Ok(left: T, right: T)",
+            "    Error(code: UInt32)",
+            "function make_ok() -> Result<UInt32>",
+            "    Ok(2 as UInt32, 5 as UInt32)",
+            "function consume(value: Result<UInt32>) -> UInt32",
+            "    return 1",
+            "function demo() -> UInt32",
+            "    return consume(make_ok())",
+        }
+    );
+    assert_fixture_success(path);
+}
+
 void test_ordinary_choice_constructor_assignment_payload_failure() {
     auto path =
         std::filesystem::temp_directory_path() / "orison_semantics_choice_assignment_payload_failure.or";
@@ -13200,6 +13221,7 @@ int main() {
     test_choice_constructor_ternary_annotated_binding_payload_types();
     test_choice_constructor_ternary_assignment_payload_types();
     test_choice_constructor_ternary_call_argument_payload_types();
+    test_choice_typed_call_argument_accepts_function_result_success();
     test_ordinary_choice_constructor_assignment_payload_failure();
     test_ordinary_choice_constructor_call_argument_arity_failure();
     test_zero_payload_choice_constructor_annotated_binding_success();

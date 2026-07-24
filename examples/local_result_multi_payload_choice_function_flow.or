@@ -1,0 +1,19 @@
+package examples.local_result_multi_payload_choice_function_flow
+
+choice Result<T>
+    Ok(left: T, right: T)
+    Error(code: UInt32)
+
+function make_ok() -> Result<UInt32>
+    Ok(2 as UInt32, 5 as UInt32)
+
+function make_error() -> Result<UInt32>
+    Error(1 as UInt32)
+
+function score(result: Result<UInt32>) -> UInt32
+    switch result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function main() -> UInt32
+    score(make_ok()) + score(make_error()) - 8 as UInt32
