@@ -278,6 +278,8 @@ representation.
   lowering.
 - Semantic and CLI coverage now pin declared choice receiver diagnostics beyond `Maybe<T>`, so `Result<UInt32>.value`
   and `Result<UInt32>.scale(1 as UInt32)` report missing member/method diagnostics before lowering.
+- `examples/local_result_choice_switch.or` now pins generic `Result<UInt32>` construction and explicit switch payload
+  consumption as a checked-in frontend example while backend generic choice local lowering remains pending.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

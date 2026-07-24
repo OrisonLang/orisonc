@@ -100,6 +100,14 @@ auto main() -> int {
         assert(!backend.object_bytes.empty());
     }
 
+    constexpr auto frontend_examples = std::array<std::string_view, 1> {
+        "local_result_choice_switch.or",
+    };
+    for (auto name : frontend_examples) {
+        auto frontend = pipeline.analyze(examples / name);
+        assert(!frontend.has_errors());
+    }
+
     auto view_descriptor_ir = pipeline.emit_llvm(examples / "view_descriptor_reads.or");
     assert(!view_descriptor_ir.has_errors());
     assert(view_descriptor_ir.ir_text.find("define i64 @count({ ptr, i64 } %values)") != std::string::npos);

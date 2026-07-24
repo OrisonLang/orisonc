@@ -1,0 +1,20 @@
+package demo.local_result_choice_switch
+
+choice Result<T>
+    Ok(value: T)
+    Error(code: UInt32)
+
+function ok_score() -> UInt32
+    let result: Result<UInt32> = Ok(7 as UInt32)
+    switch result
+        Ok(value) => value
+        Error(code) => 0 as UInt32
+
+function error_score() -> UInt32
+    let result: Result<UInt32> = Error(5 as UInt32)
+    switch result
+        Ok(value) => value
+        Error(code) => 0 as UInt32
+
+function main() -> UInt32
+    ok_score() + error_score() - 7 as UInt32
