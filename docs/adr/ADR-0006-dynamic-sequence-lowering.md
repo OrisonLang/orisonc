@@ -259,6 +259,10 @@ representation.
 - Semantic and CLI coverage now reject ordinary indexing on concrete generic null-safe aggregate-return values before
   lowering, so `box?.pair(7 as UInt32)[0 as UInt64]` reports that `Maybe<Array<Box<UInt32>, 2>>` is not an indexable
   base.
+- Source-type query coverage now pins the same concrete generic null-safe aggregate-return chain metadata:
+  `box?.bump(5 as UInt32)` recovers `Maybe<Box<UInt32>>`, `box?.bump(5 as UInt32)?.value` recovers `Maybe<UInt32>`,
+  `box?.pair(7 as UInt32)` recovers `Maybe<Array<Box<UInt32>, 2>>`, and direct indexing that `Maybe` result has no
+  element source type.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

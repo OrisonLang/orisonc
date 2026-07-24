@@ -23,6 +23,14 @@ auto member(orison::syntax::ExpressionSyntax left, std::string text) -> orison::
     return expression;
 }
 
+auto null_safe_member(orison::syntax::ExpressionSyntax left, std::string text) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::null_safe_member_access;
+    expression.text = std::move(text);
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(left));
+    return expression;
+}
+
 auto index(orison::syntax::ExpressionSyntax left) -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
     expression.kind = orison::syntax::ExpressionKind::index_access;
@@ -190,6 +198,21 @@ auto method_call(orison::syntax::ExpressionSyntax receiver, std::string method_n
     return expression;
 }
 
+auto null_safe_method_call(
+    orison::syntax::ExpressionSyntax receiver,
+    std::string method_name,
+    orison::syntax::ExpressionSyntax argument
+) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::call;
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    expression.left->kind = orison::syntax::ExpressionKind::null_safe_member_access;
+    expression.left->text = std::move(method_name);
+    expression.left->left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(receiver));
+    expression.arguments.push_back(std::move(argument));
+    return expression;
+}
+
 auto ternary(
     orison::syntax::ExpressionSyntax condition,
     orison::syntax::ExpressionSyntax then_expression,
@@ -247,6 +270,50 @@ int main() {
             .symbol_name = "method.Bucket.view",
         },
     });
+    context.records.emplace("Box<UInt32>", orison::lowering::LoweredRecordLayout {
+        .name = "Box<UInt32>",
+        .llvm_type_name = "%record.Box_UInt32_",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "value",
+                .source_type_name = "UInt32",
+                .llvm_type = "i32",
+                .index = 0,
+            },
+        },
+    });
+    context.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Box<UInt32>",
+        .method_name = "bump",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "%record.Box_UInt32_",
+            .source_return_type_name = "Box<UInt32>",
+            .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+            .parameter_types = {"%record.Box_UInt32_", "i32"},
+            .parameter_source_type_names = {"shared.Box<UInt32>", "UInt32"},
+            .parameter_signedness = {
+                orison::lowering::IntegerSignedness::not_integer,
+                orison::lowering::IntegerSignedness::unsigned_integer,
+            },
+            .symbol_name = "method.Box_UInt32_.bump",
+        },
+    });
+    context.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Box<UInt32>",
+        .method_name = "pair",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "[2 x %record.Box_UInt32_]",
+            .source_return_type_name = "Array<Box<UInt32>, 2>",
+            .return_signedness = orison::lowering::IntegerSignedness::not_integer,
+            .parameter_types = {"%record.Box_UInt32_", "i32"},
+            .parameter_source_type_names = {"shared.Box<UInt32>", "UInt32"},
+            .parameter_signedness = {
+                orison::lowering::IntegerSignedness::not_integer,
+                orison::lowering::IntegerSignedness::unsigned_integer,
+            },
+            .symbol_name = "method.Box_UInt32_.pair",
+        },
+    });
 
     auto state = orison::lowering::FunctionLoweringState {};
     state.source_type_names["wrapper"] = "Wrapper";
@@ -255,6 +322,7 @@ int main() {
     state.source_type_names["wrapper_pointer"] = "Pointer<Wrapper>";
     state.source_type_names["left_values"] = "Array<UInt32, 3>";
     state.source_type_names["right_values"] = "Array<UInt32, 3>";
+    state.source_type_names["box"] = "Maybe<Box<UInt32>>";
 
     assert(orison::lowering::split_top_level_generic_arguments("Bucket, Array<UInt32, 3>").size() == 2);
     assert(orison::lowering::array_element_source_type_name("Array<Bucket, 2>") == "Bucket");
@@ -352,6 +420,37 @@ int main() {
     assert(orison::lowering::source_type_name_for_expression(index(name("buckets")), context, state) == "Bucket");
     assert(orison::lowering::source_type_name_for_expression(index(name("bucket_array_pointer")), context, state) == "Bucket");
     assert(orison::lowering::source_type_name_for_expression(call("make_bucket"), context, state) == "Bucket");
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            null_safe_method_call(name("box"), "bump", cast(integer_literal("5"), "UInt32")),
+            context,
+            state
+        ) == "Maybe<Box<UInt32>>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            null_safe_member(
+                null_safe_method_call(name("box"), "bump", cast(integer_literal("5"), "UInt32")),
+                "value"
+            ),
+            context,
+            state
+        ) == "Maybe<UInt32>"
+    );
+    assert(
+        orison::lowering::source_type_name_for_expression(
+            null_safe_method_call(name("box"), "pair", cast(integer_literal("7"), "UInt32")),
+            context,
+            state
+        ) == "Maybe<Array<Box<UInt32>, 2>>"
+    );
+    assert(
+        !orison::lowering::source_type_name_for_expression(
+            index(null_safe_method_call(name("box"), "pair", cast(integer_literal("7"), "UInt32"))),
+            context,
+            state
+        ).has_value()
+    );
     assert(
         orison::lowering::source_type_name_for_expression(
             cast(integer_literal("1"), "UInt32"),
