@@ -78,6 +78,7 @@ int main() {
             ExpressionLoweringFailureReason::generic_record_constructor_inference_failed,
             "generic record constructor inference failed"
         },
+        std::pair {ExpressionLoweringFailureReason::unsupported_choice_abi, "unsupported choice ABI"},
         std::pair {ExpressionLoweringFailureReason::unknown_function, "unknown lowered function"},
         std::pair {ExpressionLoweringFailureReason::call_return_type_mismatch, "call return type mismatch"},
         std::pair {ExpressionLoweringFailureReason::call_arity_mismatch, "call arity mismatch"},

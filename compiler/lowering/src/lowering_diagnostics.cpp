@@ -157,6 +157,9 @@ auto render_expression_lowering_failure(
     case ExpressionLoweringFailureReason::generic_record_constructor_inference_failed:
         prefix = "generic record constructor inference failed";
         break;
+    case ExpressionLoweringFailureReason::unsupported_choice_abi:
+        prefix = "unsupported choice ABI";
+        break;
     case ExpressionLoweringFailureReason::unknown_function:
         prefix = "unknown lowered function";
         break;

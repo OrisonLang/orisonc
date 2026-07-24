@@ -21,6 +21,7 @@ enum class ExpressionLoweringFailureReason {
     cannot_infer_operand_type,
     branch_type_mismatch,
     generic_record_constructor_inference_failed,
+    unsupported_choice_abi,
     unknown_function,
     call_return_type_mismatch,
     call_arity_mismatch,

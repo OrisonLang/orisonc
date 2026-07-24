@@ -1025,6 +1025,25 @@ auto choice_payload_field_type(LoweredChoiceLayout const& layout) -> std::option
     return field;
 }
 
+auto record_unsupported_choice_constructor_abi_failure(
+    LoweringFailures& failures,
+    LoweredChoiceLayout const& layout,
+    std::string_view constructor_name
+) -> void {
+    auto source_type_name = layout.source_type_name.empty()
+        ? layout.name
+        : layout.source_type_name;
+    auto reason = layout.unsupported_abi_reason.empty()
+        ? std::string("choice type does not yet have a lowered choice ABI")
+        : layout.unsupported_abi_reason;
+    record_expression_lowering_failure(
+        failures,
+        ExpressionLoweringFailureReason::unsupported_choice_abi,
+        "choice constructor '" + std::string(constructor_name) + "' for '" +
+            source_type_name + "': " + reason
+    );
+}
+
 struct ChoiceConstructorLayoutLookup {
     LoweredChoiceLayout const* layout = nullptr;
     bool ambiguous = false;
@@ -1130,9 +1149,11 @@ auto lower_choice_constructor_expression(
     if (!variant->payloads.empty()) {
         auto payload_field_type = choice_payload_field_type(*layout);
         if (!payload_field_type.has_value()) {
+            record_unsupported_choice_constructor_abi_failure(failures, *layout, *constructor_name);
             return std::nullopt;
         }
         if (variant->lowered_payload_type.empty()) {
+            record_unsupported_choice_constructor_abi_failure(failures, *layout, *constructor_name);
             return std::nullopt;
         }
 

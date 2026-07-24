@@ -333,6 +333,9 @@ representation.
 - Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
   and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
   choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
+- Choice-constructor expression lowering now records a structured `unsupported choice ABI` failure when a matched choice
+  layout lacks a usable payload ABI. This keeps future callers from collapsing descriptor-backed payload failures into
+  generic expression rejections while the finite payload-buffer ABI remains incomplete for descriptor-backed payloads.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

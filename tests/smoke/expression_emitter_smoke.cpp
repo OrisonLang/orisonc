@@ -221,6 +221,80 @@ int main() {
         "  %tmp2 = insertvalue { i1, i32 } %tmp1, i32 %left, 1\n"
     );
 
+    auto unsupported_choice_lowering = orison::lowering::LoweringContext {};
+    unsupported_choice_lowering.choices.emplace("Buffered", orison::lowering::LoweredChoiceLayout {
+        .name = "Buffered",
+        .source_type_name = "Buffered",
+        .llvm_type_name = "{ i32 }",
+        .unsupported_abi_reason =
+            "choice payload type 'DynamicArray<UInt32>' does not yet have a lowered choice ABI",
+        .variants = {
+            orison::lowering::LoweredChoiceVariant {
+                .name = "Ready",
+                .tag = 0,
+                .payloads = {
+                    orison::lowering::LoweredChoicePayload {
+                        .name = "values",
+                        .source_type_name = "DynamicArray<UInt32>",
+                        .llvm_type = "ptr",
+                        .index = 0,
+                    },
+                },
+            },
+        },
+    });
+    auto unsupported_choice_context = orison::lowering::LoweringEmissionContext {
+        .lowering = unsupported_choice_lowering,
+        .string_constants = strings,
+        .options = {},
+    };
+    auto unsupported_choice_state = orison::lowering::FunctionLoweringState {};
+    unsupported_choice_state.immutable_bindings.emplace("values", orison::lowering::LoweredExpression {
+        .type = "ptr",
+        .value = "%values",
+        .signedness = orison::lowering::IntegerSignedness::not_integer,
+    });
+    auto unsupported_choice_failures = orison::lowering::LoweringFailures {};
+    auto unsupported_choice_session = orison::lowering::FunctionLoweringSession {
+        .state = unsupported_choice_state,
+        .failures = unsupported_choice_failures,
+    };
+    auto ready_expression = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "Ready",
+            }
+        ),
+    };
+    ready_expression.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "values",
+    });
+    output = {};
+    auto unsupported_choice = orison::lowering::lower_expression(
+        ready_expression,
+        "{ i32 }",
+        orison::lowering::IntegerSignedness::not_integer,
+        unsupported_choice_context,
+        unsupported_choice_session,
+        output,
+        std::string_view {"Buffered"}
+    );
+    assert(!unsupported_choice.has_value());
+    assert(
+        unsupported_choice_session.failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::unsupported_choice_abi
+    );
+    assert(
+        orison::lowering::render_expression_lowering_failure(
+            unsupported_choice_session.failures.expression
+        ) ==
+        "unsupported choice ABI: choice constructor 'Ready' for 'Buffered': choice payload type "
+        "'DynamicArray<UInt32>' does not yet have a lowered choice ABI"
+    );
+
     auto null_safe_lowering = orison::lowering::LoweringContext {};
     null_safe_lowering.records.emplace("User", orison::lowering::LoweredRecordLayout {
         .name = "User",

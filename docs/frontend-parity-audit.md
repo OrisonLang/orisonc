@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: choice-constructor expression lowering now records a structured `unsupported choice ABI` failure when a
+  matched choice layout lacks a usable payload ABI. `orison_expression_emitter_smoke` pins the direct failure detail so
+  callers can append a specific ABI reason instead of losing context behind a generic expression rejection.
 - 2026-07-24: unsupported choice payload ABI diagnostics now use a shared lowering diagnostic helper across function
   and statement emitters. Return, parameter, annotated `let`, and annotated `var` boundaries keep the same pinned
   diagnostics; assignment/reassignment cannot yet reach an unsupported choice ABI value because those boundary checks
