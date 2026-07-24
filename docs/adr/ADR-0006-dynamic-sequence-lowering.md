@@ -342,6 +342,9 @@ representation.
 - Aggregate assignment target diagnostics now use the same aggregate-path error renderer as expression lowering.
   Statement smoke coverage pins scalar member assignment as `expected record` and scalar index assignment as
   `expected array`, preserving the concrete path failure at assignment sites.
+- CLI aggregate assignment diagnostics now explicitly pin the semantic/lowering boundary for scalar member/index
+  assignment targets. Those source forms remain semantic errors, so the lowerer-only aggregate assignment path failures
+  are intentionally covered in statement-emitter smoke rather than as user-facing CLI diagnostics.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

@@ -45,6 +45,15 @@ void assert_failure_with_no_stdout_contains(
     assert(result.stderr_text.find(expected_message) != std::string::npos);
 }
 
+void assert_failure_with_no_stdout_contains_not_contains(
+    orison::driver::CompileResult const& result,
+    std::string_view expected_message,
+    std::string_view rejected_message
+) {
+    assert_failure_with_no_stdout_contains(result, expected_message);
+    assert(result.stderr_text.find(rejected_message) == std::string::npos);
+}
+
 void assert_success_with_stdout_contains(
     orison::driver::CompileResult const& result,
     std::initializer_list<std::string_view> expected_fragments
@@ -83,9 +92,10 @@ auto main() -> int {
     );
     auto emit_scalar_member_assignment_failure =
         run_emit_llvm(app, emit_scalar_member_assignment_failure_path);
-    assert_failure_with_no_stdout_contains(
+    assert_failure_with_no_stdout_contains_not_contains(
         emit_scalar_member_assignment_failure,
-        "type 'UInt32' has no member 'status'"
+        "type 'UInt32' has no member 'status'",
+        "lowering aggregate assignment member target failed"
     );
 
     auto emit_scalar_index_assignment_failure_path =
@@ -102,9 +112,10 @@ auto main() -> int {
     );
     auto emit_scalar_index_assignment_failure =
         run_emit_llvm(app, emit_scalar_index_assignment_failure_path);
-    assert_failure_with_no_stdout_contains(
+    assert_failure_with_no_stdout_contains_not_contains(
         emit_scalar_index_assignment_failure,
-        "index access requires Array, View, DynamicArray, or Pointer base: UInt32"
+        "index access requires Array, View, DynamicArray, or Pointer base: UInt32",
+        "lowering aggregate assignment index target failed"
     );
 
     auto emit_local_record_address_path = std::filesystem::temp_directory_path() / "emit_local_record_address.or";

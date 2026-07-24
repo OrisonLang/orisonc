@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: CLI aggregate assignment diagnostics now explicitly pin the semantic/lowering boundary. The driver
+  aggregate-lowering smoke confirms scalar member/index assignment targets remain semantic errors and do not leak the
+  lowerer-only aggregate assignment path failure messages.
 - 2026-07-24: aggregate assignment target diagnostics now reuse the shared aggregate-path error renderer. Statement
   smoke coverage pins scalar member/index assignment targets as `expected record` and `expected array` failures instead
   of generic unsupported target messages.
