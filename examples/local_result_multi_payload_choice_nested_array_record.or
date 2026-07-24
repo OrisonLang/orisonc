@@ -1,0 +1,34 @@
+package examples.local_result_multi_payload_choice_nested_array_record
+
+choice Result<T>
+    Ok(left: T, right: T)
+    Error(code: UInt32)
+
+record Holder
+    result: Result<UInt32>
+
+function score(result: Result<UInt32>) -> UInt32
+    switch result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function row_total(row: Array<Holder, 2>) -> UInt32
+    score(row[0 as UInt64].result) + score(row[1 as UInt64].result)
+
+function total(holders: Array<Array<Holder, 2>, 2>) -> UInt32
+    row_total(holders[0 as UInt64]) + row_total(holders[1 as UInt64])
+
+function choose(flag: Bool) -> Array<Array<Holder, 2>, 2>
+    flag ? [[Holder(Ok(2 as UInt32, 5 as UInt32)), Holder(Error(1 as UInt32))], [Holder(Error(1 as UInt32)), Holder(Ok(3 as UInt32, 4 as UInt32))]] : [[Holder(Error(1 as UInt32)), Holder(Ok(2 as UInt32, 5 as UInt32))], [Holder(Ok(3 as UInt32, 4 as UInt32)), Holder(Error(1 as UInt32))]]
+
+function reassign(flag: Bool) -> UInt32
+    var holders: Array<Array<Holder, 2>, 2> = [[Holder(Error(1 as UInt32)), Holder(Error(1 as UInt32))], [Holder(Error(1 as UInt32)), Holder(Error(1 as UInt32))]]
+    if flag
+        holders[1 as UInt64][0 as UInt64].result = Ok(3 as UInt32, 4 as UInt32)
+    else
+        holders[0 as UInt64][1 as UInt64].result = Ok(2 as UInt32, 5 as UInt32)
+
+    total(holders)
+
+function main() -> UInt32
+    total(choose(true)) + total(choose(false)) + reassign(true) + reassign(false) - 52 as UInt32

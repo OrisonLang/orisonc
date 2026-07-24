@@ -318,6 +318,9 @@ representation.
 - Fixed arrays of records containing multi-payload choice fields now have checked-in backend coverage through array
   literals, indexed record-field assignment, calls, and indexed field-read payload recovery.
   `local_result_multi_payload_choice_array_record.or` pins `Array<Holder, 2>` with `Holder.result: Result<UInt32>`.
+- Nested fixed arrays of records containing multi-payload choice fields now have checked-in backend coverage through
+  nested array literals, multi-level indexed record-field assignment, calls, and indexed field-read payload recovery.
+  `local_result_multi_payload_choice_nested_array_record.or` pins `Array<Array<Holder, 2>, 2>`.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
