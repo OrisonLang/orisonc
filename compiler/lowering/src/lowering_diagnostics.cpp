@@ -1,5 +1,6 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_failure_rendering.hpp"
+#include "orison/lowering/member_call_receiver.hpp"
 
 #include <string>
 #include <utility>
@@ -82,6 +83,26 @@ auto expression_lowering_failure_detail(
     ExpressionLoweringFailure const& failure
 ) -> std::string {
     return render_expression_lowering_failure(failure);
+}
+
+auto unsupported_choice_abi_diagnostic(
+    syntax::TypeSyntax const& type,
+    LoweringContext const& context,
+    std::string_view role
+) -> std::optional<std::string> {
+    auto source_type_name = render_source_type_name(type);
+    auto choice = context.choices.find(source_type_name);
+    if (choice == context.choices.end() && !type.name.empty()) {
+        choice = context.choices.find(type.name);
+    }
+    if (choice == context.choices.end() || !choice->second.llvm_type_name.empty()) {
+        return std::nullopt;
+    }
+
+    auto reason = choice->second.unsupported_abi_reason.empty()
+        ? std::string("choice type does not yet have a lowered choice ABI")
+        : choice->second.unsupported_abi_reason;
+    return "lowering does not yet support " + source_type_name + " as " + std::string(role) + ": " + reason;
 }
 
 auto render_expression_lowering_failure(

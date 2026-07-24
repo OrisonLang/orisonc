@@ -1,7 +1,9 @@
 #pragma once
 
 #include "orison/lowering/lowering_failures.hpp"
+#include "orison/lowering/lowering_context.hpp"
 
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -63,5 +65,11 @@ auto append_control_flow_lowering_failure(
 auto expression_lowering_failure_detail(
     ExpressionLoweringFailure const& failure
 ) -> std::string;
+
+auto unsupported_choice_abi_diagnostic(
+    syntax::TypeSyntax const& type,
+    LoweringContext const& context,
+    std::string_view role
+) -> std::optional<std::string>;
 
 }  // namespace orison::lowering

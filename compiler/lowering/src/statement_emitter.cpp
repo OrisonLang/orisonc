@@ -60,26 +60,6 @@ auto is_dynamic_array_source_type(std::string_view source_type_name) -> bool {
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
 }
 
-auto unsupported_choice_abi_diagnostic(
-    syntax::TypeSyntax const& type,
-    LoweringContext const& context,
-    std::string_view role
-) -> std::optional<std::string> {
-    auto source_type_name = render_source_type_name(type);
-    auto choice = context.choices.find(source_type_name);
-    if (choice == context.choices.end() && !type.name.empty()) {
-        choice = context.choices.find(type.name);
-    }
-    if (choice == context.choices.end() || !choice->second.llvm_type_name.empty()) {
-        return std::nullopt;
-    }
-
-    auto reason = choice->second.unsupported_abi_reason.empty()
-        ? std::string("choice type does not yet have a lowered choice ABI")
-        : choice->second.unsupported_abi_reason;
-    return "lowering does not yet support " + source_type_name + " as " + std::string(role) + ": " + reason;
-}
-
 auto lower_dynamic_array_default_construction(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,

@@ -33,6 +33,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: unsupported choice payload ABI diagnostics now use a shared lowering diagnostic helper across function
+  and statement emitters. Return, parameter, annotated `let`, and annotated `var` boundaries keep the same pinned
+  diagnostics; assignment/reassignment cannot yet reach an unsupported choice ABI value because those boundary checks
+  reject the value before mutable storage exists.
 - 2026-07-24: unsupported choice payload ABI diagnostics are now pinned for annotated local `let` and `var` bindings
   too. The `choice_dynamic_array_payload_let_rejected.or` and
   `choice_dynamic_array_payload_var_rejected.or` fixtures confirm `Buffered` locals explain that

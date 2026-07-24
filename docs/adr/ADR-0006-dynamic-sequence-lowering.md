@@ -330,6 +330,9 @@ representation.
 - Unsupported choice payload ABI diagnostics are now also pinned for annotated local `let` and `var` bindings. The
   `choice_dynamic_array_payload_let_rejected.or` and `choice_dynamic_array_payload_var_rejected.or` fixtures confirm
   `Buffered` locals explain that `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
+- Unsupported choice payload ABI diagnostics now flow through a shared lowering diagnostic helper used by both function
+  and statement emitters. Assignment/reassignment diagnostics do not have a separate fixture yet because unsupported
+  choice ABI values are rejected at return, parameter, or local-binding boundaries before mutable storage can exist.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

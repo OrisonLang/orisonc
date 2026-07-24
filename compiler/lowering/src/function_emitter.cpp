@@ -271,23 +271,6 @@ auto is_receiver_self_source_type(std::string_view type_name) -> bool {
     return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
 }
 
-auto unsupported_choice_abi_diagnostic(
-    syntax::TypeSyntax const& type,
-    LoweringContext const& context,
-    std::string_view role
-) -> std::optional<std::string> {
-    auto choice = context.choices.find(type.name);
-    if (choice == context.choices.end() || !choice->second.llvm_type_name.empty()) {
-        return std::nullopt;
-    }
-
-    auto source_type_name = render_source_type_name(type);
-    auto reason = choice->second.unsupported_abi_reason.empty()
-        ? std::string("choice type does not yet have a lowered choice ABI")
-        : choice->second.unsupported_abi_reason;
-    return "lowering does not yet support " + source_type_name + " as " + std::string(role) + ": " + reason;
-}
-
 auto unsupported_dynamic_array_parameter_diagnostic(
     syntax::ParameterSyntax const& parameter
 ) -> std::optional<std::string> {
