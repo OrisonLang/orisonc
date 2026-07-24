@@ -6982,6 +6982,27 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_success(
         executable,
+        smoke_temp_root / "orison_cli_generic_array_payload_choice_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "record Payload",
+            "    code: UInt32",
+            "choice Result<T, E>",
+            "    Ok(value: T)",
+            "    Error(error: E)",
+            "function make_result() -> Result<Array<Payload, 2>, Payload>",
+            "    Ok([Payload(3 as UInt32), Payload(4 as UInt32)] as Array<Payload, 2>)",
+        },
+        {
+            "%record.Payload = type { i32 }",
+            "define { i32, [8 x i8] } @make_result()",
+            "store [2 x %record.Payload]",
+            "load [8 x i8], ptr",
+            "ret { i32, [8 x i8] }",
+        }
+    );
+    assert_cli_emit_llvm_success(
+        executable,
         smoke_temp_root / "orison_cli_ambiguous_choice_layout_emit.or",
         std::vector<std::string_view> {
             "package demo.cli",

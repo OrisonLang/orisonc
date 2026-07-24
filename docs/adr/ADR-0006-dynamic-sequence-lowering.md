@@ -290,6 +290,9 @@ representation.
 - Distinct concrete generic choice payload buffering now sizes record payload variants with full lowering context
   record layouts. `local_result_distinct_record_choice_switch.or` pins `Result<Payload, Flag>` construction and switch
   payload recovery through linked execution.
+- Distinct concrete generic choice payload buffering now also covers fixed-array payload variants whose elements are
+  records. `local_result_array_payload_choice_switch.or` pins `Result<Array<Payload, 2>, Payload>` construction and
+  array payload recovery through linked execution.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

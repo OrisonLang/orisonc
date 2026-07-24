@@ -1,0 +1,23 @@
+package demo.local_result_array_payload_choice_switch
+
+record Payload
+    code: UInt32
+
+choice Result<T, E>
+    Ok(value: T)
+    Error(error: E)
+
+function ok_score() -> UInt32
+    let result: Result<Array<Payload, 2>, Payload> = Ok([Payload(3 as UInt32), Payload(4 as UInt32)] as Array<Payload, 2>)
+    switch result
+        Ok(values) => values[0 as UInt64].code + values[1 as UInt64].code
+        Error(error) => error.code
+
+function error_score() -> UInt32
+    let result: Result<Array<Payload, 2>, Payload> = Error(Payload(1 as UInt32))
+    switch result
+        Ok(values) => values[0 as UInt64].code + values[1 as UInt64].code
+        Error(error) => error.code
+
+function main() -> UInt32
+    ok_score() + error_score() - 8 as UInt32
