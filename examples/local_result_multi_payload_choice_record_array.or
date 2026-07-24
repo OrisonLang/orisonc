@@ -1,0 +1,31 @@
+package examples.local_result_multi_payload_choice_record_array
+
+choice Result<T>
+    Ok(left: T, right: T)
+    Error(code: UInt32)
+
+record Holder
+    results: Array<Result<UInt32>, 2>
+
+function score(result: Result<UInt32>) -> UInt32
+    switch result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function total(holder: Holder) -> UInt32
+    score(holder.results[0 as UInt64]) + score(holder.results[1 as UInt64])
+
+function choose(flag: Bool) -> Holder
+    flag ? Holder([Ok(2 as UInt32, 5 as UInt32), Error(1 as UInt32)]) : Holder([Error(1 as UInt32), Ok(3 as UInt32, 4 as UInt32)])
+
+function reassign(flag: Bool) -> UInt32
+    var holder: Holder = Holder([Error(1 as UInt32), Error(1 as UInt32)])
+    if flag
+        holder.results[0 as UInt64] = Ok(3 as UInt32, 4 as UInt32)
+    else
+        holder.results[1 as UInt64] = Ok(2 as UInt32, 5 as UInt32)
+
+    total(holder)
+
+function main() -> UInt32
+    total(choose(true)) + total(choose(false)) + reassign(true) + reassign(false) - 32 as UInt32
