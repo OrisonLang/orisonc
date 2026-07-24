@@ -321,6 +321,9 @@ representation.
 - Nested fixed arrays of records containing multi-payload choice fields now have checked-in backend coverage through
   nested array literals, multi-level indexed record-field assignment, calls, and indexed field-read payload recovery.
   `local_result_multi_payload_choice_nested_array_record.or` pins `Array<Array<Holder, 2>, 2>`.
+- Unsupported choice payload ABI diagnostics are now pinned for descriptor-backed payloads. The
+  `choice_dynamic_array_payload_rejected.or` fixture confirms `Buffered.Ready(values: DynamicArray<UInt32>)` fails
+  explicitly as a function return type because `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

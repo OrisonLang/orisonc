@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: unsupported choice payload ABI diagnostics are now pinned for descriptor-backed payloads. The
+  `choice_dynamic_array_payload_rejected.or` fixture confirms `Buffered.Ready(values: DynamicArray<UInt32>)` fails
+  explicitly as a function return type because `DynamicArray<UInt32>` does not yet have a lowered choice ABI.
 - 2026-07-24: nested fixed arrays of records containing multi-payload choice fields are now pinned through nested
   array literals, multi-level indexed record-field assignment, calls, and downstream indexed field-read payload
   recovery. `local_result_multi_payload_choice_nested_array_record.or` exercises `Array<Array<Holder, 2>, 2>` where

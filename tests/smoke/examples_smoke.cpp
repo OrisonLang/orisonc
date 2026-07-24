@@ -150,6 +150,16 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto choice_dynamic_array_payload =
+        pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_rejected.or");
+    assert(choice_dynamic_array_payload.has_errors());
+    assert(
+        choice_dynamic_array_payload.error_text.find(
+            "lowering does not yet support Buffered as function return type: choice payload type "
+            "'DynamicArray<UInt32>' does not yet have a lowered choice ABI"
+        ) != std::string::npos
+    );
+
     auto owned_dynamic_array_parameter_source_drop = pipeline.emit_llvm(
         fixtures / "dynamic_array_owned_parameter_source_drop.or",
         orison::pipeline::CompilePipelineOptions {
