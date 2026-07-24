@@ -1,0 +1,8 @@
+package tests.fixtures.choice_dynamic_array_payload_parameter_rejected
+
+choice Buffered
+    Ready(values: DynamicArray<UInt32>)
+    Empty
+
+function consume(buffer: Buffered) -> UInt32
+    0 as UInt32

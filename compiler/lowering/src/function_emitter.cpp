@@ -971,6 +971,14 @@ void emit_function_body(
                     diagnostics.error(function.line, *diagnostic);
                     return;
                 }
+                if (auto choice_diagnostic = unsupported_choice_abi_diagnostic(
+                        function.parameters[index].type,
+                        context.lowering,
+                        "function parameter type"
+                    )) {
+                    diagnostics.error(function.line, *choice_diagnostic);
+                    return;
+                }
             }
             diagnostics.error(function.line, "lowering does not yet support this function parameter type");
             return;
