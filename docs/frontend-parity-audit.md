@@ -33,6 +33,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: fixed arrays of records containing multi-payload choice fields are now pinned through array literals,
+  indexed record-field assignment, calls, and downstream indexed field-read payload recovery.
+  `local_result_multi_payload_choice_array_record.or` exercises `Array<Holder, 2>` where `Holder.result` is
+  `Result<UInt32>`.
 - 2026-07-24: nested record-field fixed arrays containing multi-payload choice values are now pinned through record
   construction, nested indexed assignment, calls, and downstream nested indexed-read payload recovery.
   `local_result_multi_payload_choice_record_array.or` exercises `Holder.results: Array<Result<UInt32>, 2>`.
