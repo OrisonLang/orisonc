@@ -263,6 +263,9 @@ representation.
   `box?.bump(5 as UInt32)` recovers `Maybe<Box<UInt32>>`, `box?.bump(5 as UInt32)?.value` recovers `Maybe<UInt32>`,
   `box?.pair(7 as UInt32)` recovers `Maybe<Array<Box<UInt32>, 2>>`, and direct indexing that `Maybe` result has no
   element source type.
+- Null-safe plan and expression-emitter coverage now pin `box?.bump(5 as UInt32)?.value` below the CLI layer,
+  including the `Box<UInt32>` field segment and monomorphized `method.Box_UInt32_.bump` call feeding a
+  `Maybe<UInt32>` merge.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

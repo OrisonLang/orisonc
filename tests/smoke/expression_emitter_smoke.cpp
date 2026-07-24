@@ -56,6 +56,13 @@ int main() {
                   "record OwnedNestedBox\n"
                   "    inner: OwnedBox\n"
                   "\n"
+                  "choice Maybe<T>\n"
+                  "    Some(value: T)\n"
+                  "    Empty\n"
+                  "\n"
+                  "record Box<T>\n"
+                  "    value: T\n"
+                  "\n"
                   "function choose(flag: Bool, left: UInt32, right: UInt32) -> UInt32\n"
                   "    flag ? left + 1 as UInt32 : right + 2 as UInt32\n"
                   "\n"
@@ -65,6 +72,10 @@ int main() {
                   "extend UInt32\n"
                   "    function scale(this: shared This, amount: UInt32) -> UInt32\n"
                   "        this + amount\n"
+                  "\n"
+                  "extend Box<UInt32>\n"
+                  "    function bump(this: shared This, delta: UInt32) -> Box<UInt32>\n"
+                  "        return Box(this.value + delta)\n"
                   "\n"
                   "function call_method(value: UInt32) -> UInt32\n"
                   "    value.scale(2 as UInt32)\n"
@@ -82,7 +93,10 @@ int main() {
                   "    0x7F\n"
                   "\n"
                   "function binary_byte() -> Byte\n"
-                  "    0b1010\n";
+                  "    0b1010\n"
+                  "\n"
+                  "function null_safe_generic_bumped_value(box: Maybe<Box<UInt32>>) -> Maybe<UInt32>\n"
+                  "    box?.bump(5 as UInt32)?.value\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -358,6 +372,40 @@ int main() {
         "  %tmp10 = phi { i1, i32 } [%tmp1, %nullsafe.empty.1], "
         "[%tmp5, %nullsafe.empty.2], [%tmp9, %nullsafe.some.2]\n"
     );
+
+    auto generic_null_safe_state = orison::lowering::FunctionLoweringState {};
+    generic_null_safe_state.immutable_bindings.emplace("box", orison::lowering::LoweredExpression {
+        .type = "{ i1, %record.Box_UInt32_ }",
+        .value = "%box",
+    });
+    generic_null_safe_state.source_type_names.emplace("box", "Maybe<Box<UInt32>>");
+    auto generic_null_safe_failures = orison::lowering::LoweringFailures {};
+    auto generic_null_safe_session = orison::lowering::FunctionLoweringSession {
+        .state = generic_null_safe_state,
+        .failures = generic_null_safe_failures,
+    };
+    output = {};
+    auto generic_null_safe_lowered = orison::lowering::lower_expression(
+        parse_result.module.functions.back().body_statements.front().expression,
+        "{ i1, i32 }",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        generic_null_safe_session,
+        output
+    );
+    auto generic_null_safe_ir = output.str();
+    assert(generic_null_safe_lowered.has_value());
+    assert(generic_null_safe_lowered->type == "{ i1, i32 }");
+    assert(generic_null_safe_ir.find("nullsafe.call.empty.") != std::string::npos);
+    assert(generic_null_safe_ir.find("nullsafe.call.some.") != std::string::npos);
+    assert(generic_null_safe_ir.find("nullsafe.call.merge.") != std::string::npos);
+    assert(
+        generic_null_safe_ir.find(
+            "call %record.Box_UInt32_ @method.Box_UInt32_.bump(%record.Box_UInt32_"
+        ) != std::string::npos
+    );
+    assert(generic_null_safe_ir.find("insertvalue { i1, i32 } undef, i1 true, 0") != std::string::npos);
+    assert(generic_null_safe_ir.find("phi { i1, i32 }") != std::string::npos);
 
     auto unknown = orison::syntax::ExpressionSyntax {
         .kind = orison::syntax::ExpressionKind::name,

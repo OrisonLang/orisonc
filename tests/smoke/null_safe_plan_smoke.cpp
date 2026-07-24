@@ -38,11 +38,21 @@ int main() {
                   "record User\n"
                   "    profile: Maybe<Profile>\n"
                   "\n"
+                  "record Box<T>\n"
+                  "    value: T\n"
+                  "\n"
+                  "extend Box<UInt32>\n"
+                  "    function bump(this: shared This, delta: UInt32) -> Box<UInt32>\n"
+                  "        return Box(this.value + delta)\n"
+                  "\n"
                   "function city_name(user: Maybe<User>) -> Maybe<Text>\n"
                   "    user?.profile?.address?.city\n"
                   "\n"
                   "function missing_zipcode(user: Maybe<User>) -> Maybe<Text>\n"
-                  "    user?.profile?.address?.zipcode\n";
+                  "    user?.profile?.address?.zipcode\n"
+                  "\n"
+                  "function bumped_value(box: Maybe<Box<UInt32>>) -> Maybe<UInt32>\n"
+                  "    box?.bump(5 as UInt32)?.value\n";
     }
 
     auto source = orison::source::SourceFile::read(path);
@@ -102,6 +112,21 @@ int main() {
         orison::lowering::render_null_safe_plan_failure(missing_field_result.failure) ==
         "unknown null-safe field: AddressInfo.zipcode"
     );
+
+    auto generic_state = orison::lowering::FunctionLoweringState {};
+    generic_state.source_type_names["box"] = "Maybe<Box<UInt32>>";
+    auto const& generic_expression = parse_result.module.functions[2].body_statements.front().expression;
+    auto generic_result = orison::lowering::plan_null_safe_member_access(generic_expression, context, generic_state);
+    assert(generic_result.plan.has_value());
+    assert(generic_result.plan->base_expression != nullptr);
+    assert(generic_result.plan->base_maybe_type_name == "Maybe<Box<UInt32>>");
+    assert(generic_result.plan->segments.size() == 1);
+    assert(generic_result.plan->segments[0].receiver_type_name == "Box<UInt32>");
+    assert(generic_result.plan->segments[0].field_name == "value");
+    assert(generic_result.plan->segments[0].field_type_name == "UInt32");
+    assert(generic_result.plan->result_payload_type_name == "UInt32");
+    assert(generic_result.plan->result_maybe_type_name == "Maybe<UInt32>");
+    assert(orison::lowering::render_null_safe_plan_failure(generic_result.failure).empty());
 
     assert(orison::lowering::maybe_payload_source_type_name("Maybe<Array<UInt32, 3>>") == "Array<UInt32, 3>");
     assert(!orison::lowering::maybe_payload_source_type_name("Array<UInt32, 3>").has_value());
