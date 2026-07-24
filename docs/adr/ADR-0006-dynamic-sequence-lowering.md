@@ -273,6 +273,9 @@ representation.
   across LLVM emission, object emission, direct `run`, and retained `--build` execution.
 - Semantic and CLI coverage now reject ordinary field access after a concrete generic null-safe aggregate-return call,
   so `box?.bump(5 as UInt32).value` reports that `Maybe<Box<UInt32>>` has no `value` member before lowering.
+- Semantic and CLI coverage now reject ordinary method calls after a concrete generic null-safe aggregate-return call,
+  so `box?.bump(5 as UInt32).scale(1 as UInt32)` reports that `Maybe<Box<UInt32>>` has no `scale` method before
+  lowering.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

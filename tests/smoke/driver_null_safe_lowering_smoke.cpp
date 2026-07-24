@@ -501,6 +501,33 @@ auto main() -> int {
         "type 'Maybe<Box<UInt32>>' has no member 'value'"
     );
 
+    auto reject_null_safe_concrete_generic_aggregate_method_ordinary_method_path =
+        std::filesystem::temp_directory_path() /
+        "reject_null_safe_concrete_generic_aggregate_method_ordinary_method.or";
+    write_fixture(
+        reject_null_safe_concrete_generic_aggregate_method_ordinary_method_path,
+        "demo.generic_aggregate_member_call",
+        {
+            "choice Maybe<T>",
+            "    Some(value: T)",
+            "    Empty",
+            "record Box<T>",
+            "    value: T",
+            "extend Box<UInt32>",
+            "    function bump(this: shared This, delta: UInt32) -> Box<UInt32>",
+            "        return Box(this.value + delta)",
+            "    function scale(this: shared This, delta: UInt32) -> UInt32",
+            "        return this.value + delta",
+            "function demo() -> UInt32",
+            "    let box: Maybe<Box<UInt32>> = Empty",
+            "    return box?.bump(5 as UInt32).scale(1 as UInt32)",
+        }
+    );
+    assert_failure_with_stderr_contains(
+        run_emit_llvm(app, reject_null_safe_concrete_generic_aggregate_method_ordinary_method_path),
+        "type 'Maybe<Box<UInt32>>' has no method 'scale'"
+    );
+
     auto reject_null_safe_non_maybe_receiver_path =
         std::filesystem::temp_directory_path() / "reject_null_safe_non_maybe_receiver.or";
     write_fixture(

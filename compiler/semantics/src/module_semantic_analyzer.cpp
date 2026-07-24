@@ -2267,7 +2267,8 @@ private:
             return;
         }
 
-        if (expression.left->kind == syntax::ExpressionKind::null_safe_member_access &&
+        if ((expression.left->kind == syntax::ExpressionKind::null_safe_member_access ||
+             is_source_declared_choice_type_name(receiver_type_name)) &&
             find_method_return_type_name(receiver_type_name, expression.left->text, expression.arguments).empty()) {
             diagnostics_.error(
                 expression.line,
