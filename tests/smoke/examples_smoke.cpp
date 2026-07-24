@@ -21,7 +21,7 @@ auto main() -> int {
 
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     orison::pipeline::CompilePipeline pipeline;
-    constexpr auto backend_examples = std::array<std::string_view, 71> {
+    constexpr auto backend_examples = std::array<std::string_view, 72> {
         "concurrency_task_main.or",
         "concurrency_thread_main.or",
         "dynamic_array_parameter_reads.or",
@@ -39,6 +39,7 @@ auto main() -> int {
         "local_inferred_array_let.or",
         "local_dynamic_array_append.or",
         "local_null_safe_generic_aggregate.or",
+        "local_result_choice_switch.or",
         "local_inferred_nested_array_let.or",
         "local_inferred_array_record_let.or",
         "local_inferred_nested_mixed_let.or",
@@ -98,14 +99,6 @@ auto main() -> int {
         auto backend = pipeline.emit_object(examples / name);
         assert(!backend.has_errors());
         assert(!backend.object_bytes.empty());
-    }
-
-    constexpr auto frontend_examples = std::array<std::string_view, 1> {
-        "local_result_choice_switch.or",
-    };
-    for (auto name : frontend_examples) {
-        auto frontend = pipeline.analyze(examples / name);
-        assert(!frontend.has_errors());
     }
 
     auto view_descriptor_ir = pipeline.emit_llvm(examples / "view_descriptor_reads.or");

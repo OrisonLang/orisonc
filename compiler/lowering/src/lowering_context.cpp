@@ -117,6 +117,14 @@ auto generic_parameter_set(syntax::RecordSyntax const& record) -> std::unordered
     return parameters;
 }
 
+auto generic_parameter_set(syntax::ChoiceSyntax const& choice) -> std::unordered_set<std::string> {
+    auto parameters = std::unordered_set<std::string> {};
+    for (auto const& parameter : choice.generic_parameters) {
+        parameters.insert(parameter);
+    }
+    return parameters;
+}
+
 auto unify_constructor_type(
     syntax::TypeSyntax const& pattern,
     syntax::TypeSyntax const& actual,
@@ -230,6 +238,7 @@ auto infer_constructor_expression_type(
 void collect_expression_type_instantiations(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen
 );
@@ -237,6 +246,7 @@ void collect_expression_type_instantiations(
 void collect_statement_type_instantiations(
     syntax::StatementSyntax const& statement,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen
 );
@@ -244,16 +254,25 @@ void collect_statement_type_instantiations(
 void collect_type_instantiations(
     syntax::TypeSyntax const& type,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen
 ) {
     for (auto const& argument : type.generic_arguments) {
-        collect_type_instantiations(argument, generic_records, pending, seen);
+        collect_type_instantiations(argument, generic_records, generic_choices, pending, seen);
     }
 
     auto record = generic_records.find(type.name);
-    if (record == generic_records.end() ||
-        type.generic_arguments.size() != record->second->generic_parameters.size()) {
+    auto choice = generic_choices.find(type.name);
+    auto const expected_argument_count = record != generic_records.end()
+        ? record->second->generic_parameters.size()
+        : choice != generic_choices.end()
+            ? choice->second->generic_parameters.size()
+            : std::size_t {0};
+    if (record == generic_records.end() && choice == generic_choices.end()) {
+        return;
+    }
+    if (type.generic_arguments.size() != expected_argument_count) {
         return;
     }
 
@@ -266,28 +285,29 @@ void collect_type_instantiations(
 void collect_expression_type_instantiations(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen
 ) {
     if (auto inferred_type = infer_constructor_expression_type(expression, generic_records)) {
-        collect_type_instantiations(*inferred_type, generic_records, pending, seen);
+        collect_type_instantiations(*inferred_type, generic_records, generic_choices, pending, seen);
     }
 
     for (auto const& argument : expression.arguments) {
-        collect_expression_type_instantiations(argument, generic_records, pending, seen);
+        collect_expression_type_instantiations(argument, generic_records, generic_choices, pending, seen);
     }
     if (expression.left != nullptr) {
-        collect_expression_type_instantiations(*expression.left, generic_records, pending, seen);
+        collect_expression_type_instantiations(*expression.left, generic_records, generic_choices, pending, seen);
     }
     if (expression.right != nullptr) {
-        collect_expression_type_instantiations(*expression.right, generic_records, pending, seen);
+        collect_expression_type_instantiations(*expression.right, generic_records, generic_choices, pending, seen);
     }
     if (expression.alternate != nullptr) {
-        collect_expression_type_instantiations(*expression.alternate, generic_records, pending, seen);
+        collect_expression_type_instantiations(*expression.alternate, generic_records, generic_choices, pending, seen);
     }
     for (auto const& statement : expression.nested_statements) {
         if (statement != nullptr) {
-            collect_statement_type_instantiations(*statement, generic_records, pending, seen);
+            collect_statement_type_instantiations(*statement, generic_records, generic_choices, pending, seen);
         }
     }
 }
@@ -295,25 +315,26 @@ void collect_expression_type_instantiations(
 void collect_statement_type_instantiations(
     syntax::StatementSyntax const& statement,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen
 ) {
     if (!statement.annotated_type.name.empty()) {
-        collect_type_instantiations(statement.annotated_type, generic_records, pending, seen);
+        collect_type_instantiations(statement.annotated_type, generic_records, generic_choices, pending, seen);
     }
-    collect_expression_type_instantiations(statement.assignment_target, generic_records, pending, seen);
-    collect_expression_type_instantiations(statement.expression, generic_records, pending, seen);
+    collect_expression_type_instantiations(statement.assignment_target, generic_records, generic_choices, pending, seen);
+    collect_expression_type_instantiations(statement.expression, generic_records, generic_choices, pending, seen);
     for (auto const& nested_statement : statement.nested_statements) {
-        collect_statement_type_instantiations(nested_statement, generic_records, pending, seen);
+        collect_statement_type_instantiations(nested_statement, generic_records, generic_choices, pending, seen);
     }
     for (auto const& alternate_statement : statement.alternate_statements) {
-        collect_statement_type_instantiations(alternate_statement, generic_records, pending, seen);
+        collect_statement_type_instantiations(alternate_statement, generic_records, generic_choices, pending, seen);
     }
     for (auto const& switch_case : statement.switch_cases) {
-        collect_expression_type_instantiations(switch_case.pattern, generic_records, pending, seen);
+        collect_expression_type_instantiations(switch_case.pattern, generic_records, generic_choices, pending, seen);
         for (auto const& case_statement : switch_case.statements) {
             if (case_statement != nullptr) {
-                collect_statement_type_instantiations(*case_statement, generic_records, pending, seen);
+                collect_statement_type_instantiations(*case_statement, generic_records, generic_choices, pending, seen);
             }
         }
     }
@@ -322,110 +343,133 @@ void collect_statement_type_instantiations(
 void collect_function_type_instantiations(
     syntax::FunctionSyntax const& function,
     std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices,
     std::vector<syntax::TypeSyntax>& pending,
     std::unordered_set<std::string>& seen
 ) {
-    collect_type_instantiations(function.return_type, generic_records, pending, seen);
+    collect_type_instantiations(function.return_type, generic_records, generic_choices, pending, seen);
     for (auto const& parameter : function.parameters) {
-        collect_type_instantiations(parameter.type, generic_records, pending, seen);
+        collect_type_instantiations(parameter.type, generic_records, generic_choices, pending, seen);
     }
     for (auto const& constraint : function.where_constraints) {
         for (auto const& requirement : constraint.requirements) {
-            collect_type_instantiations(requirement, generic_records, pending, seen);
+            collect_type_instantiations(requirement, generic_records, generic_choices, pending, seen);
         }
     }
     for (auto const& statement : function.body_statements) {
-        collect_statement_type_instantiations(statement, generic_records, pending, seen);
+        collect_statement_type_instantiations(statement, generic_records, generic_choices, pending, seen);
     }
 }
 
-auto collect_generic_record_instantiations(
+auto collect_generic_type_instantiations(
     syntax::ModuleSyntax const& module,
-    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records
+    std::unordered_map<std::string, syntax::RecordSyntax const*> const& generic_records,
+    std::unordered_map<std::string, syntax::ChoiceSyntax const*> const& generic_choices
 ) -> std::vector<syntax::TypeSyntax> {
     auto pending = std::vector<syntax::TypeSyntax> {};
     auto seen = std::unordered_set<std::string> {};
 
     for (auto const& alias : module.type_aliases) {
-        collect_type_instantiations(alias.aliased_type, generic_records, pending, seen);
+        collect_type_instantiations(alias.aliased_type, generic_records, generic_choices, pending, seen);
     }
     for (auto const& constant : module.constants) {
-        collect_type_instantiations(constant.type, generic_records, pending, seen);
+        collect_type_instantiations(constant.type, generic_records, generic_choices, pending, seen);
     }
     for (auto const& record : module.records) {
         for (auto const& field : record.fields) {
-            collect_type_instantiations(field.type, generic_records, pending, seen);
+            collect_type_instantiations(field.type, generic_records, generic_choices, pending, seen);
         }
     }
     for (auto const& choice : module.choices) {
         for (auto const& variant : choice.variants) {
             for (auto const& payload : variant.payloads) {
-                collect_type_instantiations(payload.type, generic_records, pending, seen);
+                collect_type_instantiations(payload.type, generic_records, generic_choices, pending, seen);
             }
         }
     }
     for (auto const& interface : module.interfaces) {
         for (auto const& method : interface.methods) {
-            collect_type_instantiations(method.return_type, generic_records, pending, seen);
+            collect_type_instantiations(method.return_type, generic_records, generic_choices, pending, seen);
             for (auto const& parameter : method.parameters) {
-                collect_type_instantiations(parameter.type, generic_records, pending, seen);
+                collect_type_instantiations(parameter.type, generic_records, generic_choices, pending, seen);
             }
             for (auto const& constraint : method.where_constraints) {
                 for (auto const& requirement : constraint.requirements) {
-                    collect_type_instantiations(requirement, generic_records, pending, seen);
+                    collect_type_instantiations(requirement, generic_records, generic_choices, pending, seen);
                 }
             }
         }
     }
     for (auto const& foreign_import : module.foreign_imports) {
         for (auto const& function : foreign_import.functions) {
-            collect_type_instantiations(function.return_type, generic_records, pending, seen);
+            collect_type_instantiations(function.return_type, generic_records, generic_choices, pending, seen);
             for (auto const& parameter : function.parameters) {
-                collect_type_instantiations(parameter.type, generic_records, pending, seen);
+                collect_type_instantiations(parameter.type, generic_records, generic_choices, pending, seen);
             }
         }
     }
     for (auto const& foreign_export : module.foreign_exports) {
-        collect_function_type_instantiations(foreign_export.function, generic_records, pending, seen);
+        collect_function_type_instantiations(foreign_export.function, generic_records, generic_choices, pending, seen);
     }
     for (auto const& implementation : module.implementations) {
-        collect_type_instantiations(implementation.interface_type, generic_records, pending, seen);
-        collect_type_instantiations(implementation.receiver_type, generic_records, pending, seen);
+        collect_type_instantiations(implementation.interface_type, generic_records, generic_choices, pending, seen);
+        collect_type_instantiations(implementation.receiver_type, generic_records, generic_choices, pending, seen);
         for (auto const& method : implementation.methods) {
-            collect_function_type_instantiations(method, generic_records, pending, seen);
+            collect_function_type_instantiations(method, generic_records, generic_choices, pending, seen);
         }
     }
     for (auto const& extension : module.extensions) {
-        collect_type_instantiations(extension.receiver_type, generic_records, pending, seen);
+        collect_type_instantiations(extension.receiver_type, generic_records, generic_choices, pending, seen);
         for (auto const& method : extension.methods) {
-            collect_function_type_instantiations(method, generic_records, pending, seen);
+            collect_function_type_instantiations(method, generic_records, generic_choices, pending, seen);
         }
     }
     for (auto const& function : module.functions) {
-        collect_function_type_instantiations(function, generic_records, pending, seen);
+        collect_function_type_instantiations(function, generic_records, generic_choices, pending, seen);
     }
 
     for (auto index = std::size_t {0}; index < pending.size(); ++index) {
         auto record = generic_records.find(pending[index].name);
-        if (record == generic_records.end()) {
-            continue;
+        auto choice = generic_choices.find(pending[index].name);
+        if (record != generic_records.end()) {
+            auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+            for (auto argument_index = std::size_t {0}; argument_index < pending[index].generic_arguments.size();
+                 ++argument_index) {
+                substitutions.emplace(
+                    record->second->generic_parameters[argument_index],
+                    pending[index].generic_arguments[argument_index]
+                );
+            }
+            for (auto const& field : record->second->fields) {
+                collect_type_instantiations(
+                    substitute_type(field.type, substitutions),
+                    generic_records,
+                    generic_choices,
+                    pending,
+                    seen
+                );
+            }
         }
-
-        auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
-        for (auto argument_index = std::size_t {0}; argument_index < pending[index].generic_arguments.size();
-             ++argument_index) {
-            substitutions.emplace(
-                record->second->generic_parameters[argument_index],
-                pending[index].generic_arguments[argument_index]
-            );
-        }
-        for (auto const& field : record->second->fields) {
-            collect_type_instantiations(
-                substitute_type(field.type, substitutions),
-                generic_records,
-                pending,
-                seen
-            );
+        if (choice != generic_choices.end()) {
+            auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+            for (auto argument_index = std::size_t {0}; argument_index < pending[index].generic_arguments.size();
+                 ++argument_index) {
+                substitutions.emplace(
+                    choice->second->generic_parameters[argument_index],
+                    pending[index].generic_arguments[argument_index]
+                );
+            }
+            for (auto const& variant : choice->second->variants) {
+                for (auto const& payload : variant.payloads) {
+                    collect_type_instantiations(
+                        substitute_type(payload.type, substitutions),
+                        generic_records,
+                        generic_choices,
+                        pending,
+                        seen
+                    );
+                }
+            }
         }
     }
 
@@ -447,10 +491,7 @@ auto contextual_choice_type_for(
     syntax::TypeSyntax const& type,
     std::unordered_map<std::string, LoweredChoiceLayout> const& choices
 ) -> std::optional<std::string> {
-    if (!type.generic_arguments.empty()) {
-        return std::nullopt;
-    }
-    auto choice = choices.find(type.name);
+    auto choice = choices.find(render_source_type_name(type));
     if (choice == choices.end() || choice->second.llvm_type_name.empty()) {
         return std::nullopt;
     }
@@ -575,8 +616,8 @@ auto llvm_field_type_for(
     if (record_names.contains(source_type_name)) {
         return lowered_record_type_name(source_type_name);
     }
-    if (type.generic_arguments.empty() && choices != nullptr) {
-        auto choice = choices->find(type.name);
+    if (choices != nullptr) {
+        auto choice = choices->find(render_source_type_name(type));
         if (choice != choices->end() && !choice->second.llvm_type_name.empty()) {
             return choice->second.llvm_type_name;
         }
@@ -655,26 +696,40 @@ auto collect_instantiated_record_layout(
 
 auto collect_choice_layout(
     syntax::ChoiceSyntax const& choice,
-    std::unordered_set<std::string> const& record_names
+    std::unordered_set<std::string> const& record_names,
+    std::unordered_map<std::string, LoweredChoiceLayout> const& choices,
+    syntax::TypeSyntax concrete_type = {}
 ) -> LoweredChoiceLayout {
-    auto choice_type = syntax::TypeSyntax {
-        .name = choice.name,
-    };
-    for (auto const& generic_parameter : choice.generic_parameters) {
-        choice_type.generic_arguments.push_back(syntax::TypeSyntax {
-            .name = generic_parameter,
-        });
+    auto const is_template_layout = concrete_type.name.empty();
+    auto choice_type = concrete_type.name.empty()
+        ? syntax::TypeSyntax {.name = choice.name}
+        : std::move(concrete_type);
+    if (choice_type.generic_arguments.empty()) {
+        for (auto const& generic_parameter : choice.generic_parameters) {
+            choice_type.generic_arguments.push_back(syntax::TypeSyntax {
+                .name = generic_parameter,
+            });
+        }
+    }
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    if (choice_type.generic_arguments.size() == choice.generic_parameters.size()) {
+        for (auto index = std::size_t {0}; index < choice.generic_parameters.size(); ++index) {
+            substitutions.emplace(choice.generic_parameters[index], choice_type.generic_arguments[index]);
+        }
     }
 
     auto layout = LoweredChoiceLayout {
-        .name = choice.name,
+        .name = is_template_layout ? choice.name : render_source_type_name(choice_type),
         .source_type_name = render_source_type_name(choice_type),
         .generic_parameters = choice.generic_parameters,
     };
     layout.variants.reserve(choice.variants.size());
     auto payload_llvm_type = std::optional<std::string> {};
     auto has_payload = false;
-    auto supports_single_payload_abi = choice.generic_parameters.empty();
+    auto const is_concrete_instantiation = choice.generic_parameters.empty() ||
+        generic_parameter_set(choice).empty() ||
+        choice_type.generic_arguments.size() == choice.generic_parameters.size();
+    auto supports_single_payload_abi = choice.generic_parameters.empty() || is_concrete_instantiation;
     if (!supports_single_payload_abi) {
         layout.unsupported_abi_reason = "generic choices do not yet have a lowered choice ABI";
     }
@@ -694,12 +749,13 @@ auto collect_choice_layout(
         for (auto payload_index = std::size_t {0}; payload_index < variant.payloads.size(); ++payload_index) {
             has_payload = true;
             auto const& payload = variant.payloads[payload_index];
-            auto payload_llvm = llvm_field_type_for(payload.type, record_names);
+            auto substituted_payload_type = substitute_type(payload.type, substitutions);
+            auto payload_llvm = llvm_field_type_for(substituted_payload_type, record_names, &choices);
             if (!is_supported_choice_payload_llvm_type(payload_llvm)) {
                 supports_single_payload_abi = false;
                 if (layout.unsupported_abi_reason.empty()) {
                     layout.unsupported_abi_reason =
-                        "choice payload type '" + render_source_type_name(payload.type) +
+                        "choice payload type '" + render_source_type_name(substituted_payload_type) +
                         "' does not yet have a lowered choice ABI";
                 }
             } else if (!payload_llvm_type.has_value()) {
@@ -713,7 +769,7 @@ auto collect_choice_layout(
             }
             lowered_variant.payloads.push_back(LoweredChoicePayload {
                 .name = payload.name,
-                .source_type_name = render_source_type_name(payload.type),
+                .source_type_name = render_source_type_name(substituted_payload_type),
                 .llvm_type = std::move(payload_llvm),
                 .index = payload_index,
             });
@@ -736,6 +792,7 @@ auto build_lowering_context(
     auto context = LoweringContext {};
     auto record_names = std::unordered_set<std::string> {};
     auto generic_records = std::unordered_map<std::string, syntax::RecordSyntax const*> {};
+    auto generic_choices = std::unordered_map<std::string, syntax::ChoiceSyntax const*> {};
     for (auto const& record : module.records) {
         if (!record.generic_parameters.empty()) {
             generic_records.emplace(record.name, &record);
@@ -744,12 +801,34 @@ auto build_lowering_context(
         }
         record_names.insert(record.name);
     }
-    auto instantiated_record_types = collect_generic_record_instantiations(module, generic_records);
-    for (auto const& type : instantiated_record_types) {
-        record_names.insert(render_record_type_name(type));
+    for (auto const& choice : module.choices) {
+        if (!choice.generic_parameters.empty() && choice.name != "Maybe") {
+            generic_choices.emplace(choice.name, &choice);
+        }
+    }
+    auto instantiated_types = collect_generic_type_instantiations(module, generic_records, generic_choices);
+    for (auto const& type : instantiated_types) {
+        if (generic_records.contains(type.name)) {
+            record_names.insert(render_record_type_name(type));
+        }
     }
     for (auto const& choice : module.choices) {
-        context.choices.emplace(choice.name, collect_choice_layout(choice, record_names));
+        if (!choice.generic_parameters.empty()) {
+            context.choices.emplace(choice.name, collect_choice_layout(choice, record_names, context.choices));
+            continue;
+        }
+        context.choices.emplace(choice.name, collect_choice_layout(choice, record_names, context.choices));
+    }
+    for (auto const& type : instantiated_types) {
+        auto choice = generic_choices.find(type.name);
+        if (choice == generic_choices.end()) {
+            continue;
+        }
+        auto source_type_name = render_source_type_name(type);
+        context.choices.emplace(
+            source_type_name,
+            collect_choice_layout(*choice->second, record_names, context.choices, type)
+        );
     }
     for (auto const& record : module.records) {
         if (!record.generic_parameters.empty()) {
@@ -757,7 +836,7 @@ auto build_lowering_context(
         }
         context.records.emplace(record.name, collect_record_layout(record, record_names, context.choices));
     }
-    for (auto const& type : instantiated_record_types) {
+    for (auto const& type : instantiated_types) {
         auto record = generic_records.find(type.name);
         if (record == generic_records.end()) {
             continue;

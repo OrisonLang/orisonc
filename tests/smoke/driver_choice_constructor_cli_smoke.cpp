@@ -6919,7 +6919,7 @@ auto main() -> int {
             "ret { i32, %record.Payload }",
         }
     );
-    assert_cli_emit_llvm_failure(
+    assert_cli_emit_llvm_success(
         executable,
         smoke_temp_root / "orison_cli_generic_choice_emit.or",
         std::vector<std::string_view> {
@@ -6930,8 +6930,12 @@ auto main() -> int {
             "function make_boxed() -> Boxed<UInt32>",
             "    Wrap(7 as UInt32)",
         },
-        "lowering does not yet support Boxed<UInt32> as function return type: "
-        "generic choices do not yet have a lowered choice ABI"
+        {
+            "define { i32, i32 } @make_boxed()",
+            "insertvalue { i32, i32 } undef, i32 0, 0",
+            "insertvalue { i32, i32 }",
+            "ret { i32, i32 }",
+        }
     );
     assert_cli_emit_llvm_success(
         executable,

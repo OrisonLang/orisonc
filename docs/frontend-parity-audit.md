@@ -188,6 +188,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-23: `examples/local_result_choice_switch.or` now pins generic `Result<UInt32>` construction and explicit
   switch payload consumption as a checked-in frontend example while backend generic choice local lowering remains
   pending.
+- 2026-07-23: generic concrete choice instantiations with the existing finite single-payload ABI now lower for
+  function returns, local constructors, and explicit switch payload consumption. `local_result_choice_switch.or` now
+  emits and runs through the backend while `Maybe<T>` remains on its dedicated null-safe `{ i1, payload }` ABI path.
 - 2026-07-22: direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and
   post-merge reuse diagnostics for `nested.box.payload` below the CLI layer.
 - 2026-07-22: direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate
