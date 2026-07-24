@@ -1044,6 +1044,44 @@ auto record_unsupported_choice_constructor_abi_failure(
     );
 }
 
+auto aggregate_path_error_detail(AggregatePathError error) -> std::string_view {
+    switch (error) {
+    case AggregatePathError::none:
+        return "none";
+    case AggregatePathError::no_steps:
+        return "no aggregate path steps";
+    case AggregatePathError::unsupported_base:
+        return "unsupported aggregate path base";
+    case AggregatePathError::unsupported_source_type:
+        return "unsupported aggregate source type";
+    case AggregatePathError::expected_record:
+        return "expected record";
+    case AggregatePathError::unknown_field:
+        return "unknown field";
+    case AggregatePathError::unsupported_field_type:
+        return "unsupported field type";
+    case AggregatePathError::expected_array:
+        return "expected array";
+    case AggregatePathError::unsupported_element_source_type:
+        return "unsupported element source type";
+    case AggregatePathError::unsupported_element_type:
+        return "unsupported element type";
+    }
+    return "unknown aggregate path error";
+}
+
+auto record_unsupported_aggregate_path_failure(
+    LoweringFailures& failures,
+    std::string_view operation,
+    AggregatePathError error
+) -> void {
+    record_expression_lowering_failure(
+        failures,
+        ExpressionLoweringFailureReason::unsupported_aggregate_path,
+        std::string(operation) + ": " + std::string(aggregate_path_error_detail(error))
+    );
+}
+
 struct ChoiceConstructorLayoutLookup {
     LoweredChoiceLayout const* layout = nullptr;
     bool ambiguous = false;
@@ -1272,11 +1310,7 @@ auto advance_address_of_aggregate_path_step(
             output
         );
         if (result.error != AggregatePathError::none) {
-            record_expression_lowering_failure(
-                failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
-                "address_of field layout"
-            );
+            record_unsupported_aggregate_path_failure(failures, "address_of member path", result.error);
             return false;
         }
         return true;
@@ -1285,7 +1319,7 @@ auto advance_address_of_aggregate_path_step(
     if (step.index_expression == nullptr) {
         record_expression_lowering_failure(
             failures,
-            ExpressionLoweringFailureReason::unsupported_expression,
+            ExpressionLoweringFailureReason::unsupported_aggregate_path,
             "address_of indexed field layout"
         );
         return false;
@@ -1311,13 +1345,7 @@ auto advance_address_of_aggregate_path_step(
         output
     );
     if (result.error != AggregatePathError::none) {
-        record_expression_lowering_failure(
-            failures,
-            ExpressionLoweringFailureReason::unsupported_expression,
-            result.error == AggregatePathError::unsupported_element_source_type
-                ? "address_of indexed source type"
-                : "address_of indexed field layout"
-        );
+        record_unsupported_aggregate_path_failure(failures, "address_of index path", result.error);
         return false;
     }
     return true;
@@ -1360,7 +1388,7 @@ auto lower_pointer_record_field_address(
     if (!cursor.has_value()) {
         record_expression_lowering_failure(
             failures,
-            ExpressionLoweringFailureReason::unsupported_expression,
+            ExpressionLoweringFailureReason::unsupported_aggregate_path,
             "address_of field source record layout"
         );
         return std::nullopt;
@@ -1699,10 +1727,10 @@ auto lower_aggregate_path_read_from_storage(
                 output
             );
             if (result.error != AggregatePathError::none) {
-                record_expression_lowering_failure(
+                record_unsupported_aggregate_path_failure(
                     session.failures,
-                    ExpressionLoweringFailureReason::unsupported_expression,
-                    expression.text
+                    "aggregate member read '" + expression.text + "'",
+                    result.error
                 );
                 return std::nullopt;
             }
@@ -1712,7 +1740,7 @@ auto lower_aggregate_path_read_from_storage(
         if (step.index_expression == nullptr) {
             record_expression_lowering_failure(
                 session.failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
+                ExpressionLoweringFailureReason::unsupported_aggregate_path,
                 expression.text
             );
             return std::nullopt;
@@ -1738,10 +1766,10 @@ auto lower_aggregate_path_read_from_storage(
             output
         );
         if (result.error != AggregatePathError::none) {
-            record_expression_lowering_failure(
+            record_unsupported_aggregate_path_failure(
                 session.failures,
-                ExpressionLoweringFailureReason::unsupported_expression,
-                expression.text
+                "aggregate index read '" + expression.text + "'",
+                result.error
             );
             return std::nullopt;
         }

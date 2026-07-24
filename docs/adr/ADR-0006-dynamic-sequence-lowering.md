@@ -336,6 +336,9 @@ representation.
 - Choice-constructor expression lowering now records a structured `unsupported choice ABI` failure when a matched choice
   layout lacks a usable payload ABI. This keeps future callers from collapsing descriptor-backed payload failures into
   generic expression rejections while the finite payload-buffer ABI remains incomplete for descriptor-backed payloads.
+- Aggregate path expression lowering now records a structured `unsupported aggregate path` failure for member/index
+  layout failures. Direct expression smoke coverage pins `address_of(device.missing)` as an `unknown field` aggregate
+  path failure instead of a generic unsupported-expression detail.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

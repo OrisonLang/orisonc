@@ -1127,6 +1127,52 @@ int main() {
         "  %tmp7 = ptrtoint ptr %tmp6 to i64\n"
     );
 
+    auto missing_aggregate_member_state = raw_state;
+    auto missing_aggregate_member_failures = orison::lowering::LoweringFailures {};
+    auto missing_aggregate_member_session = orison::lowering::FunctionLoweringSession {
+        .state = missing_aggregate_member_state,
+        .failures = missing_aggregate_member_failures,
+    };
+    auto missing_aggregate_member_address_call = orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::call,
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "address_of",
+            }
+        ),
+    };
+    missing_aggregate_member_address_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::member_access,
+        .text = "missing",
+        .left = std::make_unique<orison::syntax::ExpressionSyntax>(
+            orison::syntax::ExpressionSyntax {
+                .kind = orison::syntax::ExpressionKind::name,
+                .text = "device",
+            }
+        ),
+    });
+    output = {};
+    auto missing_aggregate_member_address = orison::lowering::lower_expression(
+        missing_aggregate_member_address_call,
+        "i64",
+        orison::lowering::IntegerSignedness::not_integer,
+        context,
+        missing_aggregate_member_session,
+        output
+    );
+    assert(!missing_aggregate_member_address.has_value());
+    assert(
+        missing_aggregate_member_session.failures.expression.reason ==
+        orison::lowering::ExpressionLoweringFailureReason::unsupported_aggregate_path
+    );
+    assert(
+        orison::lowering::render_expression_lowering_failure(
+            missing_aggregate_member_session.failures.expression
+        ) == "unsupported aggregate path: address_of member path: unknown field"
+    );
+    assert(output.str().empty());
+
     auto array_field_address_call = orison::syntax::ExpressionSyntax {
         .kind = orison::syntax::ExpressionKind::call,
         .left = std::make_unique<orison::syntax::ExpressionSyntax>(

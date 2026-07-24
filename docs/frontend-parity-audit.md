@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: aggregate path expression lowering now records a structured `unsupported aggregate path` failure for
+  member/index layout failures instead of flattening them into generic unsupported-expression details. The expression
+  emitter smoke pins `address_of(device.missing)` as `address_of member path: unknown field`.
 - 2026-07-24: choice-constructor expression lowering now records a structured `unsupported choice ABI` failure when a
   matched choice layout lacks a usable payload ABI. `orison_expression_emitter_smoke` pins the direct failure detail so
   callers can append a specific ABI reason instead of losing context behind a generic expression rejection.

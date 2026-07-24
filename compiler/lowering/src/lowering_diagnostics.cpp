@@ -160,6 +160,9 @@ auto render_expression_lowering_failure(
     case ExpressionLoweringFailureReason::unsupported_choice_abi:
         prefix = "unsupported choice ABI";
         break;
+    case ExpressionLoweringFailureReason::unsupported_aggregate_path:
+        prefix = "unsupported aggregate path";
+        break;
     case ExpressionLoweringFailureReason::unknown_function:
         prefix = "unknown lowered function";
         break;
