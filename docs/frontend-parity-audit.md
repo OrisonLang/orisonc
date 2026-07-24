@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: fixed arrays containing multi-payload choice values are now pinned through array literals, indexed
+  assignment, function calls, and downstream indexed-read payload recovery. `local_result_multi_payload_choice_array_element.or`
+  exercises `Array<Result<UInt32>, 2>` values whose elements use the finite tagged payload-buffer ABI.
 - 2026-07-24: record fields containing multi-payload choice values are now pinned through construction, field
   assignment, and field-access `switch` recovery. `local_result_multi_payload_choice_record_field.or` exercises a
   `Holder.result: Result<UInt32>` field across ternary record construction, mutable field stores, and payload-pattern

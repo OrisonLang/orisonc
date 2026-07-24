@@ -41,6 +41,8 @@ ternary and `switch` branches, then consumed through function calls and payload-
 `if` and `switch` branches before payload-pattern recovery.
 `local_result_multi_payload_choice_record_field.or` demonstrates multi-payload choice values stored in record fields,
 including record construction, field reassignment, and payload-pattern recovery through field access.
+`local_result_multi_payload_choice_array_element.or` demonstrates multi-payload choice values stored in fixed-array
+elements, including array literals, indexed assignment, calls, and payload-pattern recovery after indexed reads.
 `local_inferred_nested_array_let.or` demonstrates a nested immutable fixed-array `let` inferred from explicit elements.
 `local_inferred_array_record_let.or` demonstrates record-field access from an inferred fixed array of records.
 `local_inferred_nested_mixed_let.or` demonstrates record-field access through an inferred record's fixed-array field.
@@ -129,6 +131,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_result_multi_payload_choice_branch_flow.or` | generic `Result<UInt32>` multi-payload ternary/switch branch production plus downstream consumption | backend |
 | `local_result_multi_payload_choice_reassignment.or` | mutable generic `Result<UInt32>` multi-payload reassignment across `if`/`switch` branches plus downstream consumption | backend |
 | `local_result_multi_payload_choice_record_field.or` | generic `Result<UInt32>` multi-payload record-field construction, field reassignment, and downstream field `switch` consumption | backend |
+| `local_result_multi_payload_choice_array_element.or` | generic `Result<UInt32>` multi-payload fixed-array literals, indexed assignment, calls, and downstream indexed consumption | backend |
 | `local_inferred_nested_array_let.or` | inferred nested immutable fixed-array `let` binding | backend |
 | `local_inferred_array_record_let.or` | inferred immutable array-of-record field access | backend |
 | `local_inferred_nested_mixed_let.or` | inferred immutable record-field/array-index/record-field access | backend |

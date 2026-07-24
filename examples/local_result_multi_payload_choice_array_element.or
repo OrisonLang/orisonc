@@ -1,0 +1,30 @@
+package examples.local_result_multi_payload_choice_array_element
+
+choice Result<T>
+    Ok(left: T, right: T)
+    Error(code: UInt32)
+
+function score(result: Result<UInt32>) -> UInt32
+    switch result
+        Ok(left, right) => left + right
+        Error(code) => code
+
+function choose(flag: Bool) -> Array<Result<UInt32>, 2>
+    flag ? [Ok(2 as UInt32, 5 as UInt32), Error(1 as UInt32)] : [Error(1 as UInt32), Ok(3 as UInt32, 4 as UInt32)]
+
+function reassign(flag: Bool) -> UInt32
+    var results: Array<Result<UInt32>, 2> = [Error(1 as UInt32), Error(1 as UInt32)]
+    if flag
+        results[0 as UInt64] = Ok(3 as UInt32, 4 as UInt32)
+    else
+        results[1 as UInt64] = Ok(2 as UInt32, 5 as UInt32)
+
+    score(results[0 as UInt64]) + score(results[1 as UInt64])
+
+function total(first: Array<Result<UInt32>, 2>, second: Array<Result<UInt32>, 2>) -> UInt32
+    score(first[0 as UInt64]) + score(first[1 as UInt64]) + score(second[0 as UInt64]) + score(second[1 as UInt64])
+
+function main() -> UInt32
+    let first = choose(true)
+    let second = choose(false)
+    total(first, second) + reassign(true) + reassign(false) - 32 as UInt32
