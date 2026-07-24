@@ -25,6 +25,8 @@ iteration, and cleanup on the default compiler path.
 an aggregate, followed by explicit `switch` consumption of the resulting `Maybe<UInt32>`.
 `local_result_choice_switch.or` demonstrates generic `Result<UInt32>` choice construction and explicit backend
 `switch` payload consumption.
+`local_result_distinct_choice_switch.or` demonstrates generic `Result<UInt32, Bool>` construction and explicit backend
+`switch` payload consumption when variant payloads use distinct lowered LLVM types.
 `local_inferred_nested_array_let.or` demonstrates a nested immutable fixed-array `let` inferred from explicit elements.
 `local_inferred_array_record_let.or` demonstrates record-field access from an inferred fixed array of records.
 `local_inferred_nested_mixed_let.or` demonstrates record-field access through an inferred record's fixed-array field.
@@ -105,6 +107,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_dynamic_array_append.or` | local `DynamicArray<UInt32>` construction, append/grow, checked index read, iteration, and cleanup | backend |
 | `local_null_safe_generic_aggregate.or` | concrete generic null-safe aggregate-return method call plus explicit `Maybe<UInt32>` switch consumption | backend |
 | `local_result_choice_switch.or` | generic `Result<UInt32>` construction plus explicit `switch` payload consumption | backend |
+| `local_result_distinct_choice_switch.or` | generic `Result<UInt32, Bool>` construction plus distinct-payload `switch` consumption | backend |
 | `local_inferred_nested_array_let.or` | inferred nested immutable fixed-array `let` binding | backend |
 | `local_inferred_array_record_let.or` | inferred immutable array-of-record field access | backend |
 | `local_inferred_nested_mixed_let.or` | inferred immutable record-field/array-index/record-field access | backend |

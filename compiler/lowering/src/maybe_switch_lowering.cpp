@@ -108,9 +108,31 @@ auto choice_layout_for_switch_subject(
     return find_lowered_choice_layout_by_llvm_type(context, llvm_type);
 }
 
+auto choice_payload_field_type(LoweredChoiceLayout const& layout) -> std::optional<std::string_view> {
+    constexpr auto prefix = std::string_view {"{ i32,"};
+    if (!layout.llvm_type_name.starts_with(prefix) || !layout.llvm_type_name.ends_with("}")) {
+        return std::nullopt;
+    }
+    auto field = std::string_view(layout.llvm_type_name).substr(
+        prefix.size(),
+        layout.llvm_type_name.size() - prefix.size() - 1
+    );
+    while (!field.empty() && field.front() == ' ') {
+        field.remove_prefix(1);
+    }
+    while (!field.empty() && field.back() == ' ') {
+        field.remove_suffix(1);
+    }
+    if (field.empty()) {
+        return std::nullopt;
+    }
+    return field;
+}
+
 void bind_switch_payload_value(
     std::string const& binding_name,
     std::string const& payload_type,
+    std::string_view payload_field_type,
     std::optional<std::string> source_type_name,
     LoweredExpression const& subject,
     LoweringEmissionContext const& context,
@@ -126,9 +148,19 @@ void bind_switch_payload_value(
         session.state.source_type_names[binding_name] = std::move(*source_type_name);
     }
     output << "  " << payload << " = extractvalue " << subject.type << " " << subject.value << ", 1\n";
+    auto payload_value = std::move(payload);
+    if (payload_field_type != payload_type) {
+        auto payload_storage = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << payload_storage << " = alloca " << payload_field_type << ", align 8\n";
+        output << "  store " << payload_field_type << " " << payload_value << ", ptr "
+               << payload_storage << ", align 8\n";
+        payload_value = next_llvm_temporary_name(session.state.next_temporary_index);
+        output << "  " << payload_value << " = load " << payload_type << ", ptr "
+               << payload_storage << ", align 8\n";
+    }
     auto lowered_payload = LoweredExpression {
         .type = payload_type,
-        .value = std::move(payload),
+        .value = std::move(payload_value),
         .signedness = payload_signedness,
     };
     session.state.immutable_bindings[binding_name] = lowered_payload;
@@ -232,6 +264,7 @@ void bind_switch_payload(
         bind_switch_payload_value(
             *binding_name,
             *payload_type,
+            *payload_type,
             std::move(source_type_name),
             subject,
             context,
@@ -258,9 +291,21 @@ void bind_switch_payload(
         session,
         subject_source_type_name
     );
+    auto const* choice_layout = choice_layout_for_switch_subject(
+        context.lowering,
+        subject.type,
+        subject_source_type_name
+    );
+    auto payload_field_type = choice_layout == nullptr
+        ? std::optional<std::string_view> {}
+        : choice_payload_field_type(*choice_layout);
+    if (!payload_field_type.has_value()) {
+        return;
+    }
     bind_switch_payload_value(
         choice_binding->binding_name,
         choice_binding->payload_type,
+        *payload_field_type,
         std::move(choice_binding->source_type_name),
         subject,
         context,

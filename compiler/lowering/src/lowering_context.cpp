@@ -2,8 +2,10 @@
 
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/target_layout.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
+#include <algorithm>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
@@ -642,6 +644,10 @@ auto is_supported_choice_payload_llvm_type(std::string_view type) -> bool {
     return !type.empty() && type != "void";
 }
 
+auto choice_payload_storage_type(std::size_t size_bytes) -> std::string {
+    return "[" + std::to_string(std::max<std::size_t>(size_bytes, 1)) + " x i8]";
+}
+
 auto collect_record_layout(
     syntax::RecordSyntax const& record,
     std::unordered_set<std::string> const& record_names,
@@ -725,6 +731,9 @@ auto collect_choice_layout(
     };
     layout.variants.reserve(choice.variants.size());
     auto payload_llvm_type = std::optional<std::string> {};
+    auto max_payload_size_bytes = std::size_t {0};
+    auto has_distinct_payload_types = false;
+    auto missing_distinct_payload_size = std::optional<std::string> {};
     auto has_payload = false;
     auto const is_concrete_instantiation = choice.generic_parameters.empty() ||
         generic_parameter_set(choice).empty() ||
@@ -761,10 +770,14 @@ auto collect_choice_layout(
             } else if (!payload_llvm_type.has_value()) {
                 payload_llvm_type = payload_llvm;
             } else if (*payload_llvm_type != payload_llvm) {
-                supports_single_payload_abi = false;
-                if (layout.unsupported_abi_reason.empty()) {
-                    layout.unsupported_abi_reason =
-                        "choice payload variants must share one LLVM payload type";
+                has_distinct_payload_types = true;
+            }
+            if (is_supported_choice_payload_llvm_type(payload_llvm)) {
+                auto payload_size = lowered_type_size_bytes(payload_llvm);
+                if (!payload_size.has_value()) {
+                    missing_distinct_payload_size = render_source_type_name(substituted_payload_type);
+                } else {
+                    max_payload_size_bytes = std::max(max_payload_size_bytes, *payload_size);
                 }
             }
             lowered_variant.payloads.push_back(LoweredChoicePayload {
@@ -776,8 +789,20 @@ auto collect_choice_layout(
         }
         layout.variants.push_back(std::move(lowered_variant));
     }
+    if (supports_single_payload_abi && has_distinct_payload_types && missing_distinct_payload_size.has_value()) {
+        supports_single_payload_abi = false;
+        layout.unsupported_abi_reason =
+            "choice payload type '" + *missing_distinct_payload_size +
+            "' does not yet have a finite lowered choice ABI size";
+    }
     if (supports_single_payload_abi) {
-        layout.llvm_type_name = has_payload ? "{ i32, " + *payload_llvm_type + " }" : "i32";
+        layout.llvm_type_name = has_payload
+            ? "{ i32, " +
+                (has_distinct_payload_types
+                    ? choice_payload_storage_type(max_payload_size_bytes)
+                    : *payload_llvm_type) +
+                " }"
+            : "i32";
         layout.unsupported_abi_reason.clear();
     }
     return layout;

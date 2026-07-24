@@ -1004,6 +1004,27 @@ auto find_choice_variant(
     return nullptr;
 }
 
+auto choice_payload_field_type(LoweredChoiceLayout const& layout) -> std::optional<std::string_view> {
+    constexpr auto prefix = std::string_view {"{ i32,"};
+    if (!layout.llvm_type_name.starts_with(prefix) || !layout.llvm_type_name.ends_with("}")) {
+        return std::nullopt;
+    }
+    auto field = std::string_view(layout.llvm_type_name).substr(
+        prefix.size(),
+        layout.llvm_type_name.size() - prefix.size() - 1
+    );
+    while (!field.empty() && field.front() == ' ') {
+        field.remove_prefix(1);
+    }
+    while (!field.empty() && field.back() == ' ') {
+        field.remove_suffix(1);
+    }
+    if (field.empty()) {
+        return std::nullopt;
+    }
+    return field;
+}
+
 struct ChoiceConstructorLayoutLookup {
     LoweredChoiceLayout const* layout = nullptr;
     bool ambiguous = false;
@@ -1108,6 +1129,10 @@ auto lower_choice_constructor_expression(
     auto aggregate_value = std::move(tag_name);
     if (!variant->payloads.empty()) {
         auto const& payload = variant->payloads.front();
+        auto payload_field_type = choice_payload_field_type(*layout);
+        if (!payload_field_type.has_value()) {
+            return std::nullopt;
+        }
         auto lowered_payload = lowered_expression(
             arguments->front(),
             payload.llvm_type,
@@ -1119,9 +1144,19 @@ auto lower_choice_constructor_expression(
         if (!lowered_payload.has_value()) {
             return std::nullopt;
         }
+        auto payload_value = lowered_payload->value;
+        if (*payload_field_type != payload.llvm_type) {
+            auto payload_storage = next_llvm_temporary_name(session.state.next_temporary_index);
+            output << "  " << payload_storage << " = alloca " << *payload_field_type << ", align 8\n";
+            output << "  store " << payload.llvm_type << " " << lowered_payload->value << ", ptr "
+                   << payload_storage << ", align 8\n";
+            payload_value = next_llvm_temporary_name(session.state.next_temporary_index);
+            output << "  " << payload_value << " = load " << *payload_field_type << ", ptr "
+                   << payload_storage << ", align 8\n";
+        }
         auto payload_name = next_llvm_temporary_name(session.state.next_temporary_index);
         output << "  " << payload_name << " = insertvalue " << layout->llvm_type_name << " "
-               << aggregate_value << ", " << payload.llvm_type << " " << lowered_payload->value
+               << aggregate_value << ", " << *payload_field_type << " " << payload_value
                << ", 1\n";
         aggregate_value = std::move(payload_name);
     }

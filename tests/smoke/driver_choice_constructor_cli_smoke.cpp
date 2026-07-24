@@ -6939,6 +6939,25 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_success(
         executable,
+        smoke_temp_root / "orison_cli_generic_distinct_payload_choice_emit.or",
+        std::vector<std::string_view> {
+            "package demo.cli",
+            "choice Result<T, E>",
+            "    Ok(value: T)",
+            "    Error(error: E)",
+            "function make_result() -> Result<UInt32, Bool>",
+            "    Error(true)",
+        },
+        {
+            "define { i32, [4 x i8] } @make_result()",
+            "insertvalue { i32, [4 x i8] } undef, i32 1, 0",
+            "store i1 1, ptr",
+            "load [4 x i8], ptr",
+            "ret { i32, [4 x i8] }",
+        }
+    );
+    assert_cli_emit_llvm_success(
+        executable,
         smoke_temp_root / "orison_cli_ambiguous_choice_layout_emit.or",
         std::vector<std::string_view> {
             "package demo.cli",
