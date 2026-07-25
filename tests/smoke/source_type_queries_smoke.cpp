@@ -547,6 +547,26 @@ int main() {
             mismatched_computed_cleanup_sequence
         ).find("ownership join blocked") != std::string::npos
     );
+    auto mismatched_computed_descriptor_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_render(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            state
+        );
+    assert(
+        mismatched_computed_descriptor_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorRenderPlanKind::ownership_join_blocked
+    );
+    assert(mismatched_computed_descriptor_render.rendered_ir.empty());
+    assert(!mismatched_computed_descriptor_render.descriptor_load_planned);
+    assert(!mismatched_computed_descriptor_render.data_projection_planned);
+    assert(!mismatched_computed_descriptor_render.length_projection_planned);
+    assert(!mismatched_computed_descriptor_render.render_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_render_plan_report(
+            mismatched_computed_descriptor_render
+        ).find("ownership join blocked") != std::string::npos
+    );
 
     auto proven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -614,6 +634,47 @@ int main() {
         );
     assert(proven_computed_cleanup_sequence_report.find("loop cleanup sequence planned") != std::string::npos);
     assert(proven_computed_cleanup_sequence_report.find("[cleanup sequence disabled]") != std::string::npos);
+    auto proven_computed_descriptor_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_render(
+            ternary(name("flag"), name("items"), name("items")),
+            context,
+            state
+        );
+    assert(
+        proven_computed_descriptor_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned
+    );
+    assert(proven_computed_descriptor_render.cleanup_owner_name == "items");
+    assert(proven_computed_descriptor_render.descriptor_storage_name == "%items.addr");
+    assert(proven_computed_descriptor_render.descriptor_value_name == "%items.computed_for.descriptor");
+    assert(proven_computed_descriptor_render.data_pointer_name == "%items.computed_for.data");
+    assert(proven_computed_descriptor_render.length_name == "%items.computed_for.length");
+    assert(proven_computed_descriptor_render.rendered_ir.size() == 3);
+    assert(
+        proven_computed_descriptor_render.rendered_ir[0] ==
+        "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        proven_computed_descriptor_render.rendered_ir[1] ==
+        "  %items.computed_for.data = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 0\n"
+    );
+    assert(
+        proven_computed_descriptor_render.rendered_ir[2] ==
+        "  %items.computed_for.length = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 1\n"
+    );
+    assert(proven_computed_descriptor_render.descriptor_load_planned);
+    assert(proven_computed_descriptor_render.data_projection_planned);
+    assert(proven_computed_descriptor_render.length_projection_planned);
+    assert(!proven_computed_descriptor_render.render_enabled);
+    auto proven_computed_descriptor_render_report =
+        orison::lowering::computed_dynamic_array_iterable_descriptor_render_plan_report(
+            proven_computed_descriptor_render
+        );
+    assert(
+        proven_computed_descriptor_render_report.find("descriptor load projection planned") !=
+        std::string::npos
+    );
+    assert(proven_computed_descriptor_render_report.find("[render disabled]") != std::string::npos);
 
     auto unproven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -669,6 +730,27 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
             unproven_computed_cleanup_sequence
+        ).find("cleanup owner unproven") != std::string::npos
+    );
+    auto unproven_computed_descriptor_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_render(
+            ternary(name("flag"), name("predicted_items"), name("predicted_items")),
+            context,
+            state
+        );
+    assert(
+        unproven_computed_descriptor_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven
+    );
+    assert(unproven_computed_descriptor_render.cleanup_owner_name == "predicted_items");
+    assert(unproven_computed_descriptor_render.rendered_ir.empty());
+    assert(!unproven_computed_descriptor_render.descriptor_load_planned);
+    assert(!unproven_computed_descriptor_render.data_projection_planned);
+    assert(!unproven_computed_descriptor_render.length_projection_planned);
+    assert(!unproven_computed_descriptor_render.render_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_render_plan_report(
+            unproven_computed_descriptor_render
         ).find("cleanup owner unproven") != std::string::npos
     );
 

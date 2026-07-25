@@ -60,6 +60,9 @@ representation.
   emission disabled.
 - Dynamic-array `for` rejection diagnostics now include the computed cleanup-sequence report, so computed owned
   iterable failures show whether loop cleanup ownership is blocked, unproven, or planned-but-disabled.
+- Computed owned dynamic-array descriptor rendering now has a disabled internal plan for proven handoffs. It records
+  the descriptor load plus data and length projections needed by a future loop emitter while keeping render emission
+  disabled.
 
 ## Consequences
 

@@ -1,6 +1,7 @@
 #include "orison/lowering/source_type_queries.hpp"
 
 #include "orison/lowering/addressable_binding.hpp"
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
@@ -656,6 +657,133 @@ auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
         " [function cleanup blocked]";
     output += plan.cleanup_sequence_enabled ? " [cleanup sequence enabled]" :
         " [cleanup sequence disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
+auto plan_computed_dynamic_array_iterable_descriptor_render(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableDescriptorRenderPlan {
+    auto plan = ComputedDynamicArrayIterableDescriptorRenderPlan {};
+    plan.cleanup_sequence_plan = plan_computed_dynamic_array_iterable_cleanup_sequence(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.cleanup_sequence_plan.source_type_name;
+    plan.element_source_type_name = plan.cleanup_sequence_plan.element_source_type_name;
+    plan.cleanup_owner_name = plan.cleanup_sequence_plan.cleanup_owner_name;
+    plan.descriptor_storage_name = plan.cleanup_sequence_plan.descriptor_storage_name;
+    plan.render_enabled = false;
+
+    switch (plan.cleanup_sequence_plan.kind) {
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned:
+            break;
+    }
+
+    if (plan.cleanup_owner_name.empty() || plan.descriptor_storage_name.empty()) {
+        plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven;
+        return plan;
+    }
+
+    auto prefix = "%" + plan.cleanup_owner_name + ".computed_for";
+    plan.descriptor_value_name = prefix + ".descriptor";
+    plan.data_pointer_name = prefix + ".data";
+    plan.length_name = prefix + ".length";
+    plan.rendered_ir.push_back(
+        emit_dynamic_array_descriptor_load(plan.descriptor_value_name, plan.descriptor_storage_name)
+    );
+    plan.rendered_ir.push_back(
+        emit_dynamic_array_descriptor_field_projection(
+            plan.data_pointer_name,
+            plan.descriptor_value_name,
+            DynamicArrayDescriptorField::data
+        )
+    );
+    plan.rendered_ir.push_back(
+        emit_dynamic_array_descriptor_field_projection(
+            plan.length_name,
+            plan.descriptor_value_name,
+            DynamicArrayDescriptorField::length
+        )
+    );
+    plan.descriptor_load_planned = true;
+    plan.data_projection_planned = true;
+    plan.length_projection_planned = true;
+    plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_descriptor_render_plan_report(
+    ComputedDynamicArrayIterableDescriptorRenderPlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray descriptor render plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned:
+            output += "descriptor load projection planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    if (!plan.descriptor_storage_name.empty()) {
+        output += " descriptor ";
+        output += plan.descriptor_storage_name;
+    }
+    if (!plan.descriptor_value_name.empty()) {
+        output += " value ";
+        output += plan.descriptor_value_name;
+    }
+    if (!plan.data_pointer_name.empty()) {
+        output += " data ";
+        output += plan.data_pointer_name;
+    }
+    if (!plan.length_name.empty()) {
+        output += " length ";
+        output += plan.length_name;
+    }
+    output += plan.descriptor_load_planned ? " [descriptor load planned]" :
+        " [descriptor load blocked]";
+    output += plan.data_projection_planned ? " [data projection planned]" :
+        " [data projection blocked]";
+    output += plan.length_projection_planned ? " [length projection planned]" :
+        " [length projection blocked]";
+    output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
     output += " (metadata only)";
     return output;
 }

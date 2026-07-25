@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` descriptor rendering now has a disabled internal plan. Proven same-owner
+  handoffs can record the future descriptor load plus data and length projections while keeping render emission
+  disabled.
 - 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the cleanup sequence report.
   The report distinguishes blocked, unproven, and planned-but-disabled loop cleanup ownership without enabling cleanup
   sequence emission.

@@ -134,6 +134,32 @@ struct ComputedDynamicArrayIterableCleanupSequencePlan {
     bool cleanup_sequence_enabled = false;
 };
 
+enum class ComputedDynamicArrayIterableDescriptorRenderPlanKind {
+    not_computed_dynamic_array,
+    unsupported_computed_shape,
+    ownership_join_blocked,
+    cleanup_owner_unproven,
+    descriptor_render_planned,
+};
+
+struct ComputedDynamicArrayIterableDescriptorRenderPlan {
+    ComputedDynamicArrayIterableDescriptorRenderPlanKind kind =
+        ComputedDynamicArrayIterableDescriptorRenderPlanKind::not_computed_dynamic_array;
+    ComputedDynamicArrayIterableCleanupSequencePlan cleanup_sequence_plan;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string cleanup_owner_name;
+    std::string descriptor_storage_name;
+    std::string descriptor_value_name;
+    std::string data_pointer_name;
+    std::string length_name;
+    std::vector<std::string> rendered_ir;
+    bool descriptor_load_planned = false;
+    bool data_projection_planned = false;
+    bool length_projection_planned = false;
+    bool render_enabled = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -190,6 +216,16 @@ auto plan_computed_dynamic_array_iterable_cleanup_sequence(
 
 auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
     ComputedDynamicArrayIterableCleanupSequencePlan const& plan
+) -> std::string;
+
+auto plan_computed_dynamic_array_iterable_descriptor_render(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableDescriptorRenderPlan;
+
+auto computed_dynamic_array_iterable_descriptor_render_plan_report(
+    ComputedDynamicArrayIterableDescriptorRenderPlan const& plan
 ) -> std::string;
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool;
