@@ -1799,6 +1799,31 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "element UInt32 owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
         ) != std::string::npos
     );
+
+    auto computed_same_owner_parameter_for = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "function sum_words(flag: Bool, items: DynamicArray<UInt32>) -> UInt32\n"
+        "    var total = 0 as UInt32\n"
+        "    for word in flag ? items : items\n"
+        "        total = total + word\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(computed_same_owner_parameter_for.has_errors());
+    assert(
+        computed_same_owner_parameter_for.render(path.string()).find(
+            "computed DynamicArray ownership plan ternary single owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owners items items [ownership join ok] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
 }
 
 void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {

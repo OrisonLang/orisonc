@@ -709,6 +709,33 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_dynamic_array_same_owner_for_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_same_owner_for_rejected.or";
+    {
+        auto same_owner_for_source = std::ofstream(computed_dynamic_array_same_owner_for_path);
+        same_owner_for_source
+            << "package demo.pipeline.computeddynamicarraysameownerfor\n"
+            << "\n"
+            << "function sum_words(flag: Bool, items: DynamicArray<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for word in flag ? items : items\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_same_owner_for = pipeline.emit_llvm(
+        computed_dynamic_array_same_owner_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+        }
+    );
+    assert(computed_dynamic_array_same_owner_for.has_errors());
+    assert(
+        computed_dynamic_array_same_owner_for.error_text.find(
+            "computed DynamicArray ownership plan ternary single owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owners items items [ownership join ok] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
+
     auto view_parameter_length_path = smoke_temp_root / "orison_pipeline_view_parameter_length.or";
     {
         auto view_length_source = std::ofstream(view_parameter_length_path);

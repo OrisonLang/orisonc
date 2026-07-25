@@ -45,6 +45,8 @@ representation.
   remain blocked, while same-owner ternaries can distinguish proven cleanup owners from metadata-only predicted owners.
 - Dynamic-array `for` rejection diagnostics include the computed ownership-transfer report for computed owned iterables,
   so ternary failures distinguish branch owner mismatches from missing cleanup-owner proof.
+- Rejection coverage now pins same-owner computed ternaries separately from owner-mismatch ternaries: `flag ? items :
+  items` can satisfy the ownership join but remains blocked until cleanup-owner proof is available.
 
 ## Consequences
 

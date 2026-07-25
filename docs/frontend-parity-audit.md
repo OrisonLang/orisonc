@@ -1621,3 +1621,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the computed ownership-transfer
   report, distinguishing ternary branch owner mismatches from missing cleanup-owner proof while leaving lowering
   disabled.
+- 2026-07-25: same-owner computed owned `DynamicArray<T>` ternary iterables are now pinned as a separate rejection
+  path: `flag ? items : items` reports an accepted ownership join but remains blocked by missing cleanup-owner proof.
