@@ -47,6 +47,9 @@ representation.
   so ternary failures distinguish branch owner mismatches from missing cleanup-owner proof.
 - Rejection coverage now pins same-owner computed ternaries separately from owner-mismatch ternaries: `flag ? items :
   items` can satisfy the ownership join but remains blocked until cleanup-owner proof is available.
+- Local same-owner computed ternary coverage now pins the positive metadata-only proof state: lowered local descriptors
+  can prove the cleanup owner, but computed owned `for` lowering still remains disabled until descriptor handoff and
+  cleanup sequencing are implemented.
 
 ## Consequences
 

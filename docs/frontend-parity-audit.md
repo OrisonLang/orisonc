@@ -1623,3 +1623,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   disabled.
 - 2026-07-25: same-owner computed owned `DynamicArray<T>` ternary iterables are now pinned as a separate rejection
   path: `flag ? items : items` reports an accepted ownership join but remains blocked by missing cleanup-owner proof.
+- 2026-07-25: local same-owner computed owned `DynamicArray<T>` ternary iterables now pin the positive metadata-only
+  proof path: a locally constructed descriptor reports ownership join ok and cleanup owner proven, while computed
+  owned `for` lowering remains disabled.

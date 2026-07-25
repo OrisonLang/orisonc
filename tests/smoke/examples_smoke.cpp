@@ -223,6 +223,22 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_local_same_owner_dynamic_array_iterable =
+        pipeline.emit_llvm(
+            fixtures / "dynamic_array_computed_local_same_owner_iterable_rejected.or",
+            orison::pipeline::CompilePipelineOptions {
+                .dynamic_array_production_construction_lowering_enabled = true,
+                .dynamic_array_production_for_lowering_enabled = true,
+            }
+        );
+    assert(computed_local_same_owner_dynamic_array_iterable.has_errors());
+    assert(
+        computed_local_same_owner_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "
+            "element UInt32 owners items items [ownership join ok] [cleanup owner proven] (metadata only)"
+        ) != std::string::npos
+    );
+
     auto choice_dynamic_array_payload =
         pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_rejected.or");
     assert(choice_dynamic_array_payload.has_errors());
