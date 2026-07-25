@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: CLI and pipeline return-expression failure tests now pin structured cast detail for negative unsigned
+  literal casts. The driver, compile-pipeline, and drop-report smoke paths require
+  `unsupported cast: negative value to UInt32`.
 - 2026-07-24: CLI and pipeline return-expression failure tests now also pin unary operator detail for unsupported
   unsigned negation. The driver, compile-pipeline, and drop-report smoke paths require `unsupported operator: -`
   instead of only proving comparison-operator detail.

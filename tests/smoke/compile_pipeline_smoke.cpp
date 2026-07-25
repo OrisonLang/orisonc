@@ -2237,6 +2237,26 @@ auto main() -> int {
     assert(failed_unary_lowering.drop_readiness_relation_report.empty());
     assert(failed_unary_lowering.drop_readiness_blocker_report.empty());
 
+    auto failed_cast_lowering_path =
+        std::filesystem::temp_directory_path() / "orison_pipeline_drop_readiness_cast_failure.or";
+    {
+        std::ofstream source(failed_cast_lowering_path);
+        source << "package demo.readinessfailure\n";
+        source << "function main() -> UInt32\n";
+        source << "    -1 as UInt32\n";
+    }
+    auto failed_cast_lowering = pipeline.emit_llvm(failed_cast_lowering_path);
+    assert(failed_cast_lowering.has_errors());
+    assert(
+        failed_cast_lowering.error_text.find(
+            "lowering does not yet support this return expression: unsupported cast: negative value to UInt32"
+        ) != std::string::npos
+    );
+    assert(failed_cast_lowering.drop_readiness_snapshot_report.empty());
+    assert(failed_cast_lowering.drop_readiness_summary_report.empty());
+    assert(failed_cast_lowering.drop_readiness_relation_report.empty());
+    assert(failed_cast_lowering.drop_readiness_blocker_report.empty());
+
     auto object = pipeline.emit_object(source_path);
     assert(!object.has_errors());
     assert(!object.object_bytes.empty());

@@ -351,6 +351,10 @@ representation.
 - CLI and pipeline return-expression failure tests now also pin unary operator details for unsupported unsigned
   negation. The driver, compile-pipeline, and drop-report smoke paths require `unsupported operator: -` so the
   structured lowerer reason survives the same user-visible failure boundaries as comparison operators.
+- CLI and pipeline return-expression failure tests now pin structured cast details for negative unsigned literal casts.
+  The driver, compile-pipeline, and drop-report smoke paths require
+  `unsupported cast: negative value to UInt32`, preventing the cast-specific reason from being flattened at
+  user-visible failure boundaries.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
