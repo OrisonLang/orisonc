@@ -1783,6 +1783,16 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "lowering DynamicArray for statements currently requires a named descriptor iterable"
         ) != std::string::npos
     );
+    assert(
+        computed_parameter_for.render(path.string()).find(
+            "computed DynamicArray iterable of type 'DynamicArray<UInt32>' requires a proven single descriptor owner"
+        ) != std::string::npos
+    );
+    assert(
+        computed_parameter_for.render(path.string()).find(
+            "cleanup owner proof missing"
+        ) != std::string::npos
+    );
 }
 
 void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {

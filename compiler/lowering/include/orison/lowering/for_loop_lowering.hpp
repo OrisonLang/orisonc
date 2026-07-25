@@ -115,7 +115,8 @@ auto lower_sequence_for_statement(
     if (sequence->kind == DynamicSequenceKind::dynamic_array && !dynamic_array_plan.can_lower_now) {
         diagnostics.error(
             statement.line,
-            "lowering DynamicArray for statements currently requires a named descriptor iterable"
+            "lowering DynamicArray for statements currently requires a named descriptor iterable: " +
+                dynamic_array_iterable_descriptor_plan_report(dynamic_array_plan)
         );
         return StatementFlow::failed;
     }

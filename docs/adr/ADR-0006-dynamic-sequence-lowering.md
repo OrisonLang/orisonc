@@ -38,6 +38,8 @@ representation.
 - The descriptor-ownership plan now records cleanup-owner proof separately from descriptor readability. Lowered local
   descriptors and bound parameter descriptors count as proven cleanup owners; predicted semantic origins and
   audit-only parameter descriptors remain metadata-only and do not prove computed owned iterable safety.
+- Dynamic-array `for` rejection diagnostics surface the descriptor-ownership plan report, so computed owned iterable
+  failures explain both the need for a proven single descriptor owner and the current cleanup-owner proof status.
 
 ## Consequences
 

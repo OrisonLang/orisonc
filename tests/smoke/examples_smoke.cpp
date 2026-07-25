@@ -191,6 +191,16 @@ auto main() -> int {
             "lowering DynamicArray for statements currently requires a named descriptor iterable"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray iterable of type 'DynamicArray<UInt32>' requires a proven single descriptor owner"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_iterable.error_text.find(
+            "cleanup owner proof missing"
+        ) != std::string::npos
+    );
 
     auto choice_dynamic_array_payload =
         pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_rejected.or");
