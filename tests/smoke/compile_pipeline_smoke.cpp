@@ -722,6 +722,13 @@ auto main() -> int {
             "[cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_parameter_for.error_text.find(
+            "computed DynamicArray descriptor render plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [descriptor load blocked] [data projection blocked] "
+            "[length projection blocked] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_dynamic_array_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_same_owner_for_rejected.or";
@@ -761,6 +768,13 @@ auto main() -> int {
             "computed DynamicArray cleanup sequence plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [loop cleanup blocked] [function cleanup blocked] "
             "[cleanup sequence disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_same_owner_for.error_text.find(
+            "computed DynamicArray descriptor render plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [descriptor load blocked] [data projection blocked] "
+            "[length projection blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -805,6 +819,15 @@ auto main() -> int {
             "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
             "loop-entry items.loop.entry loop-exit items [loop cleanup owns descriptor] "
             "[function cleanup resumes] [cleanup sequence disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for.error_text.find(
+            "computed DynamicArray descriptor render plan descriptor load projection planned source "
+            "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
+            "value %items.computed_for.descriptor data %items.computed_for.data "
+            "length %items.computed_for.length [descriptor load planned] [data projection planned] "
+            "[length projection planned] [render disabled] (metadata only)"
         ) != std::string::npos
     );
 

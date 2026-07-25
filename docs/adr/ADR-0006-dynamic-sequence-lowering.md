@@ -63,6 +63,8 @@ representation.
 - Computed owned dynamic-array descriptor rendering now has a disabled internal plan for proven handoffs. It records
   the descriptor load plus data and length projections needed by a future loop emitter while keeping render emission
   disabled.
+- Dynamic-array `for` rejection diagnostics now include the computed descriptor-render report, so computed owned
+  iterable failures show whether descriptor load/projection rendering is blocked, unproven, or planned-but-disabled.
 
 ## Consequences
 
