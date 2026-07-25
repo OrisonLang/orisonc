@@ -1610,3 +1610,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-24: dynamic-array `for` lowering now consults an internal descriptor-ownership plan that distinguishes named
   bound descriptor owners, named bindings without descriptor storage, and computed owned iterables. Computed owned
   `DynamicArray<T>` iteration remains rejected until a single cleanup owner can be proven.
+- 2026-07-24: the dynamic-array iterable descriptor plan now reports cleanup-owner proof independently from descriptor
+  readability. Lowered local and bound parameter descriptors are proven owners; predicted semantic origins and
+  audit-only descriptors remain metadata-only blockers for computed owned iteration.

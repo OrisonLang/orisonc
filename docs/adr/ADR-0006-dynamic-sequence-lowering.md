@@ -35,6 +35,9 @@ representation.
 - Dynamic-array `for` lowering consumes an internal descriptor-ownership plan before emission. Named bindings with
   bound descriptor storage are the only lowerable owned iterable shape today; computed owned iterables, including
   ternaries and helper-returned descriptors, remain blocked until lowering can prove a single cleanup owner.
+- The descriptor-ownership plan now records cleanup-owner proof separately from descriptor readability. Lowered local
+  descriptors and bound parameter descriptors count as proven cleanup owners; predicted semantic origins and
+  audit-only parameter descriptors remain metadata-only and do not prove computed owned iterable safety.
 
 ## Consequences
 

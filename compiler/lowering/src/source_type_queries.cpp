@@ -206,6 +206,61 @@ auto dynamic_array_lowering_invariants() -> DynamicArrayLoweringInvariants {
     };
 }
 
+auto dynamic_array_iterable_cleanup_owner_proof_status(
+    DynamicArrayDescriptorStorageStatus status
+) -> DynamicArrayIterableCleanupOwnerProofStatus {
+    switch (status) {
+        case DynamicArrayDescriptorStorageStatus::predicted_owner_local:
+            return DynamicArrayIterableCleanupOwnerProofStatus::predicted_owner_local;
+        case DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor:
+            return DynamicArrayIterableCleanupOwnerProofStatus::audit_parameter_descriptor;
+        case DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor:
+            return DynamicArrayIterableCleanupOwnerProofStatus::proven_bound_parameter_descriptor;
+        case DynamicArrayDescriptorStorageStatus::lowered_local_descriptor:
+            return DynamicArrayIterableCleanupOwnerProofStatus::proven_lowered_local_descriptor;
+    }
+    return DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan;
+}
+
+auto dynamic_array_iterable_cleanup_owner_proven(
+    DynamicArrayIterableCleanupOwnerProofStatus status
+) -> bool {
+    return status == DynamicArrayIterableCleanupOwnerProofStatus::proven_bound_parameter_descriptor ||
+        status == DynamicArrayIterableCleanupOwnerProofStatus::proven_lowered_local_descriptor;
+}
+
+auto attach_dynamic_array_iterable_cleanup_owner_proof(
+    DynamicArrayIterableDescriptorPlan& plan,
+    FunctionLoweringState const& state
+) -> void {
+    if (plan.owner_name.empty()) {
+        plan.cleanup_owner_proof_status =
+            DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan;
+        return;
+    }
+
+    for (auto const& cleanup_plan : state.dynamic_array_local_cleanup_plans) {
+        if (cleanup_plan.owner_name != plan.owner_name ||
+            cleanup_plan.source_type_name != plan.source_type_name) {
+            continue;
+        }
+        if (!plan.descriptor_storage.empty() &&
+            !cleanup_plan.descriptor_storage_name.empty() &&
+            cleanup_plan.descriptor_storage_name != plan.descriptor_storage) {
+            continue;
+        }
+
+        plan.cleanup_owner_proof_status =
+            dynamic_array_iterable_cleanup_owner_proof_status(cleanup_plan.descriptor_storage_status);
+        plan.cleanup_owner_proven =
+            dynamic_array_iterable_cleanup_owner_proven(plan.cleanup_owner_proof_status);
+        return;
+    }
+
+    plan.cleanup_owner_proof_status =
+        DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan;
+}
+
 auto plan_dynamic_array_iterable_descriptor(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
@@ -228,6 +283,7 @@ auto plan_dynamic_array_iterable_descriptor(
 
     if (expression.kind != syntax::ExpressionKind::name) {
         plan.kind = DynamicArrayIterableDescriptorPlanKind::computed_owner_unproven;
+        attach_dynamic_array_iterable_cleanup_owner_proof(plan, state);
         return plan;
     }
 
@@ -235,30 +291,53 @@ auto plan_dynamic_array_iterable_descriptor(
     auto storage = aggregate_storage_for_name(expression.text, state);
     if (!storage.has_value()) {
         plan.kind = DynamicArrayIterableDescriptorPlanKind::missing_named_descriptor_storage;
+        attach_dynamic_array_iterable_cleanup_owner_proof(plan, state);
         return plan;
     }
 
     plan.kind = DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner;
     plan.descriptor_storage = std::move(*storage);
     plan.can_lower_now = true;
+    attach_dynamic_array_iterable_cleanup_owner_proof(plan, state);
     return plan;
+}
+
+auto dynamic_array_iterable_cleanup_owner_proof_report(
+    DynamicArrayIterableDescriptorPlan const& plan
+) -> std::string {
+    switch (plan.cleanup_owner_proof_status) {
+        case DynamicArrayIterableCleanupOwnerProofStatus::not_dynamic_array:
+            return "cleanup owner proof not required";
+        case DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan:
+            return "cleanup owner proof missing";
+        case DynamicArrayIterableCleanupOwnerProofStatus::predicted_owner_local:
+            return "cleanup owner predicted from semantic descriptor origin";
+        case DynamicArrayIterableCleanupOwnerProofStatus::audit_parameter_descriptor:
+            return "cleanup owner audit-only parameter descriptor";
+        case DynamicArrayIterableCleanupOwnerProofStatus::proven_bound_parameter_descriptor:
+            return "cleanup owner proven from bound parameter descriptor";
+        case DynamicArrayIterableCleanupOwnerProofStatus::proven_lowered_local_descriptor:
+            return "cleanup owner proven from lowered local descriptor";
+    }
+    return "cleanup owner proof unknown";
 }
 
 auto dynamic_array_iterable_descriptor_plan_report(
     DynamicArrayIterableDescriptorPlan const& plan
 ) -> std::string {
+    auto cleanup_report = dynamic_array_iterable_cleanup_owner_proof_report(plan);
     switch (plan.kind) {
         case DynamicArrayIterableDescriptorPlanKind::not_dynamic_array:
             return "not a DynamicArray iterable";
         case DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner:
             return "named DynamicArray descriptor owner '" + plan.owner_name + "' lowers from " +
-                plan.descriptor_storage;
+                plan.descriptor_storage + " [" + cleanup_report + "]";
         case DynamicArrayIterableDescriptorPlanKind::missing_named_descriptor_storage:
             return "named DynamicArray iterable '" + plan.owner_name +
-                "' has no bound descriptor storage";
+                "' has no bound descriptor storage [" + cleanup_report + "]";
         case DynamicArrayIterableDescriptorPlanKind::computed_owner_unproven:
             return "computed DynamicArray iterable of type '" + plan.source_type_name +
-                "' requires a proven single descriptor owner before lowering";
+                "' requires a proven single descriptor owner before lowering [" + cleanup_report + "]";
     }
     return "unknown DynamicArray iterable descriptor plan";
 }

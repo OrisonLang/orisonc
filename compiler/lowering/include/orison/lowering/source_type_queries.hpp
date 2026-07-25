@@ -48,13 +48,25 @@ enum class DynamicArrayIterableDescriptorPlanKind {
     computed_owner_unproven,
 };
 
+enum class DynamicArrayIterableCleanupOwnerProofStatus {
+    not_dynamic_array,
+    missing_cleanup_plan,
+    predicted_owner_local,
+    audit_parameter_descriptor,
+    proven_bound_parameter_descriptor,
+    proven_lowered_local_descriptor,
+};
+
 struct DynamicArrayIterableDescriptorPlan {
     DynamicArrayIterableDescriptorPlanKind kind = DynamicArrayIterableDescriptorPlanKind::not_dynamic_array;
+    DynamicArrayIterableCleanupOwnerProofStatus cleanup_owner_proof_status =
+        DynamicArrayIterableCleanupOwnerProofStatus::not_dynamic_array;
     std::string source_type_name;
     std::string element_source_type_name;
     std::string owner_name;
     std::string descriptor_storage;
     bool can_lower_now = false;
+    bool cleanup_owner_proven = false;
 };
 
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;

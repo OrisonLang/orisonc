@@ -373,6 +373,7 @@ int main() {
     assert(!orison::lowering::dynamic_sequence_source_type("Array<UInt32, 3>").has_value());
 
     state.source_type_names["items"] = "DynamicArray<UInt32>";
+    state.source_type_names["predicted_items"] = "DynamicArray<UInt32>";
     state.source_type_names["computed_left"] = "DynamicArray<UInt32>";
     state.source_type_names["computed_right"] = "DynamicArray<UInt32>";
     state.addressable_bindings["items"] = orison::lowering::AddressableBinding {
@@ -382,6 +383,33 @@ int main() {
         },
         .storage = "%items.addr",
     };
+    state.addressable_bindings["predicted_items"] = orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        .storage = "%predicted_items.addr",
+    };
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "items",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%items.addr",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor,
+        .element_size_bytes = 4,
+    });
+    state.dynamic_array_local_cleanup_plans.push_back(orison::lowering::DynamicArrayDescriptorCleanupPlan {
+        .owner_name = "predicted_items",
+        .source_type_name = "DynamicArray<UInt32>",
+        .element_source_type_name = "UInt32",
+        .element_llvm_type = "i32",
+        .descriptor_storage_name = "%predicted_items.addr",
+        .descriptor_storage_status =
+            orison::lowering::DynamicArrayDescriptorStorageStatus::predicted_owner_local,
+        .element_size_bytes = 4,
+    });
 
     auto named_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("items"), context, state);
@@ -394,9 +422,31 @@ int main() {
     assert(named_dynamic_array_plan.owner_name == "items");
     assert(named_dynamic_array_plan.descriptor_storage == "%items.addr");
     assert(named_dynamic_array_plan.can_lower_now);
+    assert(named_dynamic_array_plan.cleanup_owner_proven);
+    assert(
+        named_dynamic_array_plan.cleanup_owner_proof_status ==
+        orison::lowering::DynamicArrayIterableCleanupOwnerProofStatus::proven_lowered_local_descriptor
+    );
     assert(
         orison::lowering::dynamic_array_iterable_descriptor_plan_report(named_dynamic_array_plan)
-            .find("named DynamicArray descriptor owner 'items'") != std::string::npos
+            .find("cleanup owner proven from lowered local descriptor") != std::string::npos
+    );
+
+    auto predicted_dynamic_array_plan =
+        orison::lowering::plan_dynamic_array_iterable_descriptor(name("predicted_items"), context, state);
+    assert(
+        predicted_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner
+    );
+    assert(predicted_dynamic_array_plan.can_lower_now);
+    assert(!predicted_dynamic_array_plan.cleanup_owner_proven);
+    assert(
+        predicted_dynamic_array_plan.cleanup_owner_proof_status ==
+        orison::lowering::DynamicArrayIterableCleanupOwnerProofStatus::predicted_owner_local
+    );
+    assert(
+        orison::lowering::dynamic_array_iterable_descriptor_plan_report(predicted_dynamic_array_plan)
+            .find("cleanup owner predicted from semantic descriptor origin") != std::string::npos
     );
 
     auto missing_dynamic_array_plan =
@@ -406,6 +456,11 @@ int main() {
         orison::lowering::DynamicArrayIterableDescriptorPlanKind::missing_named_descriptor_storage
     );
     assert(!missing_dynamic_array_plan.can_lower_now);
+    assert(!missing_dynamic_array_plan.cleanup_owner_proven);
+    assert(
+        missing_dynamic_array_plan.cleanup_owner_proof_status ==
+        orison::lowering::DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan
+    );
     assert(
         orison::lowering::dynamic_array_iterable_descriptor_plan_report(missing_dynamic_array_plan)
             .find("has no bound descriptor storage") != std::string::npos
@@ -423,6 +478,11 @@ int main() {
     assert(computed_dynamic_array_plan.source_type_name == "DynamicArray<UInt32>");
     assert(computed_dynamic_array_plan.element_source_type_name == "UInt32");
     assert(!computed_dynamic_array_plan.can_lower_now);
+    assert(!computed_dynamic_array_plan.cleanup_owner_proven);
+    assert(
+        computed_dynamic_array_plan.cleanup_owner_proof_status ==
+        orison::lowering::DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan
+    );
     assert(
         orison::lowering::dynamic_array_iterable_descriptor_plan_report(computed_dynamic_array_plan)
             .find("requires a proven single descriptor owner") != std::string::npos
@@ -435,6 +495,11 @@ int main() {
         orison::lowering::DynamicArrayIterableDescriptorPlanKind::not_dynamic_array
     );
     assert(!not_dynamic_array_plan.can_lower_now);
+    assert(!not_dynamic_array_plan.cleanup_owner_proven);
+    assert(
+        not_dynamic_array_plan.cleanup_owner_proof_status ==
+        orison::lowering::DynamicArrayIterableCleanupOwnerProofStatus::not_dynamic_array
+    );
 
     auto array = orison::lowering::parse_llvm_array_type("[3 x i32]");
     assert(array.has_value());
