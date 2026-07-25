@@ -58,6 +58,8 @@ representation.
 - Computed owned dynamic-array cleanup sequencing now has a metadata-only internal plan. It records loop-entry cleanup
   ownership, loop-exit ownership resumption, and descriptor storage for proven handoffs, while keeping cleanup sequence
   emission disabled.
+- Dynamic-array `for` rejection diagnostics now include the computed cleanup-sequence report, so computed owned
+  iterable failures show whether loop cleanup ownership is blocked, unproven, or planned-but-disabled.
 
 ## Consequences
 

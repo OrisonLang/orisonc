@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the cleanup sequence report.
+  The report distinguishes blocked, unproven, and planned-but-disabled loop cleanup ownership without enabling cleanup
+  sequence emission.
 - 2026-07-25: computed owned `DynamicArray<T>` cleanup sequencing now has a metadata-only internal plan. Proven
   same-owner descriptor handoffs can record loop-entry cleanup ownership and function cleanup resumption while keeping
   cleanup sequence emission disabled.

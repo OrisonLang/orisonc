@@ -715,6 +715,13 @@ auto main() -> int {
             "[lowering disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_parameter_for.error_text.find(
+            "computed DynamicArray cleanup sequence plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [loop cleanup blocked] [function cleanup blocked] "
+            "[cleanup sequence disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_dynamic_array_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_same_owner_for_rejected.or";
@@ -747,6 +754,13 @@ auto main() -> int {
             "computed DynamicArray descriptor handoff plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items handoff items [descriptor storage blocked] [cleanup owner blocked] "
             "[lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_same_owner_for.error_text.find(
+            "computed DynamicArray cleanup sequence plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [loop cleanup blocked] [function cleanup blocked] "
+            "[cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -783,6 +797,14 @@ auto main() -> int {
             "computed DynamicArray descriptor handoff plan single cleanup owner handoff planned source "
             "DynamicArray<UInt32> element UInt32 owner items handoff items descriptor %items.addr "
             "[descriptor storage available] [cleanup owner proven] [lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for.error_text.find(
+            "computed DynamicArray cleanup sequence plan loop cleanup sequence planned source "
+            "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
+            "loop-entry items.loop.entry loop-exit items [loop cleanup owns descriptor] "
+            "[function cleanup resumes] [cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );
 

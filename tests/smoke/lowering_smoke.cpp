@@ -1806,6 +1806,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "[lowering disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_parameter_for.render(path.string()).find(
+            "computed DynamicArray cleanup sequence plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [loop cleanup blocked] [function cleanup blocked] "
+            "[cleanup sequence disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_same_owner_parameter_for = lower_source(
         path,
@@ -1838,6 +1845,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "[lowering disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_same_owner_parameter_for.render(path.string()).find(
+            "computed DynamicArray cleanup sequence plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [loop cleanup blocked] [function cleanup blocked] "
+            "[cleanup sequence disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_local_same_owner_for = lower_source(
         path,
@@ -1867,6 +1881,14 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "computed DynamicArray descriptor handoff plan single cleanup owner handoff planned source "
             "DynamicArray<UInt32> element UInt32 owner items handoff items descriptor %items.addr "
             "[descriptor storage available] [cleanup owner proven] [lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_for.render(path.string()).find(
+            "computed DynamicArray cleanup sequence plan loop cleanup sequence planned source "
+            "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
+            "loop-entry items.loop.entry loop-exit items [loop cleanup owns descriptor] "
+            "[function cleanup resumes] [cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );
 }
