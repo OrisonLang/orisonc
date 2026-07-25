@@ -55,6 +55,9 @@ representation.
   keeps lowering explicitly disabled until cleanup sequencing is implemented.
 - Dynamic-array `for` rejection diagnostics now include the computed descriptor-handoff report, so proven same-owner
   computed iterables can show the future handoff owner and descriptor storage while still reporting lowering disabled.
+- Computed owned dynamic-array cleanup sequencing now has a metadata-only internal plan. It records loop-entry cleanup
+  ownership, loop-exit ownership resumption, and descriptor storage for proven handoffs, while keeping cleanup sequence
+  emission disabled.
 
 ## Consequences
 

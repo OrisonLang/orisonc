@@ -529,6 +529,24 @@ int main() {
             mismatched_computed_handoff_plan
         ).find("ownership join blocked") != std::string::npos
     );
+    auto mismatched_computed_cleanup_sequence =
+        orison::lowering::plan_computed_dynamic_array_iterable_cleanup_sequence(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            state
+        );
+    assert(
+        mismatched_computed_cleanup_sequence.kind ==
+        orison::lowering::ComputedDynamicArrayIterableCleanupSequencePlanKind::ownership_join_blocked
+    );
+    assert(!mismatched_computed_cleanup_sequence.loop_body_has_cleanup_responsibility);
+    assert(!mismatched_computed_cleanup_sequence.function_cleanup_resumes_after_loop);
+    assert(!mismatched_computed_cleanup_sequence.cleanup_sequence_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+            mismatched_computed_cleanup_sequence
+        ).find("ownership join blocked") != std::string::npos
+    );
 
     auto proven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -573,6 +591,29 @@ int main() {
         );
     assert(proven_computed_handoff_report.find("single cleanup owner handoff planned") != std::string::npos);
     assert(proven_computed_handoff_report.find("[lowering disabled]") != std::string::npos);
+    auto proven_computed_cleanup_sequence =
+        orison::lowering::plan_computed_dynamic_array_iterable_cleanup_sequence(
+            ternary(name("flag"), name("items"), name("items")),
+            context,
+            state
+        );
+    assert(
+        proven_computed_cleanup_sequence.kind ==
+        orison::lowering::ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned
+    );
+    assert(proven_computed_cleanup_sequence.cleanup_owner_name == "items");
+    assert(proven_computed_cleanup_sequence.descriptor_storage_name == "%items.addr");
+    assert(proven_computed_cleanup_sequence.loop_entry_cleanup_owner_name == "items.loop.entry");
+    assert(proven_computed_cleanup_sequence.loop_exit_cleanup_owner_name == "items");
+    assert(proven_computed_cleanup_sequence.loop_body_has_cleanup_responsibility);
+    assert(proven_computed_cleanup_sequence.function_cleanup_resumes_after_loop);
+    assert(!proven_computed_cleanup_sequence.cleanup_sequence_enabled);
+    auto proven_computed_cleanup_sequence_report =
+        orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+            proven_computed_cleanup_sequence
+        );
+    assert(proven_computed_cleanup_sequence_report.find("loop cleanup sequence planned") != std::string::npos);
+    assert(proven_computed_cleanup_sequence_report.find("[cleanup sequence disabled]") != std::string::npos);
 
     auto unproven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -609,6 +650,25 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
             unproven_computed_handoff_plan
+        ).find("cleanup owner unproven") != std::string::npos
+    );
+    auto unproven_computed_cleanup_sequence =
+        orison::lowering::plan_computed_dynamic_array_iterable_cleanup_sequence(
+            ternary(name("flag"), name("predicted_items"), name("predicted_items")),
+            context,
+            state
+        );
+    assert(
+        unproven_computed_cleanup_sequence.kind ==
+        orison::lowering::ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven
+    );
+    assert(unproven_computed_cleanup_sequence.cleanup_owner_name == "predicted_items");
+    assert(!unproven_computed_cleanup_sequence.loop_body_has_cleanup_responsibility);
+    assert(!unproven_computed_cleanup_sequence.function_cleanup_resumes_after_loop);
+    assert(!unproven_computed_cleanup_sequence.cleanup_sequence_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+            unproven_computed_cleanup_sequence
         ).find("cleanup owner unproven") != std::string::npos
     );
 

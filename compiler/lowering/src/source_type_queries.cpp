@@ -558,6 +558,108 @@ auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_cleanup_sequence(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableCleanupSequencePlan {
+    auto plan = ComputedDynamicArrayIterableCleanupSequencePlan {};
+    plan.handoff_plan = plan_computed_dynamic_array_iterable_descriptor_handoff(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.handoff_plan.source_type_name;
+    plan.element_source_type_name = plan.handoff_plan.element_source_type_name;
+    plan.cleanup_owner_name = plan.handoff_plan.handoff_owner_name;
+    plan.descriptor_storage_name = plan.handoff_plan.descriptor_storage_name;
+    plan.cleanup_sequence_enabled = false;
+
+    switch (plan.handoff_plan.kind) {
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned:
+            break;
+    }
+
+    if (plan.cleanup_owner_name.empty() || plan.descriptor_storage_name.empty()) {
+        plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven;
+        return plan;
+    }
+
+    plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned;
+    plan.loop_entry_cleanup_owner_name = plan.cleanup_owner_name + ".loop.entry";
+    plan.loop_exit_cleanup_owner_name = plan.cleanup_owner_name;
+    plan.loop_body_has_cleanup_responsibility = true;
+    plan.function_cleanup_resumes_after_loop = true;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+    ComputedDynamicArrayIterableCleanupSequencePlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray cleanup sequence plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned:
+            output += "loop cleanup sequence planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    if (!plan.descriptor_storage_name.empty()) {
+        output += " descriptor ";
+        output += plan.descriptor_storage_name;
+    }
+    if (!plan.loop_entry_cleanup_owner_name.empty()) {
+        output += " loop-entry ";
+        output += plan.loop_entry_cleanup_owner_name;
+    }
+    if (!plan.loop_exit_cleanup_owner_name.empty()) {
+        output += " loop-exit ";
+        output += plan.loop_exit_cleanup_owner_name;
+    }
+    output += plan.loop_body_has_cleanup_responsibility ? " [loop cleanup owns descriptor]" :
+        " [loop cleanup blocked]";
+    output += plan.function_cleanup_resumes_after_loop ? " [function cleanup resumes]" :
+        " [function cleanup blocked]";
+    output += plan.cleanup_sequence_enabled ? " [cleanup sequence enabled]" :
+        " [cleanup sequence disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

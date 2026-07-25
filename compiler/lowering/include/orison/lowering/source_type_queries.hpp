@@ -111,6 +111,29 @@ struct ComputedDynamicArrayIterableDescriptorHandoffPlan {
     bool lowering_enabled = false;
 };
 
+enum class ComputedDynamicArrayIterableCleanupSequencePlanKind {
+    not_computed_dynamic_array,
+    unsupported_computed_shape,
+    ownership_join_blocked,
+    cleanup_owner_unproven,
+    loop_cleanup_sequence_planned,
+};
+
+struct ComputedDynamicArrayIterableCleanupSequencePlan {
+    ComputedDynamicArrayIterableCleanupSequencePlanKind kind =
+        ComputedDynamicArrayIterableCleanupSequencePlanKind::not_computed_dynamic_array;
+    ComputedDynamicArrayIterableDescriptorHandoffPlan handoff_plan;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string cleanup_owner_name;
+    std::string descriptor_storage_name;
+    std::string loop_entry_cleanup_owner_name;
+    std::string loop_exit_cleanup_owner_name;
+    bool loop_body_has_cleanup_responsibility = false;
+    bool function_cleanup_resumes_after_loop = false;
+    bool cleanup_sequence_enabled = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -157,6 +180,16 @@ auto plan_computed_dynamic_array_iterable_descriptor_handoff(
 
 auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
     ComputedDynamicArrayIterableDescriptorHandoffPlan const& plan
+) -> std::string;
+
+auto plan_computed_dynamic_array_iterable_cleanup_sequence(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableCleanupSequencePlan;
+
+auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
+    ComputedDynamicArrayIterableCleanupSequencePlan const& plan
 ) -> std::string;
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool;
