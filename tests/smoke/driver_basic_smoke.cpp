@@ -141,6 +141,22 @@ int main() {
         "lowering does not yet support this return expression: unsupported operator: <"
     );
 
+    auto unary_emit_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_llvm_unary_failure.or";
+    write_concurrency_fixture(
+        unary_emit_failure_path,
+        "demo.emit",
+        {
+            "function negate(value: UInt32) -> UInt32",
+            "    -value",
+        }
+    );
+    auto unary_emit_failure = run_emit_llvm(app, unary_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        unary_emit_failure,
+        "lowering does not yet support this return expression: unsupported operator: -"
+    );
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

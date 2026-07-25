@@ -296,6 +296,34 @@ int main() {
         "lowering does not yet support this return expression: unsupported operator: <"
     );
 
+    auto unary_emit_failure_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_unary_failure.or";
+    write_fixture(
+        unary_emit_failure_path,
+        "demo.emit",
+        {
+            "function negate(value: UInt32) -> UInt32",
+            "    -value",
+        }
+    );
+    auto unary_drop_readiness_summary_failure =
+        run_drop_readiness_summary(app, unary_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        unary_drop_readiness_summary_failure,
+        "lowering does not yet support this return expression: unsupported operator: -"
+    );
+    auto unary_emitted_drops_failure = run_emitted_drops(app, unary_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        unary_emitted_drops_failure,
+        "lowering does not yet support this return expression: unsupported operator: -"
+    );
+    auto unary_drop_readiness_relations_failure =
+        run_drop_readiness_relations(app, unary_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        unary_drop_readiness_relations_failure,
+        "lowering does not yet support this return expression: unsupported operator: -"
+    );
+
     auto planned_drop_report_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
     auto planned_drop_emit = run_emit_llvm(app, planned_drop_report_path);

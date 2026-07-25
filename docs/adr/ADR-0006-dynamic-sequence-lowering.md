@@ -348,6 +348,9 @@ representation.
 - CLI and pipeline return-expression failure tests now pin structured expression details for unsupported operators. The
   driver, compile-pipeline, and drop-report smoke paths require `unsupported operator: <`, preventing regressions that
   keep only the generic return-expression prefix.
+- CLI and pipeline return-expression failure tests now also pin unary operator details for unsupported unsigned
+  negation. The driver, compile-pipeline, and drop-report smoke paths require `unsupported operator: -` so the
+  structured lowerer reason survives the same user-visible failure boundaries as comparison operators.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
