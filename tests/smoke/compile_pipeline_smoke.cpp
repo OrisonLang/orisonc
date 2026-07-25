@@ -918,6 +918,68 @@ auto main() -> int {
         orison::lowering::LlvmObjectEmitter {}.emit(method_returned_shared_view_for.ir_text);
     assert(!method_returned_shared_view_for_object.has_errors());
 
+    auto member_receiver_method_returned_shared_view_for_path =
+        smoke_temp_root / "orison_pipeline_member_receiver_method_returned_shared_view_for.or";
+    {
+        auto member_receiver_method_returned_shared_view_for_source =
+            std::ofstream(member_receiver_method_returned_shared_view_for_path);
+        member_receiver_method_returned_shared_view_for_source
+            << "package demo.pipeline.memberreceiverreturnedsharedviewfor\n"
+            << "\n"
+            << "record Bucket\n"
+            << "    marker: UInt32\n"
+            << "\n"
+            << "record Wrapper\n"
+            << "    bucket: Bucket\n"
+            << "\n"
+            << "record Shelf\n"
+            << "    buckets: Array<Bucket, 2>\n"
+            << "\n"
+            << "extend Bucket\n"
+            << "    public function forward_view(this: shared This, values: shared.View<UInt32>) -> shared.View<UInt32>\n"
+            << "        values\n"
+            << "\n"
+            << "function sum_wrapper(wrapper: Wrapper, values: shared.View<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for item in wrapper.bucket.forward_view(values)\n"
+            << "        total = total + item\n"
+            << "    total\n"
+            << "\n"
+            << "function sum_shelf(shelf: Shelf, values: shared.View<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for item in shelf.buckets[0].forward_view(values)\n"
+            << "        total = total + item\n"
+            << "    total\n";
+    }
+    auto member_receiver_method_returned_shared_view_for =
+        pipeline.emit_llvm(member_receiver_method_returned_shared_view_for_path);
+    assert(!member_receiver_method_returned_shared_view_for.has_errors());
+    assert(member_receiver_method_returned_shared_view_for.dynamic_array_runtime_request_report.empty());
+    assert(
+        member_receiver_method_returned_shared_view_for.ir_text.find(
+            " = call { ptr, i64 } @method.Bucket.forward_view(%record.Bucket"
+        ) != std::string::npos
+    );
+    assert(
+        member_receiver_method_returned_shared_view_for.ir_text.find(
+            " = getelementptr %record.Wrapper, ptr %wrapper.addr"
+        ) != std::string::npos
+    );
+    assert(
+        member_receiver_method_returned_shared_view_for.ir_text.find(
+            " = getelementptr [2 x %record.Bucket], ptr"
+        ) != std::string::npos
+    );
+    assert(
+        member_receiver_method_returned_shared_view_for.ir_text.find("%computed.sequence_for") !=
+        std::string::npos
+    );
+    auto member_receiver_method_returned_shared_view_for_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(
+            member_receiver_method_returned_shared_view_for.ir_text
+        );
+    assert(!member_receiver_method_returned_shared_view_for_object.has_errors());
+
     auto dynamic_array_blocked_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

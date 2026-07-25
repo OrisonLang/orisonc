@@ -39,6 +39,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-24: method-returned `shared.View<UInt32>` descriptor-loop lowering is now pinned through scalar receiver
   method calls. The same computed descriptor path handles `seed.forward_view(values)` without adding syntax or
   changing owned `DynamicArray<T>` restrictions.
+- 2026-07-24: method-returned `shared.View<UInt32>` descriptor-loop lowering now also covers member-derived receivers:
+  `wrapper.bucket.forward_view(values)` and `shelf.buckets[0].forward_view(values)` both lower through the computed
+  descriptor loop and preserve the owned `DynamicArray<T>` boundary.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.

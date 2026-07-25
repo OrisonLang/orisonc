@@ -1,6 +1,19 @@
 package examples.viewdescriptor
 
+record ViewBucket
+    marker: UInt32
+
+record ViewWrapper
+    bucket: ViewBucket
+
+record ViewShelf
+    buckets: Array<ViewBucket, 2>
+
 extend UInt32
+    public function forward_view(this: shared This, values: shared.View<UInt32>) -> shared.View<UInt32>
+        values
+
+extend ViewBucket
     public function forward_view(this: shared This, values: shared.View<UInt32>) -> shared.View<UInt32>
         values
 
@@ -31,6 +44,18 @@ function sum_forwarded(values: shared.View<UInt32>) -> UInt32
 function sum_method_forwarded(seed: UInt32, values: shared.View<UInt32>) -> UInt32
     var total = 0 as UInt32
     for item in seed.forward_view(values)
+        total = total + item
+    total
+
+function sum_member_forwarded(wrapper: ViewWrapper, values: shared.View<UInt32>) -> UInt32
+    var total = 0 as UInt32
+    for item in wrapper.bucket.forward_view(values)
+        total = total + item
+    total
+
+function sum_index_member_forwarded(shelf: ViewShelf, values: shared.View<UInt32>) -> UInt32
+    var total = 0 as UInt32
+    for item in shelf.buckets[0].forward_view(values)
         total = total + item
     total
 

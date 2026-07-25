@@ -128,6 +128,24 @@ auto main() -> int {
             "call { ptr, i64 } @method.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
         ) != std::string::npos
     );
+    assert(
+        view_descriptor_ir.ir_text.find(
+            "define { ptr, i64 } @method.ViewBucket.forward_view(%record.ViewBucket %this, { ptr, i64 } %values)"
+        ) != std::string::npos
+    );
+    assert(
+        view_descriptor_ir.ir_text.find(
+            "call { ptr, i64 } @method.ViewBucket.forward_view(%record.ViewBucket"
+        ) != std::string::npos
+    );
+    assert(
+        view_descriptor_ir.ir_text.find("getelementptr %record.ViewWrapper, ptr %wrapper.addr") !=
+        std::string::npos
+    );
+    assert(
+        view_descriptor_ir.ir_text.find("getelementptr [2 x %record.ViewBucket], ptr") !=
+        std::string::npos
+    );
     auto view_descriptor_object =
         orison::lowering::LlvmObjectEmitter {}.emit(view_descriptor_ir.ir_text);
     assert(!view_descriptor_object.has_errors());

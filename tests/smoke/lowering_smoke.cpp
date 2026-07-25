@@ -8317,6 +8317,57 @@ void test_emit_method_returned_view_for_iterable_lowering() {
     assert_ir_contains(result, ".value = load i32, ptr %computed.sequence_for");
 }
 
+void test_emit_member_receiver_method_returned_view_for_iterable_lowering() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_member_receiver_method_returned_view_for_iterable.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "record Bucket\n"
+        "    marker: UInt32\n"
+        "\n"
+        "record Wrapper\n"
+        "    bucket: Bucket\n"
+        "\n"
+        "record Shelf\n"
+        "    buckets: Array<Bucket, 2>\n"
+        "\n"
+        "extend Bucket\n"
+        "    public function forward_view(this: shared This, values: shared.View<UInt32>) -> shared.View<UInt32>\n"
+        "        values\n"
+        "\n"
+        "function sum_wrapper(wrapper: Wrapper, values: shared.View<UInt32>) -> UInt32\n"
+        "    var total: UInt32 = 0 as UInt32\n"
+        "    for item in wrapper.bucket.forward_view(values)\n"
+        "        total = total + item\n"
+        "    total\n"
+        "\n"
+        "function sum_shelf(shelf: Shelf, values: shared.View<UInt32>) -> UInt32\n"
+        "    var total: UInt32 = 0 as UInt32\n"
+        "    for item in shelf.buckets[0].forward_view(values)\n"
+        "        total = total + item\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {}
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(
+        result,
+        "define { ptr, i64 } @method.Bucket.forward_view(%record.Bucket %this, { ptr, i64 } %values)"
+    );
+    assert_ir_contains(result, "define i32 @sum_wrapper(%record.Wrapper %wrapper, { ptr, i64 } %values)");
+    assert_ir_contains(result, "define i32 @sum_shelf(%record.Shelf %shelf, { ptr, i64 } %values)");
+    assert_ir_contains(result, " = call { ptr, i64 } @method.Bucket.forward_view(%record.Bucket %tmp");
+    assert_ir_contains(result, " = getelementptr %record.Wrapper, ptr %wrapper.addr");
+    assert_ir_contains(result, " = getelementptr [2 x %record.Bucket], ptr %tmp");
+    assert_ir_contains(result, "  %computed.sequence_for");
+    assert_ir_contains(result, ".length = extractvalue { ptr, i64 } %tmp");
+    assert_ir_contains(result, ".more = icmp ult i64 %computed.sequence_for");
+    assert_ir_contains(result, ".element.addr = getelementptr i32, ptr %computed.sequence_for");
+    assert_ir_contains(result, ".value = load i32, ptr %computed.sequence_for");
+}
+
 void test_emit_view_parameter_index_lowering() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_view_parameter_index.or";
     auto result = lower_source(
@@ -13184,6 +13235,7 @@ auto main() -> int {
     test_emit_view_for_iterable_lowering();
     test_emit_computed_view_for_iterable_lowering();
     test_emit_method_returned_view_for_iterable_lowering();
+    test_emit_member_receiver_method_returned_view_for_iterable_lowering();
     test_emit_view_parameter_index_lowering();
     test_emit_view_parameter_length_lowering();
     test_emit_exclusive_view_parameter_index_assignment_lowering();

@@ -511,6 +511,8 @@ representation.
   `DynamicArray<T>` iteration remains restricted to named descriptor storage.
 - Method-returned View descriptor-loop lowering uses the same computed descriptor path for lowerable receiver calls
   such as `seed.forward_view(values) -> shared.View<T>`, with no separate ownership or cleanup path.
+- Member-derived receiver calls that return `shared.View<T>`, including record-field and indexed-array receiver paths,
+  use that same computed descriptor path.
 - Shared descriptor-loop lowering now emits neutral `sequence_for` temporary names in generated LLVM IR. The remaining
   DynamicArray-specific option names are intentionally gate-oriented rather than loop-shape-oriented.
 - Local `DynamicArray<T>` lowering is now available on the default compile path for constructed local descriptors:
