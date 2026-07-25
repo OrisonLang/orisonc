@@ -69,6 +69,26 @@ struct DynamicArrayIterableDescriptorPlan {
     bool cleanup_owner_proven = false;
 };
 
+enum class ComputedDynamicArrayIterableOwnershipPlanKind {
+    not_computed_dynamic_array,
+    unsupported_computed_shape,
+    ternary_branch_owner_mismatch,
+    ternary_single_owner_unproven,
+    ternary_single_owner_proven,
+};
+
+struct ComputedDynamicArrayIterableOwnershipPlan {
+    ComputedDynamicArrayIterableOwnershipPlanKind kind =
+        ComputedDynamicArrayIterableOwnershipPlanKind::not_computed_dynamic_array;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::vector<std::string> branch_owner_names;
+    std::vector<DynamicArrayIterableCleanupOwnerProofStatus> branch_cleanup_owner_proof_statuses;
+    OwnershipTransferState merged_transfers;
+    bool ownership_join_matches = false;
+    bool cleanup_owner_proven = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -95,6 +115,16 @@ auto plan_dynamic_array_iterable_descriptor(
 
 auto dynamic_array_iterable_descriptor_plan_report(
     DynamicArrayIterableDescriptorPlan const& plan
+) -> std::string;
+
+auto plan_computed_dynamic_array_iterable_ownership_transfer(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableOwnershipPlan;
+
+auto computed_dynamic_array_iterable_ownership_plan_report(
+    ComputedDynamicArrayIterableOwnershipPlan const& plan
 ) -> std::string;
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool;

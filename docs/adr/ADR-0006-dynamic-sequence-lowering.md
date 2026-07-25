@@ -40,6 +40,9 @@ representation.
   audit-only parameter descriptors remain metadata-only and do not prove computed owned iterable safety.
 - Dynamic-array `for` rejection diagnostics surface the descriptor-ownership plan report, so computed owned iterable
   failures explain both the need for a proven single descriptor owner and the current cleanup-owner proof status.
+- Computed owned dynamic-array iterable planning now has a metadata-only ternary ownership-transfer model. Each arm is
+  modeled as consuming its branch owner and then uses the existing ownership-transfer merge rule; differing owners
+  remain blocked, while same-owner ternaries can distinguish proven cleanup owners from metadata-only predicted owners.
 
 ## Consequences
 

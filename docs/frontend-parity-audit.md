@@ -1615,3 +1615,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   audit-only descriptors remain metadata-only blockers for computed owned iteration.
 - 2026-07-24: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the descriptor-ownership plan
   report, including the proven-single-owner requirement and cleanup-owner proof status.
+- 2026-07-24: computed owned `DynamicArray<T>` ternary iterable planning now models branch ownership transfer without
+  enabling lowering. Differing branch owners remain blocked; same-owner ternaries can be classified as proven or
+  unproven based on cleanup-owner proof metadata.

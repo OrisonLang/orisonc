@@ -342,6 +342,116 @@ auto dynamic_array_iterable_descriptor_plan_report(
     return "unknown DynamicArray iterable descriptor plan";
 }
 
+auto plan_computed_dynamic_array_iterable_ownership_transfer(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableOwnershipPlan {
+    auto plan = ComputedDynamicArrayIterableOwnershipPlan {};
+    auto source_type_name = source_type_name_for_expression(expression, context, state);
+    if (!source_type_name.has_value()) {
+        return plan;
+    }
+
+    auto sequence = dynamic_sequence_source_type(*source_type_name);
+    if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array ||
+        expression.kind == syntax::ExpressionKind::name) {
+        plan.source_type_name = std::move(*source_type_name);
+        return plan;
+    }
+
+    plan.source_type_name = std::move(*source_type_name);
+    plan.element_source_type_name = std::move(sequence->element_source_type_name);
+    if (expression.kind != syntax::ExpressionKind::ternary || expression.right == nullptr ||
+        expression.alternate == nullptr || expression.right->kind != syntax::ExpressionKind::name ||
+        expression.alternate->kind != syntax::ExpressionKind::name) {
+        plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape;
+        return plan;
+    }
+
+    auto then_descriptor = plan_dynamic_array_iterable_descriptor(*expression.right, context, state);
+    auto else_descriptor = plan_dynamic_array_iterable_descriptor(*expression.alternate, context, state);
+    if (then_descriptor.source_type_name != plan.source_type_name ||
+        else_descriptor.source_type_name != plan.source_type_name ||
+        then_descriptor.owner_name.empty() ||
+        else_descriptor.owner_name.empty()) {
+        plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape;
+        return plan;
+    }
+
+    plan.branch_owner_names.push_back(then_descriptor.owner_name);
+    plan.branch_owner_names.push_back(else_descriptor.owner_name);
+    plan.branch_cleanup_owner_proof_statuses.push_back(then_descriptor.cleanup_owner_proof_status);
+    plan.branch_cleanup_owner_proof_statuses.push_back(else_descriptor.cleanup_owner_proof_status);
+
+    auto branch_states = std::vector<OwnershipTransferState> {};
+    branch_states.reserve(2);
+    auto then_state = state.ownership_transfers;
+    mark_owned_binding_consumed(then_state, then_descriptor.owner_name);
+    branch_states.push_back(std::move(then_state));
+    auto else_state = state.ownership_transfers;
+    mark_owned_binding_consumed(else_state, else_descriptor.owner_name);
+    branch_states.push_back(std::move(else_state));
+
+    auto merged = merge_ownership_transfer_states(branch_states);
+    if (!merged.has_value()) {
+        plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch;
+        return plan;
+    }
+
+    plan.merged_transfers = std::move(*merged);
+    plan.ownership_join_matches = true;
+    plan.cleanup_owner_proven =
+        then_descriptor.cleanup_owner_proven && else_descriptor.cleanup_owner_proven &&
+        then_descriptor.owner_name == else_descriptor.owner_name;
+    plan.kind = plan.cleanup_owner_proven
+        ? ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven
+        : ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_ownership_plan_report(
+    ComputedDynamicArrayIterableOwnershipPlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray ownership plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableOwnershipPlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch:
+            output += "ternary branch owner mismatch";
+            break;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven:
+            output += "ternary single owner unproven";
+            break;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven:
+            output += "ternary single owner proven";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.branch_owner_names.empty()) {
+        output += " owners";
+        for (auto const& owner : plan.branch_owner_names) {
+            output += " ";
+            output += owner;
+        }
+    }
+    output += plan.ownership_join_matches ? " [ownership join ok]" : " [ownership join blocked]";
+    output += plan.cleanup_owner_proven ? " [cleanup owner proven]" : " [cleanup owner blocked]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

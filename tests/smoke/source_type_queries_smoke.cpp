@@ -488,6 +488,66 @@ int main() {
             .find("requires a proven single descriptor owner") != std::string::npos
     );
 
+    auto mismatched_computed_ownership_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            state
+        );
+    assert(
+        mismatched_computed_ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch
+    );
+    assert(mismatched_computed_ownership_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(mismatched_computed_ownership_plan.element_source_type_name == "UInt32");
+    assert(mismatched_computed_ownership_plan.branch_owner_names.size() == 2);
+    assert(mismatched_computed_ownership_plan.branch_owner_names[0] == "computed_left");
+    assert(mismatched_computed_ownership_plan.branch_owner_names[1] == "computed_right");
+    assert(!mismatched_computed_ownership_plan.ownership_join_matches);
+    assert(!mismatched_computed_ownership_plan.cleanup_owner_proven);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            mismatched_computed_ownership_plan
+        ).find("ternary branch owner mismatch") != std::string::npos
+    );
+
+    auto proven_computed_ownership_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
+            ternary(name("flag"), name("items"), name("items")),
+            context,
+            state
+        );
+    assert(
+        proven_computed_ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven
+    );
+    assert(proven_computed_ownership_plan.ownership_join_matches);
+    assert(proven_computed_ownership_plan.cleanup_owner_proven);
+    assert(orison::lowering::is_owned_binding_consumed(proven_computed_ownership_plan.merged_transfers, "items"));
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            proven_computed_ownership_plan
+        ).find("ternary single owner proven") != std::string::npos
+    );
+
+    auto unproven_computed_ownership_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
+            ternary(name("flag"), name("predicted_items"), name("predicted_items")),
+            context,
+            state
+        );
+    assert(
+        unproven_computed_ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven
+    );
+    assert(unproven_computed_ownership_plan.ownership_join_matches);
+    assert(!unproven_computed_ownership_plan.cleanup_owner_proven);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            unproven_computed_ownership_plan
+        ).find("ternary single owner unproven") != std::string::npos
+    );
+
     auto not_dynamic_array_plan =
         orison::lowering::plan_dynamic_array_iterable_descriptor(name("left_values"), context, state);
     assert(
