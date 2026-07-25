@@ -68,6 +68,8 @@ representation.
 - Computed owned dynamic-array loop-control rendering now has a disabled internal plan for proven descriptor renders.
   It records the entry branch, condition/body/continue/exit blocks, index phi, bounds check, and conditional branch
   while keeping render emission disabled.
+- Dynamic-array `for` rejection diagnostics now include the computed loop-control render report, so computed owned
+  iterable failures show whether loop branch/bounds control is blocked, unproven, or planned-but-disabled.
 
 ## Consequences
 

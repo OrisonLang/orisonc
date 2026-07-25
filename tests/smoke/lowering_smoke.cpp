@@ -1820,6 +1820,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "[length projection blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_parameter_for.render(path.string()).find(
+            "computed DynamicArray loop control render plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [entry branch blocked] [index phi blocked] [bounds check blocked] "
+            "[conditional branch blocked] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_same_owner_parameter_for = lower_source(
         path,
@@ -1864,6 +1871,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "computed DynamicArray descriptor render plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [descriptor load blocked] [data projection blocked] "
             "[length projection blocked] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_same_owner_parameter_for.render(path.string()).find(
+            "computed DynamicArray loop control render plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [entry branch blocked] [index phi blocked] [bounds check blocked] "
+            "[conditional branch blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -1912,6 +1926,16 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "value %items.computed_for.descriptor data %items.computed_for.data "
             "length %items.computed_for.length [descriptor load planned] [data projection planned] "
             "[length projection planned] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_for.render(path.string()).find(
+            "computed DynamicArray loop control render plan loop control render planned source "
+            "DynamicArray<UInt32> element UInt32 owner items condition items.computed_for.condition "
+            "body items.computed_for.body continue items.computed_for.continue exit items.computed_for.exit "
+            "index %items.computed_for.index bounds %items.computed_for.more [entry branch planned] "
+            "[index phi planned] [bounds check planned] [conditional branch planned] "
+            "[render disabled] (metadata only)"
         ) != std::string::npos
     );
 }

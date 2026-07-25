@@ -154,6 +154,16 @@ auto lower_sequence_for_statement(
             diagnostic_detail += computed_dynamic_array_iterable_descriptor_render_plan_report(
                 computed_descriptor_render_plan
             );
+            auto computed_loop_control_render_plan =
+                plan_computed_dynamic_array_iterable_loop_control_render(
+                    statement.expression,
+                    context.lowering,
+                    session.state
+                );
+            diagnostic_detail += "; ";
+            diagnostic_detail += computed_dynamic_array_iterable_loop_control_render_plan_report(
+                computed_loop_control_render_plan
+            );
         }
         diagnostics.error(
             statement.line,
