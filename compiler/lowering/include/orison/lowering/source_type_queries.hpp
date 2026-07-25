@@ -160,6 +160,36 @@ struct ComputedDynamicArrayIterableDescriptorRenderPlan {
     bool render_enabled = false;
 };
 
+enum class ComputedDynamicArrayIterableLoopControlRenderPlanKind {
+    not_computed_dynamic_array,
+    unsupported_computed_shape,
+    ownership_join_blocked,
+    cleanup_owner_unproven,
+    loop_control_render_planned,
+};
+
+struct ComputedDynamicArrayIterableLoopControlRenderPlan {
+    ComputedDynamicArrayIterableLoopControlRenderPlanKind kind =
+        ComputedDynamicArrayIterableLoopControlRenderPlanKind::not_computed_dynamic_array;
+    ComputedDynamicArrayIterableDescriptorRenderPlan descriptor_render_plan;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string cleanup_owner_name;
+    std::string condition_block_name;
+    std::string body_block_name;
+    std::string continue_block_name;
+    std::string exit_block_name;
+    std::string index_name;
+    std::string next_index_name;
+    std::string bounds_check_name;
+    std::vector<std::string> rendered_ir;
+    bool entry_branch_planned = false;
+    bool index_phi_planned = false;
+    bool bounds_check_planned = false;
+    bool conditional_branch_planned = false;
+    bool render_enabled = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -226,6 +256,16 @@ auto plan_computed_dynamic_array_iterable_descriptor_render(
 
 auto computed_dynamic_array_iterable_descriptor_render_plan_report(
     ComputedDynamicArrayIterableDescriptorRenderPlan const& plan
+) -> std::string;
+
+auto plan_computed_dynamic_array_iterable_loop_control_render(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableLoopControlRenderPlan;
+
+auto computed_dynamic_array_iterable_loop_control_render_plan_report(
+    ComputedDynamicArrayIterableLoopControlRenderPlan const& plan
 ) -> std::string;
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool;

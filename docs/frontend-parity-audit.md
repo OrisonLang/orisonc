@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` loop-control rendering now has a disabled internal plan. Proven
+  descriptor renders can record the future entry branch, condition/body/continue/exit blocks, index phi, bounds check,
+  and conditional branch while keeping render emission disabled.
 - 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the descriptor render report.
   The report distinguishes blocked, unproven, and planned-but-disabled descriptor load/projection rendering without
   enabling render emission.

@@ -567,6 +567,27 @@ int main() {
             mismatched_computed_descriptor_render
         ).find("ownership join blocked") != std::string::npos
     );
+    auto mismatched_computed_loop_control_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_loop_control_render(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            state
+        );
+    assert(
+        mismatched_computed_loop_control_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableLoopControlRenderPlanKind::ownership_join_blocked
+    );
+    assert(mismatched_computed_loop_control_render.rendered_ir.empty());
+    assert(!mismatched_computed_loop_control_render.entry_branch_planned);
+    assert(!mismatched_computed_loop_control_render.index_phi_planned);
+    assert(!mismatched_computed_loop_control_render.bounds_check_planned);
+    assert(!mismatched_computed_loop_control_render.conditional_branch_planned);
+    assert(!mismatched_computed_loop_control_render.render_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_loop_control_render_plan_report(
+            mismatched_computed_loop_control_render
+        ).find("ownership join blocked") != std::string::npos
+    );
 
     auto proven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -675,6 +696,55 @@ int main() {
         std::string::npos
     );
     assert(proven_computed_descriptor_render_report.find("[render disabled]") != std::string::npos);
+    auto proven_computed_loop_control_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_loop_control_render(
+            ternary(name("flag"), name("items"), name("items")),
+            context,
+            state
+        );
+    assert(
+        proven_computed_loop_control_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableLoopControlRenderPlanKind::
+            loop_control_render_planned
+    );
+    assert(proven_computed_loop_control_render.cleanup_owner_name == "items");
+    assert(proven_computed_loop_control_render.condition_block_name == "items.computed_for.condition");
+    assert(proven_computed_loop_control_render.body_block_name == "items.computed_for.body");
+    assert(proven_computed_loop_control_render.continue_block_name == "items.computed_for.continue");
+    assert(proven_computed_loop_control_render.exit_block_name == "items.computed_for.exit");
+    assert(proven_computed_loop_control_render.index_name == "%items.computed_for.index");
+    assert(proven_computed_loop_control_render.next_index_name == "%items.computed_for.next.index");
+    assert(proven_computed_loop_control_render.bounds_check_name == "%items.computed_for.more");
+    assert(proven_computed_loop_control_render.rendered_ir.size() == 5);
+    assert(proven_computed_loop_control_render.rendered_ir[0] == "  br label %items.computed_for.condition\n");
+    assert(proven_computed_loop_control_render.rendered_ir[1] == "items.computed_for.condition:\n");
+    assert(
+        proven_computed_loop_control_render.rendered_ir[2] ==
+        "  %items.computed_for.index = phi i64 [ 0, %entry ], [ %items.computed_for.next.index, "
+        "%items.computed_for.continue ]\n"
+    );
+    assert(
+        proven_computed_loop_control_render.rendered_ir[3] ==
+        "  %items.computed_for.more = icmp ult i64 %items.computed_for.index, %items.computed_for.length\n"
+    );
+    assert(
+        proven_computed_loop_control_render.rendered_ir[4] ==
+        "  br i1 %items.computed_for.more, label %items.computed_for.body, label %items.computed_for.exit\n"
+    );
+    assert(proven_computed_loop_control_render.entry_branch_planned);
+    assert(proven_computed_loop_control_render.index_phi_planned);
+    assert(proven_computed_loop_control_render.bounds_check_planned);
+    assert(proven_computed_loop_control_render.conditional_branch_planned);
+    assert(!proven_computed_loop_control_render.render_enabled);
+    auto proven_computed_loop_control_render_report =
+        orison::lowering::computed_dynamic_array_iterable_loop_control_render_plan_report(
+            proven_computed_loop_control_render
+        );
+    assert(
+        proven_computed_loop_control_render_report.find("loop control render planned") !=
+        std::string::npos
+    );
+    assert(proven_computed_loop_control_render_report.find("[render disabled]") != std::string::npos);
 
     auto unproven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -751,6 +821,28 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_descriptor_render_plan_report(
             unproven_computed_descriptor_render
+        ).find("cleanup owner unproven") != std::string::npos
+    );
+    auto unproven_computed_loop_control_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_loop_control_render(
+            ternary(name("flag"), name("predicted_items"), name("predicted_items")),
+            context,
+            state
+        );
+    assert(
+        unproven_computed_loop_control_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_owner_unproven
+    );
+    assert(unproven_computed_loop_control_render.cleanup_owner_name == "predicted_items");
+    assert(unproven_computed_loop_control_render.rendered_ir.empty());
+    assert(!unproven_computed_loop_control_render.entry_branch_planned);
+    assert(!unproven_computed_loop_control_render.index_phi_planned);
+    assert(!unproven_computed_loop_control_render.bounds_check_planned);
+    assert(!unproven_computed_loop_control_render.conditional_branch_planned);
+    assert(!unproven_computed_loop_control_render.render_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_loop_control_render_plan_report(
+            unproven_computed_loop_control_render
         ).find("cleanup owner unproven") != std::string::npos
     );
 

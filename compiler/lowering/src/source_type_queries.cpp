@@ -788,6 +788,149 @@ auto computed_dynamic_array_iterable_descriptor_render_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_loop_control_render(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableLoopControlRenderPlan {
+    auto plan = ComputedDynamicArrayIterableLoopControlRenderPlan {};
+    plan.descriptor_render_plan = plan_computed_dynamic_array_iterable_descriptor_render(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.descriptor_render_plan.source_type_name;
+    plan.element_source_type_name = plan.descriptor_render_plan.element_source_type_name;
+    plan.cleanup_owner_name = plan.descriptor_render_plan.cleanup_owner_name;
+    plan.render_enabled = false;
+
+    switch (plan.descriptor_render_plan.kind) {
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableLoopControlRenderPlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableLoopControlRenderPlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableLoopControlRenderPlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned:
+            break;
+    }
+
+    if (plan.cleanup_owner_name.empty() || plan.descriptor_render_plan.length_name.empty()) {
+        plan.kind = ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_owner_unproven;
+        return plan;
+    }
+
+    auto prefix = "%" + plan.cleanup_owner_name + ".computed_for";
+    auto block_prefix = plan.cleanup_owner_name + ".computed_for";
+    plan.condition_block_name = block_prefix + ".condition";
+    plan.body_block_name = block_prefix + ".body";
+    plan.continue_block_name = block_prefix + ".continue";
+    plan.exit_block_name = block_prefix + ".exit";
+    plan.index_name = prefix + ".index";
+    plan.next_index_name = prefix + ".next.index";
+    plan.bounds_check_name = prefix + ".more";
+
+    plan.rendered_ir.push_back("  br label %" + plan.condition_block_name + "\n");
+    plan.rendered_ir.push_back(plan.condition_block_name + ":\n");
+    plan.rendered_ir.push_back(
+        "  " + plan.index_name + " = phi i64 [ 0, %entry ], [ " + plan.next_index_name +
+        ", %" + plan.continue_block_name + " ]\n"
+    );
+    plan.rendered_ir.push_back(
+        emit_dynamic_array_bounds_check(
+            plan.bounds_check_name,
+            plan.index_name,
+            plan.descriptor_render_plan.length_name,
+            DynamicArrayBoundsCheckKind::index_within_length
+        )
+    );
+    plan.rendered_ir.push_back(
+        "  br i1 " + plan.bounds_check_name + ", label %" + plan.body_block_name +
+        ", label %" + plan.exit_block_name + "\n"
+    );
+    plan.entry_branch_planned = true;
+    plan.index_phi_planned = true;
+    plan.bounds_check_planned = true;
+    plan.conditional_branch_planned = true;
+    plan.kind = ComputedDynamicArrayIterableLoopControlRenderPlanKind::loop_control_render_planned;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_loop_control_render_plan_report(
+    ComputedDynamicArrayIterableLoopControlRenderPlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray loop control render plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::loop_control_render_planned:
+            output += "loop control render planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    if (!plan.condition_block_name.empty()) {
+        output += " condition ";
+        output += plan.condition_block_name;
+    }
+    if (!plan.body_block_name.empty()) {
+        output += " body ";
+        output += plan.body_block_name;
+    }
+    if (!plan.continue_block_name.empty()) {
+        output += " continue ";
+        output += plan.continue_block_name;
+    }
+    if (!plan.exit_block_name.empty()) {
+        output += " exit ";
+        output += plan.exit_block_name;
+    }
+    if (!plan.index_name.empty()) {
+        output += " index ";
+        output += plan.index_name;
+    }
+    if (!plan.bounds_check_name.empty()) {
+        output += " bounds ";
+        output += plan.bounds_check_name;
+    }
+    output += plan.entry_branch_planned ? " [entry branch planned]" :
+        " [entry branch blocked]";
+    output += plan.index_phi_planned ? " [index phi planned]" : " [index phi blocked]";
+    output += plan.bounds_check_planned ? " [bounds check planned]" :
+        " [bounds check blocked]";
+    output += plan.conditional_branch_planned ? " [conditional branch planned]" :
+        " [conditional branch blocked]";
+    output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",
