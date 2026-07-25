@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<UInt32>` descriptor handoff now has a metadata-only internal plan. It
+  distinguishes ownership-join blockers, cleanup-owner proof blockers, and the positive same-owner local descriptor
+  handoff state while keeping computed owned loop lowering disabled.
 - 2026-07-24: computed `View<T>` descriptor-loop lowering is now pinned for helper-returned
   `shared.View<UInt32>` values. The lowered loop consumes the computed `{ ptr, i64 }` descriptor directly and keeps
   owned `DynamicArray<T>` iteration restricted to named descriptor storage.

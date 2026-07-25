@@ -50,6 +50,9 @@ representation.
 - Local same-owner computed ternary coverage now pins the positive metadata-only proof state: lowered local descriptors
   can prove the cleanup owner, but computed owned `for` lowering still remains disabled until descriptor handoff and
   cleanup sequencing are implemented.
+- Computed owned dynamic-array descriptor handoff now has a metadata-only internal plan. It reuses the computed
+  ownership-transfer proof, records the single source owner, handoff owner, and descriptor storage when available, and
+  keeps lowering explicitly disabled until cleanup sequencing is implemented.
 
 ## Consequences
 

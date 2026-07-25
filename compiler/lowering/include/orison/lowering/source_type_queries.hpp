@@ -89,6 +89,28 @@ struct ComputedDynamicArrayIterableOwnershipPlan {
     bool cleanup_owner_proven = false;
 };
 
+enum class ComputedDynamicArrayIterableDescriptorHandoffPlanKind {
+    not_computed_dynamic_array,
+    unsupported_computed_shape,
+    ownership_join_blocked,
+    cleanup_owner_unproven,
+    single_cleanup_owner_handoff_planned,
+};
+
+struct ComputedDynamicArrayIterableDescriptorHandoffPlan {
+    ComputedDynamicArrayIterableDescriptorHandoffPlanKind kind =
+        ComputedDynamicArrayIterableDescriptorHandoffPlanKind::not_computed_dynamic_array;
+    ComputedDynamicArrayIterableOwnershipPlan ownership_plan;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string source_owner_name;
+    std::string handoff_owner_name;
+    std::string descriptor_storage_name;
+    bool descriptor_storage_available = false;
+    bool cleanup_owner_proven = false;
+    bool lowering_enabled = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -125,6 +147,16 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
 
 auto computed_dynamic_array_iterable_ownership_plan_report(
     ComputedDynamicArrayIterableOwnershipPlan const& plan
+) -> std::string;
+
+auto plan_computed_dynamic_array_iterable_descriptor_handoff(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableDescriptorHandoffPlan;
+
+auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+    ComputedDynamicArrayIterableDescriptorHandoffPlan const& plan
 ) -> std::string;
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool;

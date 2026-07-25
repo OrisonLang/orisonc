@@ -452,6 +452,112 @@ auto computed_dynamic_array_iterable_ownership_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_descriptor_handoff(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableDescriptorHandoffPlan {
+    auto plan = ComputedDynamicArrayIterableDescriptorHandoffPlan {};
+    plan.ownership_plan = plan_computed_dynamic_array_iterable_ownership_transfer(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.ownership_plan.source_type_name;
+    plan.element_source_type_name = plan.ownership_plan.element_source_type_name;
+    plan.lowering_enabled = false;
+
+    switch (plan.ownership_plan.kind) {
+        case ComputedDynamicArrayIterableOwnershipPlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch:
+            plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven;
+            if (!plan.ownership_plan.branch_owner_names.empty()) {
+                plan.source_owner_name = plan.ownership_plan.branch_owner_names.front();
+                plan.handoff_owner_name = plan.source_owner_name;
+            }
+            return plan;
+        case ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven:
+            break;
+    }
+
+    if (plan.ownership_plan.branch_owner_names.empty()) {
+        plan.kind = ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven;
+        return plan;
+    }
+
+    plan.source_owner_name = plan.ownership_plan.branch_owner_names.front();
+    plan.handoff_owner_name = plan.source_owner_name;
+
+    auto owner_expression = syntax::ExpressionSyntax {};
+    owner_expression.kind = syntax::ExpressionKind::name;
+    owner_expression.text = plan.source_owner_name;
+    auto descriptor_plan = plan_dynamic_array_iterable_descriptor(owner_expression, context, state);
+    plan.descriptor_storage_name = std::move(descriptor_plan.descriptor_storage);
+    plan.descriptor_storage_available = !plan.descriptor_storage_name.empty();
+    plan.cleanup_owner_proven = descriptor_plan.cleanup_owner_proven;
+    plan.kind = plan.descriptor_storage_available && plan.cleanup_owner_proven
+        ? ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned
+        : ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+    ComputedDynamicArrayIterableDescriptorHandoffPlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray descriptor handoff plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableDescriptorHandoffPlanKind::single_cleanup_owner_handoff_planned:
+            output += "single cleanup owner handoff planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.source_owner_name.empty()) {
+        output += " owner ";
+        output += plan.source_owner_name;
+    }
+    if (!plan.handoff_owner_name.empty()) {
+        output += " handoff ";
+        output += plan.handoff_owner_name;
+    }
+    if (!plan.descriptor_storage_name.empty()) {
+        output += " descriptor ";
+        output += plan.descriptor_storage_name;
+    }
+    output += plan.descriptor_storage_available ? " [descriptor storage available]" :
+        " [descriptor storage blocked]";
+    output += plan.cleanup_owner_proven ? " [cleanup owner proven]" : " [cleanup owner blocked]";
+    output += plan.lowering_enabled ? " [lowering enabled]" : " [lowering disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

@@ -510,6 +510,25 @@ int main() {
             mismatched_computed_ownership_plan
         ).find("ternary branch owner mismatch") != std::string::npos
     );
+    auto mismatched_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            state
+        );
+    assert(
+        mismatched_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::ownership_join_blocked
+    );
+    assert(mismatched_computed_handoff_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(!mismatched_computed_handoff_plan.descriptor_storage_available);
+    assert(!mismatched_computed_handoff_plan.cleanup_owner_proven);
+    assert(!mismatched_computed_handoff_plan.lowering_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            mismatched_computed_handoff_plan
+        ).find("ownership join blocked") != std::string::npos
+    );
 
     auto proven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -529,6 +548,31 @@ int main() {
             proven_computed_ownership_plan
         ).find("ternary single owner proven") != std::string::npos
     );
+    auto proven_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(name("flag"), name("items"), name("items")),
+            context,
+            state
+        );
+    assert(
+        proven_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::
+            single_cleanup_owner_handoff_planned
+    );
+    assert(proven_computed_handoff_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(proven_computed_handoff_plan.element_source_type_name == "UInt32");
+    assert(proven_computed_handoff_plan.source_owner_name == "items");
+    assert(proven_computed_handoff_plan.handoff_owner_name == "items");
+    assert(proven_computed_handoff_plan.descriptor_storage_name == "%items.addr");
+    assert(proven_computed_handoff_plan.descriptor_storage_available);
+    assert(proven_computed_handoff_plan.cleanup_owner_proven);
+    assert(!proven_computed_handoff_plan.lowering_enabled);
+    auto proven_computed_handoff_report =
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            proven_computed_handoff_plan
+        );
+    assert(proven_computed_handoff_report.find("single cleanup owner handoff planned") != std::string::npos);
+    assert(proven_computed_handoff_report.find("[lowering disabled]") != std::string::npos);
 
     auto unproven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -546,6 +590,26 @@ int main() {
         orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
             unproven_computed_ownership_plan
         ).find("ternary single owner unproven") != std::string::npos
+    );
+    auto unproven_computed_handoff_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
+            ternary(name("flag"), name("predicted_items"), name("predicted_items")),
+            context,
+            state
+        );
+    assert(
+        unproven_computed_handoff_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableDescriptorHandoffPlanKind::cleanup_owner_unproven
+    );
+    assert(unproven_computed_handoff_plan.source_owner_name == "predicted_items");
+    assert(unproven_computed_handoff_plan.handoff_owner_name == "predicted_items");
+    assert(!unproven_computed_handoff_plan.descriptor_storage_available);
+    assert(!unproven_computed_handoff_plan.cleanup_owner_proven);
+    assert(!unproven_computed_handoff_plan.lowering_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+            unproven_computed_handoff_plan
+        ).find("cleanup owner unproven") != std::string::npos
     );
 
     auto not_dynamic_array_plan =
