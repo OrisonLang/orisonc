@@ -885,6 +885,39 @@ auto main() -> int {
         orison::lowering::LlvmObjectEmitter {}.emit(computed_shared_view_for.ir_text);
     assert(!computed_shared_view_for_object.has_errors());
 
+    auto method_returned_shared_view_for_path =
+        smoke_temp_root / "orison_pipeline_method_returned_shared_view_for.or";
+    {
+        auto method_returned_shared_view_for_source =
+            std::ofstream(method_returned_shared_view_for_path);
+        method_returned_shared_view_for_source
+            << "package demo.pipeline.methodreturnedsharedviewfor\n"
+            << "\n"
+            << "extend UInt32\n"
+            << "    public function forward_view(this: shared This, values: shared.View<UInt32>) -> shared.View<UInt32>\n"
+            << "        values\n"
+            << "\n"
+            << "function sum(seed: UInt32, values: shared.View<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for item in seed.forward_view(values)\n"
+            << "        total = total + item\n"
+            << "    total\n";
+    }
+    auto method_returned_shared_view_for = pipeline.emit_llvm(method_returned_shared_view_for_path);
+    assert(!method_returned_shared_view_for.has_errors());
+    assert(method_returned_shared_view_for.dynamic_array_runtime_request_report.empty());
+    assert(
+        method_returned_shared_view_for.ir_text.find(
+            " = call { ptr, i64 } @method.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
+        ) != std::string::npos
+    );
+    assert(
+        method_returned_shared_view_for.ir_text.find("%computed.sequence_for") != std::string::npos
+    );
+    auto method_returned_shared_view_for_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(method_returned_shared_view_for.ir_text);
+    assert(!method_returned_shared_view_for_object.has_errors());
+
     auto dynamic_array_blocked_owned_cleanup = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

@@ -36,6 +36,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-24: computed `View<T>` descriptor-loop lowering is now pinned for helper-returned
   `shared.View<UInt32>` values. The lowered loop consumes the computed `{ ptr, i64 }` descriptor directly and keeps
   owned `DynamicArray<T>` iteration restricted to named descriptor storage.
+- 2026-07-24: method-returned `shared.View<UInt32>` descriptor-loop lowering is now pinned through scalar receiver
+  method calls. The same computed descriptor path handles `seed.forward_view(values)` without adding syntax or
+  changing owned `DynamicArray<T>` restrictions.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.

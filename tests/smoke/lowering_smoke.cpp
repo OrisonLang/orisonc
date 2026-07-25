@@ -8282,6 +8282,41 @@ void test_emit_computed_view_for_iterable_lowering() {
     assert_ir_contains(result, ".value = load i32, ptr %computed.sequence_for");
 }
 
+void test_emit_method_returned_view_for_iterable_lowering() {
+    auto path = std::filesystem::temp_directory_path() / "orison_lowering_method_returned_view_for_iterable.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "extend UInt32\n"
+        "    public function forward_view(this: shared This, values: shared.View<UInt32>) -> shared.View<UInt32>\n"
+        "        values\n"
+        "\n"
+        "function sum(seed: UInt32, values: shared.View<UInt32>) -> UInt32\n"
+        "    var total: UInt32 = 0 as UInt32\n"
+        "    for item in seed.forward_view(values)\n"
+        "        total = total + item\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {}
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(
+        result,
+        "define { ptr, i64 } @method.UInt32.forward_view(i32 %this, { ptr, i64 } %values)"
+    );
+    assert_ir_contains(result, "define i32 @sum(i32 %seed, { ptr, i64 } %values)");
+    assert_ir_contains(
+        result,
+        " = call { ptr, i64 } @method.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
+    );
+    assert_ir_contains(result, "  %computed.sequence_for");
+    assert_ir_contains(result, ".length = extractvalue { ptr, i64 } %tmp");
+    assert_ir_contains(result, ".more = icmp ult i64 %computed.sequence_for");
+    assert_ir_contains(result, ".element.addr = getelementptr i32, ptr %computed.sequence_for");
+    assert_ir_contains(result, ".value = load i32, ptr %computed.sequence_for");
+}
+
 void test_emit_view_parameter_index_lowering() {
     auto path = std::filesystem::temp_directory_path() / "orison_lowering_view_parameter_index.or";
     auto result = lower_source(
@@ -13148,6 +13183,7 @@ auto main() -> int {
     test_emit_bare_nested_generic_record_array_literal_for_item_field_return();
     test_emit_view_for_iterable_lowering();
     test_emit_computed_view_for_iterable_lowering();
+    test_emit_method_returned_view_for_iterable_lowering();
     test_emit_view_parameter_index_lowering();
     test_emit_view_parameter_length_lowering();
     test_emit_exclusive_view_parameter_index_assignment_lowering();

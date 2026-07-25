@@ -1,5 +1,9 @@
 package examples.viewdescriptor
 
+extend UInt32
+    public function forward_view(this: shared This, values: shared.View<UInt32>) -> shared.View<UInt32>
+        values
+
 function count(values: shared.View<UInt32>) -> IntSize
     values.length()
 
@@ -21,6 +25,12 @@ function sum(values: shared.View<UInt32>) -> UInt32
 function sum_forwarded(values: shared.View<UInt32>) -> UInt32
     var total = 0 as UInt32
     for item in forward(values)
+        total = total + item
+    total
+
+function sum_method_forwarded(seed: UInt32, values: shared.View<UInt32>) -> UInt32
+    var total = 0 as UInt32
+    for item in seed.forward_view(values)
         total = total + item
     total
 

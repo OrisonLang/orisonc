@@ -118,6 +118,16 @@ auto main() -> int {
     assert(view_descriptor_ir.ir_text.find("define i64 @count({ ptr, i64 } %values)") != std::string::npos);
     assert(view_descriptor_ir.ir_text.find("define i32 @first({ ptr, i64 } %values)") != std::string::npos);
     assert(view_descriptor_ir.ir_text.find("define i32 @sum({ ptr, i64 } %values)") != std::string::npos);
+    assert(
+        view_descriptor_ir.ir_text.find(
+            "define { ptr, i64 } @method.UInt32.forward_view(i32 %this, { ptr, i64 } %values)"
+        ) != std::string::npos
+    );
+    assert(
+        view_descriptor_ir.ir_text.find(
+            "call { ptr, i64 } @method.UInt32.forward_view(i32 %seed, { ptr, i64 } %values)"
+        ) != std::string::npos
+    );
     auto view_descriptor_object =
         orison::lowering::LlvmObjectEmitter {}.emit(view_descriptor_ir.ir_text);
     assert(!view_descriptor_object.has_errors());
