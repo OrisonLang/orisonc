@@ -667,6 +667,32 @@ auto main() -> int {
         orison::lowering::LlvmObjectEmitter {}.emit(scalar_dynamic_array_parameter_for.ir_text);
     assert(!scalar_dynamic_array_parameter_for_object.has_errors());
 
+    auto computed_dynamic_array_parameter_for_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_parameter_for_rejected.or";
+    {
+        auto computed_parameter_for_source = std::ofstream(computed_dynamic_array_parameter_for_path);
+        computed_parameter_for_source
+            << "package demo.pipeline.computeddynamicarrayparameterfor\n"
+            << "\n"
+            << "function sum_words(flag: Bool, left: DynamicArray<UInt32>, right: DynamicArray<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for word in flag ? left : right\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_parameter_for = pipeline.emit_llvm(
+        computed_dynamic_array_parameter_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+        }
+    );
+    assert(computed_dynamic_array_parameter_for.has_errors());
+    assert(
+        computed_dynamic_array_parameter_for.error_text.find(
+            "lowering DynamicArray for statements currently requires a named descriptor iterable"
+        ) != std::string::npos
+    );
+
     auto view_parameter_length_path = smoke_temp_root / "orison_pipeline_view_parameter_length.or";
     {
         auto view_length_source = std::ofstream(view_parameter_length_path);

@@ -513,6 +513,8 @@ representation.
   such as `seed.forward_view(values) -> shared.View<T>`, with no separate ownership or cleanup path.
 - Member-derived receiver calls that return `shared.View<T>`, including record-field and indexed-array receiver paths,
   use that same computed descriptor path.
+- Computed owned `DynamicArray<T>` iterables remain rejected unless the iterable is a named descriptor-backed owner.
+  Ternary-selected owned descriptors such as `flag ? left : right` have no single proven descriptor storage owner yet.
 - Shared descriptor-loop lowering now emits neutral `sequence_for` temporary names in generated LLVM IR. The remaining
   DynamicArray-specific option names are intentionally gate-oriented rather than loop-shape-oriented.
 - Local `DynamicArray<T>` lowering is now available on the default compile path for constructed local descriptors:

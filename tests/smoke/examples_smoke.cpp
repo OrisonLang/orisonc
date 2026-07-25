@@ -178,6 +178,20 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_dynamic_array_iterable =
+        pipeline.emit_llvm(
+            fixtures / "dynamic_array_computed_iterable_rejected.or",
+            orison::pipeline::CompilePipelineOptions {
+                .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            }
+        );
+    assert(computed_dynamic_array_iterable.has_errors());
+    assert(
+        computed_dynamic_array_iterable.error_text.find(
+            "lowering DynamicArray for statements currently requires a named descriptor iterable"
+        ) != std::string::npos
+    );
+
     auto choice_dynamic_array_payload =
         pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_rejected.or");
     assert(choice_dynamic_array_payload.has_errors());
