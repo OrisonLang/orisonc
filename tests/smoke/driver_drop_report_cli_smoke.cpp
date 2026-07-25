@@ -352,6 +352,74 @@ int main() {
         "lowering does not yet support this return expression: unsupported cast: negative value to UInt32"
     );
 
+    auto final_if_emit_failure_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_final_if_failure.or";
+    write_fixture(
+        final_if_emit_failure_path,
+        "demo.emit",
+        {
+            "function same(flag: Bool, left: Bool, right: Bool) -> Bool",
+            "    if flag",
+            "        left < right",
+            "    else",
+            "        false",
+        }
+    );
+    auto final_if_drop_readiness_summary_failure =
+        run_drop_readiness_summary(app, final_if_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        final_if_drop_readiness_summary_failure,
+        "lowering does not yet support this final control-flow statement: "
+        "if then arm lowering failed: unsupported operator: <"
+    );
+    auto final_if_emitted_drops_failure = run_emitted_drops(app, final_if_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        final_if_emitted_drops_failure,
+        "lowering does not yet support this final control-flow statement: "
+        "if then arm lowering failed: unsupported operator: <"
+    );
+    auto final_if_drop_readiness_relations_failure =
+        run_drop_readiness_relations(app, final_if_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        final_if_drop_readiness_relations_failure,
+        "lowering does not yet support this final control-flow statement: "
+        "if then arm lowering failed: unsupported operator: <"
+    );
+
+    auto final_switch_emit_failure_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_final_switch_failure.or";
+    write_fixture(
+        final_switch_emit_failure_path,
+        "demo.emit",
+        {
+            "function same(flag: Bool, left: Bool, right: Bool) -> Bool",
+            "    switch flag",
+            "        true => left < right",
+            "        false => false",
+        }
+    );
+    auto final_switch_drop_readiness_summary_failure =
+        run_drop_readiness_summary(app, final_switch_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        final_switch_drop_readiness_summary_failure,
+        "lowering does not yet support this final control-flow statement: "
+        "switch case lowering failed: unsupported operator: <"
+    );
+    auto final_switch_emitted_drops_failure =
+        run_emitted_drops(app, final_switch_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        final_switch_emitted_drops_failure,
+        "lowering does not yet support this final control-flow statement: "
+        "switch case lowering failed: unsupported operator: <"
+    );
+    auto final_switch_drop_readiness_relations_failure =
+        run_drop_readiness_relations(app, final_switch_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        final_switch_drop_readiness_relations_failure,
+        "lowering does not yet support this final control-flow statement: "
+        "switch case lowering failed: unsupported operator: <"
+    );
+
     auto planned_drop_report_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "drop_readiness.or";
     auto planned_drop_emit = run_emit_llvm(app, planned_drop_report_path);

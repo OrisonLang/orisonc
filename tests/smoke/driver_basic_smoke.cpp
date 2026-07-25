@@ -173,6 +173,45 @@ int main() {
         "lowering does not yet support this return expression: unsupported cast: negative value to UInt32"
     );
 
+    auto final_if_emit_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_llvm_final_if_failure.or";
+    write_concurrency_fixture(
+        final_if_emit_failure_path,
+        "demo.emit",
+        {
+            "function same(flag: Bool, left: Bool, right: Bool) -> Bool",
+            "    if flag",
+            "        left < right",
+            "    else",
+            "        false",
+        }
+    );
+    auto final_if_emit_failure = run_emit_llvm(app, final_if_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        final_if_emit_failure,
+        "lowering does not yet support this final control-flow statement: "
+        "if then arm lowering failed: unsupported operator: <"
+    );
+
+    auto final_switch_emit_failure_path =
+        std::filesystem::temp_directory_path() / "orison_compiler_app_emit_llvm_final_switch_failure.or";
+    write_concurrency_fixture(
+        final_switch_emit_failure_path,
+        "demo.emit",
+        {
+            "function same(flag: Bool, left: Bool, right: Bool) -> Bool",
+            "    switch flag",
+            "        true => left < right",
+            "        false => false",
+        }
+    );
+    auto final_switch_emit_failure = run_emit_llvm(app, final_switch_emit_failure_path);
+    assert_failure_with_no_stdout_contains(
+        final_switch_emit_failure,
+        "lowering does not yet support this final control-flow statement: "
+        "switch case lowering failed: unsupported operator: <"
+    );
+
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
 }

@@ -355,6 +355,10 @@ representation.
   The driver, compile-pipeline, and drop-report smoke paths require
   `unsupported cast: negative value to UInt32`, preventing the cast-specific reason from being flattened at
   user-visible failure boundaries.
+- CLI and pipeline final control-flow failure tests now pin structured arm/case details. The driver, compile-pipeline,
+  and drop-report smoke paths require `if then arm lowering failed: unsupported operator: <` and
+  `switch case lowering failed: unsupported operator: <`, preventing nested branch expression failures from being
+  flattened at user-visible failure boundaries.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and

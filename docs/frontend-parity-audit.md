@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: CLI and pipeline final control-flow failure tests now pin structured arm/case detail. The driver,
+  compile-pipeline, and drop-report smoke paths require `if then arm lowering failed: unsupported operator: <` and
+  `switch case lowering failed: unsupported operator: <`.
 - 2026-07-24: CLI and pipeline return-expression failure tests now pin structured cast detail for negative unsigned
   literal casts. The driver, compile-pipeline, and drop-report smoke paths require
   `unsupported cast: negative value to UInt32`.
