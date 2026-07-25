@@ -9,9 +9,18 @@ function first(values: exclusive.View<UInt32>) -> UInt32
 function write_first(values: exclusive.View<UInt32>) -> Unit
     values[0] = 7 as UInt32
 
+function forward(values: shared.View<UInt32>) -> shared.View<UInt32>
+    values
+
 function sum(values: shared.View<UInt32>) -> UInt32
     var total = 0 as UInt32
     for item in values
+        total = total + item
+    total
+
+function sum_forwarded(values: shared.View<UInt32>) -> UInt32
+    var total = 0 as UInt32
+    for item in forward(values)
         total = total + item
     total
 

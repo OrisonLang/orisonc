@@ -66,25 +66,17 @@ auto lower_sequence_for_statement(
     std::ostringstream& output,
     LowerBody&& lower_body
 ) -> StatementFlow {
-    if (statement.expression.kind != syntax::ExpressionKind::name) {
+    auto source_type_name =
+        source_type_name_for_expression(statement.expression, context.lowering, session.state);
+    if (!source_type_name.has_value()) {
         diagnostics.error(
             statement.line,
-            "lowering dynamic-sequence for statements currently requires a named iterable"
+            "lowering dynamic-sequence for statements currently requires a typed iterable"
         );
         return StatementFlow::failed;
     }
 
-    auto const& owner_name = statement.expression.text;
-    auto source_type = session.state.source_type_names.find(owner_name);
-    if (source_type == session.state.source_type_names.end()) {
-        diagnostics.error(
-            statement.line,
-            "lowering dynamic-sequence for statements currently requires a named iterable"
-        );
-        return StatementFlow::failed;
-    }
-
-    auto sequence = dynamic_sequence_source_type(source_type->second);
+    auto sequence = dynamic_sequence_source_type(*source_type_name);
     if (!sequence.has_value()) {
         diagnostics.error(
             statement.line,
@@ -109,11 +101,16 @@ auto lower_sequence_for_statement(
         return StatementFlow::failed;
     }
 
-    auto storage = aggregate_storage_for_name(owner_name, session.state);
-    if (!storage.has_value()) {
+    auto named_iterable = statement.expression.kind == syntax::ExpressionKind::name
+        ? std::optional<std::string> {statement.expression.text}
+        : std::nullopt;
+    auto storage = named_iterable.has_value()
+        ? aggregate_storage_for_name(*named_iterable, session.state)
+        : std::optional<std::string> {};
+    if (sequence->kind == DynamicSequenceKind::dynamic_array && !storage.has_value()) {
         diagnostics.error(
             statement.line,
-            "lowering dynamic-sequence for statements currently requires descriptor storage"
+            "lowering DynamicArray for statements currently requires a named descriptor iterable"
         );
         return StatementFlow::failed;
     }
@@ -127,7 +124,8 @@ auto lower_sequence_for_statement(
         return StatementFlow::failed;
     }
 
-    auto prefix = "%" + owner_name + ".sequence_for" +
+    auto prefix_owner = named_iterable.value_or("computed");
+    auto prefix = "%" + prefix_owner + ".sequence_for" +
         std::to_string(session.state.next_temporary_index++);
     auto incoming_block = session.state.current_block;
     auto block_index = next_llvm_block_index(session.state.next_block_index);
@@ -148,11 +146,30 @@ auto lower_sequence_for_statement(
             prefix + ".descriptor",
             DynamicArrayDescriptorField::length
         );
-    } else {
+    } else if (storage.has_value()) {
         output << "  " << prefix << ".descriptor = load " << view_descriptor_llvm_type();
         output << ", ptr " << *storage << "\n";
         output << emit_view_descriptor_field_projection(prefix + ".data", prefix + ".descriptor", 0);
         output << emit_view_descriptor_field_projection(prefix + ".length", prefix + ".descriptor", 1);
+    } else {
+        auto lowered_descriptor = lower_expression(
+            statement.expression,
+            view_descriptor_llvm_type(),
+            IntegerSignedness::not_integer,
+            context,
+            session,
+            output,
+            std::string_view {*source_type_name}
+        );
+        if (!lowered_descriptor.has_value()) {
+            diagnostics.error(
+                statement.line,
+                "lowering View for statements currently requires a lowerable descriptor expression"
+            );
+            return StatementFlow::failed;
+        }
+        output << emit_view_descriptor_field_projection(prefix + ".data", lowered_descriptor->value, 0);
+        output << emit_view_descriptor_field_projection(prefix + ".length", lowered_descriptor->value, 1);
     }
     emit_llvm_branch(output, condition_block);
 

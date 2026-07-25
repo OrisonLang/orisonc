@@ -506,6 +506,9 @@ representation.
   computes the element address, and stores the scalar value without ownership cleanup or capacity handling.
 - View descriptor-loop lowering is now available on the default compile path for named `View<T>`, `shared.View<T>`,
   and `exclusive.View<T>` iterables.
+- Computed View descriptor-loop lowering is now available for lowerable `View<T>` expressions such as helper-returned
+  `shared.View<T>`. The loop consumes the computed `{ ptr, i64 }` descriptor value directly, while owned
+  `DynamicArray<T>` iteration remains restricted to named descriptor storage.
 - Shared descriptor-loop lowering now emits neutral `sequence_for` temporary names in generated LLVM IR. The remaining
   DynamicArray-specific option names are intentionally gate-oriented rather than loop-shape-oriented.
 - Local `DynamicArray<T>` lowering is now available on the default compile path for constructed local descriptors:
@@ -535,4 +538,5 @@ representation.
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Extend `for ... in` lowering beyond named descriptor-backed dynamic sequences to consume computed dynamic iterables.
+- Extend `for ... in` lowering beyond named descriptor-backed owned `DynamicArray<T>` sequences only after ownership,
+  cleanup, and descriptor-storage rules for computed owned iterables are proven.

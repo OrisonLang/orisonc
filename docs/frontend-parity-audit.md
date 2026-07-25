@@ -27,12 +27,15 @@ This file tracks which source-language frontend slices are reflected in the curr
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction and assignment outside the pinned
   scalar, record, and fixed-array paths; owned-element `DynamicArray<T>` parameter lowering until source-drop proof is
-  complete; computed dynamic iterables beyond named descriptor-backed `DynamicArray<T>`/`View<T>` paths; mutable
+  complete; computed owned `DynamicArray<T>` iterables beyond named descriptor-backed paths; mutable
   `exclusive.View<T>` operations; future standard-library iterator abstractions; and production backend completeness
   beyond the current LLVM/object/link/run smoke paths
 
 ## Latest update
 
+- 2026-07-24: computed `View<T>` descriptor-loop lowering is now pinned for helper-returned
+  `shared.View<UInt32>` values. The lowered loop consumes the computed `{ ptr, i64 }` descriptor directly and keeps
+  owned `DynamicArray<T>` iteration restricted to named descriptor storage.
 - 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
   path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
   stores the scalar element without adding new source syntax.
