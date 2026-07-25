@@ -1793,6 +1793,12 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "cleanup owner proof missing"
         ) != std::string::npos
     );
+    assert(
+        computed_parameter_for.render(path.string()).find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+            "element UInt32 owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
 }
 
 void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {

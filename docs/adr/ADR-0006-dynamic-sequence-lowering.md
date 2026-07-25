@@ -43,6 +43,8 @@ representation.
 - Computed owned dynamic-array iterable planning now has a metadata-only ternary ownership-transfer model. Each arm is
   modeled as consuming its branch owner and then uses the existing ownership-transfer merge rule; differing owners
   remain blocked, while same-owner ternaries can distinguish proven cleanup owners from metadata-only predicted owners.
+- Dynamic-array `for` rejection diagnostics include the computed ownership-transfer report for computed owned iterables,
+  so ternary failures distinguish branch owner mismatches from missing cleanup-owner proof.
 
 ## Consequences
 

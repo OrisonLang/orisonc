@@ -113,10 +113,23 @@ auto lower_sequence_for_statement(
         ? aggregate_storage_for_name(*named_iterable, session.state)
         : std::optional<std::string> {};
     if (sequence->kind == DynamicSequenceKind::dynamic_array && !dynamic_array_plan.can_lower_now) {
+        auto diagnostic_detail = dynamic_array_iterable_descriptor_plan_report(dynamic_array_plan);
+        auto computed_ownership_plan = plan_computed_dynamic_array_iterable_ownership_transfer(
+            statement.expression,
+            context.lowering,
+            session.state
+        );
+        if (computed_ownership_plan.kind !=
+            ComputedDynamicArrayIterableOwnershipPlanKind::not_computed_dynamic_array) {
+            diagnostic_detail += "; ";
+            diagnostic_detail += computed_dynamic_array_iterable_ownership_plan_report(
+                computed_ownership_plan
+            );
+        }
         diagnostics.error(
             statement.line,
             "lowering DynamicArray for statements currently requires a named descriptor iterable: " +
-                dynamic_array_iterable_descriptor_plan_report(dynamic_array_plan)
+                diagnostic_detail
         );
         return StatementFlow::failed;
     }

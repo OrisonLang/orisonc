@@ -1618,3 +1618,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-24: computed owned `DynamicArray<T>` ternary iterable planning now models branch ownership transfer without
   enabling lowering. Differing branch owners remain blocked; same-owner ternaries can be classified as proven or
   unproven based on cleanup-owner proof metadata.
+- 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the computed ownership-transfer
+  report, distinguishing ternary branch owner mismatches from missing cleanup-owner proof while leaving lowering
+  disabled.

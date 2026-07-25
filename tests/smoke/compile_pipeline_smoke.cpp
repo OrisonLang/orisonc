@@ -702,6 +702,12 @@ auto main() -> int {
             "cleanup owner proof missing"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_parameter_for.error_text.find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+            "element UInt32 owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto view_parameter_length_path = smoke_temp_root / "orison_pipeline_view_parameter_length.or";
     {
