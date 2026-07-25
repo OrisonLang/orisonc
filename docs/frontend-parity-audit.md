@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the descriptor handoff report.
+  Same-owner local descriptors can report a planned handoff owner and descriptor storage, but the diagnostic still
+  records `[lowering disabled]`.
 - 2026-07-25: computed owned `DynamicArray<UInt32>` descriptor handoff now has a metadata-only internal plan. It
   distinguishes ownership-join blockers, cleanup-owner proof blockers, and the positive same-owner local descriptor
   handoff state while keeping computed owned loop lowering disabled.

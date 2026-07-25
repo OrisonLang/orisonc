@@ -53,6 +53,8 @@ representation.
 - Computed owned dynamic-array descriptor handoff now has a metadata-only internal plan. It reuses the computed
   ownership-transfer proof, records the single source owner, handoff owner, and descriptor storage when available, and
   keeps lowering explicitly disabled until cleanup sequencing is implemented.
+- Dynamic-array `for` rejection diagnostics now include the computed descriptor-handoff report, so proven same-owner
+  computed iterables can show the future handoff owner and descriptor storage while still reporting lowering disabled.
 
 ## Consequences
 

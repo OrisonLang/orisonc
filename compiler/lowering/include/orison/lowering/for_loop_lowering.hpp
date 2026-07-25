@@ -125,6 +125,15 @@ auto lower_sequence_for_statement(
             diagnostic_detail += computed_dynamic_array_iterable_ownership_plan_report(
                 computed_ownership_plan
             );
+            auto computed_handoff_plan = plan_computed_dynamic_array_iterable_descriptor_handoff(
+                statement.expression,
+                context.lowering,
+                session.state
+            );
+            diagnostic_detail += "; ";
+            diagnostic_detail += computed_dynamic_array_iterable_descriptor_handoff_plan_report(
+                computed_handoff_plan
+            );
         }
         diagnostics.error(
             statement.line,

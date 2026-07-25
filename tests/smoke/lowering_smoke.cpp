@@ -1799,6 +1799,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "element UInt32 owners left right [ownership join blocked] [cleanup owner blocked] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_parameter_for.render(path.string()).find(
+            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [descriptor storage blocked] [cleanup owner blocked] "
+            "[lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_same_owner_parameter_for = lower_source(
         path,
@@ -1824,6 +1831,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "element UInt32 owners items items [ownership join ok] [cleanup owner blocked] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_same_owner_parameter_for.render(path.string()).find(
+            "computed DynamicArray descriptor handoff plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items handoff items [descriptor storage blocked] [cleanup owner blocked] "
+            "[lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_local_same_owner_for = lower_source(
         path,
@@ -1846,6 +1860,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_for.render(path.string()).find(
             "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "
             "element UInt32 owners items items [ownership join ok] [cleanup owner proven] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_for.render(path.string()).find(
+            "computed DynamicArray descriptor handoff plan single cleanup owner handoff planned source "
+            "DynamicArray<UInt32> element UInt32 owner items handoff items descriptor %items.addr "
+            "[descriptor storage available] [cleanup owner proven] [lowering disabled] (metadata only)"
         ) != std::string::npos
     );
 }
