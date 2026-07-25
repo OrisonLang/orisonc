@@ -6,6 +6,9 @@ function count(values: shared.View<UInt32>) -> IntSize
 function first(values: exclusive.View<UInt32>) -> UInt32
     values[0]
 
+function write_first(values: exclusive.View<UInt32>) -> Unit
+    values[0] = 7 as UInt32
+
 function sum(values: shared.View<UInt32>) -> UInt32
     var total = 0 as UInt32
     for item in values

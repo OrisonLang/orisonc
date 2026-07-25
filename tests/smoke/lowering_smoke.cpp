@@ -8293,6 +8293,58 @@ void test_emit_view_parameter_length_lowering() {
     assert_ir_contains(result, "ret i64 %view_length0.value");
 }
 
+void test_emit_exclusive_view_parameter_index_assignment_lowering() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_exclusive_view_parameter_index_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function write_first(values: exclusive.View<UInt32>) -> Unit\n"
+        "    values[0] = 7 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "define void @write_first({ ptr, i64 } %values)");
+    assert_ir_contains(result, "declare void @__orison_dynamic_array_bounds_failed()");
+    assert_ir_contains(result, "  %values.view_assign0.data = extractvalue { ptr, i64 } %values, 0\n");
+    assert_ir_contains(result, "  %values.view_assign0.length = extractvalue { ptr, i64 } %values, 1\n");
+    assert_ir_contains(result, "  %values.view_assign0.in_bounds = icmp ult i64 0, %values.view_assign0.length\n");
+    assert_ir_contains(result, "view.assign.out_of_bounds.0:\n");
+    assert_ir_contains(result, "  call void @__orison_dynamic_array_bounds_failed()\n");
+    assert_ir_contains(result, "view.assign.in_bounds.0:\n");
+    assert_ir_contains(
+        result,
+        "  %values.view_assign0.element.addr = getelementptr i32, ptr %values.view_assign0.data, i64 0\n"
+    );
+    assert_ir_contains(result, "  store i32 7, ptr %values.view_assign0.element.addr\n");
+    assert_ir_contains(result, "  ret void\n");
+}
+
+void test_emit_exclusive_view_parameter_index_compound_assignment_lowering() {
+    auto path = std::filesystem::temp_directory_path() /
+        "orison_lowering_exclusive_view_parameter_index_compound_assignment.or";
+    auto result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function increment_first(values: exclusive.View<UInt32>) -> Unit\n"
+        "    values[0] += 1 as UInt32\n"
+    );
+
+    assert(!result.has_errors());
+    assert_ir_contains(result, "define void @increment_first({ ptr, i64 } %values)");
+    assert_ir_contains(result, "  %values.view_assign0.in_bounds = icmp ult i64 0, %values.view_assign0.length\n");
+    assert_ir_contains(
+        result,
+        "  %values.view_assign0.element.addr = getelementptr i32, ptr %values.view_assign0.data, i64 0\n"
+    );
+    assert_ir_contains(result, " = load i32, ptr %values.view_assign0.element.addr\n");
+    assert_ir_contains(result, " = add i32 ");
+    assert_ir_contains(result, ", 1\n");
+    assert_ir_contains(result, ", ptr %values.view_assign0.element.addr\n");
+}
+
 void test_emit_access_qualified_view_parameter_lowering() {
     auto path = std::filesystem::temp_directory_path() /
         "orison_lowering_access_qualified_view_parameter.or";
@@ -8326,6 +8378,21 @@ void test_emit_access_qualified_view_parameter_lowering() {
     assert_ir_contains(
         exclusive_index_result,
         "  %view_index1.value = load i32, ptr %view_index1.element.addr\n"
+    );
+
+    auto exclusive_assignment_result = lower_source(
+        path,
+        "package demo.lowering\n"
+        "\n"
+        "function write_first(values: exclusive.View<UInt32>) -> Unit\n"
+        "    values[0] = 9 as UInt32\n"
+    );
+
+    assert(!exclusive_assignment_result.has_errors());
+    assert_ir_contains(exclusive_assignment_result, "define void @write_first({ ptr, i64 } %values)");
+    assert_ir_contains(
+        exclusive_assignment_result,
+        "  store i32 9, ptr %values.view_assign0.element.addr\n"
     );
 
     auto shared_for_result = lower_source(
@@ -13054,6 +13121,8 @@ auto main() -> int {
     test_emit_view_for_iterable_lowering();
     test_emit_view_parameter_index_lowering();
     test_emit_view_parameter_length_lowering();
+    test_emit_exclusive_view_parameter_index_assignment_lowering();
+    test_emit_exclusive_view_parameter_index_compound_assignment_lowering();
     test_emit_access_qualified_view_parameter_lowering();
     test_reject_underconstrained_generic_record_array_literal_for_item_field_return();
     test_reject_underconstrained_nested_generic_record_array_literal_for_item_field_return();

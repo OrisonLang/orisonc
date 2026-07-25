@@ -500,7 +500,10 @@ representation.
   lowering without ownership cleanup or capacity handling.
 - Access-qualified View descriptor parity is covered explicitly in smoke tests: `shared.View<T>` and
   `exclusive.View<T>` use the same read-only descriptor ABI for length, checked index reads, and descriptor-loop
-  iteration. Exclusive View mutation remains future work rather than an implicit side effect of read support.
+  iteration. Mutation is restricted to explicit indexed assignment through `exclusive.View<T>`.
+- `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The mutation path projects
+  the `{ ptr, i64 }` descriptor data and length fields, emits the same runtime bounds failure branch as checked reads,
+  computes the element address, and stores the scalar value without ownership cleanup or capacity handling.
 - View descriptor-loop lowering is now available on the default compile path for named `View<T>`, `shared.View<T>`,
   and `exclusive.View<T>` iterables.
 - Shared descriptor-loop lowering now emits neutral `sequence_for` temporary names in generated LLVM IR. The remaining

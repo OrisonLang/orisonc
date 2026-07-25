@@ -795,6 +795,43 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto exclusive_view_parameter_assignment_path =
+        smoke_temp_root / "orison_pipeline_exclusive_view_parameter_assignment.or";
+    {
+        auto exclusive_view_assignment_source = std::ofstream(exclusive_view_parameter_assignment_path);
+        exclusive_view_assignment_source
+            << "package demo.pipeline.exclusiveviewassign\n"
+            << "\n"
+            << "function write_first(values: exclusive.View<UInt32>) -> Unit\n"
+            << "    values[0] = 7 as UInt32\n";
+    }
+    auto exclusive_view_parameter_assignment = pipeline.emit_llvm(exclusive_view_parameter_assignment_path);
+    assert(!exclusive_view_parameter_assignment.has_errors());
+    assert(exclusive_view_parameter_assignment.dynamic_array_runtime_request_report.size() == 1);
+    assert_line_contains(
+        exclusive_view_parameter_assignment.dynamic_array_runtime_request_report,
+        0,
+        "__orison_dynamic_array_bounds_failed"
+    );
+    assert(
+        exclusive_view_parameter_assignment.ir_text.find(
+            "define void @write_first({ ptr, i64 } %values)"
+        ) != std::string::npos
+    );
+    assert(
+        exclusive_view_parameter_assignment.ir_text.find(
+            "%values.view_assign0.in_bounds = icmp ult i64 0, %values.view_assign0.length"
+        ) != std::string::npos
+    );
+    assert(
+        exclusive_view_parameter_assignment.ir_text.find(
+            "store i32 7, ptr %values.view_assign0.element.addr"
+        ) != std::string::npos
+    );
+    auto exclusive_view_parameter_assignment_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(exclusive_view_parameter_assignment.ir_text);
+    assert(!exclusive_view_parameter_assignment_object.has_errors());
+
     auto shared_view_parameter_for_path =
         smoke_temp_root / "orison_pipeline_shared_view_parameter_for.or";
     {

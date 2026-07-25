@@ -68,6 +68,18 @@ auto aggregate_assignment_target_failure(
         std::string(render_aggregate_path_error(error));
 }
 
+auto emit_view_descriptor_field_projection(
+    std::string_view result_name,
+    std::string_view descriptor_value_name,
+    std::size_t field_index
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  " << result_name << " = extractvalue ";
+    output << view_descriptor_llvm_type() << " " << descriptor_value_name;
+    output << ", " << field_index << "\n";
+    return output.str();
+}
+
 auto lower_dynamic_array_default_construction(
     syntax::StatementSyntax const& statement,
     LoweringEmissionContext const& context,
@@ -295,6 +307,106 @@ struct LoweredAssignmentTarget {
     std::optional<std::string> source_type_name;
 };
 
+auto lower_exclusive_view_index_assignment_target(
+    syntax::ExpressionSyntax const& target,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> std::optional<LoweredAssignmentTarget> {
+    if (target.kind != syntax::ExpressionKind::index_access ||
+        target.left == nullptr ||
+        target.left->kind != syntax::ExpressionKind::name ||
+        target.arguments.size() != 1) {
+        return std::nullopt;
+    }
+
+    auto const& owner_name = target.left->text;
+    auto source_type = session.state.source_type_names.find(owner_name);
+    if (source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+    auto sequence = dynamic_sequence_source_type(source_type->second);
+    if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::exclusive_view) {
+        return std::nullopt;
+    }
+
+    auto element_type = lowered_type_for_source_type_name(
+        sequence->element_source_type_name,
+        context.lowering
+    );
+    if (!element_type.has_value()) {
+        diagnostics.error(target.line, "lowering exclusive View assignment element type is unsupported");
+        return std::nullopt;
+    }
+
+    auto lowered_base = lower_expression(
+        *target.left,
+        std::string {view_descriptor_llvm_type()},
+        IntegerSignedness::not_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_base.has_value()) {
+        diagnostics.error(
+            target.line,
+            append_expression_lowering_failure(
+                "lowering exclusive View assignment target failed",
+                session.failures.expression
+            )
+        );
+        return std::nullopt;
+    }
+
+    auto lowered_index = lower_expression(
+        target.arguments.front(),
+        "i64",
+        IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_index.has_value()) {
+        diagnostics.error(
+            target.line,
+            append_expression_lowering_failure(
+                "lowering exclusive View assignment index failed",
+                session.failures.expression
+            )
+        );
+        return std::nullopt;
+    }
+
+    auto prefix = "%" + owner_name + ".view_assign" +
+        std::to_string(session.state.next_temporary_index++);
+    output << emit_view_descriptor_field_projection(prefix + ".data", lowered_base->value, 0);
+    output << emit_view_descriptor_field_projection(prefix + ".length", lowered_base->value, 1);
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".in_bounds",
+        lowered_index->value,
+        prefix + ".length",
+        DynamicArrayBoundsCheckKind::index_within_length
+    );
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto value_block = llvm_block_name("view.assign.in_bounds", block_index);
+    auto failure_block = llvm_block_name("view.assign.out_of_bounds", block_index);
+    emit_llvm_conditional_branch(output, prefix + ".in_bounds", value_block, failure_block);
+    emit_llvm_block_label(output, failure_block);
+    output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, value_block);
+    session.state.current_block = value_block;
+    output << "  " << prefix << ".element.addr = getelementptr " << element_type->type;
+    output << ", ptr " << prefix << ".data, i64 " << lowered_index->value << "\n";
+
+    return LoweredAssignmentTarget {
+        .type = std::move(*element_type),
+        .pointer = prefix + ".element.addr",
+        .source_type_name = sequence->element_source_type_name,
+    };
+}
+
 auto lower_assignment_target(
     syntax::ExpressionSyntax const& target,
     LoweringEmissionContext const& context,
@@ -319,6 +431,16 @@ auto lower_assignment_target(
                 return source_type->second;
             }(),
         };
+    }
+
+    if (auto view_target = lower_exclusive_view_index_assignment_target(
+            target,
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return view_target;
     }
 
     auto path = collect_aggregate_path(target);

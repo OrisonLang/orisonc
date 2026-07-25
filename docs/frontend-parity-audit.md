@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: `exclusive.View<T>` parameter descriptors now lower checked indexed element assignment. The descriptor
+  path projects data/length, traps through `__orison_dynamic_array_bounds_failed()` on out-of-bounds indexes, and
+  stores the scalar element without adding new source syntax.
 - 2026-07-24: CLI and pipeline final control-flow failure tests now pin structured arm/case detail. The driver,
   compile-pipeline, and drop-report smoke paths require `if then arm lowering failed: unsupported operator: <` and
   `switch case lowering failed: unsupported operator: <`.
