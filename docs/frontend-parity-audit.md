@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-24: CLI and pipeline return-expression failure tests now pin the structured expression detail for unsupported
+  operators. The driver, compile-pipeline, and drop-report smoke paths require `unsupported operator: <` instead of only
+  the generic return-expression prefix.
 - 2026-07-24: CLI aggregate assignment diagnostics now explicitly pin the semantic/lowering boundary. The driver
   aggregate-lowering smoke confirms scalar member/index assignment targets remain semantic errors and do not leak the
   lowerer-only aggregate assignment path failure messages.

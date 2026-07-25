@@ -2208,7 +2208,9 @@ auto main() -> int {
     auto failed_lowering = pipeline.emit_llvm(failed_lowering_path);
     assert(failed_lowering.has_errors());
     assert(
-        failed_lowering.error_text.find("lowering does not yet support this return expression") != std::string::npos
+        failed_lowering.error_text.find(
+            "lowering does not yet support this return expression: unsupported operator: <"
+        ) != std::string::npos
     );
     assert(failed_lowering.drop_readiness_snapshot_report.empty());
     assert(failed_lowering.drop_readiness_summary_report.empty());

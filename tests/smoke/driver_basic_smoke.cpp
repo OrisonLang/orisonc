@@ -138,7 +138,7 @@ int main() {
     auto emit_failure = run_emit_llvm(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         emit_failure,
-        "lowering does not yet support this return expression"
+        "lowering does not yet support this return expression: unsupported operator: <"
     );
 
     std::filesystem::remove_all(smoke_temp_root);

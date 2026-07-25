@@ -250,12 +250,12 @@ int main() {
     auto drop_readiness_summary_failure = run_drop_readiness_summary(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         drop_readiness_summary_failure,
-        "lowering does not yet support this return expression"
+        "lowering does not yet support this return expression: unsupported operator: <"
     );
     auto emitted_drops_failure = run_emitted_drops(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         emitted_drops_failure,
-        "lowering does not yet support this return expression"
+        "lowering does not yet support this return expression: unsupported operator: <"
     );
     auto dynamic_array_cleanup_sequence_verification_failure =
         run_dynamic_array_cleanup_sequence_verification(app, emit_failure_path);
@@ -293,7 +293,7 @@ int main() {
     auto drop_readiness_relations_failure = run_drop_readiness_relations(app, emit_failure_path);
     assert_failure_with_no_stdout_contains(
         drop_readiness_relations_failure,
-        "lowering does not yet support this return expression"
+        "lowering does not yet support this return expression: unsupported operator: <"
     );
 
     auto planned_drop_report_path =

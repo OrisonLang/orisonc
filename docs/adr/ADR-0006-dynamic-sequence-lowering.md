@@ -345,6 +345,9 @@ representation.
 - CLI aggregate assignment diagnostics now explicitly pin the semantic/lowering boundary for scalar member/index
   assignment targets. Those source forms remain semantic errors, so the lowerer-only aggregate assignment path failures
   are intentionally covered in statement-emitter smoke rather than as user-facing CLI diagnostics.
+- CLI and pipeline return-expression failure tests now pin structured expression details for unsupported operators. The
+  driver, compile-pipeline, and drop-report smoke paths require `unsupported operator: <`, preventing regressions that
+  keep only the generic return-expression prefix.
 - Direct control-flow smoke coverage now pins nested aggregate-descendant mismatch, balanced join, and post-merge reuse
   diagnostics for `nested.box.payload` below the CLI layer.
 - Direct control-flow aggregate ownership smoke coverage now uses shared helpers for seeded aggregate states and
