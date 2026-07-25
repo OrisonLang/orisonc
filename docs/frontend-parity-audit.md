@@ -1607,3 +1607,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup capability.
 - 2026-07-19: dynamic-array cleanup audit/report commands now use a dedicated pipeline metadata collection path rather
   than a normal LLVM emission option flag, keeping report collection separate from full IR generation.
+- 2026-07-24: dynamic-array `for` lowering now consults an internal descriptor-ownership plan that distinguishes named
+  bound descriptor owners, named bindings without descriptor storage, and computed owned iterables. Computed owned
+  `DynamicArray<T>` iteration remains rejected until a single cleanup owner can be proven.

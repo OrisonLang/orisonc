@@ -101,18 +101,26 @@ auto lower_sequence_for_statement(
         return StatementFlow::failed;
     }
 
+    auto dynamic_array_plan = plan_dynamic_array_iterable_descriptor(
+        statement.expression,
+        context.lowering,
+        session.state
+    );
     auto named_iterable = statement.expression.kind == syntax::ExpressionKind::name
         ? std::optional<std::string> {statement.expression.text}
         : std::nullopt;
     auto storage = named_iterable.has_value()
         ? aggregate_storage_for_name(*named_iterable, session.state)
         : std::optional<std::string> {};
-    if (sequence->kind == DynamicSequenceKind::dynamic_array && !storage.has_value()) {
+    if (sequence->kind == DynamicSequenceKind::dynamic_array && !dynamic_array_plan.can_lower_now) {
         diagnostics.error(
             statement.line,
             "lowering DynamicArray for statements currently requires a named descriptor iterable"
         );
         return StatementFlow::failed;
+    }
+    if (sequence->kind == DynamicSequenceKind::dynamic_array) {
+        storage = dynamic_array_plan.descriptor_storage;
     }
 
     auto element_llvm_type = llvm_type_for_source_type_name(sequence->element_source_type_name, context.lowering);

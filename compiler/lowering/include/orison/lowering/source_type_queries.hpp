@@ -41,6 +41,22 @@ struct DynamicArrayLoweringInvariants {
     bool lowered_signatures_enabled = false;
 };
 
+enum class DynamicArrayIterableDescriptorPlanKind {
+    not_dynamic_array,
+    named_descriptor_owner,
+    missing_named_descriptor_storage,
+    computed_owner_unproven,
+};
+
+struct DynamicArrayIterableDescriptorPlan {
+    DynamicArrayIterableDescriptorPlanKind kind = DynamicArrayIterableDescriptorPlanKind::not_dynamic_array;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string owner_name;
+    std::string descriptor_storage;
+    bool can_lower_now = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -58,6 +74,16 @@ auto view_descriptor_llvm_type() -> std::string_view;
 auto dynamic_array_descriptor_llvm_type() -> std::string_view;
 
 auto dynamic_array_lowering_invariants() -> DynamicArrayLoweringInvariants;
+
+auto plan_dynamic_array_iterable_descriptor(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> DynamicArrayIterableDescriptorPlan;
+
+auto dynamic_array_iterable_descriptor_plan_report(
+    DynamicArrayIterableDescriptorPlan const& plan
+) -> std::string;
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool;
 

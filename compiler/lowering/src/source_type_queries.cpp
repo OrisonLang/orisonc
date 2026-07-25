@@ -1,5 +1,6 @@
 #include "orison/lowering/source_type_queries.hpp"
 
+#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/null_safe_plan.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
@@ -203,6 +204,63 @@ auto dynamic_array_lowering_invariants() -> DynamicArrayLoweringInvariants {
     return DynamicArrayLoweringInvariants {
         .descriptor_llvm_type = dynamic_array_descriptor_llvm_type(),
     };
+}
+
+auto plan_dynamic_array_iterable_descriptor(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> DynamicArrayIterableDescriptorPlan {
+    auto plan = DynamicArrayIterableDescriptorPlan {};
+    auto source_type_name = source_type_name_for_expression(expression, context, state);
+    if (!source_type_name.has_value()) {
+        return plan;
+    }
+
+    auto sequence = dynamic_sequence_source_type(*source_type_name);
+    if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array) {
+        plan.source_type_name = std::move(*source_type_name);
+        return plan;
+    }
+
+    plan.source_type_name = std::move(*source_type_name);
+    plan.element_source_type_name = std::move(sequence->element_source_type_name);
+
+    if (expression.kind != syntax::ExpressionKind::name) {
+        plan.kind = DynamicArrayIterableDescriptorPlanKind::computed_owner_unproven;
+        return plan;
+    }
+
+    plan.owner_name = expression.text;
+    auto storage = aggregate_storage_for_name(expression.text, state);
+    if (!storage.has_value()) {
+        plan.kind = DynamicArrayIterableDescriptorPlanKind::missing_named_descriptor_storage;
+        return plan;
+    }
+
+    plan.kind = DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner;
+    plan.descriptor_storage = std::move(*storage);
+    plan.can_lower_now = true;
+    return plan;
+}
+
+auto dynamic_array_iterable_descriptor_plan_report(
+    DynamicArrayIterableDescriptorPlan const& plan
+) -> std::string {
+    switch (plan.kind) {
+        case DynamicArrayIterableDescriptorPlanKind::not_dynamic_array:
+            return "not a DynamicArray iterable";
+        case DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner:
+            return "named DynamicArray descriptor owner '" + plan.owner_name + "' lowers from " +
+                plan.descriptor_storage;
+        case DynamicArrayIterableDescriptorPlanKind::missing_named_descriptor_storage:
+            return "named DynamicArray iterable '" + plan.owner_name +
+                "' has no bound descriptor storage";
+        case DynamicArrayIterableDescriptorPlanKind::computed_owner_unproven:
+            return "computed DynamicArray iterable of type '" + plan.source_type_name +
+                "' requires a proven single descriptor owner before lowering";
+    }
+    return "unknown DynamicArray iterable descriptor plan";
 }
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {

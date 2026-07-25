@@ -32,6 +32,9 @@ representation.
 - Shared/exclusive access is tracked as source-type metadata, not by inventing different LLVM pointer spellings.
 - The current fixed-array-only `for` lowering diagnostic remains valid until loop lowering consumes this model and
   emits descriptor-aware indexing and bounds.
+- Dynamic-array `for` lowering consumes an internal descriptor-ownership plan before emission. Named bindings with
+  bound descriptor storage are the only lowerable owned iterable shape today; computed owned iterables, including
+  ternaries and helper-returned descriptors, remain blocked until lowering can prove a single cleanup owner.
 
 ## Consequences
 

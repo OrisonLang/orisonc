@@ -372,6 +372,70 @@ int main() {
     assert(exclusive_view_sequence->permits_element_mutation);
     assert(!orison::lowering::dynamic_sequence_source_type("Array<UInt32, 3>").has_value());
 
+    state.source_type_names["items"] = "DynamicArray<UInt32>";
+    state.source_type_names["computed_left"] = "DynamicArray<UInt32>";
+    state.source_type_names["computed_right"] = "DynamicArray<UInt32>";
+    state.addressable_bindings["items"] = orison::lowering::AddressableBinding {
+        .type = orison::lowering::LoweredType {
+            .type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
+            .signedness = orison::lowering::IntegerSignedness::not_integer,
+        },
+        .storage = "%items.addr",
+    };
+
+    auto named_dynamic_array_plan =
+        orison::lowering::plan_dynamic_array_iterable_descriptor(name("items"), context, state);
+    assert(
+        named_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::named_descriptor_owner
+    );
+    assert(named_dynamic_array_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(named_dynamic_array_plan.element_source_type_name == "UInt32");
+    assert(named_dynamic_array_plan.owner_name == "items");
+    assert(named_dynamic_array_plan.descriptor_storage == "%items.addr");
+    assert(named_dynamic_array_plan.can_lower_now);
+    assert(
+        orison::lowering::dynamic_array_iterable_descriptor_plan_report(named_dynamic_array_plan)
+            .find("named DynamicArray descriptor owner 'items'") != std::string::npos
+    );
+
+    auto missing_dynamic_array_plan =
+        orison::lowering::plan_dynamic_array_iterable_descriptor(name("computed_left"), context, state);
+    assert(
+        missing_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::missing_named_descriptor_storage
+    );
+    assert(!missing_dynamic_array_plan.can_lower_now);
+    assert(
+        orison::lowering::dynamic_array_iterable_descriptor_plan_report(missing_dynamic_array_plan)
+            .find("has no bound descriptor storage") != std::string::npos
+    );
+
+    auto computed_dynamic_array_plan = orison::lowering::plan_dynamic_array_iterable_descriptor(
+        ternary(name("flag"), name("computed_left"), name("computed_right")),
+        context,
+        state
+    );
+    assert(
+        computed_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::computed_owner_unproven
+    );
+    assert(computed_dynamic_array_plan.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_dynamic_array_plan.element_source_type_name == "UInt32");
+    assert(!computed_dynamic_array_plan.can_lower_now);
+    assert(
+        orison::lowering::dynamic_array_iterable_descriptor_plan_report(computed_dynamic_array_plan)
+            .find("requires a proven single descriptor owner") != std::string::npos
+    );
+
+    auto not_dynamic_array_plan =
+        orison::lowering::plan_dynamic_array_iterable_descriptor(name("left_values"), context, state);
+    assert(
+        not_dynamic_array_plan.kind ==
+        orison::lowering::DynamicArrayIterableDescriptorPlanKind::not_dynamic_array
+    );
+    assert(!not_dynamic_array_plan.can_lower_now);
+
     auto array = orison::lowering::parse_llvm_array_type("[3 x i32]");
     assert(array.has_value());
     assert(array->element_type == "i32");
