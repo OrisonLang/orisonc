@@ -248,6 +248,13 @@ auto main() -> int {
             "element UInt32 [element address blocked] [item value blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray loop continue render plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [continue block blocked] [next index blocked] [backedge branch blocked] "
+            "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_same_owner_dynamic_array_iterable =
         pipeline.emit_llvm(
@@ -303,6 +310,13 @@ auto main() -> int {
             "computed DynamicArray element load render plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [element address blocked] [item value blocked] "
             "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_same_owner_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray loop continue render plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [continue block blocked] [next index blocked] "
+            "[backedge branch blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -370,6 +384,15 @@ auto main() -> int {
             "DynamicArray<UInt32> element UInt32 lowers-to i32 owner items "
             "address %items.computed_for.element.addr item %items.computed_for.item "
             "[element address available] [item value planned] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray loop continue render plan loop continue render planned source "
+            "DynamicArray<UInt32> element UInt32 owner items continue items.computed_for.continue "
+            "condition items.computed_for.condition index %items.computed_for.index "
+            "next-index %items.computed_for.next.index [continue block planned] "
+            "[next index planned] [backedge branch planned] [render disabled] (metadata only)"
         ) != std::string::npos
     );
 

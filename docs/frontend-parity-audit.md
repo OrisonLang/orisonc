@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the loop-continue render report.
+  The report distinguishes blocked, unproven, unlowerable, and planned-but-disabled loop continuation without enabling
+  render emission.
 - 2026-07-25: computed owned `DynamicArray<T>` loop-continue rendering now has a disabled internal plan. Proven element
   loads can record the future continue block, next-index increment, and condition backedge while keeping render emission
   disabled.
