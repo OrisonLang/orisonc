@@ -818,6 +818,51 @@ void collect_test_only_computed_dynamic_array_for_module(
     }
 }
 
+void append_if_present(std::ostringstream& output, std::string_view label, std::string const& value) {
+    if (!value.empty()) {
+        output << ' ' << label << ' ' << value;
+    }
+}
+
+void append_computed_dynamic_array_for_metadata_prefix(
+    std::ostringstream& output,
+    std::string_view report_name,
+    std::string const& enclosing_function_name,
+    std::size_t source_line,
+    std::string const& source_type_name,
+    std::string const& element_source_type_name,
+    std::string const& cleanup_owner_name
+) {
+    output << "computed DynamicArray for " << report_name;
+    append_if_present(output, "function", enclosing_function_name);
+    if (source_line != 0) {
+        output << " line " << source_line;
+    }
+    append_if_present(output, "source", source_type_name);
+    append_if_present(output, "element", element_source_type_name);
+    append_if_present(output, "owner", cleanup_owner_name);
+}
+
+template <typename Metadata, typename FormatMetadata>
+auto format_computed_dynamic_array_for_metadata_report(
+    std::vector<Metadata> const& metadata,
+    FormatMetadata&& format_metadata
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(metadata.size());
+    for (auto const& item : metadata) {
+        lines.push_back(format_metadata(item));
+    }
+    return lines;
+}
+
+template <typename Metadata>
+void append_rendered_ir(std::vector<std::string>& output, std::vector<Metadata> const& metadata) {
+    for (auto const& item : metadata) {
+        output.insert(output.end(), item.rendered_ir.begin(), item.rendered_ir.end());
+    }
+}
+
 auto collect_test_only_computed_dynamic_array_for_descriptor_renders(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
@@ -1367,22 +1412,15 @@ auto format_computed_dynamic_array_for_production_sequence_metadata(
     ComputedDynamicArrayForProductionSequenceMetadata const& metadata
 ) -> std::string {
     auto output = std::ostringstream {};
-    output << "computed DynamicArray for production sequence";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
-    if (metadata.source_line != 0) {
-        output << " line " << metadata.source_line;
-    }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "production sequence",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();
@@ -1391,46 +1429,31 @@ auto format_computed_dynamic_array_for_production_sequence_metadata(
 auto format_computed_dynamic_array_for_production_sequence_metadata_report(
     std::vector<ComputedDynamicArrayForProductionSequenceMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& sequence : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_production_sequence_metadata(sequence));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& sequence) {
+            return format_computed_dynamic_array_for_production_sequence_metadata(sequence);
+        }
+    );
 }
 
 auto format_computed_dynamic_array_for_descriptor_render_metadata(
     ComputedDynamicArrayForDescriptorRenderMetadata const& metadata
 ) -> std::string {
     auto output = std::ostringstream {};
-    output << "computed DynamicArray for descriptor render";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
-    if (metadata.source_line != 0) {
-        output << " line " << metadata.source_line;
-    }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
-    if (!metadata.descriptor_storage_name.empty()) {
-        output << " descriptor " << metadata.descriptor_storage_name;
-    }
-    if (!metadata.descriptor_value_name.empty()) {
-        output << " value " << metadata.descriptor_value_name;
-    }
-    if (!metadata.data_pointer_name.empty()) {
-        output << " data " << metadata.data_pointer_name;
-    }
-    if (!metadata.length_name.empty()) {
-        output << " length " << metadata.length_name;
-    }
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "descriptor render",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
+    append_if_present(output, "descriptor", metadata.descriptor_storage_name);
+    append_if_present(output, "value", metadata.descriptor_value_name);
+    append_if_present(output, "data", metadata.data_pointer_name);
+    append_if_present(output, "length", metadata.length_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();
@@ -1439,55 +1462,34 @@ auto format_computed_dynamic_array_for_descriptor_render_metadata(
 auto format_computed_dynamic_array_for_descriptor_render_metadata_report(
     std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& render : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_descriptor_render_metadata(render));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& render) {
+            return format_computed_dynamic_array_for_descriptor_render_metadata(render);
+        }
+    );
 }
 
 auto format_computed_dynamic_array_for_loop_control_render_metadata(
     ComputedDynamicArrayForLoopControlRenderMetadata const& metadata
 ) -> std::string {
     auto output = std::ostringstream {};
-    output << "computed DynamicArray for loop control render";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
-    if (metadata.source_line != 0) {
-        output << " line " << metadata.source_line;
-    }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
-    if (!metadata.condition_block_name.empty()) {
-        output << " condition " << metadata.condition_block_name;
-    }
-    if (!metadata.body_block_name.empty()) {
-        output << " body " << metadata.body_block_name;
-    }
-    if (!metadata.continue_block_name.empty()) {
-        output << " continue " << metadata.continue_block_name;
-    }
-    if (!metadata.exit_block_name.empty()) {
-        output << " exit " << metadata.exit_block_name;
-    }
-    if (!metadata.index_name.empty()) {
-        output << " index " << metadata.index_name;
-    }
-    if (!metadata.next_index_name.empty()) {
-        output << " next " << metadata.next_index_name;
-    }
-    if (!metadata.bounds_check_name.empty()) {
-        output << " bounds " << metadata.bounds_check_name;
-    }
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "loop control render",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
+    append_if_present(output, "condition", metadata.condition_block_name);
+    append_if_present(output, "body", metadata.body_block_name);
+    append_if_present(output, "continue", metadata.continue_block_name);
+    append_if_present(output, "exit", metadata.exit_block_name);
+    append_if_present(output, "index", metadata.index_name);
+    append_if_present(output, "next", metadata.next_index_name);
+    append_if_present(output, "bounds", metadata.bounds_check_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();
@@ -1496,12 +1498,12 @@ auto format_computed_dynamic_array_for_loop_control_render_metadata(
 auto format_computed_dynamic_array_for_loop_control_render_metadata_report(
     std::vector<ComputedDynamicArrayForLoopControlRenderMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& render : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_loop_control_render_metadata(render));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& render) {
+            return format_computed_dynamic_array_for_loop_control_render_metadata(render);
+        }
+    );
 }
 
 auto format_computed_dynamic_array_for_element_address_render_metadata(
@@ -1509,33 +1511,17 @@ auto format_computed_dynamic_array_for_element_address_render_metadata(
 ) -> std::string {
     auto output = std::ostringstream {};
     output << "computed DynamicArray for element address render";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
+    append_if_present(output, "function", metadata.enclosing_function_name);
     if (metadata.source_line != 0) {
         output << " line " << metadata.source_line;
     }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.element_llvm_type_name.empty()) {
-        output << " lowers-to " << metadata.element_llvm_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
-    if (!metadata.data_pointer_name.empty()) {
-        output << " data " << metadata.data_pointer_name;
-    }
-    if (!metadata.index_name.empty()) {
-        output << " index " << metadata.index_name;
-    }
-    if (!metadata.element_address_name.empty()) {
-        output << " address " << metadata.element_address_name;
-    }
+    append_if_present(output, "source", metadata.source_type_name);
+    append_if_present(output, "element", metadata.element_source_type_name);
+    append_if_present(output, "lowers-to", metadata.element_llvm_type_name);
+    append_if_present(output, "owner", metadata.cleanup_owner_name);
+    append_if_present(output, "data", metadata.data_pointer_name);
+    append_if_present(output, "index", metadata.index_name);
+    append_if_present(output, "address", metadata.element_address_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();
@@ -1544,12 +1530,12 @@ auto format_computed_dynamic_array_for_element_address_render_metadata(
 auto format_computed_dynamic_array_for_element_address_render_metadata_report(
     std::vector<ComputedDynamicArrayForElementAddressRenderMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& render : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_element_address_render_metadata(render));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& render) {
+            return format_computed_dynamic_array_for_element_address_render_metadata(render);
+        }
+    );
 }
 
 auto format_computed_dynamic_array_for_element_load_render_metadata(
@@ -1557,30 +1543,16 @@ auto format_computed_dynamic_array_for_element_load_render_metadata(
 ) -> std::string {
     auto output = std::ostringstream {};
     output << "computed DynamicArray for element load render";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
+    append_if_present(output, "function", metadata.enclosing_function_name);
     if (metadata.source_line != 0) {
         output << " line " << metadata.source_line;
     }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.element_llvm_type_name.empty()) {
-        output << " lowers-to " << metadata.element_llvm_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
-    if (!metadata.element_address_name.empty()) {
-        output << " address " << metadata.element_address_name;
-    }
-    if (!metadata.item_value_name.empty()) {
-        output << " item " << metadata.item_value_name;
-    }
+    append_if_present(output, "source", metadata.source_type_name);
+    append_if_present(output, "element", metadata.element_source_type_name);
+    append_if_present(output, "lowers-to", metadata.element_llvm_type_name);
+    append_if_present(output, "owner", metadata.cleanup_owner_name);
+    append_if_present(output, "address", metadata.element_address_name);
+    append_if_present(output, "item", metadata.item_value_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();
@@ -1589,46 +1561,31 @@ auto format_computed_dynamic_array_for_element_load_render_metadata(
 auto format_computed_dynamic_array_for_element_load_render_metadata_report(
     std::vector<ComputedDynamicArrayForElementLoadRenderMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& render : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_element_load_render_metadata(render));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& render) {
+            return format_computed_dynamic_array_for_element_load_render_metadata(render);
+        }
+    );
 }
 
 auto format_computed_dynamic_array_for_loop_continue_render_metadata(
     ComputedDynamicArrayForLoopContinueRenderMetadata const& metadata
 ) -> std::string {
     auto output = std::ostringstream {};
-    output << "computed DynamicArray for loop continue render";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
-    if (metadata.source_line != 0) {
-        output << " line " << metadata.source_line;
-    }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
-    if (!metadata.continue_block_name.empty()) {
-        output << " continue " << metadata.continue_block_name;
-    }
-    if (!metadata.condition_block_name.empty()) {
-        output << " condition " << metadata.condition_block_name;
-    }
-    if (!metadata.index_name.empty()) {
-        output << " index " << metadata.index_name;
-    }
-    if (!metadata.next_index_name.empty()) {
-        output << " next " << metadata.next_index_name;
-    }
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "loop continue render",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
+    append_if_present(output, "continue", metadata.continue_block_name);
+    append_if_present(output, "condition", metadata.condition_block_name);
+    append_if_present(output, "index", metadata.index_name);
+    append_if_present(output, "next", metadata.next_index_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();
@@ -1637,37 +1594,28 @@ auto format_computed_dynamic_array_for_loop_continue_render_metadata(
 auto format_computed_dynamic_array_for_loop_continue_render_metadata_report(
     std::vector<ComputedDynamicArrayForLoopContinueRenderMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& render : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_loop_continue_render_metadata(render));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& render) {
+            return format_computed_dynamic_array_for_loop_continue_render_metadata(render);
+        }
+    );
 }
 
 auto format_computed_dynamic_array_for_loop_render_sequence_metadata(
     ComputedDynamicArrayForLoopRenderSequenceMetadata const& metadata
 ) -> std::string {
     auto output = std::ostringstream {};
-    output << "computed DynamicArray for loop render sequence";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
-    if (metadata.source_line != 0) {
-        output << " line " << metadata.source_line;
-    }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
-    if (!metadata.body_block_name.empty()) {
-        output << " body " << metadata.body_block_name;
-    }
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "loop render sequence",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
+    append_if_present(output, "body", metadata.body_block_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();
@@ -1676,40 +1624,29 @@ auto format_computed_dynamic_array_for_loop_render_sequence_metadata(
 auto format_computed_dynamic_array_for_loop_render_sequence_metadata_report(
     std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& sequence : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_loop_render_sequence_metadata(sequence));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& sequence) {
+            return format_computed_dynamic_array_for_loop_render_sequence_metadata(sequence);
+        }
+    );
 }
 
 auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata(
     ComputedDynamicArrayForLoopExitCleanupMetadata const& metadata
 ) -> std::string {
     auto output = std::ostringstream {};
-    output << "computed DynamicArray for loop exit cleanup";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
-    if (metadata.source_line != 0) {
-        output << " line " << metadata.source_line;
-    }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
-    if (!metadata.exit_block_name.empty()) {
-        output << " exit " << metadata.exit_block_name;
-    }
-    if (!metadata.loop_exit_cleanup_owner_name.empty()) {
-        output << " resumes " << metadata.loop_exit_cleanup_owner_name;
-    }
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "loop exit cleanup",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
+    append_if_present(output, "exit", metadata.exit_block_name);
+    append_if_present(output, "resumes", metadata.loop_exit_cleanup_owner_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();
@@ -1718,34 +1655,27 @@ auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata(
 auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata_report(
     std::vector<ComputedDynamicArrayForLoopExitCleanupMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& cleanup : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_loop_exit_cleanup_metadata(cleanup));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& cleanup) {
+            return format_computed_dynamic_array_for_loop_exit_cleanup_metadata(cleanup);
+        }
+    );
 }
 
 auto format_computed_dynamic_array_for_production_emission_gate_metadata(
     ComputedDynamicArrayForProductionEmissionGateMetadata const& metadata
 ) -> std::string {
     auto output = std::ostringstream {};
-    output << "computed DynamicArray for production emission gate";
-    if (!metadata.enclosing_function_name.empty()) {
-        output << " function " << metadata.enclosing_function_name;
-    }
-    if (metadata.source_line != 0) {
-        output << " line " << metadata.source_line;
-    }
-    if (!metadata.source_type_name.empty()) {
-        output << " source " << metadata.source_type_name;
-    }
-    if (!metadata.element_source_type_name.empty()) {
-        output << " element " << metadata.element_source_type_name;
-    }
-    if (!metadata.cleanup_owner_name.empty()) {
-        output << " owner " << metadata.cleanup_owner_name;
-    }
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "production emission gate",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
     output << (metadata.ownership_ready ? " [ownership ready]" : " [ownership missing]");
     output << (metadata.loop_render_ready ? " [loop render ready]" : " [loop render missing]");
     output << (metadata.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup missing]");
@@ -1761,12 +1691,12 @@ auto format_computed_dynamic_array_for_production_emission_gate_metadata(
 auto format_computed_dynamic_array_for_production_emission_gate_metadata_report(
     std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> const& metadata
 ) -> std::vector<std::string> {
-    auto lines = std::vector<std::string> {};
-    lines.reserve(metadata.size());
-    for (auto const& gate : metadata) {
-        lines.push_back(format_computed_dynamic_array_for_production_emission_gate_metadata(gate));
-    }
-    return lines;
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& gate) {
+            return format_computed_dynamic_array_for_production_emission_gate_metadata(gate);
+        }
+    );
 }
 
 auto LlvmIrEmissionResult::has_errors() const -> bool {
@@ -2052,101 +1982,74 @@ auto emit_module(
     if (options.test_only_collect_computed_dynamic_array_for_descriptor_renders) {
         result.test_only_computed_dynamic_array_for_descriptor_renders =
             collect_test_only_computed_dynamic_array_for_descriptor_renders(module, context);
-        for (auto const& render : result.test_only_computed_dynamic_array_for_descriptor_renders) {
-            result.test_only_computed_dynamic_array_for_descriptor_render_ir.insert(
-                result.test_only_computed_dynamic_array_for_descriptor_render_ir.end(),
-                render.rendered_ir.begin(),
-                render.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_descriptor_render_ir,
+            result.test_only_computed_dynamic_array_for_descriptor_renders
+        );
     }
     if (options.test_only_collect_computed_dynamic_array_for_loop_control_renders) {
         result.test_only_computed_dynamic_array_for_loop_control_renders =
             collect_test_only_computed_dynamic_array_for_loop_control_renders(module, context);
-        for (auto const& render : result.test_only_computed_dynamic_array_for_loop_control_renders) {
-            result.test_only_computed_dynamic_array_for_loop_control_render_ir.insert(
-                result.test_only_computed_dynamic_array_for_loop_control_render_ir.end(),
-                render.rendered_ir.begin(),
-                render.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_loop_control_render_ir,
+            result.test_only_computed_dynamic_array_for_loop_control_renders
+        );
     }
     if (options.test_only_collect_computed_dynamic_array_for_element_address_renders) {
         result.test_only_computed_dynamic_array_for_element_address_renders =
             collect_test_only_computed_dynamic_array_for_element_address_renders(module, context);
-        for (auto const& render : result.test_only_computed_dynamic_array_for_element_address_renders) {
-            result.test_only_computed_dynamic_array_for_element_address_render_ir.insert(
-                result.test_only_computed_dynamic_array_for_element_address_render_ir.end(),
-                render.rendered_ir.begin(),
-                render.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_element_address_render_ir,
+            result.test_only_computed_dynamic_array_for_element_address_renders
+        );
     }
     if (options.test_only_collect_computed_dynamic_array_for_element_load_renders) {
         result.test_only_computed_dynamic_array_for_element_load_renders =
             collect_test_only_computed_dynamic_array_for_element_load_renders(module, context);
-        for (auto const& render : result.test_only_computed_dynamic_array_for_element_load_renders) {
-            result.test_only_computed_dynamic_array_for_element_load_render_ir.insert(
-                result.test_only_computed_dynamic_array_for_element_load_render_ir.end(),
-                render.rendered_ir.begin(),
-                render.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_element_load_render_ir,
+            result.test_only_computed_dynamic_array_for_element_load_renders
+        );
     }
     if (options.test_only_collect_computed_dynamic_array_for_loop_continue_renders) {
         result.test_only_computed_dynamic_array_for_loop_continue_renders =
             collect_test_only_computed_dynamic_array_for_loop_continue_renders(module, context);
-        for (auto const& render : result.test_only_computed_dynamic_array_for_loop_continue_renders) {
-            result.test_only_computed_dynamic_array_for_loop_continue_render_ir.insert(
-                result.test_only_computed_dynamic_array_for_loop_continue_render_ir.end(),
-                render.rendered_ir.begin(),
-                render.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_loop_continue_render_ir,
+            result.test_only_computed_dynamic_array_for_loop_continue_renders
+        );
     }
     if (options.test_only_collect_computed_dynamic_array_for_loop_render_sequences) {
         result.test_only_computed_dynamic_array_for_loop_render_sequences =
             collect_test_only_computed_dynamic_array_for_loop_render_sequences(module, context);
-        for (auto const& sequence : result.test_only_computed_dynamic_array_for_loop_render_sequences) {
-            result.test_only_computed_dynamic_array_for_loop_render_sequence_ir.insert(
-                result.test_only_computed_dynamic_array_for_loop_render_sequence_ir.end(),
-                sequence.rendered_ir.begin(),
-                sequence.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_loop_render_sequence_ir,
+            result.test_only_computed_dynamic_array_for_loop_render_sequences
+        );
     }
     if (options.test_only_collect_computed_dynamic_array_for_loop_exit_cleanups) {
         result.test_only_computed_dynamic_array_for_loop_exit_cleanups =
             collect_test_only_computed_dynamic_array_for_loop_exit_cleanups(module, context);
-        for (auto const& cleanup : result.test_only_computed_dynamic_array_for_loop_exit_cleanups) {
-            result.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir.insert(
-                result.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir.end(),
-                cleanup.rendered_ir.begin(),
-                cleanup.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir,
+            result.test_only_computed_dynamic_array_for_loop_exit_cleanups
+        );
     }
     if (options.test_only_collect_computed_dynamic_array_for_production_emission_gates) {
         result.test_only_computed_dynamic_array_for_production_emission_gates =
             collect_test_only_computed_dynamic_array_for_production_emission_gates(module, context);
-        for (auto const& gate : result.test_only_computed_dynamic_array_for_production_emission_gates) {
-            result.test_only_computed_dynamic_array_for_production_emission_gate_ir.insert(
-                result.test_only_computed_dynamic_array_for_production_emission_gate_ir.end(),
-                gate.rendered_ir.begin(),
-                gate.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_production_emission_gate_ir,
+            result.test_only_computed_dynamic_array_for_production_emission_gates
+        );
     }
     if (options.test_only_collect_computed_dynamic_array_for_production_sequences) {
         result.test_only_computed_dynamic_array_for_production_sequences =
             collect_test_only_computed_dynamic_array_for_production_sequences(module, context);
-        for (auto const& sequence : result.test_only_computed_dynamic_array_for_production_sequences) {
-            result.test_only_computed_dynamic_array_for_production_sequence_ir.insert(
-                result.test_only_computed_dynamic_array_for_production_sequence_ir.end(),
-                sequence.rendered_ir.begin(),
-                sequence.rendered_ir.end()
-            );
-        }
+        append_rendered_ir(
+            result.test_only_computed_dynamic_array_for_production_sequence_ir,
+            result.test_only_computed_dynamic_array_for_production_sequences
+        );
     }
     if (options.test_only_render_dynamic_array_element_drop_walks ||
         dynamic_array_cleanup_emission_enabled(options)) {

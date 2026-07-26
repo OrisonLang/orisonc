@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` report formatting and rendered-snippet aggregation now share internal
+  lowering helpers, preserving existing audit text while reducing repetition before the next production-emission seam.
 - 2026-07-26: pipeline lowering-emission reports now carry computed owned `DynamicArray<T>` `for`
   production-sequence report lines, including intentionally rejected lowering attempts and audit output.
 - 2026-07-26: driver CLI smoke coverage now pins `--dynamic-array-cleanup-audit` output for computed local same-owner
