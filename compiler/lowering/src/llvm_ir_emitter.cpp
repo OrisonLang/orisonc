@@ -730,9 +730,10 @@ void bind_test_only_dynamic_array_local_for_computed_for_collection(
 
 void collect_test_only_computed_dynamic_array_for_production_sequences(
     syntax::StatementSyntax const& statement,
+    std::string_view enclosing_function_name,
     LoweringContext const& context,
     FunctionLoweringState& state,
-    std::vector<std::string>& snippets
+    std::vector<ComputedDynamicArrayForProductionSequenceMetadata>& sequences
 ) {
     bind_test_only_dynamic_array_local_for_computed_for_collection(statement, context, state);
     if (statement.kind == syntax::StatementKind::for_statement) {
@@ -744,24 +745,33 @@ void collect_test_only_computed_dynamic_array_for_production_sequences(
         if (gate.kind ==
                 ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
             gate.production_sequence_render_planned) {
-            snippets.insert(snippets.end(), gate.rendered_ir.begin(), gate.rendered_ir.end());
+            sequences.push_back(ComputedDynamicArrayForProductionSequenceMetadata {
+                .enclosing_function_name = std::string {enclosing_function_name},
+                .source_line = statement.line,
+                .cleanup_owner_name = gate.cleanup_owner_name,
+                .source_type_name = gate.source_type_name,
+                .element_source_type_name = gate.element_source_type_name,
+                .rendered_ir = gate.rendered_ir,
+            });
         }
     }
 
     for (auto const& nested_statement : statement.nested_statements) {
         collect_test_only_computed_dynamic_array_for_production_sequences(
             nested_statement,
+            enclosing_function_name,
             context,
             state,
-            snippets
+            sequences
         );
     }
     for (auto const& alternate_statement : statement.alternate_statements) {
         collect_test_only_computed_dynamic_array_for_production_sequences(
             alternate_statement,
+            enclosing_function_name,
             context,
             state,
-            snippets
+            sequences
         );
     }
     for (auto const& switch_case : statement.switch_cases) {
@@ -769,9 +779,10 @@ void collect_test_only_computed_dynamic_array_for_production_sequences(
             if (case_statement != nullptr) {
                 collect_test_only_computed_dynamic_array_for_production_sequences(
                     *case_statement,
+                    enclosing_function_name,
                     context,
                     state,
-                    snippets
+                    sequences
                 );
             }
         }
@@ -781,7 +792,7 @@ void collect_test_only_computed_dynamic_array_for_production_sequences(
 void collect_test_only_computed_dynamic_array_for_production_sequences(
     syntax::FunctionSyntax const& function,
     LoweringContext const& context,
-    std::vector<std::string>& snippets
+    std::vector<ComputedDynamicArrayForProductionSequenceMetadata>& sequences
 ) {
     auto state = FunctionLoweringState {};
     for (auto const& parameter : function.parameters) {
@@ -792,9 +803,10 @@ void collect_test_only_computed_dynamic_array_for_production_sequences(
     for (auto const& statement : function.body_statements) {
         collect_test_only_computed_dynamic_array_for_production_sequences(
             statement,
+            function.name,
             context,
             state,
-            snippets
+            sequences
         );
     }
 }
@@ -802,22 +814,22 @@ void collect_test_only_computed_dynamic_array_for_production_sequences(
 auto collect_test_only_computed_dynamic_array_for_production_sequences(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
-) -> std::vector<std::string> {
-    auto snippets = std::vector<std::string> {};
+) -> std::vector<ComputedDynamicArrayForProductionSequenceMetadata> {
+    auto sequences = std::vector<ComputedDynamicArrayForProductionSequenceMetadata> {};
     for (auto const& function : module.functions) {
-        collect_test_only_computed_dynamic_array_for_production_sequences(function, context, snippets);
+        collect_test_only_computed_dynamic_array_for_production_sequences(function, context, sequences);
     }
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
-            collect_test_only_computed_dynamic_array_for_production_sequences(method, context, snippets);
+            collect_test_only_computed_dynamic_array_for_production_sequences(method, context, sequences);
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
-            collect_test_only_computed_dynamic_array_for_production_sequences(method, context, snippets);
+            collect_test_only_computed_dynamic_array_for_production_sequences(method, context, sequences);
         }
     }
-    return snippets;
+    return sequences;
 }
 
 auto collect_dynamic_array_runtime_operations(
@@ -1210,8 +1222,15 @@ auto emit_module(
         }
     }
     if (options.test_only_collect_computed_dynamic_array_for_production_sequences) {
-        result.test_only_computed_dynamic_array_for_production_sequence_ir =
+        result.test_only_computed_dynamic_array_for_production_sequences =
             collect_test_only_computed_dynamic_array_for_production_sequences(module, context);
+        for (auto const& sequence : result.test_only_computed_dynamic_array_for_production_sequences) {
+            result.test_only_computed_dynamic_array_for_production_sequence_ir.insert(
+                result.test_only_computed_dynamic_array_for_production_sequence_ir.end(),
+                sequence.rendered_ir.begin(),
+                sequence.rendered_ir.end()
+            );
+        }
     }
     if (options.test_only_render_dynamic_array_element_drop_walks ||
         dynamic_array_cleanup_emission_enabled(options)) {

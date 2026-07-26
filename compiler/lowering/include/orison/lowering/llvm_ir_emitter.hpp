@@ -16,6 +16,15 @@
 
 namespace orison::lowering {
 
+struct ComputedDynamicArrayForProductionSequenceMetadata {
+    std::string enclosing_function_name;
+    std::size_t source_line = 0;
+    std::string cleanup_owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::vector<std::string> rendered_ir;
+};
+
 struct LlvmIrEmissionResult {
     diagnostics::DiagnosticBag diagnostics;
     std::string ir_text;
@@ -47,6 +56,8 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> test_only_dynamic_array_cleanup_sequence_ir;
     std::vector<std::string> test_only_dynamic_array_descriptor_load_cleanup_sequence_ir;
     std::vector<std::string> test_only_dynamic_array_element_drop_walk_ir;
+    std::vector<ComputedDynamicArrayForProductionSequenceMetadata>
+        test_only_computed_dynamic_array_for_production_sequences;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 

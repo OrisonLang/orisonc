@@ -1984,6 +1984,25 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
 
     assert(computed_local_same_owner_for.has_errors());
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
+    auto const& computed_local_same_owner_sequence =
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.front();
+    assert(computed_local_same_owner_sequence.enclosing_function_name == "sum_words");
+    assert(computed_local_same_owner_sequence.source_line == 6);
+    assert(computed_local_same_owner_sequence.cleanup_owner_name == "items");
+    assert(computed_local_same_owner_sequence.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_local_same_owner_sequence.element_source_type_name == "UInt32");
+    assert(computed_local_same_owner_sequence.rendered_ir.size() == 16);
+    assert(
+        computed_local_same_owner_sequence.rendered_ir[0] ==
+        "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(computed_local_same_owner_sequence.rendered_ir[8] == "items.computed_for.body:\n");
+    assert(computed_local_same_owner_sequence.rendered_ir[14] == "items.computed_for.exit:\n");
+    assert(
+        computed_local_same_owner_sequence.rendered_ir[15] ==
+        "  ; cleanup ownership resumes with items\n"
+    );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir.size() == 16);
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[0] ==

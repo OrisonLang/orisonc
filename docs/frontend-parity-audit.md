@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` `for` production-sequence metadata now records per-gate provenance:
+  function name, source line, cleanup owner, source type, element type, and aggregated snippets.
 - 2026-07-26: LLVM emission now has a test-only metadata collector for ready computed owned `DynamicArray<T>` `for`
   production gates. The collector records aggregated snippets on the result but still keeps them out of module IR.
 - 2026-07-26: computed owned `DynamicArray<T>` production-emission gates now expose the aggregated loop-render and
