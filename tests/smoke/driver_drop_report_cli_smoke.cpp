@@ -929,6 +929,23 @@ int main() {
         }
     );
 
+    auto dynamic_array_computed_local_same_owner_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
+        "dynamic_array_computed_local_same_owner_iterable_rejected.or";
+    auto dynamic_array_computed_local_same_owner_audit =
+        run_dynamic_array_cleanup_audit(app, dynamic_array_computed_local_same_owner_path);
+    assert_success_with_stdout_contains_in_order(
+        dynamic_array_computed_local_same_owner_audit,
+        {
+            "dynamic array descriptor origin DynamicArray<UInt32>",
+            "dynamic array cleanup emission capability blocked",
+            "[descriptor storage missing]",
+            "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
+            "element UInt32 owner items snippets 16 (metadata only)",
+            "dynamic array cleanup production readiness blocked",
+        }
+    );
+
     auto multi_planned_drop_report = run_planned_drops(app, multi_drop_readiness_fixture_path);
     assert_success_with_stdout_contains(
         multi_planned_drop_report,
