@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` element-address rendering now has a disabled internal plan. Proven
+  loop-control renders can record the future element LLVM type, descriptor data pointer, loop index, and element
+  `getelementptr` while keeping render emission disabled.
 - 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the loop-control render report.
   The report distinguishes blocked, unproven, and planned-but-disabled entry branch, index phi, bounds check, and loop
   branch rendering without enabling render emission.

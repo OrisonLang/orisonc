@@ -931,6 +931,137 @@ auto computed_dynamic_array_iterable_loop_control_render_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_element_address_render(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableElementAddressRenderPlan {
+    auto plan = ComputedDynamicArrayIterableElementAddressRenderPlan {};
+    plan.loop_control_render_plan = plan_computed_dynamic_array_iterable_loop_control_render(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.loop_control_render_plan.source_type_name;
+    plan.element_source_type_name = plan.loop_control_render_plan.element_source_type_name;
+    plan.cleanup_owner_name = plan.loop_control_render_plan.cleanup_owner_name;
+    plan.data_pointer_name = plan.loop_control_render_plan.descriptor_render_plan.data_pointer_name;
+    plan.index_name = plan.loop_control_render_plan.index_name;
+    plan.render_enabled = false;
+
+    switch (plan.loop_control_render_plan.kind) {
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableLoopControlRenderPlanKind::loop_control_render_planned:
+            break;
+    }
+
+    auto element_llvm_type = llvm_type_for_source_type_name(plan.element_source_type_name, context);
+    if (!element_llvm_type.has_value()) {
+        plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_type_unlowerable;
+        return plan;
+    }
+
+    if (plan.cleanup_owner_name.empty() || plan.data_pointer_name.empty() || plan.index_name.empty()) {
+        plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven;
+        return plan;
+    }
+
+    plan.element_llvm_type_name = *element_llvm_type;
+    plan.element_address_name = "%" + plan.cleanup_owner_name + ".computed_for.element.addr";
+    auto descriptor_cleanup_plan = DynamicArrayDescriptorCleanupPlan {
+        .owner_name = plan.cleanup_owner_name,
+        .source_type_name = plan.source_type_name,
+        .element_source_type_name = plan.element_source_type_name,
+        .element_llvm_type = plan.element_llvm_type_name,
+    };
+    plan.rendered_ir.push_back(
+        emit_dynamic_array_element_address(
+            descriptor_cleanup_plan,
+            plan.element_address_name,
+            plan.data_pointer_name,
+            plan.index_name
+        )
+    );
+    plan.data_pointer_available = true;
+    plan.index_available = true;
+    plan.element_address_planned = true;
+    plan.kind = ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_address_render_planned;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_element_address_render_plan_report(
+    ComputedDynamicArrayIterableElementAddressRenderPlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray element address render plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_type_unlowerable:
+            output += "element type unlowerable";
+            break;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_address_render_planned:
+            output += "element address render planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.element_llvm_type_name.empty()) {
+        output += " lowers-to ";
+        output += plan.element_llvm_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    if (!plan.data_pointer_name.empty()) {
+        output += " data ";
+        output += plan.data_pointer_name;
+    }
+    if (!plan.index_name.empty()) {
+        output += " index ";
+        output += plan.index_name;
+    }
+    if (!plan.element_address_name.empty()) {
+        output += " address ";
+        output += plan.element_address_name;
+    }
+    output += plan.data_pointer_available ? " [data pointer available]" :
+        " [data pointer blocked]";
+    output += plan.index_available ? " [index available]" : " [index blocked]";
+    output += plan.element_address_planned ? " [element address planned]" :
+        " [element address blocked]";
+    output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

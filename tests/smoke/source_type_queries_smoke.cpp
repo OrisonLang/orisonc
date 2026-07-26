@@ -588,6 +588,26 @@ int main() {
             mismatched_computed_loop_control_render
         ).find("ownership join blocked") != std::string::npos
     );
+    auto mismatched_computed_element_address_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_element_address_render(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            state
+        );
+    assert(
+        mismatched_computed_element_address_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableElementAddressRenderPlanKind::ownership_join_blocked
+    );
+    assert(mismatched_computed_element_address_render.rendered_ir.empty());
+    assert(!mismatched_computed_element_address_render.data_pointer_available);
+    assert(!mismatched_computed_element_address_render.index_available);
+    assert(!mismatched_computed_element_address_render.element_address_planned);
+    assert(!mismatched_computed_element_address_render.render_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_element_address_render_plan_report(
+            mismatched_computed_element_address_render
+        ).find("ownership join blocked") != std::string::npos
+    );
 
     auto proven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -745,6 +765,46 @@ int main() {
         std::string::npos
     );
     assert(proven_computed_loop_control_render_report.find("[render disabled]") != std::string::npos);
+    auto proven_computed_element_address_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_element_address_render(
+            ternary(name("flag"), name("items"), name("items")),
+            context,
+            state
+        );
+    assert(
+        proven_computed_element_address_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableElementAddressRenderPlanKind::
+            element_address_render_planned
+    );
+    assert(proven_computed_element_address_render.cleanup_owner_name == "items");
+    assert(proven_computed_element_address_render.element_source_type_name == "UInt32");
+    assert(proven_computed_element_address_render.element_llvm_type_name == "i32");
+    assert(proven_computed_element_address_render.data_pointer_name == "%items.computed_for.data");
+    assert(proven_computed_element_address_render.index_name == "%items.computed_for.index");
+    assert(proven_computed_element_address_render.element_address_name == "%items.computed_for.element.addr");
+    assert(proven_computed_element_address_render.rendered_ir.size() == 1);
+    assert(
+        proven_computed_element_address_render.rendered_ir[0] ==
+        "  %items.computed_for.element.addr = getelementptr i32, ptr %items.computed_for.data, "
+        "i64 %items.computed_for.index\n"
+    );
+    assert(proven_computed_element_address_render.data_pointer_available);
+    assert(proven_computed_element_address_render.index_available);
+    assert(proven_computed_element_address_render.element_address_planned);
+    assert(!proven_computed_element_address_render.render_enabled);
+    auto proven_computed_element_address_render_report =
+        orison::lowering::computed_dynamic_array_iterable_element_address_render_plan_report(
+            proven_computed_element_address_render
+        );
+    assert(
+        proven_computed_element_address_render_report.find("element address render planned") !=
+        std::string::npos
+    );
+    assert(
+        proven_computed_element_address_render_report.find("lowers-to i32") !=
+        std::string::npos
+    );
+    assert(proven_computed_element_address_render_report.find("[render disabled]") != std::string::npos);
 
     auto unproven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -843,6 +903,27 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_loop_control_render_plan_report(
             unproven_computed_loop_control_render
+        ).find("cleanup owner unproven") != std::string::npos
+    );
+    auto unproven_computed_element_address_render =
+        orison::lowering::plan_computed_dynamic_array_iterable_element_address_render(
+            ternary(name("flag"), name("predicted_items"), name("predicted_items")),
+            context,
+            state
+        );
+    assert(
+        unproven_computed_element_address_render.kind ==
+        orison::lowering::ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven
+    );
+    assert(unproven_computed_element_address_render.cleanup_owner_name == "predicted_items");
+    assert(unproven_computed_element_address_render.rendered_ir.empty());
+    assert(!unproven_computed_element_address_render.data_pointer_available);
+    assert(!unproven_computed_element_address_render.index_available);
+    assert(!unproven_computed_element_address_render.element_address_planned);
+    assert(!unproven_computed_element_address_render.render_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_element_address_render_plan_report(
+            unproven_computed_element_address_render
         ).find("cleanup owner unproven") != std::string::npos
     );
 

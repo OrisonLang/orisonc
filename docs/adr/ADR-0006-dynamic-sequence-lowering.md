@@ -70,6 +70,9 @@ representation.
   while keeping render emission disabled.
 - Dynamic-array `for` rejection diagnostics now include the computed loop-control render report, so computed owned
   iterable failures show whether loop branch/bounds control is blocked, unproven, or planned-but-disabled.
+- Computed owned dynamic-array element-address rendering now has a disabled internal plan for proven loop-control
+  renders. It records the element LLVM type, descriptor data pointer, loop index, and `getelementptr` element address
+  while keeping render emission disabled.
 
 ## Consequences
 
