@@ -1862,6 +1862,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "[render disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_parameter_for.render(path.string()).find(
+            "computed DynamicArray production emission gate plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [ownership blocked] [loop render blocked] [exit cleanup blocked] "
+            "[production emission disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_same_owner_parameter_for = lower_source(
         path,
@@ -1949,6 +1956,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "computed DynamicArray loop exit cleanup plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [exit block blocked] [cleanup blocked] "
             "[cleanup sequence disabled] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_same_owner_parameter_for.render(path.string()).find(
+            "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [ownership blocked] [loop render blocked] [exit cleanup blocked] "
+            "[production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -2050,6 +2064,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "DynamicArray<UInt32> element UInt32 owner items exit items.computed_for.exit "
             "resumes items [exit block planned] [cleanup resumes] [cleanup sequence disabled] "
             "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_for.render(path.string()).find(
+            "computed DynamicArray production emission gate plan production emission gate planned source "
+            "DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
+            "[exit cleanup ready] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 }

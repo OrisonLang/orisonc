@@ -771,6 +771,13 @@ auto main() -> int {
             "[render disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_parameter_for.error_text.find(
+            "computed DynamicArray production emission gate plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [ownership blocked] [loop render blocked] [exit cleanup blocked] "
+            "[production emission disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_dynamic_array_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_same_owner_for_rejected.or";
@@ -860,6 +867,13 @@ auto main() -> int {
             "computed DynamicArray loop exit cleanup plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [exit block blocked] [cleanup blocked] "
             "[cleanup sequence disabled] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_same_owner_for.error_text.find(
+            "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [ownership blocked] [loop render blocked] [exit cleanup blocked] "
+            "[production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -966,6 +980,13 @@ auto main() -> int {
             "DynamicArray<UInt32> element UInt32 owner items exit items.computed_for.exit "
             "resumes items [exit block planned] [cleanup resumes] [cleanup sequence disabled] "
             "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for.error_text.find(
+            "computed DynamicArray production emission gate plan production emission gate planned source "
+            "DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
+            "[exit cleanup ready] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 

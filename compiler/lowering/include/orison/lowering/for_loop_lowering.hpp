@@ -214,6 +214,16 @@ auto lower_sequence_for_statement(
             diagnostic_detail += computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
                 computed_loop_exit_cleanup_plan
             );
+            auto computed_production_emission_gate_plan =
+                plan_computed_dynamic_array_iterable_production_emission_gate(
+                    statement.expression,
+                    context.lowering,
+                    session.state
+                );
+            diagnostic_detail += "; ";
+            diagnostic_detail += computed_dynamic_array_iterable_production_emission_gate_plan_report(
+                computed_production_emission_gate_plan
+            );
         }
         diagnostics.error(
             statement.line,

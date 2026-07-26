@@ -96,6 +96,8 @@ representation.
   iterable failures expose exit-block and cleanup-resumption readiness without enabling cleanup emission.
 - Computed owned dynamic-array loop lowering now has a disabled production emission gate. The gate consumes ownership,
   composed loop rendering, and loop-exit cleanup readiness, then still records production emission as disabled.
+- Dynamic-array `for` rejection diagnostics now include the computed production-emission gate report, so computed owned
+  iterable failures show whether the production gate is blocked, ready-but-disabled, or still missing prerequisites.
 
 ## Consequences
 
