@@ -242,6 +242,12 @@ auto main() -> int {
             "[render disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray element load render plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [element address blocked] [item value blocked] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_same_owner_dynamic_array_iterable =
         pipeline.emit_llvm(
@@ -289,6 +295,13 @@ auto main() -> int {
         computed_same_owner_dynamic_array_iterable.error_text.find(
             "computed DynamicArray element address render plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [data pointer blocked] [index blocked] [element address blocked] "
+            "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_same_owner_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray element load render plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [element address blocked] [item value blocked] "
             "[render disabled] (metadata only)"
         ) != std::string::npos
     );
@@ -349,6 +362,14 @@ auto main() -> int {
             "index %items.computed_for.index address %items.computed_for.element.addr "
             "[data pointer available] [index available] [element address planned] "
             "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray element load render plan element load render planned source "
+            "DynamicArray<UInt32> element UInt32 lowers-to i32 owner items "
+            "address %items.computed_for.element.addr item %items.computed_for.item "
+            "[element address available] [item value planned] [render disabled] (metadata only)"
         ) != std::string::npos
     );
 
