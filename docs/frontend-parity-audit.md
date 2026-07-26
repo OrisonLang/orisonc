@@ -37,6 +37,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   production-sequence report lines, including intentionally rejected lowering attempts and audit output.
 - 2026-07-26: driver CLI smoke coverage now pins `--dynamic-array-cleanup-audit` output for computed local same-owner
   `DynamicArray<T>` `for` production-sequence report lines end-to-end.
+- 2026-07-26: computed owned `DynamicArray<T>` `for` descriptor-render metadata is now surfaced separately from the
+  full production sequence through lowering, pipeline, and driver audit reports.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` production-sequence metadata now has a report formatter that
   surfaces function, line, owner, source type, element type, and snippet count for audit consumers.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` production-sequence metadata now records per-gate provenance:

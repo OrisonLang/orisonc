@@ -940,6 +940,9 @@ int main() {
             "dynamic array descriptor origin DynamicArray<UInt32>",
             "dynamic array cleanup emission capability blocked",
             "[descriptor storage missing]",
+            "computed DynamicArray for descriptor render function sum_words line 6 source DynamicArray<UInt32> "
+            "element UInt32 owner items descriptor %items.addr value %items.computed_for.descriptor "
+            "data %items.computed_for.data length %items.computed_for.length snippets 3 (metadata only)",
             "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
             "element UInt32 owner items snippets 16 (metadata only)",
             "dynamic array cleanup production readiness blocked",

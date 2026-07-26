@@ -108,6 +108,9 @@ representation.
   surfaces can consume provenance without inspecting raw metadata vectors.
 - Pipeline lowering-emission reports now carry computed dynamic-array `for` production-sequence reports, including
   intentionally rejected lowering attempts and the existing dynamic-array audit bundle.
+- Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
+  production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
+  enabled.
 
 ## Consequences
 

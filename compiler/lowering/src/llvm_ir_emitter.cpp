@@ -789,6 +789,116 @@ void collect_test_only_computed_dynamic_array_for_production_sequences(
     }
 }
 
+void collect_test_only_computed_dynamic_array_for_descriptor_renders(
+    syntax::StatementSyntax const& statement,
+    std::string_view enclosing_function_name,
+    LoweringContext const& context,
+    FunctionLoweringState& state,
+    std::vector<ComputedDynamicArrayForDescriptorRenderMetadata>& renders
+) {
+    bind_test_only_dynamic_array_local_for_computed_for_collection(statement, context, state);
+    if (statement.kind == syntax::StatementKind::for_statement) {
+        auto plan = plan_computed_dynamic_array_iterable_descriptor_render(
+            statement.expression,
+            context,
+            state
+        );
+        if (plan.kind ==
+                ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned &&
+            plan.descriptor_load_planned &&
+            plan.data_projection_planned &&
+            plan.length_projection_planned) {
+            renders.push_back(ComputedDynamicArrayForDescriptorRenderMetadata {
+                .enclosing_function_name = std::string {enclosing_function_name},
+                .source_line = statement.line,
+                .cleanup_owner_name = plan.cleanup_owner_name,
+                .source_type_name = plan.source_type_name,
+                .element_source_type_name = plan.element_source_type_name,
+                .descriptor_storage_name = plan.descriptor_storage_name,
+                .descriptor_value_name = plan.descriptor_value_name,
+                .data_pointer_name = plan.data_pointer_name,
+                .length_name = plan.length_name,
+                .rendered_ir = plan.rendered_ir,
+            });
+        }
+    }
+
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_test_only_computed_dynamic_array_for_descriptor_renders(
+            nested_statement,
+            enclosing_function_name,
+            context,
+            state,
+            renders
+        );
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_test_only_computed_dynamic_array_for_descriptor_renders(
+            alternate_statement,
+            enclosing_function_name,
+            context,
+            state,
+            renders
+        );
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_test_only_computed_dynamic_array_for_descriptor_renders(
+                    *case_statement,
+                    enclosing_function_name,
+                    context,
+                    state,
+                    renders
+                );
+            }
+        }
+    }
+}
+
+void collect_test_only_computed_dynamic_array_for_descriptor_renders(
+    syntax::FunctionSyntax const& function,
+    LoweringContext const& context,
+    std::vector<ComputedDynamicArrayForDescriptorRenderMetadata>& renders
+) {
+    auto state = FunctionLoweringState {};
+    for (auto const& parameter : function.parameters) {
+        if (!parameter.name.empty() && !parameter.type.name.empty()) {
+            state.source_type_names[parameter.name] = render_source_type_name(parameter.type);
+        }
+    }
+    for (auto const& statement : function.body_statements) {
+        collect_test_only_computed_dynamic_array_for_descriptor_renders(
+            statement,
+            function.name,
+            context,
+            state,
+            renders
+        );
+    }
+}
+
+auto collect_test_only_computed_dynamic_array_for_descriptor_renders(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> {
+    auto renders = std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> {};
+    for (auto const& function : module.functions) {
+        collect_test_only_computed_dynamic_array_for_descriptor_renders(function, context, renders);
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            collect_test_only_computed_dynamic_array_for_descriptor_renders(method, context, renders);
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            collect_test_only_computed_dynamic_array_for_descriptor_renders(method, context, renders);
+        }
+    }
+    return renders;
+}
+
 void collect_test_only_computed_dynamic_array_for_production_sequences(
     syntax::FunctionSyntax const& function,
     LoweringContext const& context,
@@ -1040,6 +1150,54 @@ auto format_computed_dynamic_array_for_production_sequence_metadata_report(
     return lines;
 }
 
+auto format_computed_dynamic_array_for_descriptor_render_metadata(
+    ComputedDynamicArrayForDescriptorRenderMetadata const& metadata
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for descriptor render";
+    if (!metadata.enclosing_function_name.empty()) {
+        output << " function " << metadata.enclosing_function_name;
+    }
+    if (metadata.source_line != 0) {
+        output << " line " << metadata.source_line;
+    }
+    if (!metadata.source_type_name.empty()) {
+        output << " source " << metadata.source_type_name;
+    }
+    if (!metadata.element_source_type_name.empty()) {
+        output << " element " << metadata.element_source_type_name;
+    }
+    if (!metadata.cleanup_owner_name.empty()) {
+        output << " owner " << metadata.cleanup_owner_name;
+    }
+    if (!metadata.descriptor_storage_name.empty()) {
+        output << " descriptor " << metadata.descriptor_storage_name;
+    }
+    if (!metadata.descriptor_value_name.empty()) {
+        output << " value " << metadata.descriptor_value_name;
+    }
+    if (!metadata.data_pointer_name.empty()) {
+        output << " data " << metadata.data_pointer_name;
+    }
+    if (!metadata.length_name.empty()) {
+        output << " length " << metadata.length_name;
+    }
+    output << " snippets " << metadata.rendered_ir.size();
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_computed_dynamic_array_for_descriptor_render_metadata_report(
+    std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> const& metadata
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(metadata.size());
+    for (auto const& render : metadata) {
+        lines.push_back(format_computed_dynamic_array_for_descriptor_render_metadata(render));
+    }
+    return lines;
+}
+
 auto LlvmIrEmissionResult::has_errors() const -> bool {
     return diagnostics.has_errors();
 }
@@ -1087,6 +1245,13 @@ auto LlvmIrEmissionResult::computed_dynamic_array_for_production_sequence_report
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_production_sequence_metadata_report(
         test_only_computed_dynamic_array_for_production_sequences
+    );
+}
+
+auto LlvmIrEmissionResult::computed_dynamic_array_for_descriptor_render_report() const
+    -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_descriptor_render_metadata_report(
+        test_only_computed_dynamic_array_for_descriptor_renders
     );
 }
 
@@ -1262,6 +1427,17 @@ auto emit_module(
                     break;
                 }
             }
+        }
+    }
+    if (options.test_only_collect_computed_dynamic_array_for_descriptor_renders) {
+        result.test_only_computed_dynamic_array_for_descriptor_renders =
+            collect_test_only_computed_dynamic_array_for_descriptor_renders(module, context);
+        for (auto const& render : result.test_only_computed_dynamic_array_for_descriptor_renders) {
+            result.test_only_computed_dynamic_array_for_descriptor_render_ir.insert(
+                result.test_only_computed_dynamic_array_for_descriptor_render_ir.end(),
+                render.rendered_ir.begin(),
+                render.rendered_ir.end()
+            );
         }
     }
     if (options.test_only_collect_computed_dynamic_array_for_production_sequences) {

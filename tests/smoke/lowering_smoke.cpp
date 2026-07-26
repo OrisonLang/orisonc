@@ -1979,11 +1979,47 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
+            .test_only_collect_computed_dynamic_array_for_descriptor_renders = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         }
     );
 
     assert(computed_local_same_owner_for.has_errors());
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_renders.size() == 1);
+    auto const& computed_local_same_owner_descriptor_render =
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_renders.front();
+    assert(computed_local_same_owner_descriptor_render.enclosing_function_name == "sum_words");
+    assert(computed_local_same_owner_descriptor_render.source_line == 6);
+    assert(computed_local_same_owner_descriptor_render.cleanup_owner_name == "items");
+    assert(computed_local_same_owner_descriptor_render.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_local_same_owner_descriptor_render.element_source_type_name == "UInt32");
+    assert(computed_local_same_owner_descriptor_render.descriptor_storage_name == "%items.addr");
+    assert(computed_local_same_owner_descriptor_render.descriptor_value_name == "%items.computed_for.descriptor");
+    assert(computed_local_same_owner_descriptor_render.data_pointer_name == "%items.computed_for.data");
+    assert(computed_local_same_owner_descriptor_render.length_name == "%items.computed_for.length");
+    assert(computed_local_same_owner_descriptor_render.rendered_ir.size() == 3);
+    auto computed_local_same_owner_descriptor_render_report =
+        computed_local_same_owner_for.computed_dynamic_array_for_descriptor_render_report();
+    assert(computed_local_same_owner_descriptor_render_report.size() == 1);
+    assert(
+        computed_local_same_owner_descriptor_render_report.front() ==
+        "computed DynamicArray for descriptor render function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 owner items descriptor %items.addr value %items.computed_for.descriptor "
+        "data %items.computed_for.data length %items.computed_for.length snippets 3 (metadata only)"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir.size() == 3);
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[0] ==
+        "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[1] ==
+        "  %items.computed_for.data = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 0\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[2] ==
+        "  %items.computed_for.length = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 1\n"
+    );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
     auto const& computed_local_same_owner_sequence =
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.front();
