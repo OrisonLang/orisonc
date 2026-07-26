@@ -73,6 +73,8 @@ representation.
 - Computed owned dynamic-array element-address rendering now has a disabled internal plan for proven loop-control
   renders. It records the element LLVM type, descriptor data pointer, loop index, and `getelementptr` element address
   while keeping render emission disabled.
+- Dynamic-array `for` rejection diagnostics now include the computed element-address render report, so computed owned
+  iterable failures show whether element address rendering is blocked, unproven, unlowerable, or planned-but-disabled.
 
 ## Consequences
 

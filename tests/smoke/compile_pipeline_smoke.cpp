@@ -736,6 +736,13 @@ auto main() -> int {
             "[conditional branch blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_parameter_for.error_text.find(
+            "computed DynamicArray element address render plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [data pointer blocked] [index blocked] [element address blocked] "
+            "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_dynamic_array_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_same_owner_for_rejected.or";
@@ -789,6 +796,13 @@ auto main() -> int {
             "computed DynamicArray loop control render plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [entry branch blocked] [index phi blocked] [bounds check blocked] "
             "[conditional branch blocked] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_same_owner_for.error_text.find(
+            "computed DynamicArray element address render plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [data pointer blocked] [index blocked] [element address blocked] "
+            "[render disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -851,6 +865,15 @@ auto main() -> int {
             "body items.computed_for.body continue items.computed_for.continue exit items.computed_for.exit "
             "index %items.computed_for.index bounds %items.computed_for.more [entry branch planned] "
             "[index phi planned] [bounds check planned] [conditional branch planned] "
+            "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for.error_text.find(
+            "computed DynamicArray element address render plan element address render planned source "
+            "DynamicArray<UInt32> element UInt32 lowers-to i32 owner items data %items.computed_for.data "
+            "index %items.computed_for.index address %items.computed_for.element.addr "
+            "[data pointer available] [index available] [element address planned] "
             "[render disabled] (metadata only)"
         ) != std::string::npos
     );
