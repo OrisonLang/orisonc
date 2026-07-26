@@ -1985,6 +1985,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .test_only_collect_computed_dynamic_array_for_element_load_renders = true,
             .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
             .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
+            .test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         }
     );
@@ -2190,6 +2191,34 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[13] ==
         "  br label %items.computed_for.condition\n"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanups.size() == 1);
+    auto const& computed_local_same_owner_loop_exit_cleanup =
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanups.front();
+    assert(computed_local_same_owner_loop_exit_cleanup.enclosing_function_name == "sum_words");
+    assert(computed_local_same_owner_loop_exit_cleanup.source_line == 6);
+    assert(computed_local_same_owner_loop_exit_cleanup.cleanup_owner_name == "items");
+    assert(computed_local_same_owner_loop_exit_cleanup.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_local_same_owner_loop_exit_cleanup.element_source_type_name == "UInt32");
+    assert(computed_local_same_owner_loop_exit_cleanup.exit_block_name == "items.computed_for.exit");
+    assert(computed_local_same_owner_loop_exit_cleanup.loop_exit_cleanup_owner_name == "items");
+    assert(computed_local_same_owner_loop_exit_cleanup.rendered_ir.size() == 2);
+    auto computed_local_same_owner_loop_exit_cleanup_report =
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_exit_cleanup_report();
+    assert(computed_local_same_owner_loop_exit_cleanup_report.size() == 1);
+    assert(
+        computed_local_same_owner_loop_exit_cleanup_report.front() ==
+        "computed DynamicArray for loop exit cleanup function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 owner items exit items.computed_for.exit resumes items snippets 2 (metadata only)"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir.size() == 2);
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir[0] ==
+        "items.computed_for.exit:\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir[1] ==
+        "  ; cleanup ownership resumes with items\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
     auto const& computed_local_same_owner_sequence =

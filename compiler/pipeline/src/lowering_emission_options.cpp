@@ -80,6 +80,8 @@ auto build_lowering_emission_options(
         options.test_only_collect_computed_dynamic_array_for_loop_continue_renders;
     emission_options.test_only_collect_computed_dynamic_array_for_loop_render_sequences =
         options.test_only_collect_computed_dynamic_array_for_loop_render_sequences;
+    emission_options.test_only_collect_computed_dynamic_array_for_loop_exit_cleanups =
+        options.test_only_collect_computed_dynamic_array_for_loop_exit_cleanups;
     emission_options.test_only_collect_computed_dynamic_array_for_production_sequences =
         options.test_only_collect_computed_dynamic_array_for_production_sequences;
     emission_options.enable_dynamic_array_descriptor_cleanup_planning =

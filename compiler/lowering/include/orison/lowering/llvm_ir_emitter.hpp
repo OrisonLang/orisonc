@@ -102,6 +102,17 @@ struct ComputedDynamicArrayForLoopRenderSequenceMetadata {
     std::vector<std::string> rendered_ir;
 };
 
+struct ComputedDynamicArrayForLoopExitCleanupMetadata {
+    std::string enclosing_function_name;
+    std::size_t source_line = 0;
+    std::string cleanup_owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string exit_block_name;
+    std::string loop_exit_cleanup_owner_name;
+    std::vector<std::string> rendered_ir;
+};
+
 auto format_computed_dynamic_array_for_production_sequence_metadata(
     ComputedDynamicArrayForProductionSequenceMetadata const& metadata
 ) -> std::string;
@@ -158,6 +169,14 @@ auto format_computed_dynamic_array_for_loop_render_sequence_metadata_report(
     std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata> const& metadata
 ) -> std::vector<std::string>;
 
+auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata(
+    ComputedDynamicArrayForLoopExitCleanupMetadata const& metadata
+) -> std::string;
+
+auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata_report(
+    std::vector<ComputedDynamicArrayForLoopExitCleanupMetadata> const& metadata
+) -> std::vector<std::string>;
+
 struct LlvmIrEmissionResult {
     diagnostics::DiagnosticBag diagnostics;
     std::string ir_text;
@@ -210,6 +229,9 @@ struct LlvmIrEmissionResult {
     std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata>
         test_only_computed_dynamic_array_for_loop_render_sequences;
     std::vector<std::string> test_only_computed_dynamic_array_for_loop_render_sequence_ir;
+    std::vector<ComputedDynamicArrayForLoopExitCleanupMetadata>
+        test_only_computed_dynamic_array_for_loop_exit_cleanups;
+    std::vector<std::string> test_only_computed_dynamic_array_for_loop_exit_cleanup_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;
@@ -229,6 +251,7 @@ struct LlvmIrEmissionResult {
     auto computed_dynamic_array_for_element_load_render_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_loop_continue_render_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_loop_render_sequence_report() const -> std::vector<std::string>;
+    auto computed_dynamic_array_for_loop_exit_cleanup_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;

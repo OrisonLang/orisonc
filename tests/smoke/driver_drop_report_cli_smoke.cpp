@@ -959,6 +959,8 @@ int main() {
             "next %items.computed_for.next.index snippets 3 (metadata only)",
             "computed DynamicArray for loop render sequence function sum_words line 6 source DynamicArray<UInt32> "
             "element UInt32 owner items body items.computed_for.body snippets 14 (metadata only)",
+            "computed DynamicArray for loop exit cleanup function sum_words line 6 source DynamicArray<UInt32> "
+            "element UInt32 owner items exit items.computed_for.exit resumes items snippets 2 (metadata only)",
             "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
             "element UInt32 owner items snippets 16 (metadata only)",
             "dynamic array cleanup production readiness blocked",

@@ -126,6 +126,9 @@ representation.
 - Computed dynamic-array `for` loop-render-sequence metadata is now collected and reported separately from the broader
   production sequence so the composed descriptor, control, body, element, and continuation snippet bundle can be
   audited independently before exit cleanup and production emission are enabled.
+- Computed dynamic-array `for` loop-exit-cleanup metadata is now collected and reported separately from the broader
+  production sequence so exit-block and cleanup-resumption readiness can be audited independently before production
+  emission is enabled.
 
 ## Consequences
 
