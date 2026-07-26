@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` loop exit cleanup now has a disabled internal plan. It records the
+  future loop exit block and function cleanup ownership resumption without enabling cleanup sequence emission.
 - 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the composed loop render
   sequence report. The report surfaces descriptor, control, body, element, and continuation readiness without enabling
   render emission.

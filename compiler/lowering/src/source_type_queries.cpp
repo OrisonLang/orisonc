@@ -1476,6 +1476,140 @@ auto computed_dynamic_array_iterable_loop_render_sequence_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_loop_exit_cleanup(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableLoopExitCleanupPlan {
+    auto plan = ComputedDynamicArrayIterableLoopExitCleanupPlan {};
+    plan.loop_render_sequence_plan = plan_computed_dynamic_array_iterable_loop_render_sequence(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.loop_render_sequence_plan.source_type_name;
+    plan.element_source_type_name = plan.loop_render_sequence_plan.element_source_type_name;
+    plan.cleanup_owner_name = plan.loop_render_sequence_plan.cleanup_owner_name;
+    auto const& loop_continue_plan = plan.loop_render_sequence_plan.loop_continue_render_plan;
+    auto const& loop_control_plan =
+        loop_continue_plan.element_load_render_plan.element_address_render_plan.loop_control_render_plan;
+    auto const& cleanup_sequence_plan =
+        loop_control_plan.descriptor_render_plan.cleanup_sequence_plan;
+    plan.exit_block_name = loop_control_plan.exit_block_name;
+    plan.loop_exit_cleanup_owner_name = cleanup_sequence_plan.loop_exit_cleanup_owner_name;
+    plan.cleanup_sequence_enabled = false;
+    plan.render_enabled = false;
+
+    switch (plan.loop_render_sequence_plan.kind) {
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_type_unlowerable:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_type_unlowerable;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_address_unplanned:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_address_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_load_unplanned:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_load_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_continue_unplanned:
+            plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_continue_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_render_sequence_planned:
+            break;
+    }
+
+    if (plan.exit_block_name.empty() || plan.loop_exit_cleanup_owner_name.empty() ||
+        !cleanup_sequence_plan.function_cleanup_resumes_after_loop) {
+        plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_render_sequence_unplanned;
+        return plan;
+    }
+
+    plan.rendered_ir.push_back(plan.exit_block_name + ":\n");
+    plan.rendered_ir.push_back(
+        "  ; cleanup ownership resumes with " + plan.loop_exit_cleanup_owner_name + "\n"
+    );
+    plan.exit_block_planned = true;
+    plan.cleanup_resumption_planned = true;
+    plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_exit_cleanup_planned;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
+    ComputedDynamicArrayIterableLoopExitCleanupPlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray loop exit cleanup plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_type_unlowerable:
+            output += "element type unlowerable";
+            break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_address_unplanned:
+            output += "element address unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_load_unplanned:
+            output += "element load unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_continue_unplanned:
+            output += "loop continue unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_render_sequence_unplanned:
+            output += "loop render sequence unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_exit_cleanup_planned:
+            output += "loop exit cleanup planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    if (!plan.exit_block_name.empty()) {
+        output += " exit ";
+        output += plan.exit_block_name;
+    }
+    if (!plan.loop_exit_cleanup_owner_name.empty()) {
+        output += " resumes ";
+        output += plan.loop_exit_cleanup_owner_name;
+    }
+    output += plan.exit_block_planned ? " [exit block planned]" : " [exit block blocked]";
+    output += plan.cleanup_resumption_planned ? " [cleanup resumes]" : " [cleanup blocked]";
+    output += plan.cleanup_sequence_enabled ? " [cleanup sequence enabled]" :
+        " [cleanup sequence disabled]";
+    output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

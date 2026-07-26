@@ -90,6 +90,8 @@ representation.
   snippets in order while keeping render emission disabled.
 - Dynamic-array `for` rejection diagnostics now include the computed loop render sequence report, so computed owned
   iterable failures expose the full disabled render-sequence readiness state.
+- Computed owned dynamic-array loop exit cleanup now has a disabled internal plan. It records the planned exit block
+  and function cleanup ownership resumption after the computed loop while keeping cleanup sequence emission disabled.
 
 ## Consequences
 
