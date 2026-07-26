@@ -117,6 +117,9 @@ representation.
 - Computed dynamic-array `for` element-address-render metadata is now collected and reported separately from the
   broader production sequence so element type, data pointer, index, and `getelementptr` readiness can be audited
   independently before full loop emission is enabled.
+- Computed dynamic-array `for` element-load-render metadata is now collected and reported separately from the broader
+  production sequence so element address, item value, and scalar `load` readiness can be audited independently before
+  full loop emission is enabled.
 
 ## Consequences
 
