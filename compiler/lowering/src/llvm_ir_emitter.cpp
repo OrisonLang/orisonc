@@ -1004,6 +1004,42 @@ void add_dynamic_array_planned_drop_declarations(
 
 }  // namespace
 
+auto format_computed_dynamic_array_for_production_sequence_metadata(
+    ComputedDynamicArrayForProductionSequenceMetadata const& metadata
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for production sequence";
+    if (!metadata.enclosing_function_name.empty()) {
+        output << " function " << metadata.enclosing_function_name;
+    }
+    if (metadata.source_line != 0) {
+        output << " line " << metadata.source_line;
+    }
+    if (!metadata.source_type_name.empty()) {
+        output << " source " << metadata.source_type_name;
+    }
+    if (!metadata.element_source_type_name.empty()) {
+        output << " element " << metadata.element_source_type_name;
+    }
+    if (!metadata.cleanup_owner_name.empty()) {
+        output << " owner " << metadata.cleanup_owner_name;
+    }
+    output << " snippets " << metadata.rendered_ir.size();
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_computed_dynamic_array_for_production_sequence_metadata_report(
+    std::vector<ComputedDynamicArrayForProductionSequenceMetadata> const& metadata
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(metadata.size());
+    for (auto const& sequence : metadata) {
+        lines.push_back(format_computed_dynamic_array_for_production_sequence_metadata(sequence));
+    }
+    return lines;
+}
+
 auto LlvmIrEmissionResult::has_errors() const -> bool {
     return diagnostics.has_errors();
 }
@@ -1045,6 +1081,13 @@ auto LlvmIrEmissionResult::dynamic_array_cleanup_emission_capability_report() co
         return {};
     }
     return {format_dynamic_array_cleanup_emission_capability(*dynamic_array_cleanup_emission_capability)};
+}
+
+auto LlvmIrEmissionResult::computed_dynamic_array_for_production_sequence_report() const
+    -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_production_sequence_metadata_report(
+        test_only_computed_dynamic_array_for_production_sequences
+    );
 }
 
 auto LlvmIrEmissionResult::dynamic_array_runtime_request_report() const -> std::vector<std::string> {

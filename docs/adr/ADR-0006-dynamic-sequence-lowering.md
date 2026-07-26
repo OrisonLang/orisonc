@@ -104,6 +104,8 @@ representation.
   from parsed function bodies and records their aggregated snippets on the emission result without emitting module IR.
 - Computed dynamic-array `for` production-sequence metadata now preserves per-gate provenance: enclosing function,
   source line, cleanup owner, source type, element type, and the aggregated snippets.
+- Computed dynamic-array `for` production-sequence metadata now has a report formatter so pipeline and driver audit
+  surfaces can consume provenance without inspecting raw metadata vectors.
 
 ## Consequences
 

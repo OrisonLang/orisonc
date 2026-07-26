@@ -1993,6 +1993,14 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_sequence.source_type_name == "DynamicArray<UInt32>");
     assert(computed_local_same_owner_sequence.element_source_type_name == "UInt32");
     assert(computed_local_same_owner_sequence.rendered_ir.size() == 16);
+    auto computed_local_same_owner_sequence_report =
+        computed_local_same_owner_for.computed_dynamic_array_for_production_sequence_report();
+    assert(computed_local_same_owner_sequence_report.size() == 1);
+    assert(
+        computed_local_same_owner_sequence_report.front() ==
+        "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 owner items snippets 16 (metadata only)"
+    );
     assert(
         computed_local_same_owner_sequence.rendered_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"

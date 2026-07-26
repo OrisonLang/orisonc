@@ -25,6 +25,14 @@ struct ComputedDynamicArrayForProductionSequenceMetadata {
     std::vector<std::string> rendered_ir;
 };
 
+auto format_computed_dynamic_array_for_production_sequence_metadata(
+    ComputedDynamicArrayForProductionSequenceMetadata const& metadata
+) -> std::string;
+
+auto format_computed_dynamic_array_for_production_sequence_metadata_report(
+    std::vector<ComputedDynamicArrayForProductionSequenceMetadata> const& metadata
+) -> std::vector<std::string>;
+
 struct LlvmIrEmissionResult {
     diagnostics::DiagnosticBag diagnostics;
     std::string ir_text;
@@ -71,6 +79,7 @@ struct LlvmIrEmissionResult {
     auto dynamic_array_cleanup_sequence_verification_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_emission_gate_report() const -> std::vector<std::string>;
     auto dynamic_array_cleanup_emission_capability_report() const -> std::vector<std::string>;
+    auto computed_dynamic_array_for_production_sequence_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;
