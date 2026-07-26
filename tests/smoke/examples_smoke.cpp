@@ -263,6 +263,13 @@ auto main() -> int {
             "[render disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray loop exit cleanup plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [exit block blocked] [cleanup blocked] [cleanup sequence disabled] "
+            "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_same_owner_dynamic_array_iterable =
         pipeline.emit_llvm(
@@ -333,6 +340,13 @@ auto main() -> int {
             "element UInt32 owner items [descriptor render blocked] [loop control blocked] "
             "[body block blocked] [element address blocked] [element load blocked] "
             "[loop continue blocked] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_same_owner_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray loop exit cleanup plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [exit block blocked] [cleanup blocked] "
+            "[cleanup sequence disabled] [render disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -417,6 +431,14 @@ auto main() -> int {
             "DynamicArray<UInt32> element UInt32 owner items body items.computed_for.body "
             "[descriptor render planned] [loop control planned] [body block planned] "
             "[element address planned] [element load planned] [loop continue planned] "
+            "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray loop exit cleanup plan loop exit cleanup planned source "
+            "DynamicArray<UInt32> element UInt32 owner items exit items.computed_for.exit "
+            "resumes items [exit block planned] [cleanup resumes] [cleanup sequence disabled] "
             "[render disabled] (metadata only)"
         ) != std::string::npos
     );

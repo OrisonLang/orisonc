@@ -92,6 +92,8 @@ representation.
   iterable failures expose the full disabled render-sequence readiness state.
 - Computed owned dynamic-array loop exit cleanup now has a disabled internal plan. It records the planned exit block
   and function cleanup ownership resumption after the computed loop while keeping cleanup sequence emission disabled.
+- Dynamic-array `for` rejection diagnostics now include the computed loop-exit cleanup report, so computed owned
+  iterable failures expose exit-block and cleanup-resumption readiness without enabling cleanup emission.
 
 ## Consequences
 

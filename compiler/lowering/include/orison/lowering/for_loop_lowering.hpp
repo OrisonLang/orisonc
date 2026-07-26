@@ -204,6 +204,16 @@ auto lower_sequence_for_statement(
             diagnostic_detail += computed_dynamic_array_iterable_loop_render_sequence_plan_report(
                 computed_loop_render_sequence_plan
             );
+            auto computed_loop_exit_cleanup_plan =
+                plan_computed_dynamic_array_iterable_loop_exit_cleanup(
+                    statement.expression,
+                    context.lowering,
+                    session.state
+                );
+            diagnostic_detail += "; ";
+            diagnostic_detail += computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
+                computed_loop_exit_cleanup_plan
+            );
         }
         diagnostics.error(
             statement.line,
