@@ -26,6 +26,7 @@ auto run_llvm_emission_stage(
     if (emission.has_errors()) {
         result.error_text = emission.render(result.source_file->path().string());
         if (options.test_only_collect_computed_dynamic_array_for_descriptor_renders ||
+            options.test_only_collect_computed_dynamic_array_for_loop_control_renders ||
             options.test_only_collect_computed_dynamic_array_for_production_sequences) {
             populate_lowering_emission_reports(result, std::move(emission), options);
         }

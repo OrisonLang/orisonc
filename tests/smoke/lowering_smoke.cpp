@@ -1980,6 +1980,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
             .test_only_collect_computed_dynamic_array_for_descriptor_renders = true,
+            .test_only_collect_computed_dynamic_array_for_loop_control_renders = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         }
     );
@@ -2019,6 +2020,47 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[2] ==
         "  %items.computed_for.length = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 1\n"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_renders.size() == 1);
+    auto const& computed_local_same_owner_loop_control =
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_renders.front();
+    assert(computed_local_same_owner_loop_control.enclosing_function_name == "sum_words");
+    assert(computed_local_same_owner_loop_control.source_line == 6);
+    assert(computed_local_same_owner_loop_control.cleanup_owner_name == "items");
+    assert(computed_local_same_owner_loop_control.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_local_same_owner_loop_control.element_source_type_name == "UInt32");
+    assert(computed_local_same_owner_loop_control.condition_block_name == "items.computed_for.condition");
+    assert(computed_local_same_owner_loop_control.body_block_name == "items.computed_for.body");
+    assert(computed_local_same_owner_loop_control.continue_block_name == "items.computed_for.continue");
+    assert(computed_local_same_owner_loop_control.exit_block_name == "items.computed_for.exit");
+    assert(computed_local_same_owner_loop_control.index_name == "%items.computed_for.index");
+    assert(computed_local_same_owner_loop_control.next_index_name == "%items.computed_for.next.index");
+    assert(computed_local_same_owner_loop_control.bounds_check_name == "%items.computed_for.more");
+    assert(computed_local_same_owner_loop_control.rendered_ir.size() == 5);
+    auto computed_local_same_owner_loop_control_report =
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_control_render_report();
+    assert(computed_local_same_owner_loop_control_report.size() == 1);
+    assert(
+        computed_local_same_owner_loop_control_report.front() ==
+        "computed DynamicArray for loop control render function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 owner items condition items.computed_for.condition body items.computed_for.body "
+        "continue items.computed_for.continue exit items.computed_for.exit index %items.computed_for.index "
+        "next %items.computed_for.next.index bounds %items.computed_for.more snippets 5 (metadata only)"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir.size() == 5);
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir[0] ==
+        "  br label %items.computed_for.condition\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir[2] ==
+        "  %items.computed_for.index = phi i64 [ 0, %entry ], [ %items.computed_for.next.index, "
+        "%items.computed_for.continue ]\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir[4] ==
+        "  br i1 %items.computed_for.more, label %items.computed_for.body, "
+        "label %items.computed_for.exit\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
     auto const& computed_local_same_owner_sequence =

@@ -38,6 +38,22 @@ struct ComputedDynamicArrayForDescriptorRenderMetadata {
     std::vector<std::string> rendered_ir;
 };
 
+struct ComputedDynamicArrayForLoopControlRenderMetadata {
+    std::string enclosing_function_name;
+    std::size_t source_line = 0;
+    std::string cleanup_owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string condition_block_name;
+    std::string body_block_name;
+    std::string continue_block_name;
+    std::string exit_block_name;
+    std::string index_name;
+    std::string next_index_name;
+    std::string bounds_check_name;
+    std::vector<std::string> rendered_ir;
+};
+
 auto format_computed_dynamic_array_for_production_sequence_metadata(
     ComputedDynamicArrayForProductionSequenceMetadata const& metadata
 ) -> std::string;
@@ -52,6 +68,14 @@ auto format_computed_dynamic_array_for_descriptor_render_metadata(
 
 auto format_computed_dynamic_array_for_descriptor_render_metadata_report(
     std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> const& metadata
+) -> std::vector<std::string>;
+
+auto format_computed_dynamic_array_for_loop_control_render_metadata(
+    ComputedDynamicArrayForLoopControlRenderMetadata const& metadata
+) -> std::string;
+
+auto format_computed_dynamic_array_for_loop_control_render_metadata_report(
+    std::vector<ComputedDynamicArrayForLoopControlRenderMetadata> const& metadata
 ) -> std::vector<std::string>;
 
 struct LlvmIrEmissionResult {
@@ -91,6 +115,9 @@ struct LlvmIrEmissionResult {
     std::vector<ComputedDynamicArrayForDescriptorRenderMetadata>
         test_only_computed_dynamic_array_for_descriptor_renders;
     std::vector<std::string> test_only_computed_dynamic_array_for_descriptor_render_ir;
+    std::vector<ComputedDynamicArrayForLoopControlRenderMetadata>
+        test_only_computed_dynamic_array_for_loop_control_renders;
+    std::vector<std::string> test_only_computed_dynamic_array_for_loop_control_render_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;
@@ -105,6 +132,7 @@ struct LlvmIrEmissionResult {
     auto dynamic_array_cleanup_emission_capability_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_production_sequence_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_descriptor_render_report() const -> std::vector<std::string>;
+    auto computed_dynamic_array_for_loop_control_render_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;

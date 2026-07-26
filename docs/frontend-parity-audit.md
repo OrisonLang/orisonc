@@ -41,6 +41,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   full production sequence through lowering, pipeline, and driver audit reports.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` descriptor-render and production-sequence collectors now share
   traversal and local descriptor-binding setup while keeping their report artifacts separate.
+- 2026-07-26: computed owned `DynamicArray<T>` `for` loop-control-render metadata is now surfaced separately from the
+  full production sequence through lowering, pipeline, and driver audit reports.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` production-sequence metadata now has a report formatter that
   surfaces function, line, owner, source type, element type, and snippet count for audit consumers.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` production-sequence metadata now records per-gate provenance:

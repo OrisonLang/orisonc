@@ -895,6 +895,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
             .test_only_collect_computed_dynamic_array_for_descriptor_renders = true,
+            .test_only_collect_computed_dynamic_array_for_loop_control_renders = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
@@ -907,6 +908,14 @@ auto main() -> int {
         "computed DynamicArray for descriptor render function sum_words line 6 source DynamicArray<UInt32> "
         "element UInt32 owner items descriptor %items.addr value %items.computed_for.descriptor "
         "data %items.computed_for.data length %items.computed_for.length snippets 3 (metadata only)"
+    );
+    assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_loop_control_render_report.size() == 1);
+    assert(
+        computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_loop_control_render_report.front() ==
+        "computed DynamicArray for loop control render function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 owner items condition items.computed_for.condition body items.computed_for.body "
+        "continue items.computed_for.continue exit items.computed_for.exit index %items.computed_for.index "
+        "next %items.computed_for.next.index bounds %items.computed_for.more snippets 5 (metadata only)"
     );
     assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.size() == 1);
     assert(
