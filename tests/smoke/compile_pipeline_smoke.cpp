@@ -756,6 +756,14 @@ auto main() -> int {
             "[render disabled] (metadata only)"
         ) != std::string::npos
     );
+    assert(
+        computed_dynamic_array_parameter_for.error_text.find(
+            "computed DynamicArray loop render sequence plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [descriptor render blocked] [loop control blocked] [body block blocked] "
+            "[element address blocked] [element load blocked] [loop continue blocked] "
+            "[render disabled] (metadata only)"
+        ) != std::string::npos
+    );
 
     auto computed_dynamic_array_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_same_owner_for_rejected.or";
@@ -830,6 +838,14 @@ auto main() -> int {
             "computed DynamicArray loop continue render plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [continue block blocked] [next index blocked] "
             "[backedge branch blocked] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_same_owner_for.error_text.find(
+            "computed DynamicArray loop render sequence plan cleanup owner unproven source DynamicArray<UInt32> "
+            "element UInt32 owner items [descriptor render blocked] [loop control blocked] "
+            "[body block blocked] [element address blocked] [element load blocked] "
+            "[loop continue blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -919,6 +935,15 @@ auto main() -> int {
             "condition items.computed_for.condition index %items.computed_for.index "
             "next-index %items.computed_for.next.index [continue block planned] "
             "[next index planned] [backedge branch planned] [render disabled] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for.error_text.find(
+            "computed DynamicArray loop render sequence plan loop render sequence planned source "
+            "DynamicArray<UInt32> element UInt32 owner items body items.computed_for.body "
+            "[descriptor render planned] [loop control planned] [body block planned] "
+            "[element address planned] [element load planned] [loop continue planned] "
+            "[render disabled] (metadata only)"
         ) != std::string::npos
     );
 
