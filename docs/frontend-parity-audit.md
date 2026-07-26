@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` element-load rendering now has a disabled internal plan. Proven element
+  addresses can record the future loop item value and scalar `load` while keeping render emission disabled.
 - 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the element-address render
   report. The report distinguishes blocked, unproven, unlowerable, and planned-but-disabled element address rendering
   without enabling render emission.

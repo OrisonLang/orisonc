@@ -1062,6 +1062,127 @@ auto computed_dynamic_array_iterable_element_address_render_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_element_load_render(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableElementLoadRenderPlan {
+    auto plan = ComputedDynamicArrayIterableElementLoadRenderPlan {};
+    plan.element_address_render_plan = plan_computed_dynamic_array_iterable_element_address_render(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.element_address_render_plan.source_type_name;
+    plan.element_source_type_name = plan.element_address_render_plan.element_source_type_name;
+    plan.element_llvm_type_name = plan.element_address_render_plan.element_llvm_type_name;
+    plan.cleanup_owner_name = plan.element_address_render_plan.cleanup_owner_name;
+    plan.element_address_name = plan.element_address_render_plan.element_address_name;
+    plan.render_enabled = false;
+
+    switch (plan.element_address_render_plan.kind) {
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_type_unlowerable:
+            plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_type_unlowerable;
+            return plan;
+        case ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_address_render_planned:
+            break;
+    }
+
+    if (plan.element_llvm_type_name.empty() || plan.element_address_name.empty()) {
+        plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_address_unplanned;
+        return plan;
+    }
+
+    plan.item_value_name = "%" + plan.cleanup_owner_name + ".computed_for.item";
+    auto construction_plan = DynamicArrayConstructionPlan {
+        .source_type_name = plan.source_type_name,
+        .element_source_type_name = plan.element_source_type_name,
+        .element_llvm_type = plan.element_llvm_type_name,
+    };
+    plan.rendered_ir.push_back(
+        emit_dynamic_array_element_load(
+            construction_plan,
+            plan.item_value_name,
+            plan.element_address_name
+        )
+    );
+    plan.element_address_available = true;
+    plan.item_value_planned = true;
+    plan.kind = ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_load_render_planned;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_element_load_render_plan_report(
+    ComputedDynamicArrayIterableElementLoadRenderPlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray element load render plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_type_unlowerable:
+            output += "element type unlowerable";
+            break;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_address_unplanned:
+            output += "element address unplanned";
+            break;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_load_render_planned:
+            output += "element load render planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.element_llvm_type_name.empty()) {
+        output += " lowers-to ";
+        output += plan.element_llvm_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    if (!plan.element_address_name.empty()) {
+        output += " address ";
+        output += plan.element_address_name;
+    }
+    if (!plan.item_value_name.empty()) {
+        output += " item ";
+        output += plan.item_value_name;
+    }
+    output += plan.element_address_available ? " [element address available]" :
+        " [element address blocked]";
+    output += plan.item_value_planned ? " [item value planned]" : " [item value blocked]";
+    output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

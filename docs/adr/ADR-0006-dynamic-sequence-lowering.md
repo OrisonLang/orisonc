@@ -75,6 +75,9 @@ representation.
   while keeping render emission disabled.
 - Dynamic-array `for` rejection diagnostics now include the computed element-address render report, so computed owned
   iterable failures show whether element address rendering is blocked, unproven, unlowerable, or planned-but-disabled.
+- Computed owned dynamic-array element-load rendering now has a disabled internal plan for proven element addresses.
+  It records the element address, item value name, and scalar `load` needed by a future loop item binding while keeping
+  render emission disabled.
 
 ## Consequences
 
