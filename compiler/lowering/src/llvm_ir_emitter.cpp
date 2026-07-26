@@ -728,138 +728,57 @@ void bind_test_only_dynamic_array_local_for_computed_for_collection(
     state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
 }
 
-void collect_test_only_computed_dynamic_array_for_production_sequences(
+template <typename CollectForStatement>
+void collect_test_only_computed_dynamic_array_for_statements(
     syntax::StatementSyntax const& statement,
     std::string_view enclosing_function_name,
     LoweringContext const& context,
     FunctionLoweringState& state,
-    std::vector<ComputedDynamicArrayForProductionSequenceMetadata>& sequences
+    CollectForStatement&& collect_for_statement
 ) {
     bind_test_only_dynamic_array_local_for_computed_for_collection(statement, context, state);
     if (statement.kind == syntax::StatementKind::for_statement) {
-        auto gate = plan_computed_dynamic_array_iterable_production_emission_gate(
-            statement.expression,
-            context,
-            state
-        );
-        if (gate.kind ==
-                ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
-            gate.production_sequence_render_planned) {
-            sequences.push_back(ComputedDynamicArrayForProductionSequenceMetadata {
-                .enclosing_function_name = std::string {enclosing_function_name},
-                .source_line = statement.line,
-                .cleanup_owner_name = gate.cleanup_owner_name,
-                .source_type_name = gate.source_type_name,
-                .element_source_type_name = gate.element_source_type_name,
-                .rendered_ir = gate.rendered_ir,
-            });
-        }
+        collect_for_statement(statement, enclosing_function_name, context, state);
     }
 
     for (auto const& nested_statement : statement.nested_statements) {
-        collect_test_only_computed_dynamic_array_for_production_sequences(
+        collect_test_only_computed_dynamic_array_for_statements(
             nested_statement,
             enclosing_function_name,
             context,
             state,
-            sequences
+            collect_for_statement
         );
     }
     for (auto const& alternate_statement : statement.alternate_statements) {
-        collect_test_only_computed_dynamic_array_for_production_sequences(
+        collect_test_only_computed_dynamic_array_for_statements(
             alternate_statement,
             enclosing_function_name,
             context,
             state,
-            sequences
+            collect_for_statement
         );
     }
     for (auto const& switch_case : statement.switch_cases) {
         for (auto const& case_statement : switch_case.statements) {
             if (case_statement != nullptr) {
-                collect_test_only_computed_dynamic_array_for_production_sequences(
+                collect_test_only_computed_dynamic_array_for_statements(
                     *case_statement,
                     enclosing_function_name,
                     context,
                     state,
-                    sequences
+                    collect_for_statement
                 );
             }
         }
     }
 }
 
-void collect_test_only_computed_dynamic_array_for_descriptor_renders(
-    syntax::StatementSyntax const& statement,
-    std::string_view enclosing_function_name,
-    LoweringContext const& context,
-    FunctionLoweringState& state,
-    std::vector<ComputedDynamicArrayForDescriptorRenderMetadata>& renders
-) {
-    bind_test_only_dynamic_array_local_for_computed_for_collection(statement, context, state);
-    if (statement.kind == syntax::StatementKind::for_statement) {
-        auto plan = plan_computed_dynamic_array_iterable_descriptor_render(
-            statement.expression,
-            context,
-            state
-        );
-        if (plan.kind ==
-                ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned &&
-            plan.descriptor_load_planned &&
-            plan.data_projection_planned &&
-            plan.length_projection_planned) {
-            renders.push_back(ComputedDynamicArrayForDescriptorRenderMetadata {
-                .enclosing_function_name = std::string {enclosing_function_name},
-                .source_line = statement.line,
-                .cleanup_owner_name = plan.cleanup_owner_name,
-                .source_type_name = plan.source_type_name,
-                .element_source_type_name = plan.element_source_type_name,
-                .descriptor_storage_name = plan.descriptor_storage_name,
-                .descriptor_value_name = plan.descriptor_value_name,
-                .data_pointer_name = plan.data_pointer_name,
-                .length_name = plan.length_name,
-                .rendered_ir = plan.rendered_ir,
-            });
-        }
-    }
-
-    for (auto const& nested_statement : statement.nested_statements) {
-        collect_test_only_computed_dynamic_array_for_descriptor_renders(
-            nested_statement,
-            enclosing_function_name,
-            context,
-            state,
-            renders
-        );
-    }
-    for (auto const& alternate_statement : statement.alternate_statements) {
-        collect_test_only_computed_dynamic_array_for_descriptor_renders(
-            alternate_statement,
-            enclosing_function_name,
-            context,
-            state,
-            renders
-        );
-    }
-    for (auto const& switch_case : statement.switch_cases) {
-        for (auto const& case_statement : switch_case.statements) {
-            if (case_statement != nullptr) {
-                collect_test_only_computed_dynamic_array_for_descriptor_renders(
-                    *case_statement,
-                    enclosing_function_name,
-                    context,
-                    state,
-                    renders
-                );
-            }
-        }
-    }
-}
-
-void collect_test_only_computed_dynamic_array_for_descriptor_renders(
+template <typename CollectForStatement>
+void collect_test_only_computed_dynamic_array_for_function(
     syntax::FunctionSyntax const& function,
     LoweringContext const& context,
-    std::vector<ComputedDynamicArrayForDescriptorRenderMetadata>& renders
+    CollectForStatement&& collect_for_statement
 ) {
     auto state = FunctionLoweringState {};
     for (auto const& parameter : function.parameters) {
@@ -868,13 +787,34 @@ void collect_test_only_computed_dynamic_array_for_descriptor_renders(
         }
     }
     for (auto const& statement : function.body_statements) {
-        collect_test_only_computed_dynamic_array_for_descriptor_renders(
+        collect_test_only_computed_dynamic_array_for_statements(
             statement,
             function.name,
             context,
             state,
-            renders
+            collect_for_statement
         );
+    }
+}
+
+template <typename CollectForStatement>
+void collect_test_only_computed_dynamic_array_for_module(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
+    CollectForStatement&& collect_for_statement
+) {
+    for (auto const& function : module.functions) {
+        collect_test_only_computed_dynamic_array_for_function(function, context, collect_for_statement);
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            collect_test_only_computed_dynamic_array_for_function(method, context, collect_for_statement);
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            collect_test_only_computed_dynamic_array_for_function(method, context, collect_for_statement);
+        }
     }
 }
 
@@ -883,42 +823,41 @@ auto collect_test_only_computed_dynamic_array_for_descriptor_renders(
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> {
     auto renders = std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> {};
-    for (auto const& function : module.functions) {
-        collect_test_only_computed_dynamic_array_for_descriptor_renders(function, context, renders);
-    }
-    for (auto const& implementation : module.implementations) {
-        for (auto const& method : implementation.methods) {
-            collect_test_only_computed_dynamic_array_for_descriptor_renders(method, context, renders);
+    collect_test_only_computed_dynamic_array_for_module(
+        module,
+        context,
+        [&renders](
+            syntax::StatementSyntax const& statement,
+            std::string_view enclosing_function_name,
+            LoweringContext const& lowering_context,
+            FunctionLoweringState& state
+        ) {
+            auto plan = plan_computed_dynamic_array_iterable_descriptor_render(
+                statement.expression,
+                lowering_context,
+                state
+            );
+            if (plan.kind ==
+                    ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned &&
+                plan.descriptor_load_planned &&
+                plan.data_projection_planned &&
+                plan.length_projection_planned) {
+                renders.push_back(ComputedDynamicArrayForDescriptorRenderMetadata {
+                    .enclosing_function_name = std::string {enclosing_function_name},
+                    .source_line = statement.line,
+                    .cleanup_owner_name = plan.cleanup_owner_name,
+                    .source_type_name = plan.source_type_name,
+                    .element_source_type_name = plan.element_source_type_name,
+                    .descriptor_storage_name = plan.descriptor_storage_name,
+                    .descriptor_value_name = plan.descriptor_value_name,
+                    .data_pointer_name = plan.data_pointer_name,
+                    .length_name = plan.length_name,
+                    .rendered_ir = plan.rendered_ir,
+                });
+            }
         }
-    }
-    for (auto const& extension : module.extensions) {
-        for (auto const& method : extension.methods) {
-            collect_test_only_computed_dynamic_array_for_descriptor_renders(method, context, renders);
-        }
-    }
+    );
     return renders;
-}
-
-void collect_test_only_computed_dynamic_array_for_production_sequences(
-    syntax::FunctionSyntax const& function,
-    LoweringContext const& context,
-    std::vector<ComputedDynamicArrayForProductionSequenceMetadata>& sequences
-) {
-    auto state = FunctionLoweringState {};
-    for (auto const& parameter : function.parameters) {
-        if (!parameter.name.empty() && !parameter.type.name.empty()) {
-            state.source_type_names[parameter.name] = render_source_type_name(parameter.type);
-        }
-    }
-    for (auto const& statement : function.body_statements) {
-        collect_test_only_computed_dynamic_array_for_production_sequences(
-            statement,
-            function.name,
-            context,
-            state,
-            sequences
-        );
-    }
 }
 
 auto collect_test_only_computed_dynamic_array_for_production_sequences(
@@ -926,19 +865,34 @@ auto collect_test_only_computed_dynamic_array_for_production_sequences(
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForProductionSequenceMetadata> {
     auto sequences = std::vector<ComputedDynamicArrayForProductionSequenceMetadata> {};
-    for (auto const& function : module.functions) {
-        collect_test_only_computed_dynamic_array_for_production_sequences(function, context, sequences);
-    }
-    for (auto const& implementation : module.implementations) {
-        for (auto const& method : implementation.methods) {
-            collect_test_only_computed_dynamic_array_for_production_sequences(method, context, sequences);
+    collect_test_only_computed_dynamic_array_for_module(
+        module,
+        context,
+        [&sequences](
+            syntax::StatementSyntax const& statement,
+            std::string_view enclosing_function_name,
+            LoweringContext const& lowering_context,
+            FunctionLoweringState& state
+        ) {
+            auto gate = plan_computed_dynamic_array_iterable_production_emission_gate(
+                statement.expression,
+                lowering_context,
+                state
+            );
+            if (gate.kind ==
+                    ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
+                gate.production_sequence_render_planned) {
+                sequences.push_back(ComputedDynamicArrayForProductionSequenceMetadata {
+                    .enclosing_function_name = std::string {enclosing_function_name},
+                    .source_line = statement.line,
+                    .cleanup_owner_name = gate.cleanup_owner_name,
+                    .source_type_name = gate.source_type_name,
+                    .element_source_type_name = gate.element_source_type_name,
+                    .rendered_ir = gate.rendered_ir,
+                });
+            }
         }
-    }
-    for (auto const& extension : module.extensions) {
-        for (auto const& method : extension.methods) {
-            collect_test_only_computed_dynamic_array_for_production_sequences(method, context, sequences);
-        }
-    }
+    );
     return sequences;
 }
 
