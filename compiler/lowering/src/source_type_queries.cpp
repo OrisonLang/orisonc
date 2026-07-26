@@ -1670,6 +1670,17 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
     }
 
     plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned;
+    plan.rendered_ir.insert(
+        plan.rendered_ir.end(),
+        loop_render_plan.rendered_ir.begin(),
+        loop_render_plan.rendered_ir.end()
+    );
+    plan.rendered_ir.insert(
+        plan.rendered_ir.end(),
+        plan.loop_exit_cleanup_plan.rendered_ir.begin(),
+        plan.loop_exit_cleanup_plan.rendered_ir.end()
+    );
+    plan.production_sequence_render_planned = !plan.rendered_ir.empty();
     return plan;
 }
 
@@ -1727,6 +1738,8 @@ auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
     output += plan.ownership_ready ? " [ownership ready]" : " [ownership blocked]";
     output += plan.loop_render_ready ? " [loop render ready]" : " [loop render blocked]";
     output += plan.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup blocked]";
+    output += plan.production_sequence_render_planned ? " [production sequence planned]" :
+        " [production sequence blocked]";
     output += plan.production_emission_enabled ? " [production emission enabled]" :
         " [production emission disabled]";
     output += " (metadata only)";

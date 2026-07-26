@@ -775,7 +775,7 @@ auto main() -> int {
         computed_dynamic_array_parameter_for.error_text.find(
             "computed DynamicArray production emission gate plan ownership join blocked source DynamicArray<UInt32> "
             "element UInt32 [ownership blocked] [loop render blocked] [exit cleanup blocked] "
-            "[production emission disabled] (metadata only)"
+            "[production sequence blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -873,7 +873,7 @@ auto main() -> int {
         computed_dynamic_array_same_owner_for.error_text.find(
             "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [ownership blocked] [loop render blocked] [exit cleanup blocked] "
-            "[production emission disabled] (metadata only)"
+            "[production sequence blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -986,7 +986,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for.error_text.find(
             "computed DynamicArray production emission gate plan production emission gate planned source "
             "DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
-            "[exit cleanup ready] [production emission disabled] (metadata only)"
+            "[exit cleanup ready] [production sequence planned] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 

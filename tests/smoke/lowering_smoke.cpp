@@ -1866,7 +1866,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_parameter_for.render(path.string()).find(
             "computed DynamicArray production emission gate plan ownership join blocked source DynamicArray<UInt32> "
             "element UInt32 [ownership blocked] [loop render blocked] [exit cleanup blocked] "
-            "[production emission disabled] (metadata only)"
+            "[production sequence blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -1962,7 +1962,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_same_owner_parameter_for.render(path.string()).find(
             "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [ownership blocked] [loop render blocked] [exit cleanup blocked] "
-            "[production emission disabled] (metadata only)"
+            "[production sequence blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 
@@ -2070,7 +2070,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_for.render(path.string()).find(
             "computed DynamicArray production emission gate plan production emission gate planned source "
             "DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
-            "[exit cleanup ready] [production emission disabled] (metadata only)"
+            "[exit cleanup ready] [production sequence planned] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
 }

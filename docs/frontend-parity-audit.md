@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` production-emission gates now expose the aggregated loop-render and
+  exit-cleanup snippets for ready gates as an internal seam, while keeping production emission disabled.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the production-emission gate
   report. The report surfaces ownership, loop-render, and exit-cleanup readiness while keeping production emission
   disabled.

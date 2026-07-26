@@ -98,6 +98,8 @@ representation.
   composed loop rendering, and loop-exit cleanup readiness, then still records production emission as disabled.
 - Dynamic-array `for` rejection diagnostics now include the computed production-emission gate report, so computed owned
   iterable failures show whether the production gate is blocked, ready-but-disabled, or still missing prerequisites.
+- The disabled production-emission gate now exposes the aggregated computed loop render and exit-cleanup snippets for
+  ready gates as an internal handoff seam while still keeping those snippets out of module IR.
 
 ## Consequences
 

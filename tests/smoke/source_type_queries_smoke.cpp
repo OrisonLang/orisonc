@@ -706,6 +706,8 @@ int main() {
     assert(!mismatched_computed_production_emission_gate.ownership_ready);
     assert(!mismatched_computed_production_emission_gate.loop_render_ready);
     assert(!mismatched_computed_production_emission_gate.exit_cleanup_ready);
+    assert(mismatched_computed_production_emission_gate.rendered_ir.empty());
+    assert(!mismatched_computed_production_emission_gate.production_sequence_render_planned);
     assert(!mismatched_computed_production_emission_gate.production_emission_enabled);
     assert(
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
@@ -1100,6 +1102,18 @@ int main() {
     assert(proven_computed_production_emission_gate.ownership_ready);
     assert(proven_computed_production_emission_gate.loop_render_ready);
     assert(proven_computed_production_emission_gate.exit_cleanup_ready);
+    assert(proven_computed_production_emission_gate.rendered_ir.size() == 16);
+    assert(
+        proven_computed_production_emission_gate.rendered_ir[0] ==
+        "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(proven_computed_production_emission_gate.rendered_ir[8] == "items.computed_for.body:\n");
+    assert(proven_computed_production_emission_gate.rendered_ir[14] == "items.computed_for.exit:\n");
+    assert(
+        proven_computed_production_emission_gate.rendered_ir[15] ==
+        "  ; cleanup ownership resumes with items\n"
+    );
+    assert(proven_computed_production_emission_gate.production_sequence_render_planned);
     assert(!proven_computed_production_emission_gate.production_emission_enabled);
     auto proven_computed_production_emission_gate_report =
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
@@ -1111,6 +1125,10 @@ int main() {
     );
     assert(
         proven_computed_production_emission_gate_report.find("[production emission disabled]") !=
+        std::string::npos
+    );
+    assert(
+        proven_computed_production_emission_gate_report.find("[production sequence planned]") !=
         std::string::npos
     );
 
@@ -1337,6 +1355,8 @@ int main() {
     assert(!unproven_computed_production_emission_gate.ownership_ready);
     assert(!unproven_computed_production_emission_gate.loop_render_ready);
     assert(!unproven_computed_production_emission_gate.exit_cleanup_ready);
+    assert(unproven_computed_production_emission_gate.rendered_ir.empty());
+    assert(!unproven_computed_production_emission_gate.production_sequence_render_planned);
     assert(!unproven_computed_production_emission_gate.production_emission_enabled);
     assert(
         orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
