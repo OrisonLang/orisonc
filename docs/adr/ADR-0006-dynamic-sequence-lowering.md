@@ -85,6 +85,9 @@ representation.
   keeping render emission disabled.
 - Dynamic-array `for` rejection diagnostics now include the computed loop-continue render report, so computed owned
   iterable failures show whether loop continuation is blocked, unproven, unlowerable, or planned-but-disabled.
+- Computed owned dynamic-array loop rendering now has a composed disabled internal sequence plan. It aggregates the
+  descriptor render, loop-control render, body block label, element address, element load, and loop continuation
+  snippets in order while keeping render emission disabled.
 
 ## Consequences
 

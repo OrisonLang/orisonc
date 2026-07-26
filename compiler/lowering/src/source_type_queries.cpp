@@ -1315,6 +1315,167 @@ auto computed_dynamic_array_iterable_loop_continue_render_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_loop_render_sequence(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableLoopRenderSequencePlan {
+    auto plan = ComputedDynamicArrayIterableLoopRenderSequencePlan {};
+    plan.loop_continue_render_plan = plan_computed_dynamic_array_iterable_loop_continue_render(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.loop_continue_render_plan.source_type_name;
+    plan.element_source_type_name = plan.loop_continue_render_plan.element_source_type_name;
+    plan.cleanup_owner_name = plan.loop_continue_render_plan.cleanup_owner_name;
+    auto const& element_load_plan = plan.loop_continue_render_plan.element_load_render_plan;
+    auto const& element_address_plan = element_load_plan.element_address_render_plan;
+    auto const& loop_control_plan = element_address_plan.loop_control_render_plan;
+    auto const& descriptor_plan = loop_control_plan.descriptor_render_plan;
+    plan.body_block_name = loop_control_plan.body_block_name;
+    plan.render_enabled = false;
+
+    switch (plan.loop_continue_render_plan.kind) {
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_type_unlowerable:
+            plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_type_unlowerable;
+            return plan;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_address_unplanned:
+            plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_address_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_load_unplanned:
+            plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_load_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::loop_continue_render_planned:
+            break;
+    }
+
+    if (plan.body_block_name.empty() || descriptor_plan.rendered_ir.empty() ||
+        loop_control_plan.rendered_ir.empty() || element_address_plan.rendered_ir.empty() ||
+        element_load_plan.rendered_ir.empty() || plan.loop_continue_render_plan.rendered_ir.empty()) {
+        plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_continue_unplanned;
+        return plan;
+    }
+
+    plan.rendered_ir.insert(
+        plan.rendered_ir.end(),
+        descriptor_plan.rendered_ir.begin(),
+        descriptor_plan.rendered_ir.end()
+    );
+    plan.rendered_ir.insert(
+        plan.rendered_ir.end(),
+        loop_control_plan.rendered_ir.begin(),
+        loop_control_plan.rendered_ir.end()
+    );
+    plan.rendered_ir.push_back(plan.body_block_name + ":\n");
+    plan.rendered_ir.insert(
+        plan.rendered_ir.end(),
+        element_address_plan.rendered_ir.begin(),
+        element_address_plan.rendered_ir.end()
+    );
+    plan.rendered_ir.insert(
+        plan.rendered_ir.end(),
+        element_load_plan.rendered_ir.begin(),
+        element_load_plan.rendered_ir.end()
+    );
+    plan.rendered_ir.insert(
+        plan.rendered_ir.end(),
+        plan.loop_continue_render_plan.rendered_ir.begin(),
+        plan.loop_continue_render_plan.rendered_ir.end()
+    );
+
+    plan.descriptor_render_planned = descriptor_plan.descriptor_load_planned &&
+        descriptor_plan.data_projection_planned && descriptor_plan.length_projection_planned;
+    plan.loop_control_render_planned = loop_control_plan.entry_branch_planned &&
+        loop_control_plan.index_phi_planned && loop_control_plan.bounds_check_planned &&
+        loop_control_plan.conditional_branch_planned;
+    plan.body_block_planned = true;
+    plan.element_address_render_planned = element_address_plan.element_address_planned;
+    plan.element_load_render_planned = element_load_plan.item_value_planned;
+    plan.loop_continue_render_planned = plan.loop_continue_render_plan.continue_block_planned &&
+        plan.loop_continue_render_plan.next_index_planned &&
+        plan.loop_continue_render_plan.backedge_branch_planned;
+    plan.kind = ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_render_sequence_planned;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_loop_render_sequence_plan_report(
+    ComputedDynamicArrayIterableLoopRenderSequencePlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray loop render sequence plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_type_unlowerable:
+            output += "element type unlowerable";
+            break;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_address_unplanned:
+            output += "element address unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::element_load_unplanned:
+            output += "element load unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_continue_unplanned:
+            output += "loop continue unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_render_sequence_planned:
+            output += "loop render sequence planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    if (!plan.body_block_name.empty()) {
+        output += " body ";
+        output += plan.body_block_name;
+    }
+    output += plan.descriptor_render_planned ? " [descriptor render planned]" :
+        " [descriptor render blocked]";
+    output += plan.loop_control_render_planned ? " [loop control planned]" :
+        " [loop control blocked]";
+    output += plan.body_block_planned ? " [body block planned]" : " [body block blocked]";
+    output += plan.element_address_render_planned ? " [element address planned]" :
+        " [element address blocked]";
+    output += plan.element_load_render_planned ? " [element load planned]" :
+        " [element load blocked]";
+    output += plan.loop_continue_render_planned ? " [loop continue planned]" :
+        " [loop continue blocked]";
+    output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

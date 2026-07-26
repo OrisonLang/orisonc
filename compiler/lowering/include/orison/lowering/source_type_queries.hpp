@@ -272,6 +272,36 @@ struct ComputedDynamicArrayIterableLoopContinueRenderPlan {
     bool render_enabled = false;
 };
 
+enum class ComputedDynamicArrayIterableLoopRenderSequencePlanKind {
+    not_computed_dynamic_array,
+    unsupported_computed_shape,
+    ownership_join_blocked,
+    cleanup_owner_unproven,
+    element_type_unlowerable,
+    element_address_unplanned,
+    element_load_unplanned,
+    loop_continue_unplanned,
+    loop_render_sequence_planned,
+};
+
+struct ComputedDynamicArrayIterableLoopRenderSequencePlan {
+    ComputedDynamicArrayIterableLoopRenderSequencePlanKind kind =
+        ComputedDynamicArrayIterableLoopRenderSequencePlanKind::not_computed_dynamic_array;
+    ComputedDynamicArrayIterableLoopContinueRenderPlan loop_continue_render_plan;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string cleanup_owner_name;
+    std::string body_block_name;
+    std::vector<std::string> rendered_ir;
+    bool descriptor_render_planned = false;
+    bool loop_control_render_planned = false;
+    bool body_block_planned = false;
+    bool element_address_render_planned = false;
+    bool element_load_render_planned = false;
+    bool loop_continue_render_planned = false;
+    bool render_enabled = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -378,6 +408,16 @@ auto plan_computed_dynamic_array_iterable_loop_continue_render(
 
 auto computed_dynamic_array_iterable_loop_continue_render_plan_report(
     ComputedDynamicArrayIterableLoopContinueRenderPlan const& plan
+) -> std::string;
+
+auto plan_computed_dynamic_array_iterable_loop_render_sequence(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableLoopRenderSequencePlan;
+
+auto computed_dynamic_array_iterable_loop_render_sequence_plan_report(
+    ComputedDynamicArrayIterableLoopRenderSequencePlan const& plan
 ) -> std::string;
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool;
