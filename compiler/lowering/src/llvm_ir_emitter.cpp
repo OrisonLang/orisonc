@@ -1030,6 +1030,48 @@ auto collect_test_only_computed_dynamic_array_for_loop_continue_renders(
     return renders;
 }
 
+auto collect_test_only_computed_dynamic_array_for_loop_render_sequences(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata> {
+    auto sequences = std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata> {};
+    collect_test_only_computed_dynamic_array_for_module(
+        module,
+        context,
+        [&sequences](
+            syntax::StatementSyntax const& statement,
+            std::string_view enclosing_function_name,
+            LoweringContext const& lowering_context,
+            FunctionLoweringState& state
+        ) {
+            auto plan = plan_computed_dynamic_array_iterable_loop_render_sequence(
+                statement.expression,
+                lowering_context,
+                state
+            );
+            if (plan.kind ==
+                    ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_render_sequence_planned &&
+                plan.descriptor_render_planned &&
+                plan.loop_control_render_planned &&
+                plan.body_block_planned &&
+                plan.element_address_render_planned &&
+                plan.element_load_render_planned &&
+                plan.loop_continue_render_planned) {
+                sequences.push_back(ComputedDynamicArrayForLoopRenderSequenceMetadata {
+                    .enclosing_function_name = std::string {enclosing_function_name},
+                    .source_line = statement.line,
+                    .cleanup_owner_name = plan.cleanup_owner_name,
+                    .source_type_name = plan.source_type_name,
+                    .element_source_type_name = plan.element_source_type_name,
+                    .body_block_name = plan.body_block_name,
+                    .rendered_ir = plan.rendered_ir,
+                });
+            }
+        }
+    );
+    return sequences;
+}
+
 auto collect_test_only_computed_dynamic_array_for_production_sequences(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
@@ -1520,6 +1562,45 @@ auto format_computed_dynamic_array_for_loop_continue_render_metadata_report(
     return lines;
 }
 
+auto format_computed_dynamic_array_for_loop_render_sequence_metadata(
+    ComputedDynamicArrayForLoopRenderSequenceMetadata const& metadata
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for loop render sequence";
+    if (!metadata.enclosing_function_name.empty()) {
+        output << " function " << metadata.enclosing_function_name;
+    }
+    if (metadata.source_line != 0) {
+        output << " line " << metadata.source_line;
+    }
+    if (!metadata.source_type_name.empty()) {
+        output << " source " << metadata.source_type_name;
+    }
+    if (!metadata.element_source_type_name.empty()) {
+        output << " element " << metadata.element_source_type_name;
+    }
+    if (!metadata.cleanup_owner_name.empty()) {
+        output << " owner " << metadata.cleanup_owner_name;
+    }
+    if (!metadata.body_block_name.empty()) {
+        output << " body " << metadata.body_block_name;
+    }
+    output << " snippets " << metadata.rendered_ir.size();
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_computed_dynamic_array_for_loop_render_sequence_metadata_report(
+    std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata> const& metadata
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(metadata.size());
+    for (auto const& sequence : metadata) {
+        lines.push_back(format_computed_dynamic_array_for_loop_render_sequence_metadata(sequence));
+    }
+    return lines;
+}
+
 auto LlvmIrEmissionResult::has_errors() const -> bool {
     return diagnostics.has_errors();
 }
@@ -1602,6 +1683,13 @@ auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_continue_render_repor
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_loop_continue_render_metadata_report(
         test_only_computed_dynamic_array_for_loop_continue_renders
+    );
+}
+
+auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_render_sequence_report() const
+    -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_loop_render_sequence_metadata_report(
+        test_only_computed_dynamic_array_for_loop_render_sequences
     );
 }
 
@@ -1831,6 +1919,17 @@ auto emit_module(
                 result.test_only_computed_dynamic_array_for_loop_continue_render_ir.end(),
                 render.rendered_ir.begin(),
                 render.rendered_ir.end()
+            );
+        }
+    }
+    if (options.test_only_collect_computed_dynamic_array_for_loop_render_sequences) {
+        result.test_only_computed_dynamic_array_for_loop_render_sequences =
+            collect_test_only_computed_dynamic_array_for_loop_render_sequences(module, context);
+        for (auto const& sequence : result.test_only_computed_dynamic_array_for_loop_render_sequences) {
+            result.test_only_computed_dynamic_array_for_loop_render_sequence_ir.insert(
+                result.test_only_computed_dynamic_array_for_loop_render_sequence_ir.end(),
+                sequence.rendered_ir.begin(),
+                sequence.rendered_ir.end()
             );
         }
     }

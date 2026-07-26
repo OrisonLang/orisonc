@@ -1984,6 +1984,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .test_only_collect_computed_dynamic_array_for_element_address_renders = true,
             .test_only_collect_computed_dynamic_array_for_element_load_renders = true,
             .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
+            .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         }
     );
@@ -2153,6 +2154,41 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_continue_render_ir[2] ==
+        "  br label %items.computed_for.condition\n"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequences.size() == 1);
+    auto const& computed_local_same_owner_loop_sequence =
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequences.front();
+    assert(computed_local_same_owner_loop_sequence.enclosing_function_name == "sum_words");
+    assert(computed_local_same_owner_loop_sequence.source_line == 6);
+    assert(computed_local_same_owner_loop_sequence.cleanup_owner_name == "items");
+    assert(computed_local_same_owner_loop_sequence.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_local_same_owner_loop_sequence.element_source_type_name == "UInt32");
+    assert(computed_local_same_owner_loop_sequence.body_block_name == "items.computed_for.body");
+    assert(computed_local_same_owner_loop_sequence.rendered_ir.size() == 14);
+    auto computed_local_same_owner_loop_sequence_report =
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequence_report();
+    assert(computed_local_same_owner_loop_sequence_report.size() == 1);
+    assert(
+        computed_local_same_owner_loop_sequence_report.front() ==
+        "computed DynamicArray for loop render sequence function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 owner items body items.computed_for.body snippets 14 (metadata only)"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir.size() == 14);
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[0] ==
+        "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[8] ==
+        "items.computed_for.body:\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[11] ==
+        "items.computed_for.continue:\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[13] ==
         "  br label %items.computed_for.condition\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
