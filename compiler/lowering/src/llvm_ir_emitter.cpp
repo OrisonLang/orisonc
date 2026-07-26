@@ -1111,6 +1111,50 @@ auto collect_test_only_computed_dynamic_array_for_loop_exit_cleanups(
     return cleanups;
 }
 
+auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> {
+    auto gates = std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> {};
+    collect_test_only_computed_dynamic_array_for_module(
+        module,
+        context,
+        [&gates](
+            syntax::StatementSyntax const& statement,
+            std::string_view enclosing_function_name,
+            LoweringContext const& lowering_context,
+            FunctionLoweringState& state
+        ) {
+            auto gate = plan_computed_dynamic_array_iterable_production_emission_gate(
+                statement.expression,
+                lowering_context,
+                state
+            );
+            if (gate.kind ==
+                    ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
+                gate.ownership_ready &&
+                gate.loop_render_ready &&
+                gate.exit_cleanup_ready &&
+                gate.production_sequence_render_planned) {
+                gates.push_back(ComputedDynamicArrayForProductionEmissionGateMetadata {
+                    .enclosing_function_name = std::string {enclosing_function_name},
+                    .source_line = statement.line,
+                    .cleanup_owner_name = gate.cleanup_owner_name,
+                    .source_type_name = gate.source_type_name,
+                    .element_source_type_name = gate.element_source_type_name,
+                    .rendered_ir = gate.rendered_ir,
+                    .ownership_ready = gate.ownership_ready,
+                    .loop_render_ready = gate.loop_render_ready,
+                    .exit_cleanup_ready = gate.exit_cleanup_ready,
+                    .production_sequence_render_planned = gate.production_sequence_render_planned,
+                    .production_emission_enabled = gate.production_emission_enabled,
+                });
+            }
+        }
+    );
+    return gates;
+}
+
 auto collect_test_only_computed_dynamic_array_for_production_sequences(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
@@ -1682,6 +1726,49 @@ auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata_report(
     return lines;
 }
 
+auto format_computed_dynamic_array_for_production_emission_gate_metadata(
+    ComputedDynamicArrayForProductionEmissionGateMetadata const& metadata
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for production emission gate";
+    if (!metadata.enclosing_function_name.empty()) {
+        output << " function " << metadata.enclosing_function_name;
+    }
+    if (metadata.source_line != 0) {
+        output << " line " << metadata.source_line;
+    }
+    if (!metadata.source_type_name.empty()) {
+        output << " source " << metadata.source_type_name;
+    }
+    if (!metadata.element_source_type_name.empty()) {
+        output << " element " << metadata.element_source_type_name;
+    }
+    if (!metadata.cleanup_owner_name.empty()) {
+        output << " owner " << metadata.cleanup_owner_name;
+    }
+    output << (metadata.ownership_ready ? " [ownership ready]" : " [ownership missing]");
+    output << (metadata.loop_render_ready ? " [loop render ready]" : " [loop render missing]");
+    output << (metadata.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup missing]");
+    output << (metadata.production_sequence_render_planned ? " [production sequence planned]" :
+        " [production sequence missing]");
+    output << (metadata.production_emission_enabled ? " [production emission enabled]" :
+        " [production emission disabled]");
+    output << " snippets " << metadata.rendered_ir.size();
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_computed_dynamic_array_for_production_emission_gate_metadata_report(
+    std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> const& metadata
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(metadata.size());
+    for (auto const& gate : metadata) {
+        lines.push_back(format_computed_dynamic_array_for_production_emission_gate_metadata(gate));
+    }
+    return lines;
+}
+
 auto LlvmIrEmissionResult::has_errors() const -> bool {
     return diagnostics.has_errors();
 }
@@ -1778,6 +1865,13 @@ auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_exit_cleanup_report()
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_loop_exit_cleanup_metadata_report(
         test_only_computed_dynamic_array_for_loop_exit_cleanups
+    );
+}
+
+auto LlvmIrEmissionResult::computed_dynamic_array_for_production_emission_gate_report() const
+    -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_production_emission_gate_metadata_report(
+        test_only_computed_dynamic_array_for_production_emission_gates
     );
 }
 
@@ -2029,6 +2123,17 @@ auto emit_module(
                 result.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir.end(),
                 cleanup.rendered_ir.begin(),
                 cleanup.rendered_ir.end()
+            );
+        }
+    }
+    if (options.test_only_collect_computed_dynamic_array_for_production_emission_gates) {
+        result.test_only_computed_dynamic_array_for_production_emission_gates =
+            collect_test_only_computed_dynamic_array_for_production_emission_gates(module, context);
+        for (auto const& gate : result.test_only_computed_dynamic_array_for_production_emission_gates) {
+            result.test_only_computed_dynamic_array_for_production_emission_gate_ir.insert(
+                result.test_only_computed_dynamic_array_for_production_emission_gate_ir.end(),
+                gate.rendered_ir.begin(),
+                gate.rendered_ir.end()
             );
         }
     }

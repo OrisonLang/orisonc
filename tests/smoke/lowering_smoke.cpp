@@ -1986,6 +1986,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
             .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
             .test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = true,
+            .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         }
     );
@@ -2218,6 +2219,43 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir[1] ==
+        "  ; cleanup ownership resumes with items\n"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gates.size() == 1);
+    auto const& computed_local_same_owner_production_gate =
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gates.front();
+    assert(computed_local_same_owner_production_gate.enclosing_function_name == "sum_words");
+    assert(computed_local_same_owner_production_gate.source_line == 6);
+    assert(computed_local_same_owner_production_gate.cleanup_owner_name == "items");
+    assert(computed_local_same_owner_production_gate.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_local_same_owner_production_gate.element_source_type_name == "UInt32");
+    assert(computed_local_same_owner_production_gate.ownership_ready);
+    assert(computed_local_same_owner_production_gate.loop_render_ready);
+    assert(computed_local_same_owner_production_gate.exit_cleanup_ready);
+    assert(computed_local_same_owner_production_gate.production_sequence_render_planned);
+    assert(!computed_local_same_owner_production_gate.production_emission_enabled);
+    assert(computed_local_same_owner_production_gate.rendered_ir.size() == 16);
+    auto computed_local_same_owner_production_gate_report =
+        computed_local_same_owner_for.computed_dynamic_array_for_production_emission_gate_report();
+    assert(computed_local_same_owner_production_gate_report.size() == 1);
+    assert(
+        computed_local_same_owner_production_gate_report.front() ==
+        "computed DynamicArray for production emission gate function sum_words line 6 "
+        "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
+        "[exit cleanup ready] [production sequence planned] [production emission disabled] "
+        "snippets 16 (metadata only)"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir.size() == 16);
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[0] ==
+        "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[14] ==
+        "items.computed_for.exit:\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[15] ==
         "  ; cleanup ownership resumes with items\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);

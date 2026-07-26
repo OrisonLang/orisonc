@@ -113,6 +113,20 @@ struct ComputedDynamicArrayForLoopExitCleanupMetadata {
     std::vector<std::string> rendered_ir;
 };
 
+struct ComputedDynamicArrayForProductionEmissionGateMetadata {
+    std::string enclosing_function_name;
+    std::size_t source_line = 0;
+    std::string cleanup_owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::vector<std::string> rendered_ir;
+    bool ownership_ready = false;
+    bool loop_render_ready = false;
+    bool exit_cleanup_ready = false;
+    bool production_sequence_render_planned = false;
+    bool production_emission_enabled = false;
+};
+
 auto format_computed_dynamic_array_for_production_sequence_metadata(
     ComputedDynamicArrayForProductionSequenceMetadata const& metadata
 ) -> std::string;
@@ -177,6 +191,14 @@ auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata_report(
     std::vector<ComputedDynamicArrayForLoopExitCleanupMetadata> const& metadata
 ) -> std::vector<std::string>;
 
+auto format_computed_dynamic_array_for_production_emission_gate_metadata(
+    ComputedDynamicArrayForProductionEmissionGateMetadata const& metadata
+) -> std::string;
+
+auto format_computed_dynamic_array_for_production_emission_gate_metadata_report(
+    std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> const& metadata
+) -> std::vector<std::string>;
+
 struct LlvmIrEmissionResult {
     diagnostics::DiagnosticBag diagnostics;
     std::string ir_text;
@@ -232,6 +254,9 @@ struct LlvmIrEmissionResult {
     std::vector<ComputedDynamicArrayForLoopExitCleanupMetadata>
         test_only_computed_dynamic_array_for_loop_exit_cleanups;
     std::vector<std::string> test_only_computed_dynamic_array_for_loop_exit_cleanup_ir;
+    std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata>
+        test_only_computed_dynamic_array_for_production_emission_gates;
+    std::vector<std::string> test_only_computed_dynamic_array_for_production_emission_gate_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;
@@ -252,6 +277,7 @@ struct LlvmIrEmissionResult {
     auto computed_dynamic_array_for_loop_continue_render_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_loop_render_sequence_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_loop_exit_cleanup_report() const -> std::vector<std::string>;
+    auto computed_dynamic_array_for_production_emission_gate_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;

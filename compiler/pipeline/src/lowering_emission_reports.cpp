@@ -46,6 +46,8 @@ void populate_lowering_emission_reports(
         emission.computed_dynamic_array_for_loop_render_sequence_report();
     result.computed_dynamic_array_for_loop_exit_cleanup_report =
         emission.computed_dynamic_array_for_loop_exit_cleanup_report();
+    result.computed_dynamic_array_for_production_emission_gate_report =
+        emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =
         emission.computed_dynamic_array_for_production_sequence_report();
     result.dynamic_array_cleanup_production_readiness =

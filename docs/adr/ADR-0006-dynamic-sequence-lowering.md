@@ -129,6 +129,9 @@ representation.
 - Computed dynamic-array `for` loop-exit-cleanup metadata is now collected and reported separately from the broader
   production sequence so exit-block and cleanup-resumption readiness can be audited independently before production
   emission is enabled.
+- Computed dynamic-array `for` production-emission-gate metadata is now collected and reported separately from the
+  broader production sequence so ownership, loop-render, exit-cleanup, and disabled-emission readiness can be audited
+  independently before production emission is enabled.
 
 ## Consequences
 

@@ -901,6 +901,7 @@ auto main() -> int {
             .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
             .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
             .test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = true,
+            .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
@@ -975,6 +976,18 @@ auto main() -> int {
             .computed_dynamic_array_for_loop_exit_cleanup_report.front() ==
         "computed DynamicArray for loop exit cleanup function sum_words line 6 source DynamicArray<UInt32> "
         "element UInt32 owner items exit items.computed_for.exit resumes items snippets 2 (metadata only)"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_report.front() ==
+        "computed DynamicArray for production emission gate function sum_words line 6 "
+        "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
+        "[exit cleanup ready] [production sequence planned] [production emission disabled] "
+        "snippets 16 (metadata only)"
     );
     assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.size() == 1);
     assert(
