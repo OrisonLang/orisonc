@@ -52,6 +52,32 @@ auto lower_source(
     return emitter.emit(parse_result.module, semantic_result, options);
 }
 
+auto lower_source_metadata(
+    std::filesystem::path const& path,
+    std::string_view source,
+    orison::lowering::LlvmIrEmissionOptions const& options = {}
+)
+    -> orison::lowering::LlvmIrEmissionResult {
+    {
+        std::ofstream output(path);
+        output << source;
+    }
+
+    auto source_file = orison::source::SourceFile::read(path);
+    assert(source_file.has_value());
+
+    orison::syntax::ModuleParser parser;
+    auto parse_result = parser.parse(*source_file);
+    assert(!parse_result.diagnostics.has_errors());
+
+    orison::semantics::ModuleSemanticAnalyzer analyzer;
+    auto semantic_result = analyzer.analyze(parse_result.module);
+    assert(!semantic_result.has_errors());
+
+    orison::lowering::LlvmIrEmitter emitter;
+    return emitter.emit_metadata(parse_result.module, semantic_result, options);
+}
+
 auto lower_source_with_semantics(
     std::filesystem::path const& path,
     std::string_view source,
@@ -1970,8 +1996,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         ) != std::string::npos
     );
 
-    auto computed_local_same_owner_for = lower_source(
-        path,
+    auto computed_local_same_owner_source =
         "package demo.dynamicarray\n"
         "\n"
         "function sum_words(flag: Bool) -> UInt32\n"
@@ -1979,7 +2004,10 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "    var total = 0 as UInt32\n"
         "    for word in flag ? items : items\n"
         "        total = total + word\n"
-        "    total\n",
+        "    total\n";
+    auto computed_local_same_owner_for = lower_source(
+        path,
+        computed_local_same_owner_source,
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
@@ -2287,6 +2315,59 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[15] ==
         "  ; cleanup ownership resumes with items\n"
+    );
+    auto computed_local_same_owner_metadata_without_comment_emission = lower_source_metadata(
+        path,
+        computed_local_same_owner_source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+        }
+    );
+    assert(!computed_local_same_owner_metadata_without_comment_emission.has_errors());
+    assert(
+        computed_local_same_owner_metadata_without_comment_emission
+            .test_only_computed_dynamic_array_for_production_sequence_module_ir.empty()
+    );
+    assert(
+        computed_local_same_owner_metadata_without_comment_emission.ir_text.find(
+            "; computed DynamicArray for production sequence"
+        ) == std::string::npos
+    );
+    auto computed_local_same_owner_metadata_with_comment_emission = lower_source_metadata(
+        path,
+        computed_local_same_owner_source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .test_only_emit_computed_dynamic_array_for_production_sequence_comments = true,
+        }
+    );
+    assert(!computed_local_same_owner_metadata_with_comment_emission.has_errors());
+    assert(
+        computed_local_same_owner_metadata_with_comment_emission
+            .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 17
+    );
+    assert(
+        computed_local_same_owner_metadata_with_comment_emission
+            .test_only_computed_dynamic_array_for_production_sequence_ir.size() == 16
+    );
+    assert(
+        computed_local_same_owner_metadata_with_comment_emission.ir_text.find(
+            "; computed DynamicArray for production sequence function sum_words line 6 "
+            "source DynamicArray<UInt32> element UInt32 owner items snippets 16 (metadata only)\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_metadata_with_comment_emission.ir_text.find(
+            "; items.computed_for.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_metadata_with_comment_emission.ir_text.find(
+            ";   ; cleanup ownership resumes with items\n"
+        ) != std::string::npos
     );
     assert(
         computed_local_same_owner_for.render(path.string()).find(

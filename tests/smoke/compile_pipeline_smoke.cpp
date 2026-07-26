@@ -981,6 +981,47 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.front() ==
         smoke::computed_dynamic_array_production_sequence_report
     );
+    auto dynamic_array_metadata_collector =
+        orison::pipeline::DynamicArrayCleanupMetadataCollector {pipeline};
+    auto computed_dynamic_array_local_same_owner_metadata_without_comments =
+        dynamic_array_metadata_collector.collect(
+            computed_dynamic_array_local_same_owner_for_path,
+            orison::pipeline::CompilePipelineOptions {
+                .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+                .dynamic_array_production_construction_lowering_enabled = true,
+                .dynamic_array_production_for_lowering_enabled = true,
+            }
+        );
+    assert(!computed_dynamic_array_local_same_owner_metadata_without_comments.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_without_comments
+            .test_only_computed_dynamic_array_for_production_sequence_module_ir.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_without_comments.ir_text.find(
+            "; computed DynamicArray for production sequence"
+        ) == std::string::npos
+    );
+    auto computed_dynamic_array_local_same_owner_metadata_with_comments =
+        dynamic_array_metadata_collector.collect(
+            computed_dynamic_array_local_same_owner_for_path,
+            orison::pipeline::CompilePipelineOptions {
+                .test_only_emit_computed_dynamic_array_for_production_sequence_comments = true,
+                .dynamic_array_production_construction_lowering_enabled = true,
+                .dynamic_array_production_for_lowering_enabled = true,
+            }
+        );
+    assert(!computed_dynamic_array_local_same_owner_metadata_with_comments.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_with_comments
+            .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 17
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_with_comments.ir_text.find(
+            "; computed DynamicArray for production sequence function sum_words line 6 "
+            "source DynamicArray<UInt32> element UInt32 owner items snippets 16 (metadata only)\n"
+        ) != std::string::npos
+    );
     assert(
         computed_dynamic_array_local_same_owner_for.error_text.find(
             "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "

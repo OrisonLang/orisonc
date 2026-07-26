@@ -108,6 +108,9 @@ representation.
   surfaces can consume provenance without inspecting raw metadata vectors.
 - Pipeline lowering-emission reports now carry computed dynamic-array `for` production-sequence reports, including
   intentionally rejected lowering attempts and the existing dynamic-array audit bundle.
+- A test-only module-IR comment emission seam can project ready computed dynamic-array `for` production-sequence
+  snippets into metadata IR text for audit consumers. The snippets remain comments, not executable control flow, until
+  function CFG insertion and ownership cleanup emission are proven together.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

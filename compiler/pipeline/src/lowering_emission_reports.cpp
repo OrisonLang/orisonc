@@ -50,6 +50,8 @@ void populate_lowering_emission_reports(
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =
         emission.computed_dynamic_array_for_production_sequence_report();
+    result.test_only_computed_dynamic_array_for_production_sequence_module_ir =
+        std::move(emission.test_only_computed_dynamic_array_for_production_sequence_module_ir);
     result.dynamic_array_cleanup_production_readiness =
         plan_dynamic_array_cleanup_production_readiness(result, options);
     result.dynamic_array_cleanup_production_readiness_report = {

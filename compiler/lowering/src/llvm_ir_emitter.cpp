@@ -863,6 +863,31 @@ void append_rendered_ir(std::vector<std::string>& output, std::vector<Metadata> 
     }
 }
 
+auto render_computed_dynamic_array_for_production_sequence_module_comments(
+    std::vector<ComputedDynamicArrayForProductionSequenceMetadata> const& sequences
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    for (auto const& sequence : sequences) {
+        auto report = std::ostringstream {};
+        append_computed_dynamic_array_for_metadata_prefix(
+            report,
+            "production sequence",
+            sequence.enclosing_function_name,
+            sequence.source_line,
+            sequence.source_type_name,
+            sequence.element_source_type_name,
+            sequence.cleanup_owner_name
+        );
+        report << " snippets " << sequence.rendered_ir.size();
+        report << " (metadata only)";
+        lines.push_back("; " + report.str() + "\n");
+        for (auto const& snippet : sequence.rendered_ir) {
+            lines.push_back("; " + snippet);
+        }
+    }
+    return lines;
+}
+
 auto collect_test_only_computed_dynamic_array_for_descriptor_renders(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
@@ -2043,13 +2068,20 @@ auto emit_module(
             result.test_only_computed_dynamic_array_for_production_emission_gates
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_production_sequences) {
+    if (options.test_only_collect_computed_dynamic_array_for_production_sequences ||
+        options.test_only_emit_computed_dynamic_array_for_production_sequence_comments) {
         result.test_only_computed_dynamic_array_for_production_sequences =
             collect_test_only_computed_dynamic_array_for_production_sequences(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_production_sequence_ir,
             result.test_only_computed_dynamic_array_for_production_sequences
         );
+        if (options.test_only_emit_computed_dynamic_array_for_production_sequence_comments) {
+            result.test_only_computed_dynamic_array_for_production_sequence_module_ir =
+                render_computed_dynamic_array_for_production_sequence_module_comments(
+                    result.test_only_computed_dynamic_array_for_production_sequences
+                );
+        }
     }
     if (options.test_only_render_dynamic_array_element_drop_walks ||
         dynamic_array_cleanup_emission_enabled(options)) {
@@ -2351,6 +2383,9 @@ auto emit_module(
         }
     }
     if (metadata_only) {
+        for (auto const& line : result.test_only_computed_dynamic_array_for_production_sequence_module_ir) {
+            output << line;
+        }
         result.ir_text = output.str();
         return result;
     }
@@ -2422,6 +2457,10 @@ auto emit_module(
                 return result;
             }
         }
+    }
+
+    for (auto const& line : result.test_only_computed_dynamic_array_for_production_sequence_module_ir) {
+        output << line;
     }
 
     if (!result.has_errors()) {

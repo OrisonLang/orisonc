@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` production-sequence snippets now have a test-only metadata-IR comment
+  emission seam, keeping executable lowering disabled while proving the output boundary is wired.
 - 2026-07-26: computed owned `DynamicArray<T>` smoke coverage now shares canonical local same-owner audit expectation
   strings across lowering, pipeline, driver, and examples tests to keep report parity assertions synchronized.
 - 2026-07-26: computed owned `DynamicArray<T>` report formatting and rendered-snippet aggregation now share internal
