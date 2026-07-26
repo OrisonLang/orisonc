@@ -1979,10 +1979,28 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
+            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         }
     );
 
     assert(computed_local_same_owner_for.has_errors());
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir.size() == 16);
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[0] ==
+        "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[8] ==
+        "items.computed_for.body:\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[14] ==
+        "items.computed_for.exit:\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[15] ==
+        "  ; cleanup ownership resumes with items\n"
+    );
     assert(
         computed_local_same_owner_for.render(path.string()).find(
             "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "

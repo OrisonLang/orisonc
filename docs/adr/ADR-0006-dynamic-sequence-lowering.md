@@ -100,6 +100,8 @@ representation.
   iterable failures show whether the production gate is blocked, ready-but-disabled, or still missing prerequisites.
 - The disabled production-emission gate now exposes the aggregated computed loop render and exit-cleanup snippets for
   ready gates as an internal handoff seam while still keeping those snippets out of module IR.
+- LLVM emission now has a test-only metadata collector that discovers ready computed owned dynamic-array `for` gates
+  from parsed function bodies and records their aggregated snippets on the emission result without emitting module IR.
 
 ## Consequences
 

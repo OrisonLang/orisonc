@@ -3,6 +3,7 @@
 #include "orison/lowering/concurrency_plan.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
+#include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/function_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -687,6 +688,138 @@ void collect_source_dynamic_array_construction_plans(
     }
 }
 
+void bind_test_only_dynamic_array_local_for_computed_for_collection(
+    syntax::StatementSyntax const& statement,
+    LoweringContext const& context,
+    FunctionLoweringState& state
+) {
+    if ((statement.kind != syntax::StatementKind::let_binding &&
+         statement.kind != syntax::StatementKind::var_binding) ||
+        statement.name.empty() ||
+        statement.annotated_type.name.empty() ||
+        !is_dynamic_array_source_type(statement.annotated_type) ||
+        !is_dynamic_array_default_constructor(statement.expression)) {
+        return;
+    }
+
+    auto source_type_name = render_source_type_name(statement.annotated_type);
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        statement.name,
+        source_type_name,
+        context
+    );
+    if (!cleanup_plan.has_value()) {
+        return;
+    }
+
+    auto descriptor_type = std::string {dynamic_array_descriptor_llvm_type()};
+    auto descriptor_storage_name = "%" + statement.name + ".addr";
+    state.source_type_names[statement.name] = std::move(source_type_name);
+    state.addressable_bindings[statement.name] = AddressableBinding {
+        .type = LoweredType {
+            .type = descriptor_type,
+            .signedness = IntegerSignedness::not_integer,
+        },
+        .storage = descriptor_storage_name,
+    };
+    cleanup_plan->descriptor_storage_name = std::move(descriptor_storage_name);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
+    cleanup_plan->source_line = statement.line;
+    state.dynamic_array_local_cleanup_plans.push_back(std::move(*cleanup_plan));
+}
+
+void collect_test_only_computed_dynamic_array_for_production_sequences(
+    syntax::StatementSyntax const& statement,
+    LoweringContext const& context,
+    FunctionLoweringState& state,
+    std::vector<std::string>& snippets
+) {
+    bind_test_only_dynamic_array_local_for_computed_for_collection(statement, context, state);
+    if (statement.kind == syntax::StatementKind::for_statement) {
+        auto gate = plan_computed_dynamic_array_iterable_production_emission_gate(
+            statement.expression,
+            context,
+            state
+        );
+        if (gate.kind ==
+                ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
+            gate.production_sequence_render_planned) {
+            snippets.insert(snippets.end(), gate.rendered_ir.begin(), gate.rendered_ir.end());
+        }
+    }
+
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_test_only_computed_dynamic_array_for_production_sequences(
+            nested_statement,
+            context,
+            state,
+            snippets
+        );
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_test_only_computed_dynamic_array_for_production_sequences(
+            alternate_statement,
+            context,
+            state,
+            snippets
+        );
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr) {
+                collect_test_only_computed_dynamic_array_for_production_sequences(
+                    *case_statement,
+                    context,
+                    state,
+                    snippets
+                );
+            }
+        }
+    }
+}
+
+void collect_test_only_computed_dynamic_array_for_production_sequences(
+    syntax::FunctionSyntax const& function,
+    LoweringContext const& context,
+    std::vector<std::string>& snippets
+) {
+    auto state = FunctionLoweringState {};
+    for (auto const& parameter : function.parameters) {
+        if (!parameter.name.empty() && !parameter.type.name.empty()) {
+            state.source_type_names[parameter.name] = render_source_type_name(parameter.type);
+        }
+    }
+    for (auto const& statement : function.body_statements) {
+        collect_test_only_computed_dynamic_array_for_production_sequences(
+            statement,
+            context,
+            state,
+            snippets
+        );
+    }
+}
+
+auto collect_test_only_computed_dynamic_array_for_production_sequences(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> std::vector<std::string> {
+    auto snippets = std::vector<std::string> {};
+    for (auto const& function : module.functions) {
+        collect_test_only_computed_dynamic_array_for_production_sequences(function, context, snippets);
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            collect_test_only_computed_dynamic_array_for_production_sequences(method, context, snippets);
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            collect_test_only_computed_dynamic_array_for_production_sequences(method, context, snippets);
+        }
+    }
+    return snippets;
+}
+
 auto collect_dynamic_array_runtime_operations(
     LlvmIrEmissionOptions const& options,
     syntax::ModuleSyntax const& module,
@@ -1075,6 +1208,10 @@ auto emit_module(
                 }
             }
         }
+    }
+    if (options.test_only_collect_computed_dynamic_array_for_production_sequences) {
+        result.test_only_computed_dynamic_array_for_production_sequence_ir =
+            collect_test_only_computed_dynamic_array_for_production_sequences(module, context);
     }
     if (options.test_only_render_dynamic_array_element_drop_walks ||
         dynamic_array_cleanup_emission_enabled(options)) {
