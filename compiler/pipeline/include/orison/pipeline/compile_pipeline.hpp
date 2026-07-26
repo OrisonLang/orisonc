@@ -46,6 +46,7 @@ struct CompilePipelineOptions {
     bool dynamic_array_parameter_descriptor_audit_bindings_enabled = false;
     bool test_only_emit_bound_dynamic_array_parameter_cleanups = false;
     bool test_only_render_dynamic_array_element_drop_walks = false;
+    bool test_only_collect_computed_dynamic_array_for_production_sequences = false;
     bool dynamic_array_local_lowering_enabled = true;
     bool dynamic_array_parameter_lowering_enabled = true;
     bool dynamic_array_production_signature_lowering_enabled = false;
@@ -80,6 +81,7 @@ struct CompilePipelineResult {
     std::vector<std::string> dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> dynamic_array_cleanup_emission_gate_report;
     std::vector<std::string> dynamic_array_cleanup_emission_capability_report;
+    std::vector<std::string> computed_dynamic_array_for_production_sequence_report;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
     std::vector<std::string> dynamic_array_cleanup_production_readiness_report;
     std::vector<std::string> planned_drop_report;

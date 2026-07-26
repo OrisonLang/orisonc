@@ -894,11 +894,18 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
+            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
         }
     );
     assert(computed_dynamic_array_local_same_owner_for.has_errors());
+    assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.size() == 1);
+    assert(
+        computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.front() ==
+        "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 owner items snippets 16 (metadata only)"
+    );
     assert(
         computed_dynamic_array_local_same_owner_for.error_text.find(
             "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "

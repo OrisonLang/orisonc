@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: pipeline lowering-emission reports now carry computed owned `DynamicArray<T>` `for`
+  production-sequence report lines, including intentionally rejected lowering attempts and audit output.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` production-sequence metadata now has a report formatter that
   surfaces function, line, owner, source type, element type, and snippet count for audit consumers.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` production-sequence metadata now records per-gate provenance:

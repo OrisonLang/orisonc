@@ -32,6 +32,8 @@ void populate_lowering_emission_reports(
         emission.dynamic_array_cleanup_emission_gate_report();
     result.dynamic_array_cleanup_emission_capability_report =
         emission.dynamic_array_cleanup_emission_capability_report();
+    result.computed_dynamic_array_for_production_sequence_report =
+        emission.computed_dynamic_array_for_production_sequence_report();
     result.dynamic_array_cleanup_production_readiness =
         plan_dynamic_array_cleanup_production_readiness(result, options);
     result.dynamic_array_cleanup_production_readiness_report = {

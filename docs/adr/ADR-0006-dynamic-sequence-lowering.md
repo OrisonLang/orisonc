@@ -106,6 +106,8 @@ representation.
   source line, cleanup owner, source type, element type, and the aggregated snippets.
 - Computed dynamic-array `for` production-sequence metadata now has a report formatter so pipeline and driver audit
   surfaces can consume provenance without inspecting raw metadata vectors.
+- Pipeline lowering-emission reports now carry computed dynamic-array `for` production-sequence reports, including
+  intentionally rejected lowering attempts and the existing dynamic-array audit bundle.
 
 ## Consequences
 
