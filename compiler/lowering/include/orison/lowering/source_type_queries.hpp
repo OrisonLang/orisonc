@@ -331,6 +331,33 @@ struct ComputedDynamicArrayIterableLoopExitCleanupPlan {
     bool render_enabled = false;
 };
 
+enum class ComputedDynamicArrayIterableProductionEmissionGatePlanKind {
+    not_computed_dynamic_array,
+    unsupported_computed_shape,
+    ownership_join_blocked,
+    cleanup_owner_unproven,
+    element_type_unlowerable,
+    element_address_unplanned,
+    element_load_unplanned,
+    loop_continue_unplanned,
+    loop_render_sequence_unplanned,
+    loop_exit_cleanup_unplanned,
+    production_emission_gate_planned,
+};
+
+struct ComputedDynamicArrayIterableProductionEmissionGatePlan {
+    ComputedDynamicArrayIterableProductionEmissionGatePlanKind kind =
+        ComputedDynamicArrayIterableProductionEmissionGatePlanKind::not_computed_dynamic_array;
+    ComputedDynamicArrayIterableLoopExitCleanupPlan loop_exit_cleanup_plan;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string cleanup_owner_name;
+    bool ownership_ready = false;
+    bool loop_render_ready = false;
+    bool exit_cleanup_ready = false;
+    bool production_emission_enabled = false;
+};
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string>;
 
 auto parse_llvm_array_type(std::string_view type) -> std::optional<ParsedLlvmArrayType>;
@@ -457,6 +484,16 @@ auto plan_computed_dynamic_array_iterable_loop_exit_cleanup(
 
 auto computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
     ComputedDynamicArrayIterableLoopExitCleanupPlan const& plan
+) -> std::string;
+
+auto plan_computed_dynamic_array_iterable_production_emission_gate(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableProductionEmissionGatePlan;
+
+auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
+    ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
 ) -> std::string;
 
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool;

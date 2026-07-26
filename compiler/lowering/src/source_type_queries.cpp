@@ -1610,6 +1610,129 @@ auto computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_production_emission_gate(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableProductionEmissionGatePlan {
+    auto plan = ComputedDynamicArrayIterableProductionEmissionGatePlan {};
+    plan.loop_exit_cleanup_plan = plan_computed_dynamic_array_iterable_loop_exit_cleanup(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.loop_exit_cleanup_plan.source_type_name;
+    plan.element_source_type_name = plan.loop_exit_cleanup_plan.element_source_type_name;
+    plan.cleanup_owner_name = plan.loop_exit_cleanup_plan.cleanup_owner_name;
+    plan.production_emission_enabled = false;
+
+    switch (plan.loop_exit_cleanup_plan.kind) {
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_type_unlowerable:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::element_type_unlowerable;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_address_unplanned:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::element_address_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::element_load_unplanned:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::element_load_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_continue_unplanned:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::loop_continue_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_render_sequence_unplanned:
+            plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::loop_render_sequence_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_exit_cleanup_planned:
+            break;
+    }
+
+    auto const& loop_render_plan = plan.loop_exit_cleanup_plan.loop_render_sequence_plan;
+    plan.ownership_ready = !plan.cleanup_owner_name.empty();
+    plan.loop_render_ready = loop_render_plan.kind ==
+        ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_render_sequence_planned;
+    plan.exit_cleanup_ready = plan.loop_exit_cleanup_plan.exit_block_planned &&
+        plan.loop_exit_cleanup_plan.cleanup_resumption_planned;
+    if (!plan.ownership_ready || !plan.loop_render_ready || !plan.exit_cleanup_ready) {
+        plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::loop_exit_cleanup_unplanned;
+        return plan;
+    }
+
+    plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
+    ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray production emission gate plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::element_type_unlowerable:
+            output += "element type unlowerable";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::element_address_unplanned:
+            output += "element address unplanned";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::element_load_unplanned:
+            output += "element load unplanned";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::loop_continue_unplanned:
+            output += "loop continue unplanned";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::loop_render_sequence_unplanned:
+            output += "loop render sequence unplanned";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::loop_exit_cleanup_unplanned:
+            output += "loop exit cleanup unplanned";
+            break;
+        case ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned:
+            output += "production emission gate planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    output += plan.ownership_ready ? " [ownership ready]" : " [ownership blocked]";
+    output += plan.loop_render_ready ? " [loop render ready]" : " [loop render blocked]";
+    output += plan.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup blocked]";
+    output += plan.production_emission_enabled ? " [production emission enabled]" :
+        " [production emission disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

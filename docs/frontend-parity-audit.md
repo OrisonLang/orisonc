@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-25: computed owned `DynamicArray<T>` loop lowering now has a disabled production emission gate. The gate
+  consumes ownership, composed loop rendering, and loop-exit cleanup readiness while still keeping production emission
+  disabled.
 - 2026-07-25: computed owned `DynamicArray<T>` `for` rejection diagnostics now include the loop-exit cleanup report.
   The report surfaces exit-block and cleanup-resumption readiness without enabling cleanup emission.
 - 2026-07-25: computed owned `DynamicArray<T>` loop exit cleanup now has a disabled internal plan. It records the

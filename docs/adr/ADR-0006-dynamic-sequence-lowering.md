@@ -94,6 +94,8 @@ representation.
   and function cleanup ownership resumption after the computed loop while keeping cleanup sequence emission disabled.
 - Dynamic-array `for` rejection diagnostics now include the computed loop-exit cleanup report, so computed owned
   iterable failures expose exit-block and cleanup-resumption readiness without enabling cleanup emission.
+- Computed owned dynamic-array loop lowering now has a disabled production emission gate. The gate consumes ownership,
+  composed loop rendering, and loop-exit cleanup readiness, then still records production emission as disabled.
 
 ## Consequences
 

@@ -692,6 +692,26 @@ int main() {
             mismatched_computed_loop_exit_cleanup
         ).find("ownership join blocked") != std::string::npos
     );
+    auto mismatched_computed_production_emission_gate =
+        orison::lowering::plan_computed_dynamic_array_iterable_production_emission_gate(
+            ternary(name("flag"), name("computed_left"), name("computed_right")),
+            context,
+            state
+        );
+    assert(
+        mismatched_computed_production_emission_gate.kind ==
+        orison::lowering::ComputedDynamicArrayIterableProductionEmissionGatePlanKind::
+            ownership_join_blocked
+    );
+    assert(!mismatched_computed_production_emission_gate.ownership_ready);
+    assert(!mismatched_computed_production_emission_gate.loop_render_ready);
+    assert(!mismatched_computed_production_emission_gate.exit_cleanup_ready);
+    assert(!mismatched_computed_production_emission_gate.production_emission_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
+            mismatched_computed_production_emission_gate
+        ).find("ownership join blocked") != std::string::npos
+    );
 
     auto proven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -1063,6 +1083,36 @@ int main() {
         std::string::npos
     );
     assert(proven_computed_loop_exit_cleanup_report.find("[cleanup sequence disabled]") != std::string::npos);
+    auto proven_computed_production_emission_gate =
+        orison::lowering::plan_computed_dynamic_array_iterable_production_emission_gate(
+            ternary(name("flag"), name("items"), name("items")),
+            context,
+            state
+        );
+    assert(
+        proven_computed_production_emission_gate.kind ==
+        orison::lowering::ComputedDynamicArrayIterableProductionEmissionGatePlanKind::
+            production_emission_gate_planned
+    );
+    assert(proven_computed_production_emission_gate.cleanup_owner_name == "items");
+    assert(proven_computed_production_emission_gate.source_type_name == "DynamicArray<UInt32>");
+    assert(proven_computed_production_emission_gate.element_source_type_name == "UInt32");
+    assert(proven_computed_production_emission_gate.ownership_ready);
+    assert(proven_computed_production_emission_gate.loop_render_ready);
+    assert(proven_computed_production_emission_gate.exit_cleanup_ready);
+    assert(!proven_computed_production_emission_gate.production_emission_enabled);
+    auto proven_computed_production_emission_gate_report =
+        orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
+            proven_computed_production_emission_gate
+        );
+    assert(
+        proven_computed_production_emission_gate_report.find("production emission gate planned") !=
+        std::string::npos
+    );
+    assert(
+        proven_computed_production_emission_gate_report.find("[production emission disabled]") !=
+        std::string::npos
+    );
 
     auto unproven_computed_ownership_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
@@ -1270,6 +1320,27 @@ int main() {
     assert(
         orison::lowering::computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
             unproven_computed_loop_exit_cleanup
+        ).find("cleanup owner unproven") != std::string::npos
+    );
+    auto unproven_computed_production_emission_gate =
+        orison::lowering::plan_computed_dynamic_array_iterable_production_emission_gate(
+            ternary(name("flag"), name("predicted_items"), name("predicted_items")),
+            context,
+            state
+        );
+    assert(
+        unproven_computed_production_emission_gate.kind ==
+        orison::lowering::ComputedDynamicArrayIterableProductionEmissionGatePlanKind::
+            cleanup_owner_unproven
+    );
+    assert(unproven_computed_production_emission_gate.cleanup_owner_name == "predicted_items");
+    assert(!unproven_computed_production_emission_gate.ownership_ready);
+    assert(!unproven_computed_production_emission_gate.loop_render_ready);
+    assert(!unproven_computed_production_emission_gate.exit_cleanup_ready);
+    assert(!unproven_computed_production_emission_gate.production_emission_enabled);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_production_emission_gate_plan_report(
+            unproven_computed_production_emission_gate
         ).find("cleanup owner unproven") != std::string::npos
     );
 
