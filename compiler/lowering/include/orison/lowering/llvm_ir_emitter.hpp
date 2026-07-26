@@ -54,6 +54,19 @@ struct ComputedDynamicArrayForLoopControlRenderMetadata {
     std::vector<std::string> rendered_ir;
 };
 
+struct ComputedDynamicArrayForElementAddressRenderMetadata {
+    std::string enclosing_function_name;
+    std::size_t source_line = 0;
+    std::string cleanup_owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string element_llvm_type_name;
+    std::string data_pointer_name;
+    std::string index_name;
+    std::string element_address_name;
+    std::vector<std::string> rendered_ir;
+};
+
 auto format_computed_dynamic_array_for_production_sequence_metadata(
     ComputedDynamicArrayForProductionSequenceMetadata const& metadata
 ) -> std::string;
@@ -76,6 +89,14 @@ auto format_computed_dynamic_array_for_loop_control_render_metadata(
 
 auto format_computed_dynamic_array_for_loop_control_render_metadata_report(
     std::vector<ComputedDynamicArrayForLoopControlRenderMetadata> const& metadata
+) -> std::vector<std::string>;
+
+auto format_computed_dynamic_array_for_element_address_render_metadata(
+    ComputedDynamicArrayForElementAddressRenderMetadata const& metadata
+) -> std::string;
+
+auto format_computed_dynamic_array_for_element_address_render_metadata_report(
+    std::vector<ComputedDynamicArrayForElementAddressRenderMetadata> const& metadata
 ) -> std::vector<std::string>;
 
 struct LlvmIrEmissionResult {
@@ -118,6 +139,9 @@ struct LlvmIrEmissionResult {
     std::vector<ComputedDynamicArrayForLoopControlRenderMetadata>
         test_only_computed_dynamic_array_for_loop_control_renders;
     std::vector<std::string> test_only_computed_dynamic_array_for_loop_control_render_ir;
+    std::vector<ComputedDynamicArrayForElementAddressRenderMetadata>
+        test_only_computed_dynamic_array_for_element_address_renders;
+    std::vector<std::string> test_only_computed_dynamic_array_for_element_address_render_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;
@@ -133,6 +157,7 @@ struct LlvmIrEmissionResult {
     auto computed_dynamic_array_for_production_sequence_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_descriptor_render_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_loop_control_render_report() const -> std::vector<std::string>;
+    auto computed_dynamic_array_for_element_address_render_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;
     auto planned_drop_action_report() const -> std::vector<std::string>;

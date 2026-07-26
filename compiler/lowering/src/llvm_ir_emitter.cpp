@@ -906,6 +906,48 @@ auto collect_test_only_computed_dynamic_array_for_loop_control_renders(
     return renders;
 }
 
+auto collect_test_only_computed_dynamic_array_for_element_address_renders(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> std::vector<ComputedDynamicArrayForElementAddressRenderMetadata> {
+    auto renders = std::vector<ComputedDynamicArrayForElementAddressRenderMetadata> {};
+    collect_test_only_computed_dynamic_array_for_module(
+        module,
+        context,
+        [&renders](
+            syntax::StatementSyntax const& statement,
+            std::string_view enclosing_function_name,
+            LoweringContext const& lowering_context,
+            FunctionLoweringState& state
+        ) {
+            auto plan = plan_computed_dynamic_array_iterable_element_address_render(
+                statement.expression,
+                lowering_context,
+                state
+            );
+            if (plan.kind ==
+                    ComputedDynamicArrayIterableElementAddressRenderPlanKind::element_address_render_planned &&
+                plan.data_pointer_available &&
+                plan.index_available &&
+                plan.element_address_planned) {
+                renders.push_back(ComputedDynamicArrayForElementAddressRenderMetadata {
+                    .enclosing_function_name = std::string {enclosing_function_name},
+                    .source_line = statement.line,
+                    .cleanup_owner_name = plan.cleanup_owner_name,
+                    .source_type_name = plan.source_type_name,
+                    .element_source_type_name = plan.element_source_type_name,
+                    .element_llvm_type_name = plan.element_llvm_type_name,
+                    .data_pointer_name = plan.data_pointer_name,
+                    .index_name = plan.index_name,
+                    .element_address_name = plan.element_address_name,
+                    .rendered_ir = plan.rendered_ir,
+                });
+            }
+        }
+    );
+    return renders;
+}
+
 auto collect_test_only_computed_dynamic_array_for_production_sequences(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
@@ -1255,6 +1297,54 @@ auto format_computed_dynamic_array_for_loop_control_render_metadata_report(
     return lines;
 }
 
+auto format_computed_dynamic_array_for_element_address_render_metadata(
+    ComputedDynamicArrayForElementAddressRenderMetadata const& metadata
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for element address render";
+    if (!metadata.enclosing_function_name.empty()) {
+        output << " function " << metadata.enclosing_function_name;
+    }
+    if (metadata.source_line != 0) {
+        output << " line " << metadata.source_line;
+    }
+    if (!metadata.source_type_name.empty()) {
+        output << " source " << metadata.source_type_name;
+    }
+    if (!metadata.element_source_type_name.empty()) {
+        output << " element " << metadata.element_source_type_name;
+    }
+    if (!metadata.element_llvm_type_name.empty()) {
+        output << " lowers-to " << metadata.element_llvm_type_name;
+    }
+    if (!metadata.cleanup_owner_name.empty()) {
+        output << " owner " << metadata.cleanup_owner_name;
+    }
+    if (!metadata.data_pointer_name.empty()) {
+        output << " data " << metadata.data_pointer_name;
+    }
+    if (!metadata.index_name.empty()) {
+        output << " index " << metadata.index_name;
+    }
+    if (!metadata.element_address_name.empty()) {
+        output << " address " << metadata.element_address_name;
+    }
+    output << " snippets " << metadata.rendered_ir.size();
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_computed_dynamic_array_for_element_address_render_metadata_report(
+    std::vector<ComputedDynamicArrayForElementAddressRenderMetadata> const& metadata
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(metadata.size());
+    for (auto const& render : metadata) {
+        lines.push_back(format_computed_dynamic_array_for_element_address_render_metadata(render));
+    }
+    return lines;
+}
+
 auto LlvmIrEmissionResult::has_errors() const -> bool {
     return diagnostics.has_errors();
 }
@@ -1316,6 +1406,13 @@ auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_control_render_report
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_loop_control_render_metadata_report(
         test_only_computed_dynamic_array_for_loop_control_renders
+    );
+}
+
+auto LlvmIrEmissionResult::computed_dynamic_array_for_element_address_render_report() const
+    -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_element_address_render_metadata_report(
+        test_only_computed_dynamic_array_for_element_address_renders
     );
 }
 
@@ -1510,6 +1607,17 @@ auto emit_module(
         for (auto const& render : result.test_only_computed_dynamic_array_for_loop_control_renders) {
             result.test_only_computed_dynamic_array_for_loop_control_render_ir.insert(
                 result.test_only_computed_dynamic_array_for_loop_control_render_ir.end(),
+                render.rendered_ir.begin(),
+                render.rendered_ir.end()
+            );
+        }
+    }
+    if (options.test_only_collect_computed_dynamic_array_for_element_address_renders) {
+        result.test_only_computed_dynamic_array_for_element_address_renders =
+            collect_test_only_computed_dynamic_array_for_element_address_renders(module, context);
+        for (auto const& render : result.test_only_computed_dynamic_array_for_element_address_renders) {
+            result.test_only_computed_dynamic_array_for_element_address_render_ir.insert(
+                result.test_only_computed_dynamic_array_for_element_address_render_ir.end(),
                 render.rendered_ir.begin(),
                 render.rendered_ir.end()
             );

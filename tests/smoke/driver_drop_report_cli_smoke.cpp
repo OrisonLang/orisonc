@@ -947,6 +947,9 @@ int main() {
             "element UInt32 owner items condition items.computed_for.condition body items.computed_for.body "
             "continue items.computed_for.continue exit items.computed_for.exit index %items.computed_for.index "
             "next %items.computed_for.next.index bounds %items.computed_for.more snippets 5 (metadata only)",
+            "computed DynamicArray for element address render function sum_words line 6 source DynamicArray<UInt32> "
+            "element UInt32 lowers-to i32 owner items data %items.computed_for.data "
+            "index %items.computed_for.index address %items.computed_for.element.addr snippets 1 (metadata only)",
             "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
             "element UInt32 owner items snippets 16 (metadata only)",
             "dynamic array cleanup production readiness blocked",

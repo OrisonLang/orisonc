@@ -114,6 +114,9 @@ representation.
 - Computed dynamic-array `for` loop-control-render metadata is now collected and reported separately from the broader
   production sequence so branch, phi, bounds-check, and loop block readiness can be audited independently before full
   loop emission is enabled.
+- Computed dynamic-array `for` element-address-render metadata is now collected and reported separately from the
+  broader production sequence so element type, data pointer, index, and `getelementptr` readiness can be audited
+  independently before full loop emission is enabled.
 
 ## Consequences
 

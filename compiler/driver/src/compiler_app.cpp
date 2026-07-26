@@ -74,6 +74,7 @@ auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions 
         .dynamic_array_parameter_descriptor_audit_bindings_enabled = true,
         .test_only_collect_computed_dynamic_array_for_descriptor_renders = true,
         .test_only_collect_computed_dynamic_array_for_loop_control_renders = true,
+        .test_only_collect_computed_dynamic_array_for_element_address_renders = true,
         .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         .dynamic_array_production_cleanup_emission_enabled = true,
     };
@@ -114,6 +115,7 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, result.dynamic_array_cleanup_emission_capability_report);
     append_report_lines(report, result.computed_dynamic_array_for_descriptor_render_report);
     append_report_lines(report, result.computed_dynamic_array_for_loop_control_render_report);
+    append_report_lines(report, result.computed_dynamic_array_for_element_address_render_report);
     append_report_lines(report, result.computed_dynamic_array_for_production_sequence_report);
     append_report_lines(report, result.dynamic_array_cleanup_production_readiness_report);
     return report;

@@ -49,6 +49,7 @@ struct LlvmIrEmissionOptions {
     bool test_only_render_dynamic_array_element_drop_walks = false;
     bool test_only_collect_computed_dynamic_array_for_descriptor_renders = false;
     bool test_only_collect_computed_dynamic_array_for_loop_control_renders = false;
+    bool test_only_collect_computed_dynamic_array_for_element_address_renders = false;
     bool test_only_collect_computed_dynamic_array_for_production_sequences = false;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };

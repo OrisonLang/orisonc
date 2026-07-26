@@ -1981,6 +1981,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .enable_dynamic_array_for_lowering = true,
             .test_only_collect_computed_dynamic_array_for_descriptor_renders = true,
             .test_only_collect_computed_dynamic_array_for_loop_control_renders = true,
+            .test_only_collect_computed_dynamic_array_for_element_address_renders = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         }
     );
@@ -2061,6 +2062,34 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir[4] ==
         "  br i1 %items.computed_for.more, label %items.computed_for.body, "
         "label %items.computed_for.exit\n"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_address_renders.size() == 1);
+    auto const& computed_local_same_owner_element_address =
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_address_renders.front();
+    assert(computed_local_same_owner_element_address.enclosing_function_name == "sum_words");
+    assert(computed_local_same_owner_element_address.source_line == 6);
+    assert(computed_local_same_owner_element_address.cleanup_owner_name == "items");
+    assert(computed_local_same_owner_element_address.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_local_same_owner_element_address.element_source_type_name == "UInt32");
+    assert(computed_local_same_owner_element_address.element_llvm_type_name == "i32");
+    assert(computed_local_same_owner_element_address.data_pointer_name == "%items.computed_for.data");
+    assert(computed_local_same_owner_element_address.index_name == "%items.computed_for.index");
+    assert(computed_local_same_owner_element_address.element_address_name == "%items.computed_for.element.addr");
+    assert(computed_local_same_owner_element_address.rendered_ir.size() == 1);
+    auto computed_local_same_owner_element_address_report =
+        computed_local_same_owner_for.computed_dynamic_array_for_element_address_render_report();
+    assert(computed_local_same_owner_element_address_report.size() == 1);
+    assert(
+        computed_local_same_owner_element_address_report.front() ==
+        "computed DynamicArray for element address render function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 lowers-to i32 owner items data %items.computed_for.data "
+        "index %items.computed_for.index address %items.computed_for.element.addr snippets 1 (metadata only)"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_address_render_ir.size() == 1);
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_address_render_ir.front() ==
+        "  %items.computed_for.element.addr = getelementptr i32, ptr %items.computed_for.data, "
+        "i64 %items.computed_for.index\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
     auto const& computed_local_same_owner_sequence =
