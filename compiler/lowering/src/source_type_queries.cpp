@@ -1183,6 +1183,138 @@ auto computed_dynamic_array_iterable_element_load_render_plan_report(
     return output;
 }
 
+auto plan_computed_dynamic_array_iterable_loop_continue_render(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> ComputedDynamicArrayIterableLoopContinueRenderPlan {
+    auto plan = ComputedDynamicArrayIterableLoopContinueRenderPlan {};
+    plan.element_load_render_plan = plan_computed_dynamic_array_iterable_element_load_render(
+        expression,
+        context,
+        state
+    );
+    plan.source_type_name = plan.element_load_render_plan.source_type_name;
+    plan.element_source_type_name = plan.element_load_render_plan.element_source_type_name;
+    plan.cleanup_owner_name = plan.element_load_render_plan.cleanup_owner_name;
+    plan.continue_block_name =
+        plan.element_load_render_plan.element_address_render_plan.loop_control_render_plan.continue_block_name;
+    plan.condition_block_name =
+        plan.element_load_render_plan.element_address_render_plan.loop_control_render_plan.condition_block_name;
+    plan.index_name = plan.element_load_render_plan.element_address_render_plan.loop_control_render_plan.index_name;
+    plan.next_index_name =
+        plan.element_load_render_plan.element_address_render_plan.loop_control_render_plan.next_index_name;
+    plan.render_enabled = false;
+
+    switch (plan.element_load_render_plan.kind) {
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::not_computed_dynamic_array:
+            plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::not_computed_dynamic_array;
+            return plan;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::unsupported_computed_shape:
+            plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::unsupported_computed_shape;
+            return plan;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::ownership_join_blocked:
+            plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::ownership_join_blocked;
+            return plan;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::cleanup_owner_unproven:
+            plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_owner_unproven;
+            return plan;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_type_unlowerable:
+            plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_type_unlowerable;
+            return plan;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_address_unplanned:
+            plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_address_unplanned;
+            return plan;
+        case ComputedDynamicArrayIterableElementLoadRenderPlanKind::element_load_render_planned:
+            break;
+    }
+
+    if (plan.continue_block_name.empty() || plan.condition_block_name.empty() ||
+        plan.index_name.empty() || plan.next_index_name.empty()) {
+        plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_load_unplanned;
+        return plan;
+    }
+
+    plan.rendered_ir.push_back(plan.continue_block_name + ":\n");
+    plan.rendered_ir.push_back(
+        "  " + plan.next_index_name + " = add i64 " + plan.index_name + ", 1\n"
+    );
+    plan.rendered_ir.push_back("  br label %" + plan.condition_block_name + "\n");
+    plan.continue_block_planned = true;
+    plan.next_index_planned = true;
+    plan.backedge_branch_planned = true;
+    plan.kind = ComputedDynamicArrayIterableLoopContinueRenderPlanKind::loop_continue_render_planned;
+    return plan;
+}
+
+auto computed_dynamic_array_iterable_loop_continue_render_plan_report(
+    ComputedDynamicArrayIterableLoopContinueRenderPlan const& plan
+) -> std::string {
+    auto output = std::string {"computed DynamicArray loop continue render plan "};
+    switch (plan.kind) {
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::not_computed_dynamic_array:
+            output += "not computed dynamic array";
+            return output;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::unsupported_computed_shape:
+            output += "unsupported computed shape";
+            break;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::ownership_join_blocked:
+            output += "ownership join blocked";
+            break;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::cleanup_owner_unproven:
+            output += "cleanup owner unproven";
+            break;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_type_unlowerable:
+            output += "element type unlowerable";
+            break;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_address_unplanned:
+            output += "element address unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::element_load_unplanned:
+            output += "element load unplanned";
+            break;
+        case ComputedDynamicArrayIterableLoopContinueRenderPlanKind::loop_continue_render_planned:
+            output += "loop continue render planned";
+            break;
+    }
+    if (!plan.source_type_name.empty()) {
+        output += " source ";
+        output += plan.source_type_name;
+    }
+    if (!plan.element_source_type_name.empty()) {
+        output += " element ";
+        output += plan.element_source_type_name;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        output += " owner ";
+        output += plan.cleanup_owner_name;
+    }
+    if (!plan.continue_block_name.empty()) {
+        output += " continue ";
+        output += plan.continue_block_name;
+    }
+    if (!plan.condition_block_name.empty()) {
+        output += " condition ";
+        output += plan.condition_block_name;
+    }
+    if (!plan.index_name.empty()) {
+        output += " index ";
+        output += plan.index_name;
+    }
+    if (!plan.next_index_name.empty()) {
+        output += " next-index ";
+        output += plan.next_index_name;
+    }
+    output += plan.continue_block_planned ? " [continue block planned]" :
+        " [continue block blocked]";
+    output += plan.next_index_planned ? " [next index planned]" : " [next index blocked]";
+    output += plan.backedge_branch_planned ? " [backedge branch planned]" :
+        " [backedge branch blocked]";
+    output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
+    output += " (metadata only)";
+    return output;
+}
+
 auto is_scalar_or_nonowning_source_type(std::string_view source_type_name) -> bool {
     constexpr auto scalar_names = std::array<std::string_view, 25> {
         "Address",

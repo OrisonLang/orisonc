@@ -80,6 +80,9 @@ representation.
   render emission disabled.
 - Dynamic-array `for` rejection diagnostics now include the computed element-load render report, so computed owned
   iterable failures show whether loop item loading is blocked, unproven, unlowerable, or planned-but-disabled.
+- Computed owned dynamic-array loop-continue rendering now has a disabled internal plan for proven element loads. It
+  records the continue block, next-index increment, and condition backedge needed by a future computed owned loop while
+  keeping render emission disabled.
 
 ## Consequences
 
