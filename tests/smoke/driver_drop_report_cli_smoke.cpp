@@ -953,6 +953,10 @@ int main() {
             "computed DynamicArray for element load render function sum_words line 6 source DynamicArray<UInt32> "
             "element UInt32 lowers-to i32 owner items address %items.computed_for.element.addr "
             "item %items.computed_for.item snippets 1 (metadata only)",
+            "computed DynamicArray for loop continue render function sum_words line 6 source DynamicArray<UInt32> "
+            "element UInt32 owner items continue items.computed_for.continue "
+            "condition items.computed_for.condition index %items.computed_for.index "
+            "next %items.computed_for.next.index snippets 3 (metadata only)",
             "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
             "element UInt32 owner items snippets 16 (metadata only)",
             "dynamic array cleanup production readiness blocked",

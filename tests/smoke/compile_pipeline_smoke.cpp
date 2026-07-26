@@ -898,6 +898,7 @@ auto main() -> int {
             .test_only_collect_computed_dynamic_array_for_loop_control_renders = true,
             .test_only_collect_computed_dynamic_array_for_element_address_renders = true,
             .test_only_collect_computed_dynamic_array_for_element_load_renders = true,
+            .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
@@ -940,6 +941,18 @@ auto main() -> int {
         "computed DynamicArray for element load render function sum_words line 6 source DynamicArray<UInt32> "
         "element UInt32 lowers-to i32 owner items address %items.computed_for.element.addr "
         "item %items.computed_for.item snippets 1 (metadata only)"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_report.front() ==
+        "computed DynamicArray for loop continue render function sum_words line 6 source DynamicArray<UInt32> "
+        "element UInt32 owner items continue items.computed_for.continue "
+        "condition items.computed_for.condition index %items.computed_for.index "
+        "next %items.computed_for.next.index snippets 3 (metadata only)"
     );
     assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.size() == 1);
     assert(

@@ -29,6 +29,7 @@ auto run_llvm_emission_stage(
             options.test_only_collect_computed_dynamic_array_for_loop_control_renders ||
             options.test_only_collect_computed_dynamic_array_for_element_address_renders ||
             options.test_only_collect_computed_dynamic_array_for_element_load_renders ||
+            options.test_only_collect_computed_dynamic_array_for_loop_continue_renders ||
             options.test_only_collect_computed_dynamic_array_for_production_sequences) {
             populate_lowering_emission_reports(result, std::move(emission), options);
         }
