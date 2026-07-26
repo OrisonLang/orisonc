@@ -1,3 +1,5 @@
+#include "computed_dynamic_array_audit_expectations.hpp"
+
 #include "orison/driver/compiler_app.hpp"
 
 #include <array>
@@ -13,6 +15,8 @@
 #include <unistd.h>
 
 namespace {
+
+namespace smoke = orison::tests::smoke;
 
 void write_fixture(
     std::filesystem::path const& path,
@@ -940,33 +944,15 @@ int main() {
             "dynamic array descriptor origin DynamicArray<UInt32>",
             "dynamic array cleanup emission capability blocked",
             "[descriptor storage missing]",
-            "computed DynamicArray for descriptor render function sum_words line 6 source DynamicArray<UInt32> "
-            "element UInt32 owner items descriptor %items.addr value %items.computed_for.descriptor "
-            "data %items.computed_for.data length %items.computed_for.length snippets 3 (metadata only)",
-            "computed DynamicArray for loop control render function sum_words line 6 source DynamicArray<UInt32> "
-            "element UInt32 owner items condition items.computed_for.condition body items.computed_for.body "
-            "continue items.computed_for.continue exit items.computed_for.exit index %items.computed_for.index "
-            "next %items.computed_for.next.index bounds %items.computed_for.more snippets 5 (metadata only)",
-            "computed DynamicArray for element address render function sum_words line 6 source DynamicArray<UInt32> "
-            "element UInt32 lowers-to i32 owner items data %items.computed_for.data "
-            "index %items.computed_for.index address %items.computed_for.element.addr snippets 1 (metadata only)",
-            "computed DynamicArray for element load render function sum_words line 6 source DynamicArray<UInt32> "
-            "element UInt32 lowers-to i32 owner items address %items.computed_for.element.addr "
-            "item %items.computed_for.item snippets 1 (metadata only)",
-            "computed DynamicArray for loop continue render function sum_words line 6 source DynamicArray<UInt32> "
-            "element UInt32 owner items continue items.computed_for.continue "
-            "condition items.computed_for.condition index %items.computed_for.index "
-            "next %items.computed_for.next.index snippets 3 (metadata only)",
-            "computed DynamicArray for loop render sequence function sum_words line 6 source DynamicArray<UInt32> "
-            "element UInt32 owner items body items.computed_for.body snippets 14 (metadata only)",
-            "computed DynamicArray for loop exit cleanup function sum_words line 6 source DynamicArray<UInt32> "
-            "element UInt32 owner items exit items.computed_for.exit resumes items snippets 2 (metadata only)",
-            "computed DynamicArray for production emission gate function sum_words line 6 "
-            "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
-            "[exit cleanup ready] [production sequence planned] [production emission disabled] "
-            "snippets 16 (metadata only)",
-            "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
-            "element UInt32 owner items snippets 16 (metadata only)",
+            smoke::computed_dynamic_array_descriptor_render_report,
+            smoke::computed_dynamic_array_loop_control_render_report,
+            smoke::computed_dynamic_array_element_address_render_report,
+            smoke::computed_dynamic_array_element_load_render_report,
+            smoke::computed_dynamic_array_loop_continue_render_report,
+            smoke::computed_dynamic_array_loop_render_sequence_report,
+            smoke::computed_dynamic_array_loop_exit_cleanup_report,
+            smoke::computed_dynamic_array_production_emission_gate_report,
+            smoke::computed_dynamic_array_production_sequence_report,
             "dynamic array cleanup production readiness blocked",
         }
     );
