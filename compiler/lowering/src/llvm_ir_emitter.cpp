@@ -1356,19 +1356,20 @@ auto collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(
             auto const& descriptor_plan = gate.loop_exit_cleanup_plan.loop_render_sequence_plan
                 .loop_continue_render_plan.element_load_render_plan.element_address_render_plan
                 .loop_control_render_plan.descriptor_render_plan;
-            if (descriptor_plan.descriptor_storage_name.empty() ||
-                gate.loop_exit_cleanup_plan.cleanup_resumption_operation_name.empty()) {
+            auto finalization_plan = plan_consumed_descriptor_finalization(
+                gate.cleanup_owner_name,
+                descriptor_plan.descriptor_storage_name,
+                gate.loop_exit_cleanup_plan.cleanup_resumption_operation_name
+            );
+            if (!consumed_descriptor_finalization_plan_ready(finalization_plan)) {
                 return;
             }
             descriptors.push_back(ComputedDynamicArrayForConsumedCleanupDescriptorMetadata {
                 .enclosing_function_name = std::string {enclosing_function_name},
                 .source_line = statement.line,
-                .cleanup_owner_name = gate.cleanup_owner_name,
                 .source_type_name = gate.source_type_name,
                 .element_source_type_name = gate.element_source_type_name,
-                .descriptor_storage_name = descriptor_plan.descriptor_storage_name,
-                .cleanup_resumption_operation_name =
-                    gate.loop_exit_cleanup_plan.cleanup_resumption_operation_name,
+                .finalization_plan = std::move(finalization_plan),
             });
         }
     );
@@ -1858,11 +1859,14 @@ auto format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata(
         metadata.source_line,
         metadata.source_type_name,
         metadata.element_source_type_name,
-        metadata.cleanup_owner_name
+        metadata.finalization_plan.cleanup_owner_name
     );
-    append_if_present(output, "descriptor", metadata.descriptor_storage_name);
-    append_if_present(output, "cleanup-operation", metadata.cleanup_resumption_operation_name);
-    output << " [cleanup owner consumed] [descriptor finalization planned]";
+    append_if_present(output, "descriptor", metadata.finalization_plan.descriptor_storage_name);
+    append_if_present(output, "cleanup-operation", metadata.finalization_plan.cleanup_operation_name);
+    output << (metadata.finalization_plan.cleanup_owner_consumed ? " [cleanup owner consumed]" :
+        " [cleanup owner unproven]");
+    output << (metadata.finalization_plan.descriptor_finalization_planned ? " [descriptor finalization planned]" :
+        " [descriptor finalization blocked]");
     output << " (metadata only)";
     return output.str();
 }

@@ -7,6 +7,7 @@ add_library(orison_lowering STATIC
     src/conditional_plan.cpp
     src/concurrency_emitter.cpp
     src/concurrency_plan.cpp
+    src/consumed_descriptor_finalization.cpp
     src/concurrency_runtime.cpp
     src/control_flow_emitter.cpp
     src/deferred_cleanup.cpp

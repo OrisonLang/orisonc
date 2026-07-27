@@ -1770,3 +1770,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   descriptor storage, and cleanup-resumption operation before the IR-derived inserted-call/finalization verifier runs.
 - 2026-07-27: dynamic-array descriptor finalization now uses a named lowering helper, keeping the emitted
   zeroinitializer descriptor clear unchanged while removing the computed-loop lowerer's inline finalization string.
+- 2026-07-27: consumed descriptor finalization now has a generic lowering plan for owner, descriptor storage, cleanup
+  operation, and readiness flags. Computed DynamicArray cleanup metadata now carries that plan directly.

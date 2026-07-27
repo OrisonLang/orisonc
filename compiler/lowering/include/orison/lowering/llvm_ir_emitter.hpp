@@ -2,6 +2,7 @@
 
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/drop_metadata.hpp"
@@ -133,11 +134,9 @@ struct ComputedDynamicArrayForCleanupTransitionMetadata {
 struct ComputedDynamicArrayForConsumedCleanupDescriptorMetadata {
     std::string enclosing_function_name;
     std::size_t source_line = 0;
-    std::string cleanup_owner_name;
     std::string source_type_name;
     std::string element_source_type_name;
-    std::string descriptor_storage_name;
-    std::string cleanup_resumption_operation_name;
+    ConsumedDescriptorFinalizationPlan finalization_plan;
 };
 
 struct ComputedDynamicArrayForProductionEmissionGateMetadata {

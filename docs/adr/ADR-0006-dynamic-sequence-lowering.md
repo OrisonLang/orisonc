@@ -708,6 +708,9 @@ representation.
 - Dynamic-array descriptor finalization is now rendered through a named lowering helper instead of hand-built inline
   IR in the computed-loop lowerer. This keeps the current descriptor clear shape unchanged while giving future
   consumed-owner lowerers a reusable finalization emitter.
+- Consumed descriptor finalization now has a small generic lowering plan. Computed DynamicArray cleanup metadata
+  carries that plan rather than duplicating owner/storage/operation fields directly, preserving the current report text
+  while making the consumed-owner proof reusable by future descriptor-owning lowerers.
 
 ## Follow-up work
 

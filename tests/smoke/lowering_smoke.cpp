@@ -1,5 +1,6 @@
 #include "computed_dynamic_array_audit_expectations.hpp"
 
+#include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
@@ -444,6 +445,19 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     assert(
         orison::lowering::emit_dynamic_array_descriptor_finalization("%dynamic_array0.addr") ==
         "  store { ptr, i64, i64 } zeroinitializer, ptr %dynamic_array0.addr\n"
+    );
+    auto consumed_descriptor_finalization_plan =
+        orison::lowering::plan_consumed_descriptor_finalization(
+            "items",
+            "%items.addr",
+            "items.computed_for.cleanup.resume"
+        );
+    assert(orison::lowering::consumed_descriptor_finalization_plan_ready(consumed_descriptor_finalization_plan));
+    assert(
+        orison::lowering::format_consumed_descriptor_finalization_plan(consumed_descriptor_finalization_plan) ==
+        "consumed descriptor finalization plan owner items descriptor %items.addr "
+        "cleanup-operation items.computed_for.cleanup.resume [cleanup owner consumed] "
+        "[descriptor finalization planned] (metadata only)"
     );
     assert(result.ir_text.find("%dynamic_array0.addr = alloca { ptr, i64, i64 }") == std::string::npos);
     assert(result.test_only_dynamic_array_descriptor_projection_ir.size() == 3);
