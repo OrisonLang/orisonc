@@ -1782,3 +1782,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   duplicating the generic owner-consumed/finalization readiness flags.
 - 2026-07-27: named local `DynamicArray<T>` cleanup emission now uses the generic consumed descriptor finalization
   plan and clears the owner descriptor after deallocation, pinning that finalization ordering in lowering smoke.
+- 2026-07-27: bound `DynamicArray<T>` parameter cleanup now also clears the callee-local descriptor spill through the
+  generic finalization plan after descriptor deallocation; smoke coverage pins scalar and authorized owned-element
+  parameter cleanup paths.

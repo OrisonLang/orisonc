@@ -1700,11 +1700,18 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "  call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 4, "
         "i64 %items.dynamic_array_cleanup0.cleanup.capacity)\n"
     );
+    assert_ir_contains(
+        cleanup_emitted,
+        "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
+    );
     auto cleanup_call = cleanup_emitted.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto cleanup_clear = cleanup_emitted.ir_text.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr");
     auto return_instruction = cleanup_emitted.ir_text.find("ret i32 1");
     assert(cleanup_call != std::string::npos);
+    assert(cleanup_clear != std::string::npos);
     assert(return_instruction != std::string::npos);
-    assert(cleanup_call < return_instruction);
+    assert(cleanup_call < cleanup_clear);
+    assert(cleanup_clear < return_instruction);
 
     auto production_parameter_length = lower_source(
         path,
@@ -2757,14 +2764,21 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
         "  call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
         "i64 %items.dynamic_array_cleanup0.cleanup.capacity)\n"
     );
+    assert_ir_contains(
+        authorized,
+        "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
+    );
     auto drop_call = authorized.ir_text.find("call void @__orison_drop.Payload");
     auto deallocate_call = authorized.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto descriptor_clear = authorized.ir_text.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr");
     auto return_instruction = authorized.ir_text.find("ret i32 1");
     assert(drop_call != std::string::npos);
     assert(deallocate_call != std::string::npos);
+    assert(descriptor_clear != std::string::npos);
     assert(return_instruction != std::string::npos);
     assert(drop_call < deallocate_call);
-    assert(deallocate_call < return_instruction);
+    assert(deallocate_call < descriptor_clear);
+    assert(descriptor_clear < return_instruction);
 
     auto production_options = orison::lowering::LlvmIrEmissionOptions {
         .test_only_derive_dynamic_array_cleanup_from_semantics = true,
@@ -2784,6 +2798,10 @@ void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {
         production_authorized,
         "  call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup0.cleanup.data, i64 8, "
         "i64 %items.dynamic_array_cleanup0.cleanup.capacity)\n"
+    );
+    assert_ir_contains(
+        production_authorized,
+        "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
     );
     assert(production_authorized.drop_readiness_summary().cleanup_authorized == 1);
     assert(production_authorized.drop_readiness_summary().cleanup_blocked == 0);

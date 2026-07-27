@@ -702,6 +702,16 @@ auto emit_bound_dynamic_array_parameter_cleanup_plans(
             prefix,
             plan.element_drop_symbol_name
         );
+        auto finalization_plan = plan_consumed_descriptor_finalization(
+            plan.descriptor_cleanup.owner_name,
+            plan.descriptor_cleanup.descriptor_storage_name,
+            plan.sequence_plan.obligation.cleanup_symbol_name
+        );
+        if (consumed_descriptor_finalization_plan_ready(finalization_plan)) {
+            output << emit_dynamic_array_descriptor_finalization(
+                finalization_plan.descriptor_storage_name
+            );
+        }
     }
     return true;
 }
