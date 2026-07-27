@@ -732,6 +732,8 @@ representation.
 - Full LLVM module emission now collects consumed descriptor finalization plans from actual function cleanup emission.
   The generic audit report therefore covers computed cleanup metadata plus emitted local and bound cleanup descriptor
   finalization without inferring local/bound cleanup from source-level construction plans.
+- `--dynamic-array-cleanup-audit` now merges the consumed descriptor finalization report from a successful full-emission
+  pass into the metadata audit output. Individual dynamic-array cleanup report commands remain metadata-only.
 
 ## Follow-up work
 

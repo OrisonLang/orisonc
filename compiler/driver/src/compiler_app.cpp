@@ -143,6 +143,31 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     return report;
 }
 
+auto dynamic_array_cleanup_audit(
+    std::filesystem::path const& source_path,
+    pipeline::CompilePipelineOptions const& options
+) -> CompileResult {
+    pipeline::CompilePipeline pipeline;
+    auto result = pipeline.collect_dynamic_array_cleanup_metadata(source_path, options);
+    if (result.has_errors()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stderr_text = std::move(result.error_text),
+        };
+    }
+
+    auto emitted_result = pipeline.emit_llvm(source_path, options);
+    if (!emitted_result.has_errors()) {
+        result.consumed_descriptor_finalization_plan_report =
+            std::move(emitted_result.consumed_descriptor_finalization_plan_report);
+    }
+
+    return CompileResult {
+        .exit_code = 0,
+        .stdout_text = render_report_lines(dynamic_array_cleanup_audit_report(result)),
+    };
+}
+
 auto analyze_report(std::filesystem::path const& source_path, auto report_selector) -> CompileResult {
     pipeline::CompilePipeline pipeline;
     auto result = pipeline.analyze(source_path);
@@ -533,12 +558,9 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-audit") {
-        return dynamic_array_cleanup_report(
+        return dynamic_array_cleanup_audit(
             std::filesystem::path(args[2]),
-            dynamic_array_cleanup_report_options(),
-            [](auto const& result) {
-                return dynamic_array_cleanup_audit_report(result);
-            }
+            dynamic_array_cleanup_report_options()
         );
     }
 

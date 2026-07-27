@@ -1785,3 +1785,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: bound `DynamicArray<T>` parameter cleanup now also clears the callee-local descriptor spill through the
   generic finalization plan after descriptor deallocation; smoke coverage pins scalar and authorized owned-element
   parameter cleanup paths.
+- 2026-07-27: `--dynamic-array-cleanup-audit` now merges consumed descriptor finalization plans from a successful
+  full-emission pass, so local and bound cleanup finalization proof reaches the CLI audit surface.

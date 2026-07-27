@@ -916,6 +916,9 @@ int main() {
             "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "dynamic array cleanup emission capability proven",
             "[element cleanup ok]",
+            "consumed descriptor finalization plan owner items descriptor %items.addr "
+            "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
+            "[descriptor finalization planned] (metadata only)",
             "dynamic array cleanup production readiness ready",
             "[production signatures ok]",
         }
@@ -955,6 +958,19 @@ int main() {
             smoke::computed_dynamic_array_production_emission_gate_report,
             smoke::computed_dynamic_array_production_sequence_report,
             "dynamic array cleanup production readiness blocked",
+        }
+    );
+    auto dynamic_array_local_append_path =
+        std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "local_dynamic_array_append.or";
+    auto dynamic_array_local_append_audit =
+        run_dynamic_array_cleanup_audit(app, dynamic_array_local_append_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_local_append_audit,
+        {
+            "dynamic array descriptor origin DynamicArray<UInt32>",
+            "consumed descriptor finalization plan owner items descriptor %items.addr "
+            "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
+            "[descriptor finalization planned] (metadata only)",
         }
     );
 
