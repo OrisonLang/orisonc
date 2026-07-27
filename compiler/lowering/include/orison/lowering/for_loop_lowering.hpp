@@ -168,7 +168,8 @@ auto lower_sequence_for_statement(
                     .operation_name = cleanup_sequence_plan.loop_entry_cleanup_operation_name,
                     .source_owner_name = cleanup_sequence_plan.cleanup_owner_name,
                     .target_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name,
-                    .cleanup_calls_enabled = false,
+                    .cleanup_calls_enabled =
+                        context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
                 }
             );
             for (auto const& line : descriptor_plan.rendered_ir) {
@@ -217,9 +218,17 @@ auto lower_sequence_for_statement(
             for (auto const& line : loop_continue_plan.rendered_ir) {
                 output << line;
             }
-            for (auto const& line : loop_exit_plan.rendered_ir) {
-                output << line;
-            }
+            output << loop_exit_plan.exit_block_name << ":\n";
+            output << render_computed_dynamic_array_cleanup_state_handoff(
+                ComputedDynamicArrayCleanupStateHandoff {
+                    .kind = ComputedDynamicArrayCleanupStateHandoffKind::resume,
+                    .operation_name = loop_exit_plan.cleanup_resumption_operation_name,
+                    .source_owner_name = loop_exit_plan.loop_entry_cleanup_owner_name,
+                    .target_owner_name = loop_exit_plan.loop_exit_cleanup_owner_name,
+                    .cleanup_calls_enabled =
+                        context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
+                }
+            );
             session.state.current_block = loop_exit_plan.exit_block_name;
             return StatementFlow::falls_through;
         }

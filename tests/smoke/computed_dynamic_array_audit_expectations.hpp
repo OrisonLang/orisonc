@@ -59,11 +59,23 @@ inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_state_
     "resume-operation items.computed_for.0.cleanup.resume acquire-from items acquire-to items.loop.entry "
     "resume-from items.loop.entry resume-to items [handoff paired] [cleanup calls disabled] (inserted IR)";
 
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_state_verification_enabled_report =
+    "computed DynamicArray for inserted cleanup state verification "
+    "acquire-operation items.computed_for.0.cleanup.acquire "
+    "resume-operation items.computed_for.0.cleanup.resume acquire-from items acquire-to items.loop.entry "
+    "resume-from items.loop.entry resume-to items [handoff paired] [cleanup calls enabled] (inserted IR)";
+
 inline constexpr std::string_view computed_dynamic_array_cleanup_call_emission_gate_report =
     "computed DynamicArray for cleanup call emission gate blocked "
     "acquire-operation items.computed_for.0.cleanup.acquire "
     "resume-operation items.computed_for.0.cleanup.resume [inserted state verified] "
     "[cleanup calls disabled] [cleanup call emission blocked] (inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_cleanup_call_emission_gate_ready_report =
+    "computed DynamicArray for cleanup call emission gate ready "
+    "acquire-operation items.computed_for.0.cleanup.acquire "
+    "resume-operation items.computed_for.0.cleanup.resume [inserted state verified] "
+    "[cleanup calls enabled] [cleanup call emission ready] (inserted IR)";
 
 inline constexpr std::string_view computed_dynamic_array_cleanup_call_plan_report =
     "computed DynamicArray for cleanup call plan planned "
@@ -85,6 +97,11 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_
     "computed DynamicArray for cleanup call insertion gate blocked "
     "cleanup-operation items.computed_for.0.cleanup.resume.call [inserted state verified] "
     "[cleanup operands proven] [cleanup calls unauthorized] [cleanup call insertion blocked] (inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_gate_ready_report =
+    "computed DynamicArray for cleanup call insertion gate ready "
+    "cleanup-operation items.computed_for.0.cleanup.resume.call [inserted state verified] "
+    "[cleanup operands proven] [cleanup calls authorized] [cleanup call insertion ready] (inserted IR)";
 
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "

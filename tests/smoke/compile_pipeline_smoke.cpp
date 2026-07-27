@@ -1152,6 +1152,75 @@ auto main() -> int {
             "items.computed_for.0.exit:\n"
         ) != std::string::npos
     );
+    auto computed_dynamic_array_local_same_owner_authorized_cleanup_for = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_authorized_cleanup_for.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for.ir_text.find(
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls enabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for.ir_text.find(
+            "  ; cleanup state handoff resume operation items.computed_for.0.cleanup.resume "
+            "from items.loop.entry to items [cleanup calls enabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data"
+        ) == std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_report.front() ==
+        smoke::computed_dynamic_array_inserted_cleanup_state_verification_enabled_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_emission_gate_ready_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_report.front().find(
+                "[cleanup calls enabled]"
+            ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_render_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_render_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_insertion_gate_ready_report
+    );
     auto computed_dynamic_array_local_same_owner_two_loops_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_two_loops.or";
     {

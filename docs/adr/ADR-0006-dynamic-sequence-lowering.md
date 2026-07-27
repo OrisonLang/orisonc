@@ -155,6 +155,8 @@ representation.
   and is not inserted into module IR.
 - Computed dynamic-array cleanup-call insertion now has an explicit gate. The gate requires verified inserted cleanup
   state, proven cleanup operands, and cleanup-call authorization before any rendered cleanup call can enter module IR.
+- A test-only computed dynamic-array cleanup-call authorization option can mark inserted cleanup handoffs as enabled.
+  This lets the insertion gate report ready while production cleanup-call insertion remains disabled.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

@@ -176,7 +176,9 @@ auto format_inserted_cleanup_state_verification(
     output << " acquire-to " << acquisition.target_owner_name;
     output << " resume-from " << resumption.source_owner_name;
     output << " resume-to " << resumption.target_owner_name;
-    output << " [handoff paired] [cleanup calls disabled]";
+    output << " [handoff paired]";
+    output << (acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled ?
+        " [cleanup calls enabled]" : " [cleanup calls disabled]");
     output << " (inserted IR)";
     return output.str();
 }
