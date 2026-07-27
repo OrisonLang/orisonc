@@ -1488,8 +1488,8 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.front().find(
-                "descriptor %items.addr cleanup-operation items.computed_for.cleanup.resume "
-                "[cleanup owner consumed]"
+            "descriptor %items.addr cleanup-operation items.computed_for.cleanup.resume "
+                "[generic finalization proof referenced]"
             ) != std::string::npos
     );
     assert(

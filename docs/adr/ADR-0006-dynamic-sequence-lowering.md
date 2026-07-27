@@ -720,6 +720,9 @@ representation.
 - Cleanup insertion tests now treat the generic consumed descriptor finalization report as the primary proof and keep
   the DynamicArray-specific consumed-cleanup reports as compatibility context. The generic report must be present
   before the DynamicArray wrapper reports in the checked proof chain.
+- The DynamicArray consumed-cleanup model wrapper no longer repeats the generic finalization readiness flags. It now
+  records the DynamicArray context and references the generic finalization proof, leaving owner-consumed/finalization
+  readiness wording in the reusable generic report.
 
 ## Follow-up work
 

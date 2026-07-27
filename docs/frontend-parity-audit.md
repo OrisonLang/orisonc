@@ -1778,3 +1778,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   before the DynamicArray-specific consumed-cleanup wrapper report.
 - 2026-07-27: cleanup insertion smoke coverage now uses the generic consumed descriptor finalization report as the
   primary proof, with DynamicArray-specific consumed-cleanup reports retained as compatibility context.
+- 2026-07-27: the DynamicArray consumed-cleanup model wrapper now references the generic finalization proof instead of
+  duplicating the generic owner-consumed/finalization readiness flags.

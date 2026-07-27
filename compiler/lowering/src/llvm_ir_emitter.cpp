@@ -1863,10 +1863,7 @@ auto format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata(
     );
     append_if_present(output, "descriptor", metadata.finalization_plan.descriptor_storage_name);
     append_if_present(output, "cleanup-operation", metadata.finalization_plan.cleanup_operation_name);
-    output << (metadata.finalization_plan.cleanup_owner_consumed ? " [cleanup owner consumed]" :
-        " [cleanup owner unproven]");
-    output << (metadata.finalization_plan.descriptor_finalization_planned ? " [descriptor finalization planned]" :
-        " [descriptor finalization blocked]");
+    output << " [generic finalization proof referenced]";
     output << " (metadata only)";
     return output.str();
 }
