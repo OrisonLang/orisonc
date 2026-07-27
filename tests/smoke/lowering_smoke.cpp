@@ -2020,6 +2020,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
             .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
             .test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = true,
+            .test_only_collect_computed_dynamic_array_for_cleanup_transitions = true,
             .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         }
@@ -2246,6 +2247,33 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir[1] ==
         "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
         "items.loop.entry to items (disabled)\n"
+    );
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_cleanup_transitions.size() == 1);
+    auto const& computed_local_same_owner_cleanup_transition =
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_cleanup_transitions.front();
+    assert(computed_local_same_owner_cleanup_transition.enclosing_function_name == "sum_words");
+    assert(computed_local_same_owner_cleanup_transition.source_line == 6);
+    assert(computed_local_same_owner_cleanup_transition.cleanup_owner_name == "items");
+    assert(computed_local_same_owner_cleanup_transition.source_type_name == "DynamicArray<UInt32>");
+    assert(computed_local_same_owner_cleanup_transition.element_source_type_name == "UInt32");
+    assert(computed_local_same_owner_cleanup_transition.acquisition_source_owner_name == "items");
+    assert(computed_local_same_owner_cleanup_transition.acquisition_target_owner_name == "items.loop.entry");
+    assert(
+        computed_local_same_owner_cleanup_transition.acquisition_operation_name ==
+        "items.computed_for.cleanup.acquire"
+    );
+    assert(computed_local_same_owner_cleanup_transition.resumption_source_owner_name == "items.loop.entry");
+    assert(computed_local_same_owner_cleanup_transition.resumption_target_owner_name == "items");
+    assert(
+        computed_local_same_owner_cleanup_transition.resumption_operation_name ==
+        "items.computed_for.cleanup.resume"
+    );
+    auto computed_local_same_owner_cleanup_transition_report =
+        computed_local_same_owner_for.computed_dynamic_array_for_cleanup_transition_report();
+    assert(computed_local_same_owner_cleanup_transition_report.size() == 1);
+    assert(
+        computed_local_same_owner_cleanup_transition_report.front() ==
+        smoke::computed_dynamic_array_cleanup_transition_report
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gates.size() == 1);
     auto const& computed_local_same_owner_production_gate =

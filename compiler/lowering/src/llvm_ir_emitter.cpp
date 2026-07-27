@@ -1184,6 +1184,54 @@ auto collect_test_only_computed_dynamic_array_for_loop_exit_cleanups(
     return cleanups;
 }
 
+auto collect_test_only_computed_dynamic_array_for_cleanup_transitions(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context
+) -> std::vector<ComputedDynamicArrayForCleanupTransitionMetadata> {
+    auto transitions = std::vector<ComputedDynamicArrayForCleanupTransitionMetadata> {};
+    collect_test_only_computed_dynamic_array_for_module(
+        module,
+        context,
+        [&transitions](
+            syntax::StatementSyntax const& statement,
+            std::string_view enclosing_function_name,
+            LoweringContext const& lowering_context,
+            FunctionLoweringState& state
+        ) {
+            auto plan = plan_computed_dynamic_array_iterable_loop_exit_cleanup(
+                statement.expression,
+                lowering_context,
+                state
+            );
+            auto const& cleanup_sequence_plan = plan.loop_render_sequence_plan.loop_continue_render_plan
+                .element_load_render_plan.element_address_render_plan.loop_control_render_plan
+                .descriptor_render_plan.cleanup_sequence_plan;
+            if (plan.kind ==
+                    ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_exit_cleanup_planned &&
+                plan.cleanup_resumption_planned &&
+                !cleanup_sequence_plan.cleanup_owner_name.empty() &&
+                !cleanup_sequence_plan.loop_entry_cleanup_owner_name.empty() &&
+                !cleanup_sequence_plan.loop_entry_cleanup_operation_name.empty() &&
+                !plan.cleanup_resumption_operation_name.empty()) {
+                transitions.push_back(ComputedDynamicArrayForCleanupTransitionMetadata {
+                    .enclosing_function_name = std::string {enclosing_function_name},
+                    .source_line = statement.line,
+                    .cleanup_owner_name = plan.cleanup_owner_name,
+                    .source_type_name = plan.source_type_name,
+                    .element_source_type_name = plan.element_source_type_name,
+                    .acquisition_source_owner_name = cleanup_sequence_plan.cleanup_owner_name,
+                    .acquisition_target_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name,
+                    .acquisition_operation_name = cleanup_sequence_plan.loop_entry_cleanup_operation_name,
+                    .resumption_source_owner_name = plan.loop_entry_cleanup_owner_name,
+                    .resumption_target_owner_name = plan.loop_exit_cleanup_owner_name,
+                    .resumption_operation_name = plan.cleanup_resumption_operation_name,
+                });
+            }
+        }
+    );
+    return transitions;
+}
+
 auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
@@ -1697,6 +1745,40 @@ auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata_report(
     );
 }
 
+auto format_computed_dynamic_array_for_cleanup_transition_metadata(
+    ComputedDynamicArrayForCleanupTransitionMetadata const& metadata
+) -> std::string {
+    auto output = std::ostringstream {};
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "cleanup transition",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
+    append_if_present(output, "acquire-from", metadata.acquisition_source_owner_name);
+    append_if_present(output, "acquire-to", metadata.acquisition_target_owner_name);
+    append_if_present(output, "acquire-operation", metadata.acquisition_operation_name);
+    append_if_present(output, "resume-from", metadata.resumption_source_owner_name);
+    append_if_present(output, "resume-to", metadata.resumption_target_owner_name);
+    append_if_present(output, "resume-operation", metadata.resumption_operation_name);
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_computed_dynamic_array_for_cleanup_transition_metadata_report(
+    std::vector<ComputedDynamicArrayForCleanupTransitionMetadata> const& metadata
+) -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& transition) {
+            return format_computed_dynamic_array_for_cleanup_transition_metadata(transition);
+        }
+    );
+}
+
 auto format_computed_dynamic_array_for_production_emission_gate_metadata(
     ComputedDynamicArrayForProductionEmissionGateMetadata const& metadata
 ) -> std::string {
@@ -1833,6 +1915,13 @@ auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_exit_cleanup_report()
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_loop_exit_cleanup_metadata_report(
         test_only_computed_dynamic_array_for_loop_exit_cleanups
+    );
+}
+
+auto LlvmIrEmissionResult::computed_dynamic_array_for_cleanup_transition_report() const
+    -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_cleanup_transition_metadata_report(
+        test_only_computed_dynamic_array_for_cleanup_transitions
     );
 }
 
@@ -2072,6 +2161,10 @@ auto emit_module(
             result.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir,
             result.test_only_computed_dynamic_array_for_loop_exit_cleanups
         );
+    }
+    if (options.test_only_collect_computed_dynamic_array_for_cleanup_transitions) {
+        result.test_only_computed_dynamic_array_for_cleanup_transitions =
+            collect_test_only_computed_dynamic_array_for_cleanup_transitions(module, context);
     }
     if (options.test_only_collect_computed_dynamic_array_for_production_emission_gates) {
         result.test_only_computed_dynamic_array_for_production_emission_gates =

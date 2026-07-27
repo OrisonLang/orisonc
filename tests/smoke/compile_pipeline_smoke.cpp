@@ -907,6 +907,7 @@ auto main() -> int {
             .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
             .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
             .test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = true,
+            .test_only_collect_computed_dynamic_array_for_cleanup_transitions = true,
             .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
             .dynamic_array_production_construction_lowering_enabled = true,
@@ -968,6 +969,15 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_loop_exit_cleanup_report.front() ==
         smoke::computed_dynamic_array_loop_exit_cleanup_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_report.front() ==
+        smoke::computed_dynamic_array_cleanup_transition_report
     );
     assert(
         computed_dynamic_array_local_same_owner_for

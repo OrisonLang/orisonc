@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` `for` cleanup-transition metadata now pairs the disabled loop-entry
+  cleanup acquisition with the disabled loop-exit cleanup resumption in lowering, pipeline, and driver audit reports.
 - 2026-07-26: computed owned `DynamicArray<T>` cleanup sequencing now names the disabled loop-entry cleanup-acquisition
   operation and requires it before production gates report loop cleanup ownership ready.
 - 2026-07-26: computed owned `DynamicArray<T>` loop-exit cleanup now renders a named disabled cleanup-resumption

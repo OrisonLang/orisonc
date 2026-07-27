@@ -41,6 +41,12 @@ inline constexpr std::string_view computed_dynamic_array_loop_exit_cleanup_repor
     "element UInt32 owner items exit items.computed_for.exit from items.loop.entry to items "
     "operation items.computed_for.cleanup.resume snippets 2 (metadata only)";
 
+inline constexpr std::string_view computed_dynamic_array_cleanup_transition_report =
+    "computed DynamicArray for cleanup transition function sum_words line 6 source DynamicArray<UInt32> "
+    "element UInt32 owner items acquire-from items acquire-to items.loop.entry "
+    "acquire-operation items.computed_for.cleanup.acquire resume-from items.loop.entry "
+    "resume-to items resume-operation items.computed_for.cleanup.resume (metadata only)";
+
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "
     "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
@@ -107,7 +113,7 @@ inline constexpr std::string_view computed_dynamic_array_production_emission_gat
     "[loop cleanup ownership ready] [function cleanup resumption ready] [exit cleanup ready] "
     "[production sequence planned] [production emission disabled] (metadata only)";
 
-inline constexpr std::array<std::string_view, 9> computed_dynamic_array_local_same_owner_audit_reports {
+inline constexpr std::array<std::string_view, 10> computed_dynamic_array_local_same_owner_audit_reports {
     computed_dynamic_array_descriptor_render_report,
     computed_dynamic_array_loop_control_render_report,
     computed_dynamic_array_element_address_render_report,
@@ -115,6 +121,7 @@ inline constexpr std::array<std::string_view, 9> computed_dynamic_array_local_sa
     computed_dynamic_array_loop_continue_render_report,
     computed_dynamic_array_loop_render_sequence_report,
     computed_dynamic_array_loop_exit_cleanup_report,
+    computed_dynamic_array_cleanup_transition_report,
     computed_dynamic_array_production_emission_gate_report,
     computed_dynamic_array_production_sequence_report,
 };

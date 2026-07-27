@@ -951,6 +951,7 @@ int main() {
             smoke::computed_dynamic_array_loop_continue_render_report,
             smoke::computed_dynamic_array_loop_render_sequence_report,
             smoke::computed_dynamic_array_loop_exit_cleanup_report,
+            smoke::computed_dynamic_array_cleanup_transition_report,
             smoke::computed_dynamic_array_production_emission_gate_report,
             smoke::computed_dynamic_array_production_sequence_report,
             "dynamic array cleanup production readiness blocked",

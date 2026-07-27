@@ -79,6 +79,7 @@ auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions 
         .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
         .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
         .test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = true,
+        .test_only_collect_computed_dynamic_array_for_cleanup_transitions = true,
         .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
         .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         .dynamic_array_production_cleanup_emission_enabled = true,
@@ -125,6 +126,7 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, result.computed_dynamic_array_for_loop_continue_render_report);
     append_report_lines(report, result.computed_dynamic_array_for_loop_render_sequence_report);
     append_report_lines(report, result.computed_dynamic_array_for_loop_exit_cleanup_report);
+    append_report_lines(report, result.computed_dynamic_array_for_cleanup_transition_report);
     append_report_lines(report, result.computed_dynamic_array_for_production_emission_gate_report);
     append_report_lines(report, result.computed_dynamic_array_for_production_sequence_report);
     append_report_lines(report, result.dynamic_array_cleanup_production_readiness_report);

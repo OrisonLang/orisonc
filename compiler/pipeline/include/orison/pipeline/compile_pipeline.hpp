@@ -53,6 +53,7 @@ struct CompilePipelineOptions {
     bool test_only_collect_computed_dynamic_array_for_loop_continue_renders = false;
     bool test_only_collect_computed_dynamic_array_for_loop_render_sequences = false;
     bool test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = false;
+    bool test_only_collect_computed_dynamic_array_for_cleanup_transitions = false;
     bool test_only_collect_computed_dynamic_array_for_production_emission_gates = false;
     bool test_only_collect_computed_dynamic_array_for_production_sequences = false;
     bool test_only_emit_computed_dynamic_array_for_production_sequence_comments = false;
@@ -98,6 +99,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_loop_continue_render_report;
     std::vector<std::string> computed_dynamic_array_for_loop_render_sequence_report;
     std::vector<std::string> computed_dynamic_array_for_loop_exit_cleanup_report;
+    std::vector<std::string> computed_dynamic_array_for_cleanup_transition_report;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_report;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_report;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_module_ir;

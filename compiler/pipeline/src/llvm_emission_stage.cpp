@@ -32,6 +32,7 @@ auto run_llvm_emission_stage(
             options.test_only_collect_computed_dynamic_array_for_loop_continue_renders ||
             options.test_only_collect_computed_dynamic_array_for_loop_render_sequences ||
             options.test_only_collect_computed_dynamic_array_for_loop_exit_cleanups ||
+            options.test_only_collect_computed_dynamic_array_for_cleanup_transitions ||
             options.test_only_collect_computed_dynamic_array_for_production_emission_gates ||
             options.test_only_collect_computed_dynamic_array_for_production_sequences ||
             options.test_only_emit_computed_dynamic_array_for_production_sequence_comments) {

@@ -128,6 +128,9 @@ representation.
 - Computed dynamic-array cleanup sequencing now also names the matching disabled loop-entry cleanup-acquisition
   operation, and production emission gates require that acquisition artifact before reporting loop cleanup ownership
   ready.
+- Computed dynamic-array `for` cleanup-transition metadata now reports the loop-entry cleanup acquisition and loop-exit
+  function cleanup resumption as a paired audit surface, so consumers can verify both sides of the ownership transition
+  without correlating separate sequence and exit-cleanup reports.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.
