@@ -915,6 +915,7 @@ int main() {
             "function use_items dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
             "function use_items dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "function use_items dynamic array cleanup emission capability proven",
+            "element-drop-pairs [items:items.element:__orison_drop.Payload]",
             "[element cleanup ok]",
             "consumed descriptor finalization plan function use_items owner items descriptor %items.addr "
             "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "

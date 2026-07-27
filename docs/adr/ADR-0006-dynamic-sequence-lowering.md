@@ -194,6 +194,8 @@ representation.
 - Dynamic-array cleanup emission capability proofs now also retain owned-element drop pairs when element cleanup is
   required. Each pair identifies the cleanup owner, element capture, and authorized drop ABI symbol summarized by the
   aggregate capability gate.
+- CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
+  fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 
 ## Consequences
 

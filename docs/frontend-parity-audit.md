@@ -1804,3 +1804,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   consumers do not need to correlate separate owner and operation lists by position.
 - 2026-07-27: dynamic-array cleanup emission capability reports now include owned-element drop pairs when element
   cleanup is required, identifying the cleanup owner, element capture, and authorized drop ABI symbol.
+- 2026-07-27: CLI cleanup-audit smoke coverage now pins owned-element drop-pair reporting for the authorized
+  `DynamicArray<Payload>` fixture, proving the report reaches `--dynamic-array-cleanup-audit`.
