@@ -1802,3 +1802,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   proof, pairing the aggregate capability result with the owners whose cleanup operations it authorizes or blocks.
 - 2026-07-27: dynamic-array cleanup emission capability reports now include compact owner/operation pairs, so audit
   consumers do not need to correlate separate owner and operation lists by position.
+- 2026-07-27: dynamic-array cleanup emission capability reports now include owned-element drop pairs when element
+  cleanup is required, identifying the cleanup owner, element capture, and authorized drop ABI symbol.

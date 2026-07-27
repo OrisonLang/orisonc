@@ -579,6 +579,7 @@ auto prove_dynamic_array_cleanup_emission_capability(
     auto cleanup_pairs = std::vector<std::string> {};
     auto cleanup_operation_names = std::vector<std::string> {};
     auto cleanup_owner_names = std::vector<std::string> {};
+    auto element_drop_pairs = std::vector<std::string> {};
     cleanup_pairs.reserve(obligations.size());
     cleanup_operation_names.reserve(obligations.size());
     cleanup_owner_names.reserve(obligations.size());
@@ -588,11 +589,17 @@ auto prove_dynamic_array_cleanup_emission_capability(
         );
         cleanup_operation_names.push_back(obligation.cleanup_symbol_name);
         cleanup_owner_names.push_back(obligation.descriptor_cleanup.owner_name);
+        for (auto const& action : obligation.actions) {
+            element_drop_pairs.push_back(
+                obligation.descriptor_cleanup.owner_name + ":" + action.capture_name + ":" + action.symbol_name
+            );
+        }
     }
     return DynamicArrayCleanupEmissionCapability {
         .cleanup_pairs = std::move(cleanup_pairs),
         .cleanup_operation_names = std::move(cleanup_operation_names),
         .cleanup_owner_names = std::move(cleanup_owner_names),
+        .element_drop_pairs = std::move(element_drop_pairs),
         .emission_enabled = emission_enabled,
         .descriptor_storage_bound = std::ranges::all_of(descriptor_cleanup_plans, [](auto const& plan) {
         auto storage_status_bound =
@@ -745,6 +752,12 @@ auto format_dynamic_array_cleanup_emission_capability(
         output << " cleanup-owners";
         for (auto const& cleanup_owner_name : capability.cleanup_owner_names) {
             output << " [" << cleanup_owner_name << "]";
+        }
+    }
+    if (!capability.element_drop_pairs.empty()) {
+        output << " element-drop-pairs";
+        for (auto const& element_drop_pair : capability.element_drop_pairs) {
+            output << " [" << element_drop_pair << "]";
         }
     }
     output << " [emission " << status(capability.emission_enabled) << "]";

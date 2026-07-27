@@ -101,6 +101,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(capability.cleanup_owner_names.size() == 2);
     assert(capability.cleanup_owner_names[0] == "a_items");
     assert(capability.cleanup_owner_names[1] == "z_items");
+    assert(capability.element_drop_pairs.empty());
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
@@ -158,6 +159,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(blocked_capability.cleanup_owner_names.size() == 2);
     assert(blocked_capability.cleanup_owner_names[0] == "a_items");
     assert(blocked_capability.cleanup_owner_names[1] == "z_items");
+    assert(blocked_capability.element_drop_pairs.empty());
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability) ==
@@ -250,7 +252,17 @@ void test_authorizes_owned_element_cleanup() {
         *plans
     );
     assert(capability.element_cleanup_authorized_or_not_required);
+    assert(capability.element_drop_pairs.size() == 1);
+    assert(capability.element_drop_pairs.front() == "items:items.element:__orison_drop.Payload");
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
+    assert(
+        orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
+        "dynamic array cleanup emission capability proven cleanup-pairs [items:__orison_dynamic_array_cleanup.0] "
+        "cleanup-operations [__orison_dynamic_array_cleanup.0] cleanup-owners [items] "
+        "element-drop-pairs [items:items.element:__orison_drop.Payload] "
+        "[emission ok] [descriptor storage ok] [sequence verification ok] [element cleanup ok] "
+        "[descriptor deallocation ok] (metadata only)"
+    );
     auto shared_capability = orison::lowering::prove_dynamic_array_cleanup_emission_capability(
         true,
         {plans->front().descriptor_cleanup},
@@ -259,6 +271,8 @@ void test_authorizes_owned_element_cleanup() {
         context.options.semantic_drop_lowering_authorizations
     );
     assert(shared_capability.element_cleanup_authorized_or_not_required);
+    assert(shared_capability.element_drop_pairs.size() == 1);
+    assert(shared_capability.element_drop_pairs.front() == "items:items.element:__orison_drop.Payload");
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(shared_capability));
 
     auto output = std::ostringstream {};

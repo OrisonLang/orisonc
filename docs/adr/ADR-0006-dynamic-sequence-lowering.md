@@ -191,6 +191,9 @@ representation.
   aggregate proof can be correlated with both cleanup operations and source owners without changing the gate decision.
 - Dynamic-array cleanup emission capability proofs now also format compact owner/operation pairs. The separate owner
   and operation lists remain available, but audit consumers no longer need positional correlation for the common case.
+- Dynamic-array cleanup emission capability proofs now also retain owned-element drop pairs when element cleanup is
+  required. Each pair identifies the cleanup owner, element capture, and authorized drop ABI symbol summarized by the
+  aggregate capability gate.
 
 ## Consequences
 
