@@ -1022,6 +1022,35 @@ auto main() -> int {
             "source DynamicArray<UInt32> element UInt32 owner items snippets 16 (metadata only)\n"
         ) != std::string::npos
     );
+    auto computed_dynamic_array_local_same_owner_lowered_for = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_lowered_for.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
+            "items.computed_for.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
+            "items.computed_for.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
+            "  %items.computed_for.item = load i32, ptr %items.computed_for.element.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
+            "items.computed_for.exit:\n"
+        ) != std::string::npos
+    );
     assert(
         computed_dynamic_array_local_same_owner_for.error_text.find(
             "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "

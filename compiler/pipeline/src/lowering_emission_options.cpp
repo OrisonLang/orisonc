@@ -88,6 +88,8 @@ auto build_lowering_emission_options(
         options.test_only_collect_computed_dynamic_array_for_production_sequences;
     emission_options.test_only_emit_computed_dynamic_array_for_production_sequence_comments =
         options.test_only_emit_computed_dynamic_array_for_production_sequence_comments;
+    emission_options.test_only_enable_computed_dynamic_array_for_lowering =
+        options.test_only_enable_computed_dynamic_array_for_lowering;
     emission_options.enable_dynamic_array_descriptor_cleanup_planning =
         dynamic_array_descriptor_cleanup_planning_enabled(options);
     emission_options.enable_dynamic_array_parameter_descriptor_audit_bindings =

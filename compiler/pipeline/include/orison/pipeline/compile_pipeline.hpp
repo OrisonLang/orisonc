@@ -56,6 +56,7 @@ struct CompilePipelineOptions {
     bool test_only_collect_computed_dynamic_array_for_production_emission_gates = false;
     bool test_only_collect_computed_dynamic_array_for_production_sequences = false;
     bool test_only_emit_computed_dynamic_array_for_production_sequence_comments = false;
+    bool test_only_enable_computed_dynamic_array_for_lowering = false;
     bool dynamic_array_local_lowering_enabled = true;
     bool dynamic_array_parameter_lowering_enabled = true;
     bool dynamic_array_production_signature_lowering_enabled = false;

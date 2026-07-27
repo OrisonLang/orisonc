@@ -2369,6 +2369,49 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             ";   ; cleanup ownership resumes with items\n"
         ) != std::string::npos
     );
+    auto computed_local_same_owner_lowered_for = lower_source(
+        path,
+        computed_local_same_owner_source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+        }
+    );
+    assert(!computed_local_same_owner_lowered_for.has_errors());
+    assert(
+        computed_local_same_owner_lowered_for.ir_text.find(
+            "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.condition:\n") != std::string::npos);
+    assert(computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.body:\n") != std::string::npos);
+    assert(
+        computed_local_same_owner_lowered_for.ir_text.find(
+            "  %items.computed_for.item = load i32, ptr %items.computed_for.element.addr\n"
+        ) != std::string::npos
+    );
+    assert(computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.continue:\n") != std::string::npos);
+    assert(computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.exit:\n") != std::string::npos);
+    auto computed_descriptor_position =
+        computed_local_same_owner_lowered_for.ir_text.find("%items.computed_for.descriptor");
+    auto computed_body_position =
+        computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.body:\n");
+    auto computed_body_add_position =
+        computed_local_same_owner_lowered_for.ir_text.find("add i32", computed_body_position);
+    auto computed_continue_position =
+        computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.continue:\n");
+    auto computed_exit_position =
+        computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.exit:\n");
+    assert(computed_descriptor_position != std::string::npos);
+    assert(computed_body_position != std::string::npos);
+    assert(computed_body_add_position != std::string::npos);
+    assert(computed_continue_position != std::string::npos);
+    assert(computed_exit_position != std::string::npos);
+    assert(computed_descriptor_position < computed_body_position);
+    assert(computed_body_position < computed_body_add_position);
+    assert(computed_body_add_position < computed_continue_position);
+    assert(computed_continue_position < computed_exit_position);
     assert(
         computed_local_same_owner_for.render(path.string()).find(
             "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "

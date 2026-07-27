@@ -113,6 +113,83 @@ auto lower_sequence_for_statement(
         ? aggregate_storage_for_name(*named_iterable, session.state)
         : std::optional<std::string> {};
     if (sequence->kind == DynamicSequenceKind::dynamic_array && !dynamic_array_plan.can_lower_now) {
+        auto computed_production_emission_gate_plan =
+            plan_computed_dynamic_array_iterable_production_emission_gate(
+                statement.expression,
+                context.lowering,
+                session.state
+            );
+        if (
+            context.options.test_only_enable_computed_dynamic_array_for_lowering &&
+            session.state.current_block == "entry" &&
+            computed_production_emission_gate_plan.kind ==
+                ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
+            computed_production_emission_gate_plan.ownership_ready &&
+            computed_production_emission_gate_plan.loop_render_ready &&
+            computed_production_emission_gate_plan.exit_cleanup_ready &&
+            computed_production_emission_gate_plan.production_sequence_render_planned
+        ) {
+            auto const& loop_exit_plan = computed_production_emission_gate_plan.loop_exit_cleanup_plan;
+            auto const& loop_sequence_plan = loop_exit_plan.loop_render_sequence_plan;
+            auto const& loop_continue_plan = loop_sequence_plan.loop_continue_render_plan;
+            auto const& element_load_plan = loop_continue_plan.element_load_render_plan;
+            auto const& element_address_plan = element_load_plan.element_address_render_plan;
+            auto const& loop_control_plan = element_address_plan.loop_control_render_plan;
+            auto const& descriptor_plan = loop_control_plan.descriptor_render_plan;
+
+            for (auto const& line : descriptor_plan.rendered_ir) {
+                output << line;
+            }
+            for (auto const& line : loop_control_plan.rendered_ir) {
+                output << line;
+            }
+
+            auto loop_scope = BranchBindingScope(session.state);
+            emit_llvm_block_label(output, loop_sequence_plan.body_block_name);
+            session.state.current_block = loop_sequence_plan.body_block_name;
+            for (auto const& line : element_address_plan.rendered_ir) {
+                output << line;
+            }
+            for (auto const& line : element_load_plan.rendered_ir) {
+                output << line;
+            }
+            session.state.immutable_bindings[statement.name] = LoweredExpression {
+                .type = element_type->type,
+                .value = element_load_plan.item_value_name,
+                .signedness = element_type->signedness,
+            };
+            session.state.source_type_names[statement.name] = sequence->element_source_type_name;
+            bind_addressable_aggregate_value(
+                statement.name,
+                session.state.immutable_bindings.at(statement.name),
+                session,
+                output
+            );
+
+            auto loop_targets = LoopTargets {
+                .break_target = loop_exit_plan.exit_block_name,
+                .continue_target = loop_continue_plan.continue_block_name,
+                .defer_cleanup_depth = session.state.defer_cleanup_scopes.size(),
+            };
+            [[maybe_unused]] auto target_scope = LoopTargetScope {session.state, std::move(loop_targets)};
+            auto body_flow = lower_body();
+            if (body_flow == StatementFlow::failed) {
+                return StatementFlow::failed;
+            }
+            if (body_flow == StatementFlow::falls_through) {
+                emit_llvm_branch(output, loop_continue_plan.continue_block_name);
+            }
+
+            for (auto const& line : loop_continue_plan.rendered_ir) {
+                output << line;
+            }
+            for (auto const& line : loop_exit_plan.rendered_ir) {
+                output << line;
+            }
+            session.state.current_block = loop_exit_plan.exit_block_name;
+            return StatementFlow::falls_through;
+        }
+
         auto diagnostic_detail = dynamic_array_iterable_descriptor_plan_report(dynamic_array_plan);
         auto computed_ownership_plan = plan_computed_dynamic_array_iterable_ownership_transfer(
             statement.expression,
@@ -214,12 +291,6 @@ auto lower_sequence_for_statement(
             diagnostic_detail += computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
                 computed_loop_exit_cleanup_plan
             );
-            auto computed_production_emission_gate_plan =
-                plan_computed_dynamic_array_iterable_production_emission_gate(
-                    statement.expression,
-                    context.lowering,
-                    session.state
-                );
             diagnostic_detail += "; ";
             diagnostic_detail += computed_dynamic_array_iterable_production_emission_gate_plan_report(
                 computed_production_emission_gate_plan

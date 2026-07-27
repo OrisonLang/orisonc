@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` `for` lowering now has a first test-only executable insertion path for
+  the proven local same-owner entry-block case, with default lowering still rejecting computed owned iterables.
 - 2026-07-26: computed owned `DynamicArray<T>` production-sequence snippets now have a test-only metadata-IR comment
   emission seam, keeping executable lowering disabled while proving the output boundary is wired.
 - 2026-07-26: computed owned `DynamicArray<T>` smoke coverage now shares canonical local same-owner audit expectation

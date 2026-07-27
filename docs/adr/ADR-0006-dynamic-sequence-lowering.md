@@ -111,6 +111,9 @@ representation.
 - A test-only module-IR comment emission seam can project ready computed dynamic-array `for` production-sequence
   snippets into metadata IR text for audit consumers. The snippets remain comments, not executable control flow, until
   function CFG insertion and ownership cleanup emission are proven together.
+- A test-only computed dynamic-array `for` lowering option can now insert the proven local same-owner loop sequence at
+  the entry-block statement position and lower the source loop body between the planned body and continuation blocks.
+  The path remains internal and disabled by default while nested insertion and broader cleanup proof are still pending.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.
