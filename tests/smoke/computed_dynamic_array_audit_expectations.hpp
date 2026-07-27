@@ -8,7 +8,8 @@ namespace orison::tests::smoke {
 inline constexpr std::string_view computed_dynamic_array_descriptor_render_report =
     "computed DynamicArray for descriptor render function sum_words line 6 source DynamicArray<UInt32> "
     "element UInt32 owner items descriptor %items.addr value %items.computed_for.descriptor "
-    "data %items.computed_for.data length %items.computed_for.length snippets 3 (metadata only)";
+    "data %items.computed_for.data length %items.computed_for.length "
+    "capacity %items.computed_for.capacity snippets 4 (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_loop_control_render_report =
     "computed DynamicArray for loop control render function sum_words line 6 source DynamicArray<UInt32> "
@@ -34,7 +35,7 @@ inline constexpr std::string_view computed_dynamic_array_loop_continue_render_re
 
 inline constexpr std::string_view computed_dynamic_array_loop_render_sequence_report =
     "computed DynamicArray for loop render sequence function sum_words line 6 source DynamicArray<UInt32> "
-    "element UInt32 owner items body items.computed_for.body snippets 14 (metadata only)";
+    "element UInt32 owner items body items.computed_for.body snippets 15 (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_loop_exit_cleanup_report =
     "computed DynamicArray for loop exit cleanup function sum_words line 6 source DynamicArray<UInt32> "
@@ -68,26 +69,28 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_call_plan_repor
     "computed DynamicArray for cleanup call plan planned "
     "cleanup-operation items.computed_for.0.cleanup.resume.call "
     "after-resume-operation items.computed_for.0.cleanup.resume owner items data %items.computed_for.0.data "
-    "element-size 4 [inserted state verified] [cleanup calls disabled] [data operand proven] "
-    "[element-size operand proven] [capacity operand pending] [cleanup call disabled] snippets 1 (inserted IR)";
+    "element-size 4 capacity %items.computed_for.0.capacity [inserted state verified] [cleanup calls disabled] "
+    "[data operand proven] [element-size operand proven] [capacity operand proven] [cleanup call disabled] "
+    "snippets 1 (inserted IR)";
 
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "
     "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
     "[loop cleanup ownership ready] [function cleanup resumption ready] [exit cleanup ready] "
     "[production sequence planned] [production emission disabled] "
-    "snippets 16 (metadata only)";
+    "snippets 17 (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_production_sequence_report =
     "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
-    "element UInt32 owner items snippets 16 (metadata only)";
+    "element UInt32 owner items snippets 17 (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_descriptor_render_plan =
     "computed DynamicArray descriptor render plan descriptor load projection planned source "
     "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
     "value %items.computed_for.descriptor data %items.computed_for.data "
-    "length %items.computed_for.length [descriptor load planned] [data projection planned] "
-    "[length projection planned] [render disabled] (metadata only)";
+    "length %items.computed_for.length capacity %items.computed_for.capacity "
+    "[descriptor load planned] [data projection planned] [length projection planned] "
+    "[capacity projection planned] [render disabled] (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_loop_control_render_plan =
     "computed DynamicArray loop control render plan loop control render planned source "

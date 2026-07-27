@@ -172,10 +172,12 @@ struct ComputedDynamicArrayIterableDescriptorRenderPlan {
     std::string descriptor_value_name;
     std::string data_pointer_name;
     std::string length_name;
+    std::string capacity_name;
     std::vector<std::string> rendered_ir;
     bool descriptor_load_planned = false;
     bool data_projection_planned = false;
     bool length_projection_planned = false;
+    bool capacity_projection_planned = false;
     bool render_enabled = false;
 };
 

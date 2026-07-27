@@ -739,6 +739,7 @@ auto plan_computed_dynamic_array_iterable_descriptor_render(
     plan.descriptor_value_name = prefix + ".descriptor";
     plan.data_pointer_name = prefix + ".data";
     plan.length_name = prefix + ".length";
+    plan.capacity_name = prefix + ".capacity";
     plan.rendered_ir.push_back(
         emit_dynamic_array_descriptor_load(plan.descriptor_value_name, plan.descriptor_storage_name)
     );
@@ -756,9 +757,17 @@ auto plan_computed_dynamic_array_iterable_descriptor_render(
             DynamicArrayDescriptorField::length
         )
     );
+    plan.rendered_ir.push_back(
+        emit_dynamic_array_descriptor_field_projection(
+            plan.capacity_name,
+            plan.descriptor_value_name,
+            DynamicArrayDescriptorField::capacity
+        )
+    );
     plan.descriptor_load_planned = true;
     plan.data_projection_planned = true;
     plan.length_projection_planned = true;
+    plan.capacity_projection_planned = true;
     plan.kind = ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned;
     return plan;
 }
@@ -812,12 +821,18 @@ auto computed_dynamic_array_iterable_descriptor_render_plan_report(
         output += " length ";
         output += plan.length_name;
     }
+    if (!plan.capacity_name.empty()) {
+        output += " capacity ";
+        output += plan.capacity_name;
+    }
     output += plan.descriptor_load_planned ? " [descriptor load planned]" :
         " [descriptor load blocked]";
     output += plan.data_projection_planned ? " [data projection planned]" :
         " [data projection blocked]";
     output += plan.length_projection_planned ? " [length projection planned]" :
         " [length projection blocked]";
+    output += plan.capacity_projection_planned ? " [capacity projection planned]" :
+        " [capacity projection blocked]";
     output += plan.render_enabled ? " [render enabled]" : " [render disabled]";
     output += " (metadata only)";
     return output;
@@ -1436,7 +1451,8 @@ auto plan_computed_dynamic_array_iterable_loop_render_sequence(
     );
 
     plan.descriptor_render_planned = descriptor_plan.descriptor_load_planned &&
-        descriptor_plan.data_projection_planned && descriptor_plan.length_projection_planned;
+        descriptor_plan.data_projection_planned && descriptor_plan.length_projection_planned &&
+        descriptor_plan.capacity_projection_planned;
     plan.loop_control_render_planned = loop_control_plan.entry_branch_planned &&
         loop_control_plan.index_phi_planned && loop_control_plan.bounds_check_planned &&
         loop_control_plan.conditional_branch_planned;

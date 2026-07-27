@@ -35,6 +35,7 @@ struct ComputedDynamicArrayForDescriptorRenderMetadata {
     std::string descriptor_value_name;
     std::string data_pointer_name;
     std::string length_name;
+    std::string capacity_name;
     std::vector<std::string> rendered_ir;
 };
 

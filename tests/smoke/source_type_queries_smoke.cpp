@@ -561,6 +561,7 @@ int main() {
     assert(!mismatched_computed_descriptor_render.descriptor_load_planned);
     assert(!mismatched_computed_descriptor_render.data_projection_planned);
     assert(!mismatched_computed_descriptor_render.length_projection_planned);
+    assert(!mismatched_computed_descriptor_render.capacity_projection_planned);
     assert(!mismatched_computed_descriptor_render.render_enabled);
     assert(
         orison::lowering::computed_dynamic_array_iterable_descriptor_render_plan_report(
@@ -801,7 +802,8 @@ int main() {
     assert(proven_computed_descriptor_render.descriptor_value_name == "%items.computed_for.descriptor");
     assert(proven_computed_descriptor_render.data_pointer_name == "%items.computed_for.data");
     assert(proven_computed_descriptor_render.length_name == "%items.computed_for.length");
-    assert(proven_computed_descriptor_render.rendered_ir.size() == 3);
+    assert(proven_computed_descriptor_render.capacity_name == "%items.computed_for.capacity");
+    assert(proven_computed_descriptor_render.rendered_ir.size() == 4);
     assert(
         proven_computed_descriptor_render.rendered_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
@@ -814,9 +816,14 @@ int main() {
         proven_computed_descriptor_render.rendered_ir[2] ==
         "  %items.computed_for.length = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 1\n"
     );
+    assert(
+        proven_computed_descriptor_render.rendered_ir[3] ==
+        "  %items.computed_for.capacity = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 2\n"
+    );
     assert(proven_computed_descriptor_render.descriptor_load_planned);
     assert(proven_computed_descriptor_render.data_projection_planned);
     assert(proven_computed_descriptor_render.length_projection_planned);
+    assert(proven_computed_descriptor_render.capacity_projection_planned);
     assert(!proven_computed_descriptor_render.render_enabled);
     auto proven_computed_descriptor_render_report =
         orison::lowering::computed_dynamic_array_iterable_descriptor_render_plan_report(
@@ -1010,25 +1017,25 @@ int main() {
     assert(proven_computed_loop_render_sequence.source_type_name == "DynamicArray<UInt32>");
     assert(proven_computed_loop_render_sequence.element_source_type_name == "UInt32");
     assert(proven_computed_loop_render_sequence.body_block_name == "items.computed_for.body");
-    assert(proven_computed_loop_render_sequence.rendered_ir.size() == 14);
+    assert(proven_computed_loop_render_sequence.rendered_ir.size() == 15);
     assert(
         proven_computed_loop_render_sequence.rendered_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
-    assert(proven_computed_loop_render_sequence.rendered_ir[3] == "  br label %items.computed_for.condition\n");
-    assert(proven_computed_loop_render_sequence.rendered_ir[8] == "items.computed_for.body:\n");
+    assert(proven_computed_loop_render_sequence.rendered_ir[4] == "  br label %items.computed_for.condition\n");
+    assert(proven_computed_loop_render_sequence.rendered_ir[9] == "items.computed_for.body:\n");
     assert(
-        proven_computed_loop_render_sequence.rendered_ir[9] ==
+        proven_computed_loop_render_sequence.rendered_ir[10] ==
         "  %items.computed_for.element.addr = getelementptr i32, ptr %items.computed_for.data, "
         "i64 %items.computed_for.index\n"
     );
     assert(
-        proven_computed_loop_render_sequence.rendered_ir[10] ==
+        proven_computed_loop_render_sequence.rendered_ir[11] ==
         "  %items.computed_for.item = load i32, ptr %items.computed_for.element.addr\n"
     );
-    assert(proven_computed_loop_render_sequence.rendered_ir[11] == "items.computed_for.continue:\n");
+    assert(proven_computed_loop_render_sequence.rendered_ir[12] == "items.computed_for.continue:\n");
     assert(
-        proven_computed_loop_render_sequence.rendered_ir[13] ==
+        proven_computed_loop_render_sequence.rendered_ir[14] ==
         "  br label %items.computed_for.condition\n"
     );
     assert(proven_computed_loop_render_sequence.descriptor_render_planned);
@@ -1112,15 +1119,15 @@ int main() {
     assert(proven_computed_production_emission_gate.loop_cleanup_ownership_ready);
     assert(proven_computed_production_emission_gate.function_cleanup_resumption_ready);
     assert(proven_computed_production_emission_gate.exit_cleanup_ready);
-    assert(proven_computed_production_emission_gate.rendered_ir.size() == 16);
+    assert(proven_computed_production_emission_gate.rendered_ir.size() == 17);
     assert(
         proven_computed_production_emission_gate.rendered_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
-    assert(proven_computed_production_emission_gate.rendered_ir[8] == "items.computed_for.body:\n");
-    assert(proven_computed_production_emission_gate.rendered_ir[14] == "items.computed_for.exit:\n");
+    assert(proven_computed_production_emission_gate.rendered_ir[9] == "items.computed_for.body:\n");
+    assert(proven_computed_production_emission_gate.rendered_ir[15] == "items.computed_for.exit:\n");
     assert(
-        proven_computed_production_emission_gate.rendered_ir[15] ==
+        proven_computed_production_emission_gate.rendered_ir[16] ==
         "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
         "from items.loop.entry to items [cleanup calls disabled]\n"
     );
@@ -1222,6 +1229,7 @@ int main() {
     assert(!unproven_computed_descriptor_render.descriptor_load_planned);
     assert(!unproven_computed_descriptor_render.data_projection_planned);
     assert(!unproven_computed_descriptor_render.length_projection_planned);
+    assert(!unproven_computed_descriptor_render.capacity_projection_planned);
     assert(!unproven_computed_descriptor_render.render_enabled);
     assert(
         orison::lowering::computed_dynamic_array_iterable_descriptor_render_plan_report(

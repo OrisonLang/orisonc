@@ -1847,7 +1847,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_parameter_for.render(path.string()).find(
             "computed DynamicArray descriptor render plan ownership join blocked source DynamicArray<UInt32> "
             "element UInt32 [descriptor load blocked] [data projection blocked] "
-            "[length projection blocked] [render disabled] (metadata only)"
+            "[length projection blocked] [capacity projection blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
     assert(
@@ -1943,7 +1943,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_same_owner_parameter_for.render(path.string()).find(
             "computed DynamicArray descriptor render plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [descriptor load blocked] [data projection blocked] "
-            "[length projection blocked] [render disabled] (metadata only)"
+            "[length projection blocked] [capacity projection blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
     assert(
@@ -2039,7 +2039,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_descriptor_render.descriptor_value_name == "%items.computed_for.descriptor");
     assert(computed_local_same_owner_descriptor_render.data_pointer_name == "%items.computed_for.data");
     assert(computed_local_same_owner_descriptor_render.length_name == "%items.computed_for.length");
-    assert(computed_local_same_owner_descriptor_render.rendered_ir.size() == 3);
+    assert(computed_local_same_owner_descriptor_render.capacity_name == "%items.computed_for.capacity");
+    assert(computed_local_same_owner_descriptor_render.rendered_ir.size() == 4);
     auto computed_local_same_owner_descriptor_render_report =
         computed_local_same_owner_for.computed_dynamic_array_for_descriptor_render_report();
     assert(computed_local_same_owner_descriptor_render_report.size() == 1);
@@ -2047,7 +2048,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_descriptor_render_report.front() ==
         smoke::computed_dynamic_array_descriptor_render_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir.size() == 3);
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir.size() == 4);
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
@@ -2059,6 +2060,10 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[2] ==
         "  %items.computed_for.length = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 1\n"
+    );
+    assert(
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[3] ==
+        "  %items.computed_for.capacity = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 2\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_renders.size() == 1);
     auto const& computed_local_same_owner_loop_control =
@@ -2190,7 +2195,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_loop_sequence.source_type_name == "DynamicArray<UInt32>");
     assert(computed_local_same_owner_loop_sequence.element_source_type_name == "UInt32");
     assert(computed_local_same_owner_loop_sequence.body_block_name == "items.computed_for.body");
-    assert(computed_local_same_owner_loop_sequence.rendered_ir.size() == 14);
+    assert(computed_local_same_owner_loop_sequence.rendered_ir.size() == 15);
     auto computed_local_same_owner_loop_sequence_report =
         computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequence_report();
     assert(computed_local_same_owner_loop_sequence_report.size() == 1);
@@ -2198,21 +2203,21 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_loop_sequence_report.front() ==
         smoke::computed_dynamic_array_loop_render_sequence_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir.size() == 14);
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir.size() == 15);
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[8] ==
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[9] ==
         "items.computed_for.body:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[11] ==
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[12] ==
         "items.computed_for.continue:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[13] ==
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[14] ==
         "  br label %items.computed_for.condition\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanups.size() == 1);
@@ -2290,7 +2295,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_production_gate.exit_cleanup_ready);
     assert(computed_local_same_owner_production_gate.production_sequence_render_planned);
     assert(!computed_local_same_owner_production_gate.production_emission_enabled);
-    assert(computed_local_same_owner_production_gate.rendered_ir.size() == 16);
+    assert(computed_local_same_owner_production_gate.rendered_ir.size() == 17);
     auto computed_local_same_owner_production_gate_report =
         computed_local_same_owner_for.computed_dynamic_array_for_production_emission_gate_report();
     assert(computed_local_same_owner_production_gate_report.size() == 1);
@@ -2298,17 +2303,17 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_production_gate_report.front() ==
         smoke::computed_dynamic_array_production_emission_gate_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir.size() == 16);
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir.size() == 17);
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[14] ==
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[15] ==
         "items.computed_for.exit:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[15] ==
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[16] ==
         "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
         "from items.loop.entry to items [cleanup calls disabled]\n"
     );
@@ -2320,7 +2325,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_sequence.cleanup_owner_name == "items");
     assert(computed_local_same_owner_sequence.source_type_name == "DynamicArray<UInt32>");
     assert(computed_local_same_owner_sequence.element_source_type_name == "UInt32");
-    assert(computed_local_same_owner_sequence.rendered_ir.size() == 16);
+    assert(computed_local_same_owner_sequence.rendered_ir.size() == 17);
     auto computed_local_same_owner_sequence_report =
         computed_local_same_owner_for.computed_dynamic_array_for_production_sequence_report();
     assert(computed_local_same_owner_sequence_report.size() == 1);
@@ -2332,28 +2337,28 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_sequence.rendered_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
-    assert(computed_local_same_owner_sequence.rendered_ir[8] == "items.computed_for.body:\n");
-    assert(computed_local_same_owner_sequence.rendered_ir[14] == "items.computed_for.exit:\n");
+    assert(computed_local_same_owner_sequence.rendered_ir[9] == "items.computed_for.body:\n");
+    assert(computed_local_same_owner_sequence.rendered_ir[15] == "items.computed_for.exit:\n");
     assert(
-        computed_local_same_owner_sequence.rendered_ir[15] ==
+        computed_local_same_owner_sequence.rendered_ir[16] ==
         "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
         "from items.loop.entry to items [cleanup calls disabled]\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir.size() == 16);
+    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir.size() == 17);
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[8] ==
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[9] ==
         "items.computed_for.body:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[14] ==
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[15] ==
         "items.computed_for.exit:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[15] ==
+        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[16] ==
         "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
         "from items.loop.entry to items [cleanup calls disabled]\n"
     );
@@ -2388,16 +2393,16 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(!computed_local_same_owner_metadata_with_comment_emission.has_errors());
     assert(
         computed_local_same_owner_metadata_with_comment_emission
-            .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 17
+            .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 18
     );
     assert(
         computed_local_same_owner_metadata_with_comment_emission
-            .test_only_computed_dynamic_array_for_production_sequence_ir.size() == 16
+            .test_only_computed_dynamic_array_for_production_sequence_ir.size() == 17
     );
     assert(
         computed_local_same_owner_metadata_with_comment_emission.ir_text.find(
             "; computed DynamicArray for production sequence function sum_words line 6 "
-            "source DynamicArray<UInt32> element UInt32 owner items snippets 16 (metadata only)\n"
+            "source DynamicArray<UInt32> element UInt32 owner items snippets 17 (metadata only)\n"
         ) != std::string::npos
     );
     assert(

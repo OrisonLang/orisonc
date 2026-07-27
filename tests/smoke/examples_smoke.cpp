@@ -229,7 +229,7 @@ auto main() -> int {
         computed_dynamic_array_iterable.error_text.find(
             "computed DynamicArray descriptor render plan ownership join blocked source DynamicArray<UInt32> "
             "element UInt32 [descriptor load blocked] [data projection blocked] "
-            "[length projection blocked] [render disabled] (metadata only)"
+            "[length projection blocked] [capacity projection blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
     assert(
@@ -315,7 +315,7 @@ auto main() -> int {
         computed_same_owner_dynamic_array_iterable.error_text.find(
             "computed DynamicArray descriptor render plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [descriptor load blocked] [data projection blocked] "
-            "[length projection blocked] [render disabled] (metadata only)"
+            "[length projection blocked] [capacity projection blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
     assert(

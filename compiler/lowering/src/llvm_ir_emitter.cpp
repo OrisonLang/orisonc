@@ -911,7 +911,8 @@ auto collect_test_only_computed_dynamic_array_for_descriptor_renders(
                     ComputedDynamicArrayIterableDescriptorRenderPlanKind::descriptor_render_planned &&
                 plan.descriptor_load_planned &&
                 plan.data_projection_planned &&
-                plan.length_projection_planned) {
+                plan.length_projection_planned &&
+                plan.capacity_projection_planned) {
                 renders.push_back(ComputedDynamicArrayForDescriptorRenderMetadata {
                     .enclosing_function_name = std::string {enclosing_function_name},
                     .source_line = statement.line,
@@ -922,6 +923,7 @@ auto collect_test_only_computed_dynamic_array_for_descriptor_renders(
                     .descriptor_value_name = plan.descriptor_value_name,
                     .data_pointer_name = plan.data_pointer_name,
                     .length_name = plan.length_name,
+                    .capacity_name = plan.capacity_name,
                     .rendered_ir = plan.rendered_ir,
                 });
             }
@@ -1534,6 +1536,7 @@ auto format_computed_dynamic_array_for_descriptor_render_metadata(
     append_if_present(output, "value", metadata.descriptor_value_name);
     append_if_present(output, "data", metadata.data_pointer_name);
     append_if_present(output, "length", metadata.length_name);
+    append_if_present(output, "capacity", metadata.capacity_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();

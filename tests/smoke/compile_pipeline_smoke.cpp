@@ -730,7 +730,7 @@ auto main() -> int {
         computed_dynamic_array_parameter_for.error_text.find(
             "computed DynamicArray descriptor render plan ownership join blocked source DynamicArray<UInt32> "
             "element UInt32 [descriptor load blocked] [data projection blocked] "
-            "[length projection blocked] [render disabled] (metadata only)"
+            "[length projection blocked] [capacity projection blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
     assert(
@@ -828,7 +828,7 @@ auto main() -> int {
         computed_dynamic_array_same_owner_for.error_text.find(
             "computed DynamicArray descriptor render plan cleanup owner unproven source DynamicArray<UInt32> "
             "element UInt32 owner items [descriptor load blocked] [data projection blocked] "
-            "[length projection blocked] [render disabled] (metadata only)"
+            "[length projection blocked] [capacity projection blocked] [render disabled] (metadata only)"
         ) != std::string::npos
     );
     assert(
@@ -1042,12 +1042,12 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_metadata_with_comments.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments
-            .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 17
+            .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 18
     );
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments.ir_text.find(
             "; computed DynamicArray for production sequence function sum_words line 6 "
-            "source DynamicArray<UInt32> element UInt32 owner items snippets 16 (metadata only)\n"
+            "source DynamicArray<UInt32> element UInt32 owner items snippets 17 (metadata only)\n"
         ) != std::string::npos
     );
     auto computed_dynamic_array_local_same_owner_lowered_for = pipeline.emit_llvm(

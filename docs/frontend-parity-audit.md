@@ -37,8 +37,10 @@ This file tracks which source-language frontend slices are reflected in the curr
   remains blocked while inserted cleanup state handoffs declare cleanup calls disabled.
 - 2026-07-26: verified computed owned `DynamicArray<T>` cleanup-call gates now expose a disabled cleanup-call plan that
   records the post-resumption operation seam while descriptor cleanup operands remain pending.
-- 2026-07-26: computed owned `DynamicArray<T>` cleanup-call plans now derive available operands from inserted IR,
-  proving data pointer and scalar element-size operands while keeping capacity pending and cleanup emission disabled.
+- 2026-07-26: computed owned `DynamicArray<T>` cleanup-call plans initially derive available operands from inserted IR,
+  proving data pointer and scalar element-size operands before capacity projection is added.
+- 2026-07-26: computed owned `DynamicArray<T>` descriptor rendering now projects capacity for proven computed loops, so
+  cleanup-call plans can prove data pointer, scalar element size, and capacity while cleanup emission remains disabled.
 - 2026-07-26: pipeline emission reports now verify computed owned `DynamicArray<T>` inserted cleanup state handoff
   sequences, reporting valid acquire/resume pairs separately from inserted-transition observability.
 - 2026-07-26: computed owned `DynamicArray<T>` cleanup acquisition/resumption markers now render through a shared
