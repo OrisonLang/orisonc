@@ -1761,3 +1761,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: the test-only computed cleanup-call insertion seam now feeds the existing dynamic-array runtime-request
   and prelude path. Inserted computed cleanup calls receive the ordinary deallocation declaration and are checked
   through LLVM object emission.
+- 2026-07-27: test-only computed cleanup insertion now clears the owner descriptor after deallocation, so the normal
+  function-exit cleanup observes an empty descriptor. A linked pipeline smoke now runs a non-empty same-owner computed
+  `DynamicArray<UInt32>` loop and exits with the iterated value.

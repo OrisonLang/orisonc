@@ -695,6 +695,9 @@ representation.
 - The test-only computed cleanup-call insertion seam now also registers the dynamic-array deallocation runtime request
   before module prelude emission. The inserted call therefore receives the normal
   `__orison_dynamic_array_deallocate` declaration and is object-emission checked by pipeline smoke.
+- Test-only computed cleanup insertion now clears the proven owner descriptor storage after deallocation, allowing the
+  existing function-exit descriptor cleanup hook to remain active without double-freeing the same backing allocation.
+  Pipeline smoke links and runs a non-empty same-owner computed `DynamicArray<UInt32>` loop through this path.
 
 ## Follow-up work
 

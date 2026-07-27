@@ -249,6 +249,10 @@ auto lower_sequence_for_statement(
                         descriptor_plan.data_pointer_name,
                         descriptor_plan.capacity_name
                     );
+                    if (!descriptor_plan.descriptor_storage_name.empty()) {
+                        output << "  store " << dynamic_array_descriptor_llvm_type();
+                        output << " zeroinitializer, ptr " << descriptor_plan.descriptor_storage_name << "\n";
+                    }
                 }
             }
             session.state.current_block = loop_exit_plan.exit_block_name;

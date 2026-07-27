@@ -1252,6 +1252,11 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text.find(
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text.find(
             "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)\n"
         ) != std::string::npos
     );
@@ -1292,6 +1297,82 @@ auto main() -> int {
             computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text
         );
     assert(!computed_dynamic_array_local_same_owner_inserted_cleanup_object.has_errors());
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_run_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_inserted_cleanup_run.or";
+    {
+        auto inserted_cleanup_run_source =
+            std::ofstream(computed_dynamic_array_local_same_owner_inserted_cleanup_run_path);
+        inserted_cleanup_run_source
+            << "package demo.pipeline.computeddynamicarraylocalsameownerinsertedcleanuprun\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    var total = 0 as UInt32\n"
+            << "    items.push(7 as UInt32)\n"
+            << "    for word in true ? items : items\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_run = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
+            .test_only_insert_computed_dynamic_array_cleanup_calls = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_inserted_cleanup_run.has_errors());
+    assert(computed_dynamic_array_local_same_owner_inserted_cleanup_run.dynamic_array_runtime_request_report.size() == 3);
+    assert_line_contains(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run.dynamic_array_runtime_request_report,
+        1,
+        "__orison_dynamic_array_grow"
+    );
+    assert_line_contains(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run.dynamic_array_runtime_request_report,
+        2,
+        "__orison_dynamic_array_deallocate"
+    );
+    auto computed_inserted_deallocate =
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for."
+        );
+    auto computed_inserted_clear =
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
+        );
+    auto computed_final_cleanup =
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
+        );
+    auto computed_return =
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text.find("ret i32 %tmp");
+    assert(computed_inserted_deallocate != std::string::npos);
+    assert(computed_inserted_clear != std::string::npos);
+    assert(computed_final_cleanup != std::string::npos);
+    assert(computed_return != std::string::npos);
+    assert(computed_inserted_deallocate < computed_inserted_clear);
+    assert(computed_inserted_clear < computed_final_cleanup);
+    assert(computed_final_cleanup < computed_return);
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_run_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(
+            computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text
+        );
+    assert(!computed_dynamic_array_local_same_owner_inserted_cleanup_run_object.has_errors());
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_run_executable =
+        smoke_temp_root / "computed_dynamic_array_local_same_owner_inserted_cleanup_run";
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_run_link = orison::link::HostLinker {}.link(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run_object.object_bytes,
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run_executable
+    );
+    assert(!computed_dynamic_array_local_same_owner_inserted_cleanup_run_link.has_errors());
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_run_status = std::system(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run_executable.string().c_str()
+    );
+    assert(WIFEXITED(computed_dynamic_array_local_same_owner_inserted_cleanup_run_status));
+    assert(WEXITSTATUS(computed_dynamic_array_local_same_owner_inserted_cleanup_run_status) == 7);
     auto computed_dynamic_array_local_same_owner_two_loops_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_two_loops.or";
     {
