@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` `for` executable test-only lowering now uniquifies emitted internal
+  labels and SSA names, with smoke coverage for two computed loops over the same local owner in one function.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` lowering now uses the actual incoming block for loop-control phi
   construction, with smoke coverage for insertion after a lowered `if`/`else` merge.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` lowering now has a first test-only executable insertion path for

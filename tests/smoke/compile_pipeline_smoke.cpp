@@ -1033,22 +1033,63 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_lowered_for.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
-            "items.computed_for.condition:\n"
+            "items.computed_for.0.condition:\n"
         ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
-            "items.computed_for.body:\n"
+            "items.computed_for.0.body:\n"
         ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
-            "  %items.computed_for.item = load i32, ptr %items.computed_for.element.addr\n"
+            "  %items.computed_for.0.item = load i32, ptr %items.computed_for.0.element.addr\n"
         ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
-            "items.computed_for.exit:\n"
+            "items.computed_for.0.exit:\n"
+        ) != std::string::npos
+    );
+    auto computed_dynamic_array_local_same_owner_two_loops_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_two_loops.or";
+    {
+        auto local_same_owner_two_loops_source = std::ofstream(computed_dynamic_array_local_same_owner_two_loops_path);
+        local_same_owner_two_loops_source
+            << "package demo.pipeline.computeddynamicarraylocalsameownertwoloops\n"
+            << "\n"
+            << "function sum_words(flag: Bool) -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for word in flag ? items : items\n"
+            << "        total = total + word\n"
+            << "    for word in flag ? items : items\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_local_same_owner_two_loops = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_two_loops_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_two_loops.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
+            "items.computed_for.1.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
+            "  %items.computed_for.1.index = phi i64 [ 0, %items.computed_for.0.exit ], "
+            "[ %items.computed_for.1.next.index, %items.computed_for.1.continue ]\n"
         ) != std::string::npos
     );
     auto computed_dynamic_array_local_same_owner_after_if_path =
@@ -1080,17 +1121,17 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_after_if.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_after_if.ir_text.find(
-            "  %items.computed_for.index = phi i64 [ 0, %if.merge."
+            "  %items.computed_for.1.index = phi i64 [ 0, %if.merge."
         ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_after_if.ir_text.find(
-            "items.computed_for.body:\n"
+            "items.computed_for.1.body:\n"
         ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_after_if.ir_text.find(
-            "items.computed_for.exit:\n"
+            "items.computed_for.1.exit:\n"
         ) != std::string::npos
     );
     assert(

@@ -12,6 +12,19 @@
 
 namespace orison::lowering {
 
+namespace {
+
+auto computed_dynamic_array_for_base_name(
+    std::string_view cleanup_owner_name,
+    FunctionLoweringState const& state
+) -> std::string {
+    auto name = std::string {cleanup_owner_name} + ".computed_for";
+    name += state.computed_dynamic_array_for_unique_suffix;
+    return name;
+}
+
+}  // namespace
+
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string> {
     auto arguments = std::vector<std::string> {};
     auto depth = std::size_t {0};
@@ -700,7 +713,8 @@ auto plan_computed_dynamic_array_iterable_descriptor_render(
         return plan;
     }
 
-    auto prefix = "%" + plan.cleanup_owner_name + ".computed_for";
+    auto const base_name = computed_dynamic_array_for_base_name(plan.cleanup_owner_name, state);
+    auto prefix = "%" + base_name;
     plan.descriptor_value_name = prefix + ".descriptor";
     plan.data_pointer_name = prefix + ".data";
     plan.length_name = prefix + ".length";
@@ -826,8 +840,8 @@ auto plan_computed_dynamic_array_iterable_loop_control_render(
         return plan;
     }
 
-    auto prefix = "%" + plan.cleanup_owner_name + ".computed_for";
-    auto block_prefix = plan.cleanup_owner_name + ".computed_for";
+    auto const block_prefix = computed_dynamic_array_for_base_name(plan.cleanup_owner_name, state);
+    auto prefix = "%" + block_prefix;
     plan.condition_block_name = block_prefix + ".condition";
     plan.body_block_name = block_prefix + ".body";
     plan.continue_block_name = block_prefix + ".continue";
@@ -979,8 +993,9 @@ auto plan_computed_dynamic_array_iterable_element_address_render(
         return plan;
     }
 
+    auto const base_name = computed_dynamic_array_for_base_name(plan.cleanup_owner_name, state);
     plan.element_llvm_type_name = *element_llvm_type;
-    plan.element_address_name = "%" + plan.cleanup_owner_name + ".computed_for.element.addr";
+    plan.element_address_name = "%" + base_name + ".element.addr";
     auto descriptor_cleanup_plan = DynamicArrayDescriptorCleanupPlan {
         .owner_name = plan.cleanup_owner_name,
         .source_type_name = plan.source_type_name,
@@ -1107,7 +1122,8 @@ auto plan_computed_dynamic_array_iterable_element_load_render(
         return plan;
     }
 
-    plan.item_value_name = "%" + plan.cleanup_owner_name + ".computed_for.item";
+    auto const base_name = computed_dynamic_array_for_base_name(plan.cleanup_owner_name, state);
+    plan.item_value_name = "%" + base_name + ".item";
     auto construction_plan = DynamicArrayConstructionPlan {
         .source_type_name = plan.source_type_name,
         .element_source_type_name = plan.element_source_type_name,

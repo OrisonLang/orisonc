@@ -65,6 +65,7 @@ struct FunctionLoweringState {
     std::size_t next_temporary_index = 0;
     std::size_t next_block_index = 0;
     std::size_t next_concurrency_ordinal = 0;
+    std::string computed_dynamic_array_for_unique_suffix;
     std::string current_block = "entry";
     std::vector<LoopTargets> loop_targets;
 };

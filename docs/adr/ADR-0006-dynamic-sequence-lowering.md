@@ -116,6 +116,9 @@ representation.
   The path remains internal and disabled by default while nested insertion and broader cleanup proof are still pending.
 - The test-only computed dynamic-array `for` lowering path now records the actual incoming block for loop-control phi
   construction, so insertion after a lowered branch merge no longer assumes `%entry`.
+- Executable test-only computed dynamic-array `for` lowering now allocates a unique internal suffix from the function
+  block-index stream for emitted labels and SSA names, preventing collisions when the same owner participates in
+  multiple computed loops. Metadata-only audit plans retain their stable unsuffixed names.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.
