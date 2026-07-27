@@ -138,6 +138,8 @@ representation.
 - Computed dynamic-array cleanup acquisition and resumption markers now render through a shared internal cleanup state
   handoff model. The lowered IR still contains disabled audit markers only; no cleanup calls, deallocation, or element
   drops are emitted by this seam.
+- Pipeline emission reports now verify inserted cleanup state handoff sequences. Valid acquire/resume pairs report as
+  paired with cleanup calls disabled, while malformed inserted handoff sequences report blocked verifier lines.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

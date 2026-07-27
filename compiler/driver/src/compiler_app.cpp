@@ -128,6 +128,7 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, result.computed_dynamic_array_for_loop_exit_cleanup_report);
     append_report_lines(report, result.computed_dynamic_array_for_cleanup_transition_report);
     append_report_lines(report, result.computed_dynamic_array_for_inserted_cleanup_transition_report);
+    append_report_lines(report, result.computed_dynamic_array_for_inserted_cleanup_state_verification_report);
     append_report_lines(report, result.computed_dynamic_array_for_production_emission_gate_report);
     append_report_lines(report, result.computed_dynamic_array_for_production_sequence_report);
     append_report_lines(report, result.dynamic_array_cleanup_production_readiness_report);

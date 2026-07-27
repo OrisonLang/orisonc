@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: pipeline emission reports now verify computed owned `DynamicArray<T>` inserted cleanup state handoff
+  sequences, reporting valid acquire/resume pairs separately from inserted-transition observability.
 - 2026-07-26: computed owned `DynamicArray<T>` cleanup acquisition/resumption markers now render through a shared
   internal cleanup state handoff model while still emitting no cleanup calls, deallocation, or element drops.
 - 2026-07-26: pipeline emission reports now derive a computed owned `DynamicArray<T>` inserted cleanup-transition line

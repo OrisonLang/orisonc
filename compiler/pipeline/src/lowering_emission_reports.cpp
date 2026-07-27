@@ -74,6 +74,37 @@ auto format_inserted_cleanup_transition(
     return output.str();
 }
 
+auto format_inserted_cleanup_state_verification(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for inserted cleanup state verification";
+    output << " acquire-operation " << acquisition.operation_name;
+    output << " resume-operation " << resumption.operation_name;
+    output << " acquire-from " << acquisition.source_owner_name;
+    output << " acquire-to " << acquisition.target_owner_name;
+    output << " resume-from " << resumption.source_owner_name;
+    output << " resume-to " << resumption.target_owner_name;
+    output << " [handoff paired] [cleanup calls disabled]";
+    output << " (inserted IR)";
+    return output.str();
+}
+
+auto format_inserted_cleanup_state_verification_blocked(
+    std::string_view reason,
+    InsertedCleanupOperation const& operation
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for inserted cleanup state verification blocked";
+    output << " reason " << reason;
+    output << " operation " << operation.operation_name;
+    output << " from " << operation.source_owner_name;
+    output << " to " << operation.target_owner_name;
+    output << " (inserted IR)";
+    return output.str();
+}
+
 auto format_inserted_cleanup_transition_report(std::string_view ir_text) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     auto pending_acquisition = std::optional<InsertedCleanupOperation> {};
@@ -99,6 +130,60 @@ auto format_inserted_cleanup_transition_report(std::string_view ir_text) -> std:
             }
             pending_acquisition.reset();
         }
+    }
+    return report;
+}
+
+auto format_inserted_cleanup_state_verification_report(std::string_view ir_text)
+    -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    auto pending_acquisition = std::optional<InsertedCleanupOperation> {};
+    auto input = std::istringstream {std::string {ir_text}};
+    auto line = std::string {};
+    while (std::getline(input, line)) {
+        auto handoff = parse_inserted_cleanup_operation(
+            line,
+            "  ; cleanup state handoff "
+        );
+        if (!handoff.has_value()) {
+            continue;
+        }
+        if (handoff->kind_name == "acquire") {
+            if (pending_acquisition.has_value()) {
+                report.push_back(format_inserted_cleanup_state_verification_blocked(
+                    "nested-acquire",
+                    *pending_acquisition
+                ));
+            }
+            pending_acquisition = std::move(handoff);
+            continue;
+        }
+        if (handoff->kind_name == "resume") {
+            if (!pending_acquisition.has_value()) {
+                report.push_back(format_inserted_cleanup_state_verification_blocked(
+                    "resume-without-acquire",
+                    *handoff
+                ));
+                continue;
+            }
+            if (pending_acquisition->target_owner_name != handoff->source_owner_name ||
+                pending_acquisition->source_owner_name != handoff->target_owner_name) {
+                report.push_back(format_inserted_cleanup_state_verification_blocked(
+                    "owner-mismatch",
+                    *handoff
+                ));
+                pending_acquisition.reset();
+                continue;
+            }
+            report.push_back(format_inserted_cleanup_state_verification(*pending_acquisition, *handoff));
+            pending_acquisition.reset();
+        }
+    }
+    if (pending_acquisition.has_value()) {
+        report.push_back(format_inserted_cleanup_state_verification_blocked(
+            "acquire-without-resume",
+            *pending_acquisition
+        ));
     }
     return report;
 }
@@ -147,6 +232,8 @@ void populate_lowering_emission_reports(
         emission.computed_dynamic_array_for_cleanup_transition_report();
     result.computed_dynamic_array_for_inserted_cleanup_transition_report =
         format_inserted_cleanup_transition_report(result.ir_text);
+    result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
+        format_inserted_cleanup_state_verification_report(result.ir_text);
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =
