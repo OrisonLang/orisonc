@@ -1165,7 +1165,12 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .consumed_descriptor_finalization_plan_report.empty()
+            .consumed_descriptor_finalization_plan_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .consumed_descriptor_finalization_plan_report.front() ==
+        smoke::local_consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -1276,7 +1281,12 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .consumed_descriptor_finalization_plan_report.empty()
+            .consumed_descriptor_finalization_plan_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .consumed_descriptor_finalization_plan_report.front() ==
+        smoke::local_consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
@@ -1347,12 +1357,17 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_plan_report.size() == 1
+            .consumed_descriptor_finalization_plan_report.size() == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_plan_report.front() ==
+            .consumed_descriptor_finalization_plan_report[0] ==
         smoke::consumed_descriptor_finalization_plan_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_plan_report[1] ==
+        smoke::local_consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
@@ -1474,12 +1489,17 @@ auto main() -> int {
     assert(computed_final_cleanup < computed_return);
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .consumed_descriptor_finalization_plan_report.size() == 1
+            .consumed_descriptor_finalization_plan_report.size() == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .consumed_descriptor_finalization_plan_report.front() ==
+            .consumed_descriptor_finalization_plan_report[0] ==
         smoke::consumed_descriptor_finalization_plan_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .consumed_descriptor_finalization_plan_report[1] ==
+        smoke::local_consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run

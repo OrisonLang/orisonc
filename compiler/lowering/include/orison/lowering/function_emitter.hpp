@@ -1,5 +1,6 @@
 #pragma once
 
+#include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -9,8 +10,24 @@
 #include "orison/syntax/module_parser.hpp"
 
 #include <string>
+#include <vector>
 
 namespace orison::lowering {
+
+struct FunctionEmissionResult {
+    std::string ir_text;
+    std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
+};
+
+auto emit_function_with_metadata(
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    LoweringContext const& lowering_context,
+    StringConstantTable const& string_constants,
+    semantics::SemanticAnalysisResult const& semantic_result,
+    diagnostics::DiagnosticBag& diagnostics,
+    LlvmIrEmissionOptions const& options = {}
+) -> FunctionEmissionResult;
 
 auto emit_function(
     syntax::FunctionSyntax const& function,

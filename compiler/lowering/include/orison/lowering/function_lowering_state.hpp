@@ -1,5 +1,6 @@
 #pragma once
 
+#include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
@@ -58,6 +59,7 @@ struct FunctionLoweringState {
     std::unordered_map<std::string, std::string> source_type_names;
     std::vector<std::string> parameter_names;
     std::vector<DynamicArrayDescriptorCleanupPlan> dynamic_array_local_cleanup_plans;
+    std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
     OwnershipTransferState ownership_transfers;
     std::unordered_map<std::string, std::size_t> local_name_counts;
     std::vector<DeferredCleanupScopeState> defer_cleanup_scopes;

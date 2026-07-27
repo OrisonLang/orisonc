@@ -2028,9 +2028,15 @@ auto LlvmIrEmissionResult::computed_dynamic_array_for_cleanup_transition_report(
 auto LlvmIrEmissionResult::consumed_descriptor_finalization_plan_report() const
     -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
-    lines.reserve(test_only_computed_dynamic_array_for_consumed_cleanup_descriptors.size());
+    lines.reserve(
+        test_only_computed_dynamic_array_for_consumed_cleanup_descriptors.size() +
+        consumed_descriptor_finalization_plans.size()
+    );
     for (auto const& descriptor : test_only_computed_dynamic_array_for_consumed_cleanup_descriptors) {
         lines.push_back(format_consumed_descriptor_finalization_plan(descriptor.finalization_plan));
+    }
+    for (auto const& plan : consumed_descriptor_finalization_plans) {
+        lines.push_back(format_consumed_descriptor_finalization_plan(plan));
     }
     return lines;
 }
@@ -2634,7 +2640,7 @@ auto emit_module(
             result.diagnostics.error(function.line, "lowering context is missing function signature");
             return result;
         }
-        output << emit_function(
+        auto function_emission = emit_function_with_metadata(
             function,
             signature->second,
             context,
@@ -2642,6 +2648,12 @@ auto emit_module(
             semantic_result,
             result.diagnostics,
             options
+        );
+        output << function_emission.ir_text;
+        result.consumed_descriptor_finalization_plans.insert(
+            result.consumed_descriptor_finalization_plans.end(),
+            function_emission.consumed_descriptor_finalization_plans.begin(),
+            function_emission.consumed_descriptor_finalization_plans.end()
         );
         output << "\n";
     }
@@ -2656,7 +2668,7 @@ auto emit_module(
         if (is_uninstantiated_generic_function(method)) {
             return true;
         }
-        output << emit_function(
+        auto function_emission = emit_function_with_metadata(
             method,
             lowered_method.signature,
             context,
@@ -2664,6 +2676,12 @@ auto emit_module(
             semantic_result,
             result.diagnostics,
             options
+        );
+        output << function_emission.ir_text;
+        result.consumed_descriptor_finalization_plans.insert(
+            result.consumed_descriptor_finalization_plans.end(),
+            function_emission.consumed_descriptor_finalization_plans.begin(),
+            function_emission.consumed_descriptor_finalization_plans.end()
         );
         output << "\n";
         return !result.has_errors();

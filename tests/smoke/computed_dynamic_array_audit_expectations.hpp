@@ -120,6 +120,11 @@ inline constexpr std::string_view consumed_descriptor_finalization_plan_report =
     "cleanup-operation items.computed_for.cleanup.resume [cleanup owner consumed] "
     "[descriptor finalization planned] (metadata only)";
 
+inline constexpr std::string_view local_consumed_descriptor_finalization_plan_report =
+    "consumed descriptor finalization plan owner items descriptor %items.addr "
+    "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
+    "[descriptor finalization planned] (metadata only)";
+
 inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descriptor_model_report =
     "computed DynamicArray for consumed cleanup descriptor model function sum_words line 6 "
     "source DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "

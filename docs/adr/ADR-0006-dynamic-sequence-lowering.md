@@ -729,6 +729,9 @@ representation.
 - Bound `DynamicArray<T>` parameter cleanup now uses the same consumed descriptor finalization plan for the callee-local
   descriptor spill. The clear targets `%parameter.addr` storage owned by the current function frame, not caller storage,
   and runs after descriptor deallocation for scalar/non-owning and authorized owned-element parameter cleanup paths.
+- Full LLVM module emission now collects consumed descriptor finalization plans from actual function cleanup emission.
+  The generic audit report therefore covers computed cleanup metadata plus emitted local and bound cleanup descriptor
+  finalization without inferring local/bound cleanup from source-level construction plans.
 
 ## Follow-up work
 

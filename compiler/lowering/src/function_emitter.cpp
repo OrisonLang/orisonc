@@ -917,13 +917,33 @@ auto lower_unit_statement(
     return StatementFlow::failed;
 }
 
+void finish_function_emission(
+    FunctionLoweringState const& state,
+    std::vector<ConsumedDescriptorFinalizationPlan>* consumed_descriptor_finalization_plans,
+    std::ostringstream& output
+) {
+    output << "}\n";
+    for (auto const& definition : state.pending_function_definitions) {
+        output << "\n" << definition;
+    }
+    if (consumed_descriptor_finalization_plans == nullptr) {
+        return;
+    }
+    consumed_descriptor_finalization_plans->insert(
+        consumed_descriptor_finalization_plans->end(),
+        state.consumed_descriptor_finalization_plans.begin(),
+        state.consumed_descriptor_finalization_plans.end()
+    );
+}
+
 void emit_function_body(
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature const& signature,
     EmissionContext const& context,
     semantics::SemanticAnalysisResult const* semantic_result,
     diagnostics::DiagnosticBag& diagnostics,
-    std::ostringstream& output
+    std::ostringstream& output,
+    std::vector<ConsumedDescriptorFinalizationPlan>* consumed_descriptor_finalization_plans
 ) {
     if (!function.generic_parameters.empty()) {
         diagnostics.error(function.line, "lowering does not yet support generic functions");
@@ -1028,10 +1048,7 @@ void emit_function_body(
             }
             output << "  ret void\n";
         }
-        output << "}\n";
-        for (auto const& definition : state.pending_function_definitions) {
-            output << "\n" << definition;
-        }
+        finish_function_emission(state, consumed_descriptor_finalization_plans, output);
         return;
     }
 
@@ -1318,10 +1335,7 @@ void emit_function_body(
         return;
     }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
-    output << "}\n";
-    for (auto const& definition : state.pending_function_definitions) {
-        output << "\n" << definition;
-    }
+    finish_function_emission(state, consumed_descriptor_finalization_plans, output);
 }
 
 }  // namespace
@@ -1336,6 +1350,35 @@ auto lower_unit_deferred_cleanup_block(
     return lower_unit_statement_block(statements, context, session, diagnostics, output);
 }
 
+auto emit_function_with_metadata(
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature const& signature,
+    LoweringContext const& lowering_context,
+    StringConstantTable const& string_constants,
+    semantics::SemanticAnalysisResult const& semantic_result,
+    diagnostics::DiagnosticBag& diagnostics,
+    LlvmIrEmissionOptions const& options
+) -> FunctionEmissionResult {
+    auto output = std::ostringstream {};
+    auto context = EmissionContext {
+        .lowering = lowering_context,
+        .string_constants = string_constants,
+        .options = options,
+    };
+    auto result = FunctionEmissionResult {};
+    emit_function_body(
+        function,
+        signature,
+        context,
+        &semantic_result,
+        diagnostics,
+        output,
+        &result.consumed_descriptor_finalization_plans
+    );
+    result.ir_text = output.str();
+    return result;
+}
+
 auto emit_function(
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature const& signature,
@@ -1345,14 +1388,15 @@ auto emit_function(
     diagnostics::DiagnosticBag& diagnostics,
     LlvmIrEmissionOptions const& options
 ) -> std::string {
-    auto output = std::ostringstream {};
-    auto context = EmissionContext {
-        .lowering = lowering_context,
-        .string_constants = string_constants,
-        .options = options,
-    };
-    emit_function_body(function, signature, context, &semantic_result, diagnostics, output);
-    return output.str();
+    return emit_function_with_metadata(
+        function,
+        signature,
+        lowering_context,
+        string_constants,
+        semantic_result,
+        diagnostics,
+        options
+    ).ir_text;
 }
 
 auto emit_function(

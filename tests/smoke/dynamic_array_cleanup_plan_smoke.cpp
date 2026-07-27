@@ -110,6 +110,23 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(ir.find("call void @__orison_drop.Payload") == std::string::npos);
     assert(ir.find("call void @__orison_dynamic_array_deallocate") != std::string::npos);
     assert(state.next_temporary_index == 2);
+    assert(state.consumed_descriptor_finalization_plans.size() == 2);
+    assert(
+        orison::lowering::format_consumed_descriptor_finalization_plan(
+            state.consumed_descriptor_finalization_plans[0]
+        ) ==
+        "consumed descriptor finalization plan owner a_items descriptor %a_items.addr "
+        "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
+        "[descriptor finalization planned] (metadata only)"
+    );
+    assert(
+        orison::lowering::format_consumed_descriptor_finalization_plan(
+            state.consumed_descriptor_finalization_plans[1]
+        ) ==
+        "consumed descriptor finalization plan owner z_items descriptor %z_items.addr "
+        "cleanup-operation __orison_dynamic_array_cleanup.1 [cleanup owner consumed] "
+        "[descriptor finalization planned] (metadata only)"
+    );
 
     auto malformed_plans = *plans;
     malformed_plans[1].sequence_verification.errors.push_back("test malformed cleanup order");
@@ -132,6 +149,7 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
         blocked_output
     ));
     assert(blocked_output.str().empty());
+    assert(state.consumed_descriptor_finalization_plans.size() == 2);
     assert(state.next_temporary_index == 2);
 }
 
@@ -244,7 +262,11 @@ void test_skips_consumed_owned_dynamic_array_local_cleanup() {
     assert(numbers_cleanup.has_value());
     assert(items_cleanup.has_value());
     numbers_cleanup->descriptor_storage_name = "%numbers.addr";
+    numbers_cleanup->descriptor_storage_status =
+        orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
     items_cleanup->descriptor_storage_name = "%items.addr";
+    items_cleanup->descriptor_storage_status =
+        orison::lowering::DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
     state.dynamic_array_local_cleanup_plans.push_back(std::move(*numbers_cleanup));
     state.dynamic_array_local_cleanup_plans.push_back(std::move(*items_cleanup));
     state.ownership_transfers.consumed_owned_bindings.insert("items");
@@ -262,6 +284,18 @@ void test_skips_consumed_owned_dynamic_array_local_cleanup() {
     assert(plans.has_value());
     assert(plans->size() == 1);
     assert(plans->front().descriptor_cleanup.owner_name == "numbers");
+    auto output = std::ostringstream {};
+    assert(orison::lowering::emit_local_dynamic_array_cleanups(context, session, output));
+    assert(output.str().find("store { ptr, i64, i64 } zeroinitializer, ptr %numbers.addr") != std::string::npos);
+    assert(state.consumed_descriptor_finalization_plans.size() == 1);
+    assert(
+        orison::lowering::format_consumed_descriptor_finalization_plan(
+            state.consumed_descriptor_finalization_plans.front()
+        ) ==
+        "consumed descriptor finalization plan owner numbers descriptor %numbers.addr "
+        "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
+        "[descriptor finalization planned] (metadata only)"
+    );
 }
 
 void test_skips_consumed_owned_dynamic_array_parameter_cleanup() {
