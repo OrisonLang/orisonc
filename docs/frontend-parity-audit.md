@@ -1766,3 +1766,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   `DynamicArray<UInt32>` loop and exits with the iterated value.
 - 2026-07-27: inserted computed cleanup now surfaces a consumed-descriptor audit report, proving that the inserted
   deallocation call is followed by owner descriptor finalization before normal function-exit cleanup runs.
+- 2026-07-27: consumed computed cleanup descriptor proof now also has a lowering-model report that records owner,
+  descriptor storage, and cleanup-resumption operation before the IR-derived inserted-call/finalization verifier runs.

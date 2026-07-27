@@ -115,6 +115,12 @@ inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descri
     "cleanup-operation items.computed_for.0.cleanup.resume.call owner items descriptor %items.addr "
     "[inserted cleanup call proven] [descriptor finalized] (inserted IR)";
 
+inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descriptor_model_report =
+    "computed DynamicArray for consumed cleanup descriptor model function sum_words line 6 "
+    "source DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
+    "cleanup-operation items.computed_for.cleanup.resume [cleanup owner consumed] "
+    "[descriptor finalization planned] (metadata only)";
+
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "
     "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "

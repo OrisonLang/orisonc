@@ -1318,6 +1318,63 @@ auto collect_test_only_computed_dynamic_array_for_production_sequences(
     return sequences;
 }
 
+auto collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(
+    syntax::ModuleSyntax const& module,
+    LoweringContext const& context,
+    LlvmIrEmissionOptions const& options
+) -> std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata> {
+    auto descriptors = std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata> {};
+    if (!options.test_only_enable_computed_dynamic_array_for_lowering ||
+        !options.test_only_authorize_computed_dynamic_array_cleanup_calls ||
+        !options.test_only_insert_computed_dynamic_array_cleanup_calls) {
+        return descriptors;
+    }
+    collect_test_only_computed_dynamic_array_for_module(
+        module,
+        context,
+        [&descriptors](
+            syntax::StatementSyntax const& statement,
+            std::string_view enclosing_function_name,
+            LoweringContext const& lowering_context,
+            FunctionLoweringState& state
+        ) {
+            auto gate = plan_computed_dynamic_array_iterable_production_emission_gate(
+                statement.expression,
+                lowering_context,
+                state
+            );
+            if (gate.kind !=
+                    ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned ||
+                !gate.ownership_ready ||
+                !gate.loop_render_ready ||
+                !gate.loop_cleanup_ownership_ready ||
+                !gate.function_cleanup_resumption_ready ||
+                !gate.exit_cleanup_ready ||
+                !gate.production_sequence_render_planned) {
+                return;
+            }
+            auto const& descriptor_plan = gate.loop_exit_cleanup_plan.loop_render_sequence_plan
+                .loop_continue_render_plan.element_load_render_plan.element_address_render_plan
+                .loop_control_render_plan.descriptor_render_plan;
+            if (descriptor_plan.descriptor_storage_name.empty() ||
+                gate.loop_exit_cleanup_plan.cleanup_resumption_operation_name.empty()) {
+                return;
+            }
+            descriptors.push_back(ComputedDynamicArrayForConsumedCleanupDescriptorMetadata {
+                .enclosing_function_name = std::string {enclosing_function_name},
+                .source_line = statement.line,
+                .cleanup_owner_name = gate.cleanup_owner_name,
+                .source_type_name = gate.source_type_name,
+                .element_source_type_name = gate.element_source_type_name,
+                .descriptor_storage_name = descriptor_plan.descriptor_storage_name,
+                .cleanup_resumption_operation_name =
+                    gate.loop_exit_cleanup_plan.cleanup_resumption_operation_name,
+            });
+        }
+    );
+    return descriptors;
+}
+
 auto collect_dynamic_array_runtime_operations(
     LlvmIrEmissionOptions const& options,
     syntax::ModuleSyntax const& module,
@@ -1790,6 +1847,37 @@ auto format_computed_dynamic_array_for_cleanup_transition_metadata_report(
     );
 }
 
+auto format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata(
+    ComputedDynamicArrayForConsumedCleanupDescriptorMetadata const& metadata
+) -> std::string {
+    auto output = std::ostringstream {};
+    append_computed_dynamic_array_for_metadata_prefix(
+        output,
+        "consumed cleanup descriptor model",
+        metadata.enclosing_function_name,
+        metadata.source_line,
+        metadata.source_type_name,
+        metadata.element_source_type_name,
+        metadata.cleanup_owner_name
+    );
+    append_if_present(output, "descriptor", metadata.descriptor_storage_name);
+    append_if_present(output, "cleanup-operation", metadata.cleanup_resumption_operation_name);
+    output << " [cleanup owner consumed] [descriptor finalization planned]";
+    output << " (metadata only)";
+    return output.str();
+}
+
+auto format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata_report(
+    std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata> const& metadata
+) -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_metadata_report(
+        metadata,
+        [](auto const& descriptor) {
+            return format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata(descriptor);
+        }
+    );
+}
+
 auto format_computed_dynamic_array_for_production_emission_gate_metadata(
     ComputedDynamicArrayForProductionEmissionGateMetadata const& metadata
 ) -> std::string {
@@ -1933,6 +2021,13 @@ auto LlvmIrEmissionResult::computed_dynamic_array_for_cleanup_transition_report(
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_cleanup_transition_metadata_report(
         test_only_computed_dynamic_array_for_cleanup_transitions
+    );
+}
+
+auto LlvmIrEmissionResult::computed_dynamic_array_for_consumed_cleanup_descriptor_model_report() const
+    -> std::vector<std::string> {
+    return format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata_report(
+        test_only_computed_dynamic_array_for_consumed_cleanup_descriptors
     );
 }
 
@@ -2177,6 +2272,8 @@ auto emit_module(
         result.test_only_computed_dynamic_array_for_cleanup_transitions =
             collect_test_only_computed_dynamic_array_for_cleanup_transitions(module, context);
     }
+    result.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors =
+        collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(module, context, options);
     if (options.test_only_collect_computed_dynamic_array_for_production_emission_gates) {
         result.test_only_computed_dynamic_array_for_production_emission_gates =
             collect_test_only_computed_dynamic_array_for_production_emission_gates(module, context);

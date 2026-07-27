@@ -130,6 +130,16 @@ struct ComputedDynamicArrayForCleanupTransitionMetadata {
     std::string resumption_operation_name;
 };
 
+struct ComputedDynamicArrayForConsumedCleanupDescriptorMetadata {
+    std::string enclosing_function_name;
+    std::size_t source_line = 0;
+    std::string cleanup_owner_name;
+    std::string source_type_name;
+    std::string element_source_type_name;
+    std::string descriptor_storage_name;
+    std::string cleanup_resumption_operation_name;
+};
+
 struct ComputedDynamicArrayForProductionEmissionGateMetadata {
     std::string enclosing_function_name;
     std::size_t source_line = 0;
@@ -218,6 +228,14 @@ auto format_computed_dynamic_array_for_cleanup_transition_metadata_report(
     std::vector<ComputedDynamicArrayForCleanupTransitionMetadata> const& metadata
 ) -> std::vector<std::string>;
 
+auto format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata(
+    ComputedDynamicArrayForConsumedCleanupDescriptorMetadata const& metadata
+) -> std::string;
+
+auto format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata_report(
+    std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata> const& metadata
+) -> std::vector<std::string>;
+
 auto format_computed_dynamic_array_for_production_emission_gate_metadata(
     ComputedDynamicArrayForProductionEmissionGateMetadata const& metadata
 ) -> std::string;
@@ -284,6 +302,8 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> test_only_computed_dynamic_array_for_loop_exit_cleanup_ir;
     std::vector<ComputedDynamicArrayForCleanupTransitionMetadata>
         test_only_computed_dynamic_array_for_cleanup_transitions;
+    std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata>
+        test_only_computed_dynamic_array_for_consumed_cleanup_descriptors;
     std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata>
         test_only_computed_dynamic_array_for_production_emission_gates;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_emission_gate_ir;
@@ -308,6 +328,7 @@ struct LlvmIrEmissionResult {
     auto computed_dynamic_array_for_loop_render_sequence_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_loop_exit_cleanup_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_cleanup_transition_report() const -> std::vector<std::string>;
+    auto computed_dynamic_array_for_consumed_cleanup_descriptor_model_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_production_emission_gate_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;
     auto emitted_drop_declaration_report() const -> std::vector<std::string>;

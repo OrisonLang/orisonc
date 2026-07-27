@@ -701,6 +701,10 @@ representation.
 - Inserted computed cleanup now has an explicit consumed-descriptor audit report. The report is emitted only when the
   inserted deallocation call is present and followed by the owner descriptor finalization store, moving the proof model
   toward an explicit consumed-owner state instead of relying on an incidental IR pattern.
+- Consumed computed cleanup descriptor proof now has a lowering-model report before IR inspection. The metadata report
+  records the source owner, descriptor storage, and cleanup-resumption operation when the computed cleanup insertion
+  gates are all enabled; the inserted-IR report remains a separate verification that the runtime deallocation call and
+  descriptor finalization store were actually emitted.
 
 ## Follow-up work
 
