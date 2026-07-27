@@ -1251,6 +1251,25 @@ auto main() -> int {
         ) != std::string::npos
     );
     assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text.find(
+            "declare void @__orison_dynamic_array_deallocate(ptr, i64, i64)\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .dynamic_array_runtime_request_report.size() == 2
+    );
+    assert_line_contains(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for.dynamic_array_runtime_request_report,
+        0,
+        "__orison_dynamic_array_allocate"
+    );
+    assert_line_contains(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for.dynamic_array_runtime_request_report,
+        1,
+        "__orison_dynamic_array_deallocate"
+    );
+    assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
     );
@@ -1268,6 +1287,11 @@ auto main() -> int {
             .computed_dynamic_array_for_inserted_cleanup_call_report.front() ==
         smoke::computed_dynamic_array_inserted_cleanup_call_report
     );
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(
+            computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text
+        );
+    assert(!computed_dynamic_array_local_same_owner_inserted_cleanup_object.has_errors());
     auto computed_dynamic_array_local_same_owner_two_loops_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_two_loops.or";
     {

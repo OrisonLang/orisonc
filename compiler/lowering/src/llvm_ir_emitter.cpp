@@ -1354,6 +1354,14 @@ auto collect_dynamic_array_runtime_operations(
         has_lowerable_dynamic_array_parameter(module, options)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
     }
+    if (
+        options.test_only_enable_computed_dynamic_array_for_lowering &&
+        options.test_only_authorize_computed_dynamic_array_cleanup_calls &&
+        options.test_only_insert_computed_dynamic_array_cleanup_calls &&
+        !collect_test_only_computed_dynamic_array_for_production_sequences(module, context).empty()
+    ) {
+        push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
+    }
     if (has_view_index_read(module)) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::bounds_failed);
     }

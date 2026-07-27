@@ -692,6 +692,9 @@ representation.
   deallocation call is inserted only when computed lowering, cleanup-call authorization, and explicit insertion are all
   enabled together. Default and production-disabled paths continue to stop at audit-ready state without mutating module
   IR.
+- The test-only computed cleanup-call insertion seam now also registers the dynamic-array deallocation runtime request
+  before module prelude emission. The inserted call therefore receives the normal
+  `__orison_dynamic_array_deallocate` declaration and is object-emission checked by pipeline smoke.
 
 ## Follow-up work
 
