@@ -522,6 +522,58 @@ auto format_computed_cleanup_call_inserted_report(std::string_view ir_text)
     return report;
 }
 
+auto format_computed_consumed_cleanup_descriptor(
+    InsertedCleanupOperation const& resumption,
+    std::string_view descriptor_storage_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for consumed cleanup descriptor";
+    output << " cleanup-operation " << resumption.operation_name << ".call";
+    output << " owner " << resumption.target_owner_name;
+    output << " descriptor " << descriptor_storage_name;
+    output << " [inserted cleanup call proven]";
+    output << " [descriptor finalized]";
+    output << " (inserted IR)";
+    return output.str();
+}
+
+auto format_computed_consumed_cleanup_descriptor_report(std::string_view ir_text)
+    -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    for (auto const& [acquisition, resumption] : collect_verified_inserted_cleanup_state_pairs(ir_text)) {
+        auto const operands = collect_computed_cleanup_call_operands(ir_text, resumption);
+        if (
+            operands.data_pointer_name.empty() ||
+            operands.element_size_bytes.empty() ||
+            operands.capacity_name.empty()
+        ) {
+            continue;
+        }
+        auto call_text = std::ostringstream {};
+        call_text << "  call void @__orison_dynamic_array_deallocate(ptr ";
+        call_text << operands.data_pointer_name;
+        call_text << ", i64 " << operands.element_size_bytes;
+        call_text << ", i64 " << operands.capacity_name << ")\n";
+        auto const call_position = ir_text.find(call_text.str());
+        if (call_position == std::string_view::npos) {
+            continue;
+        }
+        auto const descriptor_storage_name = "%" + resumption.target_owner_name + ".addr";
+        auto clear_text = std::ostringstream {};
+        clear_text << "  store { ptr, i64, i64 } zeroinitializer, ptr ";
+        clear_text << descriptor_storage_name << "\n";
+        auto const clear_position = ir_text.find(clear_text.str(), call_position + call_text.str().size());
+        if (clear_position == std::string_view::npos) {
+            continue;
+        }
+        (void)acquisition;
+        report.push_back(
+            format_computed_consumed_cleanup_descriptor(resumption, descriptor_storage_name)
+        );
+    }
+    return report;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -578,6 +630,8 @@ void populate_lowering_emission_reports(
         format_computed_cleanup_call_insertion_gate_report(result.ir_text);
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
         format_computed_cleanup_call_inserted_report(result.ir_text);
+    result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
+        format_computed_consumed_cleanup_descriptor_report(result.ir_text);
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =

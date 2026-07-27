@@ -698,6 +698,9 @@ representation.
 - Test-only computed cleanup insertion now clears the proven owner descriptor storage after deallocation, allowing the
   existing function-exit descriptor cleanup hook to remain active without double-freeing the same backing allocation.
   Pipeline smoke links and runs a non-empty same-owner computed `DynamicArray<UInt32>` loop through this path.
+- Inserted computed cleanup now has an explicit consumed-descriptor audit report. The report is emitted only when the
+  inserted deallocation call is present and followed by the owner descriptor finalization store, moving the proof model
+  toward an explicit consumed-owner state instead of relying on an incidental IR pattern.
 
 ## Follow-up work
 

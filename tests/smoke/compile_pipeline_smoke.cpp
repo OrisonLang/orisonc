@@ -1009,6 +1009,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_emission_gate_report.size() == 1
     );
     assert(
@@ -1135,6 +1139,10 @@ auto main() -> int {
             .computed_dynamic_array_for_inserted_cleanup_call_report.empty()
     );
     assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.empty()
+    );
+    assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
             "from items to items.loop.entry [cleanup calls disabled]\n"
@@ -1233,6 +1241,10 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_inserted_cleanup_call_report.empty()
     );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.empty()
+    );
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
@@ -1291,6 +1303,15 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_inserted_cleanup_call_report.front() ==
         smoke::computed_dynamic_array_inserted_cleanup_call_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.front() ==
+        smoke::computed_dynamic_array_consumed_cleanup_descriptor_report
     );
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_object =
         orison::lowering::LlvmObjectEmitter {}.emit(
@@ -1356,6 +1377,16 @@ auto main() -> int {
     assert(computed_inserted_deallocate < computed_inserted_clear);
     assert(computed_inserted_clear < computed_final_cleanup);
     assert(computed_final_cleanup < computed_return);
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.front().find(
+                "owner items descriptor %items.addr [inserted cleanup call proven] [descriptor finalized]"
+            ) != std::string::npos
+    );
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_run_object =
         orison::lowering::LlvmObjectEmitter {}.emit(
             computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text

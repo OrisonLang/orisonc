@@ -1764,3 +1764,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: test-only computed cleanup insertion now clears the owner descriptor after deallocation, so the normal
   function-exit cleanup observes an empty descriptor. A linked pipeline smoke now runs a non-empty same-owner computed
   `DynamicArray<UInt32>` loop and exits with the iterated value.
+- 2026-07-27: inserted computed cleanup now surfaces a consumed-descriptor audit report, proving that the inserted
+  deallocation call is followed by owner descriptor finalization before normal function-exit cleanup runs.
