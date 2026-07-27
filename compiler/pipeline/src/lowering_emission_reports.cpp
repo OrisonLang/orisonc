@@ -18,6 +18,7 @@ struct InsertedCleanupOperation {
     std::string operation_name;
     std::string source_owner_name;
     std::string target_owner_name;
+    bool cleanup_calls_enabled = false;
 };
 
 auto parse_inserted_cleanup_operation(
@@ -43,7 +44,13 @@ auto parse_inserted_cleanup_operation(
         return std::nullopt;
     }
     auto const disabled_suffix = std::string_view {" [cleanup calls disabled]"};
-    auto const suffix_position = payload.find(disabled_suffix, target_separator);
+    auto const enabled_suffix = std::string_view {" [cleanup calls enabled]"};
+    auto suffix_position = payload.find(disabled_suffix, target_separator);
+    auto cleanup_calls_enabled = false;
+    if (suffix_position == std::string_view::npos) {
+        suffix_position = payload.find(enabled_suffix, target_separator);
+        cleanup_calls_enabled = suffix_position != std::string_view::npos;
+    }
     if (suffix_position == std::string_view::npos) {
         return std::nullopt;
     }
@@ -55,6 +62,7 @@ auto parse_inserted_cleanup_operation(
             payload.substr(target_separator + std::string_view {" to "}.size(),
                            suffix_position - target_separator - std::string_view {" to "}.size())
         },
+        .cleanup_calls_enabled = cleanup_calls_enabled,
     };
 }
 
@@ -105,6 +113,28 @@ auto format_inserted_cleanup_state_verification_blocked(
     return output.str();
 }
 
+auto format_computed_cleanup_call_emission_gate(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption
+) -> std::string {
+    auto const state_verified =
+        acquisition.target_owner_name == resumption.source_owner_name &&
+        acquisition.source_owner_name == resumption.target_owner_name;
+    auto const cleanup_calls_enabled =
+        acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled;
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for cleanup call emission gate ";
+    output << (state_verified && cleanup_calls_enabled ? "ready" : "blocked");
+    output << " acquire-operation " << acquisition.operation_name;
+    output << " resume-operation " << resumption.operation_name;
+    output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
+    output << (cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    output << (state_verified && cleanup_calls_enabled ? " [cleanup call emission ready]" :
+        " [cleanup call emission blocked]");
+    output << " (inserted IR)";
+    return output.str();
+}
+
 auto format_inserted_cleanup_transition_report(std::string_view ir_text) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     auto pending_acquisition = std::optional<InsertedCleanupOperation> {};
@@ -132,6 +162,36 @@ auto format_inserted_cleanup_transition_report(std::string_view ir_text) -> std:
         }
     }
     return report;
+}
+
+auto collect_verified_inserted_cleanup_state_pairs(std::string_view ir_text)
+    -> std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> {
+    auto pairs = std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> {};
+    auto pending_acquisition = std::optional<InsertedCleanupOperation> {};
+    auto input = std::istringstream {std::string {ir_text}};
+    auto line = std::string {};
+    while (std::getline(input, line)) {
+        auto handoff = parse_inserted_cleanup_operation(
+            line,
+            "  ; cleanup state handoff "
+        );
+        if (!handoff.has_value()) {
+            continue;
+        }
+        if (handoff->kind_name == "acquire") {
+            pending_acquisition = std::move(handoff);
+            continue;
+        }
+        if (handoff->kind_name == "resume") {
+            if (pending_acquisition.has_value() &&
+                pending_acquisition->target_owner_name == handoff->source_owner_name &&
+                pending_acquisition->source_owner_name == handoff->target_owner_name) {
+                pairs.push_back({*pending_acquisition, *handoff});
+            }
+            pending_acquisition.reset();
+        }
+    }
+    return pairs;
 }
 
 auto format_inserted_cleanup_state_verification_report(std::string_view ir_text)
@@ -188,6 +248,15 @@ auto format_inserted_cleanup_state_verification_report(std::string_view ir_text)
     return report;
 }
 
+auto format_computed_cleanup_call_emission_gate_report(std::string_view ir_text)
+    -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    for (auto const& [acquisition, resumption] : collect_verified_inserted_cleanup_state_pairs(ir_text)) {
+        report.push_back(format_computed_cleanup_call_emission_gate(acquisition, resumption));
+    }
+    return report;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -234,6 +303,8 @@ void populate_lowering_emission_reports(
         format_inserted_cleanup_transition_report(result.ir_text);
     result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
         format_inserted_cleanup_state_verification_report(result.ir_text);
+    result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
+        format_computed_cleanup_call_emission_gate_report(result.ir_text);
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =

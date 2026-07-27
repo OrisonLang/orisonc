@@ -989,6 +989,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_emission_gate_report.size() == 1
     );
     assert(
@@ -1070,6 +1074,15 @@ auto main() -> int {
         smoke::computed_dynamic_array_inserted_cleanup_state_verification_report
     );
     assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_emission_gate_report
+    );
+    assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
             "from items to items.loop.entry [cleanup calls disabled]\n"
@@ -1148,6 +1161,21 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_inserted_cleanup_state_verification_report.back().find(
                 "items.computed_for.1.cleanup.resume"
+            ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_emission_gate_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.back().find(
+                "[cleanup call emission blocked]"
             ) != std::string::npos
     );
     assert(

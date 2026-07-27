@@ -140,6 +140,8 @@ representation.
   drops are emitted by this seam.
 - Pipeline emission reports now verify inserted cleanup state handoff sequences. Valid acquire/resume pairs report as
   paired with cleanup calls disabled, while malformed inserted handoff sequences report blocked verifier lines.
+- Computed dynamic-array cleanup-call emission now has an internal verifier-driven gate. The gate requires verified
+  inserted cleanup state handoffs and remains blocked while those handoffs declare cleanup calls disabled.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.
