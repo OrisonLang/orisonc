@@ -125,6 +125,9 @@ representation.
 - Computed dynamic-array loop-exit cleanup now renders a named disabled cleanup-resumption operation that records the
   transfer from loop cleanup ownership back to the function cleanup owner. This replaces the generic placeholder
   resumption comment while still keeping production cleanup emission disabled.
+- Computed dynamic-array cleanup sequencing now also names the matching disabled loop-entry cleanup-acquisition
+  operation, and production emission gates require that acquisition artifact before reporting loop cleanup ownership
+  ready.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

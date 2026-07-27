@@ -129,6 +129,7 @@ struct ComputedDynamicArrayIterableCleanupSequencePlan {
     std::string descriptor_storage_name;
     std::string loop_entry_cleanup_owner_name;
     std::string loop_exit_cleanup_owner_name;
+    std::string loop_entry_cleanup_operation_name;
     bool loop_body_has_cleanup_responsibility = false;
     bool function_cleanup_resumes_after_loop = false;
     bool cleanup_sequence_enabled = false;

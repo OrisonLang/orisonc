@@ -772,6 +772,7 @@ int main() {
     assert(proven_computed_cleanup_sequence.descriptor_storage_name == "%items.addr");
     assert(proven_computed_cleanup_sequence.loop_entry_cleanup_owner_name == "items.loop.entry");
     assert(proven_computed_cleanup_sequence.loop_exit_cleanup_owner_name == "items");
+    assert(proven_computed_cleanup_sequence.loop_entry_cleanup_operation_name == "items.computed_for.cleanup.acquire");
     assert(proven_computed_cleanup_sequence.loop_body_has_cleanup_responsibility);
     assert(proven_computed_cleanup_sequence.function_cleanup_resumes_after_loop);
     assert(!proven_computed_cleanup_sequence.cleanup_sequence_enabled);
@@ -780,6 +781,10 @@ int main() {
             proven_computed_cleanup_sequence
         );
     assert(proven_computed_cleanup_sequence_report.find("loop cleanup sequence planned") != std::string::npos);
+    assert(
+        proven_computed_cleanup_sequence_report.find("operation items.computed_for.cleanup.acquire") !=
+        std::string::npos
+    );
     assert(proven_computed_cleanup_sequence_report.find("[cleanup sequence disabled]") != std::string::npos);
     auto proven_computed_descriptor_render =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_render(

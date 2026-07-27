@@ -614,6 +614,8 @@ auto plan_computed_dynamic_array_iterable_cleanup_sequence(
     plan.kind = ComputedDynamicArrayIterableCleanupSequencePlanKind::loop_cleanup_sequence_planned;
     plan.loop_entry_cleanup_owner_name = plan.cleanup_owner_name + ".loop.entry";
     plan.loop_exit_cleanup_owner_name = plan.cleanup_owner_name;
+    auto const operation_base_name = computed_dynamic_array_for_base_name(plan.cleanup_owner_name, state);
+    plan.loop_entry_cleanup_operation_name = operation_base_name + ".cleanup.acquire";
     plan.loop_body_has_cleanup_responsibility = true;
     plan.function_cleanup_resumes_after_loop = true;
     return plan;
@@ -663,6 +665,10 @@ auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
     if (!plan.loop_exit_cleanup_owner_name.empty()) {
         output += " loop-exit ";
         output += plan.loop_exit_cleanup_owner_name;
+    }
+    if (!plan.loop_entry_cleanup_operation_name.empty()) {
+        output += " operation ";
+        output += plan.loop_entry_cleanup_operation_name;
     }
     output += plan.loop_body_has_cleanup_responsibility ? " [loop cleanup owns descriptor]" :
         " [loop cleanup blocked]";
@@ -1700,7 +1706,8 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
     plan.ownership_ready = !plan.cleanup_owner_name.empty();
     plan.loop_render_ready = loop_render_plan.kind ==
         ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_render_sequence_planned;
-    plan.loop_cleanup_ownership_ready = cleanup_sequence_plan.loop_body_has_cleanup_responsibility;
+    plan.loop_cleanup_ownership_ready = cleanup_sequence_plan.loop_body_has_cleanup_responsibility &&
+        !cleanup_sequence_plan.loop_entry_cleanup_operation_name.empty();
     plan.function_cleanup_resumption_ready = cleanup_sequence_plan.function_cleanup_resumes_after_loop &&
         plan.loop_exit_cleanup_plan.cleanup_resumption_planned;
     plan.exit_cleanup_ready = plan.loop_exit_cleanup_plan.exit_block_planned &&

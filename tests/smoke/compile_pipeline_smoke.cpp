@@ -1153,7 +1153,8 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for.error_text.find(
             "computed DynamicArray cleanup sequence plan loop cleanup sequence planned source "
             "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
-            "loop-entry items.loop.entry loop-exit items [loop cleanup owns descriptor] "
+            "loop-entry items.loop.entry loop-exit items operation items.computed_for.cleanup.acquire "
+            "[loop cleanup owns descriptor] "
             "[function cleanup resumes] [cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );

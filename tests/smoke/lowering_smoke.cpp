@@ -2423,15 +2423,22 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.0.continue:\n");
     auto computed_exit_position =
         computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.0.exit:\n");
+    auto computed_cleanup_resumption_position =
+        computed_local_same_owner_lowered_for.ir_text.find(
+            "items.computed_for.0.cleanup.resume",
+            computed_exit_position
+        );
     assert(computed_descriptor_position != std::string::npos);
     assert(computed_body_position != std::string::npos);
     assert(computed_body_add_position != std::string::npos);
     assert(computed_continue_position != std::string::npos);
     assert(computed_exit_position != std::string::npos);
+    assert(computed_cleanup_resumption_position != std::string::npos);
     assert(computed_descriptor_position < computed_body_position);
     assert(computed_body_position < computed_body_add_position);
     assert(computed_body_add_position < computed_continue_position);
     assert(computed_continue_position < computed_exit_position);
+    assert(computed_exit_position < computed_cleanup_resumption_position);
 
     auto computed_local_same_owner_two_loops_source =
         "package demo.dynamicarray\n"
@@ -2527,7 +2534,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_for.render(path.string()).find(
             "computed DynamicArray cleanup sequence plan loop cleanup sequence planned source "
             "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
-            "loop-entry items.loop.entry loop-exit items [loop cleanup owns descriptor] "
+            "loop-entry items.loop.entry loop-exit items operation items.computed_for.cleanup.acquire "
+            "[loop cleanup owns descriptor] "
             "[function cleanup resumes] [cleanup sequence disabled] (metadata only)"
         ) != std::string::npos
     );
