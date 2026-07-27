@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: test-only computed owned `DynamicArray<T>` `for` lowering now checks the paired cleanup transition before
+  insertion and emits the disabled loop-entry cleanup-acquisition marker ahead of descriptor rendering.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` cleanup-transition metadata now pairs the disabled loop-entry
   cleanup acquisition with the disabled loop-exit cleanup resumption in lowering, pipeline, and driver audit reports.
 - 2026-07-26: computed owned `DynamicArray<T>` cleanup sequencing now names the disabled loop-entry cleanup-acquisition

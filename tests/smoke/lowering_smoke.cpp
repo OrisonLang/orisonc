@@ -2423,6 +2423,12 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(!computed_local_same_owner_lowered_for.has_errors());
     assert(
         computed_local_same_owner_lowered_for.ir_text.find(
+            "  ; cleanup acquisition operation items.computed_for.0.cleanup.acquire transfers "
+            "items to items.loop.entry (disabled)\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_lowered_for.ir_text.find(
             "  %items.computed_for.0.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
         ) != std::string::npos
     );
@@ -2441,6 +2447,10 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "items.loop.entry to items (disabled)\n"
         ) != std::string::npos
     );
+    auto computed_cleanup_acquisition_position =
+        computed_local_same_owner_lowered_for.ir_text.find(
+            "items.computed_for.0.cleanup.acquire"
+        );
     auto computed_descriptor_position =
         computed_local_same_owner_lowered_for.ir_text.find("%items.computed_for.0.descriptor");
     auto computed_body_position =
@@ -2462,6 +2472,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_continue_position != std::string::npos);
     assert(computed_exit_position != std::string::npos);
     assert(computed_cleanup_resumption_position != std::string::npos);
+    assert(computed_cleanup_acquisition_position != std::string::npos);
+    assert(computed_cleanup_acquisition_position < computed_descriptor_position);
     assert(computed_descriptor_position < computed_body_position);
     assert(computed_body_position < computed_body_add_position);
     assert(computed_body_add_position < computed_continue_position);
@@ -2491,8 +2503,18 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(!computed_local_same_owner_two_loops.has_errors());
     assert(computed_local_same_owner_two_loops.ir_text.find("items.computed_for.0.condition:\n") != std::string::npos);
     assert(computed_local_same_owner_two_loops.ir_text.find("items.computed_for.0.exit:\n") != std::string::npos);
+    assert(
+        computed_local_same_owner_two_loops.ir_text.find(
+            "items.computed_for.0.cleanup.acquire"
+        ) != std::string::npos
+    );
     assert(computed_local_same_owner_two_loops.ir_text.find("items.computed_for.1.condition:\n") != std::string::npos);
     assert(computed_local_same_owner_two_loops.ir_text.find("items.computed_for.1.exit:\n") != std::string::npos);
+    assert(
+        computed_local_same_owner_two_loops.ir_text.find(
+            "items.computed_for.1.cleanup.acquire"
+        ) != std::string::npos
+    );
     auto computed_first_loop_exit_position =
         computed_local_same_owner_two_loops.ir_text.find("items.computed_for.0.exit:\n");
     auto computed_second_loop_condition_position =

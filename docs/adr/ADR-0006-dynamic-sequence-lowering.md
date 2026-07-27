@@ -131,6 +131,8 @@ representation.
 - Computed dynamic-array `for` cleanup-transition metadata now reports the loop-entry cleanup acquisition and loop-exit
   function cleanup resumption as a paired audit surface, so consumers can verify both sides of the ownership transition
   without correlating separate sequence and exit-cleanup reports.
+- Test-only computed dynamic-array `for` lowering now checks that the paired cleanup acquisition/resumption owners match
+  before inserting the loop, and emits the disabled cleanup-acquisition marker immediately before descriptor rendering.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.
