@@ -577,12 +577,16 @@ auto prove_dynamic_array_cleanup_emission_capability(
     std::vector<semantics::DropLoweringAuthorization> const& semantic_drop_lowering_authorizations
 ) -> DynamicArrayCleanupEmissionCapability {
     auto cleanup_operation_names = std::vector<std::string> {};
+    auto cleanup_owner_names = std::vector<std::string> {};
     cleanup_operation_names.reserve(obligations.size());
+    cleanup_owner_names.reserve(obligations.size());
     for (auto const& obligation : obligations) {
         cleanup_operation_names.push_back(obligation.cleanup_symbol_name);
+        cleanup_owner_names.push_back(obligation.descriptor_cleanup.owner_name);
     }
     return DynamicArrayCleanupEmissionCapability {
         .cleanup_operation_names = std::move(cleanup_operation_names),
+        .cleanup_owner_names = std::move(cleanup_owner_names),
         .emission_enabled = emission_enabled,
         .descriptor_storage_bound = std::ranges::all_of(descriptor_cleanup_plans, [](auto const& plan) {
         auto storage_status_bound =
@@ -723,6 +727,12 @@ auto format_dynamic_array_cleanup_emission_capability(
         output << " cleanup-operations";
         for (auto const& cleanup_operation_name : capability.cleanup_operation_names) {
             output << " [" << cleanup_operation_name << "]";
+        }
+    }
+    if (!capability.cleanup_owner_names.empty()) {
+        output << " cleanup-owners";
+        for (auto const& cleanup_owner_name : capability.cleanup_owner_names) {
+            output << " [" << cleanup_owner_name << "]";
         }
     }
     output << " [emission " << status(capability.emission_enabled) << "]";

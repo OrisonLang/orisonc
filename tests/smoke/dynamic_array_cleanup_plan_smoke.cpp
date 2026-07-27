@@ -95,11 +95,15 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(capability.cleanup_operation_names.size() == 2);
     assert(capability.cleanup_operation_names[0] == "__orison_dynamic_array_cleanup.0");
     assert(capability.cleanup_operation_names[1] == "__orison_dynamic_array_cleanup.1");
+    assert(capability.cleanup_owner_names.size() == 2);
+    assert(capability.cleanup_owner_names[0] == "a_items");
+    assert(capability.cleanup_owner_names[1] == "z_items");
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
         "dynamic array cleanup emission capability proven cleanup-operations "
         "[__orison_dynamic_array_cleanup.0] [__orison_dynamic_array_cleanup.1] "
+        "cleanup-owners [a_items] [z_items] "
         "[emission ok] [descriptor storage ok] "
         "[sequence verification ok] [element cleanup ok] [descriptor deallocation ok] (metadata only)"
     );
@@ -143,11 +147,15 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(blocked_capability.cleanup_operation_names.size() == 2);
     assert(blocked_capability.cleanup_operation_names[0] == "__orison_dynamic_array_cleanup.0");
     assert(blocked_capability.cleanup_operation_names[1] == "__orison_dynamic_array_cleanup.1");
+    assert(blocked_capability.cleanup_owner_names.size() == 2);
+    assert(blocked_capability.cleanup_owner_names[0] == "a_items");
+    assert(blocked_capability.cleanup_owner_names[1] == "z_items");
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability) ==
         "dynamic array cleanup emission capability blocked cleanup-operations "
         "[__orison_dynamic_array_cleanup.0] [__orison_dynamic_array_cleanup.1] "
+        "cleanup-owners [a_items] [z_items] "
         "[emission ok] [descriptor storage ok] "
         "[sequence verification missing] [element cleanup ok] [descriptor deallocation ok] (metadata only)"
     );

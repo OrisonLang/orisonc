@@ -1798,3 +1798,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   output without changing the emitted IR naming model.
 - 2026-07-27: dynamic-array cleanup emission capability reports now list the cleanup operations summarized by the
   capability proof, keeping aggregate capability lines auditable when a function owns multiple descriptor cleanups.
+- 2026-07-27: dynamic-array cleanup emission capability reports now also list the descriptor owners summarized by the
+  proof, pairing the aggregate capability result with the owners whose cleanup operations it authorizes or blocks.

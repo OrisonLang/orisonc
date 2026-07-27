@@ -187,6 +187,8 @@ representation.
 - Dynamic-array cleanup emission capability proofs now retain the cleanup operation names they summarize. This keeps a
   capability line explainable for functions with multiple descriptor cleanups while preserving the existing aggregate
   proof gate.
+- Dynamic-array cleanup emission capability proofs now also retain the descriptor owner names they summarize, so the
+  aggregate proof can be correlated with both cleanup operations and source owners without changing the gate decision.
 
 ## Consequences
 
