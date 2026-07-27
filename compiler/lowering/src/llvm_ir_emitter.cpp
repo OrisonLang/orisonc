@@ -2028,6 +2028,16 @@ auto LlvmIrEmissionResult::computed_dynamic_array_for_cleanup_transition_report(
     );
 }
 
+auto LlvmIrEmissionResult::consumed_descriptor_finalization_plan_report() const
+    -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    lines.reserve(test_only_computed_dynamic_array_for_consumed_cleanup_descriptors.size());
+    for (auto const& descriptor : test_only_computed_dynamic_array_for_consumed_cleanup_descriptors) {
+        lines.push_back(format_consumed_descriptor_finalization_plan(descriptor.finalization_plan));
+    }
+    return lines;
+}
+
 auto LlvmIrEmissionResult::computed_dynamic_array_for_consumed_cleanup_descriptor_model_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata_report(

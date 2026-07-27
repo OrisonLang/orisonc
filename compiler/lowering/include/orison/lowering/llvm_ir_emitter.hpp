@@ -327,6 +327,7 @@ struct LlvmIrEmissionResult {
     auto computed_dynamic_array_for_loop_render_sequence_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_loop_exit_cleanup_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_cleanup_transition_report() const -> std::vector<std::string>;
+    auto consumed_descriptor_finalization_plan_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_consumed_cleanup_descriptor_model_report() const -> std::vector<std::string>;
     auto computed_dynamic_array_for_production_emission_gate_report() const -> std::vector<std::string>;
     auto dynamic_array_runtime_request_report() const -> std::vector<std::string>;

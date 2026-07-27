@@ -714,6 +714,9 @@ representation.
 - Computed DynamicArray cleanup insertion now also uses the generic consumed descriptor finalization plan before
   emitting the owner descriptor clear. Planning and emitted IR now share the same owner/storage/operation readiness
   gate, while the generated finalization IR remains unchanged.
+- The generic consumed descriptor finalization plan is now surfaced as its own pipeline and CLI audit report before the
+  DynamicArray-specific consumed-cleanup wrapper report. This gives future descriptor-owning lowerers a reusable audit
+  line without depending on DynamicArray wording.
 
 ## Follow-up work
 

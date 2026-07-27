@@ -1009,6 +1009,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .consumed_descriptor_finalization_plan_report.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.empty()
     );
     assert(
@@ -1144,6 +1148,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
+            .consumed_descriptor_finalization_plan_report.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.empty()
     );
     assert(
@@ -1251,6 +1259,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .consumed_descriptor_finalization_plan_report.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.empty()
     );
     assert(
@@ -1315,6 +1327,15 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_inserted_cleanup_call_report.front() ==
         smoke::computed_dynamic_array_inserted_cleanup_call_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_plan_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_plan_report.front() ==
+        smoke::consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
@@ -1398,6 +1419,17 @@ auto main() -> int {
     assert(computed_inserted_deallocate < computed_inserted_clear);
     assert(computed_inserted_clear < computed_final_cleanup);
     assert(computed_final_cleanup < computed_return);
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .consumed_descriptor_finalization_plan_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .consumed_descriptor_finalization_plan_report.front().find(
+                "owner items descriptor %items.addr cleanup-operation items.computed_for.cleanup.resume "
+                "[cleanup owner consumed]"
+            ) != std::string::npos
+    );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1

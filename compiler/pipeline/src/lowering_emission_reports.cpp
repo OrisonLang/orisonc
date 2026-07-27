@@ -630,6 +630,8 @@ void populate_lowering_emission_reports(
         format_computed_cleanup_call_insertion_gate_report(result.ir_text);
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
         format_computed_cleanup_call_inserted_report(result.ir_text);
+    result.consumed_descriptor_finalization_plan_report =
+        emission.consumed_descriptor_finalization_plan_report();
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report =
         emission.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report();
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =

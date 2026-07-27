@@ -1774,3 +1774,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   operation, and readiness flags. Computed DynamicArray cleanup metadata now carries that plan directly.
 - 2026-07-27: computed DynamicArray cleanup insertion now emits the descriptor finalization clear through that generic
   plan's readiness gate, aligning model proof and IR emission without changing the generated clear instruction.
+- 2026-07-27: the generic consumed descriptor finalization plan is now exposed through pipeline and CLI audit reports
+  before the DynamicArray-specific consumed-cleanup wrapper report.
