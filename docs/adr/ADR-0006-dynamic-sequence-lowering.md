@@ -133,6 +133,8 @@ representation.
   without correlating separate sequence and exit-cleanup reports.
 - Test-only computed dynamic-array `for` lowering now checks that the paired cleanup acquisition/resumption owners match
   before inserting the loop, and emits the disabled cleanup-acquisition marker immediately before descriptor rendering.
+- Pipeline emission reports now derive an inserted cleanup-transition audit line from the actual lowered IR markers,
+  keeping executable test-only insertion observability separate from metadata-only cleanup-transition readiness.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

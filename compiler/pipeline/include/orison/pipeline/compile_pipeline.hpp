@@ -100,6 +100,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_loop_render_sequence_report;
     std::vector<std::string> computed_dynamic_array_for_loop_exit_cleanup_report;
     std::vector<std::string> computed_dynamic_array_for_cleanup_transition_report;
+    std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_transition_report;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_report;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_report;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_module_ir;

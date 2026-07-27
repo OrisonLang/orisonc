@@ -47,6 +47,11 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_transition_repo
     "acquire-operation items.computed_for.cleanup.acquire resume-from items.loop.entry "
     "resume-to items resume-operation items.computed_for.cleanup.resume (metadata only)";
 
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_transition_report =
+    "computed DynamicArray for inserted cleanup transition acquire-from items acquire-to items.loop.entry "
+    "acquire-operation items.computed_for.0.cleanup.acquire resume-from items.loop.entry "
+    "resume-to items resume-operation items.computed_for.0.cleanup.resume (inserted IR)";
+
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "
     "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
