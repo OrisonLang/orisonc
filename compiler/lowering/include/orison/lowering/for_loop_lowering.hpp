@@ -131,6 +131,8 @@ auto lower_sequence_for_statement(
                 ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
             computed_production_emission_gate_plan.ownership_ready &&
             computed_production_emission_gate_plan.loop_render_ready &&
+            computed_production_emission_gate_plan.loop_cleanup_ownership_ready &&
+            computed_production_emission_gate_plan.function_cleanup_resumption_ready &&
             computed_production_emission_gate_plan.exit_cleanup_ready &&
             computed_production_emission_gate_plan.production_sequence_render_planned
         ) {

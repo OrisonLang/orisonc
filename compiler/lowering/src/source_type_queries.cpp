@@ -1677,12 +1677,23 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
     }
 
     auto const& loop_render_plan = plan.loop_exit_cleanup_plan.loop_render_sequence_plan;
+    auto const& loop_continue_plan = loop_render_plan.loop_continue_render_plan;
+    auto const& cleanup_sequence_plan = loop_continue_plan.element_load_render_plan
+                                            .element_address_render_plan
+                                            .loop_control_render_plan
+                                            .descriptor_render_plan
+                                            .cleanup_sequence_plan;
     plan.ownership_ready = !plan.cleanup_owner_name.empty();
     plan.loop_render_ready = loop_render_plan.kind ==
         ComputedDynamicArrayIterableLoopRenderSequencePlanKind::loop_render_sequence_planned;
+    plan.loop_cleanup_ownership_ready = cleanup_sequence_plan.loop_body_has_cleanup_responsibility;
+    plan.function_cleanup_resumption_ready = cleanup_sequence_plan.function_cleanup_resumes_after_loop &&
+        plan.loop_exit_cleanup_plan.cleanup_resumption_planned;
     plan.exit_cleanup_ready = plan.loop_exit_cleanup_plan.exit_block_planned &&
         plan.loop_exit_cleanup_plan.cleanup_resumption_planned;
-    if (!plan.ownership_ready || !plan.loop_render_ready || !plan.exit_cleanup_ready) {
+    if (!plan.ownership_ready || !plan.loop_render_ready ||
+        !plan.loop_cleanup_ownership_ready || !plan.function_cleanup_resumption_ready ||
+        !plan.exit_cleanup_ready) {
         plan.kind = ComputedDynamicArrayIterableProductionEmissionGatePlanKind::loop_exit_cleanup_unplanned;
         return plan;
     }
@@ -1755,6 +1766,10 @@ auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
     }
     output += plan.ownership_ready ? " [ownership ready]" : " [ownership blocked]";
     output += plan.loop_render_ready ? " [loop render ready]" : " [loop render blocked]";
+    output += plan.loop_cleanup_ownership_ready ? " [loop cleanup ownership ready]" :
+        " [loop cleanup ownership blocked]";
+    output += plan.function_cleanup_resumption_ready ? " [function cleanup resumption ready]" :
+        " [function cleanup resumption blocked]";
     output += plan.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup blocked]";
     output += plan.production_sequence_render_planned ? " [production sequence planned]" :
         " [production sequence blocked]";

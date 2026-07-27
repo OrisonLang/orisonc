@@ -1895,7 +1895,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_parameter_for.render(path.string()).find(
             "computed DynamicArray production emission gate plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [ownership blocked] [loop render blocked] [exit cleanup blocked] "
+            "element UInt32 [ownership blocked] [loop render blocked] [loop cleanup ownership blocked] "
+            "[function cleanup resumption blocked] [exit cleanup blocked] "
             "[production sequence blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
@@ -1991,7 +1992,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_same_owner_parameter_for.render(path.string()).find(
             "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [ownership blocked] [loop render blocked] [exit cleanup blocked] "
+            "element UInt32 owner items [ownership blocked] [loop render blocked] "
+            "[loop cleanup ownership blocked] [function cleanup resumption blocked] [exit cleanup blocked] "
             "[production sequence blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
@@ -2249,6 +2251,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_production_gate.element_source_type_name == "UInt32");
     assert(computed_local_same_owner_production_gate.ownership_ready);
     assert(computed_local_same_owner_production_gate.loop_render_ready);
+    assert(computed_local_same_owner_production_gate.loop_cleanup_ownership_ready);
+    assert(computed_local_same_owner_production_gate.function_cleanup_resumption_ready);
     assert(computed_local_same_owner_production_gate.exit_cleanup_ready);
     assert(computed_local_same_owner_production_gate.production_sequence_render_planned);
     assert(!computed_local_same_owner_production_gate.production_emission_enabled);

@@ -356,6 +356,8 @@ struct ComputedDynamicArrayIterableProductionEmissionGatePlan {
     std::vector<std::string> rendered_ir;
     bool ownership_ready = false;
     bool loop_render_ready = false;
+    bool loop_cleanup_ownership_ready = false;
+    bool function_cleanup_resumption_ready = false;
     bool exit_cleanup_ready = false;
     bool production_sequence_render_planned = false;
     bool production_emission_enabled = false;

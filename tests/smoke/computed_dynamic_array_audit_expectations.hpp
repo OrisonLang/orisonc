@@ -43,7 +43,8 @@ inline constexpr std::string_view computed_dynamic_array_loop_exit_cleanup_repor
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "
     "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
-    "[exit cleanup ready] [production sequence planned] [production emission disabled] "
+    "[loop cleanup ownership ready] [function cleanup resumption ready] [exit cleanup ready] "
+    "[production sequence planned] [production emission disabled] "
     "snippets 16 (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_production_sequence_report =
@@ -101,7 +102,8 @@ inline constexpr std::string_view computed_dynamic_array_loop_exit_cleanup_plan 
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_plan =
     "computed DynamicArray production emission gate plan production emission gate planned source "
     "DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
-    "[exit cleanup ready] [production sequence planned] [production emission disabled] (metadata only)";
+    "[loop cleanup ownership ready] [function cleanup resumption ready] [exit cleanup ready] "
+    "[production sequence planned] [production emission disabled] (metadata only)";
 
 inline constexpr std::array<std::string_view, 9> computed_dynamic_array_local_same_owner_audit_reports {
     computed_dynamic_array_descriptor_render_report,

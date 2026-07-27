@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` `for` production-emission gates now report and require explicit loop
+  cleanup-ownership plus function cleanup-resumption readiness before test-only executable insertion.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` executable test-only lowering now uniquifies emitted internal
   labels and SSA names, with smoke coverage for two computed loops over the same local owner in one function.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` lowering now uses the actual incoming block for loop-control phi

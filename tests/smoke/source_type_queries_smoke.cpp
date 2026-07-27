@@ -1101,6 +1101,8 @@ int main() {
     assert(proven_computed_production_emission_gate.element_source_type_name == "UInt32");
     assert(proven_computed_production_emission_gate.ownership_ready);
     assert(proven_computed_production_emission_gate.loop_render_ready);
+    assert(proven_computed_production_emission_gate.loop_cleanup_ownership_ready);
+    assert(proven_computed_production_emission_gate.function_cleanup_resumption_ready);
     assert(proven_computed_production_emission_gate.exit_cleanup_ready);
     assert(proven_computed_production_emission_gate.rendered_ir.size() == 16);
     assert(
@@ -1129,6 +1131,14 @@ int main() {
     );
     assert(
         proven_computed_production_emission_gate_report.find("[production sequence planned]") !=
+        std::string::npos
+    );
+    assert(
+        proven_computed_production_emission_gate_report.find("[loop cleanup ownership ready]") !=
+        std::string::npos
+    );
+    assert(
+        proven_computed_production_emission_gate_report.find("[function cleanup resumption ready]") !=
         std::string::npos
     );
 

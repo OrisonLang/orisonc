@@ -119,6 +119,9 @@ representation.
 - Executable test-only computed dynamic-array `for` lowering now allocates a unique internal suffix from the function
   block-index stream for emitted labels and SSA names, preventing collisions when the same owner participates in
   multiple computed loops. Metadata-only audit plans retain their stable unsuffixed names.
+- Computed dynamic-array `for` production-emission gates now expose explicit loop cleanup-ownership and function
+  cleanup-resumption readiness flags. The executable test-only insertion path requires both flags in addition to
+  ownership, render, exit-cleanup, and production-sequence readiness.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

@@ -778,7 +778,8 @@ auto main() -> int {
     assert(
         computed_dynamic_array_parameter_for.error_text.find(
             "computed DynamicArray production emission gate plan ownership join blocked source DynamicArray<UInt32> "
-            "element UInt32 [ownership blocked] [loop render blocked] [exit cleanup blocked] "
+            "element UInt32 [ownership blocked] [loop render blocked] [loop cleanup ownership blocked] "
+            "[function cleanup resumption blocked] [exit cleanup blocked] "
             "[production sequence blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );
@@ -876,7 +877,8 @@ auto main() -> int {
     assert(
         computed_dynamic_array_same_owner_for.error_text.find(
             "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [ownership blocked] [loop render blocked] [exit cleanup blocked] "
+            "element UInt32 owner items [ownership blocked] [loop render blocked] "
+            "[loop cleanup ownership blocked] [function cleanup resumption blocked] [exit cleanup blocked] "
             "[production sequence blocked] [production emission disabled] (metadata only)"
         ) != std::string::npos
     );

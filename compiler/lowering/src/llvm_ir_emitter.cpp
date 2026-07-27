@@ -1204,6 +1204,8 @@ auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
                     ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
                 gate.ownership_ready &&
                 gate.loop_render_ready &&
+                gate.loop_cleanup_ownership_ready &&
+                gate.function_cleanup_resumption_ready &&
                 gate.exit_cleanup_ready &&
                 gate.production_sequence_render_planned) {
                 gates.push_back(ComputedDynamicArrayForProductionEmissionGateMetadata {
@@ -1215,6 +1217,8 @@ auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
                     .rendered_ir = gate.rendered_ir,
                     .ownership_ready = gate.ownership_ready,
                     .loop_render_ready = gate.loop_render_ready,
+                    .loop_cleanup_ownership_ready = gate.loop_cleanup_ownership_ready,
+                    .function_cleanup_resumption_ready = gate.function_cleanup_resumption_ready,
                     .exit_cleanup_ready = gate.exit_cleanup_ready,
                     .production_sequence_render_planned = gate.production_sequence_render_planned,
                     .production_emission_enabled = gate.production_emission_enabled,
@@ -1703,6 +1707,10 @@ auto format_computed_dynamic_array_for_production_emission_gate_metadata(
     );
     output << (metadata.ownership_ready ? " [ownership ready]" : " [ownership missing]");
     output << (metadata.loop_render_ready ? " [loop render ready]" : " [loop render missing]");
+    output << (metadata.loop_cleanup_ownership_ready ? " [loop cleanup ownership ready]" :
+        " [loop cleanup ownership missing]");
+    output << (metadata.function_cleanup_resumption_ready ? " [function cleanup resumption ready]" :
+        " [function cleanup resumption missing]");
     output << (metadata.exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup missing]");
     output << (metadata.production_sequence_render_planned ? " [production sequence planned]" :
         " [production sequence missing]");
