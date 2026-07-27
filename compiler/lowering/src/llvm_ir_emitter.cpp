@@ -1553,33 +1553,49 @@ auto collect_dynamic_array_element_drop_cleanups(
     return cleanups;
 }
 
-void append_report_lines(std::vector<std::string>& target, std::vector<std::string> const& source) {
-    target.insert(target.end(), source.begin(), source.end());
+void append_function_report_lines(
+    std::vector<std::string>& target,
+    std::vector<std::string> const& source,
+    std::string const& function_symbol_name
+) {
+    target.reserve(target.size() + source.size());
+    for (auto const& line : source) {
+        if (function_symbol_name.empty()) {
+            target.push_back(line);
+        } else {
+            target.push_back("function " + function_symbol_name + " " + line);
+        }
+    }
 }
 
 void append_function_emission_reports(
     LlvmIrEmissionResult& result,
     FunctionEmissionResult const& function_emission
 ) {
-    append_report_lines(
+    append_function_report_lines(
         result.emitted_dynamic_array_cleanup_obligation_report,
-        function_emission.emitted_dynamic_array_cleanup_obligation_report
+        function_emission.emitted_dynamic_array_cleanup_obligation_report,
+        function_emission.function_symbol_name
     );
-    append_report_lines(
+    append_function_report_lines(
         result.emitted_dynamic_array_cleanup_sequence_plan_report,
-        function_emission.emitted_dynamic_array_cleanup_sequence_plan_report
+        function_emission.emitted_dynamic_array_cleanup_sequence_plan_report,
+        function_emission.function_symbol_name
     );
-    append_report_lines(
+    append_function_report_lines(
         result.emitted_dynamic_array_cleanup_sequence_verification_report,
-        function_emission.emitted_dynamic_array_cleanup_sequence_verification_report
+        function_emission.emitted_dynamic_array_cleanup_sequence_verification_report,
+        function_emission.function_symbol_name
     );
-    append_report_lines(
+    append_function_report_lines(
         result.emitted_dynamic_array_cleanup_emission_gate_report,
-        function_emission.emitted_dynamic_array_cleanup_emission_gate_report
+        function_emission.emitted_dynamic_array_cleanup_emission_gate_report,
+        function_emission.function_symbol_name
     );
-    append_report_lines(
+    append_function_report_lines(
         result.emitted_dynamic_array_cleanup_emission_capability_report,
-        function_emission.emitted_dynamic_array_cleanup_emission_capability_report
+        function_emission.emitted_dynamic_array_cleanup_emission_capability_report,
+        function_emission.function_symbol_name
     );
     result.consumed_descriptor_finalization_plans.insert(
         result.consumed_descriptor_finalization_plans.end(),

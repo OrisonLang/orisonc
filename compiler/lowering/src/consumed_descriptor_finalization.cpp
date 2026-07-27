@@ -30,6 +30,9 @@ auto format_consumed_descriptor_finalization_plan(
 ) -> std::string {
     auto output = std::ostringstream {};
     output << "consumed descriptor finalization plan";
+    if (!plan.function_symbol_name.empty()) {
+        output << " function " << plan.function_symbol_name;
+    }
     if (!plan.cleanup_owner_name.empty()) {
         output << " owner " << plan.cleanup_owner_name;
     }

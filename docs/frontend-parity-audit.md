@@ -1793,3 +1793,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: successful `--dynamic-array-cleanup-audit` full-emission probes now replace metadata cleanup
   obligation/sequence/gate/capability sections with emitted cleanup reports, aligning local cleanup operation names
   with consumed descriptor finalization lines.
+- 2026-07-27: successful cleanup audit emitted cleanup sections now include function symbol context, so repeated
+  function-local cleanup symbols such as `__orison_dynamic_array_cleanup.0` are distinguishable in multi-function CLI
+  output without changing the emitted IR naming model.

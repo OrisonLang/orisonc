@@ -6,6 +6,7 @@
 namespace orison::lowering {
 
 struct ConsumedDescriptorFinalizationPlan {
+    std::string function_symbol_name;
     std::string cleanup_owner_name;
     std::string descriptor_storage_name;
     std::string cleanup_operation_name;

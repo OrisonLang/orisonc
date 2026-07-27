@@ -1380,6 +1380,7 @@ auto emit_function_with_metadata(
         .options = options,
     };
     auto result = FunctionEmissionResult {};
+    result.function_symbol_name = signature.symbol_name;
     emit_function_body(
         function,
         signature,

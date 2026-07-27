@@ -910,13 +910,13 @@ int main() {
         {
             "dynamic array descriptor origin DynamicArray<Payload>",
             "dynamic array descriptor cleanup DynamicArray<Payload>",
-            "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
-            "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
-            "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
-            "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
-            "dynamic array cleanup emission capability proven",
+            "function use_items dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
+            "function use_items dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
+            "function use_items dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
+            "function use_items dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
+            "function use_items dynamic array cleanup emission capability proven",
             "[element cleanup ok]",
-            "consumed descriptor finalization plan owner items descriptor %items.addr "
+            "consumed descriptor finalization plan function use_items owner items descriptor %items.addr "
             "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
             "[descriptor finalization planned] (metadata only)",
             "dynamic array cleanup production readiness ready",
@@ -972,12 +972,16 @@ int main() {
             "dynamic array descriptor origin DynamicArray<UInt32>",
             "dynamic array descriptor cleanup DynamicArray<UInt32>",
             "descriptor %items.addr local",
-            "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
-            "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
-            "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
-            "dynamic array cleanup emission capability proven",
+            "function first_value dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
+            "function first_value dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
+            "function first_value dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
+            "function first_value dynamic array cleanup emission capability proven",
+            "function counted_sum dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
             "[descriptor storage ok]",
-            "consumed descriptor finalization plan owner items descriptor %items.addr "
+            "consumed descriptor finalization plan function first_value owner items descriptor %items.addr "
+            "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
+            "[descriptor finalization planned] (metadata only)",
+            "consumed descriptor finalization plan function counted_sum owner items descriptor %items.addr "
             "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
             "[descriptor finalization planned] (metadata only)",
         }

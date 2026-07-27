@@ -754,6 +754,7 @@ auto emit_bound_dynamic_array_parameter_cleanup_plans(
             plan.descriptor_cleanup.descriptor_storage_name,
             plan.sequence_plan.obligation.cleanup_symbol_name
         );
+        finalization_plan.function_symbol_name = session.enclosing_symbol_name;
         if (consumed_descriptor_finalization_plan_ready(finalization_plan)) {
             session.state.consumed_descriptor_finalization_plans.push_back(finalization_plan);
             output << emit_dynamic_array_descriptor_finalization(
@@ -804,6 +805,7 @@ auto emit_local_dynamic_array_cleanups(
             plan.descriptor_cleanup.descriptor_storage_name,
             plan.sequence_plan.obligation.cleanup_symbol_name
         );
+        finalization_plan.function_symbol_name = session.enclosing_symbol_name;
         if (consumed_descriptor_finalization_plan_ready(finalization_plan)) {
             session.state.consumed_descriptor_finalization_plans.push_back(finalization_plan);
             output << emit_dynamic_array_descriptor_finalization(

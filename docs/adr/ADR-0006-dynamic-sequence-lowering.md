@@ -181,6 +181,9 @@ representation.
 - Computed dynamic-array `for` production-emission-gate metadata is now collected and reported separately from the
   broader production sequence so ownership, loop-render, exit-cleanup, and disabled-emission readiness can be audited
   independently before production emission is enabled.
+- Emitted dynamic-array cleanup audit report lines now carry function symbol context, and emitted consumed descriptor
+  finalization plans record the same function symbol. Cleanup symbols remain function-local; audit output is
+  disambiguated by context rather than by changing generated IR names.
 
 ## Consequences
 
