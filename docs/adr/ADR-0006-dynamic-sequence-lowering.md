@@ -705,6 +705,9 @@ representation.
   records the source owner, descriptor storage, and cleanup-resumption operation when the computed cleanup insertion
   gates are all enabled; the inserted-IR report remains a separate verification that the runtime deallocation call and
   descriptor finalization store were actually emitted.
+- Dynamic-array descriptor finalization is now rendered through a named lowering helper instead of hand-built inline
+  IR in the computed-loop lowerer. This keeps the current descriptor clear shape unchanged while giving future
+  consumed-owner lowerers a reusable finalization emitter.
 
 ## Follow-up work
 

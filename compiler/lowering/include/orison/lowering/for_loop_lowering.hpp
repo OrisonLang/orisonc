@@ -250,8 +250,9 @@ auto lower_sequence_for_statement(
                         descriptor_plan.capacity_name
                     );
                     if (!descriptor_plan.descriptor_storage_name.empty()) {
-                        output << "  store " << dynamic_array_descriptor_llvm_type();
-                        output << " zeroinitializer, ptr " << descriptor_plan.descriptor_storage_name << "\n";
+                        output << emit_dynamic_array_descriptor_finalization(
+                            descriptor_plan.descriptor_storage_name
+                        );
                     }
                 }
             }

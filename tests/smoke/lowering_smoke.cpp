@@ -1,5 +1,6 @@
 #include "computed_dynamic_array_audit_expectations.hpp"
 
+#include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/llvm_ir_emitter.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/lowering/llvm_ir_verifier.hpp"
@@ -439,6 +440,10 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         result.test_only_dynamic_array_descriptor_binding_ir.front() ==
         "  %dynamic_array0.addr = alloca { ptr, i64, i64 }\n"
         "  store { ptr, i64, i64 } %dynamic_array_alloc0, ptr %dynamic_array0.addr\n"
+    );
+    assert(
+        orison::lowering::emit_dynamic_array_descriptor_finalization("%dynamic_array0.addr") ==
+        "  store { ptr, i64, i64 } zeroinitializer, ptr %dynamic_array0.addr\n"
     );
     assert(result.ir_text.find("%dynamic_array0.addr = alloca { ptr, i64, i64 }") == std::string::npos);
     assert(result.test_only_dynamic_array_descriptor_projection_ir.size() == 3);

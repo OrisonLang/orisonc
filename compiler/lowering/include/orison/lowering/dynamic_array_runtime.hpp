@@ -188,6 +188,10 @@ auto emit_dynamic_array_descriptor_write_back(
     std::string_view local_address_name
 ) -> std::string;
 
+auto emit_dynamic_array_descriptor_finalization(
+    std::string_view descriptor_storage_name
+) -> std::string;
+
 auto emit_dynamic_array_append_sequence(
     DynamicArrayConstructionPlan const& plan,
     std::string_view descriptor_value_name,

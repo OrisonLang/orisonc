@@ -436,6 +436,15 @@ auto emit_dynamic_array_descriptor_write_back(
     return output.str();
 }
 
+auto emit_dynamic_array_descriptor_finalization(
+    std::string_view descriptor_storage_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "  store " << dynamic_array_descriptor_llvm_type();
+    output << " zeroinitializer, ptr " << descriptor_storage_name << "\n";
+    return output.str();
+}
+
 auto emit_dynamic_array_append_sequence(
     DynamicArrayConstructionPlan const& plan,
     std::string_view descriptor_value_name,
