@@ -1772,3 +1772,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   zeroinitializer descriptor clear unchanged while removing the computed-loop lowerer's inline finalization string.
 - 2026-07-27: consumed descriptor finalization now has a generic lowering plan for owner, descriptor storage, cleanup
   operation, and readiness flags. Computed DynamicArray cleanup metadata now carries that plan directly.
+- 2026-07-27: computed DynamicArray cleanup insertion now emits the descriptor finalization clear through that generic
+  plan's readiness gate, aligning model proof and IR emission without changing the generated clear instruction.

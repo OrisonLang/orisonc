@@ -711,6 +711,9 @@ representation.
 - Consumed descriptor finalization now has a small generic lowering plan. Computed DynamicArray cleanup metadata
   carries that plan rather than duplicating owner/storage/operation fields directly, preserving the current report text
   while making the consumed-owner proof reusable by future descriptor-owning lowerers.
+- Computed DynamicArray cleanup insertion now also uses the generic consumed descriptor finalization plan before
+  emitting the owner descriptor clear. Planning and emitted IR now share the same owner/storage/operation readiness
+  gate, while the generated finalization IR remains unchanged.
 
 ## Follow-up work
 

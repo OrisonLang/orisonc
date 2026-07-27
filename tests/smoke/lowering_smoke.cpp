@@ -459,6 +459,23 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "cleanup-operation items.computed_for.cleanup.resume [cleanup owner consumed] "
         "[descriptor finalization planned] (metadata only)"
     );
+    auto blocked_consumed_descriptor_finalization_plan =
+        orison::lowering::plan_consumed_descriptor_finalization(
+            "items",
+            "",
+            "items.computed_for.cleanup.resume"
+        );
+    assert(!orison::lowering::consumed_descriptor_finalization_plan_ready(
+        blocked_consumed_descriptor_finalization_plan
+    ));
+    assert(
+        orison::lowering::format_consumed_descriptor_finalization_plan(
+            blocked_consumed_descriptor_finalization_plan
+        ) ==
+        "consumed descriptor finalization plan owner items "
+        "cleanup-operation items.computed_for.cleanup.resume [cleanup owner consumed] "
+        "[descriptor finalization blocked] (metadata only)"
+    );
     assert(result.ir_text.find("%dynamic_array0.addr = alloca { ptr, i64, i64 }") == std::string::npos);
     assert(result.test_only_dynamic_array_descriptor_projection_ir.size() == 3);
     assert(

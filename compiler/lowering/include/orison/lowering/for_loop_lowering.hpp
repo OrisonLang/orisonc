@@ -3,6 +3,7 @@
 #include "orison/diagnostics/diagnostic_bag.hpp"
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
+#include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/expression_emitter.hpp"
 #include "orison/lowering/function_lowering_session.hpp"
@@ -249,9 +250,14 @@ auto lower_sequence_for_statement(
                         descriptor_plan.data_pointer_name,
                         descriptor_plan.capacity_name
                     );
-                    if (!descriptor_plan.descriptor_storage_name.empty()) {
+                    auto finalization_plan = plan_consumed_descriptor_finalization(
+                        cleanup_sequence_plan.cleanup_owner_name,
+                        descriptor_plan.descriptor_storage_name,
+                        loop_exit_plan.cleanup_resumption_operation_name
+                    );
+                    if (consumed_descriptor_finalization_plan_ready(finalization_plan)) {
                         output << emit_dynamic_array_descriptor_finalization(
-                            descriptor_plan.descriptor_storage_name
+                            finalization_plan.descriptor_storage_name
                         );
                     }
                 }
