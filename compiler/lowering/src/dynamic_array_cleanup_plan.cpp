@@ -212,6 +212,52 @@ auto authorized_descriptor_element_drop_symbol_name(
     return obligation.actions.front().symbol_name;
 }
 
+template <typename CleanupPlan>
+void record_emitted_dynamic_array_cleanup_reports(
+    DynamicArrayCleanupEmissionCapability const& capability,
+    std::vector<CleanupPlan> const& plans,
+    FunctionLoweringSession& session
+) {
+    auto obligations = std::vector<DynamicArrayCleanupObligation> {};
+    auto sequence_plans = std::vector<DynamicArrayCleanupSequencePlan> {};
+    auto verifications = std::vector<DynamicArrayCleanupSequenceVerification> {};
+    obligations.reserve(plans.size());
+    sequence_plans.reserve(plans.size());
+    verifications.reserve(plans.size());
+    for (auto const& plan : plans) {
+        obligations.push_back(plan.sequence_plan.obligation);
+        sequence_plans.push_back(plan.sequence_plan);
+        verifications.push_back(plan.sequence_verification);
+    }
+    auto obligation_report = format_dynamic_array_cleanup_obligation_report(obligations);
+    session.state.emitted_dynamic_array_cleanup_obligation_report.insert(
+        session.state.emitted_dynamic_array_cleanup_obligation_report.end(),
+        obligation_report.begin(),
+        obligation_report.end()
+    );
+    auto sequence_report = format_dynamic_array_cleanup_sequence_plan_report(sequence_plans);
+    session.state.emitted_dynamic_array_cleanup_sequence_plan_report.insert(
+        session.state.emitted_dynamic_array_cleanup_sequence_plan_report.end(),
+        sequence_report.begin(),
+        sequence_report.end()
+    );
+    auto verification_report = format_dynamic_array_cleanup_sequence_verification_report(verifications);
+    session.state.emitted_dynamic_array_cleanup_sequence_verification_report.insert(
+        session.state.emitted_dynamic_array_cleanup_sequence_verification_report.end(),
+        verification_report.begin(),
+        verification_report.end()
+    );
+    auto gate_report = format_dynamic_array_cleanup_emission_gate_report(verifications);
+    session.state.emitted_dynamic_array_cleanup_emission_gate_report.insert(
+        session.state.emitted_dynamic_array_cleanup_emission_gate_report.end(),
+        gate_report.begin(),
+        gate_report.end()
+    );
+    session.state.emitted_dynamic_array_cleanup_emission_capability_report.push_back(
+        format_dynamic_array_cleanup_emission_capability(capability)
+    );
+}
+
 }  // namespace
 
 auto plan_dynamic_array_descriptor_cleanup_obligation(
@@ -686,6 +732,7 @@ auto emit_bound_dynamic_array_parameter_cleanup_plans(
         return false;
     }
 
+    record_emitted_dynamic_array_cleanup_reports(capability, plans, session);
     for (auto const& plan : plans) {
         auto prefix = "%" + plan.descriptor_cleanup.owner_name + ".dynamic_array_cleanup" +
             std::to_string(session.state.next_temporary_index++);
@@ -735,6 +782,7 @@ auto emit_local_dynamic_array_cleanups(
         return false;
     }
 
+    record_emitted_dynamic_array_cleanup_reports(capability, *plans, session);
     for (auto const& plan : *plans) {
         auto prefix = "%" + plan.descriptor_cleanup.owner_name + ".dynamic_array_cleanup" +
             std::to_string(session.state.next_temporary_index++);

@@ -110,6 +110,36 @@ void append_report_lines(std::vector<std::string>& output, std::vector<std::stri
     output.insert(output.end(), lines.begin(), lines.end());
 }
 
+void prefer_emitted_dynamic_array_cleanup_reports(
+    pipeline::CompilePipelineResult& result,
+    pipeline::CompilePipelineResult&& emitted_result
+) {
+    if (!emitted_result.emitted_dynamic_array_cleanup_obligation_report.empty()) {
+        result.dynamic_array_cleanup_obligation_report =
+            std::move(emitted_result.emitted_dynamic_array_cleanup_obligation_report);
+    }
+    if (!emitted_result.emitted_dynamic_array_cleanup_sequence_plan_report.empty()) {
+        result.dynamic_array_cleanup_sequence_plan_report =
+            std::move(emitted_result.emitted_dynamic_array_cleanup_sequence_plan_report);
+    }
+    if (!emitted_result.emitted_dynamic_array_cleanup_sequence_verification_report.empty()) {
+        result.dynamic_array_cleanup_sequence_verification_report =
+            std::move(emitted_result.emitted_dynamic_array_cleanup_sequence_verification_report);
+    }
+    if (!emitted_result.emitted_dynamic_array_cleanup_emission_gate_report.empty()) {
+        result.dynamic_array_cleanup_emission_gate_report =
+            std::move(emitted_result.emitted_dynamic_array_cleanup_emission_gate_report);
+    }
+    if (!emitted_result.emitted_dynamic_array_cleanup_emission_capability_report.empty()) {
+        result.dynamic_array_cleanup_emission_capability_report =
+            std::move(emitted_result.emitted_dynamic_array_cleanup_emission_capability_report);
+    }
+    if (!emitted_result.consumed_descriptor_finalization_plan_report.empty()) {
+        result.consumed_descriptor_finalization_plan_report =
+            std::move(emitted_result.consumed_descriptor_finalization_plan_report);
+    }
+}
+
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     append_report_lines(report, result.semantic_dynamic_array_descriptor_origin_report);
@@ -158,8 +188,7 @@ auto dynamic_array_cleanup_audit(
 
     auto emitted_result = pipeline.emit_llvm(source_path, options);
     if (!emitted_result.has_errors()) {
-        result.consumed_descriptor_finalization_plan_report =
-            std::move(emitted_result.consumed_descriptor_finalization_plan_report);
+        prefer_emitted_dynamic_array_cleanup_reports(result, std::move(emitted_result));
     }
 
     return CompileResult {

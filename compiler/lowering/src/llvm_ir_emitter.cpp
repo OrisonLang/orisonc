@@ -1553,6 +1553,41 @@ auto collect_dynamic_array_element_drop_cleanups(
     return cleanups;
 }
 
+void append_report_lines(std::vector<std::string>& target, std::vector<std::string> const& source) {
+    target.insert(target.end(), source.begin(), source.end());
+}
+
+void append_function_emission_reports(
+    LlvmIrEmissionResult& result,
+    FunctionEmissionResult const& function_emission
+) {
+    append_report_lines(
+        result.emitted_dynamic_array_cleanup_obligation_report,
+        function_emission.emitted_dynamic_array_cleanup_obligation_report
+    );
+    append_report_lines(
+        result.emitted_dynamic_array_cleanup_sequence_plan_report,
+        function_emission.emitted_dynamic_array_cleanup_sequence_plan_report
+    );
+    append_report_lines(
+        result.emitted_dynamic_array_cleanup_sequence_verification_report,
+        function_emission.emitted_dynamic_array_cleanup_sequence_verification_report
+    );
+    append_report_lines(
+        result.emitted_dynamic_array_cleanup_emission_gate_report,
+        function_emission.emitted_dynamic_array_cleanup_emission_gate_report
+    );
+    append_report_lines(
+        result.emitted_dynamic_array_cleanup_emission_capability_report,
+        function_emission.emitted_dynamic_array_cleanup_emission_capability_report
+    );
+    result.consumed_descriptor_finalization_plans.insert(
+        result.consumed_descriptor_finalization_plans.end(),
+        function_emission.consumed_descriptor_finalization_plans.begin(),
+        function_emission.consumed_descriptor_finalization_plans.end()
+    );
+}
+
 auto collect_dynamic_array_descriptor_cleanup_plans(
     syntax::ModuleSyntax const& module,
     semantics::SemanticAnalysisResult const& semantic_result,
@@ -2702,11 +2737,7 @@ auto emit_module(
             options
         );
         output << function_emission.ir_text;
-        result.consumed_descriptor_finalization_plans.insert(
-            result.consumed_descriptor_finalization_plans.end(),
-            function_emission.consumed_descriptor_finalization_plans.begin(),
-            function_emission.consumed_descriptor_finalization_plans.end()
-        );
+        append_function_emission_reports(result, function_emission);
         output << "\n";
     }
 
@@ -2730,11 +2761,7 @@ auto emit_module(
             options
         );
         output << function_emission.ir_text;
-        result.consumed_descriptor_finalization_plans.insert(
-            result.consumed_descriptor_finalization_plans.end(),
-            function_emission.consumed_descriptor_finalization_plans.begin(),
-            function_emission.consumed_descriptor_finalization_plans.end()
-        );
+        append_function_emission_reports(result, function_emission);
         output << "\n";
         return !result.has_errors();
     };

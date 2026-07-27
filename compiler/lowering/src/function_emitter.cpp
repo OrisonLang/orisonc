@@ -919,6 +919,7 @@ auto lower_unit_statement(
 
 void finish_function_emission(
     FunctionLoweringState const& state,
+    FunctionEmissionResult* result,
     std::vector<ConsumedDescriptorFinalizationPlan>* consumed_descriptor_finalization_plans,
     std::ostringstream& output
 ) {
@@ -928,6 +929,18 @@ void finish_function_emission(
     }
     if (consumed_descriptor_finalization_plans == nullptr) {
         return;
+    }
+    if (result != nullptr) {
+        result->emitted_dynamic_array_cleanup_obligation_report =
+            state.emitted_dynamic_array_cleanup_obligation_report;
+        result->emitted_dynamic_array_cleanup_sequence_plan_report =
+            state.emitted_dynamic_array_cleanup_sequence_plan_report;
+        result->emitted_dynamic_array_cleanup_sequence_verification_report =
+            state.emitted_dynamic_array_cleanup_sequence_verification_report;
+        result->emitted_dynamic_array_cleanup_emission_gate_report =
+            state.emitted_dynamic_array_cleanup_emission_gate_report;
+        result->emitted_dynamic_array_cleanup_emission_capability_report =
+            state.emitted_dynamic_array_cleanup_emission_capability_report;
     }
     consumed_descriptor_finalization_plans->insert(
         consumed_descriptor_finalization_plans->end(),
@@ -943,6 +956,7 @@ void emit_function_body(
     semantics::SemanticAnalysisResult const* semantic_result,
     diagnostics::DiagnosticBag& diagnostics,
     std::ostringstream& output,
+    FunctionEmissionResult* result,
     std::vector<ConsumedDescriptorFinalizationPlan>* consumed_descriptor_finalization_plans
 ) {
     if (!function.generic_parameters.empty()) {
@@ -1048,7 +1062,7 @@ void emit_function_body(
             }
             output << "  ret void\n";
         }
-        finish_function_emission(state, consumed_descriptor_finalization_plans, output);
+        finish_function_emission(state, result, consumed_descriptor_finalization_plans, output);
         return;
     }
 
@@ -1335,7 +1349,7 @@ void emit_function_body(
         return;
     }
     output << "  ret " << lowered->type << " " << lowered->value << "\n";
-    finish_function_emission(state, consumed_descriptor_finalization_plans, output);
+    finish_function_emission(state, result, consumed_descriptor_finalization_plans, output);
 }
 
 }  // namespace
@@ -1373,6 +1387,7 @@ auto emit_function_with_metadata(
         &semantic_result,
         diagnostics,
         output,
+        &result,
         &result.consumed_descriptor_finalization_plans
     );
     result.ir_text = output.str();

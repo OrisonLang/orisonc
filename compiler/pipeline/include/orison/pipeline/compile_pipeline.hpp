@@ -94,6 +94,11 @@ struct CompilePipelineResult {
     std::vector<std::string> dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> dynamic_array_cleanup_emission_gate_report;
     std::vector<std::string> dynamic_array_cleanup_emission_capability_report;
+    std::vector<std::string> emitted_dynamic_array_cleanup_obligation_report;
+    std::vector<std::string> emitted_dynamic_array_cleanup_sequence_plan_report;
+    std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
+    std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
+    std::vector<std::string> emitted_dynamic_array_cleanup_emission_capability_report;
     std::vector<std::string> computed_dynamic_array_for_descriptor_render_report;
     std::vector<std::string> computed_dynamic_array_for_loop_control_render_report;
     std::vector<std::string> computed_dynamic_array_for_element_address_render_report;

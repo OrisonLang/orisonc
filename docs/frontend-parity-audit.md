@@ -1790,3 +1790,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: report-mode dynamic-array cleanup planning now classifies source-confirmed local
   `DynamicArray<T> = DynamicArray()` descriptors as local storage, removing the false storage-missing blocker from
   CLI cleanup audit output.
+- 2026-07-27: successful `--dynamic-array-cleanup-audit` full-emission probes now replace metadata cleanup
+  obligation/sequence/gate/capability sections with emitted cleanup reports, aligning local cleanup operation names
+  with consumed descriptor finalization lines.

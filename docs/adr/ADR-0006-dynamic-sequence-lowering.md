@@ -737,6 +737,9 @@ representation.
 - Report-mode descriptor cleanup planning now upgrades semantic origins that match a source `let`/`var`
   `DynamicArray<T> = DynamicArray()` constructor to `local` descriptor storage. Predicted origins without matching
   source-local construction remain predicted.
+- Successful `--dynamic-array-cleanup-audit` full-emission probes now replace metadata cleanup
+  obligation/sequence/verification/gate/capability sections with emitted cleanup reports. This keeps emitted local
+  cleanup operation names aligned with consumed descriptor finalization report lines.
 
 ## Follow-up work
 

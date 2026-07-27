@@ -600,6 +600,16 @@ void populate_lowering_emission_reports(
         emission.dynamic_array_cleanup_emission_gate_report();
     result.dynamic_array_cleanup_emission_capability_report =
         emission.dynamic_array_cleanup_emission_capability_report();
+    result.emitted_dynamic_array_cleanup_obligation_report =
+        std::move(emission.emitted_dynamic_array_cleanup_obligation_report);
+    result.emitted_dynamic_array_cleanup_sequence_plan_report =
+        std::move(emission.emitted_dynamic_array_cleanup_sequence_plan_report);
+    result.emitted_dynamic_array_cleanup_sequence_verification_report =
+        std::move(emission.emitted_dynamic_array_cleanup_sequence_verification_report);
+    result.emitted_dynamic_array_cleanup_emission_gate_report =
+        std::move(emission.emitted_dynamic_array_cleanup_emission_gate_report);
+    result.emitted_dynamic_array_cleanup_emission_capability_report =
+        std::move(emission.emitted_dynamic_array_cleanup_emission_capability_report);
     result.computed_dynamic_array_for_descriptor_render_report =
         emission.computed_dynamic_array_for_descriptor_render_report();
     result.computed_dynamic_array_for_loop_control_render_report =

@@ -972,6 +972,9 @@ int main() {
             "dynamic array descriptor origin DynamicArray<UInt32>",
             "dynamic array descriptor cleanup DynamicArray<UInt32>",
             "descriptor %items.addr local",
+            "dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
+            "dynamic array cleanup sequence __orison_dynamic_array_cleanup.0",
+            "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "dynamic array cleanup emission capability proven",
             "[descriptor storage ok]",
             "consumed descriptor finalization plan owner items descriptor %items.addr "
