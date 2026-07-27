@@ -680,6 +680,21 @@ auto computed_dynamic_array_iterable_cleanup_sequence_plan_report(
     return output;
 }
 
+auto render_computed_dynamic_array_cleanup_state_handoff(
+    ComputedDynamicArrayCleanupStateHandoff const& handoff
+) -> std::string {
+    auto output = std::string {"  ; cleanup state handoff "};
+    output += handoff.kind == ComputedDynamicArrayCleanupStateHandoffKind::acquire ? "acquire" : "resume";
+    output += " operation ";
+    output += handoff.operation_name;
+    output += " from ";
+    output += handoff.source_owner_name;
+    output += " to ";
+    output += handoff.target_owner_name;
+    output += handoff.cleanup_calls_enabled ? " [cleanup calls enabled]\n" : " [cleanup calls disabled]\n";
+    return output;
+}
+
 auto plan_computed_dynamic_array_iterable_descriptor_render(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
@@ -1564,11 +1579,15 @@ auto plan_computed_dynamic_array_iterable_loop_exit_cleanup(
     auto const operation_base_name = computed_dynamic_array_for_base_name(plan.cleanup_owner_name, state);
     plan.cleanup_resumption_operation_name = operation_base_name + ".cleanup.resume";
     plan.rendered_ir.push_back(plan.exit_block_name + ":\n");
-    plan.rendered_ir.push_back(
-        "  ; cleanup resumption operation " + plan.cleanup_resumption_operation_name +
-        " transfers " + plan.loop_entry_cleanup_owner_name + " to " +
-        plan.loop_exit_cleanup_owner_name + " (disabled)\n"
-    );
+    plan.rendered_ir.push_back(render_computed_dynamic_array_cleanup_state_handoff(
+        ComputedDynamicArrayCleanupStateHandoff {
+            .kind = ComputedDynamicArrayCleanupStateHandoffKind::resume,
+            .operation_name = plan.cleanup_resumption_operation_name,
+            .source_owner_name = plan.loop_entry_cleanup_owner_name,
+            .target_owner_name = plan.loop_exit_cleanup_owner_name,
+            .cleanup_calls_enabled = false,
+        }
+    ));
     plan.exit_block_planned = true;
     plan.cleanup_resumption_planned = true;
     plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_exit_cleanup_planned;

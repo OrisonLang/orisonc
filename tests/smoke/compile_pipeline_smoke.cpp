@@ -1058,8 +1058,8 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
-            "  ; cleanup acquisition operation items.computed_for.0.cleanup.acquire transfers "
-            "items to items.loop.entry (disabled)\n"
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls disabled]\n"
         ) != std::string::npos
     );
     assert(

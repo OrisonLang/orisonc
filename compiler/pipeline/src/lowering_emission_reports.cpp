@@ -14,6 +14,7 @@ namespace orison::pipeline {
 namespace {
 
 struct InsertedCleanupOperation {
+    std::string kind_name;
     std::string operation_name;
     std::string source_owner_name;
     std::string target_owner_name;
@@ -27,22 +28,28 @@ auto parse_inserted_cleanup_operation(
         return std::nullopt;
     }
     auto const payload = line.substr(prefix.size());
-    auto const transfers_position = payload.find(" transfers ");
-    if (transfers_position == std::string_view::npos) {
+    auto const kind_separator = payload.find(" operation ");
+    if (kind_separator == std::string_view::npos) {
         return std::nullopt;
     }
-    auto const source_start = transfers_position + std::string_view {" transfers "}.size();
+    auto const operation_start = kind_separator + std::string_view {" operation "}.size();
+    auto const from_separator = payload.find(" from ", operation_start);
+    if (from_separator == std::string_view::npos) {
+        return std::nullopt;
+    }
+    auto const source_start = from_separator + std::string_view {" from "}.size();
     auto const target_separator = payload.find(" to ", source_start);
     if (target_separator == std::string_view::npos) {
         return std::nullopt;
     }
-    auto const disabled_suffix = std::string_view {" (disabled)"};
+    auto const disabled_suffix = std::string_view {" [cleanup calls disabled]"};
     auto const suffix_position = payload.find(disabled_suffix, target_separator);
     if (suffix_position == std::string_view::npos) {
         return std::nullopt;
     }
     return InsertedCleanupOperation {
-        .operation_name = std::string {payload.substr(0, transfers_position)},
+        .kind_name = std::string {payload.substr(0, kind_separator)},
+        .operation_name = std::string {payload.substr(operation_start, from_separator - operation_start)},
         .source_owner_name = std::string {payload.substr(source_start, target_separator - source_start)},
         .target_owner_name = std::string {
             payload.substr(target_separator + std::string_view {" to "}.size(),
@@ -73,21 +80,22 @@ auto format_inserted_cleanup_transition_report(std::string_view ir_text) -> std:
     auto input = std::istringstream {std::string {ir_text}};
     auto line = std::string {};
     while (std::getline(input, line)) {
-        if (auto acquisition = parse_inserted_cleanup_operation(
+        auto handoff = parse_inserted_cleanup_operation(
                 line,
-                "  ; cleanup acquisition operation "
-            )) {
-            pending_acquisition = std::move(acquisition);
+                "  ; cleanup state handoff "
+            );
+        if (!handoff.has_value()) {
             continue;
         }
-        if (auto resumption = parse_inserted_cleanup_operation(
-                line,
-                "  ; cleanup resumption operation "
-            )) {
+        if (handoff->kind_name == "acquire") {
+            pending_acquisition = std::move(handoff);
+            continue;
+        }
+        if (handoff->kind_name == "resume") {
             if (pending_acquisition.has_value() &&
-                pending_acquisition->target_owner_name == resumption->source_owner_name &&
-                pending_acquisition->source_owner_name == resumption->target_owner_name) {
-                report.push_back(format_inserted_cleanup_transition(*pending_acquisition, *resumption));
+                pending_acquisition->target_owner_name == handoff->source_owner_name &&
+                pending_acquisition->source_owner_name == handoff->target_owner_name) {
+                report.push_back(format_inserted_cleanup_transition(*pending_acquisition, *handoff));
             }
             pending_acquisition.reset();
         }

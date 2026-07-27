@@ -162,11 +162,15 @@ auto lower_sequence_for_statement(
             auto const& descriptor_plan = loop_control_plan.descriptor_render_plan;
             auto const& cleanup_sequence_plan = descriptor_plan.cleanup_sequence_plan;
 
-            output << "  ; cleanup acquisition operation "
-                   << cleanup_sequence_plan.loop_entry_cleanup_operation_name
-                   << " transfers " << cleanup_sequence_plan.cleanup_owner_name
-                   << " to " << cleanup_sequence_plan.loop_entry_cleanup_owner_name
-                   << " (disabled)\n";
+            output << render_computed_dynamic_array_cleanup_state_handoff(
+                ComputedDynamicArrayCleanupStateHandoff {
+                    .kind = ComputedDynamicArrayCleanupStateHandoffKind::acquire,
+                    .operation_name = cleanup_sequence_plan.loop_entry_cleanup_operation_name,
+                    .source_owner_name = cleanup_sequence_plan.cleanup_owner_name,
+                    .target_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name,
+                    .cleanup_calls_enabled = false,
+                }
+            );
             for (auto const& line : descriptor_plan.rendered_ir) {
                 output << line;
             }

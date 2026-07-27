@@ -1073,8 +1073,8 @@ int main() {
     assert(proven_computed_loop_exit_cleanup.rendered_ir[0] == "items.computed_for.exit:\n");
     assert(
         proven_computed_loop_exit_cleanup.rendered_ir[1] ==
-        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
-        "items.loop.entry to items (disabled)\n"
+        "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+        "from items.loop.entry to items [cleanup calls disabled]\n"
     );
     assert(proven_computed_loop_exit_cleanup.exit_block_planned);
     assert(proven_computed_loop_exit_cleanup.cleanup_resumption_planned);
@@ -1121,8 +1121,8 @@ int main() {
     assert(proven_computed_production_emission_gate.rendered_ir[14] == "items.computed_for.exit:\n");
     assert(
         proven_computed_production_emission_gate.rendered_ir[15] ==
-        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
-        "items.loop.entry to items (disabled)\n"
+        "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+        "from items.loop.entry to items [cleanup calls disabled]\n"
     );
     assert(proven_computed_production_emission_gate.production_sequence_render_planned);
     assert(!proven_computed_production_emission_gate.production_emission_enabled);

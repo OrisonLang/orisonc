@@ -2245,8 +2245,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir[1] ==
-        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
-        "items.loop.entry to items (disabled)\n"
+        "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+        "from items.loop.entry to items [cleanup calls disabled]\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_cleanup_transitions.size() == 1);
     auto const& computed_local_same_owner_cleanup_transition =
@@ -2309,8 +2309,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[15] ==
-        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
-        "items.loop.entry to items (disabled)\n"
+        "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+        "from items.loop.entry to items [cleanup calls disabled]\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
     auto const& computed_local_same_owner_sequence =
@@ -2336,8 +2336,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_sequence.rendered_ir[14] == "items.computed_for.exit:\n");
     assert(
         computed_local_same_owner_sequence.rendered_ir[15] ==
-        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
-        "items.loop.entry to items (disabled)\n"
+        "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+        "from items.loop.entry to items [cleanup calls disabled]\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir.size() == 16);
     assert(
@@ -2354,8 +2354,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[15] ==
-        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
-        "items.loop.entry to items (disabled)\n"
+        "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+        "from items.loop.entry to items [cleanup calls disabled]\n"
     );
     auto computed_local_same_owner_metadata_without_comment_emission = lower_source_metadata(
         path,
@@ -2407,8 +2407,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_metadata_with_comment_emission.ir_text.find(
-            ";   ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
-            "items.loop.entry to items (disabled)\n"
+            ";   ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
+            "from items.loop.entry to items [cleanup calls disabled]\n"
         ) != std::string::npos
     );
     auto computed_local_same_owner_lowered_for = lower_source(
@@ -2423,8 +2423,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(!computed_local_same_owner_lowered_for.has_errors());
     assert(
         computed_local_same_owner_lowered_for.ir_text.find(
-            "  ; cleanup acquisition operation items.computed_for.0.cleanup.acquire transfers "
-            "items to items.loop.entry (disabled)\n"
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls disabled]\n"
         ) != std::string::npos
     );
     assert(
@@ -2443,8 +2443,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.0.exit:\n") != std::string::npos);
     assert(
         computed_local_same_owner_lowered_for.ir_text.find(
-            "  ; cleanup resumption operation items.computed_for.0.cleanup.resume transfers "
-            "items.loop.entry to items (disabled)\n"
+            "  ; cleanup state handoff resume operation items.computed_for.0.cleanup.resume "
+            "from items.loop.entry to items [cleanup calls disabled]\n"
         ) != std::string::npos
     );
     auto computed_cleanup_acquisition_position =
