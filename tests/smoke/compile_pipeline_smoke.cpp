@@ -50,6 +50,23 @@ void assert_any_line_contains(
     assert(false);
 }
 
+auto line_index_containing(
+    std::vector<std::string> const& lines,
+    std::string_view expected_fragment
+) -> std::size_t {
+    for (std::size_t index = 0; index < lines.size(); ++index) {
+        if (lines[index].find(expected_fragment) != std::string::npos) {
+            return index;
+        }
+    }
+    std::cerr << "expected any report line to contain '" << expected_fragment << "'\n";
+    for (auto const& line : lines) {
+        std::cerr << "actual line: '" << line << "'\n";
+    }
+    assert(false);
+    return lines.size();
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -1355,6 +1372,42 @@ auto main() -> int {
             .computed_dynamic_array_for_consumed_cleanup_descriptor_report.front() ==
         smoke::computed_dynamic_array_consumed_cleanup_descriptor_report
     );
+    auto inserted_cleanup_finalization_audit = std::vector<std::string> {};
+    inserted_cleanup_finalization_audit.insert(
+        inserted_cleanup_finalization_audit.end(),
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_plan_report.begin(),
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_plan_report.end()
+    );
+    inserted_cleanup_finalization_audit.insert(
+        inserted_cleanup_finalization_audit.end(),
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.begin(),
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.end()
+    );
+    inserted_cleanup_finalization_audit.insert(
+        inserted_cleanup_finalization_audit.end(),
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.begin(),
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.end()
+    );
+    auto const generic_finalization_report_index = line_index_containing(
+        inserted_cleanup_finalization_audit,
+        "consumed descriptor finalization plan owner items"
+    );
+    auto const dynamic_array_model_report_index = line_index_containing(
+        inserted_cleanup_finalization_audit,
+        "computed DynamicArray for consumed cleanup descriptor model"
+    );
+    auto const dynamic_array_inserted_report_index = line_index_containing(
+        inserted_cleanup_finalization_audit,
+        "computed DynamicArray for consumed cleanup descriptor cleanup-operation"
+    );
+    assert(generic_finalization_report_index < dynamic_array_model_report_index);
+    assert(generic_finalization_report_index < dynamic_array_inserted_report_index);
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_object =
         orison::lowering::LlvmObjectEmitter {}.emit(
             computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text
@@ -1425,10 +1478,8 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .consumed_descriptor_finalization_plan_report.front().find(
-                "owner items descriptor %items.addr cleanup-operation items.computed_for.cleanup.resume "
-                "[cleanup owner consumed]"
-            ) != std::string::npos
+            .consumed_descriptor_finalization_plan_report.front() ==
+        smoke::consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run

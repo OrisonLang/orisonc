@@ -717,6 +717,9 @@ representation.
 - The generic consumed descriptor finalization plan is now surfaced as its own pipeline and CLI audit report before the
   DynamicArray-specific consumed-cleanup wrapper report. This gives future descriptor-owning lowerers a reusable audit
   line without depending on DynamicArray wording.
+- Cleanup insertion tests now treat the generic consumed descriptor finalization report as the primary proof and keep
+  the DynamicArray-specific consumed-cleanup reports as compatibility context. The generic report must be present
+  before the DynamicArray wrapper reports in the checked proof chain.
 
 ## Follow-up work
 

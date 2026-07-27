@@ -1776,3 +1776,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   plan's readiness gate, aligning model proof and IR emission without changing the generated clear instruction.
 - 2026-07-27: the generic consumed descriptor finalization plan is now exposed through pipeline and CLI audit reports
   before the DynamicArray-specific consumed-cleanup wrapper report.
+- 2026-07-27: cleanup insertion smoke coverage now uses the generic consumed descriptor finalization report as the
+  primary proof, with DynamicArray-specific consumed-cleanup reports retained as compatibility context.
