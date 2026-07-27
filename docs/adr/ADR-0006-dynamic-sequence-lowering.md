@@ -723,6 +723,9 @@ representation.
 - The DynamicArray consumed-cleanup model wrapper no longer repeats the generic finalization readiness flags. It now
   records the DynamicArray context and references the generic finalization proof, leaving owner-consumed/finalization
   readiness wording in the reusable generic report.
+- Named local `DynamicArray<T>` cleanup emission now also uses the generic consumed descriptor finalization plan before
+  clearing the owner descriptor after deallocation. This reuses the same owner/storage/cleanup-operation readiness seam
+  beyond computed-loop cleanup and makes local cleanup idempotency explicit in emitted IR.
 
 ## Follow-up work
 

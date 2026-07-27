@@ -835,6 +835,10 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
     );
     assert_ir_contains(
         placed_source_cleanup,
+        "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
+    );
+    assert_ir_contains(
+        placed_source_cleanup,
         "  %words.dynamic_array_cleanup1.descriptor = load { ptr, i64, i64 }, ptr %words.addr\n"
     );
     assert_ir_contains(
@@ -842,16 +846,28 @@ void test_collects_test_only_dynamic_array_construction_metadata() {
         "  call void @__orison_dynamic_array_deallocate(ptr %words.dynamic_array_cleanup1.cleanup.data, i64 4, "
         "i64 %words.dynamic_array_cleanup1.cleanup.capacity)\n"
     );
+    assert_ir_contains(
+        placed_source_cleanup,
+        "  store { ptr, i64, i64 } zeroinitializer, ptr %words.addr\n"
+    );
     auto items_cleanup = placed_source_cleanup.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    auto items_clear = placed_source_cleanup.ir_text.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr");
     auto words_cleanup = placed_source_cleanup.ir_text.find(
         "call void @__orison_dynamic_array_deallocate",
         items_cleanup + 1
     );
+    auto words_clear = placed_source_cleanup.ir_text.find("store { ptr, i64, i64 } zeroinitializer, ptr %words.addr");
     auto return_instruction = placed_source_cleanup.ir_text.find("ret i32 0");
     assert(items_cleanup != std::string::npos);
+    assert(items_clear != std::string::npos);
     assert(words_cleanup != std::string::npos);
+    assert(words_clear != std::string::npos);
     assert(return_instruction != std::string::npos);
+    assert(items_cleanup < items_clear);
+    assert(items_clear < words_cleanup);
     assert(items_cleanup < words_cleanup);
+    assert(words_cleanup < words_clear);
+    assert(words_clear < return_instruction);
     assert(words_cleanup < return_instruction);
 
     auto placed_source_index_read = lower_source(

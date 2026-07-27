@@ -1780,3 +1780,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   primary proof, with DynamicArray-specific consumed-cleanup reports retained as compatibility context.
 - 2026-07-27: the DynamicArray consumed-cleanup model wrapper now references the generic finalization proof instead of
   duplicating the generic owner-consumed/finalization readiness flags.
+- 2026-07-27: named local `DynamicArray<T>` cleanup emission now uses the generic consumed descriptor finalization
+  plan and clears the owner descriptor after deallocation, pinning that finalization ordering in lowering smoke.

@@ -2,6 +2,7 @@
 
 #include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/drop_metadata.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
@@ -739,6 +740,16 @@ auto emit_local_dynamic_array_cleanups(
             prefix,
             plan.element_drop_symbol_name
         );
+        auto finalization_plan = plan_consumed_descriptor_finalization(
+            plan.descriptor_cleanup.owner_name,
+            plan.descriptor_cleanup.descriptor_storage_name,
+            plan.sequence_plan.obligation.cleanup_symbol_name
+        );
+        if (consumed_descriptor_finalization_plan_ready(finalization_plan)) {
+            output << emit_dynamic_array_descriptor_finalization(
+                finalization_plan.descriptor_storage_name
+            );
+        }
     }
     return true;
 }
