@@ -189,6 +189,8 @@ representation.
   proof gate.
 - Dynamic-array cleanup emission capability proofs now also retain the descriptor owner names they summarize, so the
   aggregate proof can be correlated with both cleanup operations and source owners without changing the gate decision.
+- Dynamic-array cleanup emission capability proofs now also format compact owner/operation pairs. The separate owner
+  and operation lists remain available, but audit consumers no longer need positional correlation for the common case.
 
 ## Consequences
 

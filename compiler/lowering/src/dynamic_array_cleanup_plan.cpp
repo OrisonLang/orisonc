@@ -576,15 +576,21 @@ auto prove_dynamic_array_cleanup_emission_capability(
     std::vector<DynamicArrayCleanupObligation> const& obligations,
     std::vector<semantics::DropLoweringAuthorization> const& semantic_drop_lowering_authorizations
 ) -> DynamicArrayCleanupEmissionCapability {
+    auto cleanup_pairs = std::vector<std::string> {};
     auto cleanup_operation_names = std::vector<std::string> {};
     auto cleanup_owner_names = std::vector<std::string> {};
+    cleanup_pairs.reserve(obligations.size());
     cleanup_operation_names.reserve(obligations.size());
     cleanup_owner_names.reserve(obligations.size());
     for (auto const& obligation : obligations) {
+        cleanup_pairs.push_back(
+            obligation.descriptor_cleanup.owner_name + ":" + obligation.cleanup_symbol_name
+        );
         cleanup_operation_names.push_back(obligation.cleanup_symbol_name);
         cleanup_owner_names.push_back(obligation.descriptor_cleanup.owner_name);
     }
     return DynamicArrayCleanupEmissionCapability {
+        .cleanup_pairs = std::move(cleanup_pairs),
         .cleanup_operation_names = std::move(cleanup_operation_names),
         .cleanup_owner_names = std::move(cleanup_owner_names),
         .emission_enabled = emission_enabled,
@@ -723,6 +729,12 @@ auto format_dynamic_array_cleanup_emission_capability(
     auto output = std::ostringstream {};
     output << "dynamic array cleanup emission capability ";
     output << (dynamic_array_cleanup_emission_capability_proven(capability) ? "proven" : "blocked");
+    if (!capability.cleanup_pairs.empty()) {
+        output << " cleanup-pairs";
+        for (auto const& cleanup_pair : capability.cleanup_pairs) {
+            output << " [" << cleanup_pair << "]";
+        }
+    }
     if (!capability.cleanup_operation_names.empty()) {
         output << " cleanup-operations";
         for (auto const& cleanup_operation_name : capability.cleanup_operation_names) {

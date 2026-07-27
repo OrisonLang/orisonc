@@ -92,6 +92,9 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(capability.sequence_verified);
     assert(capability.element_cleanup_authorized_or_not_required);
     assert(capability.descriptor_deallocation_authorized);
+    assert(capability.cleanup_pairs.size() == 2);
+    assert(capability.cleanup_pairs[0] == "a_items:__orison_dynamic_array_cleanup.0");
+    assert(capability.cleanup_pairs[1] == "z_items:__orison_dynamic_array_cleanup.1");
     assert(capability.cleanup_operation_names.size() == 2);
     assert(capability.cleanup_operation_names[0] == "__orison_dynamic_array_cleanup.0");
     assert(capability.cleanup_operation_names[1] == "__orison_dynamic_array_cleanup.1");
@@ -101,7 +104,9 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(orison::lowering::dynamic_array_cleanup_emission_capability_proven(capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(capability) ==
-        "dynamic array cleanup emission capability proven cleanup-operations "
+        "dynamic array cleanup emission capability proven cleanup-pairs "
+        "[a_items:__orison_dynamic_array_cleanup.0] [z_items:__orison_dynamic_array_cleanup.1] "
+        "cleanup-operations "
         "[__orison_dynamic_array_cleanup.0] [__orison_dynamic_array_cleanup.1] "
         "cleanup-owners [a_items] [z_items] "
         "[emission ok] [descriptor storage ok] "
@@ -144,6 +149,9 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
         malformed_plans
     );
     assert(!blocked_capability.sequence_verified);
+    assert(blocked_capability.cleanup_pairs.size() == 2);
+    assert(blocked_capability.cleanup_pairs[0] == "a_items:__orison_dynamic_array_cleanup.0");
+    assert(blocked_capability.cleanup_pairs[1] == "z_items:__orison_dynamic_array_cleanup.1");
     assert(blocked_capability.cleanup_operation_names.size() == 2);
     assert(blocked_capability.cleanup_operation_names[0] == "__orison_dynamic_array_cleanup.0");
     assert(blocked_capability.cleanup_operation_names[1] == "__orison_dynamic_array_cleanup.1");
@@ -153,7 +161,9 @@ void test_plans_bound_dynamic_array_parameter_cleanups_in_name_order() {
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     assert(
         orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability) ==
-        "dynamic array cleanup emission capability blocked cleanup-operations "
+        "dynamic array cleanup emission capability blocked cleanup-pairs "
+        "[a_items:__orison_dynamic_array_cleanup.0] [z_items:__orison_dynamic_array_cleanup.1] "
+        "cleanup-operations "
         "[__orison_dynamic_array_cleanup.0] [__orison_dynamic_array_cleanup.1] "
         "cleanup-owners [a_items] [z_items] "
         "[emission ok] [descriptor storage ok] "

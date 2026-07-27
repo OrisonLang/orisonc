@@ -45,6 +45,7 @@ struct LocalDynamicArrayCleanupPlan {
 };
 
 struct DynamicArrayCleanupEmissionCapability {
+    std::vector<std::string> cleanup_pairs;
     std::vector<std::string> cleanup_operation_names;
     std::vector<std::string> cleanup_owner_names;
     bool emission_enabled = false;
