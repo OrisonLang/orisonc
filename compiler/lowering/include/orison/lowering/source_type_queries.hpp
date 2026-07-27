@@ -179,6 +179,7 @@ struct ComputedDynamicArrayIterableLoopControlRenderPlan {
     std::string body_block_name;
     std::string continue_block_name;
     std::string exit_block_name;
+    std::string incoming_block_name;
     std::string index_name;
     std::string next_index_name;
     std::string bounds_check_name;

@@ -1051,6 +1051,48 @@ auto main() -> int {
             "items.computed_for.exit:\n"
         ) != std::string::npos
     );
+    auto computed_dynamic_array_local_same_owner_after_if_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_after_if.or";
+    {
+        auto local_same_owner_after_if_source = std::ofstream(computed_dynamic_array_local_same_owner_after_if_path);
+        local_same_owner_after_if_source
+            << "package demo.pipeline.computeddynamicarraylocalsameownerafterif\n"
+            << "\n"
+            << "function sum_words(flag: Bool) -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    var total = 0 as UInt32\n"
+            << "    if flag\n"
+            << "        total = 1 as UInt32\n"
+            << "    else\n"
+            << "        total = 2 as UInt32\n"
+            << "    for word in flag ? items : items\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_local_same_owner_after_if = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_after_if_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_after_if.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_after_if.ir_text.find(
+            "  %items.computed_for.index = phi i64 [ 0, %if.merge."
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_after_if.ir_text.find(
+            "items.computed_for.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_after_if.ir_text.find(
+            "items.computed_for.exit:\n"
+        ) != std::string::npos
+    );
     assert(
         computed_dynamic_array_local_same_owner_for.error_text.find(
             "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "

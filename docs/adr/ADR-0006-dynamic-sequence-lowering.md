@@ -114,6 +114,8 @@ representation.
 - A test-only computed dynamic-array `for` lowering option can now insert the proven local same-owner loop sequence at
   the entry-block statement position and lower the source loop body between the planned body and continuation blocks.
   The path remains internal and disabled by default while nested insertion and broader cleanup proof are still pending.
+- The test-only computed dynamic-array `for` lowering path now records the actual incoming block for loop-control phi
+  construction, so insertion after a lowered branch merge no longer assumes `%entry`.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

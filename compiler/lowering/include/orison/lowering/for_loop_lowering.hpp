@@ -121,7 +121,6 @@ auto lower_sequence_for_statement(
             );
         if (
             context.options.test_only_enable_computed_dynamic_array_for_lowering &&
-            session.state.current_block == "entry" &&
             computed_production_emission_gate_plan.kind ==
                 ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
             computed_production_emission_gate_plan.ownership_ready &&

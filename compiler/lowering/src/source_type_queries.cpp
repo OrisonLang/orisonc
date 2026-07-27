@@ -832,6 +832,7 @@ auto plan_computed_dynamic_array_iterable_loop_control_render(
     plan.body_block_name = block_prefix + ".body";
     plan.continue_block_name = block_prefix + ".continue";
     plan.exit_block_name = block_prefix + ".exit";
+    plan.incoming_block_name = state.current_block;
     plan.index_name = prefix + ".index";
     plan.next_index_name = prefix + ".next.index";
     plan.bounds_check_name = prefix + ".more";
@@ -839,7 +840,8 @@ auto plan_computed_dynamic_array_iterable_loop_control_render(
     plan.rendered_ir.push_back("  br label %" + plan.condition_block_name + "\n");
     plan.rendered_ir.push_back(plan.condition_block_name + ":\n");
     plan.rendered_ir.push_back(
-        "  " + plan.index_name + " = phi i64 [ 0, %entry ], [ " + plan.next_index_name +
+        "  " + plan.index_name + " = phi i64 [ 0, %" + plan.incoming_block_name + " ], [ " +
+        plan.next_index_name +
         ", %" + plan.continue_block_name + " ]\n"
     );
     plan.rendered_ir.push_back(

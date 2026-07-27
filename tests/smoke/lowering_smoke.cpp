@@ -2412,6 +2412,45 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_body_position < computed_body_add_position);
     assert(computed_body_add_position < computed_continue_position);
     assert(computed_continue_position < computed_exit_position);
+
+    auto computed_local_same_owner_after_if_source =
+        "package demo.dynamicarray\n"
+        "\n"
+        "function sum_words(flag: Bool) -> UInt32\n"
+        "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    var total = 0 as UInt32\n"
+        "    if flag\n"
+        "        total = 1 as UInt32\n"
+        "    else\n"
+        "        total = 2 as UInt32\n"
+        "    for word in flag ? items : items\n"
+        "        total = total + word\n"
+        "    total\n";
+    auto computed_local_same_owner_after_if = lower_source(
+        path,
+        computed_local_same_owner_after_if_source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+        }
+    );
+    assert(!computed_local_same_owner_after_if.has_errors());
+    auto computed_after_if_merge_position =
+        computed_local_same_owner_after_if.ir_text.find("if.merge.");
+    auto computed_after_if_phi_position =
+        computed_local_same_owner_after_if.ir_text.find(
+            "  %items.computed_for.index = phi i64 [ 0, %if.merge."
+        );
+    auto computed_after_if_condition_position =
+        computed_local_same_owner_after_if.ir_text.find("items.computed_for.condition:\n");
+    assert(computed_after_if_merge_position != std::string::npos);
+    assert(computed_after_if_phi_position != std::string::npos);
+    assert(computed_after_if_condition_position != std::string::npos);
+    assert(computed_after_if_merge_position < computed_after_if_condition_position);
+    assert(computed_after_if_condition_position < computed_after_if_phi_position);
+    assert(computed_local_same_owner_after_if.ir_text.find("items.computed_for.body:\n") != std::string::npos);
+    assert(computed_local_same_owner_after_if.ir_text.find("items.computed_for.exit:\n") != std::string::npos);
     assert(
         computed_local_same_owner_for.render(path.string()).find(
             "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "
