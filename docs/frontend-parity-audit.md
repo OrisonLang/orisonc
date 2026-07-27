@@ -1787,3 +1787,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   parameter cleanup paths.
 - 2026-07-27: `--dynamic-array-cleanup-audit` now merges consumed descriptor finalization plans from a successful
   full-emission pass, so local and bound cleanup finalization proof reaches the CLI audit surface.
+- 2026-07-27: report-mode dynamic-array cleanup planning now classifies source-confirmed local
+  `DynamicArray<T> = DynamicArray()` descriptors as local storage, removing the false storage-missing blocker from
+  CLI cleanup audit output.

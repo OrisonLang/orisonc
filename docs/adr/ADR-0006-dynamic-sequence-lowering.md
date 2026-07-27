@@ -734,6 +734,9 @@ representation.
   finalization without inferring local/bound cleanup from source-level construction plans.
 - `--dynamic-array-cleanup-audit` now merges the consumed descriptor finalization report from a successful full-emission
   pass into the metadata audit output. Individual dynamic-array cleanup report commands remain metadata-only.
+- Report-mode descriptor cleanup planning now upgrades semantic origins that match a source `let`/`var`
+  `DynamicArray<T> = DynamicArray()` constructor to `local` descriptor storage. Predicted origins without matching
+  source-local construction remain predicted.
 
 ## Follow-up work
 

@@ -311,6 +311,56 @@ auto is_dynamic_array_source_type(syntax::TypeSyntax const& type) -> bool {
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
 }
 
+auto is_dynamic_array_local_constructor_origin(
+    syntax::StatementSyntax const& statement,
+    semantics::DynamicArrayDescriptorOrigin const& origin
+) -> bool {
+    if ((statement.kind == syntax::StatementKind::let_binding ||
+         statement.kind == syntax::StatementKind::var_binding) &&
+        statement.name == origin.owner_name &&
+        statement.line == origin.line &&
+        !statement.annotated_type.name.empty() &&
+        render_source_type_name(statement.annotated_type) == origin.source_type_name &&
+        is_dynamic_array_default_constructor(statement.expression)) {
+        return true;
+    }
+    return std::ranges::any_of(statement.nested_statements, [&](auto const& nested_statement) {
+        return is_dynamic_array_local_constructor_origin(nested_statement, origin);
+    });
+}
+
+auto has_dynamic_array_local_constructor_origin(
+    semantics::DynamicArrayDescriptorOrigin const& origin,
+    syntax::ModuleSyntax const& module
+) -> bool {
+    for (auto const& function : module.functions) {
+        for (auto const& statement : function.body_statements) {
+            if (is_dynamic_array_local_constructor_origin(statement, origin)) {
+                return true;
+            }
+        }
+    }
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            for (auto const& statement : method.body_statements) {
+                if (is_dynamic_array_local_constructor_origin(statement, origin)) {
+                    return true;
+                }
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            for (auto const& statement : method.body_statements) {
+                if (is_dynamic_array_local_constructor_origin(statement, origin)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 auto is_view_source_type(syntax::TypeSyntax const& type) -> bool {
     auto sequence = dynamic_sequence_source_type(render_source_type_name(type));
     return sequence.has_value() &&
@@ -1527,6 +1577,8 @@ auto collect_dynamic_array_descriptor_cleanup_plans(
         } else if (dynamic_array_parameter_descriptor_audit_bindings_enabled(options) &&
             has_dynamic_array_parameter_descriptor_origin(origin, module)) {
             plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::audit_parameter_descriptor;
+        } else if (has_dynamic_array_local_constructor_origin(origin, module)) {
+            plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::lowered_local_descriptor;
         }
         plan->source_line = origin.line;
         plans.push_back(std::move(*plan));

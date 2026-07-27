@@ -945,8 +945,10 @@ int main() {
         dynamic_array_computed_local_same_owner_audit,
         {
             "dynamic array descriptor origin DynamicArray<UInt32>",
-            "dynamic array cleanup emission capability blocked",
-            "[descriptor storage missing]",
+            "dynamic array descriptor cleanup DynamicArray<UInt32>",
+            "descriptor %items.addr local",
+            "dynamic array cleanup emission capability proven",
+            "[descriptor storage ok]",
             smoke::computed_dynamic_array_descriptor_render_report,
             smoke::computed_dynamic_array_loop_control_render_report,
             smoke::computed_dynamic_array_element_address_render_report,
@@ -957,7 +959,7 @@ int main() {
             smoke::computed_dynamic_array_cleanup_transition_report,
             smoke::computed_dynamic_array_production_emission_gate_report,
             smoke::computed_dynamic_array_production_sequence_report,
-            "dynamic array cleanup production readiness blocked",
+            "dynamic array cleanup production readiness ready",
         }
     );
     auto dynamic_array_local_append_path =
@@ -968,6 +970,10 @@ int main() {
         dynamic_array_local_append_audit,
         {
             "dynamic array descriptor origin DynamicArray<UInt32>",
+            "dynamic array descriptor cleanup DynamicArray<UInt32>",
+            "descriptor %items.addr local",
+            "dynamic array cleanup emission capability proven",
+            "[descriptor storage ok]",
             "consumed descriptor finalization plan owner items descriptor %items.addr "
             "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
             "[descriptor finalization planned] (metadata only)",
