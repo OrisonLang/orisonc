@@ -184,6 +184,9 @@ representation.
 - Emitted dynamic-array cleanup audit report lines now carry function symbol context, and emitted consumed descriptor
   finalization plans record the same function symbol. Cleanup symbols remain function-local; audit output is
   disambiguated by context rather than by changing generated IR names.
+- Dynamic-array cleanup emission capability proofs now retain the cleanup operation names they summarize. This keeps a
+  capability line explainable for functions with multiple descriptor cleanups while preserving the existing aggregate
+  proof gate.
 
 ## Consequences
 

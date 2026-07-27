@@ -576,7 +576,13 @@ auto prove_dynamic_array_cleanup_emission_capability(
     std::vector<DynamicArrayCleanupObligation> const& obligations,
     std::vector<semantics::DropLoweringAuthorization> const& semantic_drop_lowering_authorizations
 ) -> DynamicArrayCleanupEmissionCapability {
+    auto cleanup_operation_names = std::vector<std::string> {};
+    cleanup_operation_names.reserve(obligations.size());
+    for (auto const& obligation : obligations) {
+        cleanup_operation_names.push_back(obligation.cleanup_symbol_name);
+    }
     return DynamicArrayCleanupEmissionCapability {
+        .cleanup_operation_names = std::move(cleanup_operation_names),
         .emission_enabled = emission_enabled,
         .descriptor_storage_bound = std::ranges::all_of(descriptor_cleanup_plans, [](auto const& plan) {
         auto storage_status_bound =
@@ -713,6 +719,12 @@ auto format_dynamic_array_cleanup_emission_capability(
     auto output = std::ostringstream {};
     output << "dynamic array cleanup emission capability ";
     output << (dynamic_array_cleanup_emission_capability_proven(capability) ? "proven" : "blocked");
+    if (!capability.cleanup_operation_names.empty()) {
+        output << " cleanup-operations";
+        for (auto const& cleanup_operation_name : capability.cleanup_operation_names) {
+            output << " [" << cleanup_operation_name << "]";
+        }
+    }
     output << " [emission " << status(capability.emission_enabled) << "]";
     output << " [descriptor storage " << status(capability.descriptor_storage_bound) << "]";
     output << " [sequence verification " << status(capability.sequence_verified) << "]";
