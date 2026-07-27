@@ -21,6 +21,88 @@ struct InsertedCleanupOperation {
     bool cleanup_calls_enabled = false;
 };
 
+struct ComputedCleanupCallOperands {
+    std::string data_pointer_name;
+    std::string capacity_name;
+    std::string element_size_bytes;
+};
+
+auto trim(std::string_view value) -> std::string_view {
+    while (!value.empty() && value.front() == ' ') {
+        value.remove_prefix(1);
+    }
+    while (!value.empty() && value.back() == ' ') {
+        value.remove_suffix(1);
+    }
+    return value;
+}
+
+auto operation_prefix_for_cleanup_resume(std::string_view operation_name) -> std::string {
+    auto const suffix = std::string_view {".cleanup.resume"};
+    if (operation_name.ends_with(suffix)) {
+        return std::string {operation_name.substr(0, operation_name.size() - suffix.size())};
+    }
+    return std::string {operation_name};
+}
+
+auto scalar_llvm_type_size_bytes(std::string_view llvm_type) -> std::optional<std::size_t> {
+    if (llvm_type == "i1" || llvm_type == "i8") {
+        return 1;
+    }
+    if (llvm_type == "i16") {
+        return 2;
+    }
+    if (llvm_type == "i32" || llvm_type == "float") {
+        return 4;
+    }
+    if (llvm_type == "i64" || llvm_type == "double" || llvm_type == "ptr") {
+        return 8;
+    }
+    return std::nullopt;
+}
+
+auto collect_computed_cleanup_call_operands(
+    std::string_view ir_text,
+    InsertedCleanupOperation const& resumption
+) -> ComputedCleanupCallOperands {
+    auto operands = ComputedCleanupCallOperands {};
+    auto const operation_prefix = operation_prefix_for_cleanup_resume(resumption.operation_name);
+    auto const data_prefix = "  %" + operation_prefix + ".data = extractvalue ";
+    auto const capacity_prefix = "  %" + operation_prefix + ".capacity = extractvalue ";
+    auto const cleanup_capacity_prefix = "  %" + operation_prefix + ".cleanup.capacity = extractvalue ";
+    auto const item_load_prefix = "  %" + operation_prefix + ".item = load ";
+    auto input = std::istringstream {std::string {ir_text}};
+    auto line = std::string {};
+    while (std::getline(input, line)) {
+        if (operands.data_pointer_name.empty() && line.starts_with(data_prefix) &&
+            line.ends_with(", 0")) {
+            operands.data_pointer_name = "%" + operation_prefix + ".data";
+            continue;
+        }
+        if (operands.capacity_name.empty() &&
+            (line.starts_with(capacity_prefix) || line.starts_with(cleanup_capacity_prefix)) &&
+            line.ends_with(", 2")) {
+            auto const equals_position = line.find(" = ");
+            if (equals_position != std::string::npos) {
+                operands.capacity_name = std::string {trim(std::string_view {line}.substr(2, equals_position - 2))};
+            }
+            continue;
+        }
+        if (operands.element_size_bytes.empty() && line.starts_with(item_load_prefix)) {
+            auto const type_start = item_load_prefix.size();
+            auto const comma_position = line.find(",", type_start);
+            if (comma_position == std::string::npos) {
+                continue;
+            }
+            auto const llvm_type = trim(std::string_view {line}.substr(type_start, comma_position - type_start));
+            if (auto size = scalar_llvm_type_size_bytes(llvm_type)) {
+                operands.element_size_bytes = std::to_string(*size);
+            }
+        }
+    }
+    return operands;
+}
+
 auto parse_inserted_cleanup_operation(
     std::string_view line,
     std::string_view prefix
@@ -137,7 +219,8 @@ auto format_computed_cleanup_call_emission_gate(
 
 auto format_computed_cleanup_call_plan(
     InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption
+    InsertedCleanupOperation const& resumption,
+    ComputedCleanupCallOperands const& operands
 ) -> std::string {
     auto const state_verified =
         acquisition.target_owner_name == resumption.source_owner_name &&
@@ -150,9 +233,21 @@ auto format_computed_cleanup_call_plan(
     output << " cleanup-operation " << resumption.operation_name << ".call";
     output << " after-resume-operation " << resumption.operation_name;
     output << " owner " << resumption.target_owner_name;
+    if (!operands.data_pointer_name.empty()) {
+        output << " data " << operands.data_pointer_name;
+    }
+    if (!operands.element_size_bytes.empty()) {
+        output << " element-size " << operands.element_size_bytes;
+    }
+    if (!operands.capacity_name.empty()) {
+        output << " capacity " << operands.capacity_name;
+    }
     output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
     output << (cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
-    output << " [descriptor cleanup operands pending]";
+    output << (operands.data_pointer_name.empty() ? " [data operand pending]" : " [data operand proven]");
+    output << (operands.element_size_bytes.empty() ? " [element-size operand pending]" :
+        " [element-size operand proven]");
+    output << (operands.capacity_name.empty() ? " [capacity operand pending]" : " [capacity operand proven]");
     output << " [cleanup call disabled]";
     output << " snippets 1 (inserted IR)";
     return output.str();
@@ -284,7 +379,11 @@ auto format_computed_cleanup_call_plan_report(std::string_view ir_text)
     -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     for (auto const& [acquisition, resumption] : collect_verified_inserted_cleanup_state_pairs(ir_text)) {
-        report.push_back(format_computed_cleanup_call_plan(acquisition, resumption));
+        report.push_back(format_computed_cleanup_call_plan(
+            acquisition,
+            resumption,
+            collect_computed_cleanup_call_operands(ir_text, resumption)
+        ));
     }
     return report;
 }

@@ -67,9 +67,9 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_call_emission_g
 inline constexpr std::string_view computed_dynamic_array_cleanup_call_plan_report =
     "computed DynamicArray for cleanup call plan planned "
     "cleanup-operation items.computed_for.0.cleanup.resume.call "
-    "after-resume-operation items.computed_for.0.cleanup.resume owner items "
-    "[inserted state verified] [cleanup calls disabled] [descriptor cleanup operands pending] "
-    "[cleanup call disabled] snippets 1 (inserted IR)";
+    "after-resume-operation items.computed_for.0.cleanup.resume owner items data %items.computed_for.0.data "
+    "element-size 4 [inserted state verified] [cleanup calls disabled] [data operand proven] "
+    "[element-size operand proven] [capacity operand pending] [cleanup call disabled] snippets 1 (inserted IR)";
 
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "

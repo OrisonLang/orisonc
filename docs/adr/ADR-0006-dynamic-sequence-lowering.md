@@ -145,6 +145,9 @@ representation.
 - Verified computed dynamic-array cleanup-call gates now also surface a disabled cleanup-call plan. The plan records
   the post-resumption cleanup operation seam and remains blocked on descriptor cleanup operands before any real
   cleanup call, deallocation, or element drop can be emitted.
+- The disabled computed dynamic-array cleanup-call plan now derives available descriptor cleanup operands from inserted
+  IR. It can prove the data pointer and scalar element-size operands for lowered computed loops while keeping capacity
+  pending and cleanup-call emission disabled.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.
