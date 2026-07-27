@@ -1061,12 +1061,15 @@ int main() {
     assert(proven_computed_loop_exit_cleanup.source_type_name == "DynamicArray<UInt32>");
     assert(proven_computed_loop_exit_cleanup.element_source_type_name == "UInt32");
     assert(proven_computed_loop_exit_cleanup.exit_block_name == "items.computed_for.exit");
+    assert(proven_computed_loop_exit_cleanup.loop_entry_cleanup_owner_name == "items.loop.entry");
     assert(proven_computed_loop_exit_cleanup.loop_exit_cleanup_owner_name == "items");
+    assert(proven_computed_loop_exit_cleanup.cleanup_resumption_operation_name == "items.computed_for.cleanup.resume");
     assert(proven_computed_loop_exit_cleanup.rendered_ir.size() == 2);
     assert(proven_computed_loop_exit_cleanup.rendered_ir[0] == "items.computed_for.exit:\n");
     assert(
         proven_computed_loop_exit_cleanup.rendered_ir[1] ==
-        "  ; cleanup ownership resumes with items\n"
+        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
+        "items.loop.entry to items (disabled)\n"
     );
     assert(proven_computed_loop_exit_cleanup.exit_block_planned);
     assert(proven_computed_loop_exit_cleanup.cleanup_resumption_planned);
@@ -1113,7 +1116,8 @@ int main() {
     assert(proven_computed_production_emission_gate.rendered_ir[14] == "items.computed_for.exit:\n");
     assert(
         proven_computed_production_emission_gate.rendered_ir[15] ==
-        "  ; cleanup ownership resumes with items\n"
+        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
+        "items.loop.entry to items (disabled)\n"
     );
     assert(proven_computed_production_emission_gate.production_sequence_render_planned);
     assert(!proven_computed_production_emission_gate.production_emission_enabled);

@@ -1514,6 +1514,7 @@ auto plan_computed_dynamic_array_iterable_loop_exit_cleanup(
     auto const& cleanup_sequence_plan =
         loop_control_plan.descriptor_render_plan.cleanup_sequence_plan;
     plan.exit_block_name = loop_control_plan.exit_block_name;
+    plan.loop_entry_cleanup_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name;
     plan.loop_exit_cleanup_owner_name = cleanup_sequence_plan.loop_exit_cleanup_owner_name;
     plan.cleanup_sequence_enabled = false;
     plan.render_enabled = false;
@@ -1547,15 +1548,20 @@ auto plan_computed_dynamic_array_iterable_loop_exit_cleanup(
             break;
     }
 
-    if (plan.exit_block_name.empty() || plan.loop_exit_cleanup_owner_name.empty() ||
+    if (plan.exit_block_name.empty() || plan.loop_entry_cleanup_owner_name.empty() ||
+        plan.loop_exit_cleanup_owner_name.empty() ||
         !cleanup_sequence_plan.function_cleanup_resumes_after_loop) {
         plan.kind = ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_render_sequence_unplanned;
         return plan;
     }
 
+    auto const operation_base_name = computed_dynamic_array_for_base_name(plan.cleanup_owner_name, state);
+    plan.cleanup_resumption_operation_name = operation_base_name + ".cleanup.resume";
     plan.rendered_ir.push_back(plan.exit_block_name + ":\n");
     plan.rendered_ir.push_back(
-        "  ; cleanup ownership resumes with " + plan.loop_exit_cleanup_owner_name + "\n"
+        "  ; cleanup resumption operation " + plan.cleanup_resumption_operation_name +
+        " transfers " + plan.loop_entry_cleanup_owner_name + " to " +
+        plan.loop_exit_cleanup_owner_name + " (disabled)\n"
     );
     plan.exit_block_planned = true;
     plan.cleanup_resumption_planned = true;
@@ -1615,9 +1621,17 @@ auto computed_dynamic_array_iterable_loop_exit_cleanup_plan_report(
         output += " exit ";
         output += plan.exit_block_name;
     }
+    if (!plan.loop_entry_cleanup_owner_name.empty()) {
+        output += " from ";
+        output += plan.loop_entry_cleanup_owner_name;
+    }
     if (!plan.loop_exit_cleanup_owner_name.empty()) {
-        output += " resumes ";
+        output += " to ";
         output += plan.loop_exit_cleanup_owner_name;
+    }
+    if (!plan.cleanup_resumption_operation_name.empty()) {
+        output += " operation ";
+        output += plan.cleanup_resumption_operation_name;
     }
     output += plan.exit_block_planned ? " [exit block planned]" : " [exit block blocked]";
     output += plan.cleanup_resumption_planned ? " [cleanup resumes]" : " [cleanup blocked]";

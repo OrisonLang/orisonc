@@ -2223,7 +2223,12 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_loop_exit_cleanup.source_type_name == "DynamicArray<UInt32>");
     assert(computed_local_same_owner_loop_exit_cleanup.element_source_type_name == "UInt32");
     assert(computed_local_same_owner_loop_exit_cleanup.exit_block_name == "items.computed_for.exit");
+    assert(computed_local_same_owner_loop_exit_cleanup.loop_entry_cleanup_owner_name == "items.loop.entry");
     assert(computed_local_same_owner_loop_exit_cleanup.loop_exit_cleanup_owner_name == "items");
+    assert(
+        computed_local_same_owner_loop_exit_cleanup.cleanup_resumption_operation_name ==
+        "items.computed_for.cleanup.resume"
+    );
     assert(computed_local_same_owner_loop_exit_cleanup.rendered_ir.size() == 2);
     auto computed_local_same_owner_loop_exit_cleanup_report =
         computed_local_same_owner_for.computed_dynamic_array_for_loop_exit_cleanup_report();
@@ -2239,7 +2244,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir[1] ==
-        "  ; cleanup ownership resumes with items\n"
+        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
+        "items.loop.entry to items (disabled)\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gates.size() == 1);
     auto const& computed_local_same_owner_production_gate =
@@ -2275,7 +2281,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[15] ==
-        "  ; cleanup ownership resumes with items\n"
+        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
+        "items.loop.entry to items (disabled)\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
     auto const& computed_local_same_owner_sequence =
@@ -2301,7 +2308,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_sequence.rendered_ir[14] == "items.computed_for.exit:\n");
     assert(
         computed_local_same_owner_sequence.rendered_ir[15] ==
-        "  ; cleanup ownership resumes with items\n"
+        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
+        "items.loop.entry to items (disabled)\n"
     );
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir.size() == 16);
     assert(
@@ -2318,7 +2326,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[15] ==
-        "  ; cleanup ownership resumes with items\n"
+        "  ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
+        "items.loop.entry to items (disabled)\n"
     );
     auto computed_local_same_owner_metadata_without_comment_emission = lower_source_metadata(
         path,
@@ -2370,7 +2379,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_metadata_with_comment_emission.ir_text.find(
-            ";   ; cleanup ownership resumes with items\n"
+            ";   ; cleanup resumption operation items.computed_for.cleanup.resume transfers "
+            "items.loop.entry to items (disabled)\n"
         ) != std::string::npos
     );
     auto computed_local_same_owner_lowered_for = lower_source(
@@ -2397,6 +2407,12 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.0.continue:\n") != std::string::npos);
     assert(computed_local_same_owner_lowered_for.ir_text.find("items.computed_for.0.exit:\n") != std::string::npos);
+    assert(
+        computed_local_same_owner_lowered_for.ir_text.find(
+            "  ; cleanup resumption operation items.computed_for.0.cleanup.resume transfers "
+            "items.loop.entry to items (disabled)\n"
+        ) != std::string::npos
+    );
     auto computed_descriptor_position =
         computed_local_same_owner_lowered_for.ir_text.find("%items.computed_for.0.descriptor");
     auto computed_body_position =

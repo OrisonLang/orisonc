@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-26: computed owned `DynamicArray<T>` loop-exit cleanup now renders a named disabled cleanup-resumption
+  operation, preserving audit visibility of the loop-owner-to-function-owner transition without enabling cleanup calls.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` production-emission gates now report and require explicit loop
   cleanup-ownership plus function cleanup-resumption readiness before test-only executable insertion.
 - 2026-07-26: computed owned `DynamicArray<T>` `for` executable test-only lowering now uniquifies emitted internal

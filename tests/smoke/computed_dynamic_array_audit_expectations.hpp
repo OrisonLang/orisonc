@@ -38,7 +38,8 @@ inline constexpr std::string_view computed_dynamic_array_loop_render_sequence_re
 
 inline constexpr std::string_view computed_dynamic_array_loop_exit_cleanup_report =
     "computed DynamicArray for loop exit cleanup function sum_words line 6 source DynamicArray<UInt32> "
-    "element UInt32 owner items exit items.computed_for.exit resumes items snippets 2 (metadata only)";
+    "element UInt32 owner items exit items.computed_for.exit from items.loop.entry to items "
+    "operation items.computed_for.cleanup.resume snippets 2 (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "
@@ -96,7 +97,8 @@ inline constexpr std::string_view computed_dynamic_array_loop_render_sequence_pl
 inline constexpr std::string_view computed_dynamic_array_loop_exit_cleanup_plan =
     "computed DynamicArray loop exit cleanup plan loop exit cleanup planned source "
     "DynamicArray<UInt32> element UInt32 owner items exit items.computed_for.exit "
-    "resumes items [exit block planned] [cleanup resumes] [cleanup sequence disabled] "
+    "from items.loop.entry to items operation items.computed_for.cleanup.resume "
+    "[exit block planned] [cleanup resumes] [cleanup sequence disabled] "
     "[render disabled] (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_plan =

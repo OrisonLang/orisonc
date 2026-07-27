@@ -1164,7 +1164,8 @@ auto collect_test_only_computed_dynamic_array_for_loop_exit_cleanups(
             if (plan.kind ==
                     ComputedDynamicArrayIterableLoopExitCleanupPlanKind::loop_exit_cleanup_planned &&
                 plan.exit_block_planned &&
-                plan.cleanup_resumption_planned) {
+                plan.cleanup_resumption_planned &&
+                !plan.cleanup_resumption_operation_name.empty()) {
                 cleanups.push_back(ComputedDynamicArrayForLoopExitCleanupMetadata {
                     .enclosing_function_name = std::string {enclosing_function_name},
                     .source_line = statement.line,
@@ -1172,7 +1173,9 @@ auto collect_test_only_computed_dynamic_array_for_loop_exit_cleanups(
                     .source_type_name = plan.source_type_name,
                     .element_source_type_name = plan.element_source_type_name,
                     .exit_block_name = plan.exit_block_name,
+                    .loop_entry_cleanup_owner_name = plan.loop_entry_cleanup_owner_name,
                     .loop_exit_cleanup_owner_name = plan.loop_exit_cleanup_owner_name,
+                    .cleanup_resumption_operation_name = plan.cleanup_resumption_operation_name,
                     .rendered_ir = plan.rendered_ir,
                 });
             }
@@ -1675,7 +1678,9 @@ auto format_computed_dynamic_array_for_loop_exit_cleanup_metadata(
         metadata.cleanup_owner_name
     );
     append_if_present(output, "exit", metadata.exit_block_name);
-    append_if_present(output, "resumes", metadata.loop_exit_cleanup_owner_name);
+    append_if_present(output, "from", metadata.loop_entry_cleanup_owner_name);
+    append_if_present(output, "to", metadata.loop_exit_cleanup_owner_name);
+    append_if_present(output, "operation", metadata.cleanup_resumption_operation_name);
     output << " snippets " << metadata.rendered_ir.size();
     output << " (metadata only)";
     return output.str();

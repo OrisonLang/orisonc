@@ -324,7 +324,9 @@ struct ComputedDynamicArrayIterableLoopExitCleanupPlan {
     std::string element_source_type_name;
     std::string cleanup_owner_name;
     std::string exit_block_name;
+    std::string loop_entry_cleanup_owner_name;
     std::string loop_exit_cleanup_owner_name;
+    std::string cleanup_resumption_operation_name;
     std::vector<std::string> rendered_ir;
     bool exit_block_planned = false;
     bool cleanup_resumption_planned = false;
