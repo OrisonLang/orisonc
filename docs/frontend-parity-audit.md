@@ -1755,3 +1755,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-25: local same-owner computed owned `DynamicArray<T>` ternary iterables now pin the positive metadata-only
   proof path: a locally constructed descriptor reports ownership join ok and cleanup owner proven, while computed
   owned `for` lowering remains disabled.
+- 2026-07-25: computed owned `DynamicArray<T>` cleanup-call insertion now has a final test-only seam. The lowered IR
+  receives `__orison_dynamic_array_deallocate` only when computed lowering, cleanup-call authorization, and explicit
+  insertion are enabled together; default and authorization-only paths remain audit-only.

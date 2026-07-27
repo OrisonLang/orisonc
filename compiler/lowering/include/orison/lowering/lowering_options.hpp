@@ -60,6 +60,7 @@ struct LlvmIrEmissionOptions {
     bool test_only_emit_computed_dynamic_array_for_production_sequence_comments = false;
     bool test_only_enable_computed_dynamic_array_for_lowering = false;
     bool test_only_authorize_computed_dynamic_array_cleanup_calls = false;
+    bool test_only_insert_computed_dynamic_array_cleanup_calls = false;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
 

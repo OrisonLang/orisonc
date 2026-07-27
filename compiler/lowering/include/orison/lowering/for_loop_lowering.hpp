@@ -229,6 +229,28 @@ auto lower_sequence_for_statement(
                         context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
                 }
             );
+            if (
+                context.options.test_only_authorize_computed_dynamic_array_cleanup_calls &&
+                context.options.test_only_insert_computed_dynamic_array_cleanup_calls
+            ) {
+                auto const element_size_bytes =
+                    lowered_type_size_bytes(element_type->type, context.lowering);
+                if (element_size_bytes.has_value()) {
+                    auto cleanup_call_plan = DynamicArrayConstructionPlan {
+                        .owner_name = cleanup_sequence_plan.cleanup_owner_name,
+                        .source_type_name = std::string {*source_type_name},
+                        .element_source_type_name = sequence->element_source_type_name,
+                        .element_llvm_type = element_type->type,
+                        .element_size_bytes = *element_size_bytes,
+                        .operation = DynamicArrayRuntimeOperation::deallocate,
+                    };
+                    output << emit_dynamic_array_deallocation_call(
+                        cleanup_call_plan,
+                        descriptor_plan.data_pointer_name,
+                        descriptor_plan.capacity_name
+                    );
+                }
+            }
             session.state.current_block = loop_exit_plan.exit_block_name;
             return StatementFlow::falls_through;
         }

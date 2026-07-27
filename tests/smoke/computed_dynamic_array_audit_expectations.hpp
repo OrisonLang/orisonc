@@ -103,6 +103,13 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_
     "cleanup-operation items.computed_for.0.cleanup.resume.call [inserted state verified] "
     "[cleanup operands proven] [cleanup calls authorized] [cleanup call insertion ready] (inserted IR)";
 
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_call_report =
+    "computed DynamicArray for inserted cleanup call "
+    "cleanup-operation items.computed_for.0.cleanup.resume.call "
+    "call \"call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, i64 4, "
+    "i64 %items.computed_for.0.capacity)\" [inserted state verified] [cleanup calls authorized] "
+    "(inserted IR)";
+
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "
     "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "

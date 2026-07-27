@@ -478,6 +478,50 @@ auto format_computed_cleanup_call_insertion_gate_report(std::string_view ir_text
     return report;
 }
 
+auto format_computed_cleanup_call_inserted(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption,
+    ComputedCleanupCallOperands const& operands
+) -> std::string {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for inserted cleanup call";
+    output << " cleanup-operation " << resumption.operation_name << ".call";
+    output << " call \"call void @__orison_dynamic_array_deallocate(ptr ";
+    output << operands.data_pointer_name;
+    output << ", i64 " << operands.element_size_bytes;
+    output << ", i64 " << operands.capacity_name << ")\"";
+    output << " [inserted state verified]";
+    output << (acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled ?
+        " [cleanup calls authorized]" : " [cleanup calls unauthorized]");
+    output << " (inserted IR)";
+    return output.str();
+}
+
+auto format_computed_cleanup_call_inserted_report(std::string_view ir_text)
+    -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    for (auto const& [acquisition, resumption] : collect_verified_inserted_cleanup_state_pairs(ir_text)) {
+        auto const operands = collect_computed_cleanup_call_operands(ir_text, resumption);
+        if (
+            operands.data_pointer_name.empty() ||
+            operands.element_size_bytes.empty() ||
+            operands.capacity_name.empty()
+        ) {
+            continue;
+        }
+        auto call_text = std::ostringstream {};
+        call_text << "  call void @__orison_dynamic_array_deallocate(ptr ";
+        call_text << operands.data_pointer_name;
+        call_text << ", i64 " << operands.element_size_bytes;
+        call_text << ", i64 " << operands.capacity_name << ")\n";
+        if (ir_text.find(call_text.str()) == std::string_view::npos) {
+            continue;
+        }
+        report.push_back(format_computed_cleanup_call_inserted(acquisition, resumption, operands));
+    }
+    return report;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -532,6 +576,8 @@ void populate_lowering_emission_reports(
         format_computed_cleanup_call_render_report(result.ir_text);
     result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
         format_computed_cleanup_call_insertion_gate_report(result.ir_text);
+    result.computed_dynamic_array_for_inserted_cleanup_call_report =
+        format_computed_cleanup_call_inserted_report(result.ir_text);
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =

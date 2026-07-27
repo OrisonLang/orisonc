@@ -94,6 +94,8 @@ auto build_lowering_emission_options(
         options.test_only_enable_computed_dynamic_array_for_lowering;
     emission_options.test_only_authorize_computed_dynamic_array_cleanup_calls =
         options.test_only_authorize_computed_dynamic_array_cleanup_calls;
+    emission_options.test_only_insert_computed_dynamic_array_cleanup_calls =
+        options.test_only_insert_computed_dynamic_array_cleanup_calls;
     emission_options.enable_dynamic_array_descriptor_cleanup_planning =
         dynamic_array_descriptor_cleanup_planning_enabled(options);
     emission_options.enable_dynamic_array_parameter_descriptor_audit_bindings =

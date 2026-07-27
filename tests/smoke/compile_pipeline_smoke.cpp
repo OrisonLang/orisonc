@@ -1005,6 +1005,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_inserted_cleanup_call_report.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_emission_gate_report.size() == 1
     );
     assert(
@@ -1127,6 +1131,10 @@ auto main() -> int {
         smoke::computed_dynamic_array_cleanup_call_insertion_gate_report
     );
     assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_call_report.empty()
+    );
+    assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
             "from items to items.loop.entry [cleanup calls disabled]\n"
@@ -1220,6 +1228,45 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
         smoke::computed_dynamic_array_cleanup_call_insertion_gate_ready_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_report.empty()
+    );
+    auto computed_dynamic_array_local_same_owner_inserted_cleanup_for = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
+            .test_only_insert_computed_dynamic_array_cleanup_calls = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_inserted_cleanup_for.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
+            "i64 4, i64 %items.computed_for.0.capacity)\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_insertion_gate_ready_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_report.front() ==
+        smoke::computed_dynamic_array_inserted_cleanup_call_report
     );
     auto computed_dynamic_array_local_same_owner_two_loops_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_two_loops.or";

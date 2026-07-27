@@ -59,6 +59,7 @@ struct CompilePipelineOptions {
     bool test_only_emit_computed_dynamic_array_for_production_sequence_comments = false;
     bool test_only_enable_computed_dynamic_array_for_lowering = false;
     bool test_only_authorize_computed_dynamic_array_cleanup_calls = false;
+    bool test_only_insert_computed_dynamic_array_cleanup_calls = false;
     bool dynamic_array_local_lowering_enabled = true;
     bool dynamic_array_parameter_lowering_enabled = true;
     bool dynamic_array_production_signature_lowering_enabled = false;
@@ -107,6 +108,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_plan_report;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_render_report;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_insertion_gate_report;
+    std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_call_report;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_report;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_report;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_module_ir;

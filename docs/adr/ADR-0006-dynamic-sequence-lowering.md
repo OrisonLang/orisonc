@@ -688,6 +688,10 @@ representation.
   storage inspectability without claiming a lowered function ABI.
 - Dynamic-array cleanup report commands now call a dedicated pipeline metadata collection path, backed by
   `LlvmIrEmitter::emit_metadata`, instead of passing a metadata-only flag through normal LLVM emission options.
+- Computed owned `DynamicArray<T>` cleanup-call insertion now has a final test-only seam: the rendered runtime
+  deallocation call is inserted only when computed lowering, cleanup-call authorization, and explicit insertion are all
+  enabled together. Default and production-disabled paths continue to stop at audit-ready state without mutating module
+  IR.
 
 ## Follow-up work
 
