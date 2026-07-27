@@ -142,6 +142,9 @@ representation.
   paired with cleanup calls disabled, while malformed inserted handoff sequences report blocked verifier lines.
 - Computed dynamic-array cleanup-call emission now has an internal verifier-driven gate. The gate requires verified
   inserted cleanup state handoffs and remains blocked while those handoffs declare cleanup calls disabled.
+- Verified computed dynamic-array cleanup-call gates now also surface a disabled cleanup-call plan. The plan records
+  the post-resumption cleanup operation seam and remains blocked on descriptor cleanup operands before any real
+  cleanup call, deallocation, or element drop can be emitted.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

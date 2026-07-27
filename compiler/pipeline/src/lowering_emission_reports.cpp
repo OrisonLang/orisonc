@@ -135,6 +135,29 @@ auto format_computed_cleanup_call_emission_gate(
     return output.str();
 }
 
+auto format_computed_cleanup_call_plan(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption
+) -> std::string {
+    auto const state_verified =
+        acquisition.target_owner_name == resumption.source_owner_name &&
+        acquisition.source_owner_name == resumption.target_owner_name;
+    auto const cleanup_calls_enabled =
+        acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled;
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for cleanup call plan ";
+    output << (state_verified ? "planned" : "blocked");
+    output << " cleanup-operation " << resumption.operation_name << ".call";
+    output << " after-resume-operation " << resumption.operation_name;
+    output << " owner " << resumption.target_owner_name;
+    output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
+    output << (cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    output << " [descriptor cleanup operands pending]";
+    output << " [cleanup call disabled]";
+    output << " snippets 1 (inserted IR)";
+    return output.str();
+}
+
 auto format_inserted_cleanup_transition_report(std::string_view ir_text) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     auto pending_acquisition = std::optional<InsertedCleanupOperation> {};
@@ -257,6 +280,15 @@ auto format_computed_cleanup_call_emission_gate_report(std::string_view ir_text)
     return report;
 }
 
+auto format_computed_cleanup_call_plan_report(std::string_view ir_text)
+    -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    for (auto const& [acquisition, resumption] : collect_verified_inserted_cleanup_state_pairs(ir_text)) {
+        report.push_back(format_computed_cleanup_call_plan(acquisition, resumption));
+    }
+    return report;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -305,6 +337,8 @@ void populate_lowering_emission_reports(
         format_inserted_cleanup_state_verification_report(result.ir_text);
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
         format_computed_cleanup_call_emission_gate_report(result.ir_text);
+    result.computed_dynamic_array_for_cleanup_call_plan_report =
+        format_computed_cleanup_call_plan_report(result.ir_text);
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =

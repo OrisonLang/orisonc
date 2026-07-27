@@ -993,6 +993,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_call_plan_report.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_emission_gate_report.size() == 1
     );
     assert(
@@ -1081,6 +1085,15 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.front() ==
         smoke::computed_dynamic_array_cleanup_call_emission_gate_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
@@ -1176,6 +1189,21 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.back().find(
                 "[cleanup call emission blocked]"
+            ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_report.size() == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_plan_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_report.back().find(
+                "items.computed_for.1.cleanup.resume.call"
             ) != std::string::npos
     );
     assert(
