@@ -253,6 +253,40 @@ auto format_computed_cleanup_call_plan(
     return output.str();
 }
 
+auto format_computed_cleanup_call_render(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption,
+    ComputedCleanupCallOperands const& operands
+) -> std::string {
+    auto const state_verified =
+        acquisition.target_owner_name == resumption.source_owner_name &&
+        acquisition.source_owner_name == resumption.target_owner_name;
+    auto const operands_proven =
+        !operands.data_pointer_name.empty() &&
+        !operands.element_size_bytes.empty() &&
+        !operands.capacity_name.empty();
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for cleanup call render ";
+    output << (state_verified && operands_proven ? "rendered" : "blocked");
+    output << " cleanup-operation " << resumption.operation_name << ".call";
+    if (operands_proven) {
+        output << " call \"call void @__orison_dynamic_array_deallocate(ptr ";
+        output << operands.data_pointer_name;
+        output << ", i64 " << operands.element_size_bytes;
+        output << ", i64 " << operands.capacity_name << ")\"";
+    }
+    output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
+    output << (operands.data_pointer_name.empty() ? " [data operand pending]" : " [data operand proven]");
+    output << (operands.element_size_bytes.empty() ? " [element-size operand pending]" :
+        " [element-size operand proven]");
+    output << (operands.capacity_name.empty() ? " [capacity operand pending]" : " [capacity operand proven]");
+    output << " [render disabled]";
+    output << " [module IR unchanged]";
+    output << " snippets " << (state_verified && operands_proven ? 1 : 0);
+    output << " (inserted IR)";
+    return output.str();
+}
+
 auto format_inserted_cleanup_transition_report(std::string_view ir_text) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     auto pending_acquisition = std::optional<InsertedCleanupOperation> {};
@@ -388,6 +422,19 @@ auto format_computed_cleanup_call_plan_report(std::string_view ir_text)
     return report;
 }
 
+auto format_computed_cleanup_call_render_report(std::string_view ir_text)
+    -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    for (auto const& [acquisition, resumption] : collect_verified_inserted_cleanup_state_pairs(ir_text)) {
+        report.push_back(format_computed_cleanup_call_render(
+            acquisition,
+            resumption,
+            collect_computed_cleanup_call_operands(ir_text, resumption)
+        ));
+    }
+    return report;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -438,6 +485,8 @@ void populate_lowering_emission_reports(
         format_computed_cleanup_call_emission_gate_report(result.ir_text);
     result.computed_dynamic_array_for_cleanup_call_plan_report =
         format_computed_cleanup_call_plan_report(result.ir_text);
+    result.computed_dynamic_array_for_cleanup_call_render_report =
+        format_computed_cleanup_call_render_report(result.ir_text);
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =

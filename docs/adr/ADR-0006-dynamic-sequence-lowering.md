@@ -150,6 +150,9 @@ representation.
   projection is added.
 - Computed dynamic-array descriptor rendering now also projects capacity for proven computed loops. Cleanup-call plans
   can prove data pointer, scalar element size, and capacity operands while cleanup-call emission remains disabled.
+- Computed dynamic-array cleanup-call rendering now formats the exact disabled
+  `__orison_dynamic_array_deallocate(ptr, i64, i64)` call from proven operands. The rendered call remains report-only
+  and is not inserted into module IR.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.
