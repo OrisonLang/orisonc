@@ -287,6 +287,34 @@ auto format_computed_cleanup_call_render(
     return output.str();
 }
 
+auto format_computed_cleanup_call_insertion_gate(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption,
+    ComputedCleanupCallOperands const& operands
+) -> std::string {
+    auto const state_verified =
+        acquisition.target_owner_name == resumption.source_owner_name &&
+        acquisition.source_owner_name == resumption.target_owner_name;
+    auto const operands_proven =
+        !operands.data_pointer_name.empty() &&
+        !operands.element_size_bytes.empty() &&
+        !operands.capacity_name.empty();
+    auto const cleanup_calls_authorized =
+        acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled;
+    auto const insertion_ready =
+        state_verified && operands_proven && cleanup_calls_authorized;
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray for cleanup call insertion gate ";
+    output << (insertion_ready ? "ready" : "blocked");
+    output << " cleanup-operation " << resumption.operation_name << ".call";
+    output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
+    output << (operands_proven ? " [cleanup operands proven]" : " [cleanup operands blocked]");
+    output << (cleanup_calls_authorized ? " [cleanup calls authorized]" : " [cleanup calls unauthorized]");
+    output << (insertion_ready ? " [cleanup call insertion ready]" : " [cleanup call insertion blocked]");
+    output << " (inserted IR)";
+    return output.str();
+}
+
 auto format_inserted_cleanup_transition_report(std::string_view ir_text) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     auto pending_acquisition = std::optional<InsertedCleanupOperation> {};
@@ -435,6 +463,19 @@ auto format_computed_cleanup_call_render_report(std::string_view ir_text)
     return report;
 }
 
+auto format_computed_cleanup_call_insertion_gate_report(std::string_view ir_text)
+    -> std::vector<std::string> {
+    auto report = std::vector<std::string> {};
+    for (auto const& [acquisition, resumption] : collect_verified_inserted_cleanup_state_pairs(ir_text)) {
+        report.push_back(format_computed_cleanup_call_insertion_gate(
+            acquisition,
+            resumption,
+            collect_computed_cleanup_call_operands(ir_text, resumption)
+        ));
+    }
+    return report;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -487,6 +528,8 @@ void populate_lowering_emission_reports(
         format_computed_cleanup_call_plan_report(result.ir_text);
     result.computed_dynamic_array_for_cleanup_call_render_report =
         format_computed_cleanup_call_render_report(result.ir_text);
+    result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
+        format_computed_cleanup_call_insertion_gate_report(result.ir_text);
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =

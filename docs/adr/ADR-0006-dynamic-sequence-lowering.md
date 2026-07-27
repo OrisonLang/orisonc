@@ -153,6 +153,8 @@ representation.
 - Computed dynamic-array cleanup-call rendering now formats the exact disabled
   `__orison_dynamic_array_deallocate(ptr, i64, i64)` call from proven operands. The rendered call remains report-only
   and is not inserted into module IR.
+- Computed dynamic-array cleanup-call insertion now has an explicit gate. The gate requires verified inserted cleanup
+  state, proven cleanup operands, and cleanup-call authorization before any rendered cleanup call can enter module IR.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

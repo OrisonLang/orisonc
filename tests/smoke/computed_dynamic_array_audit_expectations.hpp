@@ -81,6 +81,11 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_call_render_rep
     "[element-size operand proven] [capacity operand proven] [render disabled] [module IR unchanged] "
     "snippets 1 (inserted IR)";
 
+inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_gate_report =
+    "computed DynamicArray for cleanup call insertion gate blocked "
+    "cleanup-operation items.computed_for.0.cleanup.resume.call [inserted state verified] "
+    "[cleanup operands proven] [cleanup calls unauthorized] [cleanup call insertion blocked] (inserted IR)";
+
 inline constexpr std::string_view computed_dynamic_array_production_emission_gate_report =
     "computed DynamicArray for production emission gate function sum_words line 6 "
     "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
