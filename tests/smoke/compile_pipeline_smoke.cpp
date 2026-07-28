@@ -2,6 +2,7 @@
 
 #include "computed_cleanup_proof_model.hpp"
 
+#include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/link/host_linker.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
@@ -187,10 +188,35 @@ void assert_computed_cleanup_proof_model_reusable_without_reports() {
     );
 }
 
+void assert_consumed_descriptor_finalization_readiness_typed() {
+    auto ready_plan = orison::lowering::plan_consumed_descriptor_finalization(
+        "items",
+        "%items.addr",
+        "items.computed_for.cleanup.resume"
+    );
+    auto ready_state = orison::lowering::plan_consumed_descriptor_finalization_readiness(ready_plan);
+    assert(ready_state.cleanup_owner_consumed);
+    assert(ready_state.descriptor_finalization_planned);
+    assert(ready_state.ready);
+    assert(orison::lowering::consumed_descriptor_finalization_plan_ready(ready_plan));
+
+    auto blocked_plan = orison::lowering::plan_consumed_descriptor_finalization(
+        "items",
+        "",
+        "items.computed_for.cleanup.resume"
+    );
+    auto blocked_state = orison::lowering::plan_consumed_descriptor_finalization_readiness(blocked_plan);
+    assert(blocked_state.cleanup_owner_consumed);
+    assert(!blocked_state.descriptor_finalization_planned);
+    assert(!blocked_state.ready);
+    assert(!orison::lowering::consumed_descriptor_finalization_plan_ready(blocked_plan));
+}
+
 }  // namespace
 
 auto main() -> int {
     assert_computed_cleanup_proof_model_reusable_without_reports();
+    assert_consumed_descriptor_finalization_readiness_typed();
 
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root =

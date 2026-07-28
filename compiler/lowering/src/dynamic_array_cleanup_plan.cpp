@@ -814,7 +814,8 @@ auto emit_bound_dynamic_array_parameter_cleanup_plans(
             plan.sequence_plan.obligation.cleanup_symbol_name
         );
         finalization_plan.function_symbol_name = session.enclosing_symbol_name;
-        if (consumed_descriptor_finalization_plan_ready(finalization_plan)) {
+        auto const finalization_readiness = plan_consumed_descriptor_finalization_readiness(finalization_plan);
+        if (finalization_readiness.ready) {
             session.state.consumed_descriptor_finalization_plans.push_back(finalization_plan);
             output << emit_dynamic_array_descriptor_finalization(
                 finalization_plan.descriptor_storage_name
@@ -865,7 +866,8 @@ auto emit_local_dynamic_array_cleanups(
             plan.sequence_plan.obligation.cleanup_symbol_name
         );
         finalization_plan.function_symbol_name = session.enclosing_symbol_name;
-        if (consumed_descriptor_finalization_plan_ready(finalization_plan)) {
+        auto const finalization_readiness = plan_consumed_descriptor_finalization_readiness(finalization_plan);
+        if (finalization_readiness.ready) {
             session.state.consumed_descriptor_finalization_plans.push_back(finalization_plan);
             output << emit_dynamic_array_descriptor_finalization(
                 finalization_plan.descriptor_storage_name

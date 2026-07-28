@@ -253,7 +253,9 @@ auto lower_sequence_for_statement(
                         descriptor_plan.descriptor_storage_name,
                         loop_exit_plan.cleanup_resumption_operation_name
                     );
-                    if (consumed_descriptor_finalization_plan_ready(finalization_plan)) {
+                    auto const finalization_readiness =
+                        plan_consumed_descriptor_finalization_readiness(finalization_plan);
+                    if (finalization_readiness.ready) {
                         output << emit_dynamic_array_descriptor_finalization(
                             finalization_plan.descriptor_storage_name
                         );

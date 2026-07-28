@@ -1395,7 +1395,8 @@ auto collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(
                 descriptor_plan.descriptor_storage_name,
                 gate.loop_exit_cleanup_plan.cleanup_resumption_operation_name
             );
-            if (!consumed_descriptor_finalization_plan_ready(finalization_plan)) {
+            auto const finalization_readiness = plan_consumed_descriptor_finalization_readiness(finalization_plan);
+            if (!finalization_readiness.ready) {
                 return;
             }
             descriptors.push_back(ComputedDynamicArrayForConsumedCleanupDescriptorMetadata {

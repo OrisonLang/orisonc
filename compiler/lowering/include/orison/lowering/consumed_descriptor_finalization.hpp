@@ -14,11 +14,21 @@ struct ConsumedDescriptorFinalizationPlan {
     bool descriptor_finalization_planned = false;
 };
 
+struct ConsumedDescriptorFinalizationReadiness {
+    bool cleanup_owner_consumed = false;
+    bool descriptor_finalization_planned = false;
+    bool ready = false;
+};
+
 auto plan_consumed_descriptor_finalization(
     std::string_view cleanup_owner_name,
     std::string_view descriptor_storage_name,
     std::string_view cleanup_operation_name
 ) -> ConsumedDescriptorFinalizationPlan;
+
+auto plan_consumed_descriptor_finalization_readiness(
+    ConsumedDescriptorFinalizationPlan const& plan
+) -> ConsumedDescriptorFinalizationReadiness;
 
 auto consumed_descriptor_finalization_plan_ready(
     ConsumedDescriptorFinalizationPlan const& plan

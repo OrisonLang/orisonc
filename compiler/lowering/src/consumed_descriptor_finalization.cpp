@@ -19,15 +19,27 @@ auto plan_consumed_descriptor_finalization(
     return plan;
 }
 
+auto plan_consumed_descriptor_finalization_readiness(
+    ConsumedDescriptorFinalizationPlan const& plan
+) -> ConsumedDescriptorFinalizationReadiness {
+    auto readiness = ConsumedDescriptorFinalizationReadiness {
+        .cleanup_owner_consumed = plan.cleanup_owner_consumed,
+        .descriptor_finalization_planned = plan.descriptor_finalization_planned,
+    };
+    readiness.ready = readiness.cleanup_owner_consumed && readiness.descriptor_finalization_planned;
+    return readiness;
+}
+
 auto consumed_descriptor_finalization_plan_ready(
     ConsumedDescriptorFinalizationPlan const& plan
 ) -> bool {
-    return plan.cleanup_owner_consumed && plan.descriptor_finalization_planned;
+    return plan_consumed_descriptor_finalization_readiness(plan).ready;
 }
 
 auto format_consumed_descriptor_finalization_plan(
     ConsumedDescriptorFinalizationPlan const& plan
 ) -> std::string {
+    auto const readiness = plan_consumed_descriptor_finalization_readiness(plan);
     auto output = std::ostringstream {};
     output << "consumed descriptor finalization plan";
     if (!plan.function_symbol_name.empty()) {
@@ -42,8 +54,8 @@ auto format_consumed_descriptor_finalization_plan(
     if (!plan.cleanup_operation_name.empty()) {
         output << " cleanup-operation " << plan.cleanup_operation_name;
     }
-    output << (plan.cleanup_owner_consumed ? " [cleanup owner consumed]" : " [cleanup owner unproven]");
-    output << (plan.descriptor_finalization_planned ? " [descriptor finalization planned]" :
+    output << (readiness.cleanup_owner_consumed ? " [cleanup owner consumed]" : " [cleanup owner unproven]");
+    output << (readiness.descriptor_finalization_planned ? " [descriptor finalization planned]" :
         " [descriptor finalization blocked]");
     output << " (metadata only)";
     return output.str();
