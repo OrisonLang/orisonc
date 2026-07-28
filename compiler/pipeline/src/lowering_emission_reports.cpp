@@ -8,6 +8,28 @@
 
 namespace orison::pipeline {
 
+namespace {
+
+auto build_computed_dynamic_array_for_production_sequence_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForProductionSequenceState {
+    auto state = ComputedDynamicArrayForProductionSequenceState {
+        .module_comments_emitted = !emission.test_only_computed_dynamic_array_for_production_sequence_module_ir.empty(),
+        .sequence_count = emission.test_only_computed_dynamic_array_for_production_sequences.size(),
+        .module_comment_line_count =
+            emission.test_only_computed_dynamic_array_for_production_sequence_module_ir.size(),
+    };
+    state.sequence_metadata_available = state.sequence_count > 0;
+    state.cleanup_owner_names.reserve(emission.test_only_computed_dynamic_array_for_production_sequences.size());
+    for (auto const& sequence : emission.test_only_computed_dynamic_array_for_production_sequences) {
+        state.cleanup_owner_names.push_back(sequence.cleanup_owner_name);
+        state.rendered_ir_snippet_count += sequence.rendered_ir.size();
+    }
+    return state;
+}
+
+}  // namespace
+
 void populate_lowering_emission_reports(
     CompilePipelineResult& result,
     lowering::LlvmIrEmissionResult&& emission,
@@ -133,6 +155,8 @@ void populate_lowering_emission_reports(
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =
         emission.computed_dynamic_array_for_production_sequence_report();
+    result.computed_dynamic_array_for_production_sequence_state =
+        build_computed_dynamic_array_for_production_sequence_state(emission);
     result.test_only_computed_dynamic_array_for_production_sequence_module_ir =
         std::move(emission.test_only_computed_dynamic_array_for_production_sequence_module_ir);
     result.dynamic_array_cleanup_production_readiness =

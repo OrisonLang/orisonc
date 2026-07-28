@@ -37,6 +37,15 @@ struct DynamicArrayCleanupProductionReadiness {
     bool production_cleanup_emission_enabled = false;
 };
 
+struct ComputedDynamicArrayForProductionSequenceState {
+    std::vector<std::string> cleanup_owner_names;
+    bool sequence_metadata_available = false;
+    bool module_comments_emitted = false;
+    std::size_t sequence_count = 0;
+    std::size_t rendered_ir_snippet_count = 0;
+    std::size_t module_comment_line_count = 0;
+};
+
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool;
@@ -149,6 +158,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_report;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_report;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_report;
+    ComputedDynamicArrayForProductionSequenceState computed_dynamic_array_for_production_sequence_state;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_module_ir;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
     std::vector<std::string> dynamic_array_cleanup_production_readiness_report;

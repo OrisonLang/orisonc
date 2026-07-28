@@ -1195,6 +1195,34 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.front() ==
         smoke::computed_dynamic_array_production_sequence_report
     );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_sequence_state.sequence_metadata_available
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_sequence_state.module_comments_emitted
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_sequence_state.sequence_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_sequence_state.rendered_ir_snippet_count == 17
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_sequence_state.module_comment_line_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_sequence_state.cleanup_owner_names.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_sequence_state.cleanup_owner_names.front() == "items"
+    );
     auto dynamic_array_metadata_collector =
         orison::pipeline::DynamicArrayCleanupMetadataCollector {pipeline};
     auto computed_dynamic_array_local_same_owner_metadata_without_comments =
@@ -1210,6 +1238,18 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_metadata_without_comments
             .test_only_computed_dynamic_array_for_production_sequence_module_ir.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_without_comments
+            .computed_dynamic_array_for_production_sequence_state.sequence_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_without_comments
+            .computed_dynamic_array_for_production_sequence_state.rendered_ir_snippet_count == 17
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_metadata_without_comments
+            .computed_dynamic_array_for_production_sequence_state.module_comments_emitted
     );
     assert(
         computed_dynamic_array_local_same_owner_metadata_without_comments.ir_text.find(
@@ -1229,6 +1269,22 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments
             .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 18
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_with_comments
+            .computed_dynamic_array_for_production_sequence_state.sequence_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_with_comments
+            .computed_dynamic_array_for_production_sequence_state.rendered_ir_snippet_count == 17
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_with_comments
+            .computed_dynamic_array_for_production_sequence_state.module_comments_emitted
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_with_comments
+            .computed_dynamic_array_for_production_sequence_state.module_comment_line_count == 18
     );
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments.ir_text.find(

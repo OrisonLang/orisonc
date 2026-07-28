@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed dynamic-array production-sequence metadata now populates typed pipeline state with sequence,
+  snippet, comment-emission, and cleanup-owner counts so downstream consumers do not need to parse audit strings.
 - 2026-07-28: dynamic-array cleanup production readiness now consumes typed cleanup availability state populated from
   semantic and lowering metadata instead of deriving availability from formatted report vectors.
 - 2026-07-28: computed cleanup-call report inputs now live as structured proof events, with the private report
