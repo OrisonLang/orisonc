@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: consumed descriptor finalization now also populates typed pipeline state with computed descriptor,
+  emitted finalization, ready, and blocked plan counts plus owner/descriptor names.
 - 2026-07-28: consumed descriptor finalization now exposes typed readiness state, and cleanup emission plus computed
   descriptor metadata collection branch on that state instead of a boolean-only finalization helper.
 - 2026-07-28: test-only computed dynamic-array loop insertion now uses shared typed lowering predicates for production

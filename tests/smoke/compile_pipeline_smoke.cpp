@@ -1201,6 +1201,16 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .consumed_descriptor_finalization_state.computed_descriptor_plan_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 0
+    );
+    assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.ready_plan_count == 0);
+    assert(!computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.all_ready);
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.empty()
     );
     assert(
@@ -1541,6 +1551,25 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for
             .consumed_descriptor_finalization_plan_report.front() ==
         smoke::local_sum_words_consumed_descriptor_finalization_plan_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .consumed_descriptor_finalization_state.computed_descriptor_plan_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 1
+    );
+    assert(computed_dynamic_array_local_same_owner_lowered_for.consumed_descriptor_finalization_state.ready_plan_count == 1);
+    assert(computed_dynamic_array_local_same_owner_lowered_for.consumed_descriptor_finalization_state.blocked_plan_count == 0);
+    assert(computed_dynamic_array_local_same_owner_lowered_for.consumed_descriptor_finalization_state.all_ready);
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .consumed_descriptor_finalization_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .consumed_descriptor_finalization_state.descriptor_storage_names.front() == "%items.addr"
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -1920,6 +1949,23 @@ auto main() -> int {
             .consumed_descriptor_finalization_plan_report[1] ==
         smoke::local_sum_words_consumed_descriptor_finalization_plan_report
     );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_state.computed_descriptor_plan_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_state.ready_plan_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_state.blocked_plan_count == 0
+    );
+    assert(computed_dynamic_array_local_same_owner_inserted_cleanup_for.consumed_descriptor_finalization_state.all_ready);
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1

@@ -60,6 +60,42 @@ auto build_computed_dynamic_array_for_production_emission_gate_state(
     return state;
 }
 
+auto record_consumed_descriptor_finalization_plan(
+    ConsumedDescriptorFinalizationState& state,
+    lowering::ConsumedDescriptorFinalizationPlan const& plan
+) {
+    auto const readiness = lowering::plan_consumed_descriptor_finalization_readiness(plan);
+    if (readiness.ready) {
+        ++state.ready_plan_count;
+    } else {
+        ++state.blocked_plan_count;
+    }
+    if (!plan.cleanup_owner_name.empty()) {
+        state.cleanup_owner_names.push_back(plan.cleanup_owner_name);
+    }
+    if (!plan.descriptor_storage_name.empty()) {
+        state.descriptor_storage_names.push_back(plan.descriptor_storage_name);
+    }
+}
+
+auto build_consumed_descriptor_finalization_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ConsumedDescriptorFinalizationState {
+    auto state = ConsumedDescriptorFinalizationState {
+        .computed_descriptor_plan_count =
+            emission.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors.size(),
+        .emitted_finalization_plan_count = emission.consumed_descriptor_finalization_plans.size(),
+    };
+    for (auto const& descriptor : emission.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors) {
+        record_consumed_descriptor_finalization_plan(state, descriptor.finalization_plan);
+    }
+    for (auto const& plan : emission.consumed_descriptor_finalization_plans) {
+        record_consumed_descriptor_finalization_plan(state, plan);
+    }
+    state.all_ready = state.ready_plan_count > 0 && state.blocked_plan_count == 0;
+    return state;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -179,6 +215,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.inserted_cleanup_call_report;
     result.consumed_descriptor_finalization_plan_report =
         emission.consumed_descriptor_finalization_plan_report();
+    result.consumed_descriptor_finalization_state =
+        build_consumed_descriptor_finalization_state(emission);
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report =
         emission.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report();
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =

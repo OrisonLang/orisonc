@@ -69,6 +69,16 @@ struct ComputedDynamicArrayForProductionReadiness {
     bool production_emission_enabled = false;
 };
 
+struct ConsumedDescriptorFinalizationState {
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> descriptor_storage_names;
+    bool all_ready = false;
+    std::size_t computed_descriptor_plan_count = 0;
+    std::size_t emitted_finalization_plan_count = 0;
+    std::size_t ready_plan_count = 0;
+    std::size_t blocked_plan_count = 0;
+};
+
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool;
@@ -186,6 +196,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_insertion_gate_report;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_call_report;
     std::vector<std::string> consumed_descriptor_finalization_plan_report;
+    ConsumedDescriptorFinalizationState consumed_descriptor_finalization_state;
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_model_report;
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_report;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_report;
