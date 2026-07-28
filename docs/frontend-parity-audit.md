@@ -1831,3 +1831,5 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: executable computed cleanup handoffs are now retained as structured metadata, so inserted cleanup
   transition/state verification and downstream cleanup-call reports prefer recorded handoff operations before falling
   back to inserted IR comments.
+- 2026-07-27: computed cleanup-call report formatting now shares one analyzed cleanup-call operand set per verified
+  inserted cleanup pair, with structured-vs-IR-fallback provenance counts pinned in pipeline smoke coverage.

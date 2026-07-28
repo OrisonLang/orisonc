@@ -220,6 +220,9 @@ representation.
   to IR text matching.
 - Executable computed cleanup handoffs are now retained as structured metadata. Pipeline inserted cleanup-transition
   and state-verification reports prefer recorded handoff operations before falling back to inserted IR comments.
+- Computed cleanup-call report formatting now shares one analyzed operand set per verified inserted cleanup pair.
+  Pipeline results expose structured-vs-IR-fallback operand provenance counts so the normal path can prove it avoids
+  operand scraping while the suppression seam still covers fallback behavior.
 
 ## Consequences
 

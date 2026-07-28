@@ -26,12 +26,20 @@ struct ComputedCleanupCallOperands {
     std::string data_pointer_name;
     std::string capacity_name;
     std::string element_size_bytes;
+    bool from_metadata = false;
 };
 
 struct InsertedCleanupStateAnalysis {
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> verified_pairs;
     std::vector<std::string> transition_report;
     std::vector<std::string> verification_report;
+};
+
+struct VerifiedComputedCleanupCall {
+    InsertedCleanupOperation acquisition;
+    InsertedCleanupOperation resumption;
+    ComputedCleanupCallOperands operands;
+    lowering::ComputedDynamicArrayCleanupCallOperands const* metadata = nullptr;
 };
 
 auto trim(std::string_view value) -> std::string_view {
@@ -122,6 +130,7 @@ auto computed_cleanup_call_operands_from_metadata(
             .data_pointer_name = operands.data_pointer_name,
             .capacity_name = operands.capacity_name,
             .element_size_bytes = std::to_string(operands.element_size_bytes),
+            .from_metadata = true,
         };
     }
     return std::nullopt;
@@ -461,6 +470,24 @@ auto analyze_inserted_cleanup_state_handoffs(
     return analyze_inserted_cleanup_state_handoffs_from_ir(ir_text);
 }
 
+auto collect_verified_computed_cleanup_calls(
+    std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
+    std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
+) -> std::vector<VerifiedComputedCleanupCall> {
+    auto calls = std::vector<VerifiedComputedCleanupCall> {};
+    calls.reserve(verified_pairs.size());
+    for (auto const& [acquisition, resumption] : verified_pairs) {
+        calls.push_back(VerifiedComputedCleanupCall {
+            .acquisition = acquisition,
+            .resumption = resumption,
+            .operands = collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption),
+            .metadata = computed_cleanup_call_metadata_for_resumption(operand_metadata, resumption),
+        });
+    }
+    return calls;
+}
+
 auto format_computed_cleanup_call_emission_gate_report(
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
 ) -> std::vector<std::string> {
@@ -472,48 +499,42 @@ auto format_computed_cleanup_call_emission_gate_report(
 }
 
 auto format_computed_cleanup_call_plan_report(
-    std::string_view ir_text,
-    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
-    std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
+    std::vector<VerifiedComputedCleanupCall> const& verified_calls
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
-    for (auto const& [acquisition, resumption] : verified_pairs) {
+    for (auto const& call : verified_calls) {
         report.push_back(format_computed_cleanup_call_plan(
-            acquisition,
-            resumption,
-            collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption)
+            call.acquisition,
+            call.resumption,
+            call.operands
         ));
     }
     return report;
 }
 
 auto format_computed_cleanup_call_render_report(
-    std::string_view ir_text,
-    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
-    std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
+    std::vector<VerifiedComputedCleanupCall> const& verified_calls
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
-    for (auto const& [acquisition, resumption] : verified_pairs) {
+    for (auto const& call : verified_calls) {
         report.push_back(format_computed_cleanup_call_render(
-            acquisition,
-            resumption,
-            collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption)
+            call.acquisition,
+            call.resumption,
+            call.operands
         ));
     }
     return report;
 }
 
 auto format_computed_cleanup_call_insertion_gate_report(
-    std::string_view ir_text,
-    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
-    std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
+    std::vector<VerifiedComputedCleanupCall> const& verified_calls
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
-    for (auto const& [acquisition, resumption] : verified_pairs) {
+    for (auto const& call : verified_calls) {
         report.push_back(format_computed_cleanup_call_insertion_gate(
-            acquisition,
-            resumption,
-            collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption)
+            call.acquisition,
+            call.resumption,
+            call.operands
         ));
     }
     return report;
@@ -540,12 +561,11 @@ auto format_computed_cleanup_call_inserted(
 
 auto format_computed_cleanup_call_inserted_report(
     std::string_view ir_text,
-    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
-    std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
+    std::vector<VerifiedComputedCleanupCall> const& verified_calls
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
-    for (auto const& [acquisition, resumption] : verified_pairs) {
-        auto const operands = collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption);
+    for (auto const& call : verified_calls) {
+        auto const& operands = call.operands;
         if (
             operands.data_pointer_name.empty() ||
             operands.element_size_bytes.empty() ||
@@ -553,10 +573,13 @@ auto format_computed_cleanup_call_inserted_report(
         ) {
             continue;
         }
-        if (auto const* metadata = computed_cleanup_call_metadata_for_resumption(operand_metadata, resumption);
-            metadata != nullptr) {
-            if (metadata->cleanup_call_inserted) {
-                report.push_back(format_computed_cleanup_call_inserted(acquisition, resumption, operands));
+        if (call.metadata != nullptr) {
+            if (call.metadata->cleanup_call_inserted) {
+                report.push_back(format_computed_cleanup_call_inserted(
+                    call.acquisition,
+                    call.resumption,
+                    operands
+                ));
             }
             continue;
         }
@@ -568,7 +591,7 @@ auto format_computed_cleanup_call_inserted_report(
         if (ir_text.find(call_text.str()) == std::string_view::npos) {
             continue;
         }
-        report.push_back(format_computed_cleanup_call_inserted(acquisition, resumption, operands));
+        report.push_back(format_computed_cleanup_call_inserted(call.acquisition, call.resumption, operands));
     }
     return report;
 }
@@ -590,12 +613,11 @@ auto format_computed_consumed_cleanup_descriptor(
 
 auto format_computed_consumed_cleanup_descriptor_report(
     std::string_view ir_text,
-    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
-    std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
+    std::vector<VerifiedComputedCleanupCall> const& verified_calls
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
-    for (auto const& [acquisition, resumption] : verified_pairs) {
-        auto const operands = collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption);
+    for (auto const& call : verified_calls) {
+        auto const& operands = call.operands;
         if (
             operands.data_pointer_name.empty() ||
             operands.element_size_bytes.empty() ||
@@ -603,18 +625,16 @@ auto format_computed_consumed_cleanup_descriptor_report(
         ) {
             continue;
         }
-        if (auto const* metadata = computed_cleanup_call_metadata_for_resumption(operand_metadata, resumption);
-            metadata != nullptr) {
+        if (call.metadata != nullptr) {
             if (
-                metadata->cleanup_call_inserted &&
-                metadata->descriptor_finalized &&
-                !metadata->descriptor_storage_name.empty()
+                call.metadata->cleanup_call_inserted &&
+                call.metadata->descriptor_finalized &&
+                !call.metadata->descriptor_storage_name.empty()
             ) {
-                (void)acquisition;
                 report.push_back(
                     format_computed_consumed_cleanup_descriptor(
-                        resumption,
-                        metadata->descriptor_storage_name
+                        call.resumption,
+                        call.metadata->descriptor_storage_name
                     )
                 );
             }
@@ -629,7 +649,7 @@ auto format_computed_consumed_cleanup_descriptor_report(
         if (call_position == std::string_view::npos) {
             continue;
         }
-        auto const descriptor_storage_name = "%" + resumption.target_owner_name + ".addr";
+        auto const descriptor_storage_name = "%" + call.resumption.target_owner_name + ".addr";
         auto clear_text = std::ostringstream {};
         clear_text << "  store { ptr, i64, i64 } zeroinitializer, ptr ";
         clear_text << descriptor_storage_name << "\n";
@@ -637,9 +657,8 @@ auto format_computed_consumed_cleanup_descriptor_report(
         if (clear_position == std::string_view::npos) {
             continue;
         }
-        (void)acquisition;
         report.push_back(
-            format_computed_consumed_cleanup_descriptor(resumption, descriptor_storage_name)
+            format_computed_consumed_cleanup_descriptor(call.resumption, descriptor_storage_name)
         );
     }
     return report;
@@ -656,6 +675,11 @@ void populate_lowering_emission_reports(
     auto const inserted_cleanup_state = analyze_inserted_cleanup_state_handoffs(
         result.ir_text,
         emission.computed_dynamic_array_inserted_cleanup_handoffs
+    );
+    auto const verified_cleanup_calls = collect_verified_computed_cleanup_calls(
+        result.ir_text,
+        emission.computed_dynamic_array_cleanup_call_operands,
+        inserted_cleanup_state.verified_pairs
     );
     result.dynamic_array_construction_plan_report =
         emission.dynamic_array_construction_plan_report();
@@ -724,6 +748,13 @@ void populate_lowering_emission_reports(
         emission.computed_dynamic_array_inserted_cleanup_handoffs.size();
     result.computed_dynamic_array_for_structured_cleanup_operand_count =
         emission.computed_dynamic_array_cleanup_call_operands.size();
+    for (auto const& call : verified_cleanup_calls) {
+        if (call.operands.from_metadata) {
+            ++result.computed_dynamic_array_for_structured_cleanup_operand_use_count;
+        } else {
+            ++result.computed_dynamic_array_for_ir_cleanup_operand_fallback_count;
+        }
+    }
     for (auto const& operands : emission.computed_dynamic_array_cleanup_call_operands) {
         if (operands.cleanup_call_inserted) {
             ++result.computed_dynamic_array_for_structured_inserted_cleanup_call_count;
@@ -737,28 +768,15 @@ void populate_lowering_emission_reports(
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
         format_computed_cleanup_call_emission_gate_report(inserted_cleanup_state.verified_pairs);
     result.computed_dynamic_array_for_cleanup_call_plan_report =
-        format_computed_cleanup_call_plan_report(
-            result.ir_text,
-            emission.computed_dynamic_array_cleanup_call_operands,
-            inserted_cleanup_state.verified_pairs
-        );
+        format_computed_cleanup_call_plan_report(verified_cleanup_calls);
     result.computed_dynamic_array_for_cleanup_call_render_report =
-        format_computed_cleanup_call_render_report(
-            result.ir_text,
-            emission.computed_dynamic_array_cleanup_call_operands,
-            inserted_cleanup_state.verified_pairs
-        );
+        format_computed_cleanup_call_render_report(verified_cleanup_calls);
     result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
-        format_computed_cleanup_call_insertion_gate_report(
-            result.ir_text,
-            emission.computed_dynamic_array_cleanup_call_operands,
-            inserted_cleanup_state.verified_pairs
-        );
+        format_computed_cleanup_call_insertion_gate_report(verified_cleanup_calls);
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
         format_computed_cleanup_call_inserted_report(
             result.ir_text,
-            emission.computed_dynamic_array_cleanup_call_operands,
-            inserted_cleanup_state.verified_pairs
+            verified_cleanup_calls
         );
     result.consumed_descriptor_finalization_plan_report =
         emission.consumed_descriptor_finalization_plan_report();
@@ -767,8 +785,7 @@ void populate_lowering_emission_reports(
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
         format_computed_consumed_cleanup_descriptor_report(
             result.ir_text,
-            emission.computed_dynamic_array_cleanup_call_operands,
-            inserted_cleanup_state.verified_pairs
+            verified_cleanup_calls
         );
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();

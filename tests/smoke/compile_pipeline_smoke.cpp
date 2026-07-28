@@ -1140,6 +1140,14 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_structured_inserted_cleanup_call_count == 0
     );
     assert(
@@ -1258,6 +1266,14 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
             .computed_dynamic_array_for_structured_inserted_cleanup_call_count == 0
     );
     assert(
@@ -1338,6 +1354,14 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_structured_cleanup_operand_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
@@ -1466,6 +1490,14 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_structured_cleanup_operand_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
