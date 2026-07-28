@@ -1,5 +1,7 @@
 #include "computed_dynamic_array_audit_expectations.hpp"
 
+#include "computed_cleanup_proof_model.hpp"
+
 #include "orison/lowering/llvm_object_emitter.hpp"
 #include "orison/link/host_linker.hpp"
 #include "orison/pipeline/compile_pipeline.hpp"
@@ -67,9 +69,58 @@ auto line_index_containing(
     return lines.size();
 }
 
+void assert_computed_cleanup_proof_model_reusable_without_reports() {
+    auto handoffs = std::vector<orison::lowering::ComputedDynamicArrayCleanupStateHandoff> {
+        {
+            .kind = orison::lowering::ComputedDynamicArrayCleanupStateHandoffKind::acquire,
+            .operation_name = "items.computed_for.cleanup.acquire",
+            .source_owner_name = "items",
+            .target_owner_name = "items.loop.entry",
+            .cleanup_calls_enabled = true,
+        },
+        {
+            .kind = orison::lowering::ComputedDynamicArrayCleanupStateHandoffKind::resume,
+            .operation_name = "items.computed_for.cleanup.resume",
+            .source_owner_name = "items.loop.entry",
+            .target_owner_name = "items",
+            .cleanup_calls_enabled = true,
+        },
+    };
+    auto operands = std::vector<orison::lowering::ComputedDynamicArrayCleanupCallOperands> {
+        {
+            .cleanup_operation_name = "items.computed_for.cleanup.resume",
+            .data_pointer_name = "%items.data",
+            .element_size_bytes = 4,
+            .capacity_name = "%items.capacity",
+            .descriptor_storage_name = "%items.addr",
+            .cleanup_call_inserted = true,
+            .descriptor_finalized = true,
+        },
+    };
+
+    auto proof_model = orison::pipeline::build_computed_cleanup_proof_model("", handoffs, operands);
+    assert(proof_model.inserted_cleanup_state.from_metadata);
+    assert(proof_model.inserted_cleanup_state.verified_pairs.size() == 1);
+    assert(proof_model.verified_cleanup_calls.size() == 1);
+
+    auto const& call = proof_model.verified_cleanup_calls.front();
+    assert(orison::pipeline::computed_cleanup_call_operands_complete(call.operands));
+    assert(call.operands.from_metadata);
+    assert(orison::pipeline::computed_cleanup_call_inserted_by_metadata(call));
+    assert(!orison::pipeline::computed_cleanup_call_inserted_by_ir("", call));
+    assert(orison::pipeline::computed_consumed_cleanup_descriptor_by_metadata(call));
+    assert(!orison::pipeline::computed_consumed_cleanup_descriptor_by_ir("", call).has_value());
+    assert(
+        orison::pipeline::rendered_computed_cleanup_call_text(call.operands) ==
+        "  call void @__orison_dynamic_array_deallocate(ptr %items.data, i64 4, i64 %items.capacity)\n"
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
+    assert_computed_cleanup_proof_model_reusable_without_reports();
+
     auto original_temp_root = std::filesystem::temp_directory_path();
     auto smoke_temp_root =
         original_temp_root / ("orison_pipeline_smoke_" + std::to_string(static_cast<long long>(::getpid())));

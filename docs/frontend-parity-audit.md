@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-27: pipeline smoke coverage now consumes the reusable computed cleanup-proof model directly, proving the
+  typed proof bundle can be used outside lowering-emission report formatting.
 - 2026-07-26: computed owned `DynamicArray<T>` cleanup-call emission now has an internal verifier-driven gate that
   remains blocked while inserted cleanup state handoffs declare cleanup calls disabled.
 - 2026-07-26: verified computed owned `DynamicArray<T>` cleanup-call gates now expose a disabled cleanup-call plan that

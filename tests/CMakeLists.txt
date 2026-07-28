@@ -1284,6 +1284,11 @@ target_link_libraries(orison_pipeline_smoke
         orison_pipeline
 )
 
+target_include_directories(orison_pipeline_smoke
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/compiler/pipeline/src
+)
+
 target_compile_definitions(orison_pipeline_smoke
     PRIVATE
         ORISON_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
