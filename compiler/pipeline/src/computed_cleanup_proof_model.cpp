@@ -190,46 +190,53 @@ auto analyze_inserted_cleanup_state_handoff_operations(
     for (auto const& handoff : handoffs) {
         if (handoff.kind_name == "acquire") {
             if (pending_acquisition.has_value()) {
-                analysis.verification_report.push_back(format_inserted_cleanup_state_verification_blocked(
-                    "nested-acquire",
-                    *pending_acquisition
-                ));
+                analysis.verification_events.push_back(InsertedCleanupStateVerificationEvent {
+                    .kind = InsertedCleanupStateVerificationKind::blocked,
+                    .reason = "nested-acquire",
+                    .operation = *pending_acquisition,
+                });
             }
             pending_acquisition = handoff;
             continue;
         }
         if (handoff.kind_name == "resume") {
             if (!pending_acquisition.has_value()) {
-                analysis.verification_report.push_back(format_inserted_cleanup_state_verification_blocked(
-                    "resume-without-acquire",
-                    handoff
-                ));
+                analysis.verification_events.push_back(InsertedCleanupStateVerificationEvent {
+                    .kind = InsertedCleanupStateVerificationKind::blocked,
+                    .reason = "resume-without-acquire",
+                    .operation = handoff,
+                });
                 continue;
             }
             if (pending_acquisition->target_owner_name != handoff.source_owner_name ||
                 pending_acquisition->source_owner_name != handoff.target_owner_name) {
-                analysis.verification_report.push_back(format_inserted_cleanup_state_verification_blocked(
-                    "owner-mismatch",
-                    handoff
-                ));
+                analysis.verification_events.push_back(InsertedCleanupStateVerificationEvent {
+                    .kind = InsertedCleanupStateVerificationKind::blocked,
+                    .reason = "owner-mismatch",
+                    .operation = handoff,
+                });
                 pending_acquisition.reset();
                 continue;
             }
             analysis.verified_pairs.push_back({*pending_acquisition, handoff});
-            analysis.transition_report.push_back(
-                format_inserted_cleanup_transition(*pending_acquisition, handoff)
-            );
-            analysis.verification_report.push_back(
-                format_inserted_cleanup_state_verification(*pending_acquisition, handoff)
-            );
+            analysis.transition_events.push_back(InsertedCleanupTransitionEvent {
+                .acquisition = *pending_acquisition,
+                .resumption = handoff,
+            });
+            analysis.verification_events.push_back(InsertedCleanupStateVerificationEvent {
+                .kind = InsertedCleanupStateVerificationKind::paired,
+                .acquisition = *pending_acquisition,
+                .operation = handoff,
+            });
             pending_acquisition.reset();
         }
     }
     if (pending_acquisition.has_value()) {
-        analysis.verification_report.push_back(format_inserted_cleanup_state_verification_blocked(
-            "acquire-without-resume",
-            *pending_acquisition
-        ));
+        analysis.verification_events.push_back(InsertedCleanupStateVerificationEvent {
+            .kind = InsertedCleanupStateVerificationKind::blocked,
+            .reason = "acquire-without-resume",
+            .operation = *pending_acquisition,
+        });
     }
     return analysis;
 }

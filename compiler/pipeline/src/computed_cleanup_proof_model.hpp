@@ -29,10 +29,27 @@ struct ComputedCleanupCallOperands {
     bool from_metadata = false;
 };
 
+struct InsertedCleanupTransitionEvent {
+    InsertedCleanupOperation acquisition;
+    InsertedCleanupOperation resumption;
+};
+
+enum class InsertedCleanupStateVerificationKind {
+    paired,
+    blocked,
+};
+
+struct InsertedCleanupStateVerificationEvent {
+    InsertedCleanupStateVerificationKind kind = InsertedCleanupStateVerificationKind::blocked;
+    std::string reason;
+    std::optional<InsertedCleanupOperation> acquisition;
+    InsertedCleanupOperation operation;
+};
+
 struct InsertedCleanupStateAnalysis {
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> verified_pairs;
-    std::vector<std::string> transition_report;
-    std::vector<std::string> verification_report;
+    std::vector<InsertedCleanupTransitionEvent> transition_events;
+    std::vector<InsertedCleanupStateVerificationEvent> verification_events;
     bool from_metadata = false;
 };
 

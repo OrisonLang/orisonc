@@ -77,9 +77,9 @@ void populate_lowering_emission_reports(
     result.computed_dynamic_array_for_cleanup_transition_report =
         emission.computed_dynamic_array_for_cleanup_transition_report();
     result.computed_dynamic_array_for_inserted_cleanup_transition_report =
-        cleanup_proof_model.inserted_cleanup_state.transition_report;
+        cleanup_proof_model.reports.inserted_cleanup_transition_report;
     result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
-        cleanup_proof_model.inserted_cleanup_state.verification_report;
+        cleanup_proof_model.reports.inserted_cleanup_state_verification_report;
     result.computed_dynamic_array_for_cleanup_proof_model_count =
         cleanup_proof_model.summary.cleanup_proof_model_count;
     result.computed_dynamic_array_for_verified_inserted_cleanup_pair_count =

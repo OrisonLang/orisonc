@@ -156,25 +156,35 @@ auto format_computed_consumed_cleanup_descriptor(
 }  // namespace
 
 auto format_inserted_cleanup_transition(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption
+    InsertedCleanupTransitionEvent const& event
 ) -> std::string {
     auto output = std::ostringstream {};
     output << "computed DynamicArray for inserted cleanup transition";
-    output << " acquire-from " << acquisition.source_owner_name;
-    output << " acquire-to " << acquisition.target_owner_name;
-    output << " acquire-operation " << acquisition.operation_name;
-    output << " resume-from " << resumption.source_owner_name;
-    output << " resume-to " << resumption.target_owner_name;
-    output << " resume-operation " << resumption.operation_name;
+    output << " acquire-from " << event.acquisition.source_owner_name;
+    output << " acquire-to " << event.acquisition.target_owner_name;
+    output << " acquire-operation " << event.acquisition.operation_name;
+    output << " resume-from " << event.resumption.source_owner_name;
+    output << " resume-to " << event.resumption.target_owner_name;
+    output << " resume-operation " << event.resumption.operation_name;
     output << " (inserted IR)";
     return output.str();
 }
 
 auto format_inserted_cleanup_state_verification(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption
+    InsertedCleanupStateVerificationEvent const& event
 ) -> std::string {
+    if (event.kind == InsertedCleanupStateVerificationKind::blocked || !event.acquisition.has_value()) {
+        auto output = std::ostringstream {};
+        output << "computed DynamicArray for inserted cleanup state verification blocked";
+        output << " reason " << event.reason;
+        output << " operation " << event.operation.operation_name;
+        output << " from " << event.operation.source_owner_name;
+        output << " to " << event.operation.target_owner_name;
+        output << " (inserted IR)";
+        return output.str();
+    }
+    auto const& acquisition = *event.acquisition;
+    auto const& resumption = event.operation;
     auto output = std::ostringstream {};
     output << "computed DynamicArray for inserted cleanup state verification";
     output << " acquire-operation " << acquisition.operation_name;
@@ -190,24 +200,18 @@ auto format_inserted_cleanup_state_verification(
     return output.str();
 }
 
-auto format_inserted_cleanup_state_verification_blocked(
-    std::string_view reason,
-    InsertedCleanupOperation const& operation
-) -> std::string {
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for inserted cleanup state verification blocked";
-    output << " reason " << reason;
-    output << " operation " << operation.operation_name;
-    output << " from " << operation.source_owner_name;
-    output << " to " << operation.target_owner_name;
-    output << " (inserted IR)";
-    return output.str();
-}
-
 auto build_computed_cleanup_proof_report_bundle(
     ComputedCleanupProofModel const& model
 ) -> ComputedCleanupProofReportBundle {
     auto reports = ComputedCleanupProofReportBundle {};
+    for (auto const& event : model.inserted_cleanup_state.transition_events) {
+        reports.inserted_cleanup_transition_report.push_back(format_inserted_cleanup_transition(event));
+    }
+    for (auto const& event : model.inserted_cleanup_state.verification_events) {
+        reports.inserted_cleanup_state_verification_report.push_back(
+            format_inserted_cleanup_state_verification(event)
+        );
+    }
     for (auto const& [acquisition, resumption] : model.inserted_cleanup_state.verified_pairs) {
         reports.cleanup_call_emission_gate_report.push_back(
             format_computed_cleanup_call_emission_gate(acquisition, resumption)
