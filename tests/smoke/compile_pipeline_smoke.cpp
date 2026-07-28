@@ -1160,6 +1160,74 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.render_metadata_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.render_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.rendered_ir_snippet_count == 5
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.all_control_flow_names_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.enclosing_function_names.front() == "sum_words"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.source_type_names.front() ==
+        "DynamicArray<UInt32>"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.element_source_type_names.front() == "UInt32"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.condition_block_names.front() ==
+        "items.computed_for.condition"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.body_block_names.front() ==
+        "items.computed_for.body"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.continue_block_names.front() ==
+        "items.computed_for.continue"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.exit_block_names.front() ==
+        "items.computed_for.exit"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.index_names.front() ==
+        "%items.computed_for.index"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.next_index_names.front() ==
+        "%items.computed_for.next.index"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_control_render_state.bounds_check_names.front() ==
+        "%items.computed_for.more"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_element_address_render_report.size() == 1
     );
     assert(

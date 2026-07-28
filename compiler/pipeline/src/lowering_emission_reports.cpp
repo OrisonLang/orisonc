@@ -68,6 +68,52 @@ auto build_computed_dynamic_array_for_descriptor_render_state(
     return state;
 }
 
+auto build_computed_dynamic_array_for_loop_control_render_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForLoopControlRenderState {
+    auto const& renders = emission.test_only_computed_dynamic_array_for_loop_control_renders;
+    auto state = ComputedDynamicArrayForLoopControlRenderState {
+        .render_count = renders.size(),
+    };
+    state.render_metadata_available = state.render_count > 0;
+    state.all_control_flow_names_ready = state.render_metadata_available;
+    state.enclosing_function_names.reserve(renders.size());
+    state.cleanup_owner_names.reserve(renders.size());
+    state.source_type_names.reserve(renders.size());
+    state.element_source_type_names.reserve(renders.size());
+    state.condition_block_names.reserve(renders.size());
+    state.body_block_names.reserve(renders.size());
+    state.continue_block_names.reserve(renders.size());
+    state.exit_block_names.reserve(renders.size());
+    state.index_names.reserve(renders.size());
+    state.next_index_names.reserve(renders.size());
+    state.bounds_check_names.reserve(renders.size());
+    for (auto const& render : renders) {
+        state.enclosing_function_names.push_back(render.enclosing_function_name);
+        state.cleanup_owner_names.push_back(render.cleanup_owner_name);
+        state.source_type_names.push_back(render.source_type_name);
+        state.element_source_type_names.push_back(render.element_source_type_name);
+        state.condition_block_names.push_back(render.condition_block_name);
+        state.body_block_names.push_back(render.body_block_name);
+        state.continue_block_names.push_back(render.continue_block_name);
+        state.exit_block_names.push_back(render.exit_block_name);
+        state.index_names.push_back(render.index_name);
+        state.next_index_names.push_back(render.next_index_name);
+        state.bounds_check_names.push_back(render.bounds_check_name);
+        state.rendered_ir_snippet_count += render.rendered_ir.size();
+        state.all_control_flow_names_ready =
+            state.all_control_flow_names_ready &&
+            !render.condition_block_name.empty() &&
+            !render.body_block_name.empty() &&
+            !render.continue_block_name.empty() &&
+            !render.exit_block_name.empty() &&
+            !render.index_name.empty() &&
+            !render.next_index_name.empty() &&
+            !render.bounds_check_name.empty();
+    }
+    return state;
+}
+
 auto build_computed_dynamic_array_for_production_emission_gate_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionEmissionGateState {
@@ -436,6 +482,8 @@ void populate_lowering_emission_reports(
         build_computed_dynamic_array_for_descriptor_render_state(emission);
     result.computed_dynamic_array_for_loop_control_render_report =
         emission.computed_dynamic_array_for_loop_control_render_report();
+    result.computed_dynamic_array_for_loop_control_render_state =
+        build_computed_dynamic_array_for_loop_control_render_state(emission);
     result.computed_dynamic_array_for_element_address_render_report =
         emission.computed_dynamic_array_for_element_address_render_report();
     result.computed_dynamic_array_for_element_load_render_report =
