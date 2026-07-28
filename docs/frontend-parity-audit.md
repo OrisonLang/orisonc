@@ -1816,3 +1816,6 @@ This file tracks which source-language frontend slices are reflected in the curr
   from the pipeline result instead of parsing formatted cleanup capability report text.
 - 2026-07-27: dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from the pipeline result instead of scanning formatted report strings.
+- 2026-07-27: computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs
+  before transition, state-verification, cleanup-call gate, plan, render, insertion, and consumed-descriptor reports
+  are formatted.

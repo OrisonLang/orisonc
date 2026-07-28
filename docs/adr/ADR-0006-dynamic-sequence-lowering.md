@@ -207,6 +207,9 @@ representation.
   `CompilePipelineResult` rather than parsing formatted cleanup capability report text.
 - Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
+- Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the
+  downstream transition, state-verification, cleanup-call gate, plan, render, insertion, and consumed-descriptor
+  reports are formatted.
 
 ## Consequences
 

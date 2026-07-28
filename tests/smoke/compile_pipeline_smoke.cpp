@@ -1006,6 +1006,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.empty()
     );
     assert(
@@ -1117,6 +1121,10 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_inserted_cleanup_state_verification_report.front() ==
         smoke::computed_dynamic_array_inserted_cleanup_state_verification_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -1244,6 +1252,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 1
     );
     assert(
@@ -1349,6 +1361,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_inserted_cleanup_call_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
@@ -1582,6 +1598,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_inserted_cleanup_state_verification_report.size() == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
