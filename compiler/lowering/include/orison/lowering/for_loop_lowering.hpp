@@ -232,7 +232,8 @@ auto lower_sequence_for_statement(
             );
             auto const element_size_bytes =
                 lowered_type_size_bytes(element_type->type, context.lowering);
-            if (element_size_bytes.has_value()) {
+            if (element_size_bytes.has_value() &&
+                !context.options.test_only_suppress_computed_dynamic_array_cleanup_operand_metadata) {
                 session.state.computed_dynamic_array_cleanup_call_operands.push_back(
                     ComputedDynamicArrayCleanupCallOperands {
                         .cleanup_operation_name = loop_exit_plan.cleanup_resumption_operation_name,

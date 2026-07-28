@@ -1222,6 +1222,51 @@ auto main() -> int {
             "items.computed_for.0.exit:\n"
         ) != std::string::npos
     );
+    auto computed_dynamic_array_local_same_owner_operand_fallback_for = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_operand_fallback_for.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_structured_cleanup_operand_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_cleanup_call_plan_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_cleanup_call_plan_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_plan_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_cleanup_call_render_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_cleanup_call_render_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_render_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
+        smoke::computed_dynamic_array_cleanup_call_insertion_gate_report
+    );
     auto computed_dynamic_array_local_same_owner_authorized_cleanup_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {

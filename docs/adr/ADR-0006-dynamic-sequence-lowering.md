@@ -213,6 +213,8 @@ representation.
 - Executable computed dynamic-array `for` lowering now records structured cleanup-call operand metadata for the planned
   cleanup resumption. Pipeline cleanup-call reports prefer that metadata over IR instruction scraping when proving
   data pointer, element size, and capacity operands.
+- A test-only suppression seam covers the fallback path: when structured computed cleanup-call operand metadata is
+  absent, cleanup-call plan/render/insertion-gate reports can still degrade through the existing IR-derived operands.
 
 ## Consequences
 

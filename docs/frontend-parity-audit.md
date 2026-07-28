@@ -1822,3 +1822,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: executable computed dynamic-array `for` lowering now records structured cleanup-call operand metadata
   for the planned cleanup resumption, and pipeline cleanup-call reports prefer that metadata over IR instruction
   scraping when proving data pointer, element size, and capacity operands.
+- 2026-07-27: compile-pipeline smoke coverage now suppresses structured computed cleanup-call operand metadata through
+  an internal test seam and proves cleanup-call plan/render/insertion-gate reports still degrade through the IR-derived
+  fallback path.
