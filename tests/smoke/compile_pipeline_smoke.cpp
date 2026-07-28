@@ -1416,6 +1416,44 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.sequence_metadata_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.sequence_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.rendered_ir_snippet_count == 15
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.all_body_blocks_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.enclosing_function_names.front() == "sum_words"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.source_type_names.front() ==
+        "DynamicArray<UInt32>"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.element_source_type_names.front() == "UInt32"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_render_sequence_state.body_block_names.front() ==
+        "items.computed_for.body"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_loop_exit_cleanup_report.size() == 1
     );
     assert(

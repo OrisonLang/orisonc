@@ -222,6 +222,34 @@ auto build_computed_dynamic_array_for_loop_continue_render_state(
     return state;
 }
 
+auto build_computed_dynamic_array_for_loop_render_sequence_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForLoopRenderSequenceState {
+    auto const& sequences = emission.test_only_computed_dynamic_array_for_loop_render_sequences;
+    auto state = ComputedDynamicArrayForLoopRenderSequenceState {
+        .sequence_count = sequences.size(),
+    };
+    state.sequence_metadata_available = state.sequence_count > 0;
+    state.all_body_blocks_ready = state.sequence_metadata_available;
+    state.enclosing_function_names.reserve(sequences.size());
+    state.cleanup_owner_names.reserve(sequences.size());
+    state.source_type_names.reserve(sequences.size());
+    state.element_source_type_names.reserve(sequences.size());
+    state.body_block_names.reserve(sequences.size());
+    for (auto const& sequence : sequences) {
+        state.enclosing_function_names.push_back(sequence.enclosing_function_name);
+        state.cleanup_owner_names.push_back(sequence.cleanup_owner_name);
+        state.source_type_names.push_back(sequence.source_type_name);
+        state.element_source_type_names.push_back(sequence.element_source_type_name);
+        state.body_block_names.push_back(sequence.body_block_name);
+        state.rendered_ir_snippet_count += sequence.rendered_ir.size();
+        state.all_body_blocks_ready =
+            state.all_body_blocks_ready &&
+            !sequence.body_block_name.empty();
+    }
+    return state;
+}
+
 auto build_computed_dynamic_array_for_production_emission_gate_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionEmissionGateState {
@@ -606,6 +634,8 @@ void populate_lowering_emission_reports(
         build_computed_dynamic_array_for_loop_continue_render_state(emission);
     result.computed_dynamic_array_for_loop_render_sequence_report =
         emission.computed_dynamic_array_for_loop_render_sequence_report();
+    result.computed_dynamic_array_for_loop_render_sequence_state =
+        build_computed_dynamic_array_for_loop_render_sequence_state(emission);
     result.computed_dynamic_array_for_loop_exit_cleanup_report =
         emission.computed_dynamic_array_for_loop_exit_cleanup_report();
     result.computed_dynamic_array_for_cleanup_transition_report =
