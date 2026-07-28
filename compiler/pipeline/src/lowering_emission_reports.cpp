@@ -346,30 +346,6 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.inserted_cleanup_state_verification_report;
     result.computed_dynamic_array_for_cleanup_proof_summary_state =
         build_computed_cleanup_proof_summary_state(cleanup_proof_model);
-    result.computed_dynamic_array_for_cleanup_proof_model_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count;
-    result.computed_dynamic_array_for_verified_inserted_cleanup_pair_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count;
-    result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_count;
-    result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_use_count;
-    result.computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_handoff_fallback_count;
-    result.computed_dynamic_array_for_structured_cleanup_operand_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count;
-    result.computed_dynamic_array_for_structured_cleanup_operand_use_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_use_count;
-    result.computed_dynamic_array_for_ir_cleanup_operand_fallback_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.ir_cleanup_operand_fallback_count;
-    result.computed_dynamic_array_for_structured_inserted_cleanup_call_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_call_count;
-    result.computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.structured_consumed_cleanup_descriptor_count;
-    result.computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_call_fallback_count;
-    result.computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count =
-        result.computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count;
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
         cleanup_proof_model.reports.cleanup_call_emission_gate_report;
     result.computed_dynamic_array_for_cleanup_call_emission_gate_state =

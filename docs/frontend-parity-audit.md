@@ -33,10 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
-- 2026-07-28: downstream computed cleanup-proof smoke checks now consume the typed proof-summary state directly, with
-  legacy scalar counters retained only behind a compatibility parity helper.
-- 2026-07-28: computed cleanup-proof summary counters now populate a typed aggregate pipeline state, with legacy scalar
-  counter fields sourced from that state for compatibility.
+- 2026-07-28: computed cleanup-proof summary state is now the sole pipeline API for proof counters; the legacy scalar
+  counter fields and compatibility parity helper have been removed.
 - 2026-07-28: computed cleanup-call emission gates now populate typed pipeline state with gate counts,
   ready-vs-blocked counts, state-verification and cleanup-call enablement booleans, owners, and handoff operation names.
 - 2026-07-28: computed cleanup-call plan/render reports now populate typed pipeline state with plan/render counts,
