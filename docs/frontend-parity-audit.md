@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-27: computed cleanup proof report formatting now lives in a private companion module, keeping the core proof
+  model focused on typed state while preserving the prebuilt report bundle for pipeline consumers.
 - 2026-07-27: the computed cleanup-proof model now carries its cleanup-call report bundle, so pipeline report population
   copies prebuilt proof reports instead of assembling computed cleanup report inputs manually.
 - 2026-07-27: the computed cleanup-proof model now exposes aggregate summary counts, so pipeline report population

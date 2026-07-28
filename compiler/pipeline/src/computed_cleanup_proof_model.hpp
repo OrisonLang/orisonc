@@ -3,6 +3,8 @@
 #include "orison/lowering/computed_dynamic_array_cleanup_call.hpp"
 #include "orison/lowering/computed_dynamic_array_cleanup_handoff.hpp"
 
+#include "computed_cleanup_proof_reports.hpp"
+
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -79,15 +81,6 @@ struct ComputedCleanupProofSummary {
     std::size_t structured_consumed_cleanup_descriptor_count = 0;
     std::size_t ir_inserted_cleanup_call_fallback_count = 0;
     std::size_t ir_consumed_cleanup_descriptor_fallback_count = 0;
-};
-
-struct ComputedCleanupProofReportBundle {
-    std::vector<std::string> cleanup_call_emission_gate_report;
-    std::vector<std::string> cleanup_call_plan_report;
-    std::vector<std::string> cleanup_call_render_report;
-    std::vector<std::string> cleanup_call_insertion_gate_report;
-    std::vector<std::string> inserted_cleanup_call_report;
-    std::vector<std::string> consumed_cleanup_descriptor_report;
 };
 
 struct ComputedCleanupProofModel {
