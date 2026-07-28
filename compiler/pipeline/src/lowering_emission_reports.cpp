@@ -261,6 +261,38 @@ auto build_computed_cleanup_proof_summary_state(
     };
 }
 
+auto build_computed_inserted_cleanup_handoff_state(
+    ComputedCleanupProofModel const& proof_model
+) -> ComputedInsertedCleanupHandoffState {
+    auto state = ComputedInsertedCleanupHandoffState {
+        .from_metadata = proof_model.inserted_cleanup_state.from_metadata,
+        .transition_count = proof_model.inserted_cleanup_state.transition_events.size(),
+        .verification_count = proof_model.inserted_cleanup_state.verification_events.size(),
+    };
+    state.all_cleanup_calls_enabled = state.transition_count > 0;
+    state.cleanup_owner_names.reserve(proof_model.inserted_cleanup_state.transition_events.size());
+    state.acquire_operation_names.reserve(proof_model.inserted_cleanup_state.transition_events.size());
+    state.resume_operation_names.reserve(proof_model.inserted_cleanup_state.transition_events.size());
+    for (auto const& event : proof_model.inserted_cleanup_state.transition_events) {
+        state.cleanup_owner_names.push_back(event.resumption.target_owner_name);
+        state.acquire_operation_names.push_back(event.acquisition.operation_name);
+        state.resume_operation_names.push_back(event.resumption.operation_name);
+        state.all_cleanup_calls_enabled =
+            state.all_cleanup_calls_enabled &&
+            event.acquisition.cleanup_calls_enabled &&
+            event.resumption.cleanup_calls_enabled;
+    }
+    for (auto const& event : proof_model.inserted_cleanup_state.verification_events) {
+        if (event.kind == InsertedCleanupStateVerificationKind::paired) {
+            ++state.paired_count;
+        } else {
+            ++state.blocked_count;
+        }
+    }
+    state.all_paired = state.paired_count > 0 && state.blocked_count == 0;
+    return state;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -344,6 +376,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.inserted_cleanup_transition_report;
     result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
         cleanup_proof_model.reports.inserted_cleanup_state_verification_report;
+    result.computed_dynamic_array_for_inserted_cleanup_handoff_state =
+        build_computed_inserted_cleanup_handoff_state(cleanup_proof_model);
     result.computed_dynamic_array_for_cleanup_proof_summary_state =
         build_computed_cleanup_proof_summary_state(cleanup_proof_model);
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =

@@ -1165,6 +1165,18 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.transition_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.verification_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+             .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_paired
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 0
     );
     assert(
@@ -1493,6 +1505,48 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_inserted_cleanup_state_verification_report.front() ==
         smoke::computed_dynamic_array_inserted_cleanup_state_verification_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.transition_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.verification_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.paired_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.blocked_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.from_metadata
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_paired
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for
+             .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.acquire_operation_names.front() ==
+        "items.computed_for.0.cleanup.acquire"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.resume_operation_names.front() ==
+        "items.computed_for.0.cleanup.resume"
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -1903,6 +1957,34 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_inserted_cleanup_state_verification_report.front() ==
         smoke::computed_dynamic_array_inserted_cleanup_state_verification_enabled_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.transition_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.verification_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.paired_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.blocked_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.from_metadata
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_paired
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_cleanup_calls_enabled
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
@@ -2421,6 +2503,34 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.transition_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.verification_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.paired_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.blocked_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_handoff_fallback_for
+             .computed_dynamic_array_for_inserted_cleanup_handoff_state.from_metadata
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_paired
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_handoff_fallback_for
+             .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count == 1
     );
     assert(
@@ -2642,6 +2752,57 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_inserted_cleanup_state_verification_report.size() == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.transition_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.verification_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.paired_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.blocked_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.from_metadata
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_paired
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_two_loops
+             .computed_dynamic_array_for_inserted_cleanup_handoff_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.cleanup_owner_names.size() == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.acquire_operation_names.front() ==
+        "items.computed_for.0.cleanup.acquire"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.acquire_operation_names.back() ==
+        "items.computed_for.1.cleanup.acquire"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_inserted_cleanup_handoff_state.resume_operation_names.back() ==
+        "items.computed_for.1.cleanup.resume"
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops

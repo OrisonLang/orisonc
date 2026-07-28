@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed inserted-cleanup handoff verification now populates typed pipeline state with
+  transition/verification counts, paired/blocked counts, metadata provenance, cleanup-call enablement, owners, and
+  acquire/resume operation names from proof-model events.
 - 2026-07-28: computed cleanup-proof summary state is now the sole pipeline API for proof counters; the legacy scalar
   counter fields and compatibility parity helper have been removed.
 - 2026-07-28: computed cleanup-call emission gates now populate typed pipeline state with gate counts,

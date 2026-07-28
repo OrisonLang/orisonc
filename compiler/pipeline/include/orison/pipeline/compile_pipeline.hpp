@@ -153,6 +153,19 @@ struct ComputedCleanupProofSummaryState {
     std::size_t ir_consumed_cleanup_descriptor_fallback_count = 0;
 };
 
+struct ComputedInsertedCleanupHandoffState {
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> acquire_operation_names;
+    std::vector<std::string> resume_operation_names;
+    bool from_metadata = false;
+    bool all_paired = false;
+    bool all_cleanup_calls_enabled = false;
+    std::size_t transition_count = 0;
+    std::size_t verification_count = 0;
+    std::size_t paired_count = 0;
+    std::size_t blocked_count = 0;
+};
+
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool;
@@ -252,6 +265,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_cleanup_transition_report;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_transition_report;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_state_verification_report;
+    ComputedInsertedCleanupHandoffState computed_dynamic_array_for_inserted_cleanup_handoff_state;
     ComputedCleanupProofSummaryState computed_dynamic_array_for_cleanup_proof_summary_state;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_emission_gate_report;
     ComputedCleanupCallEmissionGateState computed_dynamic_array_for_cleanup_call_emission_gate_state;
