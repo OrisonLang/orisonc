@@ -1303,14 +1303,7 @@ auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
                 lowering_context,
                 state
             );
-            if (gate.kind ==
-                    ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
-                gate.ownership_ready &&
-                gate.loop_render_ready &&
-                gate.loop_cleanup_ownership_ready &&
-                gate.function_cleanup_resumption_ready &&
-                gate.exit_cleanup_ready &&
-                gate.production_sequence_render_planned) {
+            if (computed_dynamic_array_iterable_production_emission_gate_ready(gate)) {
                 gates.push_back(ComputedDynamicArrayForProductionEmissionGateMetadata {
                     .enclosing_function_name = std::string {enclosing_function_name},
                     .source_line = statement.line,
@@ -1351,9 +1344,7 @@ auto collect_test_only_computed_dynamic_array_for_production_sequences(
                 lowering_context,
                 state
             );
-            if (gate.kind ==
-                    ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
-                gate.production_sequence_render_planned) {
+            if (computed_dynamic_array_iterable_production_emission_gate_ready(gate)) {
                 sequences.push_back(ComputedDynamicArrayForProductionSequenceMetadata {
                     .enclosing_function_name = std::string {enclosing_function_name},
                     .source_line = statement.line,
@@ -1393,14 +1384,7 @@ auto collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(
                 lowering_context,
                 state
             );
-            if (gate.kind !=
-                    ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned ||
-                !gate.ownership_ready ||
-                !gate.loop_render_ready ||
-                !gate.loop_cleanup_ownership_ready ||
-                !gate.function_cleanup_resumption_ready ||
-                !gate.exit_cleanup_ready ||
-                !gate.production_sequence_render_planned) {
+            if (!computed_dynamic_array_iterable_production_emission_gate_ready(gate)) {
                 return;
             }
             auto const& descriptor_plan = gate.loop_exit_cleanup_plan.loop_render_sequence_plan

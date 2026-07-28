@@ -1769,6 +1769,33 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
     return plan;
 }
 
+auto computed_dynamic_array_iterable_production_emission_gate_ready(
+    ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
+) -> bool {
+    return plan.kind ==
+            ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
+        plan.ownership_ready &&
+        plan.loop_render_ready &&
+        plan.loop_cleanup_ownership_ready &&
+        plan.function_cleanup_resumption_ready &&
+        plan.exit_cleanup_ready &&
+        plan.production_sequence_render_planned;
+}
+
+auto computed_dynamic_array_iterable_cleanup_transition_ready(
+    ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
+) -> bool {
+    auto const& loop_exit_plan = plan.loop_exit_cleanup_plan;
+    auto const& cleanup_sequence_plan =
+        loop_exit_plan.loop_render_sequence_plan.loop_continue_render_plan.element_load_render_plan
+            .element_address_render_plan.loop_control_render_plan.descriptor_render_plan.cleanup_sequence_plan;
+    return
+        cleanup_sequence_plan.cleanup_owner_name == loop_exit_plan.loop_exit_cleanup_owner_name &&
+        cleanup_sequence_plan.loop_entry_cleanup_owner_name == loop_exit_plan.loop_entry_cleanup_owner_name &&
+        !cleanup_sequence_plan.loop_entry_cleanup_operation_name.empty() &&
+        !loop_exit_plan.cleanup_resumption_operation_name.empty();
+}
+
 auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
     ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
 ) -> std::string {

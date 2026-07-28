@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: test-only computed dynamic-array loop insertion now uses shared typed lowering predicates for production
+  gate readiness and cleanup-transition consistency instead of duplicating local boolean chains.
 - 2026-07-28: computed dynamic-array production readiness now composes typed gate and sequence state, checking gate
   readiness, sequence availability, count/snippet/owner consistency, and production-emission enablement without report
   parsing.

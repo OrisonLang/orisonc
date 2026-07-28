@@ -126,33 +126,10 @@ auto lower_sequence_for_statement(
                 session.state
             );
         session.state.computed_dynamic_array_for_unique_suffix = std::move(saved_computed_for_unique_suffix);
-        auto const& computed_loop_exit_plan_for_gate =
-            computed_production_emission_gate_plan.loop_exit_cleanup_plan;
-        auto const& computed_loop_sequence_plan_for_gate =
-            computed_loop_exit_plan_for_gate.loop_render_sequence_plan;
-        auto const& computed_loop_continue_plan_for_gate =
-            computed_loop_sequence_plan_for_gate.loop_continue_render_plan;
-        auto const& computed_cleanup_sequence_plan_for_gate =
-            computed_loop_continue_plan_for_gate.element_load_render_plan.element_address_render_plan
-                .loop_control_render_plan.descriptor_render_plan.cleanup_sequence_plan;
-        auto const computed_cleanup_transition_ready =
-            computed_cleanup_sequence_plan_for_gate.cleanup_owner_name ==
-                computed_loop_exit_plan_for_gate.loop_exit_cleanup_owner_name &&
-            computed_cleanup_sequence_plan_for_gate.loop_entry_cleanup_owner_name ==
-                computed_loop_exit_plan_for_gate.loop_entry_cleanup_owner_name &&
-            !computed_cleanup_sequence_plan_for_gate.loop_entry_cleanup_operation_name.empty() &&
-            !computed_loop_exit_plan_for_gate.cleanup_resumption_operation_name.empty();
         if (
             context.options.test_only_enable_computed_dynamic_array_for_lowering &&
-            computed_production_emission_gate_plan.kind ==
-                ComputedDynamicArrayIterableProductionEmissionGatePlanKind::production_emission_gate_planned &&
-            computed_production_emission_gate_plan.ownership_ready &&
-            computed_production_emission_gate_plan.loop_render_ready &&
-            computed_production_emission_gate_plan.loop_cleanup_ownership_ready &&
-            computed_production_emission_gate_plan.function_cleanup_resumption_ready &&
-            computed_production_emission_gate_plan.exit_cleanup_ready &&
-            computed_production_emission_gate_plan.production_sequence_render_planned &&
-            computed_cleanup_transition_ready
+            computed_dynamic_array_iterable_production_emission_gate_ready(computed_production_emission_gate_plan) &&
+            computed_dynamic_array_iterable_cleanup_transition_ready(computed_production_emission_gate_plan)
         ) {
             auto const& loop_exit_plan = computed_production_emission_gate_plan.loop_exit_cleanup_plan;
             auto const& loop_sequence_plan = loop_exit_plan.loop_render_sequence_plan;

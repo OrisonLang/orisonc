@@ -507,6 +507,14 @@ auto plan_computed_dynamic_array_iterable_production_emission_gate(
     FunctionLoweringState const& state
 ) -> ComputedDynamicArrayIterableProductionEmissionGatePlan;
 
+auto computed_dynamic_array_iterable_production_emission_gate_ready(
+    ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
+) -> bool;
+
+auto computed_dynamic_array_iterable_cleanup_transition_ready(
+    ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
+) -> bool;
+
 auto computed_dynamic_array_iterable_production_emission_gate_plan_report(
     ComputedDynamicArrayIterableProductionEmissionGatePlan const& plan
 ) -> std::string;
