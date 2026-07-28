@@ -79,6 +79,19 @@ struct ConsumedDescriptorFinalizationState {
     std::size_t blocked_plan_count = 0;
 };
 
+struct ComputedConsumedCleanupDescriptorModelState {
+    std::vector<std::string> enclosing_function_names;
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> descriptor_storage_names;
+    std::vector<std::string> cleanup_operation_names;
+    std::vector<std::string> source_type_names;
+    std::vector<std::string> element_source_type_names;
+    bool all_finalization_ready = false;
+    std::size_t descriptor_model_count = 0;
+    std::size_t ready_model_count = 0;
+    std::size_t blocked_model_count = 0;
+};
+
 struct ComputedConsumedCleanupDescriptorState {
     std::vector<std::string> cleanup_owner_names;
     std::vector<std::string> descriptor_storage_names;
@@ -279,6 +292,7 @@ struct CompilePipelineResult {
     std::vector<std::string> consumed_descriptor_finalization_plan_report;
     ConsumedDescriptorFinalizationState consumed_descriptor_finalization_state;
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_model_report;
+    ComputedConsumedCleanupDescriptorModelState computed_dynamic_array_for_consumed_cleanup_descriptor_model_state;
     ComputedConsumedCleanupDescriptorState computed_dynamic_array_for_consumed_cleanup_descriptor_state;
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_report;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_report;

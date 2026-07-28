@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed consumed-cleanup descriptor model metadata now populates typed pipeline state with descriptor
+  model counts, finalization readiness counts, function names, owners, descriptor storage, cleanup operations, source
+  types, and element types.
 - 2026-07-28: computed inserted-cleanup handoff verification now populates typed pipeline state with
   transition/verification counts, paired/blocked counts, metadata provenance, cleanup-call enablement, owners, and
   acquire/resume operation names from proof-model events.

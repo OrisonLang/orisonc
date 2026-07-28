@@ -1263,6 +1263,18 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.ready_model_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.all_finalization_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_report.empty()
     );
     assert(
@@ -2363,6 +2375,51 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.ready_model_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.blocked_model_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.all_finalization_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.enclosing_function_names.front() ==
+        "sum_words"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_storage_names.front() ==
+        "%items.addr"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.cleanup_operation_names.front() ==
+        "items.computed_for.cleanup.resume"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.source_type_names.front() ==
+        "DynamicArray<UInt32>"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.element_source_type_names.front() ==
+        "UInt32"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
     );
     assert(
@@ -2674,6 +2731,32 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.ready_model_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.all_finalization_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.enclosing_function_names.front() ==
+        "main"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.cleanup_operation_names.front() ==
+        "items.computed_for.cleanup.resume"
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run

@@ -96,6 +96,40 @@ auto build_consumed_descriptor_finalization_state(
     return state;
 }
 
+auto build_computed_consumed_cleanup_descriptor_model_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedConsumedCleanupDescriptorModelState {
+    auto const& descriptors = emission.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors;
+    auto state = ComputedConsumedCleanupDescriptorModelState {
+        .descriptor_model_count = descriptors.size(),
+    };
+    state.all_finalization_ready = state.descriptor_model_count > 0;
+    state.enclosing_function_names.reserve(descriptors.size());
+    state.cleanup_owner_names.reserve(descriptors.size());
+    state.descriptor_storage_names.reserve(descriptors.size());
+    state.cleanup_operation_names.reserve(descriptors.size());
+    state.source_type_names.reserve(descriptors.size());
+    state.element_source_type_names.reserve(descriptors.size());
+    for (auto const& descriptor : descriptors) {
+        auto const readiness = lowering::plan_consumed_descriptor_finalization_readiness(
+            descriptor.finalization_plan
+        );
+        state.enclosing_function_names.push_back(descriptor.enclosing_function_name);
+        state.cleanup_owner_names.push_back(descriptor.finalization_plan.cleanup_owner_name);
+        state.descriptor_storage_names.push_back(descriptor.finalization_plan.descriptor_storage_name);
+        state.cleanup_operation_names.push_back(descriptor.finalization_plan.cleanup_operation_name);
+        state.source_type_names.push_back(descriptor.source_type_name);
+        state.element_source_type_names.push_back(descriptor.element_source_type_name);
+        if (readiness.ready) {
+            ++state.ready_model_count;
+        } else {
+            ++state.blocked_model_count;
+        }
+        state.all_finalization_ready = state.all_finalization_ready && readiness.ready;
+    }
+    return state;
+}
+
 auto build_computed_consumed_cleanup_descriptor_state(
     ComputedCleanupProofModel const& proof_model
 ) -> ComputedConsumedCleanupDescriptorState {
@@ -404,6 +438,8 @@ void populate_lowering_emission_reports(
         build_consumed_descriptor_finalization_state(emission);
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report =
         emission.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report();
+    result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_state =
+        build_computed_consumed_cleanup_descriptor_model_state(emission);
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_state =
         build_computed_consumed_cleanup_descriptor_state(cleanup_proof_model);
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
