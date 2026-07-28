@@ -1219,6 +1219,14 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.all_finalized
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_emission_gate_report.size() == 1
     );
     assert(
@@ -1984,6 +1992,31 @@ auto main() -> int {
             .computed_dynamic_array_for_consumed_cleanup_descriptor_report.front() ==
         smoke::computed_dynamic_array_consumed_cleanup_descriptor_report
     );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.structured_proof_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.ir_fallback_proof_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.all_finalized
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_storage_names.front() ==
+        "%items.addr"
+    );
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
@@ -2043,6 +2076,22 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.structured_proof_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.ir_fallback_proof_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.all_finalized
     );
     auto computed_dynamic_array_local_same_owner_handoff_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,

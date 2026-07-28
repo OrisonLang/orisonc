@@ -96,6 +96,24 @@ auto build_consumed_descriptor_finalization_state(
     return state;
 }
 
+auto build_computed_consumed_cleanup_descriptor_state(
+    ComputedCleanupProofModel const& proof_model
+) -> ComputedConsumedCleanupDescriptorState {
+    auto state = ComputedConsumedCleanupDescriptorState {
+        .descriptor_count = proof_model.cleanup_call_report_events.consumed_descriptor_events.size(),
+        .structured_proof_count = proof_model.summary.structured_consumed_cleanup_descriptor_count,
+        .ir_fallback_proof_count = proof_model.summary.ir_consumed_cleanup_descriptor_fallback_count,
+    };
+    state.all_finalized = state.descriptor_count > 0;
+    state.cleanup_owner_names.reserve(proof_model.cleanup_call_report_events.consumed_descriptor_events.size());
+    state.descriptor_storage_names.reserve(proof_model.cleanup_call_report_events.consumed_descriptor_events.size());
+    for (auto const& event : proof_model.cleanup_call_report_events.consumed_descriptor_events) {
+        state.cleanup_owner_names.push_back(event.resumption.target_owner_name);
+        state.descriptor_storage_names.push_back(event.descriptor_storage_name);
+    }
+    return state;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -219,6 +237,8 @@ void populate_lowering_emission_reports(
         build_consumed_descriptor_finalization_state(emission);
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report =
         emission.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report();
+    result.computed_dynamic_array_for_consumed_cleanup_descriptor_state =
+        build_computed_consumed_cleanup_descriptor_state(cleanup_proof_model);
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
         cleanup_proof_model.reports.consumed_cleanup_descriptor_report;
     result.computed_dynamic_array_for_production_emission_gate_report =

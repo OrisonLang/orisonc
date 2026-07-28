@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed consumed cleanup descriptors now populate typed pipeline state with descriptor counts,
+  structured-vs-IR proof counts, owner names, and descriptor storage names from proof-model events.
 - 2026-07-28: consumed descriptor finalization now also populates typed pipeline state with computed descriptor,
   emitted finalization, ready, and blocked plan counts plus owner/descriptor names.
 - 2026-07-28: consumed descriptor finalization now exposes typed readiness state, and cleanup emission plus computed
