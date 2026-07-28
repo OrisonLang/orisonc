@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-27: computed cleanup-call insertion readiness is now exposed as a typed proof-model decision, so report
+  formatting consumes reusable compiler state instead of recomputing gate booleans locally.
 - 2026-07-27: pipeline smoke coverage now consumes the reusable computed cleanup-proof model directly, proving the
   typed proof bundle can be used outside lowering-emission report formatting.
 - 2026-07-26: computed owned `DynamicArray<T>` cleanup-call emission now has an internal verifier-driven gate that

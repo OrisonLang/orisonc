@@ -368,6 +368,22 @@ auto rendered_computed_cleanup_call_text(ComputedCleanupCallOperands const& oper
     return call_text.str();
 }
 
+auto computed_cleanup_call_insertion_decision(
+    VerifiedComputedCleanupCall const& call
+) -> ComputedCleanupCallInsertionDecision {
+    auto decision = ComputedCleanupCallInsertionDecision {
+        .state_verified =
+            call.acquisition.target_owner_name == call.resumption.source_owner_name &&
+            call.acquisition.source_owner_name == call.resumption.target_owner_name,
+        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
+        .cleanup_calls_authorized =
+            call.acquisition.cleanup_calls_enabled && call.resumption.cleanup_calls_enabled,
+    };
+    decision.insertion_ready =
+        decision.state_verified && decision.operands_proven && decision.cleanup_calls_authorized;
+    return decision;
+}
+
 auto computed_cleanup_call_inserted_by_metadata(VerifiedComputedCleanupCall const& call) -> bool {
     return call.metadata != nullptr && call.metadata->cleanup_call_inserted;
 }

@@ -106,29 +106,19 @@ auto format_computed_cleanup_call_render(
 }
 
 auto format_computed_cleanup_call_insertion_gate(
-    InsertedCleanupOperation const& acquisition,
     InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallOperands const& operands
+    ComputedCleanupCallInsertionDecision const& decision
 ) -> std::string {
-    auto const state_verified =
-        acquisition.target_owner_name == resumption.source_owner_name &&
-        acquisition.source_owner_name == resumption.target_owner_name;
-    auto const operands_proven =
-        !operands.data_pointer_name.empty() &&
-        !operands.element_size_bytes.empty() &&
-        !operands.capacity_name.empty();
-    auto const cleanup_calls_authorized =
-        acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled;
-    auto const insertion_ready =
-        state_verified && operands_proven && cleanup_calls_authorized;
     auto output = std::ostringstream {};
     output << "computed DynamicArray for cleanup call insertion gate ";
-    output << (insertion_ready ? "ready" : "blocked");
+    output << (decision.insertion_ready ? "ready" : "blocked");
     output << " cleanup-operation " << resumption.operation_name << ".call";
-    output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
-    output << (operands_proven ? " [cleanup operands proven]" : " [cleanup operands blocked]");
-    output << (cleanup_calls_authorized ? " [cleanup calls authorized]" : " [cleanup calls unauthorized]");
-    output << (insertion_ready ? " [cleanup call insertion ready]" : " [cleanup call insertion blocked]");
+    output << (decision.state_verified ? " [inserted state verified]" : " [inserted state blocked]");
+    output << (decision.operands_proven ? " [cleanup operands proven]" : " [cleanup operands blocked]");
+    output << (decision.cleanup_calls_authorized ? " [cleanup calls authorized]" :
+        " [cleanup calls unauthorized]");
+    output << (decision.insertion_ready ? " [cleanup call insertion ready]" :
+        " [cleanup call insertion blocked]");
     output << " (inserted IR)";
     return output.str();
 }
@@ -177,9 +167,8 @@ auto format_computed_cleanup_call_insertion_gate_report(
     auto report = std::vector<std::string> {};
     for (auto const& call : verified_calls) {
         report.push_back(format_computed_cleanup_call_insertion_gate(
-            call.acquisition,
             call.resumption,
-            call.operands
+            computed_cleanup_call_insertion_decision(call)
         ));
     }
     return report;

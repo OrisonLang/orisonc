@@ -104,8 +104,13 @@ void assert_computed_cleanup_proof_model_reusable_without_reports() {
     assert(proof_model.verified_cleanup_calls.size() == 1);
 
     auto const& call = proof_model.verified_cleanup_calls.front();
+    auto const insertion_decision = orison::pipeline::computed_cleanup_call_insertion_decision(call);
     assert(orison::pipeline::computed_cleanup_call_operands_complete(call.operands));
     assert(call.operands.from_metadata);
+    assert(insertion_decision.state_verified);
+    assert(insertion_decision.operands_proven);
+    assert(insertion_decision.cleanup_calls_authorized);
+    assert(insertion_decision.insertion_ready);
     assert(orison::pipeline::computed_cleanup_call_inserted_by_metadata(call));
     assert(!orison::pipeline::computed_cleanup_call_inserted_by_ir("", call));
     assert(orison::pipeline::computed_consumed_cleanup_descriptor_by_metadata(call));
