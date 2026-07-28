@@ -60,6 +60,15 @@ struct ComputedDynamicArrayForProductionEmissionGateState {
     std::size_t rendered_ir_snippet_count = 0;
 };
 
+struct ComputedDynamicArrayForProductionReadiness {
+    bool gate_ready = false;
+    bool sequence_ready = false;
+    bool gate_sequence_counts_match = false;
+    bool gate_sequence_snippets_match = false;
+    bool cleanup_owners_match = false;
+    bool production_emission_enabled = false;
+};
+
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool;
@@ -67,6 +76,15 @@ auto dynamic_array_cleanup_production_ready(
 auto format_dynamic_array_cleanup_production_readiness(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> std::string;
+
+auto plan_computed_dynamic_array_for_production_readiness(
+    ComputedDynamicArrayForProductionEmissionGateState const& gate_state,
+    ComputedDynamicArrayForProductionSequenceState const& sequence_state
+) -> ComputedDynamicArrayForProductionReadiness;
+
+auto computed_dynamic_array_for_production_ready(
+    ComputedDynamicArrayForProductionReadiness const& readiness
+) -> bool;
 
 struct CompilePipelineOptions {
     std::vector<semantics::DropImplementation> test_only_semantic_drop_implementations;
@@ -174,6 +192,7 @@ struct CompilePipelineResult {
     ComputedDynamicArrayForProductionEmissionGateState computed_dynamic_array_for_production_emission_gate_state;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_report;
     ComputedDynamicArrayForProductionSequenceState computed_dynamic_array_for_production_sequence_state;
+    ComputedDynamicArrayForProductionReadiness computed_dynamic_array_for_production_readiness;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_module_ir;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
     std::vector<std::string> dynamic_array_cleanup_production_readiness_report;

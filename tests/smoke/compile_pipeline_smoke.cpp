@@ -1271,6 +1271,27 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_sequence_state.cleanup_owner_names.front() == "items"
     );
+    assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_readiness.gate_ready);
+    assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_readiness.sequence_ready);
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_readiness.gate_sequence_counts_match
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_readiness.gate_sequence_snippets_match
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_readiness.cleanup_owners_match
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(!orison::pipeline::computed_dynamic_array_for_production_ready(
+        computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_readiness
+    ));
     auto dynamic_array_metadata_collector =
         orison::pipeline::DynamicArrayCleanupMetadataCollector {pipeline};
     auto computed_dynamic_array_local_same_owner_metadata_without_comments =
@@ -1299,6 +1320,21 @@ auto main() -> int {
         !computed_dynamic_array_local_same_owner_metadata_without_comments
             .computed_dynamic_array_for_production_sequence_state.module_comments_emitted
     );
+    assert(
+        !computed_dynamic_array_local_same_owner_metadata_without_comments
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_without_comments
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_metadata_without_comments
+            .computed_dynamic_array_for_production_readiness.gate_sequence_counts_match
+    );
+    assert(!orison::pipeline::computed_dynamic_array_for_production_ready(
+        computed_dynamic_array_local_same_owner_metadata_without_comments.computed_dynamic_array_for_production_readiness
+    ));
     assert(
         computed_dynamic_array_local_same_owner_metadata_without_comments.ir_text.find(
             "; computed DynamicArray for production sequence"
@@ -1334,6 +1370,17 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_metadata_with_comments
             .computed_dynamic_array_for_production_sequence_state.module_comment_line_count == 18
     );
+    assert(
+        !computed_dynamic_array_local_same_owner_metadata_with_comments
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_metadata_with_comments
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(!orison::pipeline::computed_dynamic_array_for_production_ready(
+        computed_dynamic_array_local_same_owner_metadata_with_comments.computed_dynamic_array_for_production_readiness
+    ));
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments.ir_text.find(
             "; computed DynamicArray for production sequence function sum_words line 6 "

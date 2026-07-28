@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed dynamic-array production readiness now composes typed gate and sequence state, checking gate
+  readiness, sequence availability, count/snippet/owner consistency, and production-emission enablement without report
+  parsing.
 - 2026-07-28: computed dynamic-array production-emission gate metadata now populates typed pipeline state with
   ownership, loop-render, cleanup-resumption, exit-cleanup, sequence-planning, and emission-enable booleans.
 - 2026-07-28: computed dynamic-array production-sequence metadata now populates typed pipeline state with sequence,
