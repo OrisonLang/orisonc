@@ -102,6 +102,14 @@ void assert_computed_cleanup_proof_model_reusable_without_reports() {
     assert(proof_model.inserted_cleanup_state.from_metadata);
     assert(proof_model.inserted_cleanup_state.verified_pairs.size() == 1);
     assert(proof_model.verified_cleanup_calls.size() == 1);
+    assert(proof_model.summary.cleanup_proof_model_count == 1);
+    assert(proof_model.summary.verified_inserted_cleanup_pair_count == 1);
+    assert(proof_model.summary.structured_inserted_cleanup_handoff_count == 2);
+    assert(proof_model.summary.structured_inserted_cleanup_handoff_use_count == 2);
+    assert(proof_model.summary.structured_cleanup_operand_count == 1);
+    assert(proof_model.summary.structured_cleanup_operand_use_count == 1);
+    assert(proof_model.summary.structured_inserted_cleanup_call_count == 1);
+    assert(proof_model.summary.structured_consumed_cleanup_descriptor_count == 1);
 
     auto const& call = proof_model.verified_cleanup_calls.front();
     auto const insertion_decision = orison::pipeline::computed_cleanup_call_insertion_decision(call);

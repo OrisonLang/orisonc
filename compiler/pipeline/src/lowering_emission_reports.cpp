@@ -321,45 +321,29 @@ void populate_lowering_emission_reports(
     result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
         cleanup_proof_model.inserted_cleanup_state.verification_report;
     result.computed_dynamic_array_for_cleanup_proof_model_count =
-        cleanup_proof_model.verified_cleanup_calls.size();
+        cleanup_proof_model.summary.cleanup_proof_model_count;
     result.computed_dynamic_array_for_verified_inserted_cleanup_pair_count =
-        cleanup_proof_model.inserted_cleanup_state.verified_pairs.size();
+        cleanup_proof_model.summary.verified_inserted_cleanup_pair_count;
     result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_count =
-        emission.computed_dynamic_array_inserted_cleanup_handoffs.size();
-    if (cleanup_proof_model.inserted_cleanup_state.from_metadata) {
-        result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count =
-            cleanup_proof_model.inserted_cleanup_state.verified_pairs.size() * 2;
-    } else {
-        result.computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count =
-            cleanup_proof_model.inserted_cleanup_state.verified_pairs.size() * 2;
-    }
+        cleanup_proof_model.summary.structured_inserted_cleanup_handoff_count;
+    result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count =
+        cleanup_proof_model.summary.structured_inserted_cleanup_handoff_use_count;
+    result.computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count =
+        cleanup_proof_model.summary.ir_inserted_cleanup_handoff_fallback_count;
     result.computed_dynamic_array_for_structured_cleanup_operand_count =
-        emission.computed_dynamic_array_cleanup_call_operands.size();
-    for (auto const& call : cleanup_proof_model.verified_cleanup_calls) {
-        if (call.operands.from_metadata) {
-            ++result.computed_dynamic_array_for_structured_cleanup_operand_use_count;
-        } else {
-            ++result.computed_dynamic_array_for_ir_cleanup_operand_fallback_count;
-        }
-    }
-    for (auto const& operands : emission.computed_dynamic_array_cleanup_call_operands) {
-        if (operands.cleanup_call_inserted) {
-            ++result.computed_dynamic_array_for_structured_inserted_cleanup_call_count;
-        }
-        if (operands.cleanup_call_inserted &&
-            operands.descriptor_finalized &&
-            !operands.descriptor_storage_name.empty()) {
-            ++result.computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count;
-        }
-    }
-    for (auto const& call : cleanup_proof_model.verified_cleanup_calls) {
-        if (call.inserted_call_decision.proven_by_ir) {
-            ++result.computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count;
-        }
-        if (call.consumed_descriptor_decision.finalized_by_ir) {
-            ++result.computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count;
-        }
-    }
+        cleanup_proof_model.summary.structured_cleanup_operand_count;
+    result.computed_dynamic_array_for_structured_cleanup_operand_use_count =
+        cleanup_proof_model.summary.structured_cleanup_operand_use_count;
+    result.computed_dynamic_array_for_ir_cleanup_operand_fallback_count =
+        cleanup_proof_model.summary.ir_cleanup_operand_fallback_count;
+    result.computed_dynamic_array_for_structured_inserted_cleanup_call_count =
+        cleanup_proof_model.summary.structured_inserted_cleanup_call_count;
+    result.computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count =
+        cleanup_proof_model.summary.structured_consumed_cleanup_descriptor_count;
+    result.computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count =
+        cleanup_proof_model.summary.ir_inserted_cleanup_call_fallback_count;
+    result.computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count =
+        cleanup_proof_model.summary.ir_consumed_cleanup_descriptor_fallback_count;
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
         format_computed_cleanup_call_emission_gate_report(
             cleanup_proof_model.inserted_cleanup_state.verified_pairs

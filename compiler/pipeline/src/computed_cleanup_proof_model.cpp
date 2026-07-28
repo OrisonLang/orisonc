@@ -405,6 +405,50 @@ auto collect_verified_computed_cleanup_calls(
     return calls;
 }
 
+auto build_computed_cleanup_proof_summary(
+    ComputedCleanupProofModel const& model,
+    std::vector<lowering::ComputedDynamicArrayCleanupStateHandoff> const& handoff_metadata,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata
+) -> ComputedCleanupProofSummary {
+    auto summary = ComputedCleanupProofSummary {
+        .cleanup_proof_model_count = model.verified_cleanup_calls.size(),
+        .verified_inserted_cleanup_pair_count = model.inserted_cleanup_state.verified_pairs.size(),
+        .structured_inserted_cleanup_handoff_count = handoff_metadata.size(),
+        .structured_cleanup_operand_count = operand_metadata.size(),
+    };
+    if (model.inserted_cleanup_state.from_metadata) {
+        summary.structured_inserted_cleanup_handoff_use_count =
+            model.inserted_cleanup_state.verified_pairs.size() * 2;
+    } else {
+        summary.ir_inserted_cleanup_handoff_fallback_count =
+            model.inserted_cleanup_state.verified_pairs.size() * 2;
+    }
+    for (auto const& call : model.verified_cleanup_calls) {
+        if (call.operands.from_metadata) {
+            ++summary.structured_cleanup_operand_use_count;
+        } else {
+            ++summary.ir_cleanup_operand_fallback_count;
+        }
+        if (call.inserted_call_decision.proven_by_ir) {
+            ++summary.ir_inserted_cleanup_call_fallback_count;
+        }
+        if (call.consumed_descriptor_decision.finalized_by_ir) {
+            ++summary.ir_consumed_cleanup_descriptor_fallback_count;
+        }
+    }
+    for (auto const& operands : operand_metadata) {
+        if (operands.cleanup_call_inserted) {
+            ++summary.structured_inserted_cleanup_call_count;
+        }
+        if (operands.cleanup_call_inserted &&
+            operands.descriptor_finalized &&
+            !operands.descriptor_storage_name.empty()) {
+            ++summary.structured_consumed_cleanup_descriptor_count;
+        }
+    }
+    return summary;
+}
+
 }  // namespace
 
 auto build_computed_cleanup_proof_model(
@@ -419,6 +463,7 @@ auto build_computed_cleanup_proof_model(
         operand_metadata,
         model.inserted_cleanup_state.verified_pairs
     );
+    model.summary = build_computed_cleanup_proof_summary(model, handoff_metadata, operand_metadata);
     return model;
 }
 

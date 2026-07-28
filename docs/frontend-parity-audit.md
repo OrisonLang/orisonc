@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-27: the computed cleanup-proof model now exposes aggregate summary counts, so pipeline report population
+  reads proof-model counters instead of deriving structured/fallback counts from raw emission metadata.
 - 2026-07-27: verified computed cleanup calls now cache insertion, inserted-call, and consumed-descriptor decisions at
   proof-model construction time so downstream reports and counters read stable proof state.
 - 2026-07-27: inserted computed cleanup-call and consumed-descriptor proof checks now flow through typed proof-model
