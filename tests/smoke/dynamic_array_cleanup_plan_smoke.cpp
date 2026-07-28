@@ -485,6 +485,8 @@ void test_plans_descriptor_cleanup_obligations() {
     );
     assert(!blocked_capability.element_cleanup_authorized_or_not_required);
     assert(blocked_capability.element_drop_pairs.empty());
+    assert(blocked_capability.missing_element_drop_pairs.size() == 1);
+    assert(blocked_capability.missing_element_drop_pairs.front() == "items:items.element:__orison_drop.Payload");
     assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
     auto blocked_capability_report =
         orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability);
@@ -494,8 +496,13 @@ void test_plans_descriptor_cleanup_obligations() {
             "[items:__orison_dynamic_array_cleanup.4]"
         ) != std::string::npos
     );
+    assert(
+        blocked_capability_report.find(
+            "missing-element-drop-pairs [items:items.element:__orison_drop.Payload]"
+        ) != std::string::npos
+    );
     assert(blocked_capability_report.find("[element cleanup missing]") != std::string::npos);
-    assert(blocked_capability_report.find("element-drop-pairs") == std::string::npos);
+    assert(blocked_capability_report.find(" element-drop-pairs ") == std::string::npos);
 
     auto malformed_owned = sequence_plans[1];
     malformed_owned.phases = {"load descriptor", "deallocate descriptor storage"};

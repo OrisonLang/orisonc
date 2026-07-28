@@ -1808,3 +1808,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   `DynamicArray<Payload>` fixture, proving the report reaches `--dynamic-array-cleanup-audit`.
 - 2026-07-27: CLI cleanup-audit smoke coverage now also pins the blocked owned-element path: missing cleanup proof
   reports `[element cleanup missing]` and does not emit `element-drop-pairs`.
+- 2026-07-27: blocked dynamic-array cleanup capability reports now include `missing-element-drop-pairs`, identifying
+  the cleanup owner, element capture, and drop ABI symbol that still needs semantic/source drop proof.

@@ -198,6 +198,9 @@ representation.
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports
   `[element cleanup missing]` and omits owned-element drop pairs rather than implying an authorized drop target.
+- Blocked dynamic-array cleanup capability reports now include `missing-element-drop-pairs`, which names the cleanup
+  owner, element capture, and drop ABI symbol that still needs semantic/source drop proof while keeping authorized
+  `element-drop-pairs` reserved for proven cleanup.
 
 ## Consequences
 

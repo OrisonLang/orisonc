@@ -794,6 +794,7 @@ int main() {
             "dynamic array cleanup sequence verification __orison_dynamic_array_cleanup.0 passed",
             "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.0 allowed",
             "dynamic array cleanup emission capability blocked",
+            "missing-element-drop-pairs [items:items.element:__orison_drop.Payload]",
             "[element cleanup missing]",
             "dynamic array cleanup production readiness blocked",
             "[cleanup capability missing]",
@@ -840,11 +841,11 @@ int main() {
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_capability.stdout_text.find("element-drop-pairs") ==
+        dynamic_array_blocked_cleanup_capability.stdout_text.find(" element-drop-pairs ") ==
         std::string::npos
     );
     assert(
-        dynamic_array_blocked_cleanup_audit.stdout_text.find("element-drop-pairs") ==
+        dynamic_array_blocked_cleanup_audit.stdout_text.find(" element-drop-pairs ") ==
         std::string::npos
     );
 
