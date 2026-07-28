@@ -126,6 +126,18 @@ struct ComputedCleanupCallPlanRenderState {
     std::size_t renderable_count = 0;
 };
 
+struct ComputedCleanupCallEmissionGateState {
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> acquire_operation_names;
+    std::vector<std::string> resume_operation_names;
+    bool all_state_verified = false;
+    bool all_cleanup_calls_enabled = false;
+    bool all_ready = false;
+    std::size_t gate_count = 0;
+    std::size_t ready_count = 0;
+    std::size_t blocked_count = 0;
+};
+
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool;
@@ -238,6 +250,7 @@ struct CompilePipelineResult {
     std::size_t computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count = 0;
     std::size_t computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count = 0;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_emission_gate_report;
+    ComputedCleanupCallEmissionGateState computed_dynamic_array_for_cleanup_call_emission_gate_state;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_plan_report;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_render_report;
     ComputedCleanupCallPlanRenderState computed_dynamic_array_for_cleanup_call_plan_render_state;

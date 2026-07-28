@@ -1181,6 +1181,14 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.gate_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_cleanup_call_plan_report.empty()
     );
     assert(
@@ -1549,6 +1557,44 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.gate_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.ready_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.blocked_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_state_verified
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_cleanup_calls_enabled
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.acquire_operation_names.front() ==
+        "items.computed_for.0.cleanup.acquire"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.resume_operation_names.front() ==
+        "items.computed_for.0.cleanup.resume"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_cleanup_call_plan_report.size() == 1
     );
     assert(
@@ -1914,6 +1960,30 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.front() ==
         smoke::computed_dynamic_array_cleanup_call_emission_gate_ready_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.gate_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.ready_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.blocked_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_state_verified
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_ready
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
@@ -2599,6 +2669,30 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.gate_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.ready_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.blocked_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_state_verified
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_cleanup_calls_enabled
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_ready
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops

@@ -203,6 +203,38 @@ auto build_computed_cleanup_call_plan_render_state(
     return state;
 }
 
+auto build_computed_cleanup_call_emission_gate_state(
+    ComputedCleanupProofModel const& proof_model
+) -> ComputedCleanupCallEmissionGateState {
+    auto state = ComputedCleanupCallEmissionGateState {
+        .gate_count = proof_model.cleanup_call_report_events.emission_gate_events.size(),
+    };
+    state.all_state_verified = state.gate_count > 0;
+    state.all_cleanup_calls_enabled = state.gate_count > 0;
+    state.cleanup_owner_names.reserve(proof_model.cleanup_call_report_events.emission_gate_events.size());
+    state.acquire_operation_names.reserve(proof_model.cleanup_call_report_events.emission_gate_events.size());
+    state.resume_operation_names.reserve(proof_model.cleanup_call_report_events.emission_gate_events.size());
+    for (auto const& event : proof_model.cleanup_call_report_events.emission_gate_events) {
+        auto const state_verified =
+            event.acquisition.target_owner_name == event.resumption.source_owner_name &&
+            event.acquisition.source_owner_name == event.resumption.target_owner_name;
+        auto const cleanup_calls_enabled =
+            event.acquisition.cleanup_calls_enabled && event.resumption.cleanup_calls_enabled;
+        state.cleanup_owner_names.push_back(event.resumption.target_owner_name);
+        state.acquire_operation_names.push_back(event.acquisition.operation_name);
+        state.resume_operation_names.push_back(event.resumption.operation_name);
+        state.all_state_verified = state.all_state_verified && state_verified;
+        state.all_cleanup_calls_enabled = state.all_cleanup_calls_enabled && cleanup_calls_enabled;
+        if (state_verified && cleanup_calls_enabled) {
+            ++state.ready_count;
+        } else {
+            ++state.blocked_count;
+        }
+    }
+    state.all_ready = state.ready_count > 0 && state.blocked_count == 0;
+    return state;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -312,6 +344,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.summary.ir_consumed_cleanup_descriptor_fallback_count;
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
         cleanup_proof_model.reports.cleanup_call_emission_gate_report;
+    result.computed_dynamic_array_for_cleanup_call_emission_gate_state =
+        build_computed_cleanup_call_emission_gate_state(cleanup_proof_model);
     result.computed_dynamic_array_for_cleanup_call_plan_report =
         cleanup_proof_model.reports.cleanup_call_plan_report;
     result.computed_dynamic_array_for_cleanup_call_render_report =
