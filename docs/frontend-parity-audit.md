@@ -1825,3 +1825,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: compile-pipeline smoke coverage now suppresses structured computed cleanup-call operand metadata through
   an internal test seam and proves cleanup-call plan/render/insertion-gate reports still degrade through the IR-derived
   fallback path.
+- 2026-07-27: structured computed cleanup-call metadata now records whether the deallocation call and descriptor
+  finalization were emitted, so inserted cleanup-call and consumed-descriptor reports prefer structured proof before
+  falling back to IR text matching.

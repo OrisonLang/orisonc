@@ -117,6 +117,8 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_state_verification_report;
     std::size_t computed_dynamic_array_for_verified_inserted_cleanup_pair_count = 0;
     std::size_t computed_dynamic_array_for_structured_cleanup_operand_count = 0;
+    std::size_t computed_dynamic_array_for_structured_inserted_cleanup_call_count = 0;
+    std::size_t computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count = 0;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_emission_gate_report;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_plan_report;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_render_report;

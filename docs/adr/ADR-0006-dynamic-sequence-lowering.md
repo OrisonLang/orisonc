@@ -215,6 +215,9 @@ representation.
   data pointer, element size, and capacity operands.
 - A test-only suppression seam covers the fallback path: when structured computed cleanup-call operand metadata is
   absent, cleanup-call plan/render/insertion-gate reports can still degrade through the existing IR-derived operands.
+- Structured computed cleanup-call metadata now records whether the deallocation call and descriptor finalization were
+  emitted. Pipeline inserted cleanup-call and consumed-descriptor reports prefer those proof flags before falling back
+  to IR text matching.
 
 ## Consequences
 

@@ -127,6 +127,18 @@ auto computed_cleanup_call_operands_from_metadata(
     return std::nullopt;
 }
 
+auto computed_cleanup_call_metadata_for_resumption(
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& metadata,
+    InsertedCleanupOperation const& resumption
+) -> lowering::ComputedDynamicArrayCleanupCallOperands const* {
+    for (auto const& operands : metadata) {
+        if (operands.cleanup_operation_name == resumption.operation_name) {
+            return &operands;
+        }
+    }
+    return nullptr;
+}
+
 auto collect_computed_cleanup_call_operands(
     std::string_view ir_text,
     std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& metadata,
@@ -503,6 +515,13 @@ auto format_computed_cleanup_call_inserted_report(
         ) {
             continue;
         }
+        if (auto const* metadata = computed_cleanup_call_metadata_for_resumption(operand_metadata, resumption);
+            metadata != nullptr) {
+            if (metadata->cleanup_call_inserted) {
+                report.push_back(format_computed_cleanup_call_inserted(acquisition, resumption, operands));
+            }
+            continue;
+        }
         auto call_text = std::ostringstream {};
         call_text << "  call void @__orison_dynamic_array_deallocate(ptr ";
         call_text << operands.data_pointer_name;
@@ -544,6 +563,23 @@ auto format_computed_consumed_cleanup_descriptor_report(
             operands.element_size_bytes.empty() ||
             operands.capacity_name.empty()
         ) {
+            continue;
+        }
+        if (auto const* metadata = computed_cleanup_call_metadata_for_resumption(operand_metadata, resumption);
+            metadata != nullptr) {
+            if (
+                metadata->cleanup_call_inserted &&
+                metadata->descriptor_finalized &&
+                !metadata->descriptor_storage_name.empty()
+            ) {
+                (void)acquisition;
+                report.push_back(
+                    format_computed_consumed_cleanup_descriptor(
+                        resumption,
+                        metadata->descriptor_storage_name
+                    )
+                );
+            }
             continue;
         }
         auto call_text = std::ostringstream {};
@@ -645,6 +681,16 @@ void populate_lowering_emission_reports(
         inserted_cleanup_state.verified_pairs.size();
     result.computed_dynamic_array_for_structured_cleanup_operand_count =
         emission.computed_dynamic_array_cleanup_call_operands.size();
+    for (auto const& operands : emission.computed_dynamic_array_cleanup_call_operands) {
+        if (operands.cleanup_call_inserted) {
+            ++result.computed_dynamic_array_for_structured_inserted_cleanup_call_count;
+        }
+        if (operands.cleanup_call_inserted &&
+            operands.descriptor_finalized &&
+            !operands.descriptor_storage_name.empty()) {
+            ++result.computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count;
+        }
+    }
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
         format_computed_cleanup_call_emission_gate_report(inserted_cleanup_state.verified_pairs);
     result.computed_dynamic_array_for_cleanup_call_plan_report =

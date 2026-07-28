@@ -232,16 +232,15 @@ auto lower_sequence_for_statement(
             );
             auto const element_size_bytes =
                 lowered_type_size_bytes(element_type->type, context.lowering);
-            if (element_size_bytes.has_value() &&
-                !context.options.test_only_suppress_computed_dynamic_array_cleanup_operand_metadata) {
-                session.state.computed_dynamic_array_cleanup_call_operands.push_back(
-                    ComputedDynamicArrayCleanupCallOperands {
-                        .cleanup_operation_name = loop_exit_plan.cleanup_resumption_operation_name,
-                        .data_pointer_name = descriptor_plan.data_pointer_name,
-                        .element_size_bytes = *element_size_bytes,
-                        .capacity_name = descriptor_plan.capacity_name,
-                    }
-                );
+            auto cleanup_call_operands = std::optional<ComputedDynamicArrayCleanupCallOperands> {};
+            if (element_size_bytes.has_value()) {
+                cleanup_call_operands = ComputedDynamicArrayCleanupCallOperands {
+                    .cleanup_operation_name = loop_exit_plan.cleanup_resumption_operation_name,
+                    .data_pointer_name = descriptor_plan.data_pointer_name,
+                    .element_size_bytes = *element_size_bytes,
+                    .capacity_name = descriptor_plan.capacity_name,
+                    .descriptor_storage_name = descriptor_plan.descriptor_storage_name,
+                };
             }
             if (
                 context.options.test_only_authorize_computed_dynamic_array_cleanup_calls &&
@@ -261,6 +260,9 @@ auto lower_sequence_for_statement(
                         descriptor_plan.data_pointer_name,
                         descriptor_plan.capacity_name
                     );
+                    if (cleanup_call_operands.has_value()) {
+                        cleanup_call_operands->cleanup_call_inserted = true;
+                    }
                     auto finalization_plan = plan_consumed_descriptor_finalization(
                         cleanup_sequence_plan.cleanup_owner_name,
                         descriptor_plan.descriptor_storage_name,
@@ -270,8 +272,17 @@ auto lower_sequence_for_statement(
                         output << emit_dynamic_array_descriptor_finalization(
                             finalization_plan.descriptor_storage_name
                         );
+                        if (cleanup_call_operands.has_value()) {
+                            cleanup_call_operands->descriptor_finalized = true;
+                        }
                     }
                 }
+            }
+            if (cleanup_call_operands.has_value() &&
+                !context.options.test_only_suppress_computed_dynamic_array_cleanup_operand_metadata) {
+                session.state.computed_dynamic_array_cleanup_call_operands.push_back(
+                    std::move(*cleanup_call_operands)
+                );
             }
             session.state.current_block = loop_exit_plan.exit_block_name;
             return StatementFlow::falls_through;
