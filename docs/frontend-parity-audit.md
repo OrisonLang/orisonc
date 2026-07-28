@@ -1839,3 +1839,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   explicit test-only handoff-metadata suppression seam covering the fallback path.
 - 2026-07-27: computed cleanup report population now consumes a typed internal cleanup-proof model that bundles
   inserted handoff verification with verified cleanup-call operands before formatting audit reports.
+- 2026-07-27: the computed cleanup-proof model is now a reusable private pipeline component instead of anonymous
+  report-formatting state, so later lowering pipeline stages can consume the same typed proof bundle.

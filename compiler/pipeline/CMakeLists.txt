@@ -1,4 +1,5 @@
 add_library(orison_pipeline STATIC
+    src/computed_cleanup_proof_model.cpp
     src/compile_pipeline.cpp
     src/dynamic_array_cleanup_metadata.cpp
     src/dynamic_array_cleanup_metadata_stage.cpp

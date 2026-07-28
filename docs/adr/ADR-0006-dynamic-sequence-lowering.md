@@ -232,6 +232,9 @@ representation.
 - Computed cleanup report population now consumes a typed internal cleanup-proof model. The model bundles inserted
   handoff verification and verified cleanup-call operands before downstream cleanup gate, plan, render, inserted-call,
   and consumed-descriptor reports are formatted.
+- The computed cleanup-proof model is now extracted into a reusable private pipeline component. Report formatting
+  consumes the component output, and later production-oriented pipeline stages can consume the same typed proof bundle
+  without depending on anonymous report state.
 
 ## Consequences
 
