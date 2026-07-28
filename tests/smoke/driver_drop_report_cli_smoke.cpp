@@ -809,6 +809,7 @@ int main() {
             "dynamic array cleanup production readiness blocked",
             "[descriptor origins ok]",
             "[cleanup capability missing]",
+            "missing-element-drop-pairs [items:items.element:__orison_drop.Payload]",
             "[production signatures ok]",
         }
     );

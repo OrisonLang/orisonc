@@ -14,6 +14,7 @@
 namespace orison::pipeline {
 
 struct DynamicArrayCleanupProductionReadiness {
+    std::vector<std::string> missing_element_drop_pairs;
     bool descriptor_origins_available = false;
     bool descriptor_cleanup_plans_available = false;
     bool cleanup_obligations_available = false;

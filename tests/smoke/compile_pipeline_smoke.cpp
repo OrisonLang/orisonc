@@ -2141,6 +2141,11 @@ auto main() -> int {
         0,
         "[cleanup capability missing]"
     );
+    assert_line_contains(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        0,
+        "missing-element-drop-pairs [items:items.element:__orison_drop.Payload]"
+    );
 
     auto dynamic_array_owned_production_signature_rejected = pipeline.emit_llvm(
         dynamic_array_source_owner_path,

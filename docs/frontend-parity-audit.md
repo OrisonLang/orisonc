@@ -1810,3 +1810,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   reports `[element cleanup missing]` and does not emit `element-drop-pairs`.
 - 2026-07-27: blocked dynamic-array cleanup capability reports now include `missing-element-drop-pairs`, identifying
   the cleanup owner, element capture, and drop ABI symbol that still needs semantic/source drop proof.
+- 2026-07-27: dynamic-array cleanup production-readiness reports now propagate `missing-element-drop-pairs` from the
+  cleanup capability report, so readiness blockers identify the exact owned-element cleanup proof still missing.

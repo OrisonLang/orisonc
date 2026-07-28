@@ -201,6 +201,8 @@ representation.
 - Blocked dynamic-array cleanup capability reports now include `missing-element-drop-pairs`, which names the cleanup
   owner, element capture, and drop ABI symbol that still needs semantic/source drop proof while keeping authorized
   `element-drop-pairs` reserved for proven cleanup.
+- Dynamic-array cleanup production-readiness reports now propagate `missing-element-drop-pairs` from cleanup
+  capability reports, so readiness blockers can name the same owner/capture/drop proof that prevents cleanup readiness.
 
 ## Consequences
 
