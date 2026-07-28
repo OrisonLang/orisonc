@@ -1814,3 +1814,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup capability report, so readiness blockers identify the exact owned-element cleanup proof still missing.
 - 2026-07-27: dynamic-array cleanup production-readiness planning now consumes structured missing element-drop pairs
   from the pipeline result instead of parsing formatted cleanup capability report text.
+- 2026-07-27: dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
+  cleanup-capability booleans from the pipeline result instead of scanning formatted report strings.

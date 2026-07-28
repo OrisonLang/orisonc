@@ -205,6 +205,8 @@ representation.
   capability reports, so readiness blockers can name the same owner/capture/drop proof that prevents cleanup readiness.
 - Dynamic-array cleanup production-readiness planning now consumes structured missing element-drop pairs from
   `CompilePipelineResult` rather than parsing formatted cleanup capability report text.
+- Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
+  cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
 
 ## Consequences
 

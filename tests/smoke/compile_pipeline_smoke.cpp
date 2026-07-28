@@ -2121,6 +2121,8 @@ auto main() -> int {
         0,
         "[element cleanup missing]"
     );
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_sequence_verification_passed);
+    assert(!dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_missing_element_drop_pairs.size() == 1);
     assert(
         dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_missing_element_drop_pairs.front() ==
@@ -2202,6 +2204,8 @@ auto main() -> int {
         0,
         "[element cleanup ok]"
     );
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_sequence_verification_passed);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_owned_cleanup.drop_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_owned_cleanup.drop_readiness_summary.cleanup_blocked == 0);
     assert(

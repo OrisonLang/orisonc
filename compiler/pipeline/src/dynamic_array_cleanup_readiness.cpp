@@ -2,20 +2,9 @@
 
 #include "lowering_emission_options.hpp"
 
-#include <algorithm>
 #include <sstream>
-#include <string_view>
 
 namespace orison::pipeline {
-namespace {
-
-auto report_contains(std::vector<std::string> const& lines, std::string_view fragment) -> bool {
-    return std::ranges::any_of(lines, [&](auto const& line) {
-        return line.find(fragment) != std::string::npos;
-    });
-}
-
-}  // namespace
 
 auto plan_dynamic_array_cleanup_production_readiness(
     CompilePipelineResult const& result,
@@ -27,11 +16,8 @@ auto plan_dynamic_array_cleanup_production_readiness(
         .descriptor_cleanup_plans_available = !result.dynamic_array_descriptor_cleanup_plan_report.empty(),
         .cleanup_obligations_available = !result.dynamic_array_cleanup_obligation_report.empty(),
         .sequence_verification_available = !result.dynamic_array_cleanup_sequence_verification_report.empty(),
-        .sequence_verification_passed =
-            !result.dynamic_array_cleanup_sequence_verification_report.empty() &&
-            !report_contains(result.dynamic_array_cleanup_sequence_verification_report, " failed"),
-        .cleanup_capability_proven =
-            report_contains(result.dynamic_array_cleanup_emission_capability_report, "capability proven"),
+        .sequence_verification_passed = result.dynamic_array_cleanup_sequence_verification_passed,
+        .cleanup_capability_proven = result.dynamic_array_cleanup_capability_proven,
         .production_signature_lowering_enabled =
             dynamic_array_parameter_lowering_enabled(options),
         .production_construction_lowering_enabled =

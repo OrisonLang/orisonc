@@ -1,5 +1,6 @@
 #include "lowering_emission_reports.hpp"
 
+#include "orison/lowering/dynamic_array_cleanup_plan.hpp"
 #include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 
 #include "dynamic_array_cleanup_readiness.hpp"
@@ -596,9 +597,18 @@ void populate_lowering_emission_reports(
         emission.dynamic_array_cleanup_sequence_plan_report();
     result.dynamic_array_cleanup_sequence_verification_report =
         emission.dynamic_array_cleanup_sequence_verification_report();
+    result.dynamic_array_cleanup_sequence_verification_passed =
+        !emission.dynamic_array_cleanup_sequence_verifications.empty() &&
+        lowering::dynamic_array_cleanup_sequence_verification_report_passed(
+            emission.dynamic_array_cleanup_sequence_verifications
+        );
     result.dynamic_array_cleanup_emission_gate_report =
         emission.dynamic_array_cleanup_emission_gate_report();
     if (emission.dynamic_array_cleanup_emission_capability.has_value()) {
+        result.dynamic_array_cleanup_capability_proven =
+            lowering::dynamic_array_cleanup_emission_capability_proven(
+                *emission.dynamic_array_cleanup_emission_capability
+            );
         result.dynamic_array_cleanup_missing_element_drop_pairs =
             emission.dynamic_array_cleanup_emission_capability->missing_element_drop_pairs;
     }
