@@ -110,6 +110,9 @@ void assert_computed_cleanup_proof_model_reusable_without_reports() {
         orison::pipeline::computed_consumed_cleanup_descriptor_decision("", call);
     assert(orison::pipeline::computed_cleanup_call_operands_complete(call.operands));
     assert(call.operands.from_metadata);
+    assert(call.insertion_decision.insertion_ready);
+    assert(call.inserted_call_decision.inserted);
+    assert(call.consumed_descriptor_decision.finalized);
     assert(insertion_decision.state_verified);
     assert(insertion_decision.operands_proven);
     assert(insertion_decision.cleanup_calls_authorized);

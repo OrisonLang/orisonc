@@ -317,6 +317,71 @@ auto analyze_inserted_cleanup_state_handoffs(
     return analyze_inserted_cleanup_state_handoffs_from_ir(ir_text);
 }
 
+auto build_computed_cleanup_call_insertion_decision(
+    VerifiedComputedCleanupCall const& call
+) -> ComputedCleanupCallInsertionDecision {
+    auto decision = ComputedCleanupCallInsertionDecision {
+        .state_verified =
+            call.acquisition.target_owner_name == call.resumption.source_owner_name &&
+            call.acquisition.source_owner_name == call.resumption.target_owner_name,
+        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
+        .cleanup_calls_authorized =
+            call.acquisition.cleanup_calls_enabled && call.resumption.cleanup_calls_enabled,
+    };
+    decision.insertion_ready =
+        decision.state_verified && decision.operands_proven && decision.cleanup_calls_authorized;
+    return decision;
+}
+
+auto build_computed_inserted_cleanup_call_decision(
+    std::string_view ir_text,
+    VerifiedComputedCleanupCall const& call
+) -> ComputedInsertedCleanupCallDecision {
+    auto decision = ComputedInsertedCleanupCallDecision {
+        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
+        .proven_by_metadata = call.metadata != nullptr && call.metadata->cleanup_call_inserted,
+    };
+    decision.proven_by_ir =
+        call.metadata == nullptr &&
+        decision.operands_proven &&
+        ir_text.find(rendered_computed_cleanup_call_text(call.operands)) != std::string_view::npos;
+    decision.inserted = decision.proven_by_metadata || decision.proven_by_ir;
+    return decision;
+}
+
+auto build_computed_consumed_cleanup_descriptor_decision(
+    std::string_view ir_text,
+    VerifiedComputedCleanupCall const& call
+) -> ComputedConsumedCleanupDescriptorDecision {
+    auto decision = ComputedConsumedCleanupDescriptorDecision {
+        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
+        .finalized_by_metadata =
+            call.metadata != nullptr &&
+            call.metadata->cleanup_call_inserted &&
+            call.metadata->descriptor_finalized &&
+            !call.metadata->descriptor_storage_name.empty(),
+    };
+    if (decision.finalized_by_metadata) {
+        decision.descriptor_storage_name = call.metadata->descriptor_storage_name;
+    } else if (call.metadata == nullptr && decision.operands_proven) {
+        auto const call_text = rendered_computed_cleanup_call_text(call.operands);
+        auto const call_position = ir_text.find(call_text);
+        if (call_position != std::string_view::npos) {
+            auto const descriptor_storage_name = "%" + call.resumption.target_owner_name + ".addr";
+            auto clear_text = std::ostringstream {};
+            clear_text << "  store { ptr, i64, i64 } zeroinitializer, ptr ";
+            clear_text << descriptor_storage_name << "\n";
+            auto const clear_position = ir_text.find(clear_text.str(), call_position + call_text.size());
+            if (clear_position != std::string_view::npos) {
+                decision.finalized_by_ir = true;
+                decision.descriptor_storage_name = descriptor_storage_name;
+            }
+        }
+    }
+    decision.finalized = decision.finalized_by_metadata || decision.finalized_by_ir;
+    return decision;
+}
+
 auto collect_verified_computed_cleanup_calls(
     std::string_view ir_text,
     std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
@@ -325,12 +390,17 @@ auto collect_verified_computed_cleanup_calls(
     auto calls = std::vector<VerifiedComputedCleanupCall> {};
     calls.reserve(verified_pairs.size());
     for (auto const& [acquisition, resumption] : verified_pairs) {
-        calls.push_back(VerifiedComputedCleanupCall {
+        auto call = VerifiedComputedCleanupCall {
             .acquisition = acquisition,
             .resumption = resumption,
             .operands = collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption),
             .metadata = computed_cleanup_call_metadata_for_resumption(operand_metadata, resumption),
-        });
+        };
+        call.insertion_decision = build_computed_cleanup_call_insertion_decision(call);
+        call.inserted_call_decision = build_computed_inserted_cleanup_call_decision(ir_text, call);
+        call.consumed_descriptor_decision =
+            build_computed_consumed_cleanup_descriptor_decision(ir_text, call);
+        calls.push_back(std::move(call));
     }
     return calls;
 }
@@ -371,66 +441,23 @@ auto rendered_computed_cleanup_call_text(ComputedCleanupCallOperands const& oper
 auto computed_cleanup_call_insertion_decision(
     VerifiedComputedCleanupCall const& call
 ) -> ComputedCleanupCallInsertionDecision {
-    auto decision = ComputedCleanupCallInsertionDecision {
-        .state_verified =
-            call.acquisition.target_owner_name == call.resumption.source_owner_name &&
-            call.acquisition.source_owner_name == call.resumption.target_owner_name,
-        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
-        .cleanup_calls_authorized =
-            call.acquisition.cleanup_calls_enabled && call.resumption.cleanup_calls_enabled,
-    };
-    decision.insertion_ready =
-        decision.state_verified && decision.operands_proven && decision.cleanup_calls_authorized;
-    return decision;
+    return call.insertion_decision;
 }
 
 auto computed_inserted_cleanup_call_decision(
     std::string_view ir_text,
     VerifiedComputedCleanupCall const& call
 ) -> ComputedInsertedCleanupCallDecision {
-    auto decision = ComputedInsertedCleanupCallDecision {
-        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
-        .proven_by_metadata = call.metadata != nullptr && call.metadata->cleanup_call_inserted,
-    };
-    decision.proven_by_ir =
-        call.metadata == nullptr &&
-        decision.operands_proven &&
-        ir_text.find(rendered_computed_cleanup_call_text(call.operands)) != std::string_view::npos;
-    decision.inserted = decision.proven_by_metadata || decision.proven_by_ir;
-    return decision;
+    (void)ir_text;
+    return call.inserted_call_decision;
 }
 
 auto computed_consumed_cleanup_descriptor_decision(
     std::string_view ir_text,
     VerifiedComputedCleanupCall const& call
 ) -> ComputedConsumedCleanupDescriptorDecision {
-    auto decision = ComputedConsumedCleanupDescriptorDecision {
-        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
-        .finalized_by_metadata =
-            call.metadata != nullptr &&
-            call.metadata->cleanup_call_inserted &&
-            call.metadata->descriptor_finalized &&
-            !call.metadata->descriptor_storage_name.empty(),
-    };
-    if (decision.finalized_by_metadata) {
-        decision.descriptor_storage_name = call.metadata->descriptor_storage_name;
-    } else if (call.metadata == nullptr && decision.operands_proven) {
-        auto const call_text = rendered_computed_cleanup_call_text(call.operands);
-        auto const call_position = ir_text.find(call_text);
-        if (call_position != std::string_view::npos) {
-            auto const descriptor_storage_name = "%" + call.resumption.target_owner_name + ".addr";
-            auto clear_text = std::ostringstream {};
-            clear_text << "  store { ptr, i64, i64 } zeroinitializer, ptr ";
-            clear_text << descriptor_storage_name << "\n";
-            auto const clear_position = ir_text.find(clear_text.str(), call_position + call_text.size());
-            if (clear_position != std::string_view::npos) {
-                decision.finalized_by_ir = true;
-                decision.descriptor_storage_name = descriptor_storage_name;
-            }
-        }
-    }
-    decision.finalized = decision.finalized_by_metadata || decision.finalized_by_ir;
-    return decision;
+    (void)ir_text;
+    return call.consumed_descriptor_decision;
 }
 
 auto computed_cleanup_call_inserted_by_metadata(VerifiedComputedCleanupCall const& call) -> bool {

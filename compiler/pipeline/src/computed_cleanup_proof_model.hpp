@@ -33,13 +33,6 @@ struct InsertedCleanupStateAnalysis {
     bool from_metadata = false;
 };
 
-struct VerifiedComputedCleanupCall {
-    InsertedCleanupOperation acquisition;
-    InsertedCleanupOperation resumption;
-    ComputedCleanupCallOperands operands;
-    lowering::ComputedDynamicArrayCleanupCallOperands const* metadata = nullptr;
-};
-
 struct ComputedCleanupCallInsertionDecision {
     bool state_verified = false;
     bool operands_proven = false;
@@ -60,6 +53,16 @@ struct ComputedConsumedCleanupDescriptorDecision {
     bool finalized_by_ir = false;
     bool finalized = false;
     std::optional<std::string> descriptor_storage_name;
+};
+
+struct VerifiedComputedCleanupCall {
+    InsertedCleanupOperation acquisition;
+    InsertedCleanupOperation resumption;
+    ComputedCleanupCallOperands operands;
+    lowering::ComputedDynamicArrayCleanupCallOperands const* metadata = nullptr;
+    ComputedCleanupCallInsertionDecision insertion_decision;
+    ComputedInsertedCleanupCallDecision inserted_call_decision;
+    ComputedConsumedCleanupDescriptorDecision consumed_descriptor_decision;
 };
 
 struct ComputedCleanupProofModel {

@@ -197,9 +197,10 @@ auto format_computed_cleanup_call_inserted_report(
     std::string_view ir_text,
     std::vector<VerifiedComputedCleanupCall> const& verified_calls
 ) -> std::vector<std::string> {
+    (void)ir_text;
     auto report = std::vector<std::string> {};
     for (auto const& call : verified_calls) {
-        auto const decision = computed_inserted_cleanup_call_decision(ir_text, call);
+        auto const& decision = call.inserted_call_decision;
         if (!decision.operands_proven || !decision.inserted) {
             continue;
         }
@@ -231,9 +232,10 @@ auto format_computed_consumed_cleanup_descriptor_report(
     std::string_view ir_text,
     std::vector<VerifiedComputedCleanupCall> const& verified_calls
 ) -> std::vector<std::string> {
+    (void)ir_text;
     auto report = std::vector<std::string> {};
     for (auto const& call : verified_calls) {
-        auto const decision = computed_consumed_cleanup_descriptor_decision(ir_text, call);
+        auto const& decision = call.consumed_descriptor_decision;
         if (!decision.operands_proven || !decision.finalized || !decision.descriptor_storage_name.has_value()) {
             continue;
         }
@@ -351,12 +353,10 @@ void populate_lowering_emission_reports(
         }
     }
     for (auto const& call : cleanup_proof_model.verified_cleanup_calls) {
-        auto const inserted_call_decision = computed_inserted_cleanup_call_decision(result.ir_text, call);
-        if (inserted_call_decision.proven_by_ir) {
+        if (call.inserted_call_decision.proven_by_ir) {
             ++result.computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count;
         }
-        auto const descriptor_decision = computed_consumed_cleanup_descriptor_decision(result.ir_text, call);
-        if (descriptor_decision.finalized_by_ir) {
+        if (call.consumed_descriptor_decision.finalized_by_ir) {
             ++result.computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count;
         }
     }
