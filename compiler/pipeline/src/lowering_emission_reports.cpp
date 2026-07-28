@@ -488,6 +488,67 @@ auto collect_verified_computed_cleanup_calls(
     return calls;
 }
 
+auto computed_cleanup_call_operands_complete(ComputedCleanupCallOperands const& operands) -> bool {
+    return
+        !operands.data_pointer_name.empty() &&
+        !operands.element_size_bytes.empty() &&
+        !operands.capacity_name.empty();
+}
+
+auto rendered_computed_cleanup_call_text(ComputedCleanupCallOperands const& operands) -> std::string {
+    auto call_text = std::ostringstream {};
+    call_text << "  call void @__orison_dynamic_array_deallocate(ptr ";
+    call_text << operands.data_pointer_name;
+    call_text << ", i64 " << operands.element_size_bytes;
+    call_text << ", i64 " << operands.capacity_name << ")\n";
+    return call_text.str();
+}
+
+auto computed_cleanup_call_inserted_by_metadata(VerifiedComputedCleanupCall const& call) -> bool {
+    return call.metadata != nullptr && call.metadata->cleanup_call_inserted;
+}
+
+auto computed_cleanup_call_inserted_by_ir(
+    std::string_view ir_text,
+    VerifiedComputedCleanupCall const& call
+) -> bool {
+    if (call.metadata != nullptr || !computed_cleanup_call_operands_complete(call.operands)) {
+        return false;
+    }
+    return ir_text.find(rendered_computed_cleanup_call_text(call.operands)) != std::string_view::npos;
+}
+
+auto computed_consumed_cleanup_descriptor_by_metadata(VerifiedComputedCleanupCall const& call) -> bool {
+    return
+        call.metadata != nullptr &&
+        call.metadata->cleanup_call_inserted &&
+        call.metadata->descriptor_finalized &&
+        !call.metadata->descriptor_storage_name.empty();
+}
+
+auto computed_consumed_cleanup_descriptor_by_ir(
+    std::string_view ir_text,
+    VerifiedComputedCleanupCall const& call
+) -> std::optional<std::string> {
+    if (call.metadata != nullptr || !computed_cleanup_call_operands_complete(call.operands)) {
+        return std::nullopt;
+    }
+    auto const call_text = rendered_computed_cleanup_call_text(call.operands);
+    auto const call_position = ir_text.find(call_text);
+    if (call_position == std::string_view::npos) {
+        return std::nullopt;
+    }
+    auto const descriptor_storage_name = "%" + call.resumption.target_owner_name + ".addr";
+    auto clear_text = std::ostringstream {};
+    clear_text << "  store { ptr, i64, i64 } zeroinitializer, ptr ";
+    clear_text << descriptor_storage_name << "\n";
+    auto const clear_position = ir_text.find(clear_text.str(), call_position + call_text.size());
+    if (clear_position == std::string_view::npos) {
+        return std::nullopt;
+    }
+    return descriptor_storage_name;
+}
+
 auto format_computed_cleanup_call_emission_gate_report(
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
 ) -> std::vector<std::string> {
@@ -566,29 +627,18 @@ auto format_computed_cleanup_call_inserted_report(
     auto report = std::vector<std::string> {};
     for (auto const& call : verified_calls) {
         auto const& operands = call.operands;
-        if (
-            operands.data_pointer_name.empty() ||
-            operands.element_size_bytes.empty() ||
-            operands.capacity_name.empty()
-        ) {
+        if (!computed_cleanup_call_operands_complete(operands)) {
             continue;
         }
-        if (call.metadata != nullptr) {
-            if (call.metadata->cleanup_call_inserted) {
-                report.push_back(format_computed_cleanup_call_inserted(
-                    call.acquisition,
-                    call.resumption,
-                    operands
-                ));
-            }
+        if (computed_cleanup_call_inserted_by_metadata(call)) {
+            report.push_back(format_computed_cleanup_call_inserted(
+                call.acquisition,
+                call.resumption,
+                operands
+            ));
             continue;
         }
-        auto call_text = std::ostringstream {};
-        call_text << "  call void @__orison_dynamic_array_deallocate(ptr ";
-        call_text << operands.data_pointer_name;
-        call_text << ", i64 " << operands.element_size_bytes;
-        call_text << ", i64 " << operands.capacity_name << ")\n";
-        if (ir_text.find(call_text.str()) == std::string_view::npos) {
+        if (!computed_cleanup_call_inserted_by_ir(ir_text, call)) {
             continue;
         }
         report.push_back(format_computed_cleanup_call_inserted(call.acquisition, call.resumption, operands));
@@ -618,48 +668,23 @@ auto format_computed_consumed_cleanup_descriptor_report(
     auto report = std::vector<std::string> {};
     for (auto const& call : verified_calls) {
         auto const& operands = call.operands;
-        if (
-            operands.data_pointer_name.empty() ||
-            operands.element_size_bytes.empty() ||
-            operands.capacity_name.empty()
-        ) {
+        if (!computed_cleanup_call_operands_complete(operands)) {
             continue;
         }
-        if (call.metadata != nullptr) {
-            if (
-                call.metadata->cleanup_call_inserted &&
-                call.metadata->descriptor_finalized &&
-                !call.metadata->descriptor_storage_name.empty()
-            ) {
-                report.push_back(
-                    format_computed_consumed_cleanup_descriptor(
-                        call.resumption,
-                        call.metadata->descriptor_storage_name
-                    )
-                );
-            }
+        if (computed_consumed_cleanup_descriptor_by_metadata(call)) {
+            report.push_back(
+                format_computed_consumed_cleanup_descriptor(
+                    call.resumption,
+                    call.metadata->descriptor_storage_name
+                )
+            );
             continue;
         }
-        auto call_text = std::ostringstream {};
-        call_text << "  call void @__orison_dynamic_array_deallocate(ptr ";
-        call_text << operands.data_pointer_name;
-        call_text << ", i64 " << operands.element_size_bytes;
-        call_text << ", i64 " << operands.capacity_name << ")\n";
-        auto const call_position = ir_text.find(call_text.str());
-        if (call_position == std::string_view::npos) {
-            continue;
+        if (auto descriptor_storage_name = computed_consumed_cleanup_descriptor_by_ir(ir_text, call)) {
+            report.push_back(
+                format_computed_consumed_cleanup_descriptor(call.resumption, *descriptor_storage_name)
+            );
         }
-        auto const descriptor_storage_name = "%" + call.resumption.target_owner_name + ".addr";
-        auto clear_text = std::ostringstream {};
-        clear_text << "  store { ptr, i64, i64 } zeroinitializer, ptr ";
-        clear_text << descriptor_storage_name << "\n";
-        auto const clear_position = ir_text.find(clear_text.str(), call_position + call_text.str().size());
-        if (clear_position == std::string_view::npos) {
-            continue;
-        }
-        report.push_back(
-            format_computed_consumed_cleanup_descriptor(call.resumption, descriptor_storage_name)
-        );
     }
     return report;
 }
@@ -763,6 +788,14 @@ void populate_lowering_emission_reports(
             operands.descriptor_finalized &&
             !operands.descriptor_storage_name.empty()) {
             ++result.computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count;
+        }
+    }
+    for (auto const& call : verified_cleanup_calls) {
+        if (computed_cleanup_call_inserted_by_ir(result.ir_text, call)) {
+            ++result.computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count;
+        }
+        if (computed_consumed_cleanup_descriptor_by_ir(result.ir_text, call).has_value()) {
+            ++result.computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count;
         }
     }
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =

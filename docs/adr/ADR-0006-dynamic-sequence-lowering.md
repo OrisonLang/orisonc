@@ -223,6 +223,9 @@ representation.
 - Computed cleanup-call report formatting now shares one analyzed operand set per verified inserted cleanup pair.
   Pipeline results expose structured-vs-IR-fallback operand provenance counts so the normal path can prove it avoids
   operand scraping while the suppression seam still covers fallback behavior.
+- Inserted cleanup-call and consumed cleanup-descriptor reports now expose structured-vs-IR-fallback proof counts. The
+  normal executable computed-loop path proves emitted cleanup and descriptor finalization through metadata, while the
+  deliberate suppressed-metadata seam remains covered by IR fallback tests.
 
 ## Consequences
 

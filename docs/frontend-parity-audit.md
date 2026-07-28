@@ -1833,3 +1833,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   back to inserted IR comments.
 - 2026-07-27: computed cleanup-call report formatting now shares one analyzed cleanup-call operand set per verified
   inserted cleanup pair, with structured-vs-IR-fallback provenance counts pinned in pipeline smoke coverage.
+- 2026-07-27: inserted cleanup-call and consumed-descriptor reports now expose structured-vs-IR-fallback proof counts,
+  and pipeline smoke coverage pins both the normal metadata proof path and the deliberate suppressed-metadata fallback.
