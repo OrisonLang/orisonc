@@ -1,10 +1,12 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace orison::pipeline {
 
+struct InsertedCleanupOperation;
 struct ComputedCleanupProofModel;
 
 struct ComputedCleanupProofReportBundle {
@@ -19,5 +21,20 @@ struct ComputedCleanupProofReportBundle {
 auto build_computed_cleanup_proof_report_bundle(
     ComputedCleanupProofModel const& model
 ) -> ComputedCleanupProofReportBundle;
+
+auto format_inserted_cleanup_transition(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption
+) -> std::string;
+
+auto format_inserted_cleanup_state_verification(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption
+) -> std::string;
+
+auto format_inserted_cleanup_state_verification_blocked(
+    std::string_view reason,
+    InsertedCleanupOperation const& operation
+) -> std::string;
 
 }  // namespace orison::pipeline

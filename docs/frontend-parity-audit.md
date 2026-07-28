@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-27: inserted cleanup state transition and verification report formatting now also lives in the private
+  computed cleanup proof report companion, leaving the core model with parsing, analysis, and proof construction.
 - 2026-07-27: computed cleanup proof report formatting now lives in a private companion module, keeping the core proof
   model focused on typed state while preserving the prebuilt report bundle for pipeline consumers.
 - 2026-07-27: the computed cleanup-proof model now carries its cleanup-call report bundle, so pipeline report population

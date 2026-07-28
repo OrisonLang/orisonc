@@ -101,6 +101,17 @@ void assert_computed_cleanup_proof_model_reusable_without_reports() {
     auto proof_model = orison::pipeline::build_computed_cleanup_proof_model("", handoffs, operands);
     assert(proof_model.inserted_cleanup_state.from_metadata);
     assert(proof_model.inserted_cleanup_state.verified_pairs.size() == 1);
+    assert(proof_model.inserted_cleanup_state.transition_report.size() == 1);
+    assert(proof_model.inserted_cleanup_state.verification_report.size() == 1);
+    assert(
+        proof_model.inserted_cleanup_state.transition_report.front().find(
+            "computed DynamicArray for inserted cleanup transition"
+        ) != std::string::npos
+    );
+    assert(
+        proof_model.inserted_cleanup_state.verification_report.front().find("[handoff paired]") !=
+        std::string::npos
+    );
     assert(proof_model.verified_cleanup_calls.size() == 1);
     assert(proof_model.summary.cleanup_proof_model_count == 1);
     assert(proof_model.summary.verified_inserted_cleanup_pair_count == 1);

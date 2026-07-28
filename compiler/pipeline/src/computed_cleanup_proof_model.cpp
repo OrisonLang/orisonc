@@ -182,55 +182,6 @@ auto inserted_cleanup_operation_from_metadata(
     };
 }
 
-auto format_inserted_cleanup_transition(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption
-) -> std::string {
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for inserted cleanup transition";
-    output << " acquire-from " << acquisition.source_owner_name;
-    output << " acquire-to " << acquisition.target_owner_name;
-    output << " acquire-operation " << acquisition.operation_name;
-    output << " resume-from " << resumption.source_owner_name;
-    output << " resume-to " << resumption.target_owner_name;
-    output << " resume-operation " << resumption.operation_name;
-    output << " (inserted IR)";
-    return output.str();
-}
-
-auto format_inserted_cleanup_state_verification(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption
-) -> std::string {
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for inserted cleanup state verification";
-    output << " acquire-operation " << acquisition.operation_name;
-    output << " resume-operation " << resumption.operation_name;
-    output << " acquire-from " << acquisition.source_owner_name;
-    output << " acquire-to " << acquisition.target_owner_name;
-    output << " resume-from " << resumption.source_owner_name;
-    output << " resume-to " << resumption.target_owner_name;
-    output << " [handoff paired]";
-    output << (acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled ?
-        " [cleanup calls enabled]" : " [cleanup calls disabled]");
-    output << " (inserted IR)";
-    return output.str();
-}
-
-auto format_inserted_cleanup_state_verification_blocked(
-    std::string_view reason,
-    InsertedCleanupOperation const& operation
-) -> std::string {
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for inserted cleanup state verification blocked";
-    output << " reason " << reason;
-    output << " operation " << operation.operation_name;
-    output << " from " << operation.source_owner_name;
-    output << " to " << operation.target_owner_name;
-    output << " (inserted IR)";
-    return output.str();
-}
-
 auto analyze_inserted_cleanup_state_handoff_operations(
     std::vector<InsertedCleanupOperation> const& handoffs
 ) -> InsertedCleanupStateAnalysis {
