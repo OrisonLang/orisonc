@@ -1136,6 +1136,14 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_structured_cleanup_operand_count == 1
     );
     assert(
@@ -1270,6 +1278,14 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
             .computed_dynamic_array_for_structured_cleanup_operand_count == 0
     );
     assert(
@@ -1366,6 +1382,14 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
@@ -1513,6 +1537,14 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_structured_cleanup_operand_count == 1
     );
     assert(
@@ -1594,6 +1626,18 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
             .computed_dynamic_array_for_structured_cleanup_operand_use_count == 0
     );
     assert(
@@ -1623,6 +1667,44 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
+    );
+    auto computed_dynamic_array_local_same_owner_handoff_fallback_for = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_handoff_fallback_for.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_structured_cleanup_operand_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
     );
     auto inserted_cleanup_finalization_audit = std::vector<std::string> {};
     inserted_cleanup_finalization_audit.insert(

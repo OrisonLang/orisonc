@@ -1835,3 +1835,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   inserted cleanup pair, with structured-vs-IR-fallback provenance counts pinned in pipeline smoke coverage.
 - 2026-07-27: inserted cleanup-call and consumed-descriptor reports now expose structured-vs-IR-fallback proof counts,
   and pipeline smoke coverage pins both the normal metadata proof path and the deliberate suppressed-metadata fallback.
+- 2026-07-27: inserted cleanup handoff verification now exposes structured-vs-IR-comment provenance counts, with an
+  explicit test-only handoff-metadata suppression seam covering the fallback path.

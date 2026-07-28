@@ -33,6 +33,7 @@ struct InsertedCleanupStateAnalysis {
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> verified_pairs;
     std::vector<std::string> transition_report;
     std::vector<std::string> verification_report;
+    bool from_metadata = false;
 };
 
 struct VerifiedComputedCleanupCall {
@@ -465,7 +466,9 @@ auto analyze_inserted_cleanup_state_handoffs(
         for (auto const& handoff : metadata) {
             handoffs.push_back(inserted_cleanup_operation_from_metadata(handoff));
         }
-        return analyze_inserted_cleanup_state_handoff_operations(handoffs);
+        auto analysis = analyze_inserted_cleanup_state_handoff_operations(handoffs);
+        analysis.from_metadata = true;
+        return analysis;
     }
     return analyze_inserted_cleanup_state_handoffs_from_ir(ir_text);
 }
@@ -771,6 +774,13 @@ void populate_lowering_emission_reports(
         inserted_cleanup_state.verified_pairs.size();
     result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_count =
         emission.computed_dynamic_array_inserted_cleanup_handoffs.size();
+    if (inserted_cleanup_state.from_metadata) {
+        result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count =
+            inserted_cleanup_state.verified_pairs.size() * 2;
+    } else {
+        result.computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count =
+            inserted_cleanup_state.verified_pairs.size() * 2;
+    }
     result.computed_dynamic_array_for_structured_cleanup_operand_count =
         emission.computed_dynamic_array_cleanup_call_operands.size();
     for (auto const& call : verified_cleanup_calls) {

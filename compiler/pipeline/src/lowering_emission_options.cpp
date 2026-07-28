@@ -96,6 +96,8 @@ auto build_lowering_emission_options(
         options.test_only_authorize_computed_dynamic_array_cleanup_calls;
     emission_options.test_only_insert_computed_dynamic_array_cleanup_calls =
         options.test_only_insert_computed_dynamic_array_cleanup_calls;
+    emission_options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata =
+        options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata;
     emission_options.test_only_suppress_computed_dynamic_array_cleanup_operand_metadata =
         options.test_only_suppress_computed_dynamic_array_cleanup_operand_metadata;
     emission_options.enable_dynamic_array_descriptor_cleanup_planning =

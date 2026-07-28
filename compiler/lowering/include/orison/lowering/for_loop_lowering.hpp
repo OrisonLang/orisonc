@@ -172,9 +172,11 @@ auto lower_sequence_for_statement(
                     context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(acquisition_handoff);
-            session.state.computed_dynamic_array_inserted_cleanup_handoffs.push_back(
-                std::move(acquisition_handoff)
-            );
+            if (!context.options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata) {
+                session.state.computed_dynamic_array_inserted_cleanup_handoffs.push_back(
+                    std::move(acquisition_handoff)
+                );
+            }
             for (auto const& line : descriptor_plan.rendered_ir) {
                 output << line;
             }
@@ -231,9 +233,11 @@ auto lower_sequence_for_statement(
                     context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(resumption_handoff);
-            session.state.computed_dynamic_array_inserted_cleanup_handoffs.push_back(
-                std::move(resumption_handoff)
-            );
+            if (!context.options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata) {
+                session.state.computed_dynamic_array_inserted_cleanup_handoffs.push_back(
+                    std::move(resumption_handoff)
+                );
+            }
             auto const element_size_bytes =
                 lowered_type_size_bytes(element_type->type, context.lowering);
             auto cleanup_call_operands = std::optional<ComputedDynamicArrayCleanupCallOperands> {};

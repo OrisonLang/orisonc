@@ -62,6 +62,7 @@ struct CompilePipelineOptions {
     bool test_only_enable_computed_dynamic_array_for_lowering = false;
     bool test_only_authorize_computed_dynamic_array_cleanup_calls = false;
     bool test_only_insert_computed_dynamic_array_cleanup_calls = false;
+    bool test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
     bool test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = false;
     bool dynamic_array_local_lowering_enabled = true;
     bool dynamic_array_parameter_lowering_enabled = true;
@@ -117,6 +118,8 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_state_verification_report;
     std::size_t computed_dynamic_array_for_verified_inserted_cleanup_pair_count = 0;
     std::size_t computed_dynamic_array_for_structured_inserted_cleanup_handoff_count = 0;
+    std::size_t computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count = 0;
+    std::size_t computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count = 0;
     std::size_t computed_dynamic_array_for_structured_cleanup_operand_count = 0;
     std::size_t computed_dynamic_array_for_structured_cleanup_operand_use_count = 0;
     std::size_t computed_dynamic_array_for_ir_cleanup_operand_fallback_count = 0;

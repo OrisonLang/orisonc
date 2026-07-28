@@ -226,6 +226,9 @@ representation.
 - Inserted cleanup-call and consumed cleanup-descriptor reports now expose structured-vs-IR-fallback proof counts. The
   normal executable computed-loop path proves emitted cleanup and descriptor finalization through metadata, while the
   deliberate suppressed-metadata seam remains covered by IR fallback tests.
+- Inserted cleanup handoff verification now exposes structured-vs-IR-comment provenance counts. A test-only handoff
+  metadata suppression seam keeps the IR-comment fallback intentional and covered while the normal path proves handoffs
+  from structured metadata.
 
 ## Consequences
 
