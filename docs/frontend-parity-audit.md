@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed cleanup-call plan/render reports now populate typed pipeline state with plan/render counts,
+  renderability, aggregate operand readiness, cleanup-call enablement, cleanup owners, operations, and operands.
 - 2026-07-28: computed cleanup-call insertion gates now populate typed pipeline state with gate counts, ready-vs-blocked
   counts, aggregate readiness booleans, cleanup owners, and cleanup operation names from proof-model decisions.
 - 2026-07-28: computed inserted cleanup calls now populate typed pipeline state with call counts, structured-vs-IR

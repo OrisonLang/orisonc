@@ -1189,6 +1189,18 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.plan_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.render_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_renderable
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_cleanup_call_insertion_gate_report.empty()
     );
     assert(
@@ -1554,6 +1566,61 @@ auto main() -> int {
         smoke::computed_dynamic_array_cleanup_call_render_report
     );
     assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.plan_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.render_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.planned_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.renderable_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_state_verified
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_operands_proven
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_renderable
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.cleanup_operation_names.front() ==
+        "items.computed_for.0.cleanup.resume.call"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.data_pointer_names.front() ==
+        "%items.computed_for.0.data"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.element_size_bytes.front() == "4"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.capacity_names.front() ==
+        "%items.computed_for.0.capacity"
+    );
+    assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
             "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data"
         ) == std::string::npos
@@ -1865,6 +1932,18 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.plan_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_renderable
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
     );
     assert(
@@ -1965,6 +2044,22 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.plan_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.render_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_renderable
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
@@ -2546,6 +2641,38 @@ auto main() -> int {
                 "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.1.data, i64 4, "
                 "i64 %items.computed_for.1.capacity)"
             ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.plan_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.render_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.planned_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.renderable_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_state_verified
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_operands_proven
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_call_plan_render_state.all_renderable
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
