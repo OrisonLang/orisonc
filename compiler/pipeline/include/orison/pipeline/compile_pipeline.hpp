@@ -88,6 +88,16 @@ struct ComputedConsumedCleanupDescriptorState {
     std::size_t ir_fallback_proof_count = 0;
 };
 
+struct ComputedInsertedCleanupCallState {
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> data_pointer_names;
+    std::vector<std::string> capacity_names;
+    bool all_inserted = false;
+    std::size_t call_count = 0;
+    std::size_t structured_proof_count = 0;
+    std::size_t ir_fallback_proof_count = 0;
+};
+
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool;
@@ -204,6 +214,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_render_report;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_insertion_gate_report;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_call_report;
+    ComputedInsertedCleanupCallState computed_dynamic_array_for_inserted_cleanup_call_state;
     std::vector<std::string> consumed_descriptor_finalization_plan_report;
     ConsumedDescriptorFinalizationState consumed_descriptor_finalization_state;
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_model_report;

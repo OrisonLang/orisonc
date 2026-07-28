@@ -1197,6 +1197,14 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.call_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.all_inserted
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .consumed_descriptor_finalization_plan_report.empty()
     );
     assert(
@@ -1497,6 +1505,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.call_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -1945,6 +1957,36 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.call_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.structured_proof_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.ir_fallback_proof_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.all_inserted
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.data_pointer_names.front() ==
+        "%items.computed_for.0.data"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.capacity_names.front() ==
+        "%items.computed_for.0.capacity"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .consumed_descriptor_finalization_plan_report.size() == 2
     );
     assert(
@@ -2072,6 +2114,22 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
             .computed_dynamic_array_for_inserted_cleanup_call_report.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.call_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.structured_proof_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.ir_fallback_proof_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+            .computed_dynamic_array_for_inserted_cleanup_call_state.all_inserted
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for

@@ -114,6 +114,26 @@ auto build_computed_consumed_cleanup_descriptor_state(
     return state;
 }
 
+auto build_computed_inserted_cleanup_call_state(
+    ComputedCleanupProofModel const& proof_model
+) -> ComputedInsertedCleanupCallState {
+    auto state = ComputedInsertedCleanupCallState {
+        .call_count = proof_model.cleanup_call_report_events.inserted_call_events.size(),
+        .structured_proof_count = proof_model.summary.structured_inserted_cleanup_call_count,
+        .ir_fallback_proof_count = proof_model.summary.ir_inserted_cleanup_call_fallback_count,
+    };
+    state.all_inserted = state.call_count > 0;
+    state.cleanup_owner_names.reserve(proof_model.cleanup_call_report_events.inserted_call_events.size());
+    state.data_pointer_names.reserve(proof_model.cleanup_call_report_events.inserted_call_events.size());
+    state.capacity_names.reserve(proof_model.cleanup_call_report_events.inserted_call_events.size());
+    for (auto const& event : proof_model.cleanup_call_report_events.inserted_call_events) {
+        state.cleanup_owner_names.push_back(event.resumption.target_owner_name);
+        state.data_pointer_names.push_back(event.operands.data_pointer_name);
+        state.capacity_names.push_back(event.operands.capacity_name);
+    }
+    return state;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -231,6 +251,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.cleanup_call_insertion_gate_report;
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
         cleanup_proof_model.reports.inserted_cleanup_call_report;
+    result.computed_dynamic_array_for_inserted_cleanup_call_state =
+        build_computed_inserted_cleanup_call_state(cleanup_proof_model);
     result.consumed_descriptor_finalization_plan_report =
         emission.consumed_descriptor_finalization_plan_report();
     result.consumed_descriptor_finalization_state =
