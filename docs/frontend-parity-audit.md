@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed dynamic-array loop-continue render metadata now populates typed pipeline state with render
+  counts, snippet counts, loop-continue input readiness, function names, owners, source/element types, continue and
+  condition blocks, and current/next index names.
 - 2026-07-28: computed dynamic-array element-load render metadata now populates typed pipeline state with render counts,
   snippet counts, element-load input readiness, function names, owners, source/element types, lowered LLVM element
   types, element-address names, and loaded item value names.

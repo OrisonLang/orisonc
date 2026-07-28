@@ -185,6 +185,43 @@ auto build_computed_dynamic_array_for_element_load_render_state(
     return state;
 }
 
+auto build_computed_dynamic_array_for_loop_continue_render_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForLoopContinueRenderState {
+    auto const& renders = emission.test_only_computed_dynamic_array_for_loop_continue_renders;
+    auto state = ComputedDynamicArrayForLoopContinueRenderState {
+        .render_count = renders.size(),
+    };
+    state.render_metadata_available = state.render_count > 0;
+    state.all_loop_continue_inputs_ready = state.render_metadata_available;
+    state.enclosing_function_names.reserve(renders.size());
+    state.cleanup_owner_names.reserve(renders.size());
+    state.source_type_names.reserve(renders.size());
+    state.element_source_type_names.reserve(renders.size());
+    state.continue_block_names.reserve(renders.size());
+    state.condition_block_names.reserve(renders.size());
+    state.index_names.reserve(renders.size());
+    state.next_index_names.reserve(renders.size());
+    for (auto const& render : renders) {
+        state.enclosing_function_names.push_back(render.enclosing_function_name);
+        state.cleanup_owner_names.push_back(render.cleanup_owner_name);
+        state.source_type_names.push_back(render.source_type_name);
+        state.element_source_type_names.push_back(render.element_source_type_name);
+        state.continue_block_names.push_back(render.continue_block_name);
+        state.condition_block_names.push_back(render.condition_block_name);
+        state.index_names.push_back(render.index_name);
+        state.next_index_names.push_back(render.next_index_name);
+        state.rendered_ir_snippet_count += render.rendered_ir.size();
+        state.all_loop_continue_inputs_ready =
+            state.all_loop_continue_inputs_ready &&
+            !render.continue_block_name.empty() &&
+            !render.condition_block_name.empty() &&
+            !render.index_name.empty() &&
+            !render.next_index_name.empty();
+    }
+    return state;
+}
+
 auto build_computed_dynamic_array_for_production_emission_gate_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionEmissionGateState {
@@ -565,6 +602,8 @@ void populate_lowering_emission_reports(
         build_computed_dynamic_array_for_element_load_render_state(emission);
     result.computed_dynamic_array_for_loop_continue_render_report =
         emission.computed_dynamic_array_for_loop_continue_render_report();
+    result.computed_dynamic_array_for_loop_continue_render_state =
+        build_computed_dynamic_array_for_loop_continue_render_state(emission);
     result.computed_dynamic_array_for_loop_render_sequence_report =
         emission.computed_dynamic_array_for_loop_render_sequence_report();
     result.computed_dynamic_array_for_loop_exit_cleanup_report =

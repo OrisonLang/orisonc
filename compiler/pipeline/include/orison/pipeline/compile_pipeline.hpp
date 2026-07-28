@@ -109,6 +109,21 @@ struct ComputedDynamicArrayForElementLoadRenderState {
     std::size_t rendered_ir_snippet_count = 0;
 };
 
+struct ComputedDynamicArrayForLoopContinueRenderState {
+    std::vector<std::string> enclosing_function_names;
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> source_type_names;
+    std::vector<std::string> element_source_type_names;
+    std::vector<std::string> continue_block_names;
+    std::vector<std::string> condition_block_names;
+    std::vector<std::string> index_names;
+    std::vector<std::string> next_index_names;
+    bool render_metadata_available = false;
+    bool all_loop_continue_inputs_ready = false;
+    std::size_t render_count = 0;
+    std::size_t rendered_ir_snippet_count = 0;
+};
+
 struct ComputedDynamicArrayForProductionEmissionGateState {
     std::vector<std::string> cleanup_owner_names;
     bool gate_metadata_available = false;
@@ -340,6 +355,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_element_load_render_report;
     ComputedDynamicArrayForElementLoadRenderState computed_dynamic_array_for_element_load_render_state;
     std::vector<std::string> computed_dynamic_array_for_loop_continue_render_report;
+    ComputedDynamicArrayForLoopContinueRenderState computed_dynamic_array_for_loop_continue_render_state;
     std::vector<std::string> computed_dynamic_array_for_loop_render_sequence_report;
     std::vector<std::string> computed_dynamic_array_for_loop_exit_cleanup_report;
     std::vector<std::string> computed_dynamic_array_for_cleanup_transition_report;

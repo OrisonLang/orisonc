@@ -1354,6 +1354,59 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.render_metadata_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.render_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.rendered_ir_snippet_count == 3
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.all_loop_continue_inputs_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.enclosing_function_names.front() == "sum_words"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.source_type_names.front() ==
+        "DynamicArray<UInt32>"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.element_source_type_names.front() == "UInt32"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.continue_block_names.front() ==
+        "items.computed_for.continue"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.condition_block_names.front() ==
+        "items.computed_for.condition"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.index_names.front() ==
+        "%items.computed_for.index"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_loop_continue_render_state.next_index_names.front() ==
+        "%items.computed_for.next.index"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_loop_render_sequence_report.size() == 1
     );
     assert(
