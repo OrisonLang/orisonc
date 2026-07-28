@@ -110,6 +110,17 @@ void assert_computed_cleanup_proof_model_reusable_without_reports() {
     assert(proof_model.summary.structured_cleanup_operand_use_count == 1);
     assert(proof_model.summary.structured_inserted_cleanup_call_count == 1);
     assert(proof_model.summary.structured_consumed_cleanup_descriptor_count == 1);
+    assert(proof_model.reports.cleanup_call_emission_gate_report.size() == 1);
+    assert(proof_model.reports.cleanup_call_plan_report.size() == 1);
+    assert(proof_model.reports.cleanup_call_render_report.size() == 1);
+    assert(proof_model.reports.cleanup_call_insertion_gate_report.size() == 1);
+    assert(proof_model.reports.inserted_cleanup_call_report.size() == 1);
+    assert(proof_model.reports.consumed_cleanup_descriptor_report.size() == 1);
+    assert(
+        proof_model.reports.cleanup_call_insertion_gate_report.front().find(
+            "[cleanup call insertion ready]"
+        ) != std::string::npos
+    );
 
     auto const& call = proof_model.verified_cleanup_calls.front();
     auto const insertion_decision = orison::pipeline::computed_cleanup_call_insertion_decision(call);

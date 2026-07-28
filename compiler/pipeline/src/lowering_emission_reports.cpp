@@ -6,247 +6,7 @@
 #include "dynamic_array_cleanup_readiness.hpp"
 #include "computed_cleanup_proof_model.hpp"
 
-#include <sstream>
-#include <string_view>
-
 namespace orison::pipeline {
-
-namespace {
-
-auto format_computed_cleanup_call_emission_gate(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption
-) -> std::string {
-    auto const state_verified =
-        acquisition.target_owner_name == resumption.source_owner_name &&
-        acquisition.source_owner_name == resumption.target_owner_name;
-    auto const cleanup_calls_enabled =
-        acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled;
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for cleanup call emission gate ";
-    output << (state_verified && cleanup_calls_enabled ? "ready" : "blocked");
-    output << " acquire-operation " << acquisition.operation_name;
-    output << " resume-operation " << resumption.operation_name;
-    output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
-    output << (cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
-    output << (state_verified && cleanup_calls_enabled ? " [cleanup call emission ready]" :
-        " [cleanup call emission blocked]");
-    output << " (inserted IR)";
-    return output.str();
-}
-
-auto format_computed_cleanup_call_plan(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallOperands const& operands
-) -> std::string {
-    auto const state_verified =
-        acquisition.target_owner_name == resumption.source_owner_name &&
-        acquisition.source_owner_name == resumption.target_owner_name;
-    auto const cleanup_calls_enabled =
-        acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled;
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for cleanup call plan ";
-    output << (state_verified ? "planned" : "blocked");
-    output << " cleanup-operation " << resumption.operation_name << ".call";
-    output << " after-resume-operation " << resumption.operation_name;
-    output << " owner " << resumption.target_owner_name;
-    if (!operands.data_pointer_name.empty()) {
-        output << " data " << operands.data_pointer_name;
-    }
-    if (!operands.element_size_bytes.empty()) {
-        output << " element-size " << operands.element_size_bytes;
-    }
-    if (!operands.capacity_name.empty()) {
-        output << " capacity " << operands.capacity_name;
-    }
-    output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
-    output << (cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
-    output << (operands.data_pointer_name.empty() ? " [data operand pending]" : " [data operand proven]");
-    output << (operands.element_size_bytes.empty() ? " [element-size operand pending]" :
-        " [element-size operand proven]");
-    output << (operands.capacity_name.empty() ? " [capacity operand pending]" : " [capacity operand proven]");
-    output << " [cleanup call disabled]";
-    output << " snippets 1 (inserted IR)";
-    return output.str();
-}
-
-auto format_computed_cleanup_call_render(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallOperands const& operands
-) -> std::string {
-    auto const state_verified =
-        acquisition.target_owner_name == resumption.source_owner_name &&
-        acquisition.source_owner_name == resumption.target_owner_name;
-    auto const operands_proven =
-        !operands.data_pointer_name.empty() &&
-        !operands.element_size_bytes.empty() &&
-        !operands.capacity_name.empty();
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for cleanup call render ";
-    output << (state_verified && operands_proven ? "rendered" : "blocked");
-    output << " cleanup-operation " << resumption.operation_name << ".call";
-    if (operands_proven) {
-        output << " call \"call void @__orison_dynamic_array_deallocate(ptr ";
-        output << operands.data_pointer_name;
-        output << ", i64 " << operands.element_size_bytes;
-        output << ", i64 " << operands.capacity_name << ")\"";
-    }
-    output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
-    output << (operands.data_pointer_name.empty() ? " [data operand pending]" : " [data operand proven]");
-    output << (operands.element_size_bytes.empty() ? " [element-size operand pending]" :
-        " [element-size operand proven]");
-    output << (operands.capacity_name.empty() ? " [capacity operand pending]" : " [capacity operand proven]");
-    output << " [render disabled]";
-    output << " [module IR unchanged]";
-    output << " snippets " << (state_verified && operands_proven ? 1 : 0);
-    output << " (inserted IR)";
-    return output.str();
-}
-
-auto format_computed_cleanup_call_insertion_gate(
-    InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallInsertionDecision const& decision
-) -> std::string {
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for cleanup call insertion gate ";
-    output << (decision.insertion_ready ? "ready" : "blocked");
-    output << " cleanup-operation " << resumption.operation_name << ".call";
-    output << (decision.state_verified ? " [inserted state verified]" : " [inserted state blocked]");
-    output << (decision.operands_proven ? " [cleanup operands proven]" : " [cleanup operands blocked]");
-    output << (decision.cleanup_calls_authorized ? " [cleanup calls authorized]" :
-        " [cleanup calls unauthorized]");
-    output << (decision.insertion_ready ? " [cleanup call insertion ready]" :
-        " [cleanup call insertion blocked]");
-    output << " (inserted IR)";
-    return output.str();
-}
-
-auto format_computed_cleanup_call_emission_gate_report(
-    std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
-) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    for (auto const& [acquisition, resumption] : verified_pairs) {
-        report.push_back(format_computed_cleanup_call_emission_gate(acquisition, resumption));
-    }
-    return report;
-}
-
-auto format_computed_cleanup_call_plan_report(
-    std::vector<VerifiedComputedCleanupCall> const& verified_calls
-) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    for (auto const& call : verified_calls) {
-        report.push_back(format_computed_cleanup_call_plan(
-            call.acquisition,
-            call.resumption,
-            call.operands
-        ));
-    }
-    return report;
-}
-
-auto format_computed_cleanup_call_render_report(
-    std::vector<VerifiedComputedCleanupCall> const& verified_calls
-) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    for (auto const& call : verified_calls) {
-        report.push_back(format_computed_cleanup_call_render(
-            call.acquisition,
-            call.resumption,
-            call.operands
-        ));
-    }
-    return report;
-}
-
-auto format_computed_cleanup_call_insertion_gate_report(
-    std::vector<VerifiedComputedCleanupCall> const& verified_calls
-) -> std::vector<std::string> {
-    auto report = std::vector<std::string> {};
-    for (auto const& call : verified_calls) {
-        report.push_back(format_computed_cleanup_call_insertion_gate(
-            call.resumption,
-            computed_cleanup_call_insertion_decision(call)
-        ));
-    }
-    return report;
-}
-
-auto format_computed_cleanup_call_inserted(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallOperands const& operands
-) -> std::string {
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for inserted cleanup call";
-    output << " cleanup-operation " << resumption.operation_name << ".call";
-    output << " call \"call void @__orison_dynamic_array_deallocate(ptr ";
-    output << operands.data_pointer_name;
-    output << ", i64 " << operands.element_size_bytes;
-    output << ", i64 " << operands.capacity_name << ")\"";
-    output << " [inserted state verified]";
-    output << (acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled ?
-        " [cleanup calls authorized]" : " [cleanup calls unauthorized]");
-    output << " (inserted IR)";
-    return output.str();
-}
-
-auto format_computed_cleanup_call_inserted_report(
-    std::string_view ir_text,
-    std::vector<VerifiedComputedCleanupCall> const& verified_calls
-) -> std::vector<std::string> {
-    (void)ir_text;
-    auto report = std::vector<std::string> {};
-    for (auto const& call : verified_calls) {
-        auto const& decision = call.inserted_call_decision;
-        if (!decision.operands_proven || !decision.inserted) {
-            continue;
-        }
-        report.push_back(format_computed_cleanup_call_inserted(
-            call.acquisition,
-            call.resumption,
-            call.operands
-        ));
-    }
-    return report;
-}
-
-auto format_computed_consumed_cleanup_descriptor(
-    InsertedCleanupOperation const& resumption,
-    std::string_view descriptor_storage_name
-) -> std::string {
-    auto output = std::ostringstream {};
-    output << "computed DynamicArray for consumed cleanup descriptor";
-    output << " cleanup-operation " << resumption.operation_name << ".call";
-    output << " owner " << resumption.target_owner_name;
-    output << " descriptor " << descriptor_storage_name;
-    output << " [inserted cleanup call proven]";
-    output << " [descriptor finalized]";
-    output << " (inserted IR)";
-    return output.str();
-}
-
-auto format_computed_consumed_cleanup_descriptor_report(
-    std::string_view ir_text,
-    std::vector<VerifiedComputedCleanupCall> const& verified_calls
-) -> std::vector<std::string> {
-    (void)ir_text;
-    auto report = std::vector<std::string> {};
-    for (auto const& call : verified_calls) {
-        auto const& decision = call.consumed_descriptor_decision;
-        if (!decision.operands_proven || !decision.finalized || !decision.descriptor_storage_name.has_value()) {
-            continue;
-        }
-        report.push_back(
-            format_computed_consumed_cleanup_descriptor(call.resumption, *decision.descriptor_storage_name)
-        );
-    }
-    return report;
-}
-
-}  // namespace
 
 void populate_lowering_emission_reports(
     CompilePipelineResult& result,
@@ -345,29 +105,21 @@ void populate_lowering_emission_reports(
     result.computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count =
         cleanup_proof_model.summary.ir_consumed_cleanup_descriptor_fallback_count;
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
-        format_computed_cleanup_call_emission_gate_report(
-            cleanup_proof_model.inserted_cleanup_state.verified_pairs
-        );
+        cleanup_proof_model.reports.cleanup_call_emission_gate_report;
     result.computed_dynamic_array_for_cleanup_call_plan_report =
-        format_computed_cleanup_call_plan_report(cleanup_proof_model.verified_cleanup_calls);
+        cleanup_proof_model.reports.cleanup_call_plan_report;
     result.computed_dynamic_array_for_cleanup_call_render_report =
-        format_computed_cleanup_call_render_report(cleanup_proof_model.verified_cleanup_calls);
+        cleanup_proof_model.reports.cleanup_call_render_report;
     result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
-        format_computed_cleanup_call_insertion_gate_report(cleanup_proof_model.verified_cleanup_calls);
+        cleanup_proof_model.reports.cleanup_call_insertion_gate_report;
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
-        format_computed_cleanup_call_inserted_report(
-            result.ir_text,
-            cleanup_proof_model.verified_cleanup_calls
-        );
+        cleanup_proof_model.reports.inserted_cleanup_call_report;
     result.consumed_descriptor_finalization_plan_report =
         emission.consumed_descriptor_finalization_plan_report();
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report =
         emission.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report();
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
-        format_computed_consumed_cleanup_descriptor_report(
-            result.ir_text,
-            cleanup_proof_model.verified_cleanup_calls
-        );
+        cleanup_proof_model.reports.consumed_cleanup_descriptor_report;
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =

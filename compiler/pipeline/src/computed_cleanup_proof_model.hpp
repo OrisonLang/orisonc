@@ -81,10 +81,20 @@ struct ComputedCleanupProofSummary {
     std::size_t ir_consumed_cleanup_descriptor_fallback_count = 0;
 };
 
+struct ComputedCleanupProofReportBundle {
+    std::vector<std::string> cleanup_call_emission_gate_report;
+    std::vector<std::string> cleanup_call_plan_report;
+    std::vector<std::string> cleanup_call_render_report;
+    std::vector<std::string> cleanup_call_insertion_gate_report;
+    std::vector<std::string> inserted_cleanup_call_report;
+    std::vector<std::string> consumed_cleanup_descriptor_report;
+};
+
 struct ComputedCleanupProofModel {
     InsertedCleanupStateAnalysis inserted_cleanup_state;
     std::vector<VerifiedComputedCleanupCall> verified_cleanup_calls;
     ComputedCleanupProofSummary summary;
+    ComputedCleanupProofReportBundle reports;
 };
 
 auto build_computed_cleanup_proof_model(
