@@ -210,6 +210,9 @@ representation.
 - Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the
   downstream transition, state-verification, cleanup-call gate, plan, render, insertion, and consumed-descriptor
   reports are formatted.
+- Executable computed dynamic-array `for` lowering now records structured cleanup-call operand metadata for the planned
+  cleanup resumption. Pipeline cleanup-call reports prefer that metadata over IR instruction scraping when proving
+  data pointer, element size, and capacity operands.
 
 ## Consequences
 

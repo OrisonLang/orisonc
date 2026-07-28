@@ -230,12 +230,22 @@ auto lower_sequence_for_statement(
                         context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
                 }
             );
+            auto const element_size_bytes =
+                lowered_type_size_bytes(element_type->type, context.lowering);
+            if (element_size_bytes.has_value()) {
+                session.state.computed_dynamic_array_cleanup_call_operands.push_back(
+                    ComputedDynamicArrayCleanupCallOperands {
+                        .cleanup_operation_name = loop_exit_plan.cleanup_resumption_operation_name,
+                        .data_pointer_name = descriptor_plan.data_pointer_name,
+                        .element_size_bytes = *element_size_bytes,
+                        .capacity_name = descriptor_plan.capacity_name,
+                    }
+                );
+            }
             if (
                 context.options.test_only_authorize_computed_dynamic_array_cleanup_calls &&
                 context.options.test_only_insert_computed_dynamic_array_cleanup_calls
             ) {
-                auto const element_size_bytes =
-                    lowered_type_size_bytes(element_type->type, context.lowering);
                 if (element_size_bytes.has_value()) {
                     auto cleanup_call_plan = DynamicArrayConstructionPlan {
                         .owner_name = cleanup_sequence_plan.cleanup_owner_name,

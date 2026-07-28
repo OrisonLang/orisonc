@@ -1,7 +1,8 @@
 #pragma once
 
-#include "orison/lowering/consumed_descriptor_finalization.hpp"
+#include "orison/lowering/computed_dynamic_array_cleanup_call.hpp"
 #include "orison/diagnostics/diagnostic_bag.hpp"
+#include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/function_signature.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_options.hpp"
@@ -22,6 +23,7 @@ struct FunctionEmissionResult {
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_capability_report;
+    std::vector<ComputedDynamicArrayCleanupCallOperands> computed_dynamic_array_cleanup_call_operands;
     std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
 };
 

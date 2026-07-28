@@ -1819,3 +1819,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs
   before transition, state-verification, cleanup-call gate, plan, render, insertion, and consumed-descriptor reports
   are formatted.
+- 2026-07-27: executable computed dynamic-array `for` lowering now records structured cleanup-call operand metadata
+  for the planned cleanup resumption, and pipeline cleanup-call reports prefer that metadata over IR instruction
+  scraping when proving data pointer, element size, and capacity operands.

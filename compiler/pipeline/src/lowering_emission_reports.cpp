@@ -110,6 +110,34 @@ auto collect_computed_cleanup_call_operands(
     return operands;
 }
 
+auto computed_cleanup_call_operands_from_metadata(
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& metadata,
+    InsertedCleanupOperation const& resumption
+) -> std::optional<ComputedCleanupCallOperands> {
+    for (auto const& operands : metadata) {
+        if (operands.cleanup_operation_name != resumption.operation_name) {
+            continue;
+        }
+        return ComputedCleanupCallOperands {
+            .data_pointer_name = operands.data_pointer_name,
+            .capacity_name = operands.capacity_name,
+            .element_size_bytes = std::to_string(operands.element_size_bytes),
+        };
+    }
+    return std::nullopt;
+}
+
+auto collect_computed_cleanup_call_operands(
+    std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& metadata,
+    InsertedCleanupOperation const& resumption
+) -> ComputedCleanupCallOperands {
+    if (auto operands = computed_cleanup_call_operands_from_metadata(metadata, resumption)) {
+        return *operands;
+    }
+    return collect_computed_cleanup_call_operands(ir_text, resumption);
+}
+
 auto parse_inserted_cleanup_operation(
     std::string_view line,
     std::string_view prefix
@@ -395,6 +423,7 @@ auto format_computed_cleanup_call_emission_gate_report(
 
 auto format_computed_cleanup_call_plan_report(
     std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
@@ -402,7 +431,7 @@ auto format_computed_cleanup_call_plan_report(
         report.push_back(format_computed_cleanup_call_plan(
             acquisition,
             resumption,
-            collect_computed_cleanup_call_operands(ir_text, resumption)
+            collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption)
         ));
     }
     return report;
@@ -410,6 +439,7 @@ auto format_computed_cleanup_call_plan_report(
 
 auto format_computed_cleanup_call_render_report(
     std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
@@ -417,7 +447,7 @@ auto format_computed_cleanup_call_render_report(
         report.push_back(format_computed_cleanup_call_render(
             acquisition,
             resumption,
-            collect_computed_cleanup_call_operands(ir_text, resumption)
+            collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption)
         ));
     }
     return report;
@@ -425,6 +455,7 @@ auto format_computed_cleanup_call_render_report(
 
 auto format_computed_cleanup_call_insertion_gate_report(
     std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
@@ -432,7 +463,7 @@ auto format_computed_cleanup_call_insertion_gate_report(
         report.push_back(format_computed_cleanup_call_insertion_gate(
             acquisition,
             resumption,
-            collect_computed_cleanup_call_operands(ir_text, resumption)
+            collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption)
         ));
     }
     return report;
@@ -459,11 +490,12 @@ auto format_computed_cleanup_call_inserted(
 
 auto format_computed_cleanup_call_inserted_report(
     std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     for (auto const& [acquisition, resumption] : verified_pairs) {
-        auto const operands = collect_computed_cleanup_call_operands(ir_text, resumption);
+        auto const operands = collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption);
         if (
             operands.data_pointer_name.empty() ||
             operands.element_size_bytes.empty() ||
@@ -501,11 +533,12 @@ auto format_computed_consumed_cleanup_descriptor(
 
 auto format_computed_consumed_cleanup_descriptor_report(
     std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata,
     std::vector<std::pair<InsertedCleanupOperation, InsertedCleanupOperation>> const& verified_pairs
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     for (auto const& [acquisition, resumption] : verified_pairs) {
-        auto const operands = collect_computed_cleanup_call_operands(ir_text, resumption);
+        auto const operands = collect_computed_cleanup_call_operands(ir_text, operand_metadata, resumption);
         if (
             operands.data_pointer_name.empty() ||
             operands.element_size_bytes.empty() ||
@@ -610,22 +643,44 @@ void populate_lowering_emission_reports(
         inserted_cleanup_state.verification_report;
     result.computed_dynamic_array_for_verified_inserted_cleanup_pair_count =
         inserted_cleanup_state.verified_pairs.size();
+    result.computed_dynamic_array_for_structured_cleanup_operand_count =
+        emission.computed_dynamic_array_cleanup_call_operands.size();
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
         format_computed_cleanup_call_emission_gate_report(inserted_cleanup_state.verified_pairs);
     result.computed_dynamic_array_for_cleanup_call_plan_report =
-        format_computed_cleanup_call_plan_report(result.ir_text, inserted_cleanup_state.verified_pairs);
+        format_computed_cleanup_call_plan_report(
+            result.ir_text,
+            emission.computed_dynamic_array_cleanup_call_operands,
+            inserted_cleanup_state.verified_pairs
+        );
     result.computed_dynamic_array_for_cleanup_call_render_report =
-        format_computed_cleanup_call_render_report(result.ir_text, inserted_cleanup_state.verified_pairs);
+        format_computed_cleanup_call_render_report(
+            result.ir_text,
+            emission.computed_dynamic_array_cleanup_call_operands,
+            inserted_cleanup_state.verified_pairs
+        );
     result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
-        format_computed_cleanup_call_insertion_gate_report(result.ir_text, inserted_cleanup_state.verified_pairs);
+        format_computed_cleanup_call_insertion_gate_report(
+            result.ir_text,
+            emission.computed_dynamic_array_cleanup_call_operands,
+            inserted_cleanup_state.verified_pairs
+        );
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
-        format_computed_cleanup_call_inserted_report(result.ir_text, inserted_cleanup_state.verified_pairs);
+        format_computed_cleanup_call_inserted_report(
+            result.ir_text,
+            emission.computed_dynamic_array_cleanup_call_operands,
+            inserted_cleanup_state.verified_pairs
+        );
     result.consumed_descriptor_finalization_plan_report =
         emission.consumed_descriptor_finalization_plan_report();
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report =
         emission.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report();
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
-        format_computed_consumed_cleanup_descriptor_report(result.ir_text, inserted_cleanup_state.verified_pairs);
+        format_computed_consumed_cleanup_descriptor_report(
+            result.ir_text,
+            emission.computed_dynamic_array_cleanup_call_operands,
+            inserted_cleanup_state.verified_pairs
+        );
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_sequence_report =
