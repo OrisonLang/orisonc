@@ -1010,6 +1010,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_proof_model_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_structured_cleanup_operand_count == 0
     );
     assert(
@@ -1129,6 +1133,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_cleanup_proof_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -1274,6 +1282,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
+            .computed_dynamic_array_for_cleanup_proof_model_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_operand_fallback_for
             .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
     );
     assert(
@@ -1378,6 +1390,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_proof_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
@@ -1533,6 +1549,10 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_cleanup_proof_model_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
     );
     assert(
@@ -1681,6 +1701,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
             .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
+            .computed_dynamic_array_for_cleanup_proof_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
@@ -1905,6 +1929,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 2
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops
+            .computed_dynamic_array_for_cleanup_proof_model_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops

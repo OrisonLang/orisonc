@@ -43,6 +43,11 @@ struct VerifiedComputedCleanupCall {
     lowering::ComputedDynamicArrayCleanupCallOperands const* metadata = nullptr;
 };
 
+struct ComputedCleanupProofModel {
+    InsertedCleanupStateAnalysis inserted_cleanup_state;
+    std::vector<VerifiedComputedCleanupCall> verified_cleanup_calls;
+};
+
 auto trim(std::string_view value) -> std::string_view {
     while (!value.empty() && value.front() == ' ') {
         value.remove_prefix(1);
@@ -491,6 +496,21 @@ auto collect_verified_computed_cleanup_calls(
     return calls;
 }
 
+auto build_computed_cleanup_proof_model(
+    std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupStateHandoff> const& handoff_metadata,
+    std::vector<lowering::ComputedDynamicArrayCleanupCallOperands> const& operand_metadata
+) -> ComputedCleanupProofModel {
+    auto model = ComputedCleanupProofModel {};
+    model.inserted_cleanup_state = analyze_inserted_cleanup_state_handoffs(ir_text, handoff_metadata);
+    model.verified_cleanup_calls = collect_verified_computed_cleanup_calls(
+        ir_text,
+        operand_metadata,
+        model.inserted_cleanup_state.verified_pairs
+    );
+    return model;
+}
+
 auto computed_cleanup_call_operands_complete(ComputedCleanupCallOperands const& operands) -> bool {
     return
         !operands.data_pointer_name.empty() &&
@@ -700,14 +720,10 @@ void populate_lowering_emission_reports(
     CompilePipelineOptions const& options
 ) {
     result.ir_text = std::move(emission.ir_text);
-    auto const inserted_cleanup_state = analyze_inserted_cleanup_state_handoffs(
+    auto const cleanup_proof_model = build_computed_cleanup_proof_model(
         result.ir_text,
-        emission.computed_dynamic_array_inserted_cleanup_handoffs
-    );
-    auto const verified_cleanup_calls = collect_verified_computed_cleanup_calls(
-        result.ir_text,
-        emission.computed_dynamic_array_cleanup_call_operands,
-        inserted_cleanup_state.verified_pairs
+        emission.computed_dynamic_array_inserted_cleanup_handoffs,
+        emission.computed_dynamic_array_cleanup_call_operands
     );
     result.dynamic_array_construction_plan_report =
         emission.dynamic_array_construction_plan_report();
@@ -767,23 +783,25 @@ void populate_lowering_emission_reports(
     result.computed_dynamic_array_for_cleanup_transition_report =
         emission.computed_dynamic_array_for_cleanup_transition_report();
     result.computed_dynamic_array_for_inserted_cleanup_transition_report =
-        inserted_cleanup_state.transition_report;
+        cleanup_proof_model.inserted_cleanup_state.transition_report;
     result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
-        inserted_cleanup_state.verification_report;
+        cleanup_proof_model.inserted_cleanup_state.verification_report;
+    result.computed_dynamic_array_for_cleanup_proof_model_count =
+        cleanup_proof_model.verified_cleanup_calls.size();
     result.computed_dynamic_array_for_verified_inserted_cleanup_pair_count =
-        inserted_cleanup_state.verified_pairs.size();
+        cleanup_proof_model.inserted_cleanup_state.verified_pairs.size();
     result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_count =
         emission.computed_dynamic_array_inserted_cleanup_handoffs.size();
-    if (inserted_cleanup_state.from_metadata) {
+    if (cleanup_proof_model.inserted_cleanup_state.from_metadata) {
         result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count =
-            inserted_cleanup_state.verified_pairs.size() * 2;
+            cleanup_proof_model.inserted_cleanup_state.verified_pairs.size() * 2;
     } else {
         result.computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count =
-            inserted_cleanup_state.verified_pairs.size() * 2;
+            cleanup_proof_model.inserted_cleanup_state.verified_pairs.size() * 2;
     }
     result.computed_dynamic_array_for_structured_cleanup_operand_count =
         emission.computed_dynamic_array_cleanup_call_operands.size();
-    for (auto const& call : verified_cleanup_calls) {
+    for (auto const& call : cleanup_proof_model.verified_cleanup_calls) {
         if (call.operands.from_metadata) {
             ++result.computed_dynamic_array_for_structured_cleanup_operand_use_count;
         } else {
@@ -800,7 +818,7 @@ void populate_lowering_emission_reports(
             ++result.computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count;
         }
     }
-    for (auto const& call : verified_cleanup_calls) {
+    for (auto const& call : cleanup_proof_model.verified_cleanup_calls) {
         if (computed_cleanup_call_inserted_by_ir(result.ir_text, call)) {
             ++result.computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count;
         }
@@ -809,17 +827,19 @@ void populate_lowering_emission_reports(
         }
     }
     result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
-        format_computed_cleanup_call_emission_gate_report(inserted_cleanup_state.verified_pairs);
+        format_computed_cleanup_call_emission_gate_report(
+            cleanup_proof_model.inserted_cleanup_state.verified_pairs
+        );
     result.computed_dynamic_array_for_cleanup_call_plan_report =
-        format_computed_cleanup_call_plan_report(verified_cleanup_calls);
+        format_computed_cleanup_call_plan_report(cleanup_proof_model.verified_cleanup_calls);
     result.computed_dynamic_array_for_cleanup_call_render_report =
-        format_computed_cleanup_call_render_report(verified_cleanup_calls);
+        format_computed_cleanup_call_render_report(cleanup_proof_model.verified_cleanup_calls);
     result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
-        format_computed_cleanup_call_insertion_gate_report(verified_cleanup_calls);
+        format_computed_cleanup_call_insertion_gate_report(cleanup_proof_model.verified_cleanup_calls);
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
         format_computed_cleanup_call_inserted_report(
             result.ir_text,
-            verified_cleanup_calls
+            cleanup_proof_model.verified_cleanup_calls
         );
     result.consumed_descriptor_finalization_plan_report =
         emission.consumed_descriptor_finalization_plan_report();
@@ -828,7 +848,7 @@ void populate_lowering_emission_reports(
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
         format_computed_consumed_cleanup_descriptor_report(
             result.ir_text,
-            verified_cleanup_calls
+            cleanup_proof_model.verified_cleanup_calls
         );
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();

@@ -1837,3 +1837,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   and pipeline smoke coverage pins both the normal metadata proof path and the deliberate suppressed-metadata fallback.
 - 2026-07-27: inserted cleanup handoff verification now exposes structured-vs-IR-comment provenance counts, with an
   explicit test-only handoff-metadata suppression seam covering the fallback path.
+- 2026-07-27: computed cleanup report population now consumes a typed internal cleanup-proof model that bundles
+  inserted handoff verification with verified cleanup-call operands before formatting audit reports.

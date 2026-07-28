@@ -229,6 +229,9 @@ representation.
 - Inserted cleanup handoff verification now exposes structured-vs-IR-comment provenance counts. A test-only handoff
   metadata suppression seam keeps the IR-comment fallback intentional and covered while the normal path proves handoffs
   from structured metadata.
+- Computed cleanup report population now consumes a typed internal cleanup-proof model. The model bundles inserted
+  handoff verification and verified cleanup-call operands before downstream cleanup gate, plan, render, inserted-call,
+  and consumed-descriptor reports are formatted.
 
 ## Consequences
 
