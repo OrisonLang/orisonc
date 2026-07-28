@@ -47,6 +47,21 @@ struct ComputedCleanupCallInsertionDecision {
     bool insertion_ready = false;
 };
 
+struct ComputedInsertedCleanupCallDecision {
+    bool operands_proven = false;
+    bool proven_by_metadata = false;
+    bool proven_by_ir = false;
+    bool inserted = false;
+};
+
+struct ComputedConsumedCleanupDescriptorDecision {
+    bool operands_proven = false;
+    bool finalized_by_metadata = false;
+    bool finalized_by_ir = false;
+    bool finalized = false;
+    std::optional<std::string> descriptor_storage_name;
+};
+
 struct ComputedCleanupProofModel {
     InsertedCleanupStateAnalysis inserted_cleanup_state;
     std::vector<VerifiedComputedCleanupCall> verified_cleanup_calls;
@@ -65,6 +80,16 @@ auto rendered_computed_cleanup_call_text(ComputedCleanupCallOperands const& oper
 auto computed_cleanup_call_insertion_decision(
     VerifiedComputedCleanupCall const& call
 ) -> ComputedCleanupCallInsertionDecision;
+
+auto computed_inserted_cleanup_call_decision(
+    std::string_view ir_text,
+    VerifiedComputedCleanupCall const& call
+) -> ComputedInsertedCleanupCallDecision;
+
+auto computed_consumed_cleanup_descriptor_decision(
+    std::string_view ir_text,
+    VerifiedComputedCleanupCall const& call
+) -> ComputedConsumedCleanupDescriptorDecision;
 
 auto computed_cleanup_call_inserted_by_metadata(VerifiedComputedCleanupCall const& call) -> bool;
 

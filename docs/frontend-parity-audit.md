@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-27: inserted computed cleanup-call and consumed-descriptor proof checks now flow through typed proof-model
+  decisions, keeping report generation and fallback counters out of proof ownership.
 - 2026-07-27: computed cleanup-call insertion readiness is now exposed as a typed proof-model decision, so report
   formatting consumes reusable compiler state instead of recomputing gate booleans locally.
 - 2026-07-27: pipeline smoke coverage now consumes the reusable computed cleanup-proof model directly, proving the

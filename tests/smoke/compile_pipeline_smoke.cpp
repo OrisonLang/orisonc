@@ -105,12 +105,24 @@ void assert_computed_cleanup_proof_model_reusable_without_reports() {
 
     auto const& call = proof_model.verified_cleanup_calls.front();
     auto const insertion_decision = orison::pipeline::computed_cleanup_call_insertion_decision(call);
+    auto const inserted_call_decision = orison::pipeline::computed_inserted_cleanup_call_decision("", call);
+    auto const consumed_descriptor_decision =
+        orison::pipeline::computed_consumed_cleanup_descriptor_decision("", call);
     assert(orison::pipeline::computed_cleanup_call_operands_complete(call.operands));
     assert(call.operands.from_metadata);
     assert(insertion_decision.state_verified);
     assert(insertion_decision.operands_proven);
     assert(insertion_decision.cleanup_calls_authorized);
     assert(insertion_decision.insertion_ready);
+    assert(inserted_call_decision.operands_proven);
+    assert(inserted_call_decision.proven_by_metadata);
+    assert(!inserted_call_decision.proven_by_ir);
+    assert(inserted_call_decision.inserted);
+    assert(consumed_descriptor_decision.operands_proven);
+    assert(consumed_descriptor_decision.finalized_by_metadata);
+    assert(!consumed_descriptor_decision.finalized_by_ir);
+    assert(consumed_descriptor_decision.finalized);
+    assert(consumed_descriptor_decision.descriptor_storage_name == "%items.addr");
     assert(orison::pipeline::computed_cleanup_call_inserted_by_metadata(call));
     assert(!orison::pipeline::computed_cleanup_call_inserted_by_ir("", call));
     assert(orison::pipeline::computed_consumed_cleanup_descriptor_by_metadata(call));

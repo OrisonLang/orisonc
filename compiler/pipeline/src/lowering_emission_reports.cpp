@@ -199,22 +199,15 @@ auto format_computed_cleanup_call_inserted_report(
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     for (auto const& call : verified_calls) {
-        auto const& operands = call.operands;
-        if (!computed_cleanup_call_operands_complete(operands)) {
+        auto const decision = computed_inserted_cleanup_call_decision(ir_text, call);
+        if (!decision.operands_proven || !decision.inserted) {
             continue;
         }
-        if (computed_cleanup_call_inserted_by_metadata(call)) {
-            report.push_back(format_computed_cleanup_call_inserted(
-                call.acquisition,
-                call.resumption,
-                operands
-            ));
-            continue;
-        }
-        if (!computed_cleanup_call_inserted_by_ir(ir_text, call)) {
-            continue;
-        }
-        report.push_back(format_computed_cleanup_call_inserted(call.acquisition, call.resumption, operands));
+        report.push_back(format_computed_cleanup_call_inserted(
+            call.acquisition,
+            call.resumption,
+            call.operands
+        ));
     }
     return report;
 }
@@ -240,24 +233,13 @@ auto format_computed_consumed_cleanup_descriptor_report(
 ) -> std::vector<std::string> {
     auto report = std::vector<std::string> {};
     for (auto const& call : verified_calls) {
-        auto const& operands = call.operands;
-        if (!computed_cleanup_call_operands_complete(operands)) {
+        auto const decision = computed_consumed_cleanup_descriptor_decision(ir_text, call);
+        if (!decision.operands_proven || !decision.finalized || !decision.descriptor_storage_name.has_value()) {
             continue;
         }
-        if (computed_consumed_cleanup_descriptor_by_metadata(call)) {
-            report.push_back(
-                format_computed_consumed_cleanup_descriptor(
-                    call.resumption,
-                    call.metadata->descriptor_storage_name
-                )
-            );
-            continue;
-        }
-        if (auto descriptor_storage_name = computed_consumed_cleanup_descriptor_by_ir(ir_text, call)) {
-            report.push_back(
-                format_computed_consumed_cleanup_descriptor(call.resumption, *descriptor_storage_name)
-            );
-        }
+        report.push_back(
+            format_computed_consumed_cleanup_descriptor(call.resumption, *decision.descriptor_storage_name)
+        );
     }
     return report;
 }
@@ -369,10 +351,12 @@ void populate_lowering_emission_reports(
         }
     }
     for (auto const& call : cleanup_proof_model.verified_cleanup_calls) {
-        if (computed_cleanup_call_inserted_by_ir(result.ir_text, call)) {
+        auto const inserted_call_decision = computed_inserted_cleanup_call_decision(result.ir_text, call);
+        if (inserted_call_decision.proven_by_ir) {
             ++result.computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count;
         }
-        if (computed_consumed_cleanup_descriptor_by_ir(result.ir_text, call).has_value()) {
+        auto const descriptor_decision = computed_consumed_cleanup_descriptor_decision(result.ir_text, call);
+        if (descriptor_decision.finalized_by_ir) {
             ++result.computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count;
         }
     }

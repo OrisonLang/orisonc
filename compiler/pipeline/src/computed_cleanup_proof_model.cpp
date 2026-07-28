@@ -384,49 +384,79 @@ auto computed_cleanup_call_insertion_decision(
     return decision;
 }
 
+auto computed_inserted_cleanup_call_decision(
+    std::string_view ir_text,
+    VerifiedComputedCleanupCall const& call
+) -> ComputedInsertedCleanupCallDecision {
+    auto decision = ComputedInsertedCleanupCallDecision {
+        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
+        .proven_by_metadata = call.metadata != nullptr && call.metadata->cleanup_call_inserted,
+    };
+    decision.proven_by_ir =
+        call.metadata == nullptr &&
+        decision.operands_proven &&
+        ir_text.find(rendered_computed_cleanup_call_text(call.operands)) != std::string_view::npos;
+    decision.inserted = decision.proven_by_metadata || decision.proven_by_ir;
+    return decision;
+}
+
+auto computed_consumed_cleanup_descriptor_decision(
+    std::string_view ir_text,
+    VerifiedComputedCleanupCall const& call
+) -> ComputedConsumedCleanupDescriptorDecision {
+    auto decision = ComputedConsumedCleanupDescriptorDecision {
+        .operands_proven = computed_cleanup_call_operands_complete(call.operands),
+        .finalized_by_metadata =
+            call.metadata != nullptr &&
+            call.metadata->cleanup_call_inserted &&
+            call.metadata->descriptor_finalized &&
+            !call.metadata->descriptor_storage_name.empty(),
+    };
+    if (decision.finalized_by_metadata) {
+        decision.descriptor_storage_name = call.metadata->descriptor_storage_name;
+    } else if (call.metadata == nullptr && decision.operands_proven) {
+        auto const call_text = rendered_computed_cleanup_call_text(call.operands);
+        auto const call_position = ir_text.find(call_text);
+        if (call_position != std::string_view::npos) {
+            auto const descriptor_storage_name = "%" + call.resumption.target_owner_name + ".addr";
+            auto clear_text = std::ostringstream {};
+            clear_text << "  store { ptr, i64, i64 } zeroinitializer, ptr ";
+            clear_text << descriptor_storage_name << "\n";
+            auto const clear_position = ir_text.find(clear_text.str(), call_position + call_text.size());
+            if (clear_position != std::string_view::npos) {
+                decision.finalized_by_ir = true;
+                decision.descriptor_storage_name = descriptor_storage_name;
+            }
+        }
+    }
+    decision.finalized = decision.finalized_by_metadata || decision.finalized_by_ir;
+    return decision;
+}
+
 auto computed_cleanup_call_inserted_by_metadata(VerifiedComputedCleanupCall const& call) -> bool {
-    return call.metadata != nullptr && call.metadata->cleanup_call_inserted;
+    return computed_inserted_cleanup_call_decision("", call).proven_by_metadata;
 }
 
 auto computed_cleanup_call_inserted_by_ir(
     std::string_view ir_text,
     VerifiedComputedCleanupCall const& call
 ) -> bool {
-    if (call.metadata != nullptr || !computed_cleanup_call_operands_complete(call.operands)) {
-        return false;
-    }
-    return ir_text.find(rendered_computed_cleanup_call_text(call.operands)) != std::string_view::npos;
+    return computed_inserted_cleanup_call_decision(ir_text, call).proven_by_ir;
 }
 
 auto computed_consumed_cleanup_descriptor_by_metadata(VerifiedComputedCleanupCall const& call) -> bool {
-    return
-        call.metadata != nullptr &&
-        call.metadata->cleanup_call_inserted &&
-        call.metadata->descriptor_finalized &&
-        !call.metadata->descriptor_storage_name.empty();
+    return computed_consumed_cleanup_descriptor_decision("", call).finalized_by_metadata;
 }
 
 auto computed_consumed_cleanup_descriptor_by_ir(
     std::string_view ir_text,
     VerifiedComputedCleanupCall const& call
 ) -> std::optional<std::string> {
-    if (call.metadata != nullptr || !computed_cleanup_call_operands_complete(call.operands)) {
+    auto decision = computed_consumed_cleanup_descriptor_decision(ir_text, call);
+    if (!decision.finalized_by_ir) {
         return std::nullopt;
     }
-    auto const call_text = rendered_computed_cleanup_call_text(call.operands);
-    auto const call_position = ir_text.find(call_text);
-    if (call_position == std::string_view::npos) {
-        return std::nullopt;
-    }
-    auto const descriptor_storage_name = "%" + call.resumption.target_owner_name + ".addr";
-    auto clear_text = std::ostringstream {};
-    clear_text << "  store { ptr, i64, i64 } zeroinitializer, ptr ";
-    clear_text << descriptor_storage_name << "\n";
-    auto const clear_position = ir_text.find(clear_text.str(), call_position + call_text.size());
-    if (clear_position == std::string_view::npos) {
-        return std::nullopt;
-    }
-    return descriptor_storage_name;
+    return decision.descriptor_storage_name;
 }
 
 }  // namespace orison::pipeline
