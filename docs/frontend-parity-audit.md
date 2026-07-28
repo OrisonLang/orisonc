@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed cleanup-call report inputs now live as structured proof events, with the private report
+  companion rendering plan, render, insertion-gate, inserted-call, and consumed-descriptor audit text from those events.
 - 2026-07-28: inserted cleanup state analysis now stores structured transition and verification events, with the
   private report companion rendering those events into audit text for pipeline consumers.
 - 2026-07-27: inserted cleanup state transition and verification report formatting now also lives in the private

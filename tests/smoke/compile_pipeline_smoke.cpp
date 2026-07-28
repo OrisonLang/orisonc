@@ -133,6 +133,21 @@ void assert_computed_cleanup_proof_model_reusable_without_reports() {
     assert(proof_model.reports.cleanup_call_insertion_gate_report.size() == 1);
     assert(proof_model.reports.inserted_cleanup_call_report.size() == 1);
     assert(proof_model.reports.consumed_cleanup_descriptor_report.size() == 1);
+    assert(proof_model.cleanup_call_report_events.emission_gate_events.size() == 1);
+    assert(proof_model.cleanup_call_report_events.plan_events.size() == 1);
+    assert(proof_model.cleanup_call_report_events.render_events.size() == 1);
+    assert(proof_model.cleanup_call_report_events.insertion_gate_events.size() == 1);
+    assert(proof_model.cleanup_call_report_events.inserted_call_events.size() == 1);
+    assert(proof_model.cleanup_call_report_events.consumed_descriptor_events.size() == 1);
+    assert(
+        proof_model.cleanup_call_report_events.plan_events.front().operands.capacity_name ==
+        "%items.capacity"
+    );
+    assert(proof_model.cleanup_call_report_events.insertion_gate_events.front().decision.insertion_ready);
+    assert(
+        proof_model.cleanup_call_report_events.consumed_descriptor_events.front().descriptor_storage_name ==
+        "%items.addr"
+    );
     assert(
         proof_model.reports.cleanup_call_insertion_gate_report.front().find(
             "[cleanup call insertion ready]"

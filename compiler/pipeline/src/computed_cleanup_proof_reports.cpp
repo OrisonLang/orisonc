@@ -3,16 +3,16 @@
 #include "computed_cleanup_proof_model.hpp"
 
 #include <sstream>
-#include <string_view>
 
 namespace orison::pipeline {
 
 namespace {
 
 auto format_computed_cleanup_call_emission_gate(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption
+    ComputedCleanupCallEmissionGateEvent const& event
 ) -> std::string {
+    auto const& acquisition = event.acquisition;
+    auto const& resumption = event.resumption;
     auto const state_verified =
         acquisition.target_owner_name == resumption.source_owner_name &&
         acquisition.source_owner_name == resumption.target_owner_name;
@@ -32,10 +32,11 @@ auto format_computed_cleanup_call_emission_gate(
 }
 
 auto format_computed_cleanup_call_plan(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallOperands const& operands
+    ComputedCleanupCallPlanEvent const& event
 ) -> std::string {
+    auto const& acquisition = event.acquisition;
+    auto const& resumption = event.resumption;
+    auto const& operands = event.operands;
     auto const state_verified =
         acquisition.target_owner_name == resumption.source_owner_name &&
         acquisition.source_owner_name == resumption.target_owner_name;
@@ -68,10 +69,11 @@ auto format_computed_cleanup_call_plan(
 }
 
 auto format_computed_cleanup_call_render(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallOperands const& operands
+    ComputedCleanupCallRenderEvent const& event
 ) -> std::string {
+    auto const& acquisition = event.acquisition;
+    auto const& resumption = event.resumption;
+    auto const& operands = event.operands;
     auto const state_verified =
         acquisition.target_owner_name == resumption.source_owner_name &&
         acquisition.source_owner_name == resumption.target_owner_name;
@@ -102,9 +104,10 @@ auto format_computed_cleanup_call_render(
 }
 
 auto format_computed_cleanup_call_insertion_gate(
-    InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallInsertionDecision const& decision
+    ComputedCleanupCallInsertionGateEvent const& event
 ) -> std::string {
+    auto const& resumption = event.resumption;
+    auto const& decision = event.decision;
     auto output = std::ostringstream {};
     output << "computed DynamicArray for cleanup call insertion gate ";
     output << (decision.insertion_ready ? "ready" : "blocked");
@@ -120,10 +123,11 @@ auto format_computed_cleanup_call_insertion_gate(
 }
 
 auto format_computed_cleanup_call_inserted(
-    InsertedCleanupOperation const& acquisition,
-    InsertedCleanupOperation const& resumption,
-    ComputedCleanupCallOperands const& operands
+    ComputedInsertedCleanupCallEvent const& event
 ) -> std::string {
+    auto const& acquisition = event.acquisition;
+    auto const& resumption = event.resumption;
+    auto const& operands = event.operands;
     auto output = std::ostringstream {};
     output << "computed DynamicArray for inserted cleanup call";
     output << " cleanup-operation " << resumption.operation_name << ".call";
@@ -139,14 +143,14 @@ auto format_computed_cleanup_call_inserted(
 }
 
 auto format_computed_consumed_cleanup_descriptor(
-    InsertedCleanupOperation const& resumption,
-    std::string_view descriptor_storage_name
+    ComputedConsumedCleanupDescriptorEvent const& event
 ) -> std::string {
+    auto const& resumption = event.resumption;
     auto output = std::ostringstream {};
     output << "computed DynamicArray for consumed cleanup descriptor";
     output << " cleanup-operation " << resumption.operation_name << ".call";
     output << " owner " << resumption.target_owner_name;
-    output << " descriptor " << descriptor_storage_name;
+    output << " descriptor " << event.descriptor_storage_name;
     output << " [inserted cleanup call proven]";
     output << " [descriptor finalized]";
     output << " (inserted IR)";
@@ -212,41 +216,25 @@ auto build_computed_cleanup_proof_report_bundle(
             format_inserted_cleanup_state_verification(event)
         );
     }
-    for (auto const& [acquisition, resumption] : model.inserted_cleanup_state.verified_pairs) {
+    for (auto const& event : model.cleanup_call_report_events.emission_gate_events) {
         reports.cleanup_call_emission_gate_report.push_back(
-            format_computed_cleanup_call_emission_gate(acquisition, resumption)
+            format_computed_cleanup_call_emission_gate(event)
         );
     }
-    for (auto const& call : model.verified_cleanup_calls) {
-        reports.cleanup_call_plan_report.push_back(format_computed_cleanup_call_plan(
-            call.acquisition,
-            call.resumption,
-            call.operands
-        ));
-        reports.cleanup_call_render_report.push_back(format_computed_cleanup_call_render(
-            call.acquisition,
-            call.resumption,
-            call.operands
-        ));
-        reports.cleanup_call_insertion_gate_report.push_back(format_computed_cleanup_call_insertion_gate(
-            call.resumption,
-            call.insertion_decision
-        ));
-        if (call.inserted_call_decision.operands_proven && call.inserted_call_decision.inserted) {
-            reports.inserted_cleanup_call_report.push_back(format_computed_cleanup_call_inserted(
-                call.acquisition,
-                call.resumption,
-                call.operands
-            ));
-        }
-        if (call.consumed_descriptor_decision.operands_proven &&
-            call.consumed_descriptor_decision.finalized &&
-            call.consumed_descriptor_decision.descriptor_storage_name.has_value()) {
-            reports.consumed_cleanup_descriptor_report.push_back(format_computed_consumed_cleanup_descriptor(
-                call.resumption,
-                *call.consumed_descriptor_decision.descriptor_storage_name
-            ));
-        }
+    for (auto const& event : model.cleanup_call_report_events.plan_events) {
+        reports.cleanup_call_plan_report.push_back(format_computed_cleanup_call_plan(event));
+    }
+    for (auto const& event : model.cleanup_call_report_events.render_events) {
+        reports.cleanup_call_render_report.push_back(format_computed_cleanup_call_render(event));
+    }
+    for (auto const& event : model.cleanup_call_report_events.insertion_gate_events) {
+        reports.cleanup_call_insertion_gate_report.push_back(format_computed_cleanup_call_insertion_gate(event));
+    }
+    for (auto const& event : model.cleanup_call_report_events.inserted_call_events) {
+        reports.inserted_cleanup_call_report.push_back(format_computed_cleanup_call_inserted(event));
+    }
+    for (auto const& event : model.cleanup_call_report_events.consumed_descriptor_events) {
+        reports.consumed_cleanup_descriptor_report.push_back(format_computed_consumed_cleanup_descriptor(event));
     }
     return reports;
 }

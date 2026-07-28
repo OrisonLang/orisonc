@@ -407,6 +407,54 @@ auto build_computed_cleanup_proof_summary(
     return summary;
 }
 
+auto build_computed_cleanup_call_report_events(
+    ComputedCleanupProofModel const& model
+) -> ComputedCleanupCallReportEvents {
+    auto events = ComputedCleanupCallReportEvents {};
+    events.emission_gate_events.reserve(model.inserted_cleanup_state.verified_pairs.size());
+    for (auto const& [acquisition, resumption] : model.inserted_cleanup_state.verified_pairs) {
+        events.emission_gate_events.push_back(ComputedCleanupCallEmissionGateEvent {
+            .acquisition = acquisition,
+            .resumption = resumption,
+        });
+    }
+    events.plan_events.reserve(model.verified_cleanup_calls.size());
+    events.render_events.reserve(model.verified_cleanup_calls.size());
+    events.insertion_gate_events.reserve(model.verified_cleanup_calls.size());
+    for (auto const& call : model.verified_cleanup_calls) {
+        events.plan_events.push_back(ComputedCleanupCallPlanEvent {
+            .acquisition = call.acquisition,
+            .resumption = call.resumption,
+            .operands = call.operands,
+        });
+        events.render_events.push_back(ComputedCleanupCallRenderEvent {
+            .acquisition = call.acquisition,
+            .resumption = call.resumption,
+            .operands = call.operands,
+        });
+        events.insertion_gate_events.push_back(ComputedCleanupCallInsertionGateEvent {
+            .resumption = call.resumption,
+            .decision = call.insertion_decision,
+        });
+        if (call.inserted_call_decision.operands_proven && call.inserted_call_decision.inserted) {
+            events.inserted_call_events.push_back(ComputedInsertedCleanupCallEvent {
+                .acquisition = call.acquisition,
+                .resumption = call.resumption,
+                .operands = call.operands,
+            });
+        }
+        if (call.consumed_descriptor_decision.operands_proven &&
+            call.consumed_descriptor_decision.finalized &&
+            call.consumed_descriptor_decision.descriptor_storage_name.has_value()) {
+            events.consumed_descriptor_events.push_back(ComputedConsumedCleanupDescriptorEvent {
+                .resumption = call.resumption,
+                .descriptor_storage_name = *call.consumed_descriptor_decision.descriptor_storage_name,
+            });
+        }
+    }
+    return events;
+}
+
 }  // namespace
 
 auto build_computed_cleanup_proof_model(
@@ -422,6 +470,7 @@ auto build_computed_cleanup_proof_model(
         model.inserted_cleanup_state.verified_pairs
     );
     model.summary = build_computed_cleanup_proof_summary(model, handoff_metadata, operand_metadata);
+    model.cleanup_call_report_events = build_computed_cleanup_call_report_events(model);
     model.reports = build_computed_cleanup_proof_report_bundle(model);
     return model;
 }

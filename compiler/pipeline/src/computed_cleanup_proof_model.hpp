@@ -85,6 +85,48 @@ struct VerifiedComputedCleanupCall {
     ComputedConsumedCleanupDescriptorDecision consumed_descriptor_decision;
 };
 
+struct ComputedCleanupCallEmissionGateEvent {
+    InsertedCleanupOperation acquisition;
+    InsertedCleanupOperation resumption;
+};
+
+struct ComputedCleanupCallPlanEvent {
+    InsertedCleanupOperation acquisition;
+    InsertedCleanupOperation resumption;
+    ComputedCleanupCallOperands operands;
+};
+
+struct ComputedCleanupCallRenderEvent {
+    InsertedCleanupOperation acquisition;
+    InsertedCleanupOperation resumption;
+    ComputedCleanupCallOperands operands;
+};
+
+struct ComputedCleanupCallInsertionGateEvent {
+    InsertedCleanupOperation resumption;
+    ComputedCleanupCallInsertionDecision decision;
+};
+
+struct ComputedInsertedCleanupCallEvent {
+    InsertedCleanupOperation acquisition;
+    InsertedCleanupOperation resumption;
+    ComputedCleanupCallOperands operands;
+};
+
+struct ComputedConsumedCleanupDescriptorEvent {
+    InsertedCleanupOperation resumption;
+    std::string descriptor_storage_name;
+};
+
+struct ComputedCleanupCallReportEvents {
+    std::vector<ComputedCleanupCallEmissionGateEvent> emission_gate_events;
+    std::vector<ComputedCleanupCallPlanEvent> plan_events;
+    std::vector<ComputedCleanupCallRenderEvent> render_events;
+    std::vector<ComputedCleanupCallInsertionGateEvent> insertion_gate_events;
+    std::vector<ComputedInsertedCleanupCallEvent> inserted_call_events;
+    std::vector<ComputedConsumedCleanupDescriptorEvent> consumed_descriptor_events;
+};
+
 struct ComputedCleanupProofSummary {
     std::size_t cleanup_proof_model_count = 0;
     std::size_t verified_inserted_cleanup_pair_count = 0;
@@ -103,6 +145,7 @@ struct ComputedCleanupProofSummary {
 struct ComputedCleanupProofModel {
     InsertedCleanupStateAnalysis inserted_cleanup_state;
     std::vector<VerifiedComputedCleanupCall> verified_cleanup_calls;
+    ComputedCleanupCallReportEvents cleanup_call_report_events;
     ComputedCleanupProofSummary summary;
     ComputedCleanupProofReportBundle reports;
 };
