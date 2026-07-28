@@ -114,6 +114,43 @@ auto build_computed_dynamic_array_for_loop_control_render_state(
     return state;
 }
 
+auto build_computed_dynamic_array_for_element_address_render_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForElementAddressRenderState {
+    auto const& renders = emission.test_only_computed_dynamic_array_for_element_address_renders;
+    auto state = ComputedDynamicArrayForElementAddressRenderState {
+        .render_count = renders.size(),
+    };
+    state.render_metadata_available = state.render_count > 0;
+    state.all_element_address_inputs_ready = state.render_metadata_available;
+    state.enclosing_function_names.reserve(renders.size());
+    state.cleanup_owner_names.reserve(renders.size());
+    state.source_type_names.reserve(renders.size());
+    state.element_source_type_names.reserve(renders.size());
+    state.element_llvm_type_names.reserve(renders.size());
+    state.data_pointer_names.reserve(renders.size());
+    state.index_names.reserve(renders.size());
+    state.element_address_names.reserve(renders.size());
+    for (auto const& render : renders) {
+        state.enclosing_function_names.push_back(render.enclosing_function_name);
+        state.cleanup_owner_names.push_back(render.cleanup_owner_name);
+        state.source_type_names.push_back(render.source_type_name);
+        state.element_source_type_names.push_back(render.element_source_type_name);
+        state.element_llvm_type_names.push_back(render.element_llvm_type_name);
+        state.data_pointer_names.push_back(render.data_pointer_name);
+        state.index_names.push_back(render.index_name);
+        state.element_address_names.push_back(render.element_address_name);
+        state.rendered_ir_snippet_count += render.rendered_ir.size();
+        state.all_element_address_inputs_ready =
+            state.all_element_address_inputs_ready &&
+            !render.element_llvm_type_name.empty() &&
+            !render.data_pointer_name.empty() &&
+            !render.index_name.empty() &&
+            !render.element_address_name.empty();
+    }
+    return state;
+}
+
 auto build_computed_dynamic_array_for_production_emission_gate_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionEmissionGateState {
@@ -486,6 +523,8 @@ void populate_lowering_emission_reports(
         build_computed_dynamic_array_for_loop_control_render_state(emission);
     result.computed_dynamic_array_for_element_address_render_report =
         emission.computed_dynamic_array_for_element_address_render_report();
+    result.computed_dynamic_array_for_element_address_render_state =
+        build_computed_dynamic_array_for_element_address_render_state(emission);
     result.computed_dynamic_array_for_element_load_render_report =
         emission.computed_dynamic_array_for_element_load_render_report();
     result.computed_dynamic_array_for_loop_continue_render_report =
