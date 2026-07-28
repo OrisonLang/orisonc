@@ -300,6 +300,35 @@ struct ComputedInsertedCleanupHandoffState {
     std::size_t blocked_count = 0;
 };
 
+struct ComputedInsertedCleanupTransitionState {
+    std::vector<std::string> acquire_source_owner_names;
+    std::vector<std::string> acquire_target_owner_names;
+    std::vector<std::string> resume_source_owner_names;
+    std::vector<std::string> resume_target_owner_names;
+    std::vector<std::string> acquire_operation_names;
+    std::vector<std::string> resume_operation_names;
+    bool from_metadata = false;
+    bool transitions_available = false;
+    bool all_cleanup_calls_enabled = false;
+    std::size_t transition_count = 0;
+};
+
+struct ComputedInsertedCleanupStateVerificationState {
+    std::vector<std::string> acquire_operation_names;
+    std::vector<std::string> resume_operation_names;
+    std::vector<std::string> acquire_source_owner_names;
+    std::vector<std::string> acquire_target_owner_names;
+    std::vector<std::string> resume_source_owner_names;
+    std::vector<std::string> resume_target_owner_names;
+    std::vector<std::string> blocked_reasons;
+    bool from_metadata = false;
+    bool all_paired = false;
+    bool all_cleanup_calls_enabled = false;
+    std::size_t verification_count = 0;
+    std::size_t paired_count = 0;
+    std::size_t blocked_count = 0;
+};
+
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool;
@@ -406,7 +435,10 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_cleanup_transition_report;
     ComputedDynamicArrayForCleanupTransitionState computed_dynamic_array_for_cleanup_transition_state;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_transition_report;
+    ComputedInsertedCleanupTransitionState computed_dynamic_array_for_inserted_cleanup_transition_state;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_state_verification_report;
+    ComputedInsertedCleanupStateVerificationState
+        computed_dynamic_array_for_inserted_cleanup_state_verification_state;
     ComputedInsertedCleanupHandoffState computed_dynamic_array_for_inserted_cleanup_handoff_state;
     ComputedCleanupProofSummaryState computed_dynamic_array_for_cleanup_proof_summary_state;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_emission_gate_report;

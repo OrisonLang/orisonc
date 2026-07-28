@@ -626,6 +626,77 @@ auto build_computed_inserted_cleanup_handoff_state(
     return state;
 }
 
+auto build_computed_inserted_cleanup_transition_state(
+    ComputedCleanupProofModel const& proof_model
+) -> ComputedInsertedCleanupTransitionState {
+    auto const& transitions = proof_model.inserted_cleanup_state.transition_events;
+    auto state = ComputedInsertedCleanupTransitionState {
+        .from_metadata = proof_model.inserted_cleanup_state.from_metadata,
+        .transition_count = transitions.size(),
+    };
+    state.transitions_available = state.transition_count > 0;
+    state.all_cleanup_calls_enabled = state.transitions_available;
+    state.acquire_source_owner_names.reserve(transitions.size());
+    state.acquire_target_owner_names.reserve(transitions.size());
+    state.resume_source_owner_names.reserve(transitions.size());
+    state.resume_target_owner_names.reserve(transitions.size());
+    state.acquire_operation_names.reserve(transitions.size());
+    state.resume_operation_names.reserve(transitions.size());
+    for (auto const& event : transitions) {
+        state.acquire_source_owner_names.push_back(event.acquisition.source_owner_name);
+        state.acquire_target_owner_names.push_back(event.acquisition.target_owner_name);
+        state.resume_source_owner_names.push_back(event.resumption.source_owner_name);
+        state.resume_target_owner_names.push_back(event.resumption.target_owner_name);
+        state.acquire_operation_names.push_back(event.acquisition.operation_name);
+        state.resume_operation_names.push_back(event.resumption.operation_name);
+        state.all_cleanup_calls_enabled =
+            state.all_cleanup_calls_enabled &&
+            event.acquisition.cleanup_calls_enabled &&
+            event.resumption.cleanup_calls_enabled;
+    }
+    return state;
+}
+
+auto build_computed_inserted_cleanup_state_verification_state(
+    ComputedCleanupProofModel const& proof_model
+) -> ComputedInsertedCleanupStateVerificationState {
+    auto const& verifications = proof_model.inserted_cleanup_state.verification_events;
+    auto state = ComputedInsertedCleanupStateVerificationState {
+        .from_metadata = proof_model.inserted_cleanup_state.from_metadata,
+        .verification_count = verifications.size(),
+    };
+    state.all_cleanup_calls_enabled = state.verification_count > 0;
+    state.acquire_operation_names.reserve(verifications.size());
+    state.resume_operation_names.reserve(verifications.size());
+    state.acquire_source_owner_names.reserve(verifications.size());
+    state.acquire_target_owner_names.reserve(verifications.size());
+    state.resume_source_owner_names.reserve(verifications.size());
+    state.resume_target_owner_names.reserve(verifications.size());
+    state.blocked_reasons.reserve(verifications.size());
+    for (auto const& event : verifications) {
+        if (event.kind == InsertedCleanupStateVerificationKind::paired && event.acquisition.has_value()) {
+            auto const& acquisition = *event.acquisition;
+            state.acquire_operation_names.push_back(acquisition.operation_name);
+            state.resume_operation_names.push_back(event.operation.operation_name);
+            state.acquire_source_owner_names.push_back(acquisition.source_owner_name);
+            state.acquire_target_owner_names.push_back(acquisition.target_owner_name);
+            state.resume_source_owner_names.push_back(event.operation.source_owner_name);
+            state.resume_target_owner_names.push_back(event.operation.target_owner_name);
+            state.all_cleanup_calls_enabled =
+                state.all_cleanup_calls_enabled &&
+                acquisition.cleanup_calls_enabled &&
+                event.operation.cleanup_calls_enabled;
+            ++state.paired_count;
+        } else {
+            state.blocked_reasons.push_back(event.reason);
+            state.all_cleanup_calls_enabled = false;
+            ++state.blocked_count;
+        }
+    }
+    state.all_paired = state.paired_count > 0 && state.blocked_count == 0;
+    return state;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -723,8 +794,12 @@ void populate_lowering_emission_reports(
         build_computed_dynamic_array_for_cleanup_transition_state(emission);
     result.computed_dynamic_array_for_inserted_cleanup_transition_report =
         cleanup_proof_model.reports.inserted_cleanup_transition_report;
+    result.computed_dynamic_array_for_inserted_cleanup_transition_state =
+        build_computed_inserted_cleanup_transition_state(cleanup_proof_model);
     result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
         cleanup_proof_model.reports.inserted_cleanup_state_verification_report;
+    result.computed_dynamic_array_for_inserted_cleanup_state_verification_state =
+        build_computed_inserted_cleanup_state_verification_state(cleanup_proof_model);
     result.computed_dynamic_array_for_inserted_cleanup_handoff_state =
         build_computed_inserted_cleanup_handoff_state(cleanup_proof_model);
     result.computed_dynamic_array_for_cleanup_proof_summary_state =

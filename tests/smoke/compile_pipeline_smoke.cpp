@@ -1589,6 +1589,22 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.transition_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+             .computed_dynamic_array_for_inserted_cleanup_transition_state.transitions_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.verification_count == 0
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+             .computed_dynamic_array_for_inserted_cleanup_state_verification_state.all_paired
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_inserted_cleanup_handoff_state.transition_count == 0
     );
     assert(
@@ -1941,6 +1957,90 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_inserted_cleanup_state_verification_report.front() ==
         smoke::computed_dynamic_array_inserted_cleanup_state_verification_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.transition_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.transitions_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.from_metadata
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for
+             .computed_dynamic_array_for_inserted_cleanup_transition_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.acquire_source_owner_names.front() ==
+        "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.acquire_target_owner_names.front() ==
+        "items.loop.entry"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.resume_source_owner_names.front() ==
+        "items.loop.entry"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.resume_target_owner_names.front() ==
+        "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.acquire_operation_names.front() ==
+        "items.computed_for.0.cleanup.acquire"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.resume_operation_names.front() ==
+        "items.computed_for.0.cleanup.resume"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.verification_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.paired_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.blocked_count == 0
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.blocked_reasons.empty()
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.from_metadata
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.all_paired
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for
+             .computed_dynamic_array_for_inserted_cleanup_state_verification_state.all_cleanup_calls_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.acquire_operation_names.front() ==
+        "items.computed_for.0.cleanup.acquire"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.resume_operation_names.front() ==
+        "items.computed_for.0.cleanup.resume"
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
