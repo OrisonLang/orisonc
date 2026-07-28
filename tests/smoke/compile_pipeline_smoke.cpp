@@ -1190,6 +1190,54 @@ auto main() -> int {
             .computed_dynamic_array_for_production_emission_gate_report.front() ==
         smoke::computed_dynamic_array_production_emission_gate_report
     );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.gate_metadata_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.gate_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.rendered_ir_snippet_count == 17
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.all_ownership_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.all_loop_render_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.all_loop_cleanup_ownership_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.all_function_cleanup_resumption_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.all_exit_cleanup_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.all_production_sequences_planned
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.any_production_emission_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.size() == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.front() == "items"
+    );
     assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.size() == 1);
     assert(
         computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.front() ==

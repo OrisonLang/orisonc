@@ -46,6 +46,20 @@ struct ComputedDynamicArrayForProductionSequenceState {
     std::size_t module_comment_line_count = 0;
 };
 
+struct ComputedDynamicArrayForProductionEmissionGateState {
+    std::vector<std::string> cleanup_owner_names;
+    bool gate_metadata_available = false;
+    bool all_ownership_ready = false;
+    bool all_loop_render_ready = false;
+    bool all_loop_cleanup_ownership_ready = false;
+    bool all_function_cleanup_resumption_ready = false;
+    bool all_exit_cleanup_ready = false;
+    bool all_production_sequences_planned = false;
+    bool any_production_emission_enabled = false;
+    std::size_t gate_count = 0;
+    std::size_t rendered_ir_snippet_count = 0;
+};
+
 auto dynamic_array_cleanup_production_ready(
     DynamicArrayCleanupProductionReadiness const& readiness
 ) -> bool;
@@ -157,6 +171,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_model_report;
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_report;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_report;
+    ComputedDynamicArrayForProductionEmissionGateState computed_dynamic_array_for_production_emission_gate_state;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_report;
     ComputedDynamicArrayForProductionSequenceState computed_dynamic_array_for_production_sequence_state;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_module_ir;

@@ -28,6 +28,38 @@ auto build_computed_dynamic_array_for_production_sequence_state(
     return state;
 }
 
+auto build_computed_dynamic_array_for_production_emission_gate_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForProductionEmissionGateState {
+    auto state = ComputedDynamicArrayForProductionEmissionGateState {
+        .gate_count = emission.test_only_computed_dynamic_array_for_production_emission_gates.size(),
+    };
+    state.gate_metadata_available = state.gate_count > 0;
+    state.all_ownership_ready = state.gate_metadata_available;
+    state.all_loop_render_ready = state.gate_metadata_available;
+    state.all_loop_cleanup_ownership_ready = state.gate_metadata_available;
+    state.all_function_cleanup_resumption_ready = state.gate_metadata_available;
+    state.all_exit_cleanup_ready = state.gate_metadata_available;
+    state.all_production_sequences_planned = state.gate_metadata_available;
+    state.cleanup_owner_names.reserve(emission.test_only_computed_dynamic_array_for_production_emission_gates.size());
+    for (auto const& gate : emission.test_only_computed_dynamic_array_for_production_emission_gates) {
+        state.cleanup_owner_names.push_back(gate.cleanup_owner_name);
+        state.rendered_ir_snippet_count += gate.rendered_ir.size();
+        state.all_ownership_ready = state.all_ownership_ready && gate.ownership_ready;
+        state.all_loop_render_ready = state.all_loop_render_ready && gate.loop_render_ready;
+        state.all_loop_cleanup_ownership_ready =
+            state.all_loop_cleanup_ownership_ready && gate.loop_cleanup_ownership_ready;
+        state.all_function_cleanup_resumption_ready =
+            state.all_function_cleanup_resumption_ready && gate.function_cleanup_resumption_ready;
+        state.all_exit_cleanup_ready = state.all_exit_cleanup_ready && gate.exit_cleanup_ready;
+        state.all_production_sequences_planned =
+            state.all_production_sequences_planned && gate.production_sequence_render_planned;
+        state.any_production_emission_enabled =
+            state.any_production_emission_enabled || gate.production_emission_enabled;
+    }
+    return state;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -153,6 +185,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.consumed_cleanup_descriptor_report;
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
+    result.computed_dynamic_array_for_production_emission_gate_state =
+        build_computed_dynamic_array_for_production_emission_gate_state(emission);
     result.computed_dynamic_array_for_production_sequence_report =
         emission.computed_dynamic_array_for_production_sequence_report();
     result.computed_dynamic_array_for_production_sequence_state =
