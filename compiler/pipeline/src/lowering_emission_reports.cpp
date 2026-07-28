@@ -250,6 +250,43 @@ auto build_computed_dynamic_array_for_loop_render_sequence_state(
     return state;
 }
 
+auto build_computed_dynamic_array_for_loop_exit_cleanup_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForLoopExitCleanupState {
+    auto const& cleanups = emission.test_only_computed_dynamic_array_for_loop_exit_cleanups;
+    auto state = ComputedDynamicArrayForLoopExitCleanupState {
+        .cleanup_count = cleanups.size(),
+    };
+    state.cleanup_metadata_available = state.cleanup_count > 0;
+    state.all_cleanup_resumptions_ready = state.cleanup_metadata_available;
+    state.enclosing_function_names.reserve(cleanups.size());
+    state.cleanup_owner_names.reserve(cleanups.size());
+    state.source_type_names.reserve(cleanups.size());
+    state.element_source_type_names.reserve(cleanups.size());
+    state.exit_block_names.reserve(cleanups.size());
+    state.loop_entry_cleanup_owner_names.reserve(cleanups.size());
+    state.loop_exit_cleanup_owner_names.reserve(cleanups.size());
+    state.cleanup_resumption_operation_names.reserve(cleanups.size());
+    for (auto const& cleanup : cleanups) {
+        state.enclosing_function_names.push_back(cleanup.enclosing_function_name);
+        state.cleanup_owner_names.push_back(cleanup.cleanup_owner_name);
+        state.source_type_names.push_back(cleanup.source_type_name);
+        state.element_source_type_names.push_back(cleanup.element_source_type_name);
+        state.exit_block_names.push_back(cleanup.exit_block_name);
+        state.loop_entry_cleanup_owner_names.push_back(cleanup.loop_entry_cleanup_owner_name);
+        state.loop_exit_cleanup_owner_names.push_back(cleanup.loop_exit_cleanup_owner_name);
+        state.cleanup_resumption_operation_names.push_back(cleanup.cleanup_resumption_operation_name);
+        state.rendered_ir_snippet_count += cleanup.rendered_ir.size();
+        state.all_cleanup_resumptions_ready =
+            state.all_cleanup_resumptions_ready &&
+            !cleanup.exit_block_name.empty() &&
+            !cleanup.loop_entry_cleanup_owner_name.empty() &&
+            !cleanup.loop_exit_cleanup_owner_name.empty() &&
+            !cleanup.cleanup_resumption_operation_name.empty();
+    }
+    return state;
+}
+
 auto build_computed_dynamic_array_for_production_emission_gate_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionEmissionGateState {
@@ -638,6 +675,8 @@ void populate_lowering_emission_reports(
         build_computed_dynamic_array_for_loop_render_sequence_state(emission);
     result.computed_dynamic_array_for_loop_exit_cleanup_report =
         emission.computed_dynamic_array_for_loop_exit_cleanup_report();
+    result.computed_dynamic_array_for_loop_exit_cleanup_state =
+        build_computed_dynamic_array_for_loop_exit_cleanup_state(emission);
     result.computed_dynamic_array_for_cleanup_transition_report =
         emission.computed_dynamic_array_for_cleanup_transition_report();
     result.computed_dynamic_array_for_inserted_cleanup_transition_report =

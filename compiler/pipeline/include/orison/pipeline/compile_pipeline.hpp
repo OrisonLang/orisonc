@@ -136,6 +136,21 @@ struct ComputedDynamicArrayForLoopRenderSequenceState {
     std::size_t rendered_ir_snippet_count = 0;
 };
 
+struct ComputedDynamicArrayForLoopExitCleanupState {
+    std::vector<std::string> enclosing_function_names;
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> source_type_names;
+    std::vector<std::string> element_source_type_names;
+    std::vector<std::string> exit_block_names;
+    std::vector<std::string> loop_entry_cleanup_owner_names;
+    std::vector<std::string> loop_exit_cleanup_owner_names;
+    std::vector<std::string> cleanup_resumption_operation_names;
+    bool cleanup_metadata_available = false;
+    bool all_cleanup_resumptions_ready = false;
+    std::size_t cleanup_count = 0;
+    std::size_t rendered_ir_snippet_count = 0;
+};
+
 struct ComputedDynamicArrayForProductionEmissionGateState {
     std::vector<std::string> cleanup_owner_names;
     bool gate_metadata_available = false;
@@ -371,6 +386,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_loop_render_sequence_report;
     ComputedDynamicArrayForLoopRenderSequenceState computed_dynamic_array_for_loop_render_sequence_state;
     std::vector<std::string> computed_dynamic_array_for_loop_exit_cleanup_report;
+    ComputedDynamicArrayForLoopExitCleanupState computed_dynamic_array_for_loop_exit_cleanup_state;
     std::vector<std::string> computed_dynamic_array_for_cleanup_transition_report;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_transition_report;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_state_verification_report;

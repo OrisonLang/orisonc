@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed dynamic-array loop-exit cleanup metadata now populates typed pipeline state with cleanup counts,
+  snippet counts, cleanup-resumption readiness, function names, owners, source/element types, exit blocks, loop-entry
+  and loop-exit cleanup owners, and cleanup-resumption operation names.
 - 2026-07-28: computed dynamic-array loop-render sequence metadata now populates typed pipeline state with sequence
   counts, snippet counts, body-block readiness, function names, owners, source/element types, and loop body block names.
 - 2026-07-28: computed dynamic-array loop-continue render metadata now populates typed pipeline state with render
