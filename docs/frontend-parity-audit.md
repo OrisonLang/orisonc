@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: dynamic-array cleanup production readiness now consumes typed cleanup availability state populated from
+  semantic and lowering metadata instead of deriving availability from formatted report vectors.
 - 2026-07-28: computed cleanup-call report inputs now live as structured proof events, with the private report
   companion rendering plan, render, insertion-gate, inserted-call, and consumed-descriptor audit text from those events.
 - 2026-07-28: inserted cleanup state analysis now stores structured transition and verification events, with the

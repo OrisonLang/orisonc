@@ -50,6 +50,15 @@ void populate_lowering_emission_reports(
     }
     result.dynamic_array_cleanup_emission_capability_report =
         emission.dynamic_array_cleanup_emission_capability_report();
+    result.dynamic_array_cleanup_availability = DynamicArrayCleanupAvailability {
+        .missing_element_drop_pairs = result.dynamic_array_cleanup_missing_element_drop_pairs,
+        .descriptor_origins_available = !result.semantic_result.dynamic_array_descriptor_origins.empty(),
+        .descriptor_cleanup_plans_available = !emission.dynamic_array_descriptor_cleanup_plans.empty(),
+        .cleanup_obligations_available = !emission.dynamic_array_cleanup_obligations.empty(),
+        .sequence_verification_available = !emission.dynamic_array_cleanup_sequence_verifications.empty(),
+        .sequence_verification_passed = result.dynamic_array_cleanup_sequence_verification_passed,
+        .cleanup_capability_proven = result.dynamic_array_cleanup_capability_proven,
+    };
     result.emitted_dynamic_array_cleanup_obligation_report =
         std::move(emission.emitted_dynamic_array_cleanup_obligation_report);
     result.emitted_dynamic_array_cleanup_sequence_plan_report =

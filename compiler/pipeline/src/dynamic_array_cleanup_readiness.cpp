@@ -10,14 +10,15 @@ auto plan_dynamic_array_cleanup_production_readiness(
     CompilePipelineResult const& result,
     CompilePipelineOptions const& options
 ) -> DynamicArrayCleanupProductionReadiness {
+    auto const& availability = result.dynamic_array_cleanup_availability;
     return DynamicArrayCleanupProductionReadiness {
-        .missing_element_drop_pairs = result.dynamic_array_cleanup_missing_element_drop_pairs,
-        .descriptor_origins_available = !result.semantic_dynamic_array_descriptor_origin_report.empty(),
-        .descriptor_cleanup_plans_available = !result.dynamic_array_descriptor_cleanup_plan_report.empty(),
-        .cleanup_obligations_available = !result.dynamic_array_cleanup_obligation_report.empty(),
-        .sequence_verification_available = !result.dynamic_array_cleanup_sequence_verification_report.empty(),
-        .sequence_verification_passed = result.dynamic_array_cleanup_sequence_verification_passed,
-        .cleanup_capability_proven = result.dynamic_array_cleanup_capability_proven,
+        .missing_element_drop_pairs = availability.missing_element_drop_pairs,
+        .descriptor_origins_available = availability.descriptor_origins_available,
+        .descriptor_cleanup_plans_available = availability.descriptor_cleanup_plans_available,
+        .cleanup_obligations_available = availability.cleanup_obligations_available,
+        .sequence_verification_available = availability.sequence_verification_available,
+        .sequence_verification_passed = availability.sequence_verification_passed,
+        .cleanup_capability_proven = availability.cleanup_capability_proven,
         .production_signature_lowering_enabled =
             dynamic_array_parameter_lowering_enabled(options),
         .production_construction_lowering_enabled =

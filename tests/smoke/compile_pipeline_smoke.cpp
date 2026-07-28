@@ -258,6 +258,12 @@ auto main() -> int {
         "drop readiness source correlations actions 0 semantic sites 0"
     );
     assert(ir.dynamic_array_descriptor_cleanup_plan_report.empty());
+    assert(!ir.dynamic_array_cleanup_availability.descriptor_origins_available);
+    assert(!ir.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
+    assert(!ir.dynamic_array_cleanup_availability.cleanup_obligations_available);
+    assert(!ir.dynamic_array_cleanup_availability.sequence_verification_available);
+    assert(!ir.dynamic_array_cleanup_availability.sequence_verification_passed);
+    assert(!ir.dynamic_array_cleanup_availability.cleanup_capability_proven);
     assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
         ir.dynamic_array_cleanup_production_readiness
     ));
@@ -505,6 +511,11 @@ auto main() -> int {
         0,
         "__orison_dynamic_array_cleanup.0 allowed"
     );
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.descriptor_origins_available);
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.cleanup_obligations_available);
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.sequence_verification_available);
+    assert(dynamic_array_bound_descriptor.dynamic_array_cleanup_availability.sequence_verification_passed);
     assert(
         dynamic_array_bound_descriptor.ir_text.find("define i32 @use_items({ ptr, i64, i64 } %items)") !=
         std::string::npos
@@ -2601,8 +2612,20 @@ auto main() -> int {
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_sequence_verification_passed);
     assert(!dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_capability_proven);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_missing_element_drop_pairs.size() == 1);
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_origins_available);
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.cleanup_obligations_available);
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_available);
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_passed);
+    assert(!dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.cleanup_capability_proven);
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.missing_element_drop_pairs.size() == 1);
     assert(
         dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_missing_element_drop_pairs.front() ==
+        "items:items.element:__orison_drop.Payload"
+    );
+    assert(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability
+            .missing_element_drop_pairs.front() ==
         "items:items.element:__orison_drop.Payload"
     );
     assert(dynamic_array_blocked_owned_cleanup.drop_readiness_summary.cleanup_authorized == 0);
@@ -2683,6 +2706,13 @@ auto main() -> int {
     );
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_sequence_verification_passed);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_capability_proven);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_origins_available);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.cleanup_obligations_available);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_available);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.sequence_verification_passed);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.cleanup_capability_proven);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.missing_element_drop_pairs.empty());
     assert(dynamic_array_owned_cleanup.drop_readiness_summary.cleanup_authorized == 1);
     assert(dynamic_array_owned_cleanup.drop_readiness_summary.cleanup_blocked == 0);
     assert(
