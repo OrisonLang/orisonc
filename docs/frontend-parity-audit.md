@@ -1828,3 +1828,6 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-27: structured computed cleanup-call metadata now records whether the deallocation call and descriptor
   finalization were emitted, so inserted cleanup-call and consumed-descriptor reports prefer structured proof before
   falling back to IR text matching.
+- 2026-07-27: executable computed cleanup handoffs are now retained as structured metadata, so inserted cleanup
+  transition/state verification and downstream cleanup-call reports prefer recorded handoff operations before falling
+  back to inserted IR comments.

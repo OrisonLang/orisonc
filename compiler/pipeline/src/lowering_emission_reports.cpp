@@ -195,6 +195,19 @@ auto parse_inserted_cleanup_operation(
     };
 }
 
+auto inserted_cleanup_operation_from_metadata(
+    lowering::ComputedDynamicArrayCleanupStateHandoff const& handoff
+) -> InsertedCleanupOperation {
+    return InsertedCleanupOperation {
+        .kind_name = handoff.kind == lowering::ComputedDynamicArrayCleanupStateHandoffKind::acquire ?
+            "acquire" : "resume",
+        .operation_name = handoff.operation_name,
+        .source_owner_name = handoff.source_owner_name,
+        .target_owner_name = handoff.target_owner_name,
+        .cleanup_calls_enabled = handoff.cleanup_calls_enabled,
+    };
+}
+
 auto format_inserted_cleanup_transition(
     InsertedCleanupOperation const& acquisition,
     InsertedCleanupOperation const& resumption
@@ -364,52 +377,45 @@ auto format_computed_cleanup_call_insertion_gate(
     return output.str();
 }
 
-auto analyze_inserted_cleanup_state_handoffs(std::string_view ir_text) -> InsertedCleanupStateAnalysis {
+auto analyze_inserted_cleanup_state_handoff_operations(
+    std::vector<InsertedCleanupOperation> const& handoffs
+) -> InsertedCleanupStateAnalysis {
     auto analysis = InsertedCleanupStateAnalysis {};
     auto pending_acquisition = std::optional<InsertedCleanupOperation> {};
-    auto input = std::istringstream {std::string {ir_text}};
-    auto line = std::string {};
-    while (std::getline(input, line)) {
-        auto handoff = parse_inserted_cleanup_operation(
-                line,
-                "  ; cleanup state handoff "
-            );
-        if (!handoff.has_value()) {
-            continue;
-        }
-        if (handoff->kind_name == "acquire") {
+    for (auto const& handoff : handoffs) {
+        if (handoff.kind_name == "acquire") {
             if (pending_acquisition.has_value()) {
                 analysis.verification_report.push_back(format_inserted_cleanup_state_verification_blocked(
                     "nested-acquire",
                     *pending_acquisition
                 ));
             }
-            pending_acquisition = std::move(handoff);
+            pending_acquisition = handoff;
             continue;
         }
-        if (handoff->kind_name == "resume") {
+        if (handoff.kind_name == "resume") {
             if (!pending_acquisition.has_value()) {
                 analysis.verification_report.push_back(format_inserted_cleanup_state_verification_blocked(
                     "resume-without-acquire",
-                    *handoff
+                    handoff
                 ));
                 continue;
             }
-            if (pending_acquisition->target_owner_name != handoff->source_owner_name ||
-                pending_acquisition->source_owner_name != handoff->target_owner_name) {
+            if (pending_acquisition->target_owner_name != handoff.source_owner_name ||
+                pending_acquisition->source_owner_name != handoff.target_owner_name) {
                 analysis.verification_report.push_back(format_inserted_cleanup_state_verification_blocked(
                     "owner-mismatch",
-                    *handoff
+                    handoff
                 ));
                 pending_acquisition.reset();
                 continue;
             }
-            analysis.verified_pairs.push_back({*pending_acquisition, *handoff});
+            analysis.verified_pairs.push_back({*pending_acquisition, handoff});
             analysis.transition_report.push_back(
-                format_inserted_cleanup_transition(*pending_acquisition, *handoff)
+                format_inserted_cleanup_transition(*pending_acquisition, handoff)
             );
             analysis.verification_report.push_back(
-                format_inserted_cleanup_state_verification(*pending_acquisition, *handoff)
+                format_inserted_cleanup_state_verification(*pending_acquisition, handoff)
             );
             pending_acquisition.reset();
         }
@@ -421,6 +427,38 @@ auto analyze_inserted_cleanup_state_handoffs(std::string_view ir_text) -> Insert
         ));
     }
     return analysis;
+}
+
+auto analyze_inserted_cleanup_state_handoffs_from_ir(std::string_view ir_text) -> InsertedCleanupStateAnalysis {
+    auto handoffs = std::vector<InsertedCleanupOperation> {};
+    auto input = std::istringstream {std::string {ir_text}};
+    auto line = std::string {};
+    while (std::getline(input, line)) {
+        auto handoff = parse_inserted_cleanup_operation(
+                line,
+                "  ; cleanup state handoff "
+            );
+        if (!handoff.has_value()) {
+            continue;
+        }
+        handoffs.push_back(std::move(*handoff));
+    }
+    return analyze_inserted_cleanup_state_handoff_operations(handoffs);
+}
+
+auto analyze_inserted_cleanup_state_handoffs(
+    std::string_view ir_text,
+    std::vector<lowering::ComputedDynamicArrayCleanupStateHandoff> const& metadata
+) -> InsertedCleanupStateAnalysis {
+    if (!metadata.empty()) {
+        auto handoffs = std::vector<InsertedCleanupOperation> {};
+        handoffs.reserve(metadata.size());
+        for (auto const& handoff : metadata) {
+            handoffs.push_back(inserted_cleanup_operation_from_metadata(handoff));
+        }
+        return analyze_inserted_cleanup_state_handoff_operations(handoffs);
+    }
+    return analyze_inserted_cleanup_state_handoffs_from_ir(ir_text);
 }
 
 auto format_computed_cleanup_call_emission_gate_report(
@@ -615,7 +653,10 @@ void populate_lowering_emission_reports(
     CompilePipelineOptions const& options
 ) {
     result.ir_text = std::move(emission.ir_text);
-    auto const inserted_cleanup_state = analyze_inserted_cleanup_state_handoffs(result.ir_text);
+    auto const inserted_cleanup_state = analyze_inserted_cleanup_state_handoffs(
+        result.ir_text,
+        emission.computed_dynamic_array_inserted_cleanup_handoffs
+    );
     result.dynamic_array_construction_plan_report =
         emission.dynamic_array_construction_plan_report();
     result.dynamic_array_runtime_request_report =
@@ -679,6 +720,8 @@ void populate_lowering_emission_reports(
         inserted_cleanup_state.verification_report;
     result.computed_dynamic_array_for_verified_inserted_cleanup_pair_count =
         inserted_cleanup_state.verified_pairs.size();
+    result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_count =
+        emission.computed_dynamic_array_inserted_cleanup_handoffs.size();
     result.computed_dynamic_array_for_structured_cleanup_operand_count =
         emission.computed_dynamic_array_cleanup_call_operands.size();
     for (auto const& operands : emission.computed_dynamic_array_cleanup_call_operands) {

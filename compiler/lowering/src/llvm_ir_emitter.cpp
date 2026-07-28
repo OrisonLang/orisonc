@@ -1597,6 +1597,11 @@ void append_function_emission_reports(
         function_emission.emitted_dynamic_array_cleanup_emission_capability_report,
         function_emission.function_symbol_name
     );
+    result.computed_dynamic_array_inserted_cleanup_handoffs.insert(
+        result.computed_dynamic_array_inserted_cleanup_handoffs.end(),
+        function_emission.computed_dynamic_array_inserted_cleanup_handoffs.begin(),
+        function_emission.computed_dynamic_array_inserted_cleanup_handoffs.end()
+    );
     result.computed_dynamic_array_cleanup_call_operands.insert(
         result.computed_dynamic_array_cleanup_call_operands.end(),
         function_emission.computed_dynamic_array_cleanup_call_operands.begin(),

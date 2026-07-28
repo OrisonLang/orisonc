@@ -1,5 +1,6 @@
 #pragma once
 
+#include "orison/lowering/computed_dynamic_array_cleanup_handoff.hpp"
 #include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_context.hpp"
@@ -133,20 +134,6 @@ struct ComputedDynamicArrayIterableCleanupSequencePlan {
     bool loop_body_has_cleanup_responsibility = false;
     bool function_cleanup_resumes_after_loop = false;
     bool cleanup_sequence_enabled = false;
-};
-
-enum class ComputedDynamicArrayCleanupStateHandoffKind {
-    acquire,
-    resume,
-};
-
-struct ComputedDynamicArrayCleanupStateHandoff {
-    ComputedDynamicArrayCleanupStateHandoffKind kind =
-        ComputedDynamicArrayCleanupStateHandoffKind::acquire;
-    std::string operation_name;
-    std::string source_owner_name;
-    std::string target_owner_name;
-    bool cleanup_calls_enabled = false;
 };
 
 auto render_computed_dynamic_array_cleanup_state_handoff(

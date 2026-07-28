@@ -941,6 +941,8 @@ void finish_function_emission(
             state.emitted_dynamic_array_cleanup_emission_gate_report;
         result->emitted_dynamic_array_cleanup_emission_capability_report =
             state.emitted_dynamic_array_cleanup_emission_capability_report;
+        result->computed_dynamic_array_inserted_cleanup_handoffs =
+            state.computed_dynamic_array_inserted_cleanup_handoffs;
         result->computed_dynamic_array_cleanup_call_operands =
             state.computed_dynamic_array_cleanup_call_operands;
     }

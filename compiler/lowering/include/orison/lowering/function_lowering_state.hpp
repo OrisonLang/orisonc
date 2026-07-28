@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/computed_dynamic_array_cleanup_call.hpp"
+#include "orison/lowering/computed_dynamic_array_cleanup_handoff.hpp"
 #include "orison/lowering/consumed_descriptor_finalization.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/lowered_value.hpp"
@@ -65,6 +66,7 @@ struct FunctionLoweringState {
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_capability_report;
+    std::vector<ComputedDynamicArrayCleanupStateHandoff> computed_dynamic_array_inserted_cleanup_handoffs;
     std::vector<ComputedDynamicArrayCleanupCallOperands> computed_dynamic_array_cleanup_call_operands;
     std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
     OwnershipTransferState ownership_transfers;

@@ -218,6 +218,8 @@ representation.
 - Structured computed cleanup-call metadata now records whether the deallocation call and descriptor finalization were
   emitted. Pipeline inserted cleanup-call and consumed-descriptor reports prefer those proof flags before falling back
   to IR text matching.
+- Executable computed cleanup handoffs are now retained as structured metadata. Pipeline inserted cleanup-transition
+  and state-verification reports prefer recorded handoff operations before falling back to inserted IR comments.
 
 ## Consequences
 

@@ -163,15 +163,17 @@ auto lower_sequence_for_statement(
             auto const& descriptor_plan = loop_control_plan.descriptor_render_plan;
             auto const& cleanup_sequence_plan = descriptor_plan.cleanup_sequence_plan;
 
-            output << render_computed_dynamic_array_cleanup_state_handoff(
-                ComputedDynamicArrayCleanupStateHandoff {
-                    .kind = ComputedDynamicArrayCleanupStateHandoffKind::acquire,
-                    .operation_name = cleanup_sequence_plan.loop_entry_cleanup_operation_name,
-                    .source_owner_name = cleanup_sequence_plan.cleanup_owner_name,
-                    .target_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name,
-                    .cleanup_calls_enabled =
-                        context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
-                }
+            auto acquisition_handoff = ComputedDynamicArrayCleanupStateHandoff {
+                .kind = ComputedDynamicArrayCleanupStateHandoffKind::acquire,
+                .operation_name = cleanup_sequence_plan.loop_entry_cleanup_operation_name,
+                .source_owner_name = cleanup_sequence_plan.cleanup_owner_name,
+                .target_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name,
+                .cleanup_calls_enabled =
+                    context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
+            };
+            output << render_computed_dynamic_array_cleanup_state_handoff(acquisition_handoff);
+            session.state.computed_dynamic_array_inserted_cleanup_handoffs.push_back(
+                std::move(acquisition_handoff)
             );
             for (auto const& line : descriptor_plan.rendered_ir) {
                 output << line;
@@ -220,15 +222,17 @@ auto lower_sequence_for_statement(
                 output << line;
             }
             output << loop_exit_plan.exit_block_name << ":\n";
-            output << render_computed_dynamic_array_cleanup_state_handoff(
-                ComputedDynamicArrayCleanupStateHandoff {
-                    .kind = ComputedDynamicArrayCleanupStateHandoffKind::resume,
-                    .operation_name = loop_exit_plan.cleanup_resumption_operation_name,
-                    .source_owner_name = loop_exit_plan.loop_entry_cleanup_owner_name,
-                    .target_owner_name = loop_exit_plan.loop_exit_cleanup_owner_name,
-                    .cleanup_calls_enabled =
-                        context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
-                }
+            auto resumption_handoff = ComputedDynamicArrayCleanupStateHandoff {
+                .kind = ComputedDynamicArrayCleanupStateHandoffKind::resume,
+                .operation_name = loop_exit_plan.cleanup_resumption_operation_name,
+                .source_owner_name = loop_exit_plan.loop_entry_cleanup_owner_name,
+                .target_owner_name = loop_exit_plan.loop_exit_cleanup_owner_name,
+                .cleanup_calls_enabled =
+                    context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
+            };
+            output << render_computed_dynamic_array_cleanup_state_handoff(resumption_handoff);
+            session.state.computed_dynamic_array_inserted_cleanup_handoffs.push_back(
+                std::move(resumption_handoff)
             );
             auto const element_size_bytes =
                 lowered_type_size_bytes(element_type->type, context.lowering);
