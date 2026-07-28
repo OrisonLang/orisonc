@@ -15,37 +15,6 @@ auto report_contains(std::vector<std::string> const& lines, std::string_view fra
     });
 }
 
-auto collect_bracketed_values_after_marker(
-    std::vector<std::string> const& lines,
-    std::string_view marker
-) -> std::vector<std::string> {
-    auto values = std::vector<std::string> {};
-    for (auto const& line : lines) {
-        auto marker_position = line.find(marker);
-        if (marker_position == std::string::npos) {
-            continue;
-        }
-        auto cursor = marker_position + marker.size();
-        while (cursor < line.size()) {
-            auto open = line.find('[', cursor);
-            if (open == std::string::npos) {
-                break;
-            }
-            auto close = line.find(']', open + 1);
-            if (close == std::string::npos) {
-                break;
-            }
-            auto value = line.substr(open + 1, close - open - 1);
-            if (value.find(' ') != std::string::npos) {
-                break;
-            }
-            values.push_back(value);
-            cursor = close + 1;
-        }
-    }
-    return values;
-}
-
 }  // namespace
 
 auto plan_dynamic_array_cleanup_production_readiness(
@@ -53,10 +22,7 @@ auto plan_dynamic_array_cleanup_production_readiness(
     CompilePipelineOptions const& options
 ) -> DynamicArrayCleanupProductionReadiness {
     return DynamicArrayCleanupProductionReadiness {
-        .missing_element_drop_pairs = collect_bracketed_values_after_marker(
-            result.dynamic_array_cleanup_emission_capability_report,
-            "missing-element-drop-pairs"
-        ),
+        .missing_element_drop_pairs = result.dynamic_array_cleanup_missing_element_drop_pairs,
         .descriptor_origins_available = !result.semantic_dynamic_array_descriptor_origin_report.empty(),
         .descriptor_cleanup_plans_available = !result.dynamic_array_descriptor_cleanup_plan_report.empty(),
         .cleanup_obligations_available = !result.dynamic_array_cleanup_obligation_report.empty(),

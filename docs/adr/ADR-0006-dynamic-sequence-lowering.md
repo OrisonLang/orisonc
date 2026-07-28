@@ -203,6 +203,8 @@ representation.
   `element-drop-pairs` reserved for proven cleanup.
 - Dynamic-array cleanup production-readiness reports now propagate `missing-element-drop-pairs` from cleanup
   capability reports, so readiness blockers can name the same owner/capture/drop proof that prevents cleanup readiness.
+- Dynamic-array cleanup production-readiness planning now consumes structured missing element-drop pairs from
+  `CompilePipelineResult` rather than parsing formatted cleanup capability report text.
 
 ## Consequences
 

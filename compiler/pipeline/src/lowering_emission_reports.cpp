@@ -598,6 +598,10 @@ void populate_lowering_emission_reports(
         emission.dynamic_array_cleanup_sequence_verification_report();
     result.dynamic_array_cleanup_emission_gate_report =
         emission.dynamic_array_cleanup_emission_gate_report();
+    if (emission.dynamic_array_cleanup_emission_capability.has_value()) {
+        result.dynamic_array_cleanup_missing_element_drop_pairs =
+            emission.dynamic_array_cleanup_emission_capability->missing_element_drop_pairs;
+    }
     result.dynamic_array_cleanup_emission_capability_report =
         emission.dynamic_array_cleanup_emission_capability_report();
     result.emitted_dynamic_array_cleanup_obligation_report =

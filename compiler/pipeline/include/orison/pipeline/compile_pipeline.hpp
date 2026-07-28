@@ -94,6 +94,7 @@ struct CompilePipelineResult {
     std::vector<std::string> dynamic_array_cleanup_sequence_plan_report;
     std::vector<std::string> dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> dynamic_array_cleanup_emission_gate_report;
+    std::vector<std::string> dynamic_array_cleanup_missing_element_drop_pairs;
     std::vector<std::string> dynamic_array_cleanup_emission_capability_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_obligation_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_plan_report;
