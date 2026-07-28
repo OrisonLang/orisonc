@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed cleanup-call insertion gates now populate typed pipeline state with gate counts, ready-vs-blocked
+  counts, aggregate readiness booleans, cleanup owners, and cleanup operation names from proof-model decisions.
 - 2026-07-28: computed inserted cleanup calls now populate typed pipeline state with call counts, structured-vs-IR
   proof counts, cleanup owners, and deallocation operand names from proof-model events.
 - 2026-07-28: computed consumed cleanup descriptors now populate typed pipeline state with descriptor counts,

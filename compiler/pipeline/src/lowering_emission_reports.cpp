@@ -134,6 +134,34 @@ auto build_computed_inserted_cleanup_call_state(
     return state;
 }
 
+auto build_computed_cleanup_call_insertion_gate_state(
+    ComputedCleanupProofModel const& proof_model
+) -> ComputedCleanupCallInsertionGateState {
+    auto state = ComputedCleanupCallInsertionGateState {
+        .gate_count = proof_model.cleanup_call_report_events.insertion_gate_events.size(),
+    };
+    state.all_state_verified = state.gate_count > 0;
+    state.all_operands_proven = state.gate_count > 0;
+    state.all_cleanup_calls_authorized = state.gate_count > 0;
+    state.cleanup_owner_names.reserve(proof_model.cleanup_call_report_events.insertion_gate_events.size());
+    state.cleanup_operation_names.reserve(proof_model.cleanup_call_report_events.insertion_gate_events.size());
+    for (auto const& event : proof_model.cleanup_call_report_events.insertion_gate_events) {
+        state.cleanup_owner_names.push_back(event.resumption.target_owner_name);
+        state.cleanup_operation_names.push_back(event.resumption.operation_name + ".call");
+        state.all_state_verified = state.all_state_verified && event.decision.state_verified;
+        state.all_operands_proven = state.all_operands_proven && event.decision.operands_proven;
+        state.all_cleanup_calls_authorized =
+            state.all_cleanup_calls_authorized && event.decision.cleanup_calls_authorized;
+        if (event.decision.insertion_ready) {
+            ++state.ready_count;
+        } else {
+            ++state.blocked_count;
+        }
+    }
+    state.all_ready = state.ready_count > 0 && state.blocked_count == 0;
+    return state;
+}
+
 }  // namespace
 
 void populate_lowering_emission_reports(
@@ -249,6 +277,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.cleanup_call_render_report;
     result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
         cleanup_proof_model.reports.cleanup_call_insertion_gate_report;
+    result.computed_dynamic_array_for_cleanup_call_insertion_gate_state =
+        build_computed_cleanup_call_insertion_gate_state(cleanup_proof_model);
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
         cleanup_proof_model.reports.inserted_cleanup_call_report;
     result.computed_dynamic_array_for_inserted_cleanup_call_state =
