@@ -28,6 +28,46 @@ auto build_computed_dynamic_array_for_production_sequence_state(
     return state;
 }
 
+auto build_computed_dynamic_array_for_descriptor_render_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForDescriptorRenderState {
+    auto const& renders = emission.test_only_computed_dynamic_array_for_descriptor_renders;
+    auto state = ComputedDynamicArrayForDescriptorRenderState {
+        .render_count = renders.size(),
+    };
+    state.render_metadata_available = state.render_count > 0;
+    state.all_descriptor_projections_ready = state.render_metadata_available;
+    state.enclosing_function_names.reserve(renders.size());
+    state.cleanup_owner_names.reserve(renders.size());
+    state.source_type_names.reserve(renders.size());
+    state.element_source_type_names.reserve(renders.size());
+    state.descriptor_storage_names.reserve(renders.size());
+    state.descriptor_value_names.reserve(renders.size());
+    state.data_pointer_names.reserve(renders.size());
+    state.length_names.reserve(renders.size());
+    state.capacity_names.reserve(renders.size());
+    for (auto const& render : renders) {
+        state.enclosing_function_names.push_back(render.enclosing_function_name);
+        state.cleanup_owner_names.push_back(render.cleanup_owner_name);
+        state.source_type_names.push_back(render.source_type_name);
+        state.element_source_type_names.push_back(render.element_source_type_name);
+        state.descriptor_storage_names.push_back(render.descriptor_storage_name);
+        state.descriptor_value_names.push_back(render.descriptor_value_name);
+        state.data_pointer_names.push_back(render.data_pointer_name);
+        state.length_names.push_back(render.length_name);
+        state.capacity_names.push_back(render.capacity_name);
+        state.rendered_ir_snippet_count += render.rendered_ir.size();
+        state.all_descriptor_projections_ready =
+            state.all_descriptor_projections_ready &&
+            !render.descriptor_storage_name.empty() &&
+            !render.descriptor_value_name.empty() &&
+            !render.data_pointer_name.empty() &&
+            !render.length_name.empty() &&
+            !render.capacity_name.empty();
+    }
+    return state;
+}
+
 auto build_computed_dynamic_array_for_production_emission_gate_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionEmissionGateState {
@@ -392,6 +432,8 @@ void populate_lowering_emission_reports(
         std::move(emission.emitted_dynamic_array_cleanup_emission_capability_report);
     result.computed_dynamic_array_for_descriptor_render_report =
         emission.computed_dynamic_array_for_descriptor_render_report();
+    result.computed_dynamic_array_for_descriptor_render_state =
+        build_computed_dynamic_array_for_descriptor_render_state(emission);
     result.computed_dynamic_array_for_loop_control_render_report =
         emission.computed_dynamic_array_for_loop_control_render_report();
     result.computed_dynamic_array_for_element_address_render_report =

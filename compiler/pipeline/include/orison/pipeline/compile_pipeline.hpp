@@ -46,6 +46,22 @@ struct ComputedDynamicArrayForProductionSequenceState {
     std::size_t module_comment_line_count = 0;
 };
 
+struct ComputedDynamicArrayForDescriptorRenderState {
+    std::vector<std::string> enclosing_function_names;
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> source_type_names;
+    std::vector<std::string> element_source_type_names;
+    std::vector<std::string> descriptor_storage_names;
+    std::vector<std::string> descriptor_value_names;
+    std::vector<std::string> data_pointer_names;
+    std::vector<std::string> length_names;
+    std::vector<std::string> capacity_names;
+    bool render_metadata_available = false;
+    bool all_descriptor_projections_ready = false;
+    std::size_t render_count = 0;
+    std::size_t rendered_ir_snippet_count = 0;
+};
+
 struct ComputedDynamicArrayForProductionEmissionGateState {
     std::vector<std::string> cleanup_owner_names;
     bool gate_metadata_available = false;
@@ -269,6 +285,7 @@ struct CompilePipelineResult {
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_capability_report;
     std::vector<std::string> computed_dynamic_array_for_descriptor_render_report;
+    ComputedDynamicArrayForDescriptorRenderState computed_dynamic_array_for_descriptor_render_state;
     std::vector<std::string> computed_dynamic_array_for_loop_control_render_report;
     std::vector<std::string> computed_dynamic_array_for_element_address_render_report;
     std::vector<std::string> computed_dynamic_array_for_element_load_render_report;

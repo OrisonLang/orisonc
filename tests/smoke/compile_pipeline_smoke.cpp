@@ -1096,6 +1096,63 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_descriptor_render_report.front() ==
         smoke::computed_dynamic_array_descriptor_render_report
     );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.render_metadata_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.render_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.rendered_ir_snippet_count == 4
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.all_descriptor_projections_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.enclosing_function_names.front() == "sum_words"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.source_type_names.front() ==
+        "DynamicArray<UInt32>"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.element_source_type_names.front() == "UInt32"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.descriptor_storage_names.front() == "%items.addr"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.descriptor_value_names.front() ==
+        "%items.computed_for.descriptor"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.data_pointer_names.front() ==
+        "%items.computed_for.data"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.length_names.front() ==
+        "%items.computed_for.length"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_descriptor_render_state.capacity_names.front() ==
+        "%items.computed_for.capacity"
+    );
     assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_loop_control_render_report.size() == 1);
     assert(
         computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_loop_control_render_report.front() ==

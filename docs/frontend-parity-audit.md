@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed dynamic-array descriptor-render metadata now populates typed pipeline state with render counts,
+  snippet counts, projection readiness, function names, owners, source/element types, descriptor storage, and projected
+  descriptor value/data/length/capacity names.
 - 2026-07-28: computed consumed-cleanup descriptor model metadata now populates typed pipeline state with descriptor
   model counts, finalization readiness counts, function names, owners, descriptor storage, cleanup operations, source
   types, and element types.
