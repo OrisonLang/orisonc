@@ -95,6 +95,20 @@ struct ComputedDynamicArrayForElementAddressRenderState {
     std::size_t rendered_ir_snippet_count = 0;
 };
 
+struct ComputedDynamicArrayForElementLoadRenderState {
+    std::vector<std::string> enclosing_function_names;
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> source_type_names;
+    std::vector<std::string> element_source_type_names;
+    std::vector<std::string> element_llvm_type_names;
+    std::vector<std::string> element_address_names;
+    std::vector<std::string> item_value_names;
+    bool render_metadata_available = false;
+    bool all_element_load_inputs_ready = false;
+    std::size_t render_count = 0;
+    std::size_t rendered_ir_snippet_count = 0;
+};
+
 struct ComputedDynamicArrayForProductionEmissionGateState {
     std::vector<std::string> cleanup_owner_names;
     bool gate_metadata_available = false;
@@ -324,6 +338,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_element_address_render_report;
     ComputedDynamicArrayForElementAddressRenderState computed_dynamic_array_for_element_address_render_state;
     std::vector<std::string> computed_dynamic_array_for_element_load_render_report;
+    ComputedDynamicArrayForElementLoadRenderState computed_dynamic_array_for_element_load_render_state;
     std::vector<std::string> computed_dynamic_array_for_loop_continue_render_report;
     std::vector<std::string> computed_dynamic_array_for_loop_render_sequence_report;
     std::vector<std::string> computed_dynamic_array_for_loop_exit_cleanup_report;
