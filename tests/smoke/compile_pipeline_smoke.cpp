@@ -1524,6 +1524,63 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.transition_metadata_available
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.transition_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.all_transitions_paired
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.enclosing_function_names.front() == "sum_words"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.source_type_names.front() ==
+        "DynamicArray<UInt32>"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.element_source_type_names.front() == "UInt32"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.acquisition_source_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.acquisition_target_owner_names.front() ==
+        "items.loop.entry"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.acquisition_operation_names.front() ==
+        "items.computed_for.cleanup.acquire"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.resumption_source_owner_names.front() ==
+        "items.loop.entry"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.resumption_target_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .computed_dynamic_array_for_cleanup_transition_state.resumption_operation_names.front() ==
+        "items.computed_for.cleanup.resume"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_inserted_cleanup_transition_report.empty()
     );
     assert(

@@ -287,6 +287,46 @@ auto build_computed_dynamic_array_for_loop_exit_cleanup_state(
     return state;
 }
 
+auto build_computed_dynamic_array_for_cleanup_transition_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> ComputedDynamicArrayForCleanupTransitionState {
+    auto const& transitions = emission.test_only_computed_dynamic_array_for_cleanup_transitions;
+    auto state = ComputedDynamicArrayForCleanupTransitionState {
+        .transition_count = transitions.size(),
+    };
+    state.transition_metadata_available = state.transition_count > 0;
+    state.all_transitions_paired = state.transition_metadata_available;
+    state.enclosing_function_names.reserve(transitions.size());
+    state.cleanup_owner_names.reserve(transitions.size());
+    state.source_type_names.reserve(transitions.size());
+    state.element_source_type_names.reserve(transitions.size());
+    state.acquisition_source_owner_names.reserve(transitions.size());
+    state.acquisition_target_owner_names.reserve(transitions.size());
+    state.acquisition_operation_names.reserve(transitions.size());
+    state.resumption_source_owner_names.reserve(transitions.size());
+    state.resumption_target_owner_names.reserve(transitions.size());
+    state.resumption_operation_names.reserve(transitions.size());
+    for (auto const& transition : transitions) {
+        state.enclosing_function_names.push_back(transition.enclosing_function_name);
+        state.cleanup_owner_names.push_back(transition.cleanup_owner_name);
+        state.source_type_names.push_back(transition.source_type_name);
+        state.element_source_type_names.push_back(transition.element_source_type_name);
+        state.acquisition_source_owner_names.push_back(transition.acquisition_source_owner_name);
+        state.acquisition_target_owner_names.push_back(transition.acquisition_target_owner_name);
+        state.acquisition_operation_names.push_back(transition.acquisition_operation_name);
+        state.resumption_source_owner_names.push_back(transition.resumption_source_owner_name);
+        state.resumption_target_owner_names.push_back(transition.resumption_target_owner_name);
+        state.resumption_operation_names.push_back(transition.resumption_operation_name);
+        state.all_transitions_paired =
+            state.all_transitions_paired &&
+            transition.acquisition_target_owner_name == transition.resumption_source_owner_name &&
+            transition.acquisition_source_owner_name == transition.resumption_target_owner_name &&
+            !transition.acquisition_operation_name.empty() &&
+            !transition.resumption_operation_name.empty();
+    }
+    return state;
+}
+
 auto build_computed_dynamic_array_for_production_emission_gate_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionEmissionGateState {
@@ -679,6 +719,8 @@ void populate_lowering_emission_reports(
         build_computed_dynamic_array_for_loop_exit_cleanup_state(emission);
     result.computed_dynamic_array_for_cleanup_transition_report =
         emission.computed_dynamic_array_for_cleanup_transition_report();
+    result.computed_dynamic_array_for_cleanup_transition_state =
+        build_computed_dynamic_array_for_cleanup_transition_state(emission);
     result.computed_dynamic_array_for_inserted_cleanup_transition_report =
         cleanup_proof_model.reports.inserted_cleanup_transition_report;
     result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
