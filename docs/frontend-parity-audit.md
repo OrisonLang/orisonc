@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: computed cleanup-proof summary counters now populate a typed aggregate pipeline state, with legacy scalar
+  counter fields sourced from that state for compatibility.
 - 2026-07-28: computed cleanup-call emission gates now populate typed pipeline state with gate counts,
   ready-vs-blocked counts, state-verification and cleanup-call enablement booleans, owners, and handoff operation names.
 - 2026-07-28: computed cleanup-call plan/render reports now populate typed pipeline state with plan/render counts,

@@ -70,6 +70,57 @@ auto line_index_containing(
     return lines.size();
 }
 
+void assert_computed_cleanup_proof_summary_matches_legacy(
+    orison::pipeline::CompilePipelineResult const& result
+) {
+    auto const& summary = result.computed_dynamic_array_for_cleanup_proof_summary_state;
+    assert(summary.cleanup_proof_model_count == result.computed_dynamic_array_for_cleanup_proof_model_count);
+    assert(
+        summary.verified_inserted_cleanup_pair_count ==
+        result.computed_dynamic_array_for_verified_inserted_cleanup_pair_count
+    );
+    assert(
+        summary.structured_inserted_cleanup_handoff_count ==
+        result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_count
+    );
+    assert(
+        summary.structured_inserted_cleanup_handoff_use_count ==
+        result.computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count
+    );
+    assert(
+        summary.ir_inserted_cleanup_handoff_fallback_count ==
+        result.computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count
+    );
+    assert(
+        summary.structured_cleanup_operand_count ==
+        result.computed_dynamic_array_for_structured_cleanup_operand_count
+    );
+    assert(
+        summary.structured_cleanup_operand_use_count ==
+        result.computed_dynamic_array_for_structured_cleanup_operand_use_count
+    );
+    assert(
+        summary.ir_cleanup_operand_fallback_count ==
+        result.computed_dynamic_array_for_ir_cleanup_operand_fallback_count
+    );
+    assert(
+        summary.structured_inserted_cleanup_call_count ==
+        result.computed_dynamic_array_for_structured_inserted_cleanup_call_count
+    );
+    assert(
+        summary.ir_inserted_cleanup_call_fallback_count ==
+        result.computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count
+    );
+    assert(
+        summary.structured_consumed_cleanup_descriptor_count ==
+        result.computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count
+    );
+    assert(
+        summary.ir_consumed_cleanup_descriptor_fallback_count ==
+        result.computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count
+    );
+}
+
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
     auto handoffs = std::vector<orison::lowering::ComputedDynamicArrayCleanupStateHandoff> {
         {
@@ -1171,6 +1222,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_cleanup_proof_model_count == 0
     );
+    assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_for);
     assert(
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_structured_cleanup_operand_count == 0
@@ -1546,6 +1598,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 0
     );
+    assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_lowered_for);
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 1
@@ -1841,6 +1894,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_operand_fallback_for
             .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 0
     );
+    assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_operand_fallback_for);
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
             .computed_dynamic_array_for_cleanup_call_plan_report.size() == 1
@@ -1952,6 +2006,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 0
     );
+    assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_authorized_cleanup_for);
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 1
@@ -2204,6 +2259,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 0
     );
+    assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_inserted_cleanup_for);
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_inserted_cleanup_call_report.front() ==
@@ -2365,6 +2421,9 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
             .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 1
     );
+    assert_computed_cleanup_proof_summary_matches_legacy(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
+    );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
             .computed_dynamic_array_for_inserted_cleanup_call_report.size() == 1
@@ -2446,6 +2505,9 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
             .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
+    );
+    assert_computed_cleanup_proof_summary_matches_legacy(
+        computed_dynamic_array_local_same_owner_handoff_fallback_for
     );
     auto inserted_cleanup_finalization_audit = std::vector<std::string> {};
     inserted_cleanup_finalization_audit.insert(
@@ -2655,6 +2717,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_structured_cleanup_operand_count == 2
     );
+    assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_two_loops);
     assert(
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_inserted_cleanup_state_verification_report.front() ==
