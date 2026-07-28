@@ -1806,3 +1806,5 @@ This file tracks which source-language frontend slices are reflected in the curr
   cleanup is required, identifying the cleanup owner, element capture, and authorized drop ABI symbol.
 - 2026-07-27: CLI cleanup-audit smoke coverage now pins owned-element drop-pair reporting for the authorized
   `DynamicArray<Payload>` fixture, proving the report reaches `--dynamic-array-cleanup-audit`.
+- 2026-07-27: CLI cleanup-audit smoke coverage now also pins the blocked owned-element path: missing cleanup proof
+  reports `[element cleanup missing]` and does not emit `element-drop-pairs`.

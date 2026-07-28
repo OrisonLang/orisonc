@@ -476,6 +476,26 @@ void test_plans_descriptor_cleanup_obligations() {
         gate_report[1] ==
         "dynamic array cleanup emission gate __orison_dynamic_array_cleanup.4 allowed (metadata only)"
     );
+    auto blocked_capability = orison::lowering::prove_dynamic_array_cleanup_emission_capability(
+        true,
+        {*scalar_plan, *owned_plan},
+        verifications,
+        obligations,
+        {}
+    );
+    assert(!blocked_capability.element_cleanup_authorized_or_not_required);
+    assert(blocked_capability.element_drop_pairs.empty());
+    assert(!orison::lowering::dynamic_array_cleanup_emission_capability_proven(blocked_capability));
+    auto blocked_capability_report =
+        orison::lowering::format_dynamic_array_cleanup_emission_capability(blocked_capability);
+    assert(
+        blocked_capability_report.find(
+            "cleanup-pairs [numbers:__orison_dynamic_array_cleanup.3] "
+            "[items:__orison_dynamic_array_cleanup.4]"
+        ) != std::string::npos
+    );
+    assert(blocked_capability_report.find("[element cleanup missing]") != std::string::npos);
+    assert(blocked_capability_report.find("element-drop-pairs") == std::string::npos);
 
     auto malformed_owned = sequence_plans[1];
     malformed_owned.phases = {"load descriptor", "deallocate descriptor storage"};

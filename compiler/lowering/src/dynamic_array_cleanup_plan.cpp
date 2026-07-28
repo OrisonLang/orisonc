@@ -590,9 +590,11 @@ auto prove_dynamic_array_cleanup_emission_capability(
         cleanup_operation_names.push_back(obligation.cleanup_symbol_name);
         cleanup_owner_names.push_back(obligation.descriptor_cleanup.owner_name);
         for (auto const& action : obligation.actions) {
-            element_drop_pairs.push_back(
-                obligation.descriptor_cleanup.owner_name + ":" + action.capture_name + ":" + action.symbol_name
-            );
+            if (dynamic_array_cleanup_action_authorized(action, semantic_drop_lowering_authorizations)) {
+                element_drop_pairs.push_back(
+                    obligation.descriptor_cleanup.owner_name + ":" + action.capture_name + ":" + action.symbol_name
+                );
+            }
         }
     }
     return DynamicArrayCleanupEmissionCapability {

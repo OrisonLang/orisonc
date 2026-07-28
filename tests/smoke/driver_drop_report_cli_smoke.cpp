@@ -839,6 +839,14 @@ int main() {
         dynamic_array_blocked_cleanup_audit.stdout_text.find("call void @__orison_drop.Payload") ==
         std::string::npos
     );
+    assert(
+        dynamic_array_blocked_cleanup_capability.stdout_text.find("element-drop-pairs") ==
+        std::string::npos
+    );
+    assert(
+        dynamic_array_blocked_cleanup_audit.stdout_text.find("element-drop-pairs") ==
+        std::string::npos
+    );
 
     auto dynamic_array_authorized_cleanup_capability_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" / "dynamic_array_cleanup_audit.or";
