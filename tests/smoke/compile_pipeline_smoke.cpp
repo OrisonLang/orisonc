@@ -1216,16 +1216,16 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_cleanup_proof_model_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count == 0
     );
     assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_for);
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_structured_cleanup_operand_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_for
@@ -1548,43 +1548,43 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_proof_model_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_use_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_handoff_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_structured_cleanup_operand_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_use_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_cleanup_operand_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_call_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_call_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_call_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -1592,11 +1592,11 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_consumed_cleanup_descriptor_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count == 0
     );
     assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_lowered_for);
     assert(
@@ -1848,51 +1848,51 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_operand_fallback_for.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_cleanup_proof_model_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_use_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_handoff_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_structured_cleanup_operand_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_use_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_cleanup_operand_fallback_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_call_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_call_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_call_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_consumed_cleanup_descriptor_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count == 0
     );
     assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_operand_fallback_for);
     assert(
@@ -1960,51 +1960,51 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_cleanup_proof_model_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_use_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_handoff_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_structured_cleanup_operand_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_use_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_cleanup_operand_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_call_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_call_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_call_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_consumed_cleanup_descriptor_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count == 0
     );
     assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_authorized_cleanup_for);
     assert(
@@ -2213,51 +2213,51 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_cleanup_proof_model_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_use_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_handoff_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_structured_cleanup_operand_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_use_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_cleanup_operand_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_call_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_call_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_call_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_consumed_cleanup_descriptor_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count == 0
     );
     assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_inserted_cleanup_for);
     assert(
@@ -2383,43 +2383,43 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_structured_cleanup_operand_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_use_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_handoff_fallback_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_use_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_cleanup_operand_fallback_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_call_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_call_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_call_fallback_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_call_fallback_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_structured_consumed_cleanup_descriptor_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_consumed_cleanup_descriptor_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_ir_consumed_cleanup_descriptor_fallback_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count == 1
     );
     assert_computed_cleanup_proof_summary_matches_legacy(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
@@ -2476,35 +2476,35 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_handoff_fallback_for.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
-            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
-            .computed_dynamic_array_for_cleanup_proof_model_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
-            .computed_dynamic_array_for_structured_inserted_cleanup_handoff_use_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_inserted_cleanup_handoff_use_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
-            .computed_dynamic_array_for_ir_inserted_cleanup_handoff_fallback_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_inserted_cleanup_handoff_fallback_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
-            .computed_dynamic_array_for_structured_cleanup_operand_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
-            .computed_dynamic_array_for_structured_cleanup_operand_use_count == 1
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_use_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
-            .computed_dynamic_array_for_ir_cleanup_operand_fallback_count == 0
+            .computed_dynamic_array_for_cleanup_proof_summary_state.ir_cleanup_operand_fallback_count == 0
     );
     assert_computed_cleanup_proof_summary_matches_legacy(
         computed_dynamic_array_local_same_owner_handoff_fallback_for
@@ -2707,15 +2707,15 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_verified_inserted_cleanup_pair_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_proof_model_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.cleanup_proof_model_count == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_structured_cleanup_operand_count == 2
+            .computed_dynamic_array_for_cleanup_proof_summary_state.structured_cleanup_operand_count == 2
     );
     assert_computed_cleanup_proof_summary_matches_legacy(computed_dynamic_array_local_same_owner_two_loops);
     assert(
