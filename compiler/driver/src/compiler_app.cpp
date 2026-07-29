@@ -43,6 +43,8 @@ auto usage_text() -> std::string {
            "--test-only-computed-dynamic-array-cleanup-call-insertion-capability <file> | "
            "--computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
            "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
+           "--computed-dynamic-array-inserted-cleanup-calls <file> | "
+           "--test-only-computed-dynamic-array-inserted-cleanup-calls <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
@@ -173,6 +175,42 @@ auto computed_cleanup_call_insertion_readiness_report(
             detail << "<unknown>";
         }
         detail << " (metadata only)";
+        lines.push_back(detail.str());
+    }
+
+    return lines;
+}
+
+auto computed_inserted_cleanup_call_state_report(
+    pipeline::ComputedInsertedCleanupCallState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto summary = std::ostringstream {};
+    summary << "computed DynamicArray inserted cleanup calls ";
+    summary << (state.all_inserted ? "inserted" : "absent");
+    summary << " calls " << state.call_count;
+    summary << " structured-proofs " << state.structured_proof_count;
+    summary << " ir-fallback-proofs " << state.ir_fallback_proof_count;
+    summary << " (inserted IR)";
+    lines.push_back(summary.str());
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto detail = std::ostringstream {};
+        detail << "computed DynamicArray inserted cleanup call detail owner ";
+        detail << state.cleanup_owner_names[index];
+        detail << " data ";
+        if (index < state.data_pointer_names.size()) {
+            detail << state.data_pointer_names[index];
+        } else {
+            detail << "<unknown>";
+        }
+        detail << " capacity ";
+        if (index < state.capacity_names.size()) {
+            detail << state.capacity_names[index];
+        } else {
+            detail << "<unknown>";
+        }
+        detail << " (inserted IR)";
         lines.push_back(detail.str());
     }
 
@@ -698,6 +736,31 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             [](auto const& result) {
                 return computed_cleanup_call_insertion_readiness_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
+                );
+            }
+        );
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--computed-dynamic-array-inserted-cleanup-calls") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            computed_cleanup_call_insertion_readiness_options(),
+            [](auto const& result) {
+                return computed_inserted_cleanup_call_state_report(
+                    result.computed_dynamic_array_for_inserted_cleanup_call_state
+                );
+            }
+        );
+    }
+
+    if (args.size() == 3 &&
+        std::string_view(args[1]) == "--test-only-computed-dynamic-array-inserted-cleanup-calls") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            test_only_computed_cleanup_call_insertion_capability_options(),
+            [](auto const& result) {
+                return computed_inserted_cleanup_call_state_report(
+                    result.computed_dynamic_array_for_inserted_cleanup_call_state
                 );
             }
         );

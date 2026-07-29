@@ -40,6 +40,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   insertion capability report, keeping default metadata reports disabled while preserving a positive authorization path.
 - 2026-07-28: driver now exposes dedicated computed cleanup-call insertion readiness reports with gate counts,
   verification/proof/authorization flags, and owner/operation detail lines for both default and test-only enabled paths.
+- 2026-07-28: driver now exposes computed inserted-cleanup-call state reports with call/proof counts plus owner,
+  data-pointer, and capacity detail lines for default absent and explicitly test-only inserted paths.
 - 2026-07-28: computed dynamic-array cleanup-transition metadata now populates typed pipeline state with transition
   counts, pairing readiness, function names, owners, source/element types, acquisition owners/operations, and
   resumption owners/operations.

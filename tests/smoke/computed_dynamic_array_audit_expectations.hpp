@@ -130,6 +130,18 @@ inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_call_r
     "i64 %items.computed_for.0.capacity)\" [inserted state verified] [cleanup calls authorized] "
     "(inserted IR)";
 
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_call_state_absent_report =
+    "computed DynamicArray inserted cleanup calls absent calls 0 structured-proofs 0 ir-fallback-proofs 0 "
+    "(inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_call_state_inserted_report =
+    "computed DynamicArray inserted cleanup calls inserted calls 1 structured-proofs 1 ir-fallback-proofs 0 "
+    "(inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_call_state_detail_report =
+    "computed DynamicArray inserted cleanup call detail owner items data %items.computed_for.0.data "
+    "capacity %items.computed_for.0.capacity (inserted IR)";
+
 inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descriptor_report =
     "computed DynamicArray for consumed cleanup descriptor "
     "cleanup-operation items.computed_for.0.cleanup.resume.call owner items descriptor %items.addr "
