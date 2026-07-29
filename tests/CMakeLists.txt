@@ -294,6 +294,27 @@ add_test(
     COMMAND orison_driver_drop_report_cli_smoke
 )
 
+add_executable(orison_computed_cleanup_driver_reports_smoke
+    smoke/computed_cleanup_driver_reports_smoke.cpp
+)
+
+target_link_libraries(orison_computed_cleanup_driver_reports_smoke
+    PRIVATE
+        orison_driver
+)
+
+target_include_directories(orison_computed_cleanup_driver_reports_smoke
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/compiler/driver/src
+)
+
+target_compile_features(orison_computed_cleanup_driver_reports_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_computed_cleanup_driver_reports_smoke
+    COMMAND orison_computed_cleanup_driver_reports_smoke
+)
+
 add_executable(orison_driver_aggregate_lowering_smoke
     smoke/driver_aggregate_lowering_smoke.cpp
 )
