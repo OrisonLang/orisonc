@@ -2132,6 +2132,61 @@ auto main() -> int {
             .computed_dynamic_array_for_inserted_cleanup_handoff_state.resume_operation_names.front() ==
         "items.computed_for.0.cleanup.resume"
     );
+    auto computed_dynamic_array_local_same_owner_lowered_for_with_sequence = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
+            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_lowered_for_with_sequence.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_production_sequence_state.sequence_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_inserted_cleanup_transition_state.transition_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_state.verification_count == 1
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_production_readiness.inserted_cleanup_transition_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_production_readiness.inserted_cleanup_state_verification_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_production_readiness.sequence_transition_counts_match
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_production_readiness.transition_verification_counts_match
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+             .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(!orison::pipeline::computed_dynamic_array_for_production_ready(
+        computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+            .computed_dynamic_array_for_production_readiness
+    ));
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1

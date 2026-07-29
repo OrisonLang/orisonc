@@ -63,6 +63,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   pipeline states, so transition endpoints and verification outcomes are available without parsing audit strings.
 - 2026-07-28: computed `DynamicArray<T>` `for` production readiness now consumes typed inserted-cleanup transition
   and state-verification state, including sequence/transition and transition/verification count checks.
+- 2026-07-28: computed `DynamicArray<T>` `for` smoke coverage now runs production-sequence collection and inserted
+  cleanup lowering together, proving the typed sequence/transition and transition/verification count matches.
 - 2026-07-28: computed inserted-cleanup handoff verification now populates typed pipeline state with
   transition/verification counts, paired/blocked counts, metadata provenance, cleanup-call enablement, owners, and
   acquire/resume operation names from proof-model events.
