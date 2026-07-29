@@ -227,10 +227,7 @@ auto lower_sequence_for_statement(
                     .descriptor_storage_name = descriptor_plan.descriptor_storage_name,
                 };
             }
-            if (
-                context.options.test_only_authorize_computed_dynamic_array_cleanup_calls &&
-                context.options.test_only_insert_computed_dynamic_array_cleanup_calls
-            ) {
+            if (computed_dynamic_array_cleanup_call_insertion_capability(context.options).enabled) {
                 if (element_size_bytes.has_value()) {
                     auto cleanup_call_plan = DynamicArrayConstructionPlan {
                         .owner_name = cleanup_sequence_plan.cleanup_owner_name,

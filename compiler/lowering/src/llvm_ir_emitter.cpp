@@ -1290,13 +1290,12 @@ auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
     LlvmIrEmissionOptions const& options
 ) -> std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> {
     auto gates = std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> {};
-    auto const production_emission_enabled =
-        options.test_only_authorize_computed_dynamic_array_cleanup_calls &&
-        options.test_only_insert_computed_dynamic_array_cleanup_calls;
+    auto const insertion_capability =
+        computed_dynamic_array_cleanup_call_insertion_capability(options);
     collect_test_only_computed_dynamic_array_for_module(
         module,
         context,
-        [&gates, production_emission_enabled](
+        [&gates, insertion_capability](
             syntax::StatementSyntax const& statement,
             std::string_view enclosing_function_name,
             LoweringContext const& lowering_context,
@@ -1321,7 +1320,7 @@ auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
                     .function_cleanup_resumption_ready = gate.function_cleanup_resumption_ready,
                     .exit_cleanup_ready = gate.exit_cleanup_ready,
                     .production_sequence_render_planned = gate.production_sequence_render_planned,
-                    .production_emission_enabled = production_emission_enabled,
+                    .production_emission_enabled = insertion_capability.enabled,
                 });
             }
         }
@@ -1369,9 +1368,9 @@ auto collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(
     LlvmIrEmissionOptions const& options
 ) -> std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata> {
     auto descriptors = std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata> {};
-    if (!options.test_only_enable_computed_dynamic_array_for_lowering ||
-        !options.test_only_authorize_computed_dynamic_array_cleanup_calls ||
-        !options.test_only_insert_computed_dynamic_array_cleanup_calls) {
+    auto const insertion_capability =
+        computed_dynamic_array_cleanup_call_insertion_capability(options);
+    if (!options.test_only_enable_computed_dynamic_array_for_lowering || !insertion_capability.enabled) {
         return descriptors;
     }
     collect_test_only_computed_dynamic_array_for_module(
@@ -1453,8 +1452,7 @@ auto collect_dynamic_array_runtime_operations(
     }
     if (
         options.test_only_enable_computed_dynamic_array_for_lowering &&
-        options.test_only_authorize_computed_dynamic_array_cleanup_calls &&
-        options.test_only_insert_computed_dynamic_array_cleanup_calls &&
+        computed_dynamic_array_cleanup_call_insertion_capability(options).enabled &&
         !collect_test_only_computed_dynamic_array_for_production_sequences(module, context).empty()
     ) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);

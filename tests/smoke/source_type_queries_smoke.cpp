@@ -1,4 +1,5 @@
 #include "orison/lowering/source_type_queries.hpp"
+#include "orison/lowering/lowering_options.hpp"
 
 #include <cassert>
 #include <memory>
@@ -229,6 +230,23 @@ auto ternary(
 }  // namespace
 
 int main() {
+    auto computed_cleanup_insertion_options = orison::lowering::LlvmIrEmissionOptions {};
+    assert(!orison::lowering::computed_dynamic_array_cleanup_call_insertion_capability(
+        computed_cleanup_insertion_options
+    ).enabled);
+    computed_cleanup_insertion_options.test_only_authorize_computed_dynamic_array_cleanup_calls = true;
+    assert(!orison::lowering::computed_dynamic_array_cleanup_call_insertion_capability(
+        computed_cleanup_insertion_options
+    ).enabled);
+    computed_cleanup_insertion_options.test_only_insert_computed_dynamic_array_cleanup_calls = true;
+    auto const computed_cleanup_insertion_capability =
+        orison::lowering::computed_dynamic_array_cleanup_call_insertion_capability(
+            computed_cleanup_insertion_options
+        );
+    assert(computed_cleanup_insertion_capability.cleanup_call_authorization_enabled);
+    assert(computed_cleanup_insertion_capability.cleanup_call_insertion_enabled);
+    assert(computed_cleanup_insertion_capability.enabled);
+
     auto context = orison::lowering::LoweringContext {};
     context.records.emplace("Bucket", orison::lowering::LoweredRecordLayout {
         .name = "Bucket",

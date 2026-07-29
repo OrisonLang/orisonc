@@ -68,6 +68,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-28: computed `DynamicArray<T>` `for` production-emission readiness now turns on only when emission
   metadata is collected under the explicit test-only cleanup-call authorization plus insertion gate, with pipeline
   smoke coverage.
+- 2026-07-28: computed cleanup-call insertion now has a named internal capability object, consumed by production
+  emission metadata, runtime deallocate declaration registration, and the actual test-only insertion branch.
 - 2026-07-28: computed inserted-cleanup handoff verification now populates typed pipeline state with
   transition/verification counts, paired/blocked counts, metadata provenance, cleanup-call enablement, owners, and
   acquire/resume operation names from proof-model events.

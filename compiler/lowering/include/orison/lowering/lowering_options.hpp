@@ -66,6 +66,27 @@ struct LlvmIrEmissionOptions {
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
 
+struct ComputedDynamicArrayCleanupCallInsertionCapability {
+    bool cleanup_call_authorization_enabled = false;
+    bool cleanup_call_insertion_enabled = false;
+    bool enabled = false;
+};
+
+inline auto computed_dynamic_array_cleanup_call_insertion_capability(
+    LlvmIrEmissionOptions const& options
+) -> ComputedDynamicArrayCleanupCallInsertionCapability {
+    auto capability = ComputedDynamicArrayCleanupCallInsertionCapability {
+        .cleanup_call_authorization_enabled =
+            options.test_only_authorize_computed_dynamic_array_cleanup_calls,
+        .cleanup_call_insertion_enabled =
+            options.test_only_insert_computed_dynamic_array_cleanup_calls,
+    };
+    capability.enabled =
+        capability.cleanup_call_authorization_enabled &&
+        capability.cleanup_call_insertion_enabled;
+    return capability;
+}
+
 inline auto dynamic_array_parameter_descriptors_enabled(
     LlvmIrEmissionOptions const& options
 ) -> bool {
