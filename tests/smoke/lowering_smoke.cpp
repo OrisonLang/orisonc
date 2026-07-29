@@ -1977,83 +1977,31 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         }
     );
 
-    assert(computed_same_owner_parameter_for.has_errors());
+    assert(!computed_same_owner_parameter_for.has_errors());
     assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray ownership plan ternary single owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owners items items [ownership join ok] [cleanup owner blocked] (metadata only)"
+        computed_same_owner_parameter_for.ir_text.find(
+            "define i32 @sum_words(i1 %flag, { ptr, i64, i64 } %items)"
         ) != std::string::npos
     );
+    assert(computed_same_owner_parameter_for.ir_text.find("items.computed_for.0.condition:\n") != std::string::npos);
+    assert(computed_same_owner_parameter_for.ir_text.find("items.computed_for.0.body:\n") != std::string::npos);
+    assert(computed_same_owner_parameter_for.ir_text.find("items.computed_for.0.exit:\n") != std::string::npos);
     assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray descriptor handoff plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items handoff items [descriptor storage blocked] [cleanup owner blocked] "
-            "[lowering disabled] (metadata only)"
-        ) != std::string::npos
+        computed_same_owner_parameter_for.ir_text.find("items.computed_for.0.cleanup.resume.call") ==
+        std::string::npos
+    );
+    auto same_owner_first_deallocate =
+        computed_same_owner_parameter_for.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    assert(same_owner_first_deallocate != std::string::npos);
+    assert(
+        computed_same_owner_parameter_for.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate",
+            same_owner_first_deallocate + 1
+        ) == std::string::npos
     );
     assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray cleanup sequence plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [loop cleanup blocked] [function cleanup blocked] "
-            "[cleanup sequence disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray descriptor render plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [descriptor load blocked] [data projection blocked] "
-            "[length projection blocked] [capacity projection blocked] [render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray loop control render plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [entry branch blocked] [index phi blocked] [bounds check blocked] "
-            "[conditional branch blocked] [render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray element address render plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [data pointer blocked] [index blocked] [element address blocked] "
-            "[render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray element load render plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [element address blocked] [item value blocked] "
-            "[render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray loop continue render plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [continue block blocked] [next index blocked] "
-            "[backedge branch blocked] [render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray loop render sequence plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [descriptor render blocked] [loop control blocked] "
-            "[body block blocked] [element address blocked] [element load blocked] "
-            "[loop continue blocked] [render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray loop exit cleanup plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [exit block blocked] [cleanup blocked] "
-            "[cleanup sequence disabled] [render disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_same_owner_parameter_for.render(path.string()).find(
-            "computed DynamicArray production emission gate plan cleanup owner unproven source DynamicArray<UInt32> "
-            "element UInt32 owner items [ownership blocked] [loop render blocked] "
-            "[loop cleanup ownership blocked] [function cleanup resumption blocked] [exit cleanup blocked] "
-            "[production sequence blocked] [production emission disabled] (metadata only)"
+        computed_same_owner_parameter_for.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
         ) != std::string::npos
     );
 

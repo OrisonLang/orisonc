@@ -718,6 +718,11 @@ representation.
   use that same computed descriptor path.
 - Computed owned `DynamicArray<T>` iterables remain rejected unless the iterable is a named descriptor-backed owner.
   Ternary-selected owned descriptors such as `flag ? left : right` have no single proven descriptor storage owner yet.
+- Computed same-owner `DynamicArray<T>` iterables over scalar/non-owning bound parameters now lower on the normal path.
+  Parameter binding records a proof-only cleanup-owner plan from the callee descriptor spill, so computed-loop planning
+  can prove `flag ? items : items` without adding a second descriptor cleanup. Function-exit parameter cleanup remains
+  the only production deallocation; computed-loop cleanup-call insertion remains gated behind the explicit test-only
+  authorization/insertion seam.
 - Shared descriptor-loop lowering now emits neutral `sequence_for` temporary names in generated LLVM IR. The remaining
   DynamicArray-specific option names are intentionally gate-oriented rather than loop-shape-oriented.
 - Local `DynamicArray<T>` lowering is now available on the default compile path for constructed local descriptors:
@@ -799,5 +804,5 @@ representation.
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Extend `for ... in` lowering beyond named descriptor-backed owned `DynamicArray<T>` sequences only after ownership,
-  cleanup, and descriptor-storage rules for computed owned iterables are proven.
+- Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences only after
+  ownership, cleanup, and descriptor-storage rules for broader computed owned iterables are proven.

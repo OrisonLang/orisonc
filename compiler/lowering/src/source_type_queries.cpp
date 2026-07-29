@@ -270,6 +270,23 @@ auto attach_dynamic_array_iterable_cleanup_owner_proof(
             dynamic_array_iterable_cleanup_owner_proven(plan.cleanup_owner_proof_status);
         return;
     }
+    for (auto const& cleanup_plan : state.dynamic_array_iterable_cleanup_owner_plans) {
+        if (cleanup_plan.owner_name != plan.owner_name ||
+            cleanup_plan.source_type_name != plan.source_type_name) {
+            continue;
+        }
+        if (!plan.descriptor_storage.empty() &&
+            !cleanup_plan.descriptor_storage_name.empty() &&
+            cleanup_plan.descriptor_storage_name != plan.descriptor_storage) {
+            continue;
+        }
+
+        plan.cleanup_owner_proof_status =
+            dynamic_array_iterable_cleanup_owner_proof_status(cleanup_plan.descriptor_storage_status);
+        plan.cleanup_owner_proven =
+            dynamic_array_iterable_cleanup_owner_proven(plan.cleanup_owner_proof_status);
+        return;
+    }
 
     plan.cleanup_owner_proof_status =
         DynamicArrayIterableCleanupOwnerProofStatus::missing_cleanup_plan;

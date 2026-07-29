@@ -271,6 +271,38 @@ auto is_receiver_self_source_type(std::string_view type_name) -> bool {
     return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
 }
 
+void seed_bound_dynamic_array_parameter_cleanup_owner(
+    std::string_view parameter_name,
+    std::string_view source_type_name,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session
+) {
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    if (!sequence.has_value() ||
+        sequence->kind != DynamicSequenceKind::dynamic_array ||
+        !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        return;
+    }
+
+    auto storage = aggregate_storage_for_name(parameter_name, session.state);
+    if (!storage.has_value()) {
+        return;
+    }
+
+    auto cleanup_plan = plan_dynamic_array_descriptor_cleanup(
+        std::string {parameter_name},
+        std::string {source_type_name},
+        context.lowering
+    );
+    if (!cleanup_plan.has_value()) {
+        return;
+    }
+
+    cleanup_plan->descriptor_storage_name = std::move(*storage);
+    cleanup_plan->descriptor_storage_status = DynamicArrayDescriptorStorageStatus::bound_parameter_descriptor;
+    session.state.dynamic_array_iterable_cleanup_owner_plans.push_back(std::move(*cleanup_plan));
+}
+
 auto unsupported_dynamic_array_parameter_diagnostic(
     syntax::ParameterSyntax const& parameter
 ) -> std::optional<std::string> {
@@ -1050,6 +1082,12 @@ void emit_function_body(
             },
             session,
             output
+        );
+        seed_bound_dynamic_array_parameter_cleanup_owner(
+            function.parameters[index].name,
+            state.source_type_names.at(function.parameters[index].name),
+            context,
+            session
         );
     }
     [[maybe_unused]] auto function_scope = DeferredCleanupScope {state};

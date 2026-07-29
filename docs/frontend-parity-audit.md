@@ -27,11 +27,15 @@ This file tracks which source-language frontend slices are reflected in the curr
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction and assignment outside the pinned
   scalar, record, fixed-array, and source-backed `DynamicArray<T>` paths; computed owned `DynamicArray<T>` iterables
-  beyond proven local same-owner descriptor paths; mutable `exclusive.View<T>` operations; future standard-library
+  beyond proven local and bound-parameter same-owner descriptor paths; mutable `exclusive.View<T>` operations; future standard-library
   iterator abstractions; and production backend completeness beyond the current LLVM/object/link/run smoke paths
 
 ## Latest update
 
+- 2026-07-29: computed same-owner bound-parameter `DynamicArray<T>` `for` iterables now lower on the normal path when
+  the callee descriptor spill proves the single cleanup owner. The proof feeds computed-loop ownership planning without
+  adding an extra cleanup-emission plan, so the function-exit descriptor cleanup remains the only production
+  deallocation and computed-loop cleanup-call insertion stays test-only.
 - 2026-07-29: computed same-owner local `DynamicArray<T>` `for` iterables now lower on the normal path when the
   descriptor owner is proven by local descriptor cleanup state. The existing production gate and cleanup-transition
   checks are reused, while cleanup-call authorization/insertion remains explicitly test-only.
