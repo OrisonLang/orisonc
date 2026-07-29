@@ -2005,6 +2005,55 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         ) != std::string::npos
     );
 
+    auto computed_nested_same_owner_parameter_for = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "function sum_words(flag: Bool, other_flag: Bool, items: DynamicArray<UInt32>) -> UInt32\n"
+        "    var total = 0 as UInt32\n"
+        "    for word in flag ? items : other_flag ? items : items\n"
+        "        total = total + word\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(!computed_nested_same_owner_parameter_for.has_errors());
+    assert(
+        computed_nested_same_owner_parameter_for.ir_text.find(
+            "define i32 @sum_words(i1 %flag, i1 %other_flag, { ptr, i64, i64 } %items)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_nested_same_owner_parameter_for.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) != std::string::npos
+    );
+    assert(computed_nested_same_owner_parameter_for.ir_text.find("items.computed_for.0.body:\n") != std::string::npos);
+    assert(computed_nested_same_owner_parameter_for.ir_text.find("items.computed_for.0.exit:\n") != std::string::npos);
+    assert(
+        computed_nested_same_owner_parameter_for.ir_text.find("items.computed_for.0.cleanup.resume.call") ==
+        std::string::npos
+    );
+    auto nested_same_owner_first_deallocate =
+        computed_nested_same_owner_parameter_for.ir_text.find("call void @__orison_dynamic_array_deallocate");
+    assert(nested_same_owner_first_deallocate != std::string::npos);
+    assert(
+        computed_nested_same_owner_parameter_for.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate",
+            nested_same_owner_first_deallocate + 1
+        ) == std::string::npos
+    );
+    assert(
+        computed_nested_same_owner_parameter_for.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
+        ) != std::string::npos
+    );
+
     auto computed_local_same_owner_source =
         "package demo.dynamicarray\n"
         "\n"

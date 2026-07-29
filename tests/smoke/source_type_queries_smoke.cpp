@@ -752,6 +752,32 @@ int main() {
             proven_computed_ownership_plan
         ).find("ternary single owner proven") != std::string::npos
     );
+    auto proven_nested_computed_ownership_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
+            ternary(
+                name("flag"),
+                name("items"),
+                ternary(name("other_flag"), name("items"), name("items"))
+            ),
+            context,
+            state
+        );
+    assert(
+        proven_nested_computed_ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven
+    );
+    assert(proven_nested_computed_ownership_plan.branch_owner_names.size() == 3);
+    assert(proven_nested_computed_ownership_plan.branch_owner_names[0] == "items");
+    assert(proven_nested_computed_ownership_plan.branch_owner_names[1] == "items");
+    assert(proven_nested_computed_ownership_plan.branch_owner_names[2] == "items");
+    assert(proven_nested_computed_ownership_plan.ownership_join_matches);
+    assert(proven_nested_computed_ownership_plan.cleanup_owner_proven);
+    assert(
+        orison::lowering::is_owned_binding_consumed(
+            proven_nested_computed_ownership_plan.merged_transfers,
+            "items"
+        )
+    );
     auto proven_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(name("flag"), name("items"), name("items")),

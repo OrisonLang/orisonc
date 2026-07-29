@@ -723,6 +723,10 @@ representation.
   can prove `flag ? items : items` without adding a second descriptor cleanup. Function-exit parameter cleanup remains
   the only production deallocation; computed-loop cleanup-call insertion remains gated behind the explicit test-only
   authorization/insertion seam.
+- Computed same-owner `DynamicArray<T>` ownership planning now recursively accepts nested ternary leaves when every
+  reachable leaf is a name that resolves to the same descriptor owner and every leaf has cleanup-owner proof. This keeps
+  `flag ? items : other_flag ? items : items` on the proven single-owner path while non-name computed leaves and
+  mismatched owners remain blocked.
 - Shared descriptor-loop lowering now emits neutral `sequence_for` temporary names in generated LLVM IR. The remaining
   DynamicArray-specific option names are intentionally gate-oriented rather than loop-shape-oriented.
 - Local `DynamicArray<T>` lowering is now available on the default compile path for constructed local descriptors:
@@ -804,5 +808,6 @@ representation.
 
 - Extend production `DynamicArray<T>` lowered signatures to owned element types only after semantic ownership/drop
   analysis proves unique ownership, initialized length, capacity bounds, and deterministic cleanup.
-- Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences only after
-  ownership, cleanup, and descriptor-storage rules for broader computed owned iterables are proven.
+- Extend `for ... in` lowering beyond proven local and bound-parameter same-owner `DynamicArray<T>` sequences, including
+  nested same-owner ternary leaves, only after ownership, cleanup, and descriptor-storage rules for broader computed
+  owned iterables are proven.

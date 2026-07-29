@@ -1016,6 +1016,64 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_dynamic_array_nested_same_owner_for_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_nested_same_owner_for.or";
+    {
+        auto nested_same_owner_for_source = std::ofstream(computed_dynamic_array_nested_same_owner_for_path);
+        nested_same_owner_for_source
+            << "package demo.pipeline.computeddynamicarraynestedsameownerfor\n"
+            << "\n"
+            << "function sum_words(flag: Bool, other_flag: Bool, items: DynamicArray<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for word in flag ? items : other_flag ? items : items\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_nested_same_owner_for =
+        pipeline.emit_llvm(computed_dynamic_array_nested_same_owner_for_path);
+    assert(!computed_dynamic_array_nested_same_owner_for.has_errors());
+    assert(
+        computed_dynamic_array_nested_same_owner_for.ir_text.find(
+            "define i32 @sum_words(i1 %flag, i1 %other_flag, { ptr, i64, i64 } %items)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_nested_same_owner_for.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_nested_same_owner_for.ir_text.find(
+            "items.computed_for.0.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_nested_same_owner_for.ir_text.find(
+            "items.computed_for.0.exit:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_nested_same_owner_for.ir_text.find(
+            "items.computed_for.0.cleanup.resume.call"
+        ) == std::string::npos
+    );
+    auto nested_same_owner_first_deallocate =
+        computed_dynamic_array_nested_same_owner_for.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate"
+        );
+    assert(nested_same_owner_first_deallocate != std::string::npos);
+    assert(
+        computed_dynamic_array_nested_same_owner_for.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate",
+            nested_same_owner_first_deallocate + 1
+        ) == std::string::npos
+    );
+    assert(
+        computed_dynamic_array_nested_same_owner_for.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
+        ) != std::string::npos
+    );
+
     auto computed_dynamic_array_local_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_for_rejected.or";
     {

@@ -23,6 +23,43 @@ auto computed_dynamic_array_for_base_name(
     return name;
 }
 
+auto collect_computed_dynamic_array_leaf_descriptors(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view source_type_name,
+    LoweringContext const& context,
+    FunctionLoweringState const& state,
+    std::vector<DynamicArrayIterableDescriptorPlan>& descriptors
+) -> bool {
+    if (expression.kind == syntax::ExpressionKind::name) {
+        auto descriptor = plan_dynamic_array_iterable_descriptor(expression, context, state);
+        if (descriptor.source_type_name != source_type_name || descriptor.owner_name.empty()) {
+            return false;
+        }
+        descriptors.push_back(std::move(descriptor));
+        return true;
+    }
+
+    if (expression.kind != syntax::ExpressionKind::ternary ||
+        expression.right == nullptr ||
+        expression.alternate == nullptr) {
+        return false;
+    }
+
+    return collect_computed_dynamic_array_leaf_descriptors(
+        *expression.right,
+        source_type_name,
+        context,
+        state,
+        descriptors
+    ) && collect_computed_dynamic_array_leaf_descriptors(
+        *expression.alternate,
+        source_type_name,
+        context,
+        state,
+        descriptors
+    );
+}
+
 }  // namespace
 
 auto split_top_level_generic_arguments(std::string_view text) -> std::vector<std::string> {
@@ -393,36 +430,43 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
 
     plan.source_type_name = std::move(*source_type_name);
     plan.element_source_type_name = std::move(sequence->element_source_type_name);
-    if (expression.kind != syntax::ExpressionKind::ternary || expression.right == nullptr ||
-        expression.alternate == nullptr || expression.right->kind != syntax::ExpressionKind::name ||
-        expression.alternate->kind != syntax::ExpressionKind::name) {
+    if (expression.kind != syntax::ExpressionKind::ternary) {
         plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape;
         return plan;
     }
 
-    auto then_descriptor = plan_dynamic_array_iterable_descriptor(*expression.right, context, state);
-    auto else_descriptor = plan_dynamic_array_iterable_descriptor(*expression.alternate, context, state);
-    if (then_descriptor.source_type_name != plan.source_type_name ||
-        else_descriptor.source_type_name != plan.source_type_name ||
-        then_descriptor.owner_name.empty() ||
-        else_descriptor.owner_name.empty()) {
+    auto branch_descriptors = std::vector<DynamicArrayIterableDescriptorPlan> {};
+    if (!collect_computed_dynamic_array_leaf_descriptors(
+            expression,
+            plan.source_type_name,
+            context,
+            state,
+            branch_descriptors
+        ) ||
+        branch_descriptors.empty()) {
         plan.kind = ComputedDynamicArrayIterableOwnershipPlanKind::unsupported_computed_shape;
         return plan;
     }
 
-    plan.branch_owner_names.push_back(then_descriptor.owner_name);
-    plan.branch_owner_names.push_back(else_descriptor.owner_name);
-    plan.branch_cleanup_owner_proof_statuses.push_back(then_descriptor.cleanup_owner_proof_status);
-    plan.branch_cleanup_owner_proof_statuses.push_back(else_descriptor.cleanup_owner_proof_status);
+    auto single_owner_name = branch_descriptors.front().owner_name;
+    auto cleanup_owner_proven = true;
+    plan.branch_owner_names.reserve(branch_descriptors.size());
+    plan.branch_cleanup_owner_proof_statuses.reserve(branch_descriptors.size());
+    for (auto const& descriptor : branch_descriptors) {
+        plan.branch_owner_names.push_back(descriptor.owner_name);
+        plan.branch_cleanup_owner_proof_statuses.push_back(descriptor.cleanup_owner_proof_status);
+        cleanup_owner_proven = cleanup_owner_proven &&
+            descriptor.cleanup_owner_proven &&
+            descriptor.owner_name == single_owner_name;
+    }
 
     auto branch_states = std::vector<OwnershipTransferState> {};
-    branch_states.reserve(2);
-    auto then_state = state.ownership_transfers;
-    mark_owned_binding_consumed(then_state, then_descriptor.owner_name);
-    branch_states.push_back(std::move(then_state));
-    auto else_state = state.ownership_transfers;
-    mark_owned_binding_consumed(else_state, else_descriptor.owner_name);
-    branch_states.push_back(std::move(else_state));
+    branch_states.reserve(branch_descriptors.size());
+    for (auto const& descriptor : branch_descriptors) {
+        auto branch_state = state.ownership_transfers;
+        mark_owned_binding_consumed(branch_state, descriptor.owner_name);
+        branch_states.push_back(std::move(branch_state));
+    }
 
     auto merged = merge_ownership_transfer_states(branch_states);
     if (!merged.has_value()) {
@@ -432,9 +476,7 @@ auto plan_computed_dynamic_array_iterable_ownership_transfer(
 
     plan.merged_transfers = std::move(*merged);
     plan.ownership_join_matches = true;
-    plan.cleanup_owner_proven =
-        then_descriptor.cleanup_owner_proven && else_descriptor.cleanup_owner_proven &&
-        then_descriptor.owner_name == else_descriptor.owner_name;
+    plan.cleanup_owner_proven = cleanup_owner_proven;
     plan.kind = plan.cleanup_owner_proven
         ? ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_proven
         : ComputedDynamicArrayIterableOwnershipPlanKind::ternary_single_owner_unproven;

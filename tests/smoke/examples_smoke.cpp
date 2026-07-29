@@ -348,6 +348,53 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_nested_same_owner_dynamic_array_iterable =
+        pipeline.emit_llvm(
+            fixtures / "dynamic_array_computed_nested_same_owner_iterable.or"
+        );
+    assert(!computed_nested_same_owner_dynamic_array_iterable.has_errors());
+    assert(
+        computed_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "define i32 @sum_words(i1 %flag, i1 %other_flag, { ptr, i64, i64 } %items)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.exit:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.cleanup.resume.call"
+        ) == std::string::npos
+    );
+    auto nested_same_owner_first_deallocate =
+        computed_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate"
+        );
+    assert(nested_same_owner_first_deallocate != std::string::npos);
+    assert(
+        computed_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate",
+            nested_same_owner_first_deallocate + 1
+        ) == std::string::npos
+    );
+    assert(
+        computed_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
+        ) != std::string::npos
+    );
+
     auto computed_local_same_owner_dynamic_array_iterable =
         pipeline.emit_llvm(
             fixtures / "dynamic_array_computed_local_same_owner_iterable.or",
