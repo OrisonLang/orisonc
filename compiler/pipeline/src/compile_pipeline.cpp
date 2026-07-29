@@ -14,7 +14,8 @@ auto plan_computed_dynamic_array_for_production_readiness(
     ComputedDynamicArrayForProductionEmissionGateState const& gate_state,
     ComputedDynamicArrayForProductionSequenceState const& sequence_state,
     ComputedInsertedCleanupTransitionState const& inserted_transition_state,
-    ComputedInsertedCleanupStateVerificationState const& inserted_verification_state
+    ComputedInsertedCleanupStateVerificationState const& inserted_verification_state,
+    ComputedCleanupCallInsertionCapabilityState const& insertion_capability_state
 ) -> ComputedDynamicArrayForProductionReadiness {
     return ComputedDynamicArrayForProductionReadiness {
         .gate_ready =
@@ -50,7 +51,7 @@ auto plan_computed_dynamic_array_for_production_readiness(
             gate_state.gate_metadata_available &&
             sequence_state.sequence_metadata_available &&
             gate_state.cleanup_owner_names == sequence_state.cleanup_owner_names,
-        .production_emission_enabled = gate_state.any_production_emission_enabled,
+        .production_emission_enabled = insertion_capability_state.enabled,
     };
 }
 

@@ -2938,6 +2938,22 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .dynamic_array_runtime_request_report.size() == 2
     );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_insertion_capability_state.enabled
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_inserted_cleanup_for
+             .computed_dynamic_array_for_production_readiness.gate_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(!orison::pipeline::computed_dynamic_array_for_production_ready(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .computed_dynamic_array_for_production_readiness
+    ));
     assert_line_contains(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for.dynamic_array_runtime_request_report,
         0,

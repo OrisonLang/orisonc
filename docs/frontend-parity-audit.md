@@ -72,6 +72,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   emission metadata, runtime deallocate declaration registration, and the actual test-only insertion branch.
 - 2026-07-28: computed cleanup-call insertion capability now also populates pipeline-visible typed state, including
   disabled, authorization-only, and fully enabled smoke coverage.
+- 2026-07-28: computed `DynamicArray<T>` `for` production readiness now consumes the pipeline-visible cleanup-call
+  insertion capability for production-emission enablement, while gate/sequence metadata remains required evidence.
 - 2026-07-28: computed inserted-cleanup handoff verification now populates typed pipeline state with
   transition/verification counts, paired/blocked counts, metadata provenance, cleanup-call enablement, owners, and
   acquire/resume operation names from proof-model events.

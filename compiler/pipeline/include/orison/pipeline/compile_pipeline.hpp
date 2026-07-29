@@ -351,7 +351,8 @@ auto plan_computed_dynamic_array_for_production_readiness(
     ComputedDynamicArrayForProductionEmissionGateState const& gate_state,
     ComputedDynamicArrayForProductionSequenceState const& sequence_state,
     ComputedInsertedCleanupTransitionState const& inserted_transition_state,
-    ComputedInsertedCleanupStateVerificationState const& inserted_verification_state
+    ComputedInsertedCleanupStateVerificationState const& inserted_verification_state,
+    ComputedCleanupCallInsertionCapabilityState const& insertion_capability_state
 ) -> ComputedDynamicArrayForProductionReadiness;
 
 auto computed_dynamic_array_for_production_ready(
