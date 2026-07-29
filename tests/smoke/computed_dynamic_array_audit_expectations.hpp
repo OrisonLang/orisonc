@@ -147,6 +147,17 @@ inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descri
     "cleanup-operation items.computed_for.0.cleanup.resume.call owner items descriptor %items.addr "
     "[inserted cleanup call proven] [descriptor finalized] (inserted IR)";
 
+inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descriptor_state_absent_report =
+    "computed DynamicArray consumed cleanup descriptors absent descriptors 0 structured-proofs 0 ir-fallback-proofs 0 "
+    "(inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report =
+    "computed DynamicArray consumed cleanup descriptors finalized descriptors 1 structured-proofs 1 ir-fallback-proofs 0 "
+    "(inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report =
+    "computed DynamicArray consumed cleanup descriptor detail owner items descriptor %items.addr (inserted IR)";
+
 inline constexpr std::string_view consumed_descriptor_finalization_plan_report =
     "consumed descriptor finalization plan owner items descriptor %items.addr "
     "cleanup-operation items.computed_for.cleanup.resume [cleanup owner consumed] "

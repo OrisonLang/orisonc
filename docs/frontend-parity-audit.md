@@ -42,6 +42,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   verification/proof/authorization flags, and owner/operation detail lines for both default and test-only enabled paths.
 - 2026-07-28: driver now exposes computed inserted-cleanup-call state reports with call/proof counts plus owner,
   data-pointer, and capacity detail lines for default absent and explicitly test-only inserted paths.
+- 2026-07-28: driver now exposes computed consumed-cleanup-descriptor state reports with descriptor/proof counts plus
+  owner and descriptor-storage detail lines for default absent and explicitly test-only finalized paths.
 - 2026-07-28: computed dynamic-array cleanup-transition metadata now populates typed pipeline state with transition
   counts, pairing readiness, function names, owners, source/element types, acquisition owners/operations, and
   resumption owners/operations.

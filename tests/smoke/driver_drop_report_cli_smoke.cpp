@@ -208,6 +208,20 @@ auto run_test_only_computed_dynamic_array_inserted_cleanup_calls(
     return run_single_file_command(app, "--test-only-computed-dynamic-array-inserted-cleanup-calls", path);
 }
 
+auto run_computed_dynamic_array_consumed_cleanup_descriptors(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--computed-dynamic-array-consumed-cleanup-descriptors", path);
+}
+
+auto run_test_only_computed_dynamic_array_consumed_cleanup_descriptors(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--test-only-computed-dynamic-array-consumed-cleanup-descriptors", path);
+}
+
 auto run_dynamic_array_cleanup_production_readiness(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& path
@@ -1071,6 +1085,26 @@ int main() {
         {
             smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
             smoke::computed_dynamic_array_inserted_cleanup_call_state_detail_report,
+        }
+    );
+    auto dynamic_array_computed_local_same_owner_consumed_cleanup_descriptors =
+        run_computed_dynamic_array_consumed_cleanup_descriptors(app, dynamic_array_computed_local_same_owner_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_local_same_owner_consumed_cleanup_descriptors,
+        {
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_absent_report,
+        }
+    );
+    auto dynamic_array_computed_local_same_owner_test_only_consumed_cleanup_descriptors =
+        run_test_only_computed_dynamic_array_consumed_cleanup_descriptors(
+            app,
+            dynamic_array_computed_local_same_owner_path
+        );
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_local_same_owner_test_only_consumed_cleanup_descriptors,
+        {
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report,
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
         }
     );
     auto dynamic_array_local_append_path =

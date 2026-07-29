@@ -45,6 +45,8 @@ auto usage_text() -> std::string {
            "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
            "--computed-dynamic-array-inserted-cleanup-calls <file> | "
            "--test-only-computed-dynamic-array-inserted-cleanup-calls <file> | "
+           "--computed-dynamic-array-consumed-cleanup-descriptors <file> | "
+           "--test-only-computed-dynamic-array-consumed-cleanup-descriptors <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
@@ -207,6 +209,36 @@ auto computed_inserted_cleanup_call_state_report(
         detail << " capacity ";
         if (index < state.capacity_names.size()) {
             detail << state.capacity_names[index];
+        } else {
+            detail << "<unknown>";
+        }
+        detail << " (inserted IR)";
+        lines.push_back(detail.str());
+    }
+
+    return lines;
+}
+
+auto computed_consumed_cleanup_descriptor_state_report(
+    pipeline::ComputedConsumedCleanupDescriptorState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto summary = std::ostringstream {};
+    summary << "computed DynamicArray consumed cleanup descriptors ";
+    summary << (state.all_finalized ? "finalized" : "absent");
+    summary << " descriptors " << state.descriptor_count;
+    summary << " structured-proofs " << state.structured_proof_count;
+    summary << " ir-fallback-proofs " << state.ir_fallback_proof_count;
+    summary << " (inserted IR)";
+    lines.push_back(summary.str());
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto detail = std::ostringstream {};
+        detail << "computed DynamicArray consumed cleanup descriptor detail owner ";
+        detail << state.cleanup_owner_names[index];
+        detail << " descriptor ";
+        if (index < state.descriptor_storage_names.size()) {
+            detail << state.descriptor_storage_names[index];
         } else {
             detail << "<unknown>";
         }
@@ -761,6 +793,31 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             [](auto const& result) {
                 return computed_inserted_cleanup_call_state_report(
                     result.computed_dynamic_array_for_inserted_cleanup_call_state
+                );
+            }
+        );
+    }
+
+    if (args.size() == 3 && std::string_view(args[1]) == "--computed-dynamic-array-consumed-cleanup-descriptors") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            computed_cleanup_call_insertion_readiness_options(),
+            [](auto const& result) {
+                return computed_consumed_cleanup_descriptor_state_report(
+                    result.computed_dynamic_array_for_consumed_cleanup_descriptor_state
+                );
+            }
+        );
+    }
+
+    if (args.size() == 3 &&
+        std::string_view(args[1]) == "--test-only-computed-dynamic-array-consumed-cleanup-descriptors") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            test_only_computed_cleanup_call_insertion_capability_options(),
+            [](auto const& result) {
+                return computed_consumed_cleanup_descriptor_state_report(
+                    result.computed_dynamic_array_for_consumed_cleanup_descriptor_state
                 );
             }
         );
