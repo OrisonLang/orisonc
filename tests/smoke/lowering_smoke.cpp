@@ -2572,6 +2572,43 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_continue_position < computed_exit_position);
     assert(computed_exit_position < computed_cleanup_resumption_position);
 
+    auto computed_local_nested_same_owner_source =
+        "package demo.dynamicarray\n"
+        "\n"
+        "function sum_words(flag: Bool, other_flag: Bool) -> UInt32\n"
+        "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    var total = 0 as UInt32\n"
+        "    for word in flag ? items : other_flag ? items : items\n"
+        "        total = total + word\n"
+        "    total\n";
+    auto computed_local_nested_same_owner_for = lower_source(
+        path,
+        computed_local_nested_same_owner_source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+        }
+    );
+    assert(!computed_local_nested_same_owner_for.has_errors());
+    assert(
+        computed_local_nested_same_owner_for.ir_text.find(
+            "define i32 @sum_words(i1 %flag, i1 %other_flag)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_nested_same_owner_for.ir_text.find(
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls disabled]\n"
+        ) != std::string::npos
+    );
+    assert(computed_local_nested_same_owner_for.ir_text.find("items.computed_for.0.condition:\n") != std::string::npos);
+    assert(computed_local_nested_same_owner_for.ir_text.find("items.computed_for.0.body:\n") != std::string::npos);
+    assert(computed_local_nested_same_owner_for.ir_text.find("items.computed_for.0.exit:\n") != std::string::npos);
+    assert(
+        computed_local_nested_same_owner_for.ir_text.find("items.computed_for.0.cleanup.resume.call") ==
+        std::string::npos
+    );
+
     auto computed_local_same_owner_two_loops_source =
         "package demo.dynamicarray\n"
         "\n"

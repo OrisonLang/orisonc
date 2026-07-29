@@ -456,6 +456,41 @@ auto main() -> int {
         ) == std::string::npos
     );
 
+    auto computed_local_nested_same_owner_dynamic_array_iterable =
+        pipeline.emit_llvm(
+            fixtures / "dynamic_array_computed_local_nested_same_owner_iterable.or",
+            orison::pipeline::CompilePipelineOptions {
+                .dynamic_array_production_construction_lowering_enabled = true,
+                .dynamic_array_production_for_lowering_enabled = true,
+            }
+        );
+    assert(!computed_local_nested_same_owner_dynamic_array_iterable.has_errors());
+    assert(
+        computed_local_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "define i32 @sum_words(i1 %flag, i1 %other_flag)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.exit:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.cleanup.resume.call"
+        ) == std::string::npos
+    );
+
     auto choice_dynamic_array_payload =
         pipeline.emit_llvm(fixtures / "choice_dynamic_array_payload_rejected.or");
     assert(choice_dynamic_array_payload.has_errors());
