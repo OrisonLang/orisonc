@@ -46,6 +46,8 @@ auto usage_text() -> std::string {
            "--test-only-computed-dynamic-array-cleanup-call-insertion-capability <file> | "
            "--computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
            "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
+           "--computed-dynamic-array-inserted-cleanup-handoffs <file> | "
+           "--test-only-computed-dynamic-array-inserted-cleanup-handoffs <file> | "
            "--computed-dynamic-array-inserted-cleanup-calls <file> | "
            "--test-only-computed-dynamic-array-inserted-cleanup-calls <file> | "
            "--computed-dynamic-array-consumed-cleanup-descriptors <file> | "
@@ -683,6 +685,32 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             [](auto const& result) {
                 return computed_cleanup_call_insertion_readiness_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
+                );
+            }
+        )) {
+        return std::move(*result);
+    }
+
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--computed-dynamic-array-inserted-cleanup-handoffs",
+            computed_cleanup_call_insertion_readiness_options(),
+            [](auto const& result) {
+                return computed_inserted_cleanup_handoff_state_report(
+                    result.computed_dynamic_array_for_inserted_cleanup_handoff_state
+                );
+            }
+        )) {
+        return std::move(*result);
+    }
+
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--test-only-computed-dynamic-array-inserted-cleanup-handoffs",
+            test_only_computed_cleanup_call_insertion_capability_options(),
+            [](auto const& result) {
+                return computed_inserted_cleanup_handoff_state_report(
+                    result.computed_dynamic_array_for_inserted_cleanup_handoff_state
                 );
             }
         )) {

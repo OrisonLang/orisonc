@@ -15,6 +15,10 @@ auto computed_cleanup_call_insertion_readiness_report(
     pipeline::ComputedCleanupCallInsertionGateState const& state
 ) -> std::vector<std::string>;
 
+auto computed_inserted_cleanup_handoff_state_report(
+    pipeline::ComputedInsertedCleanupHandoffState const& state
+) -> std::vector<std::string>;
+
 auto computed_inserted_cleanup_call_state_report(
     pipeline::ComputedInsertedCleanupCallState const& state
 ) -> std::vector<std::string>;

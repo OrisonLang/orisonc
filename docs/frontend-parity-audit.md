@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-29: driver now exposes computed inserted-cleanup-handoff reports with transition/verification/pairing counts,
+  metadata provenance, cleanup-call enablement, and owner acquire/resume detail lines for default and explicitly
+  test-only enabled paths.
 - 2026-07-28: driver now exposes a dedicated
   `--computed-dynamic-array-cleanup-call-insertion-capability` report so computed cleanup-call insertion authorization
   can be inspected without running the full dynamic-array cleanup audit.

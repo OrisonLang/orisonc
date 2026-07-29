@@ -92,6 +92,42 @@ auto computed_cleanup_call_insertion_readiness_report(
     return lines;
 }
 
+auto computed_inserted_cleanup_handoff_state_report(
+    pipeline::ComputedInsertedCleanupHandoffState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "transitions " << state.transition_count;
+    counts << " verifications " << state.verification_count;
+    counts << " paired " << state.paired_count;
+    counts << " blocked " << state.blocked_count;
+    counts << (state.from_metadata ? " [metadata-backed]" : " [metadata-missing]");
+    counts << (state.all_paired ? " [handoffs paired]" : " [handoffs blocked]");
+    counts << (state.all_cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    append_computed_cleanup_summary(
+        lines,
+        "inserted cleanup handoffs",
+        state.all_paired ? "paired" : "blocked",
+        counts.str(),
+        "(inserted IR)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "acquire " << indexed_name_or_unknown(state.acquire_operation_names, index);
+        fields << " resume " << indexed_name_or_unknown(state.resume_operation_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "inserted cleanup handoff",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(inserted IR)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_inserted_cleanup_call_state_report(
     pipeline::ComputedInsertedCleanupCallState const& state
 ) -> std::vector<std::string> {

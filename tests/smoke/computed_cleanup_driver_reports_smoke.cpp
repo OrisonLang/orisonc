@@ -64,6 +64,50 @@ void assert_computed_cleanup_readiness_reports() {
     assert(ready[1] == smoke::computed_dynamic_array_cleanup_call_insertion_readiness_detail_report);
 }
 
+void assert_computed_inserted_cleanup_handoff_reports() {
+    auto empty = driver::computed_inserted_cleanup_handoff_state_report(
+        pipeline::ComputedInsertedCleanupHandoffState {}
+    );
+    assert(empty.size() == 1);
+    assert(empty.front() == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_empty_report);
+
+    auto paired_disabled = driver::computed_inserted_cleanup_handoff_state_report(
+        pipeline::ComputedInsertedCleanupHandoffState {
+            .cleanup_owner_names = {"items"},
+            .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
+            .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
+            .from_metadata = true,
+            .all_paired = true,
+            .all_cleanup_calls_enabled = false,
+            .transition_count = 1,
+            .verification_count = 1,
+            .paired_count = 1,
+            .blocked_count = 0,
+        }
+    );
+    assert(paired_disabled.size() == 2);
+    assert(paired_disabled[0] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_disabled_report);
+    assert(paired_disabled[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report);
+
+    auto paired_enabled = driver::computed_inserted_cleanup_handoff_state_report(
+        pipeline::ComputedInsertedCleanupHandoffState {
+            .cleanup_owner_names = {"items"},
+            .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
+            .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
+            .from_metadata = true,
+            .all_paired = true,
+            .all_cleanup_calls_enabled = true,
+            .transition_count = 1,
+            .verification_count = 1,
+            .paired_count = 1,
+            .blocked_count = 0,
+        }
+    );
+    assert(paired_enabled.size() == 2);
+    assert(paired_enabled[0] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_enabled_report);
+    assert(paired_enabled[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report);
+}
+
 void assert_computed_inserted_cleanup_call_reports() {
     auto absent = driver::computed_inserted_cleanup_call_state_report(
         pipeline::ComputedInsertedCleanupCallState {}
@@ -186,6 +230,21 @@ void assert_computed_cleanup_unknown_detail_fallbacks() {
         consumed[1] ==
         "computed DynamicArray consumed cleanup descriptor detail owner items descriptor <unknown> (inserted IR)"
     );
+
+    auto handoff = driver::computed_inserted_cleanup_handoff_state_report(
+        pipeline::ComputedInsertedCleanupHandoffState {
+            .cleanup_owner_names = {"items"},
+            .from_metadata = true,
+            .all_paired = true,
+            .all_cleanup_calls_enabled = false,
+            .transition_count = 1,
+            .verification_count = 1,
+            .paired_count = 1,
+            .blocked_count = 0,
+        }
+    );
+    assert(handoff.size() == 2);
+    assert(handoff[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_unknown_detail_report);
 }
 
 }  // namespace
@@ -193,6 +252,7 @@ void assert_computed_cleanup_unknown_detail_fallbacks() {
 auto main() -> int {
     assert_computed_cleanup_capability_reports();
     assert_computed_cleanup_readiness_reports();
+    assert_computed_inserted_cleanup_handoff_reports();
     assert_computed_inserted_cleanup_call_reports();
     assert_computed_consumed_cleanup_descriptor_reports();
     assert_computed_cleanup_proof_summary_reports();

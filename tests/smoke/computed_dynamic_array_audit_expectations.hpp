@@ -118,6 +118,26 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_
     "computed DynamicArray cleanup call insertion readiness detail owner items "
     "cleanup-operation items.computed_for.0.cleanup.resume.call (metadata only)";
 
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_empty_report =
+    "computed DynamicArray inserted cleanup handoffs blocked transitions 0 verifications 0 paired 0 blocked 0 "
+    "[metadata-missing] [handoffs blocked] [cleanup calls disabled] (inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_paired_disabled_report =
+    "computed DynamicArray inserted cleanup handoffs paired transitions 1 verifications 1 paired 1 blocked 0 "
+    "[metadata-backed] [handoffs paired] [cleanup calls disabled] (inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_paired_enabled_report =
+    "computed DynamicArray inserted cleanup handoffs paired transitions 1 verifications 1 paired 1 blocked 0 "
+    "[metadata-backed] [handoffs paired] [cleanup calls enabled] (inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_detail_report =
+    "computed DynamicArray inserted cleanup handoff detail owner items "
+    "acquire items.computed_for.0.cleanup.acquire resume items.computed_for.0.cleanup.resume (inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_unknown_detail_report =
+    "computed DynamicArray inserted cleanup handoff detail owner items acquire <unknown> resume <unknown> "
+    "(inserted IR)";
+
 inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_gate_ready_report =
     "computed DynamicArray for cleanup call insertion gate ready "
     "cleanup-operation items.computed_for.0.cleanup.resume.call [inserted state verified] "
