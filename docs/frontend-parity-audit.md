@@ -52,6 +52,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   `compiler_app.cpp` focused on CLI command orchestration while preserving existing report text.
 - 2026-07-28: computed cleanup driver report formatting now has focused smoke coverage that constructs typed pipeline
   states directly, pinning formatter output independently from full CLI execution.
+- 2026-07-28: computed cleanup driver report smoke coverage now pins `<unknown>` detail fallbacks when optional
+  operation, data, capacity, or descriptor vectors are shorter than cleanup-owner vectors.
 - 2026-07-28: computed dynamic-array cleanup-transition metadata now populates typed pipeline state with transition
   counts, pairing readiness, function names, owners, source/element types, acquisition owners/operations, and
   resumption owners/operations.

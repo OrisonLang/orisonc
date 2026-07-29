@@ -109,6 +109,58 @@ void assert_computed_consumed_cleanup_descriptor_reports() {
     assert(finalized[1] == smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report);
 }
 
+void assert_computed_cleanup_unknown_detail_fallbacks() {
+    auto readiness = driver::computed_cleanup_call_insertion_readiness_report(
+        pipeline::ComputedCleanupCallInsertionGateState {
+            .cleanup_owner_names = {"items"},
+            .all_state_verified = true,
+            .all_operands_proven = true,
+            .all_cleanup_calls_authorized = false,
+            .all_ready = false,
+            .gate_count = 1,
+            .ready_count = 0,
+            .blocked_count = 1,
+        }
+    );
+    assert(readiness.size() == 2);
+    assert(
+        readiness[1] ==
+        "computed DynamicArray cleanup call insertion readiness detail owner items cleanup-operation <unknown> "
+        "(metadata only)"
+    );
+
+    auto inserted = driver::computed_inserted_cleanup_call_state_report(
+        pipeline::ComputedInsertedCleanupCallState {
+            .cleanup_owner_names = {"items"},
+            .all_inserted = true,
+            .call_count = 1,
+            .structured_proof_count = 1,
+            .ir_fallback_proof_count = 0,
+        }
+    );
+    assert(inserted.size() == 2);
+    assert(
+        inserted[1] ==
+        "computed DynamicArray inserted cleanup call detail owner items data <unknown> capacity <unknown> "
+        "(inserted IR)"
+    );
+
+    auto consumed = driver::computed_consumed_cleanup_descriptor_state_report(
+        pipeline::ComputedConsumedCleanupDescriptorState {
+            .cleanup_owner_names = {"items"},
+            .all_finalized = true,
+            .descriptor_count = 1,
+            .structured_proof_count = 1,
+            .ir_fallback_proof_count = 0,
+        }
+    );
+    assert(consumed.size() == 2);
+    assert(
+        consumed[1] ==
+        "computed DynamicArray consumed cleanup descriptor detail owner items descriptor <unknown> (inserted IR)"
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -116,5 +168,6 @@ auto main() -> int {
     assert_computed_cleanup_readiness_reports();
     assert_computed_inserted_cleanup_call_reports();
     assert_computed_consumed_cleanup_descriptor_reports();
+    assert_computed_cleanup_unknown_detail_fallbacks();
     return 0;
 }
