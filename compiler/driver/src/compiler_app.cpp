@@ -110,6 +110,20 @@ void append_report_lines(std::vector<std::string>& output, std::vector<std::stri
     output.insert(output.end(), lines.begin(), lines.end());
 }
 
+auto computed_cleanup_call_insertion_capability_report(
+    pipeline::ComputedCleanupCallInsertionCapabilityState const& state
+) -> std::vector<std::string> {
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray cleanup call insertion capability ";
+    output << (state.enabled ? "enabled" : "disabled");
+    output << (state.cleanup_call_authorization_enabled ?
+        " [cleanup call authorization enabled]" : " [cleanup call authorization disabled]");
+    output << (state.cleanup_call_insertion_enabled ?
+        " [cleanup call insertion enabled]" : " [cleanup call insertion disabled]");
+    output << " (metadata only)";
+    return {output.str()};
+}
+
 void prefer_emitted_dynamic_array_cleanup_reports(
     pipeline::CompilePipelineResult& result,
     pipeline::CompilePipelineResult&& emitted_result
@@ -162,6 +176,12 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, result.computed_dynamic_array_for_cleanup_call_emission_gate_report);
     append_report_lines(report, result.computed_dynamic_array_for_cleanup_call_plan_report);
     append_report_lines(report, result.computed_dynamic_array_for_cleanup_call_render_report);
+    append_report_lines(
+        report,
+        computed_cleanup_call_insertion_capability_report(
+            result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
+        )
+    );
     append_report_lines(report, result.computed_dynamic_array_for_cleanup_call_insertion_gate_report);
     append_report_lines(report, result.computed_dynamic_array_for_inserted_cleanup_call_report);
     append_report_lines(report, result.consumed_descriptor_finalization_plan_report);
