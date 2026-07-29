@@ -48,6 +48,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   emission-backed single-file reports, reducing duplicate CLI routing without changing report behavior.
 - 2026-07-28: computed cleanup state report formatting now uses shared driver summary/detail helpers for insertion
   readiness, inserted cleanup calls, and consumed cleanup descriptors while preserving existing report text.
+- 2026-07-28: computed cleanup state report formatting now lives in a dedicated driver report component, keeping
+  `compiler_app.cpp` focused on CLI command orchestration while preserving existing report text.
 - 2026-07-28: computed dynamic-array cleanup-transition metadata now populates typed pipeline state with transition
   counts, pairing readiness, function names, owners, source/element types, acquisition owners/operations, and
   resumption owners/operations.
