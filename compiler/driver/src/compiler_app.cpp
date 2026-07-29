@@ -41,6 +41,8 @@ auto usage_text() -> std::string {
            "--dynamic-array-cleanup-capability <file> | "
            "--computed-dynamic-array-cleanup-call-insertion-capability <file> | "
            "--test-only-computed-dynamic-array-cleanup-call-insertion-capability <file> | "
+           "--computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
+           "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
@@ -98,6 +100,14 @@ auto test_only_computed_cleanup_call_insertion_capability_options() -> pipeline:
     return options;
 }
 
+auto computed_cleanup_call_insertion_readiness_options() -> pipeline::CompilePipelineOptions {
+    auto options = dynamic_array_cleanup_report_options();
+    options.test_only_enable_computed_dynamic_array_for_lowering = true;
+    options.dynamic_array_production_construction_lowering_enabled = true;
+    options.dynamic_array_production_for_lowering_enabled = true;
+    return options;
+}
+
 auto dynamic_array_cleanup_report(
     std::filesystem::path const& source_path,
     pipeline::CompilePipelineOptions const& options,
@@ -134,6 +144,39 @@ auto computed_cleanup_call_insertion_capability_report(
         " [cleanup call insertion enabled]" : " [cleanup call insertion disabled]");
     output << " (metadata only)";
     return {output.str()};
+}
+
+auto computed_cleanup_call_insertion_readiness_report(
+    pipeline::ComputedCleanupCallInsertionGateState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto summary = std::ostringstream {};
+    summary << "computed DynamicArray cleanup call insertion readiness ";
+    summary << (state.all_ready ? "ready" : "blocked");
+    summary << " gates " << state.gate_count;
+    summary << " ready " << state.ready_count;
+    summary << " blocked " << state.blocked_count;
+    summary << (state.all_state_verified ? " [inserted state verified]" : " [inserted state unverified]");
+    summary << (state.all_operands_proven ? " [cleanup operands proven]" : " [cleanup operands missing]");
+    summary << (state.all_cleanup_calls_authorized ? " [cleanup calls authorized]" : " [cleanup calls unauthorized]");
+    summary << " (metadata only)";
+    lines.push_back(summary.str());
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto detail = std::ostringstream {};
+        detail << "computed DynamicArray cleanup call insertion readiness detail owner ";
+        detail << state.cleanup_owner_names[index];
+        detail << " cleanup-operation ";
+        if (index < state.cleanup_operation_names.size()) {
+            detail << state.cleanup_operation_names[index];
+        } else {
+            detail << "<unknown>";
+        }
+        detail << " (metadata only)";
+        lines.push_back(detail.str());
+    }
+
+    return lines;
 }
 
 void prefer_emitted_dynamic_array_cleanup_reports(
@@ -629,6 +672,32 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             [](auto const& result) {
                 return computed_cleanup_call_insertion_capability_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
+                );
+            }
+        );
+    }
+
+    if (args.size() == 3 &&
+        std::string_view(args[1]) == "--computed-dynamic-array-cleanup-call-insertion-readiness") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            computed_cleanup_call_insertion_readiness_options(),
+            [](auto const& result) {
+                return computed_cleanup_call_insertion_readiness_report(
+                    result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
+                );
+            }
+        );
+    }
+
+    if (args.size() == 3 &&
+        std::string_view(args[1]) == "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness") {
+        return emit_llvm_report(
+            std::filesystem::path(args[2]),
+            test_only_computed_cleanup_call_insertion_capability_options(),
+            [](auto const& result) {
+                return computed_cleanup_call_insertion_readiness_report(
+                    result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
                 );
             }
         );

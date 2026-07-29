@@ -180,6 +180,20 @@ auto run_test_only_computed_dynamic_array_cleanup_call_insertion_capability(
     return run_single_file_command(app, "--test-only-computed-dynamic-array-cleanup-call-insertion-capability", path);
 }
 
+auto run_computed_dynamic_array_cleanup_call_insertion_readiness(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--computed-dynamic-array-cleanup-call-insertion-readiness", path);
+}
+
+auto run_test_only_computed_dynamic_array_cleanup_call_insertion_readiness(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness", path);
+}
+
 auto run_dynamic_array_cleanup_production_readiness(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& path
@@ -1005,6 +1019,27 @@ int main() {
         dynamic_array_computed_local_same_owner_test_only_insertion_capability,
         {
             smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report,
+        }
+    );
+    auto dynamic_array_computed_local_same_owner_insertion_readiness =
+        run_computed_dynamic_array_cleanup_call_insertion_readiness(app, dynamic_array_computed_local_same_owner_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_local_same_owner_insertion_readiness,
+        {
+            smoke::computed_dynamic_array_cleanup_call_insertion_readiness_blocked_report,
+            smoke::computed_dynamic_array_cleanup_call_insertion_readiness_detail_report,
+        }
+    );
+    auto dynamic_array_computed_local_same_owner_test_only_insertion_readiness =
+        run_test_only_computed_dynamic_array_cleanup_call_insertion_readiness(
+            app,
+            dynamic_array_computed_local_same_owner_path
+        );
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_local_same_owner_test_only_insertion_readiness,
+        {
+            smoke::computed_dynamic_array_cleanup_call_insertion_readiness_ready_report,
+            smoke::computed_dynamic_array_cleanup_call_insertion_readiness_detail_report,
         }
     );
     auto dynamic_array_local_append_path =

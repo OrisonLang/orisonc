@@ -38,6 +38,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   can be inspected without running the full dynamic-array cleanup audit.
 - 2026-07-28: driver smoke coverage now also exercises the explicitly test-only enabled computed cleanup-call
   insertion capability report, keeping default metadata reports disabled while preserving a positive authorization path.
+- 2026-07-28: driver now exposes dedicated computed cleanup-call insertion readiness reports with gate counts,
+  verification/proof/authorization flags, and owner/operation detail lines for both default and test-only enabled paths.
 - 2026-07-28: computed dynamic-array cleanup-transition metadata now populates typed pipeline state with transition
   counts, pairing readiness, function names, owners, source/element types, acquisition owners/operations, and
   resumption owners/operations.
