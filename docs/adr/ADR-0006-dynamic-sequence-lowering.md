@@ -162,6 +162,9 @@ representation.
   proven cleanup operands, and no later sibling statement that references the same owner before emitting the
   `__orison_dynamic_array_deallocate(ptr, i64, i64)` call and descriptor finalization. Multi-use owner blocks keep
   earlier loops on the disabled computed cleanup-call path and only enable cleanup insertion for the final proven use.
+- Nested statement blocks now preserve their outer continuation when proving computed local same-owner last use. A
+  computed loop inside an `if` remains cleanup-call disabled when the same owner is referenced after the `if`, while
+  the later final loop can still emit deallocation and descriptor finalization.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

@@ -37,6 +37,9 @@ This file tracks which source-language frontend slices are reflected in the curr
   production gate. Cleanup emission plus a lowered-local descriptor cleanup owner, verified acquire/resume handoff,
   proven cleanup operands, and no later sibling owner reference now enable default deallocation/finalization for the
   final computed local use; repeated-owner blocks keep earlier loops cleanup-call disabled.
+- 2026-07-29: computed local same-owner `DynamicArray<T>` last-use proof now carries outer continuation statements
+  through nested blocks. A computed loop inside an `if` remains cleanup-call disabled when a later statement after the
+  `if` references the owner, while the later final computed loop can still emit cleanup.
 - 2026-07-29: constructed-local nested same-owner `DynamicArray<T>` `for` coverage now mirrors the bound-parameter
   nested same-owner path. `flag ? items : other_flag ? items : items` lowers through the normal local descriptor
   construction/iteration gates with computed cleanup calls still disabled.

@@ -2737,6 +2737,54 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         ) != std::string::npos
     );
 
+    auto computed_local_same_owner_if_then_later_loop_source =
+        "package demo.dynamicarray\n"
+        "\n"
+        "function sum_words(flag: Bool) -> UInt32\n"
+        "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    var total = 0 as UInt32\n"
+        "    if flag\n"
+        "        for word in flag ? items : items\n"
+        "            total = total + word\n"
+        "    for word in flag ? items : items\n"
+        "        total = total + word\n"
+        "    total\n";
+    auto computed_local_same_owner_if_then_later_loop = lower_source(
+        path,
+        computed_local_same_owner_if_then_later_loop_source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+        }
+    );
+    assert(!computed_local_same_owner_if_then_later_loop.has_errors());
+    assert(
+        computed_local_same_owner_if_then_later_loop.ir_text.find(
+            "  ; cleanup state handoff acquire operation items.computed_for.1.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls disabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_if_then_later_loop.ir_text.find(
+            "  ; cleanup state handoff acquire operation items.computed_for.2.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls enabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_if_then_later_loop.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.1.data, "
+            "i64 4, i64 %items.computed_for.1.capacity)\n"
+        ) == std::string::npos
+    );
+    assert(
+        computed_local_same_owner_if_then_later_loop.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.2.data, "
+            "i64 4, i64 %items.computed_for.2.capacity)\n"
+        ) != std::string::npos
+    );
+
     auto computed_local_same_owner_after_if_source =
         "package demo.dynamicarray\n"
         "\n"

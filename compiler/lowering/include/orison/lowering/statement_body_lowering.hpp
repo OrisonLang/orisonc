@@ -30,6 +30,11 @@ class SiblingStatementTailScope {
         for (auto tail_index = index + 1; tail_index < statements.size(); ++tail_index) {
             state.sibling_statements_after_current.push_back(statements[tail_index]);
         }
+        state.sibling_statements_after_current.insert(
+            state.sibling_statements_after_current.end(),
+            saved_tail_.begin(),
+            saved_tail_.end()
+        );
     }
 
     SiblingStatementTailScope(SiblingStatementTailScope const&) = delete;
@@ -38,6 +43,35 @@ class SiblingStatementTailScope {
     ~SiblingStatementTailScope() {
         if (state_ != nullptr) {
             state_->sibling_statements_after_current = std::move(saved_tail_);
+        }
+    }
+
+  private:
+    FunctionLoweringState* state_;
+    std::vector<syntax::StatementSyntax const*> saved_tail_;
+};
+
+class FunctionStatementTailScope {
+  public:
+    FunctionStatementTailScope(
+        FunctionLoweringState& state,
+        std::span<syntax::StatementSyntax const* const> statements,
+        std::size_t index
+    ) : state_(&state),
+        saved_tail_(std::move(state.function_statements_after_current)) {
+        state.function_statements_after_current.clear();
+        state.function_statements_after_current.reserve(statements.size() - index - 1);
+        for (auto tail_index = index + 1; tail_index < statements.size(); ++tail_index) {
+            state.function_statements_after_current.push_back(statements[tail_index]);
+        }
+    }
+
+    FunctionStatementTailScope(FunctionStatementTailScope const&) = delete;
+    auto operator=(FunctionStatementTailScope const&) -> FunctionStatementTailScope& = delete;
+
+    ~FunctionStatementTailScope() {
+        if (state_ != nullptr) {
+            state_->function_statements_after_current = std::move(saved_tail_);
         }
     }
 

@@ -1134,6 +1134,11 @@ void emit_function_body(
             statement_pointer_span(body_statement_pointers),
             index,
         };
+        auto function_tail_scope = FunctionStatementTailScope {
+            session.state,
+            statement_pointer_span(body_statement_pointers),
+            index,
+        };
         if (leading_statement_flow == StatementFlow::terminated) {
             diagnostics.error(
                 statement.line,

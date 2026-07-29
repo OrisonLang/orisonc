@@ -140,6 +140,11 @@ inline auto later_sibling_statement_references_name(
             return true;
         }
     }
+    for (auto const* statement : state.function_statements_after_current) {
+        if (statement != nullptr && statement_references_name(*statement, name)) {
+            return true;
+        }
+    }
     return false;
 }
 
