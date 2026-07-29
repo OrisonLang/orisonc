@@ -395,6 +395,25 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_nested_owner_mismatch_dynamic_array_iterable =
+        pipeline.emit_llvm(
+            fixtures / "dynamic_array_computed_nested_owner_mismatch_iterable_rejected.or"
+        );
+    assert(computed_nested_owner_mismatch_dynamic_array_iterable.has_errors());
+    assert(
+        computed_nested_owner_mismatch_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+            "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_nested_owner_mismatch_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [descriptor storage blocked] [cleanup owner blocked] "
+            "[lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+
     auto computed_local_same_owner_dynamic_array_iterable =
         pipeline.emit_llvm(
             fixtures / "dynamic_array_computed_local_same_owner_iterable.or",

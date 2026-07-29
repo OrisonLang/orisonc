@@ -33,6 +33,8 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-29: nested computed `DynamicArray<T>` owner-mismatch coverage now pins the rejection boundary for recursive
+  ternary leaves. `flag ? items : other_flag ? items : other` remains blocked with all leaf owners reported.
 - 2026-07-29: computed same-owner `DynamicArray<T>` `for` ownership planning now recursively proves nested ternary
   leaves when every reachable branch is the same named descriptor owner with cleanup proof. Mismatched owners and
   non-name computed leaves remain rejected.

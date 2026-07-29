@@ -778,6 +778,31 @@ int main() {
             "items"
         )
     );
+    auto nested_mismatched_computed_ownership_plan =
+        orison::lowering::plan_computed_dynamic_array_iterable_ownership_transfer(
+            ternary(
+                name("flag"),
+                name("items"),
+                ternary(name("other_flag"), name("items"), name("computed_right"))
+            ),
+            context,
+            state
+        );
+    assert(
+        nested_mismatched_computed_ownership_plan.kind ==
+        orison::lowering::ComputedDynamicArrayIterableOwnershipPlanKind::ternary_branch_owner_mismatch
+    );
+    assert(nested_mismatched_computed_ownership_plan.branch_owner_names.size() == 3);
+    assert(nested_mismatched_computed_ownership_plan.branch_owner_names[0] == "items");
+    assert(nested_mismatched_computed_ownership_plan.branch_owner_names[1] == "items");
+    assert(nested_mismatched_computed_ownership_plan.branch_owner_names[2] == "computed_right");
+    assert(!nested_mismatched_computed_ownership_plan.ownership_join_matches);
+    assert(!nested_mismatched_computed_ownership_plan.cleanup_owner_proven);
+    assert(
+        orison::lowering::computed_dynamic_array_iterable_ownership_plan_report(
+            nested_mismatched_computed_ownership_plan
+        ).find("owners items items computed_right [ownership join blocked]") != std::string::npos
+    );
     auto proven_computed_handoff_plan =
         orison::lowering::plan_computed_dynamic_array_iterable_descriptor_handoff(
             ternary(name("flag"), name("items"), name("items")),

@@ -2054,6 +2054,38 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         ) != std::string::npos
     );
 
+    auto computed_nested_owner_mismatch_parameter_for = lower_source(
+        path,
+        "package demo.dynamicarray\n"
+        "\n"
+        "function sum_words(flag: Bool, other_flag: Bool, items: DynamicArray<UInt32>, other: DynamicArray<UInt32>) -> UInt32\n"
+        "    var total = 0 as UInt32\n"
+        "    for word in flag ? items : other_flag ? items : other\n"
+        "        total = total + word\n"
+        "    total\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_derive_dynamic_array_cleanup_from_semantics = true,
+            .enable_dynamic_array_parameter_descriptors = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+        }
+    );
+
+    assert(computed_nested_owner_mismatch_parameter_for.has_errors());
+    assert(
+        computed_nested_owner_mismatch_parameter_for.render(path.string()).find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+            "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_nested_owner_mismatch_parameter_for.render(path.string()).find(
+            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [descriptor storage blocked] [cleanup owner blocked] "
+            "[lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+
     auto computed_local_same_owner_source =
         "package demo.dynamicarray\n"
         "\n"

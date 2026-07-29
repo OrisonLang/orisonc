@@ -1074,6 +1074,38 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_dynamic_array_nested_owner_mismatch_for_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_nested_owner_mismatch_for_rejected.or";
+    {
+        auto nested_owner_mismatch_for_source =
+            std::ofstream(computed_dynamic_array_nested_owner_mismatch_for_path);
+        nested_owner_mismatch_for_source
+            << "package demo.pipeline.computeddynamicarraynestedownermismatchfor\n"
+            << "\n"
+            << "function sum_words(flag: Bool, other_flag: Bool, "
+            << "items: DynamicArray<UInt32>, other: DynamicArray<UInt32>) -> UInt32\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for word in flag ? items : other_flag ? items : other\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_nested_owner_mismatch_for =
+        pipeline.emit_llvm(computed_dynamic_array_nested_owner_mismatch_for_path);
+    assert(computed_dynamic_array_nested_owner_mismatch_for.has_errors());
+    assert(
+        computed_dynamic_array_nested_owner_mismatch_for.error_text.find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+            "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_nested_owner_mismatch_for.error_text.find(
+            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [descriptor storage blocked] [cleanup owner blocked] "
+            "[lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+
     auto computed_dynamic_array_local_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_for_rejected.or";
     {
