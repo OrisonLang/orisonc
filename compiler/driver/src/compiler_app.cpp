@@ -6,6 +6,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <optional>
 #include <sstream>
 #include <string_view>
 #include <utility>
@@ -130,6 +131,30 @@ auto dynamic_array_cleanup_report(
         .exit_code = 0,
         .stdout_text = render_report_lines(report_selector(result)),
     };
+}
+
+auto try_dynamic_array_cleanup_report_command(
+    std::span<char const* const> args,
+    std::string_view command,
+    pipeline::CompilePipelineOptions const& options,
+    auto report_selector
+) -> std::optional<CompileResult> {
+    if (args.size() != 3 || std::string_view(args[1]) != command) {
+        return std::nullopt;
+    }
+    return dynamic_array_cleanup_report(std::filesystem::path(args[2]), options, report_selector);
+}
+
+auto try_emit_llvm_report_command(
+    std::span<char const* const> args,
+    std::string_view command,
+    pipeline::CompilePipelineOptions const& options,
+    auto report_selector
+) -> std::optional<CompileResult> {
+    if (args.size() != 3 || std::string_view(args[1]) != command) {
+        return std::nullopt;
+    }
+    return emit_llvm_report(std::filesystem::path(args[2]), options, report_selector);
 }
 
 void append_report_lines(std::vector<std::string>& output, std::vector<std::string> const& lines) {
@@ -721,106 +746,108 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         );
     }
 
-    if (args.size() == 3 &&
-        std::string_view(args[1]) == "--computed-dynamic-array-cleanup-call-insertion-capability") {
-        return dynamic_array_cleanup_report(
-            std::filesystem::path(args[2]),
+    if (auto result = try_dynamic_array_cleanup_report_command(
+            args,
+            "--computed-dynamic-array-cleanup-call-insertion-capability",
             dynamic_array_cleanup_report_options(),
             [](auto const& result) {
                 return computed_cleanup_call_insertion_capability_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
                 );
             }
-        );
+        )) {
+        return std::move(*result);
     }
 
-    if (args.size() == 3 &&
-        std::string_view(args[1]) == "--test-only-computed-dynamic-array-cleanup-call-insertion-capability") {
-        return dynamic_array_cleanup_report(
-            std::filesystem::path(args[2]),
+    if (auto result = try_dynamic_array_cleanup_report_command(
+            args,
+            "--test-only-computed-dynamic-array-cleanup-call-insertion-capability",
             test_only_computed_cleanup_call_insertion_capability_options(),
             [](auto const& result) {
                 return computed_cleanup_call_insertion_capability_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
                 );
             }
-        );
+        )) {
+        return std::move(*result);
     }
 
-    if (args.size() == 3 &&
-        std::string_view(args[1]) == "--computed-dynamic-array-cleanup-call-insertion-readiness") {
-        return emit_llvm_report(
-            std::filesystem::path(args[2]),
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--computed-dynamic-array-cleanup-call-insertion-readiness",
             computed_cleanup_call_insertion_readiness_options(),
             [](auto const& result) {
                 return computed_cleanup_call_insertion_readiness_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
                 );
             }
-        );
+        )) {
+        return std::move(*result);
     }
 
-    if (args.size() == 3 &&
-        std::string_view(args[1]) == "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness") {
-        return emit_llvm_report(
-            std::filesystem::path(args[2]),
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness",
             test_only_computed_cleanup_call_insertion_capability_options(),
             [](auto const& result) {
                 return computed_cleanup_call_insertion_readiness_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
                 );
             }
-        );
+        )) {
+        return std::move(*result);
     }
 
-    if (args.size() == 3 && std::string_view(args[1]) == "--computed-dynamic-array-inserted-cleanup-calls") {
-        return emit_llvm_report(
-            std::filesystem::path(args[2]),
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--computed-dynamic-array-inserted-cleanup-calls",
             computed_cleanup_call_insertion_readiness_options(),
             [](auto const& result) {
                 return computed_inserted_cleanup_call_state_report(
                     result.computed_dynamic_array_for_inserted_cleanup_call_state
                 );
             }
-        );
+        )) {
+        return std::move(*result);
     }
 
-    if (args.size() == 3 &&
-        std::string_view(args[1]) == "--test-only-computed-dynamic-array-inserted-cleanup-calls") {
-        return emit_llvm_report(
-            std::filesystem::path(args[2]),
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--test-only-computed-dynamic-array-inserted-cleanup-calls",
             test_only_computed_cleanup_call_insertion_capability_options(),
             [](auto const& result) {
                 return computed_inserted_cleanup_call_state_report(
                     result.computed_dynamic_array_for_inserted_cleanup_call_state
                 );
             }
-        );
+        )) {
+        return std::move(*result);
     }
 
-    if (args.size() == 3 && std::string_view(args[1]) == "--computed-dynamic-array-consumed-cleanup-descriptors") {
-        return emit_llvm_report(
-            std::filesystem::path(args[2]),
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--computed-dynamic-array-consumed-cleanup-descriptors",
             computed_cleanup_call_insertion_readiness_options(),
             [](auto const& result) {
                 return computed_consumed_cleanup_descriptor_state_report(
                     result.computed_dynamic_array_for_consumed_cleanup_descriptor_state
                 );
             }
-        );
+        )) {
+        return std::move(*result);
     }
 
-    if (args.size() == 3 &&
-        std::string_view(args[1]) == "--test-only-computed-dynamic-array-consumed-cleanup-descriptors") {
-        return emit_llvm_report(
-            std::filesystem::path(args[2]),
+    if (auto result = try_emit_llvm_report_command(
+            args,
+            "--test-only-computed-dynamic-array-consumed-cleanup-descriptors",
             test_only_computed_cleanup_call_insertion_capability_options(),
             [](auto const& result) {
                 return computed_consumed_cleanup_descriptor_state_report(
                     result.computed_dynamic_array_for_consumed_cleanup_descriptor_state
                 );
             }
-        );
+        )) {
+        return std::move(*result);
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-production-readiness") {
