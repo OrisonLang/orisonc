@@ -283,6 +283,25 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_dynamic_array_local_same_owner_iterable =
+        pipeline.emit_llvm(fixtures / "dynamic_array_computed_local_same_owner_iterable_rejected.or");
+    assert(!computed_dynamic_array_local_same_owner_iterable.has_errors());
+    assert(
+        computed_dynamic_array_local_same_owner_iterable.ir_text.find(
+            "items.computed_for.0.condition:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_iterable.ir_text.find(
+            "items.computed_for.0.body:\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_iterable.ir_text.find(
+            "items.computed_for.0.exit:\n"
+        ) != std::string::npos
+    );
+
     auto computed_same_owner_dynamic_array_iterable =
         pipeline.emit_llvm(
             fixtures / "dynamic_array_computed_same_owner_iterable_rejected.or",
@@ -378,68 +397,38 @@ auto main() -> int {
                 .dynamic_array_production_for_lowering_enabled = true,
             }
         );
-    assert(computed_local_same_owner_dynamic_array_iterable.has_errors());
+    assert(!computed_local_same_owner_dynamic_array_iterable.has_errors());
     assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "
-            "element UInt32 owners items items [ownership join ok] [cleanup owner proven] (metadata only)"
+        computed_local_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.condition:\n"
         ) != std::string::npos
     );
     assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray descriptor handoff plan single cleanup owner handoff planned source "
-            "DynamicArray<UInt32> element UInt32 owner items handoff items descriptor %items.addr "
-            "[descriptor storage available] [cleanup owner proven] [lowering disabled] (metadata only)"
+        computed_local_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.body:\n"
         ) != std::string::npos
     );
     assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            "computed DynamicArray cleanup sequence plan loop cleanup sequence planned source "
-            "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
-            "loop-entry items.loop.entry loop-exit items operation items.computed_for.cleanup.acquire "
-            "[loop cleanup owns descriptor] "
-            "[function cleanup resumes] [cleanup sequence disabled] (metadata only)"
+        computed_local_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.exit:\n"
         ) != std::string::npos
     );
     assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            smoke::computed_dynamic_array_descriptor_render_plan
+        computed_local_same_owner_dynamic_array_iterable.ir_text.find(
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls disabled]\n"
         ) != std::string::npos
     );
     assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            smoke::computed_dynamic_array_loop_control_render_plan
+        computed_local_same_owner_dynamic_array_iterable.ir_text.find(
+            "  ; cleanup state handoff resume operation items.computed_for.0.cleanup.resume "
+            "from items.loop.entry to items [cleanup calls disabled]\n"
         ) != std::string::npos
     );
     assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            smoke::computed_dynamic_array_element_address_render_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            smoke::computed_dynamic_array_element_load_render_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            smoke::computed_dynamic_array_loop_continue_render_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            smoke::computed_dynamic_array_loop_render_sequence_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            smoke::computed_dynamic_array_loop_exit_cleanup_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_dynamic_array_iterable.error_text.find(
-            smoke::computed_dynamic_array_production_emission_gate_plan
-        ) != std::string::npos
+        computed_local_same_owner_dynamic_array_iterable.ir_text.find(
+            "items.computed_for.0.cleanup.resume.call"
+        ) == std::string::npos
     );
 
     auto choice_dynamic_array_payload =

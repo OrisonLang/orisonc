@@ -26,13 +26,15 @@ This file tracks which source-language frontend slices are reflected in the curr
 - richer expression, literal, and pattern grammar beyond the current narrow subset
 - semantic analysis beyond the current validation subset, full type checking, ownership checking, and backend code generation
 - lowering gaps after the current recursive statement path: aggregate construction and assignment outside the pinned
-  scalar, record, and fixed-array paths; owned-element `DynamicArray<T>` parameter lowering until source-drop proof is
-  complete; computed owned `DynamicArray<T>` iterables beyond named descriptor-backed paths; mutable
-  `exclusive.View<T>` operations; future standard-library iterator abstractions; and production backend completeness
-  beyond the current LLVM/object/link/run smoke paths
+  scalar, record, fixed-array, and source-backed `DynamicArray<T>` paths; computed owned `DynamicArray<T>` iterables
+  beyond proven local same-owner descriptor paths; mutable `exclusive.View<T>` operations; future standard-library
+  iterator abstractions; and production backend completeness beyond the current LLVM/object/link/run smoke paths
 
 ## Latest update
 
+- 2026-07-29: computed same-owner local `DynamicArray<T>` `for` iterables now lower on the normal path when the
+  descriptor owner is proven by local descriptor cleanup state. The existing production gate and cleanup-transition
+  checks are reused, while cleanup-call authorization/insertion remains explicitly test-only.
 - 2026-07-29: normal LLVM emission now promotes semantically resolved owned-element `DynamicArray<T>` cleanup sites into
   authorized source-drop lowering for the DynamicArray descriptor path only. This keeps ordinary parsed `Drop` lowering
   gated while allowing source-backed owned-element `DynamicArray<T>` parameters to lower without a test-only option.

@@ -2085,7 +2085,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         }
     );
 
-    assert(computed_local_same_owner_for.has_errors());
+    assert(!computed_local_same_owner_for.has_errors());
     assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_renders.size() == 1);
     auto const& computed_local_same_owner_descriptor_render =
         computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_renders.front();
@@ -2481,7 +2481,6 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );
     assert(!computed_local_same_owner_lowered_for.has_errors());
@@ -2631,68 +2630,6 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_after_if_condition_position < computed_after_if_phi_position);
     assert(computed_local_same_owner_after_if.ir_text.find("items.computed_for.1.body:\n") != std::string::npos);
     assert(computed_local_same_owner_after_if.ir_text.find("items.computed_for.1.exit:\n") != std::string::npos);
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            "computed DynamicArray ownership plan ternary single owner proven source DynamicArray<UInt32> "
-            "element UInt32 owners items items [ownership join ok] [cleanup owner proven] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            "computed DynamicArray descriptor handoff plan single cleanup owner handoff planned source "
-            "DynamicArray<UInt32> element UInt32 owner items handoff items descriptor %items.addr "
-            "[descriptor storage available] [cleanup owner proven] [lowering disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            "computed DynamicArray cleanup sequence plan loop cleanup sequence planned source "
-            "DynamicArray<UInt32> element UInt32 owner items descriptor %items.addr "
-            "loop-entry items.loop.entry loop-exit items operation items.computed_for.cleanup.acquire "
-            "[loop cleanup owns descriptor] "
-            "[function cleanup resumes] [cleanup sequence disabled] (metadata only)"
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            smoke::computed_dynamic_array_descriptor_render_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            smoke::computed_dynamic_array_loop_control_render_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            smoke::computed_dynamic_array_element_address_render_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            smoke::computed_dynamic_array_element_load_render_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            smoke::computed_dynamic_array_loop_continue_render_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            smoke::computed_dynamic_array_loop_render_sequence_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            smoke::computed_dynamic_array_loop_exit_cleanup_plan
-        ) != std::string::npos
-    );
-    assert(
-        computed_local_same_owner_for.render(path.string()).find(
-            smoke::computed_dynamic_array_production_emission_gate_plan
-        ) != std::string::npos
-    );
 }
 
 void test_emits_authorized_owned_dynamic_array_parameter_cleanup() {

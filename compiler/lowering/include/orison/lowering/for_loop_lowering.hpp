@@ -115,7 +115,10 @@ auto lower_sequence_for_statement(
         : std::optional<std::string> {};
     if (sequence->kind == DynamicSequenceKind::dynamic_array && !dynamic_array_plan.can_lower_now) {
         auto saved_computed_for_unique_suffix = session.state.computed_dynamic_array_for_unique_suffix;
-        if (context.options.test_only_enable_computed_dynamic_array_for_lowering) {
+        auto const computed_dynamic_array_for_lowering_enabled =
+            context.options.enable_dynamic_array_for_lowering ||
+            context.options.test_only_enable_computed_dynamic_array_for_lowering;
+        if (computed_dynamic_array_for_lowering_enabled) {
             session.state.computed_dynamic_array_for_unique_suffix =
                 "." + std::to_string(next_llvm_block_index(session.state.next_block_index));
         }
@@ -127,7 +130,7 @@ auto lower_sequence_for_statement(
             );
         session.state.computed_dynamic_array_for_unique_suffix = std::move(saved_computed_for_unique_suffix);
         if (
-            context.options.test_only_enable_computed_dynamic_array_for_lowering &&
+            computed_dynamic_array_for_lowering_enabled &&
             computed_dynamic_array_iterable_production_emission_gate_ready(computed_production_emission_gate_plan) &&
             computed_dynamic_array_iterable_cleanup_transition_ready(computed_production_emission_gate_plan)
         ) {
