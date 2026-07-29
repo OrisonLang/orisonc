@@ -166,6 +166,13 @@ auto run_dynamic_array_cleanup_capability(orison::driver::CompilerApp const& app
     return run_single_file_command(app, "--dynamic-array-cleanup-capability", path);
 }
 
+auto run_computed_dynamic_array_cleanup_call_insertion_capability(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) -> orison::driver::CompileResult {
+    return run_single_file_command(app, "--computed-dynamic-array-cleanup-call-insertion-capability", path);
+}
+
 auto run_dynamic_array_cleanup_production_readiness(
     orison::driver::CompilerApp const& app,
     std::filesystem::path const& path
@@ -972,6 +979,14 @@ int main() {
             smoke::computed_dynamic_array_production_emission_gate_report,
             smoke::computed_dynamic_array_production_sequence_report,
             "dynamic array cleanup production readiness ready",
+        }
+    );
+    auto dynamic_array_computed_local_same_owner_insertion_capability =
+        run_computed_dynamic_array_cleanup_call_insertion_capability(app, dynamic_array_computed_local_same_owner_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_local_same_owner_insertion_capability,
+        {
+            smoke::computed_dynamic_array_cleanup_call_insertion_capability_disabled_report,
         }
     );
     auto dynamic_array_local_append_path =

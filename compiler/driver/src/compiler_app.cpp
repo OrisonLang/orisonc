@@ -39,6 +39,7 @@ auto usage_text() -> std::string {
            "--dynamic-array-cleanup-sequence-verification <file> | "
            "--dynamic-array-cleanup-emission-gate <file> | "
            "--dynamic-array-cleanup-capability <file> | "
+           "--computed-dynamic-array-cleanup-call-insertion-capability <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
@@ -592,6 +593,19 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             dynamic_array_cleanup_report_options(),
             [](auto const& result) -> auto const& {
                 return result.dynamic_array_cleanup_emission_capability_report;
+            }
+        );
+    }
+
+    if (args.size() == 3 &&
+        std::string_view(args[1]) == "--computed-dynamic-array-cleanup-call-insertion-capability") {
+        return dynamic_array_cleanup_report(
+            std::filesystem::path(args[2]),
+            dynamic_array_cleanup_report_options(),
+            [](auto const& result) {
+                return computed_cleanup_call_insertion_capability_report(
+                    result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
+                );
             }
         );
     }

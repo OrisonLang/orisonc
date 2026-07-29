@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-28: driver now exposes a dedicated
+  `--computed-dynamic-array-cleanup-call-insertion-capability` report so computed cleanup-call insertion authorization
+  can be inspected without running the full dynamic-array cleanup audit.
 - 2026-07-28: computed dynamic-array cleanup-transition metadata now populates typed pipeline state with transition
   counts, pairing readiness, function names, owners, source/element types, acquisition owners/operations, and
   resumption owners/operations.
