@@ -4140,6 +4140,41 @@ auto main() -> int {
             "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for."
         ) == std::string::npos
     );
+    auto computed_dynamic_array_local_same_owner_after_while_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_after_while.or";
+    {
+        auto local_same_owner_after_while_source =
+            std::ofstream(computed_dynamic_array_local_same_owner_after_while_path);
+        local_same_owner_after_while_source
+            << "package demo.pipeline.computeddynamicarraylocalsameownerafterwhile\n"
+            << "\n"
+            << "function sum_words(flag: Bool) -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    var total = 0 as UInt32\n"
+            << "    while flag\n"
+            << "        total = total + 1 as UInt32\n"
+            << "        break\n"
+            << "    for word in flag ? items : items\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_local_same_owner_after_while = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_after_while_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_after_while.has_errors());
+    assert(computed_dynamic_array_local_same_owner_after_while.ir_text.find("[cleanup calls disabled]") == std::string::npos);
+    assert(computed_dynamic_array_local_same_owner_after_while.ir_text.find("[cleanup calls enabled]") != std::string::npos);
+    assert(
+        computed_dynamic_array_local_same_owner_after_while.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for."
+        ) != std::string::npos
+    );
     auto computed_dynamic_array_local_same_owner_after_if_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_after_if.or";
     {

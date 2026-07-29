@@ -164,6 +164,12 @@ inline auto computed_dynamic_array_has_lowered_local_cleanup_plan(
     return false;
 }
 
+inline auto computed_dynamic_array_local_cleanup_context_allows_insertion(
+    FunctionLoweringState const& state
+) -> bool {
+    return state.loop_targets.empty();
+}
+
 inline auto computed_dynamic_array_local_cleanup_call_insertion_enabled(
     std::string_view cleanup_owner_name,
     std::string_view source_type_name,
@@ -172,7 +178,7 @@ inline auto computed_dynamic_array_local_cleanup_call_insertion_enabled(
 ) -> bool {
     return options.enable_dynamic_array_cleanup_emission &&
         options.enable_computed_dynamic_array_local_cleanup_call_insertion &&
-        state.loop_targets.empty() &&
+        computed_dynamic_array_local_cleanup_context_allows_insertion(state) &&
         computed_dynamic_array_has_lowered_local_cleanup_plan(cleanup_owner_name, source_type_name, state) &&
         !later_sibling_statement_references_name(state, cleanup_owner_name);
 }

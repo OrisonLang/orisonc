@@ -2848,6 +2848,37 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         ) == std::string::npos
     );
 
+    auto computed_local_same_owner_after_while_source =
+        "package demo.dynamicarray\n"
+        "\n"
+        "function sum_words(flag: Bool) -> UInt32\n"
+        "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+        "    var total = 0 as UInt32\n"
+        "    while flag\n"
+        "        total = total + 1 as UInt32\n"
+        "        break\n"
+        "    for word in flag ? items : items\n"
+        "        total = total + word\n"
+        "    total\n";
+    auto computed_local_same_owner_after_while = lower_source(
+        path,
+        computed_local_same_owner_after_while_source,
+        orison::lowering::LlvmIrEmissionOptions {
+            .enable_dynamic_array_construction_lowering = true,
+            .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+        }
+    );
+    assert(!computed_local_same_owner_after_while.has_errors());
+    assert(computed_local_same_owner_after_while.ir_text.find("[cleanup calls disabled]") == std::string::npos);
+    assert(computed_local_same_owner_after_while.ir_text.find("[cleanup calls enabled]") != std::string::npos);
+    assert(
+        computed_local_same_owner_after_while.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for."
+        ) != std::string::npos
+    );
+
     auto computed_local_same_owner_after_if_source =
         "package demo.dynamicarray\n"
         "\n"

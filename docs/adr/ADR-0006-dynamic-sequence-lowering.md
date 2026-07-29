@@ -167,6 +167,8 @@ representation.
   the later final loop can still emit deallocation and descriptor finalization.
 - The same continuation proof covers switch-case bodies, and computed local cleanup insertion is conservatively blocked
   while lowering inside an active loop body to avoid deallocating an owner that a later iteration can still observe.
+- Computed local cleanup insertion remains enabled after a loop has exited when the owner has no later references,
+  preserving safe final-use deallocation/finalization for post-loop computed `DynamicArray<T>` iteration.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.
