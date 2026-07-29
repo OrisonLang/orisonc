@@ -40,6 +40,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-29: computed local same-owner `DynamicArray<T>` last-use proof now carries outer continuation statements
   through nested blocks. A computed loop inside an `if` remains cleanup-call disabled when a later statement after the
   `if` references the owner, while the later final computed loop can still emit cleanup.
+- 2026-07-29: computed local same-owner `DynamicArray<T>` last-use proof now covers switch-case continuations and
+  conservatively blocks cleanup insertion while lowering inside an active loop body, preventing deallocation before a
+  possible later iteration can reuse the owner.
 - 2026-07-29: constructed-local nested same-owner `DynamicArray<T>` `for` coverage now mirrors the bound-parameter
   nested same-owner path. `flag ? items : other_flag ? items : items` lowers through the normal local descriptor
   construction/iteration gates with computed cleanup calls still disabled.

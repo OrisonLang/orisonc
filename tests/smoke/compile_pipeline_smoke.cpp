@@ -4068,6 +4068,78 @@ auto main() -> int {
             "i64 4, i64 %items.computed_for.2.capacity)\n"
         ) != std::string::npos
     );
+    auto computed_dynamic_array_local_same_owner_switch_case_later_loop_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_switch_case_later_loop.or";
+    {
+        auto local_same_owner_switch_case_later_loop_source =
+            std::ofstream(computed_dynamic_array_local_same_owner_switch_case_later_loop_path);
+        local_same_owner_switch_case_later_loop_source
+            << "package demo.pipeline.computeddynamicarraylocalsameownerswitchcaselaterloop\n"
+            << "\n"
+            << "function sum_words(flag: Bool) -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    var total = 0 as UInt32\n"
+            << "    switch flag\n"
+            << "        true =>\n"
+            << "            for word in flag ? items : items\n"
+            << "                total = total + word\n"
+            << "        default => total = total + 1 as UInt32\n"
+            << "    for word in flag ? items : items\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_local_same_owner_switch_case_later_loop = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_switch_case_later_loop_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_switch_case_later_loop.has_errors());
+    auto switch_disabled_handoff_position =
+        computed_dynamic_array_local_same_owner_switch_case_later_loop.ir_text.find("[cleanup calls disabled]");
+    auto switch_enabled_handoff_position =
+        computed_dynamic_array_local_same_owner_switch_case_later_loop.ir_text.find("[cleanup calls enabled]");
+    assert(switch_disabled_handoff_position != std::string::npos);
+    assert(switch_enabled_handoff_position != std::string::npos);
+    assert(switch_disabled_handoff_position < switch_enabled_handoff_position);
+
+    auto computed_dynamic_array_local_same_owner_while_body_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_while_body.or";
+    {
+        auto local_same_owner_while_body_source =
+            std::ofstream(computed_dynamic_array_local_same_owner_while_body_path);
+        local_same_owner_while_body_source
+            << "package demo.pipeline.computeddynamicarraylocalsameownerwhilebody\n"
+            << "\n"
+            << "function sum_words(flag: Bool) -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    var total = 0 as UInt32\n"
+            << "    while flag\n"
+            << "        for word in flag ? items : items\n"
+            << "            total = total + word\n"
+            << "        break\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_local_same_owner_while_body = pipeline.emit_llvm(
+        computed_dynamic_array_local_same_owner_while_body_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_enable_computed_dynamic_array_for_lowering = true,
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(!computed_dynamic_array_local_same_owner_while_body.has_errors());
+    assert(computed_dynamic_array_local_same_owner_while_body.ir_text.find("[cleanup calls disabled]") != std::string::npos);
+    assert(computed_dynamic_array_local_same_owner_while_body.ir_text.find("[cleanup calls enabled]") == std::string::npos);
+    assert(
+        computed_dynamic_array_local_same_owner_while_body.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for."
+        ) == std::string::npos
+    );
     auto computed_dynamic_array_local_same_owner_after_if_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_same_owner_after_if.or";
     {
