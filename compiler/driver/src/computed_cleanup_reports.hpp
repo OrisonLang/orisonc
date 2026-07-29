@@ -23,4 +23,8 @@ auto computed_consumed_cleanup_descriptor_state_report(
     pipeline::ComputedConsumedCleanupDescriptorState const& state
 ) -> std::vector<std::string>;
 
+auto computed_cleanup_proof_summary_state_report(
+    pipeline::ComputedCleanupProofSummaryState const& state
+) -> std::vector<std::string>;
+
 }  // namespace orison::driver

@@ -109,6 +109,33 @@ void assert_computed_consumed_cleanup_descriptor_reports() {
     assert(finalized[1] == smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report);
 }
 
+void assert_computed_cleanup_proof_summary_reports() {
+    auto empty = driver::computed_cleanup_proof_summary_state_report(
+        pipeline::ComputedCleanupProofSummaryState {}
+    );
+    assert(empty.size() == 1);
+    assert(empty.front() == smoke::computed_dynamic_array_cleanup_proof_summary_empty_report);
+
+    auto inserted = driver::computed_cleanup_proof_summary_state_report(
+        pipeline::ComputedCleanupProofSummaryState {
+            .cleanup_proof_model_count = 1,
+            .verified_inserted_cleanup_pair_count = 1,
+            .structured_inserted_cleanup_handoff_count = 2,
+            .structured_inserted_cleanup_handoff_use_count = 2,
+            .ir_inserted_cleanup_handoff_fallback_count = 0,
+            .structured_cleanup_operand_count = 1,
+            .structured_cleanup_operand_use_count = 1,
+            .ir_cleanup_operand_fallback_count = 0,
+            .structured_inserted_cleanup_call_count = 1,
+            .ir_inserted_cleanup_call_fallback_count = 0,
+            .structured_consumed_cleanup_descriptor_count = 1,
+            .ir_consumed_cleanup_descriptor_fallback_count = 0,
+        }
+    );
+    assert(inserted.size() == 1);
+    assert(inserted.front() == smoke::computed_dynamic_array_cleanup_proof_summary_inserted_report);
+}
+
 void assert_computed_cleanup_unknown_detail_fallbacks() {
     auto readiness = driver::computed_cleanup_call_insertion_readiness_report(
         pipeline::ComputedCleanupCallInsertionGateState {
@@ -168,6 +195,7 @@ auto main() -> int {
     assert_computed_cleanup_readiness_reports();
     assert_computed_inserted_cleanup_call_reports();
     assert_computed_consumed_cleanup_descriptor_reports();
+    assert_computed_cleanup_proof_summary_reports();
     assert_computed_cleanup_unknown_detail_fallbacks();
     return 0;
 }

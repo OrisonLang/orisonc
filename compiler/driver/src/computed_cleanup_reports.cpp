@@ -155,4 +155,32 @@ auto computed_consumed_cleanup_descriptor_state_report(
     return lines;
 }
 
+auto computed_cleanup_proof_summary_state_report(
+    pipeline::ComputedCleanupProofSummaryState const& state
+) -> std::vector<std::string> {
+    auto counts = std::ostringstream {};
+    counts << "models " << state.cleanup_proof_model_count;
+    counts << " verified-pairs " << state.verified_inserted_cleanup_pair_count;
+    counts << " structured-handoffs " << state.structured_inserted_cleanup_handoff_count;
+    counts << " structured-handoff-uses " << state.structured_inserted_cleanup_handoff_use_count;
+    counts << " ir-handoff-fallbacks " << state.ir_inserted_cleanup_handoff_fallback_count;
+    counts << " structured-operands " << state.structured_cleanup_operand_count;
+    counts << " structured-operand-uses " << state.structured_cleanup_operand_use_count;
+    counts << " ir-operand-fallbacks " << state.ir_cleanup_operand_fallback_count;
+    counts << " structured-inserted-calls " << state.structured_inserted_cleanup_call_count;
+    counts << " ir-inserted-call-fallbacks " << state.ir_inserted_cleanup_call_fallback_count;
+    counts << " structured-consumed-descriptors " << state.structured_consumed_cleanup_descriptor_count;
+    counts << " ir-consumed-descriptor-fallbacks " << state.ir_consumed_cleanup_descriptor_fallback_count;
+
+    auto lines = std::vector<std::string> {};
+    append_computed_cleanup_summary(
+        lines,
+        "cleanup proof summary",
+        state.cleanup_proof_model_count > 0 ? "available" : "empty",
+        counts.str(),
+        "(inserted IR)"
+    );
+    return lines;
+}
+
 }  // namespace orison::driver

@@ -158,6 +158,24 @@ inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descri
 inline constexpr std::string_view computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report =
     "computed DynamicArray consumed cleanup descriptor detail owner items descriptor %items.addr (inserted IR)";
 
+inline constexpr std::string_view computed_dynamic_array_cleanup_proof_summary_empty_report =
+    "computed DynamicArray cleanup proof summary empty models 0 verified-pairs 0 structured-handoffs 0 "
+    "structured-handoff-uses 0 ir-handoff-fallbacks 0 structured-operands 0 structured-operand-uses 0 "
+    "ir-operand-fallbacks 0 structured-inserted-calls 0 ir-inserted-call-fallbacks 0 "
+    "structured-consumed-descriptors 0 ir-consumed-descriptor-fallbacks 0 (inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_cleanup_proof_summary_blocked_insert_report =
+    "computed DynamicArray cleanup proof summary available models 1 verified-pairs 1 structured-handoffs 2 "
+    "structured-handoff-uses 2 ir-handoff-fallbacks 0 structured-operands 1 structured-operand-uses 1 "
+    "ir-operand-fallbacks 0 structured-inserted-calls 0 ir-inserted-call-fallbacks 0 "
+    "structured-consumed-descriptors 0 ir-consumed-descriptor-fallbacks 0 (inserted IR)";
+
+inline constexpr std::string_view computed_dynamic_array_cleanup_proof_summary_inserted_report =
+    "computed DynamicArray cleanup proof summary available models 1 verified-pairs 1 structured-handoffs 2 "
+    "structured-handoff-uses 2 ir-handoff-fallbacks 0 structured-operands 1 structured-operand-uses 1 "
+    "ir-operand-fallbacks 0 structured-inserted-calls 1 ir-inserted-call-fallbacks 0 "
+    "structured-consumed-descriptors 1 ir-consumed-descriptor-fallbacks 0 (inserted IR)";
+
 inline constexpr std::string_view consumed_descriptor_finalization_plan_report =
     "consumed descriptor finalization plan owner items descriptor %items.addr "
     "cleanup-operation items.computed_for.cleanup.resume [cleanup owner consumed] "
