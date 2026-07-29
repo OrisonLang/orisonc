@@ -1,6 +1,25 @@
 #include "lowering_emission_options.hpp"
 
 namespace orison::pipeline {
+namespace {
+
+void authorize_dynamic_array_owned_element_source_drops(
+    std::vector<semantics::DropLoweringAuthorization>& authorizations
+) {
+    for (auto& authorization : authorizations) {
+        auto const expected_symbol_name = "__orison_drop." + authorization.site.source_type_name;
+        if (!authorization.semantic_resolved ||
+            !authorization.site.owner_name.ends_with(".element") ||
+            authorization.site.abi_symbol_name != expected_symbol_name) {
+            continue;
+        }
+
+        authorization.source_drop_lowering_enabled = true;
+        authorization.authorized = true;
+    }
+}
+
+}  // namespace
 
 auto dynamic_array_construction_lowering_enabled(CompilePipelineOptions const& options) -> bool {
     return options.dynamic_array_local_lowering_enabled ||
@@ -64,6 +83,7 @@ auto build_lowering_emission_options(
         result.semantic_drop_lowering_authorizations.begin(),
         result.semantic_drop_lowering_authorizations.end()
     );
+    authorize_dynamic_array_owned_element_source_drops(emission_options.semantic_drop_lowering_authorizations);
     emission_options.test_only_dynamic_array_construction_requests =
         options.test_only_dynamic_array_construction_requests;
     emission_options.test_only_derive_dynamic_array_cleanup_from_semantics =

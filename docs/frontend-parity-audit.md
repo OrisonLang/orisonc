@@ -33,6 +33,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-29: normal LLVM emission now promotes semantically resolved owned-element `DynamicArray<T>` cleanup sites into
+  authorized source-drop lowering for the DynamicArray descriptor path only. This keeps ordinary parsed `Drop` lowering
+  gated while allowing source-backed owned-element `DynamicArray<T>` parameters to lower without a test-only option.
 - 2026-07-29: driver now exposes computed inserted-cleanup-handoff reports with transition/verification/pairing counts,
   metadata provenance, cleanup-call enablement, and owner acquire/resume detail lines for default and explicitly
   test-only enabled paths.

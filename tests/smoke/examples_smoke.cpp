@@ -483,10 +483,7 @@ auto main() -> int {
     );
 
     auto owned_dynamic_array_parameter_source_drop = pipeline.emit_llvm(
-        fixtures / "dynamic_array_owned_parameter_source_drop.or",
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-        }
+        fixtures / "dynamic_array_owned_parameter_source_drop.or"
     );
     assert(!owned_dynamic_array_parameter_source_drop.has_errors());
     assert(
