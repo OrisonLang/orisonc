@@ -40,6 +40,7 @@ auto usage_text() -> std::string {
            "--dynamic-array-cleanup-emission-gate <file> | "
            "--dynamic-array-cleanup-capability <file> | "
            "--computed-dynamic-array-cleanup-call-insertion-capability <file> | "
+           "--test-only-computed-dynamic-array-cleanup-call-insertion-capability <file> | "
            "--dynamic-array-cleanup-production-readiness <file> | --dynamic-array-cleanup-audit <file> | "
            "--emit-object <file> -o <output> | --build <file> -o <executable>";
 }
@@ -85,6 +86,16 @@ auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions 
         .test_only_collect_computed_dynamic_array_for_production_sequences = true,
         .dynamic_array_production_cleanup_emission_enabled = true,
     };
+}
+
+auto test_only_computed_cleanup_call_insertion_capability_options() -> pipeline::CompilePipelineOptions {
+    auto options = dynamic_array_cleanup_report_options();
+    options.test_only_enable_computed_dynamic_array_for_lowering = true;
+    options.test_only_authorize_computed_dynamic_array_cleanup_calls = true;
+    options.test_only_insert_computed_dynamic_array_cleanup_calls = true;
+    options.dynamic_array_production_construction_lowering_enabled = true;
+    options.dynamic_array_production_for_lowering_enabled = true;
+    return options;
 }
 
 auto dynamic_array_cleanup_report(
@@ -602,6 +613,19 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
+            [](auto const& result) {
+                return computed_cleanup_call_insertion_capability_report(
+                    result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
+                );
+            }
+        );
+    }
+
+    if (args.size() == 3 &&
+        std::string_view(args[1]) == "--test-only-computed-dynamic-array-cleanup-call-insertion-capability") {
+        return dynamic_array_cleanup_report(
+            std::filesystem::path(args[2]),
+            test_only_computed_cleanup_call_insertion_capability_options(),
             [](auto const& result) {
                 return computed_cleanup_call_insertion_capability_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
