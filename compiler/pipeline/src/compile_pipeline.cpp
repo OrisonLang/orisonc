@@ -12,7 +12,9 @@ auto CompilePipelineResult::has_errors() const -> bool {
 
 auto plan_computed_dynamic_array_for_production_readiness(
     ComputedDynamicArrayForProductionEmissionGateState const& gate_state,
-    ComputedDynamicArrayForProductionSequenceState const& sequence_state
+    ComputedDynamicArrayForProductionSequenceState const& sequence_state,
+    ComputedInsertedCleanupTransitionState const& inserted_transition_state,
+    ComputedInsertedCleanupStateVerificationState const& inserted_verification_state
 ) -> ComputedDynamicArrayForProductionReadiness {
     return ComputedDynamicArrayForProductionReadiness {
         .gate_ready =
@@ -24,6 +26,10 @@ auto plan_computed_dynamic_array_for_production_readiness(
             gate_state.all_exit_cleanup_ready &&
             gate_state.all_production_sequences_planned,
         .sequence_ready = sequence_state.sequence_metadata_available,
+        .inserted_cleanup_transition_ready =
+            inserted_transition_state.transitions_available,
+        .inserted_cleanup_state_verification_ready =
+            inserted_verification_state.all_paired,
         .gate_sequence_counts_match =
             gate_state.gate_metadata_available &&
             sequence_state.sequence_metadata_available &&
@@ -32,6 +38,14 @@ auto plan_computed_dynamic_array_for_production_readiness(
             gate_state.gate_metadata_available &&
             sequence_state.sequence_metadata_available &&
             gate_state.rendered_ir_snippet_count == sequence_state.rendered_ir_snippet_count,
+        .sequence_transition_counts_match =
+            sequence_state.sequence_metadata_available &&
+            inserted_transition_state.transitions_available &&
+            sequence_state.sequence_count == inserted_transition_state.transition_count,
+        .transition_verification_counts_match =
+            inserted_transition_state.transitions_available &&
+            inserted_verification_state.verification_count > 0 &&
+            inserted_transition_state.transition_count == inserted_verification_state.verification_count,
         .cleanup_owners_match =
             gate_state.gate_metadata_available &&
             sequence_state.sequence_metadata_available &&
@@ -45,8 +59,12 @@ auto computed_dynamic_array_for_production_ready(
 ) -> bool {
     return readiness.gate_ready &&
         readiness.sequence_ready &&
+        readiness.inserted_cleanup_transition_ready &&
+        readiness.inserted_cleanup_state_verification_ready &&
         readiness.gate_sequence_counts_match &&
         readiness.gate_sequence_snippets_match &&
+        readiness.sequence_transition_counts_match &&
+        readiness.transition_verification_counts_match &&
         readiness.cleanup_owners_match &&
         readiness.production_emission_enabled;
 }

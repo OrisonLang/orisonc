@@ -845,7 +845,9 @@ void populate_lowering_emission_reports(
     result.computed_dynamic_array_for_production_readiness =
         plan_computed_dynamic_array_for_production_readiness(
             result.computed_dynamic_array_for_production_emission_gate_state,
-            result.computed_dynamic_array_for_production_sequence_state
+            result.computed_dynamic_array_for_production_sequence_state,
+            result.computed_dynamic_array_for_inserted_cleanup_transition_state,
+            result.computed_dynamic_array_for_inserted_cleanup_state_verification_state
         );
     result.test_only_computed_dynamic_array_for_production_sequence_module_ir =
         std::move(emission.test_only_computed_dynamic_array_for_production_sequence_module_ir);

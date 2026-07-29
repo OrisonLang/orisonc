@@ -1818,6 +1818,14 @@ auto main() -> int {
     assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_readiness.gate_ready);
     assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_readiness.sequence_ready);
     assert(
+        !computed_dynamic_array_local_same_owner_for
+             .computed_dynamic_array_for_production_readiness.inserted_cleanup_transition_ready
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+             .computed_dynamic_array_for_production_readiness.inserted_cleanup_state_verification_ready
+    );
+    assert(
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_readiness.gate_sequence_counts_match
     );
@@ -1828,6 +1836,14 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_readiness.cleanup_owners_match
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+             .computed_dynamic_array_for_production_readiness.sequence_transition_counts_match
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_for
+             .computed_dynamic_array_for_production_readiness.transition_verification_counts_match
     );
     assert(
         !computed_dynamic_array_local_same_owner_for
@@ -1871,6 +1887,14 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_metadata_without_comments
             .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_metadata_without_comments
+             .computed_dynamic_array_for_production_readiness.inserted_cleanup_transition_ready
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_metadata_without_comments
+             .computed_dynamic_array_for_production_readiness.inserted_cleanup_state_verification_ready
     );
     assert(
         !computed_dynamic_array_local_same_owner_metadata_without_comments
@@ -1921,6 +1945,14 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments
             .computed_dynamic_array_for_production_readiness.sequence_ready
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_metadata_with_comments
+             .computed_dynamic_array_for_production_readiness.inserted_cleanup_transition_ready
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_metadata_with_comments
+             .computed_dynamic_array_for_production_readiness.inserted_cleanup_state_verification_ready
     );
     assert(!orison::pipeline::computed_dynamic_array_for_production_ready(
         computed_dynamic_array_local_same_owner_metadata_with_comments.computed_dynamic_array_for_production_readiness
@@ -2041,6 +2073,22 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_inserted_cleanup_state_verification_state.resume_operation_names.front() ==
         "items.computed_for.0.cleanup.resume"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_production_readiness.inserted_cleanup_transition_ready
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_production_readiness.inserted_cleanup_state_verification_ready
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for
+             .computed_dynamic_array_for_production_readiness.sequence_transition_counts_match
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for
+            .computed_dynamic_array_for_production_readiness.transition_verification_counts_match
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for

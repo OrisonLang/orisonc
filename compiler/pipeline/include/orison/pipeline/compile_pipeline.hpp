@@ -184,8 +184,12 @@ struct ComputedDynamicArrayForProductionEmissionGateState {
 struct ComputedDynamicArrayForProductionReadiness {
     bool gate_ready = false;
     bool sequence_ready = false;
+    bool inserted_cleanup_transition_ready = false;
+    bool inserted_cleanup_state_verification_ready = false;
     bool gate_sequence_counts_match = false;
     bool gate_sequence_snippets_match = false;
+    bool sequence_transition_counts_match = false;
+    bool transition_verification_counts_match = false;
     bool cleanup_owners_match = false;
     bool production_emission_enabled = false;
 };
@@ -339,7 +343,9 @@ auto format_dynamic_array_cleanup_production_readiness(
 
 auto plan_computed_dynamic_array_for_production_readiness(
     ComputedDynamicArrayForProductionEmissionGateState const& gate_state,
-    ComputedDynamicArrayForProductionSequenceState const& sequence_state
+    ComputedDynamicArrayForProductionSequenceState const& sequence_state,
+    ComputedInsertedCleanupTransitionState const& inserted_transition_state,
+    ComputedInsertedCleanupStateVerificationState const& inserted_verification_state
 ) -> ComputedDynamicArrayForProductionReadiness;
 
 auto computed_dynamic_array_for_production_ready(
