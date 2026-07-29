@@ -420,6 +420,7 @@ auto main() -> int {
             orison::pipeline::CompilePipelineOptions {
                 .dynamic_array_production_construction_lowering_enabled = true,
                 .dynamic_array_production_for_lowering_enabled = true,
+                .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
             }
         );
     assert(computed_local_nested_owner_mismatch_dynamic_array_iterable.has_errors());
@@ -443,6 +444,7 @@ auto main() -> int {
             orison::pipeline::CompilePipelineOptions {
                 .dynamic_array_production_construction_lowering_enabled = true,
                 .dynamic_array_production_for_lowering_enabled = true,
+                .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
             }
         );
     assert(!computed_local_same_owner_dynamic_array_iterable.has_errors());
@@ -464,19 +466,25 @@ auto main() -> int {
     assert(
         computed_local_same_owner_dynamic_array_iterable.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
-            "from items to items.loop.entry [cleanup calls disabled]\n"
+            "from items to items.loop.entry [cleanup calls enabled]\n"
         ) != std::string::npos
     );
     assert(
         computed_local_same_owner_dynamic_array_iterable.ir_text.find(
             "  ; cleanup state handoff resume operation items.computed_for.0.cleanup.resume "
-            "from items.loop.entry to items [cleanup calls disabled]\n"
+            "from items.loop.entry to items [cleanup calls enabled]\n"
         ) != std::string::npos
     );
     assert(
         computed_local_same_owner_dynamic_array_iterable.ir_text.find(
-            "items.computed_for.0.cleanup.resume.call"
-        ) == std::string::npos
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
+            "i64 4, i64 %items.computed_for.0.capacity)\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_dynamic_array_iterable.ir_text.find(
+            "  store { ptr, i64, i64 } zeroinitializer, ptr %items.addr\n"
+        ) != std::string::npos
     );
 
     auto computed_local_nested_same_owner_dynamic_array_iterable =
@@ -485,6 +493,7 @@ auto main() -> int {
             orison::pipeline::CompilePipelineOptions {
                 .dynamic_array_production_construction_lowering_enabled = true,
                 .dynamic_array_production_for_lowering_enabled = true,
+                .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
             }
         );
     assert(!computed_local_nested_same_owner_dynamic_array_iterable.has_errors());
@@ -510,8 +519,15 @@ auto main() -> int {
     );
     assert(
         computed_local_nested_same_owner_dynamic_array_iterable.ir_text.find(
-            "items.computed_for.0.cleanup.resume.call"
-        ) == std::string::npos
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls enabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_nested_same_owner_dynamic_array_iterable.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
+            "i64 4, i64 %items.computed_for.0.capacity)\n"
+        ) != std::string::npos
     );
 
     auto choice_dynamic_array_payload =

@@ -503,6 +503,8 @@ auto build_computed_cleanup_call_insertion_capability_state(
         options.test_only_authorize_computed_dynamic_array_cleanup_calls;
     lowering_options.test_only_insert_computed_dynamic_array_cleanup_calls =
         options.test_only_insert_computed_dynamic_array_cleanup_calls;
+    lowering_options.enable_computed_dynamic_array_local_cleanup_call_insertion =
+        options.computed_dynamic_array_local_cleanup_call_insertion_enabled;
     auto const capability =
         lowering::computed_dynamic_array_cleanup_call_insertion_capability(lowering_options);
     return ComputedCleanupCallInsertionCapabilityState {

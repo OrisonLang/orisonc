@@ -33,6 +33,10 @@ This file tracks which source-language frontend slices are reflected in the curr
 
 ## Latest update
 
+- 2026-07-29: computed local same-owner `DynamicArray<T>` cleanup-call insertion now has an explicit production
+  lowering gate. The gate is opt-in, requires a lowered-local descriptor cleanup owner plus verified acquire/resume
+  handoff and cleanup operands, emits `__orison_dynamic_array_deallocate`, and finalizes the descriptor; default
+  multi-use local paths remain cleanup-call disabled until last-use proof exists.
 - 2026-07-29: constructed-local nested same-owner `DynamicArray<T>` `for` coverage now mirrors the bound-parameter
   nested same-owner path. `flag ? items : other_flag ? items : items` lowers through the normal local descriptor
   construction/iteration gates with computed cleanup calls still disabled.

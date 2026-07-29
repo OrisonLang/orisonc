@@ -58,6 +58,26 @@ inline auto emit_view_descriptor_field_projection(
     return output.str();
 }
 
+inline auto computed_dynamic_array_local_cleanup_call_insertion_enabled(
+    std::string_view cleanup_owner_name,
+    std::string_view source_type_name,
+    FunctionLoweringState const& state,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    if (!options.enable_computed_dynamic_array_local_cleanup_call_insertion) {
+        return false;
+    }
+    for (auto const& cleanup_plan : state.dynamic_array_local_cleanup_plans) {
+        if (cleanup_plan.owner_name == cleanup_owner_name &&
+            cleanup_plan.source_type_name == source_type_name &&
+            cleanup_plan.descriptor_storage_status ==
+                DynamicArrayDescriptorStorageStatus::lowered_local_descriptor) {
+            return true;
+        }
+    }
+    return false;
+}
+
 template <typename LowerBody>
 auto lower_sequence_for_statement(
     syntax::StatementSyntax const& statement,
@@ -142,14 +162,23 @@ auto lower_sequence_for_statement(
             auto const& loop_control_plan = element_address_plan.loop_control_render_plan;
             auto const& descriptor_plan = loop_control_plan.descriptor_render_plan;
             auto const& cleanup_sequence_plan = descriptor_plan.cleanup_sequence_plan;
+            auto const production_local_cleanup_calls_enabled =
+                computed_dynamic_array_local_cleanup_call_insertion_enabled(
+                    cleanup_sequence_plan.cleanup_owner_name,
+                    cleanup_sequence_plan.source_type_name,
+                    session.state,
+                    context.options
+                );
+            auto const computed_cleanup_calls_enabled =
+                context.options.test_only_authorize_computed_dynamic_array_cleanup_calls ||
+                production_local_cleanup_calls_enabled;
 
             auto acquisition_handoff = ComputedDynamicArrayCleanupStateHandoff {
                 .kind = ComputedDynamicArrayCleanupStateHandoffKind::acquire,
                 .operation_name = cleanup_sequence_plan.loop_entry_cleanup_operation_name,
                 .source_owner_name = cleanup_sequence_plan.cleanup_owner_name,
                 .target_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name,
-                .cleanup_calls_enabled =
-                    context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
+                .cleanup_calls_enabled = computed_cleanup_calls_enabled,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(acquisition_handoff);
             if (!context.options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata) {
@@ -209,8 +238,7 @@ auto lower_sequence_for_statement(
                 .operation_name = loop_exit_plan.cleanup_resumption_operation_name,
                 .source_owner_name = loop_exit_plan.loop_entry_cleanup_owner_name,
                 .target_owner_name = loop_exit_plan.loop_exit_cleanup_owner_name,
-                .cleanup_calls_enabled =
-                    context.options.test_only_authorize_computed_dynamic_array_cleanup_calls,
+                .cleanup_calls_enabled = computed_cleanup_calls_enabled,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(resumption_handoff);
             if (!context.options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata) {
@@ -230,7 +258,8 @@ auto lower_sequence_for_statement(
                     .descriptor_storage_name = descriptor_plan.descriptor_storage_name,
                 };
             }
-            if (computed_dynamic_array_cleanup_call_insertion_capability(context.options).enabled) {
+            if (computed_dynamic_array_cleanup_call_insertion_capability(context.options).enabled &&
+                computed_cleanup_calls_enabled) {
                 if (element_size_bytes.has_value()) {
                     auto cleanup_call_plan = DynamicArrayConstructionPlan {
                         .owner_name = cleanup_sequence_plan.cleanup_owner_name,

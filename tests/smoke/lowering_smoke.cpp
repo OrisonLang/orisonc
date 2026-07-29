@@ -2510,13 +2510,15 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+            .enable_computed_dynamic_array_local_cleanup_call_insertion = true,
         }
     );
     assert(!computed_local_same_owner_lowered_for.has_errors());
     assert(
         computed_local_same_owner_lowered_for.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
-            "from items to items.loop.entry [cleanup calls disabled]\n"
+            "from items to items.loop.entry [cleanup calls enabled]\n"
         ) != std::string::npos
     );
     assert(
@@ -2536,7 +2538,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_same_owner_lowered_for.ir_text.find(
             "  ; cleanup state handoff resume operation items.computed_for.0.cleanup.resume "
-            "from items.loop.entry to items [cleanup calls disabled]\n"
+            "from items.loop.entry to items [cleanup calls enabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_lowered_for.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
+            "i64 4, i64 %items.computed_for.0.capacity)\n"
         ) != std::string::npos
     );
     auto computed_cleanup_acquisition_position =
@@ -2558,12 +2566,24 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             "items.computed_for.0.cleanup.resume",
             computed_exit_position
         );
+    auto computed_cleanup_call_position =
+        computed_local_same_owner_lowered_for.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data",
+            computed_exit_position
+        );
+    auto computed_descriptor_finalization_position =
+        computed_local_same_owner_lowered_for.ir_text.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr",
+            computed_cleanup_call_position
+        );
     assert(computed_descriptor_position != std::string::npos);
     assert(computed_body_position != std::string::npos);
     assert(computed_body_add_position != std::string::npos);
     assert(computed_continue_position != std::string::npos);
     assert(computed_exit_position != std::string::npos);
     assert(computed_cleanup_resumption_position != std::string::npos);
+    assert(computed_cleanup_call_position != std::string::npos);
+    assert(computed_descriptor_finalization_position != std::string::npos);
     assert(computed_cleanup_acquisition_position != std::string::npos);
     assert(computed_cleanup_acquisition_position < computed_descriptor_position);
     assert(computed_descriptor_position < computed_body_position);
@@ -2571,6 +2591,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_body_add_position < computed_continue_position);
     assert(computed_continue_position < computed_exit_position);
     assert(computed_exit_position < computed_cleanup_resumption_position);
+    assert(computed_cleanup_resumption_position < computed_cleanup_call_position);
+    assert(computed_cleanup_call_position < computed_descriptor_finalization_position);
 
     auto computed_local_nested_same_owner_source =
         "package demo.dynamicarray\n"
@@ -2587,6 +2609,8 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
+            .enable_computed_dynamic_array_local_cleanup_call_insertion = true,
         }
     );
     assert(!computed_local_nested_same_owner_for.has_errors());
@@ -2598,7 +2622,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_nested_same_owner_for.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
-            "from items to items.loop.entry [cleanup calls disabled]\n"
+            "from items to items.loop.entry [cleanup calls enabled]\n"
         ) != std::string::npos
     );
     assert(computed_local_nested_same_owner_for.ir_text.find("items.computed_for.0.condition:\n") != std::string::npos);
@@ -2607,6 +2631,12 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_nested_same_owner_for.ir_text.find("items.computed_for.0.cleanup.resume.call") ==
         std::string::npos
+    );
+    assert(
+        computed_local_nested_same_owner_for.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
+            "i64 4, i64 %items.computed_for.0.capacity)\n"
+        ) != std::string::npos
     );
 
     auto computed_local_nested_owner_mismatch_source =
