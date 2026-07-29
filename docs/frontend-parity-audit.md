@@ -46,6 +46,8 @@ This file tracks which source-language frontend slices are reflected in the curr
   owner and descriptor-storage detail lines for default absent and explicitly test-only finalized paths.
 - 2026-07-28: computed cleanup report command dispatch now uses shared driver helpers for collector-backed and
   emission-backed single-file reports, reducing duplicate CLI routing without changing report behavior.
+- 2026-07-28: computed cleanup state report formatting now uses shared driver summary/detail helpers for insertion
+  readiness, inserted cleanup calls, and consumed cleanup descriptors while preserving existing report text.
 - 2026-07-28: computed dynamic-array cleanup-transition metadata now populates typed pipeline state with transition
   counts, pairing readiness, function names, owners, source/element types, acquisition owners/operations, and
   resumption owners/operations.

@@ -175,34 +175,70 @@ auto computed_cleanup_call_insertion_capability_report(
     return {output.str()};
 }
 
+auto indexed_name_or_unknown(std::vector<std::string> const& names, std::size_t index) -> std::string_view {
+    if (index < names.size()) {
+        return names[index];
+    }
+    return "<unknown>";
+}
+
+void append_computed_cleanup_summary(
+    std::vector<std::string>& lines,
+    std::string_view subject,
+    std::string_view status,
+    std::string_view counts,
+    std::string_view suffix
+) {
+    auto summary = std::ostringstream {};
+    summary << "computed DynamicArray " << subject << ' ' << status << ' ' << counts << ' ' << suffix;
+    lines.push_back(summary.str());
+}
+
+void append_computed_cleanup_detail(
+    std::vector<std::string>& lines,
+    std::string_view subject,
+    std::string_view owner_name,
+    std::string_view fields,
+    std::string_view suffix
+) {
+    auto detail = std::ostringstream {};
+    detail << "computed DynamicArray " << subject << " detail owner " << owner_name;
+    if (!fields.empty()) {
+        detail << ' ' << fields;
+    }
+    detail << ' ' << suffix;
+    lines.push_back(detail.str());
+}
+
 auto computed_cleanup_call_insertion_readiness_report(
     pipeline::ComputedCleanupCallInsertionGateState const& state
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
-    auto summary = std::ostringstream {};
-    summary << "computed DynamicArray cleanup call insertion readiness ";
-    summary << (state.all_ready ? "ready" : "blocked");
-    summary << " gates " << state.gate_count;
-    summary << " ready " << state.ready_count;
-    summary << " blocked " << state.blocked_count;
-    summary << (state.all_state_verified ? " [inserted state verified]" : " [inserted state unverified]");
-    summary << (state.all_operands_proven ? " [cleanup operands proven]" : " [cleanup operands missing]");
-    summary << (state.all_cleanup_calls_authorized ? " [cleanup calls authorized]" : " [cleanup calls unauthorized]");
-    summary << " (metadata only)";
-    lines.push_back(summary.str());
+    auto counts = std::ostringstream {};
+    counts << "gates " << state.gate_count;
+    counts << " ready " << state.ready_count;
+    counts << " blocked " << state.blocked_count;
+    counts << (state.all_state_verified ? " [inserted state verified]" : " [inserted state unverified]");
+    counts << (state.all_operands_proven ? " [cleanup operands proven]" : " [cleanup operands missing]");
+    counts << (state.all_cleanup_calls_authorized ? " [cleanup calls authorized]" : " [cleanup calls unauthorized]");
+    append_computed_cleanup_summary(
+        lines,
+        "cleanup call insertion readiness",
+        state.all_ready ? "ready" : "blocked",
+        counts.str(),
+        "(metadata only)"
+    );
 
     for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
-        auto detail = std::ostringstream {};
-        detail << "computed DynamicArray cleanup call insertion readiness detail owner ";
-        detail << state.cleanup_owner_names[index];
-        detail << " cleanup-operation ";
-        if (index < state.cleanup_operation_names.size()) {
-            detail << state.cleanup_operation_names[index];
-        } else {
-            detail << "<unknown>";
-        }
-        detail << " (metadata only)";
-        lines.push_back(detail.str());
+        auto fields = std::ostringstream {};
+        fields << "cleanup-operation " << indexed_name_or_unknown(state.cleanup_operation_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "cleanup call insertion readiness",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
     }
 
     return lines;
@@ -212,33 +248,29 @@ auto computed_inserted_cleanup_call_state_report(
     pipeline::ComputedInsertedCleanupCallState const& state
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
-    auto summary = std::ostringstream {};
-    summary << "computed DynamicArray inserted cleanup calls ";
-    summary << (state.all_inserted ? "inserted" : "absent");
-    summary << " calls " << state.call_count;
-    summary << " structured-proofs " << state.structured_proof_count;
-    summary << " ir-fallback-proofs " << state.ir_fallback_proof_count;
-    summary << " (inserted IR)";
-    lines.push_back(summary.str());
+    auto counts = std::ostringstream {};
+    counts << "calls " << state.call_count;
+    counts << " structured-proofs " << state.structured_proof_count;
+    counts << " ir-fallback-proofs " << state.ir_fallback_proof_count;
+    append_computed_cleanup_summary(
+        lines,
+        "inserted cleanup calls",
+        state.all_inserted ? "inserted" : "absent",
+        counts.str(),
+        "(inserted IR)"
+    );
 
     for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
-        auto detail = std::ostringstream {};
-        detail << "computed DynamicArray inserted cleanup call detail owner ";
-        detail << state.cleanup_owner_names[index];
-        detail << " data ";
-        if (index < state.data_pointer_names.size()) {
-            detail << state.data_pointer_names[index];
-        } else {
-            detail << "<unknown>";
-        }
-        detail << " capacity ";
-        if (index < state.capacity_names.size()) {
-            detail << state.capacity_names[index];
-        } else {
-            detail << "<unknown>";
-        }
-        detail << " (inserted IR)";
-        lines.push_back(detail.str());
+        auto fields = std::ostringstream {};
+        fields << "data " << indexed_name_or_unknown(state.data_pointer_names, index);
+        fields << " capacity " << indexed_name_or_unknown(state.capacity_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "inserted cleanup call",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(inserted IR)"
+        );
     }
 
     return lines;
@@ -248,27 +280,28 @@ auto computed_consumed_cleanup_descriptor_state_report(
     pipeline::ComputedConsumedCleanupDescriptorState const& state
 ) -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
-    auto summary = std::ostringstream {};
-    summary << "computed DynamicArray consumed cleanup descriptors ";
-    summary << (state.all_finalized ? "finalized" : "absent");
-    summary << " descriptors " << state.descriptor_count;
-    summary << " structured-proofs " << state.structured_proof_count;
-    summary << " ir-fallback-proofs " << state.ir_fallback_proof_count;
-    summary << " (inserted IR)";
-    lines.push_back(summary.str());
+    auto counts = std::ostringstream {};
+    counts << "descriptors " << state.descriptor_count;
+    counts << " structured-proofs " << state.structured_proof_count;
+    counts << " ir-fallback-proofs " << state.ir_fallback_proof_count;
+    append_computed_cleanup_summary(
+        lines,
+        "consumed cleanup descriptors",
+        state.all_finalized ? "finalized" : "absent",
+        counts.str(),
+        "(inserted IR)"
+    );
 
     for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
-        auto detail = std::ostringstream {};
-        detail << "computed DynamicArray consumed cleanup descriptor detail owner ";
-        detail << state.cleanup_owner_names[index];
-        detail << " descriptor ";
-        if (index < state.descriptor_storage_names.size()) {
-            detail << state.descriptor_storage_names[index];
-        } else {
-            detail << "<unknown>";
-        }
-        detail << " (inserted IR)";
-        lines.push_back(detail.str());
+        auto fields = std::ostringstream {};
+        fields << "descriptor " << indexed_name_or_unknown(state.descriptor_storage_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "consumed cleanup descriptor",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(inserted IR)"
+        );
     }
 
     return lines;
