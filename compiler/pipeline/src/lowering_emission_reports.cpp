@@ -495,6 +495,23 @@ auto build_computed_cleanup_call_insertion_gate_state(
     return state;
 }
 
+auto build_computed_cleanup_call_insertion_capability_state(
+    CompilePipelineOptions const& options
+) -> ComputedCleanupCallInsertionCapabilityState {
+    auto lowering_options = lowering::LlvmIrEmissionOptions {};
+    lowering_options.test_only_authorize_computed_dynamic_array_cleanup_calls =
+        options.test_only_authorize_computed_dynamic_array_cleanup_calls;
+    lowering_options.test_only_insert_computed_dynamic_array_cleanup_calls =
+        options.test_only_insert_computed_dynamic_array_cleanup_calls;
+    auto const capability =
+        lowering::computed_dynamic_array_cleanup_call_insertion_capability(lowering_options);
+    return ComputedCleanupCallInsertionCapabilityState {
+        .cleanup_call_authorization_enabled = capability.cleanup_call_authorization_enabled,
+        .cleanup_call_insertion_enabled = capability.cleanup_call_insertion_enabled,
+        .enabled = capability.enabled,
+    };
+}
+
 auto build_computed_cleanup_call_plan_render_state(
     ComputedCleanupProofModel const& proof_model
 ) -> ComputedCleanupCallPlanRenderState {
@@ -818,6 +835,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.cleanup_call_insertion_gate_report;
     result.computed_dynamic_array_for_cleanup_call_insertion_gate_state =
         build_computed_cleanup_call_insertion_gate_state(cleanup_proof_model);
+    result.computed_dynamic_array_for_cleanup_call_insertion_capability_state =
+        build_computed_cleanup_call_insertion_capability_state(options);
     result.computed_dynamic_array_for_inserted_cleanup_call_report =
         cleanup_proof_model.reports.inserted_cleanup_call_report;
     result.computed_dynamic_array_for_inserted_cleanup_call_state =

@@ -248,6 +248,12 @@ struct ComputedCleanupCallInsertionGateState {
     std::size_t blocked_count = 0;
 };
 
+struct ComputedCleanupCallInsertionCapabilityState {
+    bool cleanup_call_authorization_enabled = false;
+    bool cleanup_call_insertion_enabled = false;
+    bool enabled = false;
+};
+
 struct ComputedCleanupCallPlanRenderState {
     std::vector<std::string> cleanup_owner_names;
     std::vector<std::string> cleanup_operation_names;
@@ -454,6 +460,7 @@ struct CompilePipelineResult {
     ComputedCleanupCallPlanRenderState computed_dynamic_array_for_cleanup_call_plan_render_state;
     std::vector<std::string> computed_dynamic_array_for_cleanup_call_insertion_gate_report;
     ComputedCleanupCallInsertionGateState computed_dynamic_array_for_cleanup_call_insertion_gate_state;
+    ComputedCleanupCallInsertionCapabilityState computed_dynamic_array_for_cleanup_call_insertion_capability_state;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_call_report;
     ComputedInsertedCleanupCallState computed_dynamic_array_for_inserted_cleanup_call_state;
     std::vector<std::string> consumed_descriptor_finalization_plan_report;

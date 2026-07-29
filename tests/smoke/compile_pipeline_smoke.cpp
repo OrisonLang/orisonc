@@ -2183,6 +2183,20 @@ auto main() -> int {
         !computed_dynamic_array_local_same_owner_lowered_for_with_sequence
              .computed_dynamic_array_for_production_readiness.production_emission_enabled
     );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+             .computed_dynamic_array_for_cleanup_call_insertion_capability_state
+             .cleanup_call_authorization_enabled
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+             .computed_dynamic_array_for_cleanup_call_insertion_capability_state
+             .cleanup_call_insertion_enabled
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_lowered_for_with_sequence
+             .computed_dynamic_array_for_cleanup_call_insertion_capability_state.enabled
+    );
     assert(!orison::pipeline::computed_dynamic_array_for_production_ready(
         computed_dynamic_array_local_same_owner_lowered_for_with_sequence
             .computed_dynamic_array_for_production_readiness
@@ -2252,6 +2266,20 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_production_ready_for
             .computed_dynamic_array_for_production_readiness.production_emission_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_production_ready_for
+            .computed_dynamic_array_for_cleanup_call_insertion_capability_state
+            .cleanup_call_authorization_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_production_ready_for
+            .computed_dynamic_array_for_cleanup_call_insertion_capability_state
+            .cleanup_call_insertion_enabled
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_production_ready_for
+            .computed_dynamic_array_for_cleanup_call_insertion_capability_state.enabled
     );
     assert(orison::pipeline::computed_dynamic_array_for_production_ready(
         computed_dynamic_array_local_same_owner_production_ready_for
@@ -2661,6 +2689,20 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_authorized_cleanup_for.ir_text.find(
             "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data"
         ) == std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_authorized_cleanup_for
+            .computed_dynamic_array_for_cleanup_call_insertion_capability_state
+            .cleanup_call_authorization_enabled
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_authorized_cleanup_for
+             .computed_dynamic_array_for_cleanup_call_insertion_capability_state
+             .cleanup_call_insertion_enabled
+    );
+    assert(
+        !computed_dynamic_array_local_same_owner_authorized_cleanup_for
+             .computed_dynamic_array_for_cleanup_call_insertion_capability_state.enabled
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
