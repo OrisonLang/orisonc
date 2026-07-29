@@ -2111,6 +2111,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .test_only_collect_computed_dynamic_array_for_cleanup_transitions = true,
             .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+            .enable_computed_dynamic_array_local_cleanup_call_insertion = false,
         }
     );
 
@@ -2689,6 +2690,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
             .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );
@@ -2697,14 +2699,28 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(computed_local_same_owner_two_loops.ir_text.find("items.computed_for.0.exit:\n") != std::string::npos);
     assert(
         computed_local_same_owner_two_loops.ir_text.find(
-            "items.computed_for.0.cleanup.acquire"
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls disabled]\n"
         ) != std::string::npos
     );
     assert(computed_local_same_owner_two_loops.ir_text.find("items.computed_for.1.condition:\n") != std::string::npos);
     assert(computed_local_same_owner_two_loops.ir_text.find("items.computed_for.1.exit:\n") != std::string::npos);
     assert(
         computed_local_same_owner_two_loops.ir_text.find(
-            "items.computed_for.1.cleanup.acquire"
+            "  ; cleanup state handoff acquire operation items.computed_for.1.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls enabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_same_owner_two_loops.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
+            "i64 4, i64 %items.computed_for.0.capacity)\n"
+        ) == std::string::npos
+    );
+    assert(
+        computed_local_same_owner_two_loops.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.1.data, "
+            "i64 4, i64 %items.computed_for.1.capacity)\n"
         ) != std::string::npos
     );
     auto computed_first_loop_exit_position =
@@ -2740,6 +2756,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
+            .enable_dynamic_array_cleanup_emission = true,
             .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );

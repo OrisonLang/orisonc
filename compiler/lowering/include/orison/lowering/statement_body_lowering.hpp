@@ -17,6 +17,35 @@
 
 namespace orison::lowering {
 
+class SiblingStatementTailScope {
+  public:
+    SiblingStatementTailScope(
+        FunctionLoweringState& state,
+        std::span<syntax::StatementSyntax const* const> statements,
+        std::size_t index
+    ) : state_(&state),
+        saved_tail_(std::move(state.sibling_statements_after_current)) {
+        state.sibling_statements_after_current.clear();
+        state.sibling_statements_after_current.reserve(statements.size() - index - 1);
+        for (auto tail_index = index + 1; tail_index < statements.size(); ++tail_index) {
+            state.sibling_statements_after_current.push_back(statements[tail_index]);
+        }
+    }
+
+    SiblingStatementTailScope(SiblingStatementTailScope const&) = delete;
+    auto operator=(SiblingStatementTailScope const&) -> SiblingStatementTailScope& = delete;
+
+    ~SiblingStatementTailScope() {
+        if (state_ != nullptr) {
+            state_->sibling_statements_after_current = std::move(saved_tail_);
+        }
+    }
+
+  private:
+    FunctionLoweringState* state_;
+    std::vector<syntax::StatementSyntax const*> saved_tail_;
+};
+
 auto lower_common_builtin_nonvalue_statement(
     syntax::StatementSyntax const& statement,
     std::optional<LoweredType> binding_type,
@@ -53,6 +82,7 @@ auto lower_nonvalue_statement_block(
         }
 
         auto const is_last_statement = index + 1 == statements.size();
+        auto tail_scope = SiblingStatementTailScope {session.state, statements, index};
         flow = std::forward<LowerStatement>(lower_statement)(*statement, is_last_statement);
         if (flow == StatementFlow::failed) {
             return StatementFlow::failed;

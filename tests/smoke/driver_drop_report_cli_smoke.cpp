@@ -1052,8 +1052,8 @@ int main() {
             smoke::computed_dynamic_array_loop_render_sequence_report,
             smoke::computed_dynamic_array_loop_exit_cleanup_report,
             smoke::computed_dynamic_array_cleanup_transition_report,
-            smoke::computed_dynamic_array_cleanup_call_insertion_capability_disabled_report,
-            smoke::computed_dynamic_array_production_emission_gate_report,
+            smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report,
+            smoke::computed_dynamic_array_production_emission_gate_enabled_report,
             smoke::computed_dynamic_array_production_sequence_report,
             "dynamic array cleanup production readiness ready",
         }
@@ -1063,7 +1063,7 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_insertion_capability,
         {
-            smoke::computed_dynamic_array_cleanup_call_insertion_capability_disabled_report,
+            smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report,
         }
     );
     auto dynamic_array_computed_local_same_owner_test_only_insertion_capability =
@@ -1082,7 +1082,7 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_insertion_readiness,
         {
-            smoke::computed_dynamic_array_cleanup_call_insertion_readiness_blocked_report,
+            smoke::computed_dynamic_array_cleanup_call_insertion_readiness_ready_report,
             smoke::computed_dynamic_array_cleanup_call_insertion_readiness_detail_report,
         }
     );
@@ -1103,7 +1103,7 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_inserted_cleanup_handoffs,
         {
-            smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_disabled_report,
+            smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_enabled_report,
             smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report,
         }
     );
@@ -1124,7 +1124,8 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_inserted_cleanup_calls,
         {
-            smoke::computed_dynamic_array_inserted_cleanup_call_state_absent_report,
+            smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
+            smoke::computed_dynamic_array_inserted_cleanup_call_state_detail_report,
         }
     );
     auto dynamic_array_computed_local_same_owner_test_only_inserted_cleanup_calls =
@@ -1141,7 +1142,8 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_consumed_cleanup_descriptors,
         {
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_absent_report,
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report,
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
         }
     );
     auto dynamic_array_computed_local_same_owner_test_only_consumed_cleanup_descriptors =
@@ -1161,7 +1163,7 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_local_same_owner_cleanup_proof_summary,
         {
-            smoke::computed_dynamic_array_cleanup_proof_summary_blocked_insert_report,
+            smoke::computed_dynamic_array_cleanup_proof_summary_inserted_report,
         }
     );
     auto dynamic_array_computed_local_same_owner_test_only_cleanup_proof_summary =

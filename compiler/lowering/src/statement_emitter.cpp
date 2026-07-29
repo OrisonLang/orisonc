@@ -16,6 +16,7 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
+#include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
 
 #include <optional>
@@ -674,6 +675,11 @@ auto lower_value_statement_block(
 
     for (auto index = std::size_t {0}; index + 1 < statements.size(); ++index) {
         auto const* statement = statements[index];
+        auto tail_scope = SiblingStatementTailScope {
+            session.state,
+            statements,
+            index,
+        };
         if (statement == nullptr ||
             !lower_prefix_statement(
                 *statement,

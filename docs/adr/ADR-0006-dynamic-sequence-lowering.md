@@ -157,11 +157,11 @@ representation.
   state, proven cleanup operands, and cleanup-call authorization before any rendered cleanup call can enter module IR.
 - A test-only computed dynamic-array cleanup-call authorization option can mark inserted cleanup handoffs as enabled.
   This lets the insertion gate report ready while production cleanup-call insertion remains disabled.
-- Computed local same-owner dynamic-array cleanup-call insertion now has an explicit production lowering gate. The gate
-  requires a lowered-local descriptor cleanup owner plus verified inserted acquire/resume handoff and cleanup operands
-  before emitting the `__orison_dynamic_array_deallocate(ptr, i64, i64)` call and descriptor finalization. The gate is
-  not enabled by default for all local loops yet; multi-use owners remain on the disabled computed cleanup-call path
-  until last-use proof is available.
+- Computed local same-owner dynamic-array cleanup-call insertion now has a conservative last-use production gate. The
+  gate requires cleanup emission, a lowered-local descriptor cleanup owner, verified inserted acquire/resume handoff,
+  proven cleanup operands, and no later sibling statement that references the same owner before emitting the
+  `__orison_dynamic_array_deallocate(ptr, i64, i64)` call and descriptor finalization. Multi-use owner blocks keep
+  earlier loops on the disabled computed cleanup-call path and only enable cleanup insertion for the final proven use.
 - Computed dynamic-array `for` descriptor-render metadata is now collected and reported separately from the broader
   production sequence so descriptor load/projection readiness can be audited independently before full loop emission is
   enabled.

@@ -2818,6 +2818,7 @@ auto main() -> int {
             .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
+            .computed_dynamic_array_local_cleanup_call_insertion_enabled = false,
         }
     );
     assert(!computed_dynamic_array_local_same_owner_authorized_cleanup_for.has_errors());
@@ -3722,6 +3723,7 @@ auto main() -> int {
             .test_only_enable_computed_dynamic_array_for_lowering = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
+            .dynamic_array_production_cleanup_emission_enabled = true,
         }
     );
     assert(!computed_dynamic_array_local_same_owner_two_loops.has_errors());
@@ -3828,11 +3830,11 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_emission_gate_state.ready_count == 0
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.ready_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_emission_gate_state.blocked_count == 2
+            .computed_dynamic_array_for_cleanup_call_emission_gate_state.blocked_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
@@ -3854,7 +3856,7 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_cleanup_call_emission_gate_report.back().find(
-                "[cleanup call emission blocked]"
+                "[cleanup call emission ready]"
             ) != std::string::npos
     );
     assert(
@@ -3930,11 +3932,11 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_state.ready_count == 0
+            .computed_dynamic_array_for_cleanup_call_insertion_gate_state.ready_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_state.blocked_count == 2
+            .computed_dynamic_array_for_cleanup_call_insertion_gate_state.blocked_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
@@ -3961,7 +3963,7 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_cleanup_call_insertion_gate_report.back().find(
                 "items.computed_for.1.cleanup.resume.call [inserted state verified] "
-                "[cleanup operands proven] [cleanup calls unauthorized]"
+                "[cleanup operands proven] [cleanup calls authorized] [cleanup call insertion ready]"
             ) != std::string::npos
     );
     assert(
@@ -3982,6 +3984,30 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
             "items.computed_for.1.cleanup.acquire"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
+            "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls disabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
+            "  ; cleanup state handoff acquire operation items.computed_for.1.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls enabled]\n"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
+            "i64 4, i64 %items.computed_for.0.capacity)\n"
+        ) == std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
+            "  call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.1.data, "
+            "i64 4, i64 %items.computed_for.1.capacity)\n"
         ) != std::string::npos
     );
     assert(

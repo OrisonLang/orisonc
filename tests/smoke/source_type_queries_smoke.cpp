@@ -231,6 +231,10 @@ auto ternary(
 
 int main() {
     auto computed_cleanup_insertion_options = orison::lowering::LlvmIrEmissionOptions {};
+    assert(orison::lowering::computed_dynamic_array_cleanup_call_insertion_capability(
+        computed_cleanup_insertion_options
+    ).enabled);
+    computed_cleanup_insertion_options.enable_computed_dynamic_array_local_cleanup_call_insertion = false;
     assert(!orison::lowering::computed_dynamic_array_cleanup_call_insertion_capability(
         computed_cleanup_insertion_options
     ).enabled);

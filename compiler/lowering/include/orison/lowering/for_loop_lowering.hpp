@@ -58,15 +58,96 @@ inline auto emit_view_descriptor_field_projection(
     return output.str();
 }
 
-inline auto computed_dynamic_array_local_cleanup_call_insertion_enabled(
+inline auto expression_references_name(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view name
+) -> bool;
+
+inline auto statement_references_name(
+    syntax::StatementSyntax const& statement,
+    std::string_view name
+) -> bool;
+
+inline auto expression_references_name(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view name
+) -> bool {
+    if (expression.kind == syntax::ExpressionKind::name && expression.text == name) {
+        return true;
+    }
+    for (auto const& argument : expression.arguments) {
+        if (expression_references_name(argument, name)) {
+            return true;
+        }
+    }
+    for (auto const& nested_statement : expression.nested_statements) {
+        if (nested_statement != nullptr && statement_references_name(*nested_statement, name)) {
+            return true;
+        }
+    }
+    if (expression.left != nullptr && expression_references_name(*expression.left, name)) {
+        return true;
+    }
+    if (expression.right != nullptr && expression_references_name(*expression.right, name)) {
+        return true;
+    }
+    if (expression.alternate != nullptr && expression_references_name(*expression.alternate, name)) {
+        return true;
+    }
+    return false;
+}
+
+inline auto statement_references_name(
+    syntax::StatementSyntax const& statement,
+    std::string_view name
+) -> bool {
+    if (statement.name == name) {
+        return true;
+    }
+    if (expression_references_name(statement.assignment_target, name) ||
+        expression_references_name(statement.expression, name)) {
+        return true;
+    }
+    for (auto const& nested_statement : statement.nested_statements) {
+        if (statement_references_name(nested_statement, name)) {
+            return true;
+        }
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        if (statement_references_name(alternate_statement, name)) {
+            return true;
+        }
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        if (expression_references_name(switch_case.pattern, name)) {
+            return true;
+        }
+        for (auto const& case_statement : switch_case.statements) {
+            if (case_statement != nullptr && statement_references_name(*case_statement, name)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+inline auto later_sibling_statement_references_name(
+    FunctionLoweringState const& state,
+    std::string_view name
+) -> bool {
+    for (auto const* statement : state.sibling_statements_after_current) {
+        if (statement != nullptr && statement_references_name(*statement, name)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+inline auto computed_dynamic_array_has_lowered_local_cleanup_plan(
     std::string_view cleanup_owner_name,
     std::string_view source_type_name,
-    FunctionLoweringState const& state,
-    LlvmIrEmissionOptions const& options
+    FunctionLoweringState const& state
 ) -> bool {
-    if (!options.enable_computed_dynamic_array_local_cleanup_call_insertion) {
-        return false;
-    }
     for (auto const& cleanup_plan : state.dynamic_array_local_cleanup_plans) {
         if (cleanup_plan.owner_name == cleanup_owner_name &&
             cleanup_plan.source_type_name == source_type_name &&
@@ -76,6 +157,18 @@ inline auto computed_dynamic_array_local_cleanup_call_insertion_enabled(
         }
     }
     return false;
+}
+
+inline auto computed_dynamic_array_local_cleanup_call_insertion_enabled(
+    std::string_view cleanup_owner_name,
+    std::string_view source_type_name,
+    FunctionLoweringState const& state,
+    LlvmIrEmissionOptions const& options
+) -> bool {
+    return options.enable_dynamic_array_cleanup_emission &&
+        options.enable_computed_dynamic_array_local_cleanup_call_insertion &&
+        computed_dynamic_array_has_lowered_local_cleanup_plan(cleanup_owner_name, source_type_name, state) &&
+        !later_sibling_statement_references_name(state, cleanup_owner_name);
 }
 
 template <typename LowerBody>

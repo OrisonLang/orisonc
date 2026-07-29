@@ -1125,9 +1125,15 @@ void emit_function_body(
         }
         return true;
     };
+    auto body_statement_pointers = statement_pointers_for(function.body_statements);
     for (auto index = std::size_t {0}; index < function.body_statements.size(); ++index) {
         auto const& statement = function.body_statements[index];
         auto is_last_statement = index + 1 == function.body_statements.size();
+        auto tail_scope = SiblingStatementTailScope {
+            session.state,
+            statement_pointer_span(body_statement_pointers),
+            index,
+        };
         if (leading_statement_flow == StatementFlow::terminated) {
             diagnostics.error(
                 statement.line,

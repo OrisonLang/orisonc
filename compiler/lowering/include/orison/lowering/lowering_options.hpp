@@ -61,7 +61,7 @@ struct LlvmIrEmissionOptions {
     bool test_only_enable_computed_dynamic_array_for_lowering = false;
     bool test_only_authorize_computed_dynamic_array_cleanup_calls = false;
     bool test_only_insert_computed_dynamic_array_cleanup_calls = false;
-    bool enable_computed_dynamic_array_local_cleanup_call_insertion = false;
+    bool enable_computed_dynamic_array_local_cleanup_call_insertion = true;
     bool test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
     bool test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = false;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
