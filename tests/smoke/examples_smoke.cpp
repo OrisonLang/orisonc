@@ -284,7 +284,7 @@ auto main() -> int {
     );
 
     auto computed_dynamic_array_local_same_owner_iterable =
-        pipeline.emit_llvm(fixtures / "dynamic_array_computed_local_same_owner_iterable_rejected.or");
+        pipeline.emit_llvm(fixtures / "dynamic_array_computed_local_same_owner_iterable.or");
     assert(!computed_dynamic_array_local_same_owner_iterable.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_iterable.ir_text.find(
@@ -391,7 +391,7 @@ auto main() -> int {
 
     auto computed_local_same_owner_dynamic_array_iterable =
         pipeline.emit_llvm(
-            fixtures / "dynamic_array_computed_local_same_owner_iterable_rejected.or",
+            fixtures / "dynamic_array_computed_local_same_owner_iterable.or",
             orison::pipeline::CompilePipelineOptions {
                 .dynamic_array_production_construction_lowering_enabled = true,
                 .dynamic_array_production_for_lowering_enabled = true,

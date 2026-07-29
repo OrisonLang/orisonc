@@ -1033,7 +1033,7 @@ int main() {
 
     auto dynamic_array_computed_local_same_owner_path =
         std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures" /
-        "dynamic_array_computed_local_same_owner_iterable_rejected.or";
+        "dynamic_array_computed_local_same_owner_iterable.or";
     auto dynamic_array_computed_local_same_owner_audit =
         run_dynamic_array_cleanup_audit(app, dynamic_array_computed_local_same_owner_path);
     assert_success_with_stdout_contains_in_order(
