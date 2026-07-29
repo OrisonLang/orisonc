@@ -36,6 +36,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-29: constructed-local nested same-owner `DynamicArray<T>` `for` coverage now mirrors the bound-parameter
   nested same-owner path. `flag ? items : other_flag ? items : items` lowers through the normal local descriptor
   construction/iteration gates with computed cleanup calls still disabled.
+- 2026-07-29: constructed-local nested owner-mismatch `DynamicArray<T>` `for` coverage now mirrors the
+  bound-parameter rejection boundary. `flag ? items : other_flag ? items : other` stays blocked after local descriptor
+  construction and reports every recursive ternary leaf owner.
 - 2026-07-29: nested computed `DynamicArray<T>` owner-mismatch coverage now pins the rejection boundary for recursive
   ternary leaves. `flag ? items : other_flag ? items : other` remains blocked with all leaf owners reported.
 - 2026-07-29: computed same-owner `DynamicArray<T>` `for` ownership planning now recursively proves nested ternary

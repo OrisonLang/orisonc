@@ -1106,6 +1106,44 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_dynamic_array_local_nested_owner_mismatch_for_path =
+        smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_nested_owner_mismatch_for_rejected.or";
+    {
+        auto local_nested_owner_mismatch_for_source =
+            std::ofstream(computed_dynamic_array_local_nested_owner_mismatch_for_path);
+        local_nested_owner_mismatch_for_source
+            << "package demo.pipeline.computeddynamicarraylocalnestedownermismatchfor\n"
+            << "\n"
+            << "function sum_words(flag: Bool, other_flag: Bool) -> UInt32\n"
+            << "    let items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    let other: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    var total = 0 as UInt32\n"
+            << "    for word in flag ? items : other_flag ? items : other\n"
+            << "        total = total + word\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_local_nested_owner_mismatch_for = pipeline.emit_llvm(
+        computed_dynamic_array_local_nested_owner_mismatch_for_path,
+        orison::pipeline::CompilePipelineOptions {
+            .dynamic_array_production_construction_lowering_enabled = true,
+            .dynamic_array_production_for_lowering_enabled = true,
+        }
+    );
+    assert(computed_dynamic_array_local_nested_owner_mismatch_for.has_errors());
+    assert(
+        computed_dynamic_array_local_nested_owner_mismatch_for.error_text.find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+            "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_dynamic_array_local_nested_owner_mismatch_for.error_text.find(
+            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [descriptor storage blocked] [cleanup owner blocked] "
+            "[lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+
     auto computed_dynamic_array_local_nested_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_computed_dynamic_array_local_nested_same_owner_for.or";
     {

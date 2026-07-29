@@ -414,6 +414,29 @@ auto main() -> int {
         ) != std::string::npos
     );
 
+    auto computed_local_nested_owner_mismatch_dynamic_array_iterable =
+        pipeline.emit_llvm(
+            fixtures / "dynamic_array_computed_local_nested_owner_mismatch_iterable_rejected.or",
+            orison::pipeline::CompilePipelineOptions {
+                .dynamic_array_production_construction_lowering_enabled = true,
+                .dynamic_array_production_for_lowering_enabled = true,
+            }
+        );
+    assert(computed_local_nested_owner_mismatch_dynamic_array_iterable.has_errors());
+    assert(
+        computed_local_nested_owner_mismatch_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray ownership plan ternary branch owner mismatch source DynamicArray<UInt32> "
+            "element UInt32 owners items items other [ownership join blocked] [cleanup owner blocked] (metadata only)"
+        ) != std::string::npos
+    );
+    assert(
+        computed_local_nested_owner_mismatch_dynamic_array_iterable.error_text.find(
+            "computed DynamicArray descriptor handoff plan ownership join blocked source DynamicArray<UInt32> "
+            "element UInt32 [descriptor storage blocked] [cleanup owner blocked] "
+            "[lowering disabled] (metadata only)"
+        ) != std::string::npos
+    );
+
     auto computed_local_same_owner_dynamic_array_iterable =
         pipeline.emit_llvm(
             fixtures / "dynamic_array_computed_local_same_owner_iterable.or",

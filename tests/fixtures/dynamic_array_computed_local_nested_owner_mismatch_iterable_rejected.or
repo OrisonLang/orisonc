@@ -1,0 +1,9 @@
+package fixtures.dynamicarray.computedlocalnestedownermismatchiterablerejected
+
+function sum_words(flag: Bool, other_flag: Bool) -> UInt32
+    let items: DynamicArray<UInt32> = DynamicArray()
+    let other: DynamicArray<UInt32> = DynamicArray()
+    var total = 0 as UInt32
+    for word in flag ? items : other_flag ? items : other
+        total = total + word
+    total
