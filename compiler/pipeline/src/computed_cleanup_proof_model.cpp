@@ -157,6 +157,18 @@ auto parse_inserted_cleanup_operation(
     if (suffix_position == std::string_view::npos) {
         return std::nullopt;
     }
+    auto cleanup_calls_blocked_reason = std::string {};
+    if (!cleanup_calls_enabled) {
+        auto const reason_prefix = std::string_view {" [cleanup blocked: "};
+        auto const reason_start = payload.find(reason_prefix, suffix_position);
+        if (reason_start != std::string_view::npos) {
+            auto const value_start = reason_start + reason_prefix.size();
+            auto const reason_end = payload.find("]", value_start);
+            if (reason_end != std::string_view::npos) {
+                cleanup_calls_blocked_reason = std::string {payload.substr(value_start, reason_end - value_start)};
+            }
+        }
+    }
     return InsertedCleanupOperation {
         .kind_name = std::string {payload.substr(0, kind_separator)},
         .operation_name = std::string {payload.substr(operation_start, from_separator - operation_start)},
@@ -166,6 +178,7 @@ auto parse_inserted_cleanup_operation(
                            suffix_position - target_separator - std::string_view {" to "}.size())
         },
         .cleanup_calls_enabled = cleanup_calls_enabled,
+        .cleanup_calls_blocked_reason = std::move(cleanup_calls_blocked_reason),
     };
 }
 
@@ -179,6 +192,7 @@ auto inserted_cleanup_operation_from_metadata(
         .source_owner_name = handoff.source_owner_name,
         .target_owner_name = handoff.target_owner_name,
         .cleanup_calls_enabled = handoff.cleanup_calls_enabled,
+        .cleanup_calls_blocked_reason = handoff.cleanup_calls_blocked_reason,
     };
 }
 

@@ -16,6 +16,7 @@ struct ComputedDynamicArrayCleanupStateHandoff {
     std::string source_owner_name;
     std::string target_owner_name;
     bool cleanup_calls_enabled = false;
+    std::string cleanup_calls_blocked_reason;
 };
 
 }  // namespace orison::lowering

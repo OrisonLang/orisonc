@@ -2700,7 +2700,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_same_owner_two_loops.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
-            "from items to items.loop.entry [cleanup calls disabled]\n"
+            "from items to items.loop.entry [cleanup calls disabled] [cleanup blocked: later owner use]\n"
         ) != std::string::npos
     );
     assert(computed_local_same_owner_two_loops.ir_text.find("items.computed_for.1.condition:\n") != std::string::npos);
@@ -2763,7 +2763,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(
         computed_local_same_owner_if_then_later_loop.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.1.cleanup.acquire "
-            "from items to items.loop.entry [cleanup calls disabled]\n"
+            "from items to items.loop.entry [cleanup calls disabled] [cleanup blocked: later owner use]\n"
         ) != std::string::npos
     );
     assert(
@@ -2811,7 +2811,9 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(!computed_local_same_owner_switch_case_later_loop.has_errors());
     auto switch_disabled_handoff_position =
-        computed_local_same_owner_switch_case_later_loop.ir_text.find("[cleanup calls disabled]");
+        computed_local_same_owner_switch_case_later_loop.ir_text.find(
+            "[cleanup calls disabled] [cleanup blocked: later owner use]"
+        );
     auto switch_enabled_handoff_position =
         computed_local_same_owner_switch_case_later_loop.ir_text.find("[cleanup calls enabled]");
     assert(switch_disabled_handoff_position != std::string::npos);
@@ -2841,6 +2843,11 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(!computed_local_same_owner_while_body.has_errors());
     assert(computed_local_same_owner_while_body.ir_text.find("[cleanup calls disabled]") != std::string::npos);
+    assert(
+        computed_local_same_owner_while_body.ir_text.find(
+            "[cleanup calls disabled] [cleanup blocked: active loop body]"
+        ) != std::string::npos
+    );
     assert(computed_local_same_owner_while_body.ir_text.find("[cleanup calls enabled]") == std::string::npos);
     assert(
         computed_local_same_owner_while_body.ir_text.find(

@@ -750,7 +750,13 @@ auto render_computed_dynamic_array_cleanup_state_handoff(
     output += handoff.source_owner_name;
     output += " to ";
     output += handoff.target_owner_name;
-    output += handoff.cleanup_calls_enabled ? " [cleanup calls enabled]\n" : " [cleanup calls disabled]\n";
+    output += handoff.cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]";
+    if (!handoff.cleanup_calls_enabled && !handoff.cleanup_calls_blocked_reason.empty()) {
+        output += " [cleanup blocked: ";
+        output += handoff.cleanup_calls_blocked_reason;
+        output += "]";
+    }
+    output += "\n";
     return output;
 }
 

@@ -183,6 +183,26 @@ inline auto computed_dynamic_array_local_cleanup_call_insertion_enabled(
         !later_sibling_statement_references_name(state, cleanup_owner_name);
 }
 
+inline auto computed_dynamic_array_local_cleanup_call_insertion_blocked_reason(
+    std::string_view cleanup_owner_name,
+    std::string_view source_type_name,
+    FunctionLoweringState const& state,
+    LlvmIrEmissionOptions const& options
+) -> std::string {
+    if (!options.enable_dynamic_array_cleanup_emission ||
+        !options.enable_computed_dynamic_array_local_cleanup_call_insertion ||
+        !computed_dynamic_array_has_lowered_local_cleanup_plan(cleanup_owner_name, source_type_name, state)) {
+        return {};
+    }
+    if (!computed_dynamic_array_local_cleanup_context_allows_insertion(state)) {
+        return "active loop body";
+    }
+    if (later_sibling_statement_references_name(state, cleanup_owner_name)) {
+        return "later owner use";
+    }
+    return {};
+}
+
 template <typename LowerBody>
 auto lower_sequence_for_statement(
     syntax::StatementSyntax const& statement,
@@ -277,6 +297,13 @@ auto lower_sequence_for_statement(
             auto const computed_cleanup_calls_enabled =
                 context.options.test_only_authorize_computed_dynamic_array_cleanup_calls ||
                 production_local_cleanup_calls_enabled;
+            auto const cleanup_calls_blocked_reason = computed_cleanup_calls_enabled ? std::string {} :
+                computed_dynamic_array_local_cleanup_call_insertion_blocked_reason(
+                    cleanup_sequence_plan.cleanup_owner_name,
+                    cleanup_sequence_plan.source_type_name,
+                    session.state,
+                    context.options
+                );
 
             auto acquisition_handoff = ComputedDynamicArrayCleanupStateHandoff {
                 .kind = ComputedDynamicArrayCleanupStateHandoffKind::acquire,
@@ -284,6 +311,7 @@ auto lower_sequence_for_statement(
                 .source_owner_name = cleanup_sequence_plan.cleanup_owner_name,
                 .target_owner_name = cleanup_sequence_plan.loop_entry_cleanup_owner_name,
                 .cleanup_calls_enabled = computed_cleanup_calls_enabled,
+                .cleanup_calls_blocked_reason = cleanup_calls_blocked_reason,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(acquisition_handoff);
             if (!context.options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata) {
@@ -344,6 +372,7 @@ auto lower_sequence_for_statement(
                 .source_owner_name = loop_exit_plan.loop_entry_cleanup_owner_name,
                 .target_owner_name = loop_exit_plan.loop_exit_cleanup_owner_name,
                 .cleanup_calls_enabled = computed_cleanup_calls_enabled,
+                .cleanup_calls_blocked_reason = cleanup_calls_blocked_reason,
             };
             output << render_computed_dynamic_array_cleanup_state_handoff(resumption_handoff);
             if (!context.options.test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata) {

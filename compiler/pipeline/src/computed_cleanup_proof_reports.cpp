@@ -8,6 +8,27 @@ namespace orison::pipeline {
 
 namespace {
 
+auto cleanup_calls_blocked_reason(
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption
+) -> std::string {
+    if (!acquisition.cleanup_calls_blocked_reason.empty()) {
+        return acquisition.cleanup_calls_blocked_reason;
+    }
+    return resumption.cleanup_calls_blocked_reason;
+}
+
+auto append_cleanup_calls_blocked_reason(
+    std::ostringstream& output,
+    InsertedCleanupOperation const& acquisition,
+    InsertedCleanupOperation const& resumption
+) -> void {
+    auto const reason = cleanup_calls_blocked_reason(acquisition, resumption);
+    if (!reason.empty()) {
+        output << " [cleanup blocked: " << reason << "]";
+    }
+}
+
 auto format_computed_cleanup_call_emission_gate(
     ComputedCleanupCallEmissionGateEvent const& event
 ) -> std::string {
@@ -25,6 +46,9 @@ auto format_computed_cleanup_call_emission_gate(
     output << " resume-operation " << resumption.operation_name;
     output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
     output << (cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    if (!cleanup_calls_enabled) {
+        append_cleanup_calls_blocked_reason(output, acquisition, resumption);
+    }
     output << (state_verified && cleanup_calls_enabled ? " [cleanup call emission ready]" :
         " [cleanup call emission blocked]");
     output << " (inserted IR)";
@@ -59,6 +83,9 @@ auto format_computed_cleanup_call_plan(
     }
     output << (state_verified ? " [inserted state verified]" : " [inserted state blocked]");
     output << (cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    if (!cleanup_calls_enabled) {
+        append_cleanup_calls_blocked_reason(output, acquisition, resumption);
+    }
     output << (operands.data_pointer_name.empty() ? " [data operand pending]" : " [data operand proven]");
     output << (operands.element_size_bytes.empty() ? " [element-size operand pending]" :
         " [element-size operand proven]");
@@ -200,6 +227,9 @@ auto format_inserted_cleanup_state_verification(
     output << " [handoff paired]";
     output << (acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled ?
         " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    if (!(acquisition.cleanup_calls_enabled && resumption.cleanup_calls_enabled)) {
+        append_cleanup_calls_blocked_reason(output, acquisition, resumption);
+    }
     output << " (inserted IR)";
     return output.str();
 }

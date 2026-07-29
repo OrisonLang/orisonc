@@ -3811,8 +3811,9 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_inserted_cleanup_state_verification_report.front() ==
-        smoke::computed_dynamic_array_inserted_cleanup_state_verification_report
+            .computed_dynamic_array_for_inserted_cleanup_state_verification_report.front().find(
+                "[cleanup calls disabled] [cleanup blocked: later owner use]"
+            ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
@@ -3850,8 +3851,9 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_emission_gate_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_emission_gate_report
+            .computed_dynamic_array_for_cleanup_call_emission_gate_report.front().find(
+                "[cleanup calls disabled] [cleanup blocked: later owner use] [cleanup call emission blocked]"
+            ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
@@ -3865,8 +3867,9 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_plan_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_plan_report
+            .computed_dynamic_array_for_cleanup_call_plan_report.front().find(
+                "[cleanup calls disabled] [cleanup blocked: later owner use] [data operand proven]"
+            ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
@@ -3989,7 +3992,7 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_two_loops.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
-            "from items to items.loop.entry [cleanup calls disabled]\n"
+            "from items to items.loop.entry [cleanup calls disabled] [cleanup blocked: later owner use]\n"
         ) != std::string::npos
     );
     assert(
@@ -4047,7 +4050,7 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_if_then_later_loop.ir_text.find(
             "  ; cleanup state handoff acquire operation items.computed_for.1.cleanup.acquire "
-            "from items to items.loop.entry [cleanup calls disabled]\n"
+            "from items to items.loop.entry [cleanup calls disabled] [cleanup blocked: later owner use]\n"
         ) != std::string::npos
     );
     assert(
@@ -4099,7 +4102,9 @@ auto main() -> int {
     );
     assert(!computed_dynamic_array_local_same_owner_switch_case_later_loop.has_errors());
     auto switch_disabled_handoff_position =
-        computed_dynamic_array_local_same_owner_switch_case_later_loop.ir_text.find("[cleanup calls disabled]");
+        computed_dynamic_array_local_same_owner_switch_case_later_loop.ir_text.find(
+            "[cleanup calls disabled] [cleanup blocked: later owner use]"
+        );
     auto switch_enabled_handoff_position =
         computed_dynamic_array_local_same_owner_switch_case_later_loop.ir_text.find("[cleanup calls enabled]");
     assert(switch_disabled_handoff_position != std::string::npos);
@@ -4134,6 +4139,11 @@ auto main() -> int {
     );
     assert(!computed_dynamic_array_local_same_owner_while_body.has_errors());
     assert(computed_dynamic_array_local_same_owner_while_body.ir_text.find("[cleanup calls disabled]") != std::string::npos);
+    assert(
+        computed_dynamic_array_local_same_owner_while_body.ir_text.find(
+            "[cleanup calls disabled] [cleanup blocked: active loop body]"
+        ) != std::string::npos
+    );
     assert(computed_dynamic_array_local_same_owner_while_body.ir_text.find("[cleanup calls enabled]") == std::string::npos);
     assert(
         computed_dynamic_array_local_same_owner_while_body.ir_text.find(
