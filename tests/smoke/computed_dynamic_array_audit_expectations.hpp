@@ -143,6 +143,13 @@ inline constexpr std::string_view computed_dynamic_array_production_emission_gat
     "[production sequence planned] [production emission disabled] "
     "snippets 17 (metadata only)";
 
+inline constexpr std::string_view computed_dynamic_array_production_emission_gate_enabled_report =
+    "computed DynamicArray for production emission gate function sum_words line 6 "
+    "source DynamicArray<UInt32> element UInt32 owner items [ownership ready] [loop render ready] "
+    "[loop cleanup ownership ready] [function cleanup resumption ready] [exit cleanup ready] "
+    "[production sequence planned] [production emission enabled] "
+    "snippets 17 (metadata only)";
+
 inline constexpr std::string_view computed_dynamic_array_production_sequence_report =
     "computed DynamicArray for production sequence function sum_words line 6 source DynamicArray<UInt32> "
     "element UInt32 owner items snippets 17 (metadata only)";

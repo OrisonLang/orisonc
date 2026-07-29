@@ -1286,13 +1286,17 @@ auto collect_test_only_computed_dynamic_array_for_cleanup_transitions(
 
 auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
     syntax::ModuleSyntax const& module,
-    LoweringContext const& context
+    LoweringContext const& context,
+    LlvmIrEmissionOptions const& options
 ) -> std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> {
     auto gates = std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> {};
+    auto const production_emission_enabled =
+        options.test_only_authorize_computed_dynamic_array_cleanup_calls &&
+        options.test_only_insert_computed_dynamic_array_cleanup_calls;
     collect_test_only_computed_dynamic_array_for_module(
         module,
         context,
-        [&gates](
+        [&gates, production_emission_enabled](
             syntax::StatementSyntax const& statement,
             std::string_view enclosing_function_name,
             LoweringContext const& lowering_context,
@@ -1317,7 +1321,7 @@ auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
                     .function_cleanup_resumption_ready = gate.function_cleanup_resumption_ready,
                     .exit_cleanup_ready = gate.exit_cleanup_ready,
                     .production_sequence_render_planned = gate.production_sequence_render_planned,
-                    .production_emission_enabled = gate.production_emission_enabled,
+                    .production_emission_enabled = production_emission_enabled,
                 });
             }
         }
@@ -2391,7 +2395,7 @@ auto emit_module(
         collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(module, context, options);
     if (options.test_only_collect_computed_dynamic_array_for_production_emission_gates) {
         result.test_only_computed_dynamic_array_for_production_emission_gates =
-            collect_test_only_computed_dynamic_array_for_production_emission_gates(module, context);
+            collect_test_only_computed_dynamic_array_for_production_emission_gates(module, context, options);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_production_emission_gate_ir,
             result.test_only_computed_dynamic_array_for_production_emission_gates
