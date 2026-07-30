@@ -22,6 +22,8 @@
   definition, replacement-drop/store ordering, and later cleanup drop coverage.
 - 2026-07-30: computed same-owner final-use cleanup now emits a source-backed initialized-element drop walk for owned
   `DynamicArray<Payload>` elements before descriptor deallocation/finalization on the default pipeline path.
+- 2026-07-30: `examples/local_dynamic_array_owned_computed_for.or` now pins that owned computed-loop cleanup path
+  through CLI `run`, `--emit-llvm`, `--emit-object`, and `--build` coverage.
 
 ## Scope
 

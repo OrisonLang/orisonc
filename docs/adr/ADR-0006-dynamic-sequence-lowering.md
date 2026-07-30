@@ -716,6 +716,8 @@ representation.
 - Computed same-owner final-use cleanup now reuses source-backed element Drop authorization for owned local
   `DynamicArray<Payload>` iterables. The lowered path emits the initialized-element drop walk after the loop exit
   handoff and before descriptor deallocation/finalization, while keeping the consumed local cleanup plan suppression.
+- `examples/local_dynamic_array_owned_computed_for.or` is now the checked-in owned computed-loop cleanup demo, covered
+  by the array CLI smoke across run, LLVM IR emission, object emission, and retained executable build paths.
 - Production-gated dynamic-array parameter descriptor lowering is now limited to scalar or non-owning element types.
   `DynamicArray<UInt32>` parameters lower to `{ ptr, i64, i64 }` and can emit descriptor cleanup under the production
   signature/cleanup gates, while owned-element parameters such as `DynamicArray<Payload>` remain rejected unless the
