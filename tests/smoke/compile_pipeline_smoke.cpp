@@ -2724,6 +2724,34 @@ auto main() -> int {
             "items.computed_for.0.exit:\n"
         ) != std::string::npos
     );
+    auto computed_dynamic_array_local_owned_same_owner_for_without_drop_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_local_owned_same_owner_for_without_drop.or";
+    {
+        auto local_owned_same_owner_for_without_drop_source =
+            std::ofstream(computed_dynamic_array_local_owned_same_owner_for_without_drop_path);
+        local_owned_same_owner_for_without_drop_source
+            << "package demo.pipeline.dynamicarraylocalownedsameownerforwithoutdrop\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    var total = 0 as Int64\n"
+            << "    items.push(Payload(5))\n"
+            << "    for item in true ? items : items\n"
+            << "        total = total + item.value\n"
+            << "    0 as UInt32\n";
+    }
+    auto computed_dynamic_array_local_owned_same_owner_for_without_drop =
+        pipeline.emit_llvm(computed_dynamic_array_local_owned_same_owner_for_without_drop_path);
+    assert(computed_dynamic_array_local_owned_same_owner_for_without_drop.has_errors());
+    assert(
+        computed_dynamic_array_local_owned_same_owner_for_without_drop.error_text.find(
+            "lowering computed DynamicArray cleanup for owned element type Payload requires authorized element drop"
+        ) != std::string::npos
+    );
+
     auto computed_dynamic_array_local_owned_same_owner_for_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_local_owned_same_owner_for.or";
     {

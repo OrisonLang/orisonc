@@ -497,6 +497,15 @@ auto lower_sequence_for_statement(
                         sequence->element_source_type_name,
                         context.options
                     );
+                    if (!is_scalar_or_nonowning_source_type(sequence->element_source_type_name) &&
+                        !element_drop_symbol_name.has_value()) {
+                        diagnostics.error(
+                            statement.line,
+                            "lowering computed DynamicArray cleanup for owned element type " +
+                                sequence->element_source_type_name + " requires authorized element drop"
+                        );
+                        return StatementFlow::failed;
+                    }
                     if (element_drop_symbol_name.has_value()) {
                         auto drop_walk_prefix = "%" + cleanup_sequence_plan.cleanup_owner_name +
                             ".computed_dynamic_array_cleanup" +
