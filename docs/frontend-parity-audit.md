@@ -17,6 +17,9 @@
 - 2026-07-30: local `DynamicArray<T>` indexed assignment now also lowers owned-element replacement when `items.element`
   has authorized source Drop lowering, ordering the old-element drop before the replacement store and consuming owned
   RHS bindings.
+- 2026-07-30: `examples/local_dynamic_array_owned_replacement.or` now pins local owned-element `DynamicArray<Payload>`
+  indexed replacement through `orisonc run`, `--emit-llvm`, `--emit-object`, and `--build`, including source drop
+  definition, replacement-drop/store ordering, and later cleanup drop coverage.
 
 ## Scope
 

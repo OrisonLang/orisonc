@@ -818,6 +818,10 @@ representation.
 - Named local `DynamicArray<T>` cleanup emission now also uses the generic consumed descriptor finalization plan before
   clearing the owner descriptor after deallocation. This reuses the same owner/storage/cleanup-operation readiness seam
   beyond computed-loop cleanup and makes local cleanup idempotency explicit in emitted IR.
+- `examples/local_dynamic_array_owned_replacement.or` is now the checked-in local owned-element replacement demo. The
+  array CLI smoke pins it through `orisonc run`, `--emit-llvm`, `--emit-object`, and `--build`, asserting that
+  `__orison_drop.Payload` is source-defined, the old element is dropped before the replacement store, and the remaining
+  live element is dropped during normal local descriptor cleanup.
 - Bound `DynamicArray<T>` parameter cleanup now uses the same consumed descriptor finalization plan for the callee-local
   descriptor spill. The clear targets `%parameter.addr` storage owned by the current function frame, not caller storage,
   and runs after descriptor deallocation for scalar/non-owning and authorized owned-element parameter cleanup paths.

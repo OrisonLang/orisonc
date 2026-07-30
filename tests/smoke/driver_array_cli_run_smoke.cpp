@@ -85,6 +85,32 @@ void assert_computed_dynamic_array_emit_llvm_success(
     assert(output.find("items.dynamic_array_cleanup") == std::string::npos);
 }
 
+void assert_owned_dynamic_array_replacement_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("%record.Payload = type { i64 }") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(output.find("declare void @__orison_dynamic_array_allocate") != std::string::npos);
+    assert(output.find("declare void @__orison_dynamic_array_deallocate") != std::string::npos);
+    assert(output.find("declare void @__orison_dynamic_array_bounds_failed") != std::string::npos);
+
+    auto const replacement_drop = output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_assign");
+    assert(replacement_drop != std::string::npos);
+    auto const replacement_store = output.find("store %record.Payload ", replacement_drop);
+    assert(replacement_store != std::string::npos);
+    auto const replacement_store_line_end = output.find('\n', replacement_store);
+    assert(
+        output.substr(replacement_store, replacement_store_line_end - replacement_store)
+            .find("%items.dynamic_array_assign") != std::string::npos
+    );
+    auto const cleanup_drop = output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup");
+    assert(cleanup_drop != std::string::npos);
+    assert(replacement_drop < replacement_store);
+    assert(replacement_store < cleanup_drop);
+}
+
 void assert_emit_object_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -124,9 +150,10 @@ auto main() -> int {
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
-    constexpr auto run_examples = std::array<std::string_view, 13> {
+    constexpr auto run_examples = std::array<std::string_view, 14> {
         "local_array_for.or",
         "local_dynamic_array_computed_for.or",
+        "local_dynamic_array_owned_replacement.or",
         "local_ternary_array_for.or",
         "local_ternary_array_literal_for.or",
         "local_ternary_record_array_literal_for.or",
@@ -146,6 +173,7 @@ auto main() -> int {
 
     auto generic_record_literal_path = examples / "local_generic_record_array_literal_for.or";
     auto computed_dynamic_array_path = examples / "local_dynamic_array_computed_for.or";
+    auto owned_dynamic_array_replacement_path = examples / "local_dynamic_array_owned_replacement.or";
     assert_emit_llvm_success(executable, generic_record_literal_path);
     assert_emit_object_success(
         executable,
@@ -167,6 +195,17 @@ auto main() -> int {
         executable,
         computed_dynamic_array_path,
         smoke_temp_root / "local_dynamic_array_computed_for"
+    );
+    assert_owned_dynamic_array_replacement_emit_llvm_success(executable, owned_dynamic_array_replacement_path);
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_replacement_path,
+        smoke_temp_root / "local_dynamic_array_owned_replacement.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_replacement_path,
+        smoke_temp_root / "local_dynamic_array_owned_replacement"
     );
 
     std::filesystem::remove_all(smoke_temp_root);
