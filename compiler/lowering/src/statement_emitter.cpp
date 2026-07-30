@@ -459,6 +459,116 @@ auto lower_exclusive_view_index_assignment_target(
     };
 }
 
+auto lower_dynamic_array_index_assignment_target(
+    syntax::ExpressionSyntax const& target,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session,
+    diagnostics::DiagnosticBag& diagnostics,
+    std::ostringstream& output
+) -> std::optional<LoweredAssignmentTarget> {
+    if (target.kind != syntax::ExpressionKind::index_access ||
+        target.left == nullptr ||
+        target.left->kind != syntax::ExpressionKind::name ||
+        target.arguments.size() != 1) {
+        return std::nullopt;
+    }
+
+    auto const& owner_name = target.left->text;
+    if (is_moved_owned_dynamic_array_binding(owner_name, session.state)) {
+        diagnostics.error(target.line, "use after move: " + owner_name);
+        return std::nullopt;
+    }
+    if (!session.state.mutable_bindings.contains(owner_name)) {
+        return std::nullopt;
+    }
+
+    auto source_type = session.state.source_type_names.find(owner_name);
+    if (source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+    auto sequence = dynamic_sequence_source_type(source_type->second);
+    if (!sequence.has_value() || sequence->kind != DynamicSequenceKind::dynamic_array ||
+        !sequence->owns_storage) {
+        return std::nullopt;
+    }
+    if (is_owned_transfer_source_type(sequence->element_source_type_name, context.lowering)) {
+        diagnostics.error(
+            target.line,
+            "lowering DynamicArray assignment to owned element requires replacement drop planning"
+        );
+        return std::nullopt;
+    }
+
+    auto element_type = lowered_type_for_source_type_name(
+        sequence->element_source_type_name,
+        context.lowering
+    );
+    if (!element_type.has_value()) {
+        diagnostics.error(target.line, "lowering DynamicArray assignment element type is unsupported");
+        return std::nullopt;
+    }
+
+    auto storage = aggregate_storage_for_name(owner_name, session.state);
+    if (!storage.has_value()) {
+        return std::nullopt;
+    }
+    auto lowered_index = lower_expression(
+        target.arguments.front(),
+        "i64",
+        IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_index.has_value()) {
+        diagnostics.error(
+            target.line,
+            append_expression_lowering_failure(
+                "lowering DynamicArray assignment index failed",
+                session.failures.expression
+            )
+        );
+        return std::nullopt;
+    }
+
+    auto prefix = "%" + owner_name + ".dynamic_array_assign" +
+        std::to_string(session.state.next_temporary_index++);
+    output << emit_dynamic_array_descriptor_load(prefix + ".descriptor", *storage);
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".data",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".length",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".in_bounds",
+        lowered_index->value,
+        prefix + ".length",
+        DynamicArrayBoundsCheckKind::index_within_length
+    );
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto value_block = llvm_block_name("dynamic_array.assign.in_bounds", block_index);
+    auto failure_block = llvm_block_name("dynamic_array.assign.out_of_bounds", block_index);
+    emit_llvm_conditional_branch(output, prefix + ".in_bounds", value_block, failure_block);
+    emit_llvm_block_label(output, failure_block);
+    output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, value_block);
+    session.state.current_block = value_block;
+    output << "  " << prefix << ".element.addr = getelementptr " << element_type->type;
+    output << ", ptr " << prefix << ".data, i64 " << lowered_index->value << "\n";
+
+    return LoweredAssignmentTarget {
+        .type = std::move(*element_type),
+        .pointer = prefix + ".element.addr",
+        .source_type_name = sequence->element_source_type_name,
+    };
+}
+
 auto lower_assignment_target(
     syntax::ExpressionSyntax const& target,
     LoweringEmissionContext const& context,
@@ -493,6 +603,16 @@ auto lower_assignment_target(
             output
         )) {
         return view_target;
+    }
+
+    if (auto dynamic_array_target = lower_dynamic_array_index_assignment_target(
+            target,
+            context,
+            session,
+            diagnostics,
+            output
+        )) {
+        return dynamic_array_target;
     }
 
     auto path = collect_aggregate_path(target);

@@ -666,6 +666,9 @@ representation.
   finalization, suppressing the later function-exit local cleanup plan for the same owner.
 - `DynamicArray<T>.push(value)` now marks owned element bindings and owned record-member element paths consumed after
   the successful store into array storage, so subsequent reads reuse the existing `use after move` diagnostics.
+- Local `DynamicArray<T>` indexed assignment now lowers for scalar/non-owning elements by reloading the descriptor,
+  checking `index < length`, and storing into the computed element address. Owned-element replacement remains blocked
+  until the lowerer can drop the old initialized element before overwrite.
 - Production-gated local cleanup now records constructed local descriptors as real lowered storage and emits descriptor
   load plus backing-storage deallocation before function returns. Dynamic-array indexing, growth, append, and
   unauthorized owned-element cleanup remain separate disabled work.

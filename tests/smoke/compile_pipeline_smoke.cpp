@@ -5102,6 +5102,63 @@ auto main() -> int {
     assert(WIFEXITED(dynamic_array_append_index_status));
     assert(WEXITSTATUS(dynamic_array_append_index_status) == 7);
 
+    auto dynamic_array_index_assignment_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_index_assignment.or";
+    {
+        auto index_assignment_source = std::ofstream(dynamic_array_index_assignment_path);
+        index_assignment_source
+            << "package demo.pipeline.dynamicarrayindexassignment\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<UInt32> = DynamicArray()\n"
+            << "    items.push(7 as UInt32)\n"
+            << "    items[0] = 11 as UInt32\n"
+            << "    items[0]\n";
+    }
+    auto dynamic_array_index_assignment = pipeline.emit_llvm(dynamic_array_index_assignment_path);
+    assert(!dynamic_array_index_assignment.has_errors());
+    assert(dynamic_array_index_assignment.dynamic_array_runtime_request_report.size() == 4);
+    assert_line_contains(
+        dynamic_array_index_assignment.dynamic_array_runtime_request_report,
+        1,
+        "__orison_dynamic_array_bounds_failed"
+    );
+    assert(
+        dynamic_array_index_assignment.ir_text.find(
+            "dynamic_array.assign.out_of_bounds."
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_index_assignment.ir_text.find(
+            "  store i32 11, ptr %items.dynamic_array_assign"
+        ) != std::string::npos
+    );
+    auto index_assignment_store = dynamic_array_index_assignment.ir_text.find(
+        "  store i32 11, ptr %items.dynamic_array_assign"
+    );
+    auto index_assignment_load = dynamic_array_index_assignment.ir_text.find(
+        "  %items.dynamic_array_index"
+    );
+    auto index_assignment_return = dynamic_array_index_assignment.ir_text.find("ret i32 %items.dynamic_array_index");
+    assert(index_assignment_store != std::string::npos);
+    assert(index_assignment_load != std::string::npos);
+    assert(index_assignment_return != std::string::npos);
+    assert(index_assignment_store < index_assignment_load);
+    assert(index_assignment_load < index_assignment_return);
+    auto dynamic_array_index_assignment_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(dynamic_array_index_assignment.ir_text);
+    assert(!dynamic_array_index_assignment_object.has_errors());
+    auto dynamic_array_index_assignment_executable = smoke_temp_root / "dynamic_array_index_assignment";
+    auto dynamic_array_index_assignment_link = orison::link::HostLinker {}.link(
+        dynamic_array_index_assignment_object.object_bytes,
+        dynamic_array_index_assignment_executable
+    );
+    assert(!dynamic_array_index_assignment_link.has_errors());
+    auto dynamic_array_index_assignment_status =
+        std::system(dynamic_array_index_assignment_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_index_assignment_status));
+    assert(WEXITSTATUS(dynamic_array_index_assignment_status) == 11);
+
     auto dynamic_array_append_length_path =
         smoke_temp_root / "orison_pipeline_dynamic_array_append_length.or";
     {
@@ -5765,6 +5822,43 @@ auto main() -> int {
     assert(
         dynamic_array_push_owned_field_reuse.error_text.find("use after move: box.payload") !=
         std::string::npos
+    );
+
+    auto dynamic_array_owned_element_assignment_blocked_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_blocked.or";
+    {
+        auto owned_element_assignment_blocked_source =
+            std::ofstream(dynamic_array_owned_element_assignment_blocked_path);
+        owned_element_assignment_blocked_source
+            << "package demo.pipeline.dynamicarrayownedelementassignmentblocked\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function main() -> UInt32\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    items.push(Payload(7))\n"
+            << "    items[0] = Payload(8)\n"
+            << "    0 as UInt32\n";
+    }
+    auto dynamic_array_owned_element_assignment_blocked = pipeline.emit_llvm(
+        dynamic_array_owned_element_assignment_blocked_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_element_assignment_blocked.has_errors());
+    assert(
+        dynamic_array_owned_element_assignment_blocked.error_text.find(
+            "lowering DynamicArray assignment to owned element requires replacement drop planning"
+        ) != std::string::npos
     );
 
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
