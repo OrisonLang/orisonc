@@ -1177,6 +1177,43 @@ int main() {
         }
     );
 
+    auto dynamic_array_computed_after_while_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_computed_after_while.or";
+    std::filesystem::remove(dynamic_array_computed_after_while_path, remove_error);
+    write_fixture(
+        dynamic_array_computed_after_while_path,
+        "demo.dynamicarraycomputedafterwhile",
+        {
+            "function sum_words(flag: Bool) -> UInt32",
+            "    let items: DynamicArray<UInt32> = DynamicArray()",
+            "    var total = 0 as UInt32",
+            "    while flag",
+            "        total = total + 1 as UInt32",
+            "        break",
+            "    for word in flag ? items : items",
+            "        total = total + word",
+            "    total",
+        }
+    );
+    auto dynamic_array_computed_after_while_inserted_cleanup_calls =
+        run_computed_dynamic_array_inserted_cleanup_calls(app, dynamic_array_computed_after_while_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_after_while_inserted_cleanup_calls,
+        {
+            smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
+            "computed DynamicArray inserted cleanup call detail owner items data %items.computed_for.",
+        }
+    );
+    auto dynamic_array_computed_after_while_consumed_cleanup_descriptors =
+        run_computed_dynamic_array_consumed_cleanup_descriptors(app, dynamic_array_computed_after_while_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_after_while_consumed_cleanup_descriptors,
+        {
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report,
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
+        }
+    );
+
     auto dynamic_array_computed_local_same_owner_insertion_capability =
         run_computed_dynamic_array_cleanup_call_insertion_capability(app, dynamic_array_computed_local_same_owner_path);
     assert_success_with_stdout_contains(
