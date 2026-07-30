@@ -101,7 +101,7 @@ auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions 
     };
 }
 
-auto test_only_computed_cleanup_call_insertion_capability_options() -> pipeline::CompilePipelineOptions {
+auto test_only_computed_cleanup_insertion_seam_options() -> pipeline::CompilePipelineOptions {
     auto options = dynamic_array_cleanup_report_options();
     options.test_only_enable_computed_dynamic_array_for_lowering = true;
     options.test_only_authorize_computed_dynamic_array_cleanup_calls = true;
@@ -706,7 +706,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (auto result = try_dynamic_array_cleanup_report_command(
             args,
             "--test-only-computed-dynamic-array-cleanup-call-insertion-capability",
-            test_only_computed_cleanup_call_insertion_capability_options(),
+            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_cleanup_call_insertion_capability_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
@@ -732,7 +732,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (auto result = try_emit_llvm_report_command(
             args,
             "--test-only-computed-dynamic-array-cleanup-call-insertion-readiness",
-            test_only_computed_cleanup_call_insertion_capability_options(),
+            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_cleanup_call_insertion_readiness_report(
                     result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
@@ -758,7 +758,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (auto result = try_emit_llvm_report_command(
             args,
             "--test-only-computed-dynamic-array-inserted-cleanup-handoffs",
-            test_only_computed_cleanup_call_insertion_capability_options(),
+            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_inserted_cleanup_handoff_state_report(
                     result.computed_dynamic_array_for_inserted_cleanup_handoff_state
@@ -784,7 +784,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (auto result = try_emit_llvm_report_command(
             args,
             "--test-only-computed-dynamic-array-inserted-cleanup-calls",
-            test_only_computed_cleanup_call_insertion_capability_options(),
+            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_inserted_cleanup_call_state_report(
                     result.computed_dynamic_array_for_inserted_cleanup_call_state
@@ -810,7 +810,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (auto result = try_emit_llvm_report_command(
             args,
             "--test-only-computed-dynamic-array-consumed-cleanup-descriptors",
-            test_only_computed_cleanup_call_insertion_capability_options(),
+            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_consumed_cleanup_descriptor_state_report(
                     result.computed_dynamic_array_for_consumed_cleanup_descriptor_state
@@ -836,7 +836,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (auto result = try_emit_llvm_report_command(
             args,
             "--test-only-computed-dynamic-array-cleanup-proof-summary",
-            test_only_computed_cleanup_call_insertion_capability_options(),
+            test_only_computed_cleanup_insertion_seam_options(),
             [](auto const& result) {
                 return computed_cleanup_proof_summary_state_report(
                     result.computed_dynamic_array_for_cleanup_proof_summary_state
