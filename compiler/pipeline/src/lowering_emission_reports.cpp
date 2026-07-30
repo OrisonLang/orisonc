@@ -478,6 +478,7 @@ auto build_computed_cleanup_call_insertion_gate_state(
     state.all_cleanup_calls_authorized = state.gate_count > 0;
     state.cleanup_owner_names.reserve(proof_model.cleanup_call_report_events.insertion_gate_events.size());
     state.cleanup_operation_names.reserve(proof_model.cleanup_call_report_events.insertion_gate_events.size());
+    state.cleanup_calls_blocked_reasons.reserve(proof_model.cleanup_call_report_events.insertion_gate_events.size());
     for (auto const& event : proof_model.cleanup_call_report_events.insertion_gate_events) {
         state.cleanup_owner_names.push_back(event.resumption.target_owner_name);
         state.cleanup_operation_names.push_back(event.resumption.operation_name + ".call");
@@ -487,8 +488,13 @@ auto build_computed_cleanup_call_insertion_gate_state(
             state.all_cleanup_calls_authorized && event.decision.cleanup_calls_authorized;
         if (event.decision.insertion_ready) {
             ++state.ready_count;
+            state.cleanup_calls_blocked_reasons.push_back({});
         } else {
             ++state.blocked_count;
+            if (!event.resumption.cleanup_calls_blocked_reason.empty()) {
+                ++state.cleanup_call_blocker_count;
+            }
+            state.cleanup_calls_blocked_reasons.push_back(event.resumption.cleanup_calls_blocked_reason);
         }
     }
     state.all_ready = state.ready_count > 0 && state.blocked_count == 0;

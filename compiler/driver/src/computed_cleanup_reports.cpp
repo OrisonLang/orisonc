@@ -67,6 +67,7 @@ auto computed_cleanup_call_insertion_readiness_report(
     counts << "gates " << state.gate_count;
     counts << " ready " << state.ready_count;
     counts << " blocked " << state.blocked_count;
+    counts << " cleanup-blockers " << state.cleanup_call_blocker_count;
     counts << (state.all_state_verified ? " [inserted state verified]" : " [inserted state unverified]");
     counts << (state.all_operands_proven ? " [cleanup operands proven]" : " [cleanup operands missing]");
     counts << (state.all_cleanup_calls_authorized ? " [cleanup calls authorized]" : " [cleanup calls unauthorized]");
@@ -81,6 +82,10 @@ auto computed_cleanup_call_insertion_readiness_report(
     for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
         auto fields = std::ostringstream {};
         fields << "cleanup-operation " << indexed_name_or_unknown(state.cleanup_operation_names, index);
+        auto const blocked_reason = indexed_name_or_unknown(state.cleanup_calls_blocked_reasons, index);
+        if (blocked_reason != "<unknown>" && !blocked_reason.empty()) {
+            fields << " cleanup-blocked-reason " << blocked_reason;
+        }
         append_computed_cleanup_detail(
             lines,
             "cleanup call insertion readiness",

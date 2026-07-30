@@ -107,11 +107,11 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_
     "[cleanup call authorization enabled] [cleanup call insertion enabled] (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_readiness_blocked_report =
-    "computed DynamicArray cleanup call insertion readiness blocked gates 1 ready 0 blocked 1 "
+    "computed DynamicArray cleanup call insertion readiness blocked gates 1 ready 0 blocked 1 cleanup-blockers 1 "
     "[inserted state verified] [cleanup operands proven] [cleanup calls unauthorized] (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_readiness_ready_report =
-    "computed DynamicArray cleanup call insertion readiness ready gates 1 ready 1 blocked 0 "
+    "computed DynamicArray cleanup call insertion readiness ready gates 1 ready 1 blocked 0 cleanup-blockers 0 "
     "[inserted state verified] [cleanup operands proven] [cleanup calls authorized] (metadata only)";
 
 inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_readiness_detail_report =

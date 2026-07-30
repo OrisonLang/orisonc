@@ -239,6 +239,7 @@ struct ComputedInsertedCleanupCallState {
 struct ComputedCleanupCallInsertionGateState {
     std::vector<std::string> cleanup_owner_names;
     std::vector<std::string> cleanup_operation_names;
+    std::vector<std::string> cleanup_calls_blocked_reasons;
     bool all_state_verified = false;
     bool all_operands_proven = false;
     bool all_cleanup_calls_authorized = false;
@@ -246,6 +247,7 @@ struct ComputedCleanupCallInsertionGateState {
     std::size_t gate_count = 0;
     std::size_t ready_count = 0;
     std::size_t blocked_count = 0;
+    std::size_t cleanup_call_blocker_count = 0;
 };
 
 struct ComputedCleanupCallInsertionCapabilityState {

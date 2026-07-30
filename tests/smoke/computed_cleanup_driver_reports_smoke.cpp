@@ -33,6 +33,7 @@ void assert_computed_cleanup_readiness_reports() {
         pipeline::ComputedCleanupCallInsertionGateState {
             .cleanup_owner_names = {"items"},
             .cleanup_operation_names = {"items.computed_for.0.cleanup.resume.call"},
+            .cleanup_calls_blocked_reasons = {"later owner use"},
             .all_state_verified = true,
             .all_operands_proven = true,
             .all_cleanup_calls_authorized = false,
@@ -40,11 +41,16 @@ void assert_computed_cleanup_readiness_reports() {
             .gate_count = 1,
             .ready_count = 0,
             .blocked_count = 1,
+            .cleanup_call_blocker_count = 1,
         }
     );
     assert(blocked.size() == 2);
     assert(blocked[0] == smoke::computed_dynamic_array_cleanup_call_insertion_readiness_blocked_report);
-    assert(blocked[1] == smoke::computed_dynamic_array_cleanup_call_insertion_readiness_detail_report);
+    assert(
+        blocked[1].find(
+            "cleanup-operation items.computed_for.0.cleanup.resume.call cleanup-blocked-reason later owner use"
+        ) != std::string::npos
+    );
 
     auto ready = driver::computed_cleanup_call_insertion_readiness_report(
         pipeline::ComputedCleanupCallInsertionGateState {
