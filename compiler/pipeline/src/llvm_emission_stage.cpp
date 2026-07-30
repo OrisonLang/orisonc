@@ -25,16 +25,16 @@ auto run_llvm_emission_stage(
     auto emission = emitter.emit(result.parse_result.module, result.semantic_result, emission_options);
     if (emission.has_errors()) {
         result.error_text = emission.render(result.source_file->path().string());
-        if (options.test_only_collect_computed_dynamic_array_for_descriptor_renders ||
-            options.test_only_collect_computed_dynamic_array_for_loop_control_renders ||
-            options.test_only_collect_computed_dynamic_array_for_element_address_renders ||
-            options.test_only_collect_computed_dynamic_array_for_element_load_renders ||
-            options.test_only_collect_computed_dynamic_array_for_loop_continue_renders ||
-            options.test_only_collect_computed_dynamic_array_for_loop_render_sequences ||
-            options.test_only_collect_computed_dynamic_array_for_loop_exit_cleanups ||
-            options.test_only_collect_computed_dynamic_array_for_cleanup_transitions ||
-            options.test_only_collect_computed_dynamic_array_for_production_emission_gates ||
-            options.test_only_collect_computed_dynamic_array_for_production_sequences ||
+        if (options.collect_computed_dynamic_array_for_descriptor_renders ||
+            options.collect_computed_dynamic_array_for_loop_control_renders ||
+            options.collect_computed_dynamic_array_for_element_address_renders ||
+            options.collect_computed_dynamic_array_for_element_load_renders ||
+            options.collect_computed_dynamic_array_for_loop_continue_renders ||
+            options.collect_computed_dynamic_array_for_loop_render_sequences ||
+            options.collect_computed_dynamic_array_for_loop_exit_cleanups ||
+            options.collect_computed_dynamic_array_for_cleanup_transitions ||
+            options.collect_computed_dynamic_array_for_production_emission_gates ||
+            options.collect_computed_dynamic_array_for_production_sequences ||
             options.test_only_emit_computed_dynamic_array_for_production_sequence_comments) {
             populate_lowering_emission_reports(result, std::move(emission), options);
         }

@@ -779,7 +779,7 @@ void bind_test_only_dynamic_array_local_for_computed_for_collection(
 }
 
 template <typename CollectForStatement>
-void collect_test_only_computed_dynamic_array_for_statements(
+void collect_computed_dynamic_array_for_statements(
     syntax::StatementSyntax const& statement,
     std::string_view enclosing_function_name,
     LoweringContext const& context,
@@ -792,7 +792,7 @@ void collect_test_only_computed_dynamic_array_for_statements(
     }
 
     for (auto const& nested_statement : statement.nested_statements) {
-        collect_test_only_computed_dynamic_array_for_statements(
+        collect_computed_dynamic_array_for_statements(
             nested_statement,
             enclosing_function_name,
             context,
@@ -801,7 +801,7 @@ void collect_test_only_computed_dynamic_array_for_statements(
         );
     }
     for (auto const& alternate_statement : statement.alternate_statements) {
-        collect_test_only_computed_dynamic_array_for_statements(
+        collect_computed_dynamic_array_for_statements(
             alternate_statement,
             enclosing_function_name,
             context,
@@ -812,7 +812,7 @@ void collect_test_only_computed_dynamic_array_for_statements(
     for (auto const& switch_case : statement.switch_cases) {
         for (auto const& case_statement : switch_case.statements) {
             if (case_statement != nullptr) {
-                collect_test_only_computed_dynamic_array_for_statements(
+                collect_computed_dynamic_array_for_statements(
                     *case_statement,
                     enclosing_function_name,
                     context,
@@ -825,7 +825,7 @@ void collect_test_only_computed_dynamic_array_for_statements(
 }
 
 template <typename CollectForStatement>
-void collect_test_only_computed_dynamic_array_for_function(
+void collect_computed_dynamic_array_for_function(
     syntax::FunctionSyntax const& function,
     LoweringContext const& context,
     CollectForStatement&& collect_for_statement
@@ -837,7 +837,7 @@ void collect_test_only_computed_dynamic_array_for_function(
         }
     }
     for (auto const& statement : function.body_statements) {
-        collect_test_only_computed_dynamic_array_for_statements(
+        collect_computed_dynamic_array_for_statements(
             statement,
             function.name,
             context,
@@ -848,22 +848,22 @@ void collect_test_only_computed_dynamic_array_for_function(
 }
 
 template <typename CollectForStatement>
-void collect_test_only_computed_dynamic_array_for_module(
+void collect_computed_dynamic_array_for_module(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     CollectForStatement&& collect_for_statement
 ) {
     for (auto const& function : module.functions) {
-        collect_test_only_computed_dynamic_array_for_function(function, context, collect_for_statement);
+        collect_computed_dynamic_array_for_function(function, context, collect_for_statement);
     }
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
-            collect_test_only_computed_dynamic_array_for_function(method, context, collect_for_statement);
+            collect_computed_dynamic_array_for_function(method, context, collect_for_statement);
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
-            collect_test_only_computed_dynamic_array_for_function(method, context, collect_for_statement);
+            collect_computed_dynamic_array_for_function(method, context, collect_for_statement);
         }
     }
 }
@@ -938,12 +938,12 @@ auto render_computed_dynamic_array_for_production_sequence_module_comments(
     return lines;
 }
 
-auto collect_test_only_computed_dynamic_array_for_descriptor_renders(
+auto collect_computed_dynamic_array_for_descriptor_renders(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> {
     auto renders = std::vector<ComputedDynamicArrayForDescriptorRenderMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&renders](
@@ -982,12 +982,12 @@ auto collect_test_only_computed_dynamic_array_for_descriptor_renders(
     return renders;
 }
 
-auto collect_test_only_computed_dynamic_array_for_loop_control_renders(
+auto collect_computed_dynamic_array_for_loop_control_renders(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForLoopControlRenderMetadata> {
     auto renders = std::vector<ComputedDynamicArrayForLoopControlRenderMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&renders](
@@ -1028,12 +1028,12 @@ auto collect_test_only_computed_dynamic_array_for_loop_control_renders(
     return renders;
 }
 
-auto collect_test_only_computed_dynamic_array_for_element_address_renders(
+auto collect_computed_dynamic_array_for_element_address_renders(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForElementAddressRenderMetadata> {
     auto renders = std::vector<ComputedDynamicArrayForElementAddressRenderMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&renders](
@@ -1070,12 +1070,12 @@ auto collect_test_only_computed_dynamic_array_for_element_address_renders(
     return renders;
 }
 
-auto collect_test_only_computed_dynamic_array_for_element_load_renders(
+auto collect_computed_dynamic_array_for_element_load_renders(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForElementLoadRenderMetadata> {
     auto renders = std::vector<ComputedDynamicArrayForElementLoadRenderMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&renders](
@@ -1110,12 +1110,12 @@ auto collect_test_only_computed_dynamic_array_for_element_load_renders(
     return renders;
 }
 
-auto collect_test_only_computed_dynamic_array_for_loop_continue_renders(
+auto collect_computed_dynamic_array_for_loop_continue_renders(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForLoopContinueRenderMetadata> {
     auto renders = std::vector<ComputedDynamicArrayForLoopContinueRenderMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&renders](
@@ -1152,12 +1152,12 @@ auto collect_test_only_computed_dynamic_array_for_loop_continue_renders(
     return renders;
 }
 
-auto collect_test_only_computed_dynamic_array_for_loop_render_sequences(
+auto collect_computed_dynamic_array_for_loop_render_sequences(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata> {
     auto sequences = std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&sequences](
@@ -1194,12 +1194,12 @@ auto collect_test_only_computed_dynamic_array_for_loop_render_sequences(
     return sequences;
 }
 
-auto collect_test_only_computed_dynamic_array_for_loop_exit_cleanups(
+auto collect_computed_dynamic_array_for_loop_exit_cleanups(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForLoopExitCleanupMetadata> {
     auto cleanups = std::vector<ComputedDynamicArrayForLoopExitCleanupMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&cleanups](
@@ -1236,12 +1236,12 @@ auto collect_test_only_computed_dynamic_array_for_loop_exit_cleanups(
     return cleanups;
 }
 
-auto collect_test_only_computed_dynamic_array_for_cleanup_transitions(
+auto collect_computed_dynamic_array_for_cleanup_transitions(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForCleanupTransitionMetadata> {
     auto transitions = std::vector<ComputedDynamicArrayForCleanupTransitionMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&transitions](
@@ -1284,7 +1284,7 @@ auto collect_test_only_computed_dynamic_array_for_cleanup_transitions(
     return transitions;
 }
 
-auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
+auto collect_computed_dynamic_array_for_production_emission_gates(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     LlvmIrEmissionOptions const& options
@@ -1292,7 +1292,7 @@ auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
     auto gates = std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata> {};
     auto const insertion_capability =
         computed_dynamic_array_cleanup_call_insertion_capability(options);
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&gates, insertion_capability](
@@ -1328,12 +1328,12 @@ auto collect_test_only_computed_dynamic_array_for_production_emission_gates(
     return gates;
 }
 
-auto collect_test_only_computed_dynamic_array_for_production_sequences(
+auto collect_computed_dynamic_array_for_production_sequences(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context
 ) -> std::vector<ComputedDynamicArrayForProductionSequenceMetadata> {
     auto sequences = std::vector<ComputedDynamicArrayForProductionSequenceMetadata> {};
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&sequences](
@@ -1362,7 +1362,7 @@ auto collect_test_only_computed_dynamic_array_for_production_sequences(
     return sequences;
 }
 
-auto collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(
+auto collect_computed_dynamic_array_for_consumed_cleanup_descriptors(
     syntax::ModuleSyntax const& module,
     LoweringContext const& context,
     LlvmIrEmissionOptions const& options
@@ -1376,7 +1376,7 @@ auto collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(
     if (!production_computed_cleanup_emission_enabled) {
         return descriptors;
     }
-    collect_test_only_computed_dynamic_array_for_module(
+    collect_computed_dynamic_array_for_module(
         module,
         context,
         [&descriptors](
@@ -1456,7 +1456,7 @@ auto collect_dynamic_array_runtime_operations(
     if (
         options.enable_computed_dynamic_array_consumed_cleanup_descriptor_collection &&
         computed_dynamic_array_cleanup_call_insertion_capability(options).enabled &&
-        !collect_test_only_computed_dynamic_array_for_production_sequences(module, context).empty()
+        !collect_computed_dynamic_array_for_production_sequences(module, context).empty()
     ) {
         push_dynamic_array_runtime_operation_once(operations, DynamicArrayRuntimeOperation::deallocate);
     }
@@ -2332,80 +2332,80 @@ auto emit_module(
             }
         }
     }
-    if (options.test_only_collect_computed_dynamic_array_for_descriptor_renders) {
+    if (options.collect_computed_dynamic_array_for_descriptor_renders) {
         result.test_only_computed_dynamic_array_for_descriptor_renders =
-            collect_test_only_computed_dynamic_array_for_descriptor_renders(module, context);
+            collect_computed_dynamic_array_for_descriptor_renders(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_descriptor_render_ir,
             result.test_only_computed_dynamic_array_for_descriptor_renders
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_loop_control_renders) {
+    if (options.collect_computed_dynamic_array_for_loop_control_renders) {
         result.test_only_computed_dynamic_array_for_loop_control_renders =
-            collect_test_only_computed_dynamic_array_for_loop_control_renders(module, context);
+            collect_computed_dynamic_array_for_loop_control_renders(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_loop_control_render_ir,
             result.test_only_computed_dynamic_array_for_loop_control_renders
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_element_address_renders) {
+    if (options.collect_computed_dynamic_array_for_element_address_renders) {
         result.test_only_computed_dynamic_array_for_element_address_renders =
-            collect_test_only_computed_dynamic_array_for_element_address_renders(module, context);
+            collect_computed_dynamic_array_for_element_address_renders(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_element_address_render_ir,
             result.test_only_computed_dynamic_array_for_element_address_renders
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_element_load_renders) {
+    if (options.collect_computed_dynamic_array_for_element_load_renders) {
         result.test_only_computed_dynamic_array_for_element_load_renders =
-            collect_test_only_computed_dynamic_array_for_element_load_renders(module, context);
+            collect_computed_dynamic_array_for_element_load_renders(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_element_load_render_ir,
             result.test_only_computed_dynamic_array_for_element_load_renders
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_loop_continue_renders) {
+    if (options.collect_computed_dynamic_array_for_loop_continue_renders) {
         result.test_only_computed_dynamic_array_for_loop_continue_renders =
-            collect_test_only_computed_dynamic_array_for_loop_continue_renders(module, context);
+            collect_computed_dynamic_array_for_loop_continue_renders(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_loop_continue_render_ir,
             result.test_only_computed_dynamic_array_for_loop_continue_renders
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_loop_render_sequences) {
+    if (options.collect_computed_dynamic_array_for_loop_render_sequences) {
         result.test_only_computed_dynamic_array_for_loop_render_sequences =
-            collect_test_only_computed_dynamic_array_for_loop_render_sequences(module, context);
+            collect_computed_dynamic_array_for_loop_render_sequences(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_loop_render_sequence_ir,
             result.test_only_computed_dynamic_array_for_loop_render_sequences
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_loop_exit_cleanups) {
+    if (options.collect_computed_dynamic_array_for_loop_exit_cleanups) {
         result.test_only_computed_dynamic_array_for_loop_exit_cleanups =
-            collect_test_only_computed_dynamic_array_for_loop_exit_cleanups(module, context);
+            collect_computed_dynamic_array_for_loop_exit_cleanups(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir,
             result.test_only_computed_dynamic_array_for_loop_exit_cleanups
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_cleanup_transitions) {
+    if (options.collect_computed_dynamic_array_for_cleanup_transitions) {
         result.test_only_computed_dynamic_array_for_cleanup_transitions =
-            collect_test_only_computed_dynamic_array_for_cleanup_transitions(module, context);
+            collect_computed_dynamic_array_for_cleanup_transitions(module, context);
     }
     result.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors =
-        collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(module, context, options);
-    if (options.test_only_collect_computed_dynamic_array_for_production_emission_gates) {
+        collect_computed_dynamic_array_for_consumed_cleanup_descriptors(module, context, options);
+    if (options.collect_computed_dynamic_array_for_production_emission_gates) {
         result.test_only_computed_dynamic_array_for_production_emission_gates =
-            collect_test_only_computed_dynamic_array_for_production_emission_gates(module, context, options);
+            collect_computed_dynamic_array_for_production_emission_gates(module, context, options);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_production_emission_gate_ir,
             result.test_only_computed_dynamic_array_for_production_emission_gates
         );
     }
-    if (options.test_only_collect_computed_dynamic_array_for_production_sequences ||
+    if (options.collect_computed_dynamic_array_for_production_sequences ||
         options.test_only_emit_computed_dynamic_array_for_production_sequence_comments) {
         result.test_only_computed_dynamic_array_for_production_sequences =
-            collect_test_only_computed_dynamic_array_for_production_sequences(module, context);
+            collect_computed_dynamic_array_for_production_sequences(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_production_sequence_ir,
             result.test_only_computed_dynamic_array_for_production_sequences

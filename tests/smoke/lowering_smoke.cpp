@@ -2101,16 +2101,16 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
-            .test_only_collect_computed_dynamic_array_for_descriptor_renders = true,
-            .test_only_collect_computed_dynamic_array_for_loop_control_renders = true,
-            .test_only_collect_computed_dynamic_array_for_element_address_renders = true,
-            .test_only_collect_computed_dynamic_array_for_element_load_renders = true,
-            .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
-            .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
-            .test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = true,
-            .test_only_collect_computed_dynamic_array_for_cleanup_transitions = true,
-            .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
-            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+            .collect_computed_dynamic_array_for_descriptor_renders = true,
+            .collect_computed_dynamic_array_for_loop_control_renders = true,
+            .collect_computed_dynamic_array_for_element_address_renders = true,
+            .collect_computed_dynamic_array_for_element_load_renders = true,
+            .collect_computed_dynamic_array_for_loop_continue_renders = true,
+            .collect_computed_dynamic_array_for_loop_render_sequences = true,
+            .collect_computed_dynamic_array_for_loop_exit_cleanups = true,
+            .collect_computed_dynamic_array_for_cleanup_transitions = true,
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
             .enable_computed_dynamic_array_local_cleanup_call_insertion = false,
         }
     );
@@ -2457,7 +2457,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
-            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
         }
     );
     assert(!computed_local_same_owner_metadata_without_comment_emission.has_errors());

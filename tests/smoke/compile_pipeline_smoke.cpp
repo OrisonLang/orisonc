@@ -1210,16 +1210,16 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_collect_computed_dynamic_array_for_descriptor_renders = true,
-            .test_only_collect_computed_dynamic_array_for_loop_control_renders = true,
-            .test_only_collect_computed_dynamic_array_for_element_address_renders = true,
-            .test_only_collect_computed_dynamic_array_for_element_load_renders = true,
-            .test_only_collect_computed_dynamic_array_for_loop_continue_renders = true,
-            .test_only_collect_computed_dynamic_array_for_loop_render_sequences = true,
-            .test_only_collect_computed_dynamic_array_for_loop_exit_cleanups = true,
-            .test_only_collect_computed_dynamic_array_for_cleanup_transitions = true,
-            .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
-            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+            .collect_computed_dynamic_array_for_descriptor_renders = true,
+            .collect_computed_dynamic_array_for_loop_control_renders = true,
+            .collect_computed_dynamic_array_for_element_address_renders = true,
+            .collect_computed_dynamic_array_for_element_load_renders = true,
+            .collect_computed_dynamic_array_for_loop_continue_renders = true,
+            .collect_computed_dynamic_array_for_loop_render_sequences = true,
+            .collect_computed_dynamic_array_for_loop_exit_cleanups = true,
+            .collect_computed_dynamic_array_for_cleanup_transitions = true,
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
@@ -2006,7 +2006,7 @@ auto main() -> int {
         dynamic_array_metadata_collector.collect(
             computed_dynamic_array_local_same_owner_for_path,
             orison::pipeline::CompilePipelineOptions {
-                .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+                .collect_computed_dynamic_array_for_production_sequences = true,
                 .dynamic_array_production_construction_lowering_enabled = true,
                 .dynamic_array_production_for_lowering_enabled = true,
             }
@@ -2283,8 +2283,8 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_lowered_for_with_sequence = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
-            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
@@ -2352,8 +2352,8 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_production_ready_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
-            .test_only_collect_computed_dynamic_array_for_production_sequences = true,
+            .collect_computed_dynamic_array_for_production_emission_gates = true,
+            .collect_computed_dynamic_array_for_production_sequences = true,
             .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
             .test_only_insert_computed_dynamic_array_cleanup_calls = true,
             .dynamic_array_production_construction_lowering_enabled = true,

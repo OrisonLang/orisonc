@@ -88,26 +88,26 @@ auto build_lowering_emission_options(
         options.test_only_dynamic_array_construction_requests;
     emission_options.test_only_derive_dynamic_array_cleanup_from_semantics =
         options.test_only_derive_dynamic_array_cleanup_from_semantics;
-    emission_options.test_only_collect_computed_dynamic_array_for_descriptor_renders =
-        options.test_only_collect_computed_dynamic_array_for_descriptor_renders;
-    emission_options.test_only_collect_computed_dynamic_array_for_loop_control_renders =
-        options.test_only_collect_computed_dynamic_array_for_loop_control_renders;
-    emission_options.test_only_collect_computed_dynamic_array_for_element_address_renders =
-        options.test_only_collect_computed_dynamic_array_for_element_address_renders;
-    emission_options.test_only_collect_computed_dynamic_array_for_element_load_renders =
-        options.test_only_collect_computed_dynamic_array_for_element_load_renders;
-    emission_options.test_only_collect_computed_dynamic_array_for_loop_continue_renders =
-        options.test_only_collect_computed_dynamic_array_for_loop_continue_renders;
-    emission_options.test_only_collect_computed_dynamic_array_for_loop_render_sequences =
-        options.test_only_collect_computed_dynamic_array_for_loop_render_sequences;
-    emission_options.test_only_collect_computed_dynamic_array_for_loop_exit_cleanups =
-        options.test_only_collect_computed_dynamic_array_for_loop_exit_cleanups;
-    emission_options.test_only_collect_computed_dynamic_array_for_cleanup_transitions =
-        options.test_only_collect_computed_dynamic_array_for_cleanup_transitions;
-    emission_options.test_only_collect_computed_dynamic_array_for_production_emission_gates =
-        options.test_only_collect_computed_dynamic_array_for_production_emission_gates;
-    emission_options.test_only_collect_computed_dynamic_array_for_production_sequences =
-        options.test_only_collect_computed_dynamic_array_for_production_sequences;
+    emission_options.collect_computed_dynamic_array_for_descriptor_renders =
+        options.collect_computed_dynamic_array_for_descriptor_renders;
+    emission_options.collect_computed_dynamic_array_for_loop_control_renders =
+        options.collect_computed_dynamic_array_for_loop_control_renders;
+    emission_options.collect_computed_dynamic_array_for_element_address_renders =
+        options.collect_computed_dynamic_array_for_element_address_renders;
+    emission_options.collect_computed_dynamic_array_for_element_load_renders =
+        options.collect_computed_dynamic_array_for_element_load_renders;
+    emission_options.collect_computed_dynamic_array_for_loop_continue_renders =
+        options.collect_computed_dynamic_array_for_loop_continue_renders;
+    emission_options.collect_computed_dynamic_array_for_loop_render_sequences =
+        options.collect_computed_dynamic_array_for_loop_render_sequences;
+    emission_options.collect_computed_dynamic_array_for_loop_exit_cleanups =
+        options.collect_computed_dynamic_array_for_loop_exit_cleanups;
+    emission_options.collect_computed_dynamic_array_for_cleanup_transitions =
+        options.collect_computed_dynamic_array_for_cleanup_transitions;
+    emission_options.collect_computed_dynamic_array_for_production_emission_gates =
+        options.collect_computed_dynamic_array_for_production_emission_gates;
+    emission_options.collect_computed_dynamic_array_for_production_sequences =
+        options.collect_computed_dynamic_array_for_production_sequences;
     emission_options.test_only_emit_computed_dynamic_array_for_production_sequence_comments =
         options.test_only_emit_computed_dynamic_array_for_production_sequence_comments;
     emission_options.test_only_authorize_computed_dynamic_array_cleanup_calls =
