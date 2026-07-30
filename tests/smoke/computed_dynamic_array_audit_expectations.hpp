@@ -120,15 +120,15 @@ inline constexpr std::string_view computed_dynamic_array_cleanup_call_insertion_
 
 inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_empty_report =
     "computed DynamicArray inserted cleanup handoffs blocked transitions 0 verifications 0 paired 0 blocked 0 "
-    "[metadata-missing] [handoffs blocked] [cleanup calls disabled] (inserted IR)";
+    "cleanup-blockers 0 [metadata-missing] [handoffs blocked] [cleanup calls disabled] (inserted IR)";
 
 inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_paired_disabled_report =
     "computed DynamicArray inserted cleanup handoffs paired transitions 1 verifications 1 paired 1 blocked 0 "
-    "[metadata-backed] [handoffs paired] [cleanup calls disabled] (inserted IR)";
+    "cleanup-blockers 1 [metadata-backed] [handoffs paired] [cleanup calls disabled] (inserted IR)";
 
 inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_paired_enabled_report =
     "computed DynamicArray inserted cleanup handoffs paired transitions 1 verifications 1 paired 1 blocked 0 "
-    "[metadata-backed] [handoffs paired] [cleanup calls enabled] (inserted IR)";
+    "cleanup-blockers 0 [metadata-backed] [handoffs paired] [cleanup calls enabled] (inserted IR)";
 
 inline constexpr std::string_view computed_dynamic_array_inserted_cleanup_handoff_state_detail_report =
     "computed DynamicArray inserted cleanup handoff detail owner items "

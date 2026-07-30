@@ -625,14 +625,24 @@ auto build_computed_inserted_cleanup_handoff_state(
     state.cleanup_owner_names.reserve(proof_model.inserted_cleanup_state.transition_events.size());
     state.acquire_operation_names.reserve(proof_model.inserted_cleanup_state.transition_events.size());
     state.resume_operation_names.reserve(proof_model.inserted_cleanup_state.transition_events.size());
+    state.cleanup_calls_blocked_reasons.reserve(proof_model.inserted_cleanup_state.transition_events.size());
     for (auto const& event : proof_model.inserted_cleanup_state.transition_events) {
         state.cleanup_owner_names.push_back(event.resumption.target_owner_name);
         state.acquire_operation_names.push_back(event.acquisition.operation_name);
         state.resume_operation_names.push_back(event.resumption.operation_name);
-        state.all_cleanup_calls_enabled =
-            state.all_cleanup_calls_enabled &&
-            event.acquisition.cleanup_calls_enabled &&
-            event.resumption.cleanup_calls_enabled;
+        auto const cleanup_calls_enabled =
+            event.acquisition.cleanup_calls_enabled && event.resumption.cleanup_calls_enabled;
+        state.all_cleanup_calls_enabled = state.all_cleanup_calls_enabled && cleanup_calls_enabled;
+        if (!cleanup_calls_enabled) {
+            ++state.cleanup_call_blocker_count;
+            state.cleanup_calls_blocked_reasons.push_back(
+                event.acquisition.cleanup_calls_blocked_reason.empty() ?
+                    event.resumption.cleanup_calls_blocked_reason :
+                    event.acquisition.cleanup_calls_blocked_reason
+            );
+        } else {
+            state.cleanup_calls_blocked_reasons.push_back({});
+        }
     }
     for (auto const& event : proof_model.inserted_cleanup_state.verification_events) {
         if (event.kind == InsertedCleanupStateVerificationKind::paired) {

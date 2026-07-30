@@ -301,6 +301,7 @@ struct ComputedInsertedCleanupHandoffState {
     std::vector<std::string> cleanup_owner_names;
     std::vector<std::string> acquire_operation_names;
     std::vector<std::string> resume_operation_names;
+    std::vector<std::string> cleanup_calls_blocked_reasons;
     bool from_metadata = false;
     bool all_paired = false;
     bool all_cleanup_calls_enabled = false;
@@ -308,6 +309,7 @@ struct ComputedInsertedCleanupHandoffState {
     std::size_t verification_count = 0;
     std::size_t paired_count = 0;
     std::size_t blocked_count = 0;
+    std::size_t cleanup_call_blocker_count = 0;
 };
 
 struct ComputedInsertedCleanupTransitionState {

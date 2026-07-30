@@ -101,6 +101,7 @@ auto computed_inserted_cleanup_handoff_state_report(
     counts << " verifications " << state.verification_count;
     counts << " paired " << state.paired_count;
     counts << " blocked " << state.blocked_count;
+    counts << " cleanup-blockers " << state.cleanup_call_blocker_count;
     counts << (state.from_metadata ? " [metadata-backed]" : " [metadata-missing]");
     counts << (state.all_paired ? " [handoffs paired]" : " [handoffs blocked]");
     counts << (state.all_cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
@@ -116,6 +117,10 @@ auto computed_inserted_cleanup_handoff_state_report(
         auto fields = std::ostringstream {};
         fields << "acquire " << indexed_name_or_unknown(state.acquire_operation_names, index);
         fields << " resume " << indexed_name_or_unknown(state.resume_operation_names, index);
+        auto const blocked_reason = indexed_name_or_unknown(state.cleanup_calls_blocked_reasons, index);
+        if (blocked_reason != "<unknown>" && !blocked_reason.empty()) {
+            fields << " cleanup-blocked-reason " << blocked_reason;
+        }
         append_computed_cleanup_detail(
             lines,
             "inserted cleanup handoff",

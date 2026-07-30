@@ -76,6 +76,7 @@ void assert_computed_inserted_cleanup_handoff_reports() {
             .cleanup_owner_names = {"items"},
             .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
             .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
+            .cleanup_calls_blocked_reasons = {"later owner use"},
             .from_metadata = true,
             .all_paired = true,
             .all_cleanup_calls_enabled = false,
@@ -83,11 +84,17 @@ void assert_computed_inserted_cleanup_handoff_reports() {
             .verification_count = 1,
             .paired_count = 1,
             .blocked_count = 0,
+            .cleanup_call_blocker_count = 1,
         }
     );
     assert(paired_disabled.size() == 2);
     assert(paired_disabled[0] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_disabled_report);
-    assert(paired_disabled[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report);
+    assert(
+        paired_disabled[1].find(
+            "acquire items.computed_for.0.cleanup.acquire resume items.computed_for.0.cleanup.resume "
+            "cleanup-blocked-reason later owner use"
+        ) != std::string::npos
+    );
 
     auto paired_enabled = driver::computed_inserted_cleanup_handoff_state_report(
         pipeline::ComputedInsertedCleanupHandoffState {
