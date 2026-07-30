@@ -284,38 +284,38 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> test_only_dynamic_array_descriptor_load_cleanup_sequence_ir;
     std::vector<std::string> test_only_dynamic_array_element_drop_walk_ir;
     std::vector<ComputedDynamicArrayForProductionSequenceMetadata>
-        test_only_computed_dynamic_array_for_production_sequences;
-    std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_ir;
+        computed_dynamic_array_for_production_sequences;
+    std::vector<std::string> computed_dynamic_array_for_production_sequence_ir;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_module_ir;
     std::vector<ComputedDynamicArrayForDescriptorRenderMetadata>
-        test_only_computed_dynamic_array_for_descriptor_renders;
-    std::vector<std::string> test_only_computed_dynamic_array_for_descriptor_render_ir;
+        computed_dynamic_array_for_descriptor_renders;
+    std::vector<std::string> computed_dynamic_array_for_descriptor_render_ir;
     std::vector<ComputedDynamicArrayForLoopControlRenderMetadata>
-        test_only_computed_dynamic_array_for_loop_control_renders;
-    std::vector<std::string> test_only_computed_dynamic_array_for_loop_control_render_ir;
+        computed_dynamic_array_for_loop_control_renders;
+    std::vector<std::string> computed_dynamic_array_for_loop_control_render_ir;
     std::vector<ComputedDynamicArrayForElementAddressRenderMetadata>
-        test_only_computed_dynamic_array_for_element_address_renders;
-    std::vector<std::string> test_only_computed_dynamic_array_for_element_address_render_ir;
+        computed_dynamic_array_for_element_address_renders;
+    std::vector<std::string> computed_dynamic_array_for_element_address_render_ir;
     std::vector<ComputedDynamicArrayForElementLoadRenderMetadata>
-        test_only_computed_dynamic_array_for_element_load_renders;
-    std::vector<std::string> test_only_computed_dynamic_array_for_element_load_render_ir;
+        computed_dynamic_array_for_element_load_renders;
+    std::vector<std::string> computed_dynamic_array_for_element_load_render_ir;
     std::vector<ComputedDynamicArrayForLoopContinueRenderMetadata>
-        test_only_computed_dynamic_array_for_loop_continue_renders;
-    std::vector<std::string> test_only_computed_dynamic_array_for_loop_continue_render_ir;
+        computed_dynamic_array_for_loop_continue_renders;
+    std::vector<std::string> computed_dynamic_array_for_loop_continue_render_ir;
     std::vector<ComputedDynamicArrayForLoopRenderSequenceMetadata>
-        test_only_computed_dynamic_array_for_loop_render_sequences;
-    std::vector<std::string> test_only_computed_dynamic_array_for_loop_render_sequence_ir;
+        computed_dynamic_array_for_loop_render_sequences;
+    std::vector<std::string> computed_dynamic_array_for_loop_render_sequence_ir;
     std::vector<ComputedDynamicArrayForLoopExitCleanupMetadata>
-        test_only_computed_dynamic_array_for_loop_exit_cleanups;
-    std::vector<std::string> test_only_computed_dynamic_array_for_loop_exit_cleanup_ir;
+        computed_dynamic_array_for_loop_exit_cleanups;
+    std::vector<std::string> computed_dynamic_array_for_loop_exit_cleanup_ir;
     std::vector<ComputedDynamicArrayForCleanupTransitionMetadata>
-        test_only_computed_dynamic_array_for_cleanup_transitions;
+        computed_dynamic_array_for_cleanup_transitions;
     std::vector<ConsumedDescriptorFinalizationPlan> consumed_descriptor_finalization_plans;
     std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata>
-        test_only_computed_dynamic_array_for_consumed_cleanup_descriptors;
+        computed_dynamic_array_for_consumed_cleanup_descriptors;
     std::vector<ComputedDynamicArrayForProductionEmissionGateMetadata>
-        test_only_computed_dynamic_array_for_production_emission_gates;
-    std::vector<std::string> test_only_computed_dynamic_array_for_production_emission_gate_ir;
+        computed_dynamic_array_for_production_emission_gates;
+    std::vector<std::string> computed_dynamic_array_for_production_emission_gate_ir;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 
     auto has_errors() const -> bool;

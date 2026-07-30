@@ -2116,9 +2116,9 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
 
     assert(!computed_local_same_owner_for.has_errors());
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_renders.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_descriptor_renders.size() == 1);
     auto const& computed_local_same_owner_descriptor_render =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_renders.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_descriptor_renders.front();
     assert(computed_local_same_owner_descriptor_render.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_descriptor_render.source_line == 6);
     assert(computed_local_same_owner_descriptor_render.cleanup_owner_name == "items");
@@ -2137,26 +2137,26 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_descriptor_render_report.front() ==
         smoke::computed_dynamic_array_descriptor_render_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir.size() == 4);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_descriptor_render_ir.size() == 4);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[0] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_descriptor_render_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[1] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_descriptor_render_ir[1] ==
         "  %items.computed_for.data = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 0\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[2] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_descriptor_render_ir[2] ==
         "  %items.computed_for.length = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 1\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_descriptor_render_ir[3] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_descriptor_render_ir[3] ==
         "  %items.computed_for.capacity = extractvalue { ptr, i64, i64 } %items.computed_for.descriptor, 2\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_renders.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_loop_control_renders.size() == 1);
     auto const& computed_local_same_owner_loop_control =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_renders.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_control_renders.front();
     assert(computed_local_same_owner_loop_control.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_loop_control.source_line == 6);
     assert(computed_local_same_owner_loop_control.cleanup_owner_name == "items");
@@ -2177,24 +2177,24 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_loop_control_report.front() ==
         smoke::computed_dynamic_array_loop_control_render_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir.size() == 5);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_loop_control_render_ir.size() == 5);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir[0] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_control_render_ir[0] ==
         "  br label %items.computed_for.condition\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir[2] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_control_render_ir[2] ==
         "  %items.computed_for.index = phi i64 [ 0, %entry ], [ %items.computed_for.next.index, "
         "%items.computed_for.continue ]\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_control_render_ir[4] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_control_render_ir[4] ==
         "  br i1 %items.computed_for.more, label %items.computed_for.body, "
         "label %items.computed_for.exit\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_address_renders.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_element_address_renders.size() == 1);
     auto const& computed_local_same_owner_element_address =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_address_renders.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_element_address_renders.front();
     assert(computed_local_same_owner_element_address.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_element_address.source_line == 6);
     assert(computed_local_same_owner_element_address.cleanup_owner_name == "items");
@@ -2212,15 +2212,15 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_element_address_report.front() ==
         smoke::computed_dynamic_array_element_address_render_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_address_render_ir.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_element_address_render_ir.size() == 1);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_address_render_ir.front() ==
+        computed_local_same_owner_for.computed_dynamic_array_for_element_address_render_ir.front() ==
         "  %items.computed_for.element.addr = getelementptr i32, ptr %items.computed_for.data, "
         "i64 %items.computed_for.index\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_load_renders.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_element_load_renders.size() == 1);
     auto const& computed_local_same_owner_element_load =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_load_renders.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_element_load_renders.front();
     assert(computed_local_same_owner_element_load.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_element_load.source_line == 6);
     assert(computed_local_same_owner_element_load.cleanup_owner_name == "items");
@@ -2237,14 +2237,14 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_element_load_report.front() ==
         smoke::computed_dynamic_array_element_load_render_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_load_render_ir.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_element_load_render_ir.size() == 1);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_element_load_render_ir.front() ==
+        computed_local_same_owner_for.computed_dynamic_array_for_element_load_render_ir.front() ==
         "  %items.computed_for.item = load i32, ptr %items.computed_for.element.addr\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_continue_renders.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_loop_continue_renders.size() == 1);
     auto const& computed_local_same_owner_loop_continue =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_continue_renders.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_continue_renders.front();
     assert(computed_local_same_owner_loop_continue.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_loop_continue.source_line == 6);
     assert(computed_local_same_owner_loop_continue.cleanup_owner_name == "items");
@@ -2262,22 +2262,22 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_loop_continue_report.front() ==
         smoke::computed_dynamic_array_loop_continue_render_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_continue_render_ir.size() == 3);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_loop_continue_render_ir.size() == 3);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_continue_render_ir[0] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_continue_render_ir[0] ==
         "items.computed_for.continue:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_continue_render_ir[1] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_continue_render_ir[1] ==
         "  %items.computed_for.next.index = add i64 %items.computed_for.index, 1\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_continue_render_ir[2] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_continue_render_ir[2] ==
         "  br label %items.computed_for.condition\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequences.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequences.size() == 1);
     auto const& computed_local_same_owner_loop_sequence =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequences.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequences.front();
     assert(computed_local_same_owner_loop_sequence.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_loop_sequence.source_line == 6);
     assert(computed_local_same_owner_loop_sequence.cleanup_owner_name == "items");
@@ -2292,26 +2292,26 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_loop_sequence_report.front() ==
         smoke::computed_dynamic_array_loop_render_sequence_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir.size() == 15);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequence_ir.size() == 15);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[0] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequence_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[9] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequence_ir[9] ==
         "items.computed_for.body:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[12] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequence_ir[12] ==
         "items.computed_for.continue:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_render_sequence_ir[14] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_render_sequence_ir[14] ==
         "  br label %items.computed_for.condition\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanups.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_loop_exit_cleanups.size() == 1);
     auto const& computed_local_same_owner_loop_exit_cleanup =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanups.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_exit_cleanups.front();
     assert(computed_local_same_owner_loop_exit_cleanup.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_loop_exit_cleanup.source_line == 6);
     assert(computed_local_same_owner_loop_exit_cleanup.cleanup_owner_name == "items");
@@ -2332,19 +2332,19 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_loop_exit_cleanup_report.front() ==
         smoke::computed_dynamic_array_loop_exit_cleanup_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir.size() == 2);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_loop_exit_cleanup_ir.size() == 2);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir[0] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_exit_cleanup_ir[0] ==
         "items.computed_for.exit:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir[1] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_loop_exit_cleanup_ir[1] ==
         "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
         "from items.loop.entry to items [cleanup calls disabled]\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_cleanup_transitions.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_cleanup_transitions.size() == 1);
     auto const& computed_local_same_owner_cleanup_transition =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_cleanup_transitions.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_cleanup_transitions.front();
     assert(computed_local_same_owner_cleanup_transition.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_cleanup_transition.source_line == 6);
     assert(computed_local_same_owner_cleanup_transition.cleanup_owner_name == "items");
@@ -2369,9 +2369,9 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_cleanup_transition_report.front() ==
         smoke::computed_dynamic_array_cleanup_transition_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gates.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_production_emission_gates.size() == 1);
     auto const& computed_local_same_owner_production_gate =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gates.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_production_emission_gates.front();
     assert(computed_local_same_owner_production_gate.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_production_gate.source_line == 6);
     assert(computed_local_same_owner_production_gate.cleanup_owner_name == "items");
@@ -2392,23 +2392,23 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         computed_local_same_owner_production_gate_report.front() ==
         smoke::computed_dynamic_array_production_emission_gate_report
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir.size() == 17);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_production_emission_gate_ir.size() == 17);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[0] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_production_emission_gate_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[15] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_production_emission_gate_ir[15] ==
         "items.computed_for.exit:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_emission_gate_ir[16] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_production_emission_gate_ir[16] ==
         "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
         "from items.loop.entry to items [cleanup calls disabled]\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.size() == 1);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_production_sequences.size() == 1);
     auto const& computed_local_same_owner_sequence =
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequences.front();
+        computed_local_same_owner_for.computed_dynamic_array_for_production_sequences.front();
     assert(computed_local_same_owner_sequence.enclosing_function_name == "sum_words");
     assert(computed_local_same_owner_sequence.source_line == 6);
     assert(computed_local_same_owner_sequence.cleanup_owner_name == "items");
@@ -2433,21 +2433,21 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
         "from items.loop.entry to items [cleanup calls disabled]\n"
     );
-    assert(computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir.size() == 17);
+    assert(computed_local_same_owner_for.computed_dynamic_array_for_production_sequence_ir.size() == 17);
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[0] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_production_sequence_ir[0] ==
         "  %items.computed_for.descriptor = load { ptr, i64, i64 }, ptr %items.addr\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[9] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_production_sequence_ir[9] ==
         "items.computed_for.body:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[15] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_production_sequence_ir[15] ==
         "items.computed_for.exit:\n"
     );
     assert(
-        computed_local_same_owner_for.test_only_computed_dynamic_array_for_production_sequence_ir[16] ==
+        computed_local_same_owner_for.computed_dynamic_array_for_production_sequence_ir[16] ==
         "  ; cleanup state handoff resume operation items.computed_for.cleanup.resume "
         "from items.loop.entry to items [cleanup calls disabled]\n"
     );
@@ -2486,7 +2486,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     );
     assert(
         computed_local_same_owner_metadata_with_comment_emission
-            .test_only_computed_dynamic_array_for_production_sequence_ir.size() == 17
+            .computed_dynamic_array_for_production_sequence_ir.size() == 17
     );
     assert(
         computed_local_same_owner_metadata_with_comment_emission.ir_text.find(

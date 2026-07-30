@@ -2068,63 +2068,63 @@ auto LlvmIrEmissionResult::dynamic_array_cleanup_emission_capability_report() co
 auto LlvmIrEmissionResult::computed_dynamic_array_for_production_sequence_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_production_sequence_metadata_report(
-        test_only_computed_dynamic_array_for_production_sequences
+        computed_dynamic_array_for_production_sequences
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_descriptor_render_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_descriptor_render_metadata_report(
-        test_only_computed_dynamic_array_for_descriptor_renders
+        computed_dynamic_array_for_descriptor_renders
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_control_render_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_loop_control_render_metadata_report(
-        test_only_computed_dynamic_array_for_loop_control_renders
+        computed_dynamic_array_for_loop_control_renders
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_element_address_render_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_element_address_render_metadata_report(
-        test_only_computed_dynamic_array_for_element_address_renders
+        computed_dynamic_array_for_element_address_renders
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_element_load_render_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_element_load_render_metadata_report(
-        test_only_computed_dynamic_array_for_element_load_renders
+        computed_dynamic_array_for_element_load_renders
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_continue_render_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_loop_continue_render_metadata_report(
-        test_only_computed_dynamic_array_for_loop_continue_renders
+        computed_dynamic_array_for_loop_continue_renders
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_render_sequence_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_loop_render_sequence_metadata_report(
-        test_only_computed_dynamic_array_for_loop_render_sequences
+        computed_dynamic_array_for_loop_render_sequences
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_loop_exit_cleanup_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_loop_exit_cleanup_metadata_report(
-        test_only_computed_dynamic_array_for_loop_exit_cleanups
+        computed_dynamic_array_for_loop_exit_cleanups
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_cleanup_transition_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_cleanup_transition_metadata_report(
-        test_only_computed_dynamic_array_for_cleanup_transitions
+        computed_dynamic_array_for_cleanup_transitions
     );
 }
 
@@ -2132,10 +2132,10 @@ auto LlvmIrEmissionResult::consumed_descriptor_finalization_plan_report() const
     -> std::vector<std::string> {
     auto lines = std::vector<std::string> {};
     lines.reserve(
-        test_only_computed_dynamic_array_for_consumed_cleanup_descriptors.size() +
+        computed_dynamic_array_for_consumed_cleanup_descriptors.size() +
         consumed_descriptor_finalization_plans.size()
     );
-    for (auto const& descriptor : test_only_computed_dynamic_array_for_consumed_cleanup_descriptors) {
+    for (auto const& descriptor : computed_dynamic_array_for_consumed_cleanup_descriptors) {
         lines.push_back(format_consumed_descriptor_finalization_plan(descriptor.finalization_plan));
     }
     for (auto const& plan : consumed_descriptor_finalization_plans) {
@@ -2147,14 +2147,14 @@ auto LlvmIrEmissionResult::consumed_descriptor_finalization_plan_report() const
 auto LlvmIrEmissionResult::computed_dynamic_array_for_consumed_cleanup_descriptor_model_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_consumed_cleanup_descriptor_metadata_report(
-        test_only_computed_dynamic_array_for_consumed_cleanup_descriptors
+        computed_dynamic_array_for_consumed_cleanup_descriptors
     );
 }
 
 auto LlvmIrEmissionResult::computed_dynamic_array_for_production_emission_gate_report() const
     -> std::vector<std::string> {
     return format_computed_dynamic_array_for_production_emission_gate_metadata_report(
-        test_only_computed_dynamic_array_for_production_emission_gates
+        computed_dynamic_array_for_production_emission_gates
     );
 }
 
@@ -2333,87 +2333,87 @@ auto emit_module(
         }
     }
     if (options.collect_computed_dynamic_array_for_descriptor_renders) {
-        result.test_only_computed_dynamic_array_for_descriptor_renders =
+        result.computed_dynamic_array_for_descriptor_renders =
             collect_computed_dynamic_array_for_descriptor_renders(module, context);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_descriptor_render_ir,
-            result.test_only_computed_dynamic_array_for_descriptor_renders
+            result.computed_dynamic_array_for_descriptor_render_ir,
+            result.computed_dynamic_array_for_descriptor_renders
         );
     }
     if (options.collect_computed_dynamic_array_for_loop_control_renders) {
-        result.test_only_computed_dynamic_array_for_loop_control_renders =
+        result.computed_dynamic_array_for_loop_control_renders =
             collect_computed_dynamic_array_for_loop_control_renders(module, context);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_loop_control_render_ir,
-            result.test_only_computed_dynamic_array_for_loop_control_renders
+            result.computed_dynamic_array_for_loop_control_render_ir,
+            result.computed_dynamic_array_for_loop_control_renders
         );
     }
     if (options.collect_computed_dynamic_array_for_element_address_renders) {
-        result.test_only_computed_dynamic_array_for_element_address_renders =
+        result.computed_dynamic_array_for_element_address_renders =
             collect_computed_dynamic_array_for_element_address_renders(module, context);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_element_address_render_ir,
-            result.test_only_computed_dynamic_array_for_element_address_renders
+            result.computed_dynamic_array_for_element_address_render_ir,
+            result.computed_dynamic_array_for_element_address_renders
         );
     }
     if (options.collect_computed_dynamic_array_for_element_load_renders) {
-        result.test_only_computed_dynamic_array_for_element_load_renders =
+        result.computed_dynamic_array_for_element_load_renders =
             collect_computed_dynamic_array_for_element_load_renders(module, context);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_element_load_render_ir,
-            result.test_only_computed_dynamic_array_for_element_load_renders
+            result.computed_dynamic_array_for_element_load_render_ir,
+            result.computed_dynamic_array_for_element_load_renders
         );
     }
     if (options.collect_computed_dynamic_array_for_loop_continue_renders) {
-        result.test_only_computed_dynamic_array_for_loop_continue_renders =
+        result.computed_dynamic_array_for_loop_continue_renders =
             collect_computed_dynamic_array_for_loop_continue_renders(module, context);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_loop_continue_render_ir,
-            result.test_only_computed_dynamic_array_for_loop_continue_renders
+            result.computed_dynamic_array_for_loop_continue_render_ir,
+            result.computed_dynamic_array_for_loop_continue_renders
         );
     }
     if (options.collect_computed_dynamic_array_for_loop_render_sequences) {
-        result.test_only_computed_dynamic_array_for_loop_render_sequences =
+        result.computed_dynamic_array_for_loop_render_sequences =
             collect_computed_dynamic_array_for_loop_render_sequences(module, context);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_loop_render_sequence_ir,
-            result.test_only_computed_dynamic_array_for_loop_render_sequences
+            result.computed_dynamic_array_for_loop_render_sequence_ir,
+            result.computed_dynamic_array_for_loop_render_sequences
         );
     }
     if (options.collect_computed_dynamic_array_for_loop_exit_cleanups) {
-        result.test_only_computed_dynamic_array_for_loop_exit_cleanups =
+        result.computed_dynamic_array_for_loop_exit_cleanups =
             collect_computed_dynamic_array_for_loop_exit_cleanups(module, context);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_loop_exit_cleanup_ir,
-            result.test_only_computed_dynamic_array_for_loop_exit_cleanups
+            result.computed_dynamic_array_for_loop_exit_cleanup_ir,
+            result.computed_dynamic_array_for_loop_exit_cleanups
         );
     }
     if (options.collect_computed_dynamic_array_for_cleanup_transitions) {
-        result.test_only_computed_dynamic_array_for_cleanup_transitions =
+        result.computed_dynamic_array_for_cleanup_transitions =
             collect_computed_dynamic_array_for_cleanup_transitions(module, context);
     }
-    result.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors =
+    result.computed_dynamic_array_for_consumed_cleanup_descriptors =
         collect_computed_dynamic_array_for_consumed_cleanup_descriptors(module, context, options);
     if (options.collect_computed_dynamic_array_for_production_emission_gates) {
-        result.test_only_computed_dynamic_array_for_production_emission_gates =
+        result.computed_dynamic_array_for_production_emission_gates =
             collect_computed_dynamic_array_for_production_emission_gates(module, context, options);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_production_emission_gate_ir,
-            result.test_only_computed_dynamic_array_for_production_emission_gates
+            result.computed_dynamic_array_for_production_emission_gate_ir,
+            result.computed_dynamic_array_for_production_emission_gates
         );
     }
     if (options.collect_computed_dynamic_array_for_production_sequences ||
         options.emit_computed_dynamic_array_for_production_sequence_comments) {
-        result.test_only_computed_dynamic_array_for_production_sequences =
+        result.computed_dynamic_array_for_production_sequences =
             collect_computed_dynamic_array_for_production_sequences(module, context);
         append_rendered_ir(
-            result.test_only_computed_dynamic_array_for_production_sequence_ir,
-            result.test_only_computed_dynamic_array_for_production_sequences
+            result.computed_dynamic_array_for_production_sequence_ir,
+            result.computed_dynamic_array_for_production_sequences
         );
         if (options.emit_computed_dynamic_array_for_production_sequence_comments) {
             result.computed_dynamic_array_for_production_sequence_module_ir =
                 render_computed_dynamic_array_for_production_sequence_module_comments(
-                    result.test_only_computed_dynamic_array_for_production_sequences
+                    result.computed_dynamic_array_for_production_sequences
                 );
         }
     }

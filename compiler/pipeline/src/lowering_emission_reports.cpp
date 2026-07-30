@@ -15,13 +15,13 @@ auto build_computed_dynamic_array_for_production_sequence_state(
 ) -> ComputedDynamicArrayForProductionSequenceState {
     auto state = ComputedDynamicArrayForProductionSequenceState {
         .module_comments_emitted = !emission.computed_dynamic_array_for_production_sequence_module_ir.empty(),
-        .sequence_count = emission.test_only_computed_dynamic_array_for_production_sequences.size(),
+        .sequence_count = emission.computed_dynamic_array_for_production_sequences.size(),
         .module_comment_line_count =
             emission.computed_dynamic_array_for_production_sequence_module_ir.size(),
     };
     state.sequence_metadata_available = state.sequence_count > 0;
-    state.cleanup_owner_names.reserve(emission.test_only_computed_dynamic_array_for_production_sequences.size());
-    for (auto const& sequence : emission.test_only_computed_dynamic_array_for_production_sequences) {
+    state.cleanup_owner_names.reserve(emission.computed_dynamic_array_for_production_sequences.size());
+    for (auto const& sequence : emission.computed_dynamic_array_for_production_sequences) {
         state.cleanup_owner_names.push_back(sequence.cleanup_owner_name);
         state.rendered_ir_snippet_count += sequence.rendered_ir.size();
     }
@@ -31,7 +31,7 @@ auto build_computed_dynamic_array_for_production_sequence_state(
 auto build_computed_dynamic_array_for_descriptor_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForDescriptorRenderState {
-    auto const& renders = emission.test_only_computed_dynamic_array_for_descriptor_renders;
+    auto const& renders = emission.computed_dynamic_array_for_descriptor_renders;
     auto state = ComputedDynamicArrayForDescriptorRenderState {
         .render_count = renders.size(),
     };
@@ -71,7 +71,7 @@ auto build_computed_dynamic_array_for_descriptor_render_state(
 auto build_computed_dynamic_array_for_loop_control_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForLoopControlRenderState {
-    auto const& renders = emission.test_only_computed_dynamic_array_for_loop_control_renders;
+    auto const& renders = emission.computed_dynamic_array_for_loop_control_renders;
     auto state = ComputedDynamicArrayForLoopControlRenderState {
         .render_count = renders.size(),
     };
@@ -117,7 +117,7 @@ auto build_computed_dynamic_array_for_loop_control_render_state(
 auto build_computed_dynamic_array_for_element_address_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForElementAddressRenderState {
-    auto const& renders = emission.test_only_computed_dynamic_array_for_element_address_renders;
+    auto const& renders = emission.computed_dynamic_array_for_element_address_renders;
     auto state = ComputedDynamicArrayForElementAddressRenderState {
         .render_count = renders.size(),
     };
@@ -154,7 +154,7 @@ auto build_computed_dynamic_array_for_element_address_render_state(
 auto build_computed_dynamic_array_for_element_load_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForElementLoadRenderState {
-    auto const& renders = emission.test_only_computed_dynamic_array_for_element_load_renders;
+    auto const& renders = emission.computed_dynamic_array_for_element_load_renders;
     auto state = ComputedDynamicArrayForElementLoadRenderState {
         .render_count = renders.size(),
     };
@@ -188,7 +188,7 @@ auto build_computed_dynamic_array_for_element_load_render_state(
 auto build_computed_dynamic_array_for_loop_continue_render_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForLoopContinueRenderState {
-    auto const& renders = emission.test_only_computed_dynamic_array_for_loop_continue_renders;
+    auto const& renders = emission.computed_dynamic_array_for_loop_continue_renders;
     auto state = ComputedDynamicArrayForLoopContinueRenderState {
         .render_count = renders.size(),
     };
@@ -225,7 +225,7 @@ auto build_computed_dynamic_array_for_loop_continue_render_state(
 auto build_computed_dynamic_array_for_loop_render_sequence_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForLoopRenderSequenceState {
-    auto const& sequences = emission.test_only_computed_dynamic_array_for_loop_render_sequences;
+    auto const& sequences = emission.computed_dynamic_array_for_loop_render_sequences;
     auto state = ComputedDynamicArrayForLoopRenderSequenceState {
         .sequence_count = sequences.size(),
     };
@@ -253,7 +253,7 @@ auto build_computed_dynamic_array_for_loop_render_sequence_state(
 auto build_computed_dynamic_array_for_loop_exit_cleanup_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForLoopExitCleanupState {
-    auto const& cleanups = emission.test_only_computed_dynamic_array_for_loop_exit_cleanups;
+    auto const& cleanups = emission.computed_dynamic_array_for_loop_exit_cleanups;
     auto state = ComputedDynamicArrayForLoopExitCleanupState {
         .cleanup_count = cleanups.size(),
     };
@@ -290,7 +290,7 @@ auto build_computed_dynamic_array_for_loop_exit_cleanup_state(
 auto build_computed_dynamic_array_for_cleanup_transition_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForCleanupTransitionState {
-    auto const& transitions = emission.test_only_computed_dynamic_array_for_cleanup_transitions;
+    auto const& transitions = emission.computed_dynamic_array_for_cleanup_transitions;
     auto state = ComputedDynamicArrayForCleanupTransitionState {
         .transition_count = transitions.size(),
     };
@@ -331,7 +331,7 @@ auto build_computed_dynamic_array_for_production_emission_gate_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionEmissionGateState {
     auto state = ComputedDynamicArrayForProductionEmissionGateState {
-        .gate_count = emission.test_only_computed_dynamic_array_for_production_emission_gates.size(),
+        .gate_count = emission.computed_dynamic_array_for_production_emission_gates.size(),
     };
     state.gate_metadata_available = state.gate_count > 0;
     state.all_ownership_ready = state.gate_metadata_available;
@@ -340,8 +340,8 @@ auto build_computed_dynamic_array_for_production_emission_gate_state(
     state.all_function_cleanup_resumption_ready = state.gate_metadata_available;
     state.all_exit_cleanup_ready = state.gate_metadata_available;
     state.all_production_sequences_planned = state.gate_metadata_available;
-    state.cleanup_owner_names.reserve(emission.test_only_computed_dynamic_array_for_production_emission_gates.size());
-    for (auto const& gate : emission.test_only_computed_dynamic_array_for_production_emission_gates) {
+    state.cleanup_owner_names.reserve(emission.computed_dynamic_array_for_production_emission_gates.size());
+    for (auto const& gate : emission.computed_dynamic_array_for_production_emission_gates) {
         state.cleanup_owner_names.push_back(gate.cleanup_owner_name);
         state.rendered_ir_snippet_count += gate.rendered_ir.size();
         state.all_ownership_ready = state.all_ownership_ready && gate.ownership_ready;
@@ -382,10 +382,10 @@ auto build_consumed_descriptor_finalization_state(
 ) -> ConsumedDescriptorFinalizationState {
     auto state = ConsumedDescriptorFinalizationState {
         .computed_descriptor_plan_count =
-            emission.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors.size(),
+            emission.computed_dynamic_array_for_consumed_cleanup_descriptors.size(),
         .emitted_finalization_plan_count = emission.consumed_descriptor_finalization_plans.size(),
     };
-    for (auto const& descriptor : emission.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors) {
+    for (auto const& descriptor : emission.computed_dynamic_array_for_consumed_cleanup_descriptors) {
         record_consumed_descriptor_finalization_plan(state, descriptor.finalization_plan);
     }
     for (auto const& plan : emission.consumed_descriptor_finalization_plans) {
@@ -398,7 +398,7 @@ auto build_consumed_descriptor_finalization_state(
 auto build_computed_consumed_cleanup_descriptor_model_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedConsumedCleanupDescriptorModelState {
-    auto const& descriptors = emission.test_only_computed_dynamic_array_for_consumed_cleanup_descriptors;
+    auto const& descriptors = emission.computed_dynamic_array_for_consumed_cleanup_descriptors;
     auto state = ComputedConsumedCleanupDescriptorModelState {
         .descriptor_model_count = descriptors.size(),
     };
