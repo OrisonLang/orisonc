@@ -1058,6 +1058,92 @@ int main() {
             "dynamic array cleanup production readiness ready",
         }
     );
+
+    auto dynamic_array_computed_later_owner_use_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_computed_later_owner_use.or";
+    std::filesystem::remove(dynamic_array_computed_later_owner_use_path, remove_error);
+    write_fixture(
+        dynamic_array_computed_later_owner_use_path,
+        "demo.dynamicarraycomputedlaterowneruse",
+        {
+            "function sum_words(flag: Bool) -> UInt32",
+            "    let items: DynamicArray<UInt32> = DynamicArray()",
+            "    var total = 0 as UInt32",
+            "    for word in flag ? items : items",
+            "        total = total + word",
+            "    for word in flag ? items : items",
+            "        total = total + word",
+            "    total",
+        }
+    );
+    auto dynamic_array_computed_later_owner_use_audit =
+        run_dynamic_array_cleanup_audit(app, dynamic_array_computed_later_owner_use_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_later_owner_use_audit,
+        {
+            "computed DynamicArray for inserted cleanup state verification "
+            "acquire-operation items.computed_for.0.cleanup.acquire",
+            "[cleanup calls disabled] [cleanup blocked: later owner use]",
+            "computed DynamicArray for cleanup call emission gate blocked "
+            "acquire-operation items.computed_for.0.cleanup.acquire",
+            "[cleanup blocked: later owner use] [cleanup call emission blocked]",
+            "computed DynamicArray for cleanup call plan planned "
+            "cleanup-operation items.computed_for.0.cleanup.resume.call",
+            "[cleanup blocked: later owner use] [data operand proven]",
+            "computed DynamicArray for inserted cleanup state verification "
+            "acquire-operation items.computed_for.1.cleanup.acquire",
+            "[cleanup calls enabled]",
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.1.data",
+        }
+    );
+    assert(
+        dynamic_array_computed_later_owner_use_audit.stdout_text.find(
+            "computed DynamicArray for inserted cleanup call cleanup-operation "
+            "items.computed_for.0.cleanup.resume.call"
+        ) == std::string::npos
+    );
+
+    auto dynamic_array_computed_active_loop_body_path =
+        std::filesystem::temp_directory_path() / "orison_driver_drop_report_computed_active_loop_body.or";
+    std::filesystem::remove(dynamic_array_computed_active_loop_body_path, remove_error);
+    write_fixture(
+        dynamic_array_computed_active_loop_body_path,
+        "demo.dynamicarraycomputedactiveloopbody",
+        {
+            "function sum_words(flag: Bool) -> UInt32",
+            "    let items: DynamicArray<UInt32> = DynamicArray()",
+            "    var total = 0 as UInt32",
+            "    while flag",
+            "        for word in flag ? items : items",
+            "            total = total + word",
+            "        break",
+            "    total",
+        }
+    );
+    auto dynamic_array_computed_active_loop_body_audit =
+        run_dynamic_array_cleanup_audit(app, dynamic_array_computed_active_loop_body_path);
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_active_loop_body_audit,
+        {
+            "computed DynamicArray for inserted cleanup state verification "
+            "acquire-operation items.computed_for.1.cleanup.acquire",
+            "[cleanup calls disabled] [cleanup blocked: active loop body]",
+            "computed DynamicArray for cleanup call emission gate blocked "
+            "acquire-operation items.computed_for.1.cleanup.acquire",
+            "[cleanup blocked: active loop body] [cleanup call emission blocked]",
+            "computed DynamicArray for cleanup call plan planned "
+            "cleanup-operation items.computed_for.1.cleanup.resume.call",
+            "[cleanup blocked: active loop body] [data operand proven]",
+        }
+    );
+    assert(dynamic_array_computed_active_loop_body_audit.stdout_text.find("[cleanup calls enabled]") == std::string::npos);
+    assert(
+        dynamic_array_computed_active_loop_body_audit.stdout_text.find(
+            "computed DynamicArray for inserted cleanup call cleanup-operation "
+            "items.computed_for.1.cleanup.resume.call"
+        ) == std::string::npos
+    );
+
     auto dynamic_array_computed_local_same_owner_insertion_capability =
         run_computed_dynamic_array_cleanup_call_insertion_capability(app, dynamic_array_computed_local_same_owner_path);
     assert_success_with_stdout_contains(

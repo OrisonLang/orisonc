@@ -195,6 +195,42 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.consumed_descriptor_finalization_plan_report =
             std::move(emitted_result.consumed_descriptor_finalization_plan_report);
     }
+    if (!emitted_result.computed_dynamic_array_for_inserted_cleanup_transition_report.empty()) {
+        result.computed_dynamic_array_for_inserted_cleanup_transition_report =
+            std::move(emitted_result.computed_dynamic_array_for_inserted_cleanup_transition_report);
+    }
+    if (!emitted_result.computed_dynamic_array_for_inserted_cleanup_state_verification_report.empty()) {
+        result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
+            std::move(emitted_result.computed_dynamic_array_for_inserted_cleanup_state_verification_report);
+    }
+    if (!emitted_result.computed_dynamic_array_for_cleanup_call_emission_gate_report.empty()) {
+        result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
+            std::move(emitted_result.computed_dynamic_array_for_cleanup_call_emission_gate_report);
+    }
+    if (!emitted_result.computed_dynamic_array_for_cleanup_call_plan_report.empty()) {
+        result.computed_dynamic_array_for_cleanup_call_plan_report =
+            std::move(emitted_result.computed_dynamic_array_for_cleanup_call_plan_report);
+    }
+    if (!emitted_result.computed_dynamic_array_for_cleanup_call_render_report.empty()) {
+        result.computed_dynamic_array_for_cleanup_call_render_report =
+            std::move(emitted_result.computed_dynamic_array_for_cleanup_call_render_report);
+    }
+    if (!emitted_result.computed_dynamic_array_for_cleanup_call_insertion_gate_report.empty()) {
+        result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
+            std::move(emitted_result.computed_dynamic_array_for_cleanup_call_insertion_gate_report);
+    }
+    if (!emitted_result.computed_dynamic_array_for_inserted_cleanup_call_report.empty()) {
+        result.computed_dynamic_array_for_inserted_cleanup_call_report =
+            std::move(emitted_result.computed_dynamic_array_for_inserted_cleanup_call_report);
+    }
+    if (!emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.empty()) {
+        result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report =
+            std::move(emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report);
+    }
+    if (!emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_report.empty()) {
+        result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
+            std::move(emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_report);
+    }
 }
 
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
@@ -808,7 +844,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-audit") {
         return dynamic_array_cleanup_audit(
             std::filesystem::path(args[2]),
-            dynamic_array_cleanup_report_options()
+            computed_cleanup_call_insertion_readiness_options()
         );
     }
 
