@@ -3720,7 +3720,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_two_loops = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_two_loops_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
@@ -4040,7 +4039,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_if_then_later_loop = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_if_then_later_loop_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
@@ -4094,7 +4092,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_switch_case_later_loop = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_switch_case_later_loop_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
@@ -4131,7 +4128,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_while_body = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_while_body_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,
