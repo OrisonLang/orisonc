@@ -1104,6 +1104,21 @@ int main() {
             "items.computed_for.0.cleanup.resume.call"
         ) == std::string::npos
     );
+    auto dynamic_array_computed_later_owner_use_insertion_readiness =
+        run_computed_dynamic_array_cleanup_call_insertion_readiness(
+            app,
+            dynamic_array_computed_later_owner_use_path
+        );
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_later_owner_use_insertion_readiness,
+        {
+            "computed DynamicArray cleanup call insertion readiness blocked gates 2 ready 1 blocked 1 "
+            "cleanup-blockers 1",
+            "cleanup-operation items.computed_for.0.cleanup.resume.call "
+            "cleanup-blocked-reason later owner use",
+            "cleanup-operation items.computed_for.1.cleanup.resume.call",
+        }
+    );
 
     auto dynamic_array_computed_active_loop_body_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_computed_active_loop_body.or";
@@ -1146,6 +1161,20 @@ int main() {
             "computed DynamicArray for inserted cleanup call cleanup-operation "
             "items.computed_for.1.cleanup.resume.call"
         ) == std::string::npos
+    );
+    auto dynamic_array_computed_active_loop_body_insertion_readiness =
+        run_computed_dynamic_array_cleanup_call_insertion_readiness(
+            app,
+            dynamic_array_computed_active_loop_body_path
+        );
+    assert_success_with_stdout_contains(
+        dynamic_array_computed_active_loop_body_insertion_readiness,
+        {
+            "computed DynamicArray cleanup call insertion readiness blocked gates 1 ready 0 blocked 1 "
+            "cleanup-blockers 1",
+            "cleanup-operation items.computed_for.1.cleanup.resume.call "
+            "cleanup-blocked-reason active loop body",
+        }
     );
 
     auto dynamic_array_computed_local_same_owner_insertion_capability =
