@@ -1370,7 +1370,13 @@ auto collect_test_only_computed_dynamic_array_for_consumed_cleanup_descriptors(
     auto descriptors = std::vector<ComputedDynamicArrayForConsumedCleanupDescriptorMetadata> {};
     auto const insertion_capability =
         computed_dynamic_array_cleanup_call_insertion_capability(options);
-    if (!options.test_only_enable_computed_dynamic_array_for_lowering || !insertion_capability.enabled) {
+    auto const production_computed_cleanup_emission_enabled =
+        options.enable_computed_dynamic_array_consumed_cleanup_descriptor_collection &&
+        insertion_capability.enabled;
+    auto const computed_cleanup_descriptor_collection_enabled =
+        (options.test_only_enable_computed_dynamic_array_for_lowering && insertion_capability.enabled) ||
+        production_computed_cleanup_emission_enabled;
+    if (!computed_cleanup_descriptor_collection_enabled) {
         return descriptors;
     }
     collect_test_only_computed_dynamic_array_for_module(

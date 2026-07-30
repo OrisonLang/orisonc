@@ -1814,22 +1814,27 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .consumed_descriptor_finalization_plan_report.size() == 1
+            .consumed_descriptor_finalization_plan_report.size() == 2
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .consumed_descriptor_finalization_plan_report.front() ==
+            .consumed_descriptor_finalization_plan_report[0] ==
+        smoke::consumed_descriptor_finalization_plan_report
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for
+            .consumed_descriptor_finalization_plan_report[1] ==
         smoke::local_sum_words_consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .consumed_descriptor_finalization_state.computed_descriptor_plan_count == 0
+            .consumed_descriptor_finalization_state.computed_descriptor_plan_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_for
             .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 1
     );
-    assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.ready_plan_count == 1);
+    assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.ready_plan_count == 2);
     assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.blocked_plan_count == 0);
     assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.all_ready);
     assert(
@@ -1842,18 +1847,18 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.empty()
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 0
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.ready_model_count == 0
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.ready_model_count == 1
     );
     assert(
-        !computed_dynamic_array_local_same_owner_for
+        computed_dynamic_array_local_same_owner_for
              .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.all_finalization_ready
     );
     assert(
@@ -2109,7 +2114,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_lowered_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
@@ -2281,7 +2285,6 @@ auto main() -> int {
         orison::pipeline::CompilePipelineOptions {
             .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .computed_dynamic_array_local_cleanup_call_insertion_enabled = true,
@@ -2351,7 +2354,6 @@ auto main() -> int {
         orison::pipeline::CompilePipelineOptions {
             .test_only_collect_computed_dynamic_array_for_production_emission_gates = true,
             .test_only_collect_computed_dynamic_array_for_production_sequences = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
             .test_only_insert_computed_dynamic_array_cleanup_calls = true,
             .dynamic_array_production_construction_lowering_enabled = true,
@@ -2726,7 +2728,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_operand_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
@@ -2813,7 +2814,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_authorized_cleanup_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
             .dynamic_array_local_lowering_enabled = false,
             .dynamic_array_production_construction_lowering_enabled = true,
@@ -3059,7 +3059,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
             .test_only_insert_computed_dynamic_array_cleanup_calls = true,
             .dynamic_array_production_construction_lowering_enabled = true,
@@ -3363,7 +3362,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
             .test_only_insert_computed_dynamic_array_cleanup_calls = true,
             .test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = true,
@@ -3455,7 +3453,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_handoff_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
@@ -3583,7 +3580,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_run = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .test_only_authorize_computed_dynamic_array_cleanup_calls = true,
             .test_only_insert_computed_dynamic_array_cleanup_calls = true,
             .dynamic_array_production_construction_lowering_enabled = true,
