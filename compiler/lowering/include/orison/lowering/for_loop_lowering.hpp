@@ -15,6 +15,7 @@
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/type_lowering.hpp"
+#include "orison/semantics/drop_model.hpp"
 #include "orison/syntax/module_parser.hpp"
 
 #include <cstddef>
@@ -221,6 +222,76 @@ inline void consume_computed_dynamic_array_local_cleanup_plan(
     }
 }
 
+inline auto computed_dynamic_array_element_drop_symbol_name(
+    std::string_view cleanup_owner_name,
+    std::string_view element_source_type_name,
+    LlvmIrEmissionOptions const& options
+) -> std::optional<std::string> {
+    auto expected_owner_name = std::string {cleanup_owner_name} + ".element";
+    auto expected_symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
+    for (auto const& authorization : options.semantic_drop_lowering_authorizations) {
+        if (authorization.authorized &&
+            authorization.site.owner_name == expected_owner_name &&
+            authorization.site.source_type_name == element_source_type_name &&
+            authorization.site.abi_symbol_name == expected_symbol_name) {
+            return expected_symbol_name;
+        }
+    }
+    for (auto const& authorization : options.semantic_drop_lowering_authorizations) {
+        if (authorization.authorized &&
+            authorization.site.owner_name.ends_with(".element") &&
+            authorization.site.source_type_name == element_source_type_name &&
+            authorization.site.abi_symbol_name == expected_symbol_name) {
+            return expected_symbol_name;
+        }
+    }
+    return std::nullopt;
+}
+
+inline auto computed_dynamic_array_drop_label_prefix(std::string_view name_prefix) -> std::string {
+    auto label_prefix = std::string {name_prefix};
+    if (!label_prefix.empty() && label_prefix.front() == '%') {
+        label_prefix.erase(label_prefix.begin());
+    }
+    return label_prefix;
+}
+
+inline auto emit_computed_dynamic_array_element_drop_walk(
+    DynamicArrayConstructionPlan const& plan,
+    std::string_view data_pointer_name,
+    std::string_view length_name,
+    std::string_view name_prefix,
+    std::string_view entry_block_name,
+    std::string_view drop_symbol_name
+) -> std::string {
+    auto output = std::ostringstream {};
+    auto prefix = std::string {name_prefix};
+    auto label_prefix = computed_dynamic_array_drop_label_prefix(name_prefix);
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.walk:\n";
+    output << "  " << prefix << ".drop.index = phi i64 [ 0, %" << entry_block_name << " ],";
+    output << " [ " << prefix << ".drop.next, %" << label_prefix << ".drop.body ]\n";
+    output << "  " << prefix << ".drop.more = icmp ult i64 " << prefix << ".drop.index";
+    output << ", " << length_name << "\n";
+    output << "  br i1 " << prefix << ".drop.more";
+    output << ", label %" << label_prefix << ".drop.body";
+    output << ", label %" << label_prefix << ".drop.done\n";
+    output << label_prefix << ".drop.body:\n";
+    output << emit_dynamic_array_element_address(
+        plan,
+        prefix + ".drop.element.addr",
+        data_pointer_name,
+        prefix + ".drop.index"
+    );
+    output << "  ; drop element " << plan.element_source_type_name;
+    output << " at " << prefix << ".drop.element.addr using " << drop_symbol_name << "\n";
+    output << "  call void @" << drop_symbol_name << "(ptr " << prefix << ".drop.element.addr)\n";
+    output << "  " << prefix << ".drop.next = add i64 " << prefix << ".drop.index, 1\n";
+    output << "  br label %" << label_prefix << ".drop.walk\n";
+    output << label_prefix << ".drop.done:\n";
+    return output.str();
+}
+
 template <typename LowerBody>
 auto lower_sequence_for_statement(
     syntax::StatementSyntax const& statement,
@@ -409,6 +480,7 @@ auto lower_sequence_for_statement(
                     .descriptor_storage_name = descriptor_plan.descriptor_storage_name,
                 };
             }
+            auto cleanup_continuation_block = loop_exit_plan.exit_block_name;
             if (computed_dynamic_array_cleanup_call_insertion_capability(context.options).enabled &&
                 computed_cleanup_calls_enabled) {
                 if (element_size_bytes.has_value()) {
@@ -420,6 +492,26 @@ auto lower_sequence_for_statement(
                         .element_size_bytes = *element_size_bytes,
                         .operation = DynamicArrayRuntimeOperation::deallocate,
                     };
+                    auto element_drop_symbol_name = computed_dynamic_array_element_drop_symbol_name(
+                        cleanup_sequence_plan.cleanup_owner_name,
+                        sequence->element_source_type_name,
+                        context.options
+                    );
+                    if (element_drop_symbol_name.has_value()) {
+                        auto drop_walk_prefix = "%" + cleanup_sequence_plan.cleanup_owner_name +
+                            ".computed_dynamic_array_cleanup" +
+                            std::to_string(session.state.next_temporary_index++);
+                        output << emit_computed_dynamic_array_element_drop_walk(
+                            cleanup_call_plan,
+                            descriptor_plan.data_pointer_name,
+                            descriptor_plan.length_name,
+                            drop_walk_prefix,
+                            loop_exit_plan.exit_block_name,
+                            *element_drop_symbol_name
+                        );
+                        cleanup_continuation_block =
+                            computed_dynamic_array_drop_label_prefix(drop_walk_prefix) + ".drop.done";
+                    }
                     output << emit_dynamic_array_deallocation_call(
                         cleanup_call_plan,
                         descriptor_plan.data_pointer_name,
@@ -456,7 +548,7 @@ auto lower_sequence_for_statement(
                     std::move(*cleanup_call_operands)
                 );
             }
-            session.state.current_block = loop_exit_plan.exit_block_name;
+            session.state.current_block = cleanup_continuation_block;
             return StatementFlow::falls_through;
         }
 

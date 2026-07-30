@@ -713,6 +713,9 @@ representation.
   implementation for the element type, local descriptor cleanup emits an initialized-element drop walk before backing
   storage deallocation. Without element cleanup authorization, owned-element local cleanup remains blocked rather than
   silently deallocating initialized owned elements.
+- Computed same-owner final-use cleanup now reuses source-backed element Drop authorization for owned local
+  `DynamicArray<Payload>` iterables. The lowered path emits the initialized-element drop walk after the loop exit
+  handoff and before descriptor deallocation/finalization, while keeping the consumed local cleanup plan suppression.
 - Production-gated dynamic-array parameter descriptor lowering is now limited to scalar or non-owning element types.
   `DynamicArray<UInt32>` parameters lower to `{ ptr, i64, i64 }` and can emit descriptor cleanup under the production
   signature/cleanup gates, while owned-element parameters such as `DynamicArray<Payload>` remain rejected unless the

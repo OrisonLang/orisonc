@@ -2724,6 +2724,83 @@ auto main() -> int {
             "items.computed_for.0.exit:\n"
         ) != std::string::npos
     );
+    auto computed_dynamic_array_local_owned_same_owner_for_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_local_owned_same_owner_for.or";
+    {
+        auto local_owned_same_owner_for_source =
+            std::ofstream(computed_dynamic_array_local_owned_same_owner_for_path);
+        local_owned_same_owner_for_source
+            << "package demo.pipeline.dynamicarraylocalownedsameownerfor\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function main() -> Int64\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    var total = 0 as Int64\n"
+            << "    items.push(Payload(5))\n"
+            << "    items.push(Payload(7))\n"
+            << "    for item in true ? items : items\n"
+            << "        total = total + item.value\n"
+            << "    total\n";
+    }
+    auto computed_dynamic_array_local_owned_same_owner_for =
+        pipeline.emit_llvm(computed_dynamic_array_local_owned_same_owner_for_path);
+    assert(!computed_dynamic_array_local_owned_same_owner_for.has_errors());
+    assert(
+        computed_dynamic_array_local_owned_same_owner_for.ir_text.find(
+            "define void @__orison_drop.Payload(ptr %value)"
+        ) != std::string::npos
+    );
+    auto computed_owned_drop = computed_dynamic_array_local_owned_same_owner_for.ir_text.find(
+        "call void @__orison_drop.Payload(ptr %items.computed_dynamic_array_cleanup"
+    );
+    auto computed_owned_deallocate = computed_dynamic_array_local_owned_same_owner_for.ir_text.find(
+        "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for."
+    );
+    auto computed_owned_finalize = computed_dynamic_array_local_owned_same_owner_for.ir_text.find(
+        "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
+    );
+    assert(
+        computed_dynamic_array_local_owned_same_owner_for.ir_text.find(
+            ", i64 8, i64 %items.computed_for.",
+            computed_owned_deallocate
+        ) != std::string::npos
+    );
+    auto computed_owned_return = computed_dynamic_array_local_owned_same_owner_for.ir_text.find("ret i64 %tmp");
+    assert(computed_owned_drop != std::string::npos);
+    assert(computed_owned_deallocate != std::string::npos);
+    assert(computed_owned_finalize != std::string::npos);
+    assert(computed_owned_return != std::string::npos);
+    assert(computed_owned_drop < computed_owned_deallocate);
+    assert(computed_owned_deallocate < computed_owned_finalize);
+    assert(computed_owned_finalize < computed_owned_return);
+    assert(
+        computed_dynamic_array_local_owned_same_owner_for.ir_text.find("items.dynamic_array_cleanup") ==
+        std::string::npos
+    );
+    auto computed_dynamic_array_local_owned_same_owner_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(computed_dynamic_array_local_owned_same_owner_for.ir_text);
+    assert(!computed_dynamic_array_local_owned_same_owner_object.has_errors());
+    auto computed_dynamic_array_local_owned_same_owner_executable =
+        smoke_temp_root / "dynamic_array_local_owned_same_owner_for";
+    auto computed_dynamic_array_local_owned_same_owner_link = orison::link::HostLinker {}.link(
+        computed_dynamic_array_local_owned_same_owner_object.object_bytes,
+        computed_dynamic_array_local_owned_same_owner_executable
+    );
+    assert(!computed_dynamic_array_local_owned_same_owner_link.has_errors());
+    auto computed_dynamic_array_local_owned_same_owner_status =
+        std::system(computed_dynamic_array_local_owned_same_owner_executable.string().c_str());
+    assert(WIFEXITED(computed_dynamic_array_local_owned_same_owner_status));
+    assert(WEXITSTATUS(computed_dynamic_array_local_owned_same_owner_status) == 12);
+
     auto computed_dynamic_array_local_same_owner_operand_fallback_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {

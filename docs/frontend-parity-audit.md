@@ -20,6 +20,8 @@
 - 2026-07-30: `examples/local_dynamic_array_owned_replacement.or` now pins local owned-element `DynamicArray<Payload>`
   indexed replacement through `orisonc run`, `--emit-llvm`, `--emit-object`, and `--build`, including source drop
   definition, replacement-drop/store ordering, and later cleanup drop coverage.
+- 2026-07-30: computed same-owner final-use cleanup now emits a source-backed initialized-element drop walk for owned
+  `DynamicArray<Payload>` elements before descriptor deallocation/finalization on the default pipeline path.
 
 ## Scope
 
