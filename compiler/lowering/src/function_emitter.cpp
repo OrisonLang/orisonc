@@ -279,8 +279,19 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
 ) {
     auto sequence = dynamic_sequence_source_type(source_type_name);
     if (!sequence.has_value() ||
-        sequence->kind != DynamicSequenceKind::dynamic_array ||
-        !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+        sequence->kind != DynamicSequenceKind::dynamic_array) {
+        return;
+    }
+
+    auto lowerable_parameter =
+        is_scalar_or_nonowning_source_type(sequence->element_source_type_name) ||
+        std::ranges::any_of(context.options.semantic_drop_lowering_authorizations, [&](auto const& authorization) {
+            return authorization.authorized &&
+                authorization.site.owner_name == std::string {parameter_name} + ".element" &&
+                authorization.site.source_type_name == sequence->element_source_type_name &&
+                authorization.site.abi_symbol_name == "__orison_drop." + sequence->element_source_type_name;
+        });
+    if (!lowerable_parameter) {
         return;
     }
 

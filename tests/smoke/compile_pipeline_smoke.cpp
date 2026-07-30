@@ -5440,12 +5440,8 @@ auto main() -> int {
             << "    items.push(Payload(7))\n"
             << "    use_items(items)\n";
     }
-    auto dynamic_array_owned_parameter_initialized_ir = pipeline.emit_llvm(
-        dynamic_array_owned_parameter_initialized_run_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-        }
-    );
+    auto dynamic_array_owned_parameter_initialized_ir =
+        pipeline.emit_llvm(dynamic_array_owned_parameter_initialized_run_path);
     assert(!dynamic_array_owned_parameter_initialized_ir.has_errors());
     auto initialized_transfer_deallocate =
         dynamic_array_owned_parameter_initialized_ir.ir_text.find(
@@ -5458,12 +5454,8 @@ auto main() -> int {
             initialized_transfer_deallocate + 1
         ) == std::string::npos
     );
-    auto dynamic_array_owned_parameter_initialized_run = pipeline.emit_object(
-        dynamic_array_owned_parameter_initialized_run_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-        }
-    );
+    auto dynamic_array_owned_parameter_initialized_run =
+        pipeline.emit_object(dynamic_array_owned_parameter_initialized_run_path);
     assert(!dynamic_array_owned_parameter_initialized_run.has_errors());
     assert(!dynamic_array_owned_parameter_initialized_run.object_bytes.empty());
     auto dynamic_array_owned_parameter_initialized_run_executable =
@@ -5506,12 +5498,8 @@ auto main() -> int {
             << "    items.push(Payload(7))\n"
             << "    forward_items(items)\n";
     }
-    auto dynamic_array_owned_parameter_forwarding_ir = pipeline.emit_llvm(
-        dynamic_array_owned_parameter_forwarding_run_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-        }
-    );
+    auto dynamic_array_owned_parameter_forwarding_ir =
+        pipeline.emit_llvm(dynamic_array_owned_parameter_forwarding_run_path);
     assert(!dynamic_array_owned_parameter_forwarding_ir.has_errors());
     auto forwarding_deallocate =
         dynamic_array_owned_parameter_forwarding_ir.ir_text.find(
@@ -5524,12 +5512,8 @@ auto main() -> int {
             forwarding_deallocate + 1
         ) == std::string::npos
     );
-    auto dynamic_array_owned_parameter_forwarding_run = pipeline.emit_object(
-        dynamic_array_owned_parameter_forwarding_run_path,
-        orison::pipeline::CompilePipelineOptions {
-            .source_drop_lowering_enabled = true,
-        }
-    );
+    auto dynamic_array_owned_parameter_forwarding_run =
+        pipeline.emit_object(dynamic_array_owned_parameter_forwarding_run_path);
     assert(!dynamic_array_owned_parameter_forwarding_run.has_errors());
     assert(!dynamic_array_owned_parameter_forwarding_run.object_bytes.empty());
     auto dynamic_array_owned_parameter_forwarding_run_executable =

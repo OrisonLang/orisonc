@@ -772,8 +772,8 @@ representation.
   descriptor cleanup are enabled together.
 - Scalar/non-owning `DynamicArray<T>` parameter lowering is now available on the default compile path: descriptor
   signatures, parameter cleanup, `.length()`, checked index reads, and descriptor `for` loops move together. Owned
-  element parameters such as `DynamicArray<Payload>` remain rejected on the production path until ownership/drop proof
-  is complete; the test-only descriptor seam remains available for internal cleanup-readiness coverage.
+  element parameters such as `DynamicArray<Payload>` now lower on the default compile path when source-derived semantic
+  Drop proof authorizes the `owner.element` cleanup site; unproven owned parameters remain rejected.
 - `examples/dynamic_array_parameter_reads.or` is the checked-in scalar parameter descriptor demo. It is covered by
   examples and canonical pipeline smoke tests, while `tests/fixtures/dynamic_array_owned_parameter_rejected.or` pins
   the production rejection boundary for owned-element parameters.
@@ -781,7 +781,8 @@ representation.
   needs ownership/drop proof, rather than falling through to the generic unsupported-parameter diagnostic.
 - Production dynamic-array parameter descriptor lowering can now consume positive semantic drop authorization for an
   owned element site named `owner.element`. Scalar/non-owning parameters still lower directly; owned-element parameters
-  still reject by default unless the semantic/source-drop proof path authorizes the element cleanup ABI.
+  use the same authorization to seed bound cleanup-owner plans for callee-side element drop walks and descriptor
+  deallocation.
 - Dynamic-array cleanup report paths now use production-facing descriptor cleanup planning and cleanup-emission gates.
   They no longer need the parameter-descriptor signature bypass to inspect missing element cleanup proof.
 - Dynamic-array cleanup report paths no longer require the parameter descriptor signature bypass. Report emission can
