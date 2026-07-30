@@ -4171,7 +4171,6 @@ auto main() -> int {
     auto computed_dynamic_array_local_same_owner_after_while = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_after_while_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
             .dynamic_array_production_construction_lowering_enabled = true,
             .dynamic_array_production_for_lowering_enabled = true,
             .dynamic_array_production_cleanup_emission_enabled = true,

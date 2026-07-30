@@ -2691,7 +2691,6 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );
     assert(!computed_local_same_owner_two_loops.has_errors());
@@ -2756,7 +2755,6 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );
     assert(!computed_local_same_owner_if_then_later_loop.has_errors());
@@ -2806,7 +2804,6 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );
     assert(!computed_local_same_owner_switch_case_later_loop.has_errors());
@@ -2838,7 +2835,6 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );
     assert(!computed_local_same_owner_while_body.has_errors());
@@ -2874,7 +2870,6 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );
     assert(!computed_local_same_owner_after_while.has_errors());
@@ -2906,7 +2901,6 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
             .enable_dynamic_array_cleanup_emission = true,
-            .test_only_enable_computed_dynamic_array_for_lowering = true,
         }
     );
     assert(!computed_local_same_owner_after_if.has_errors());
