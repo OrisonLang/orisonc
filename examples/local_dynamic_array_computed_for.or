@@ -1,0 +1,8 @@
+package examples.dynamicarraycomputedfor
+
+function main() -> UInt32
+    let items: DynamicArray<UInt32> = DynamicArray()
+    var total = 0 as UInt32
+    for item in true ? items : items
+        total = total + item
+    total

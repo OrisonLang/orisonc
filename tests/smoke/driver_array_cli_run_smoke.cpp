@@ -83,8 +83,9 @@ auto main() -> int {
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
-    constexpr auto run_examples = std::array<std::string_view, 12> {
+    constexpr auto run_examples = std::array<std::string_view, 13> {
         "local_array_for.or",
+        "local_dynamic_array_computed_for.or",
         "local_ternary_array_for.or",
         "local_ternary_array_literal_for.or",
         "local_ternary_record_array_literal_for.or",
@@ -113,6 +114,11 @@ auto main() -> int {
         executable,
         generic_record_literal_path,
         smoke_temp_root / "local_generic_record_array_literal_for"
+    );
+    assert_build_success(
+        executable,
+        examples / "local_dynamic_array_computed_for.or",
+        smoke_temp_root / "local_dynamic_array_computed_for"
     );
 
     std::filesystem::remove_all(smoke_temp_root);

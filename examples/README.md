@@ -21,6 +21,8 @@ checked indexing, iteration, and parameter cleanup on the default compiler path.
 `local_inferred_array_let.or` demonstrates an immutable fixed-array `let` whose type is inferred from explicit elements.
 `local_dynamic_array_append.or` demonstrates local `DynamicArray<UInt32>` construction, append/grow, index read,
 iteration, and cleanup on the default compiler path.
+`local_dynamic_array_computed_for.or` demonstrates a computed same-owner `DynamicArray<UInt32>` `for` iterable with
+final-use deallocation and descriptor finalization on the default compiler path.
 `local_null_safe_generic_aggregate.or` demonstrates null-safe access through a concrete generic record method returning
 an aggregate, followed by explicit `switch` consumption of the resulting `Maybe<UInt32>`.
 `local_result_choice_switch.or` demonstrates generic `Result<UInt32>` choice construction and explicit backend
@@ -129,6 +131,7 @@ The numbered `tour_*.or` files split `ORISON_TOUR.md` into focused examples:
 | `local_inferred_record_array_let.or` | inferred immutable record array-field index access | backend |
 | `local_inferred_array_let.or` | inferred immutable fixed-array `let` binding | backend |
 | `local_dynamic_array_append.or` | local `DynamicArray<UInt32>` construction, append/grow, checked index read, iteration, and cleanup | backend |
+| `local_dynamic_array_computed_for.or` | local computed same-owner `DynamicArray<UInt32>` `for` iteration with final-use cleanup | backend |
 | `local_null_safe_generic_aggregate.or` | concrete generic null-safe aggregate-return method call plus explicit `Maybe<UInt32>` switch consumption | backend |
 | `local_result_choice_switch.or` | generic `Result<UInt32>` construction plus explicit `switch` payload consumption | backend |
 | `local_result_distinct_choice_switch.or` | generic `Result<UInt32, Bool>` construction plus distinct-payload `switch` consumption | backend |
@@ -195,6 +198,7 @@ Use `minimal.or` for the smallest compile/link/run demonstration.
 
 Use `local_record_field_assignment.or` and `pointer_record_field_assignment.or` for aggregate-assignment pipeline
 coverage. Use `local_dynamic_array_append.or` for the local growable-sequence pipeline. Use
+`local_dynamic_array_computed_for.or` for computed same-owner growable-sequence iteration with final-use cleanup. Use
 `dynamic_array_parameter_reads.or` for scalar growable-sequence parameter descriptor coverage. Use
 `local_null_safe_generic_aggregate.or` for concrete generic null-safe aggregate-return lowering through explicit
 `Maybe` consumption. Use `concurrency_task_main.or` and `concurrency_thread_main.or` for task/thread pipeline

@@ -3,6 +3,8 @@
 - 2026-07-30: computed owned `DynamicArray<T>` `for` audit collectors now reserve production audit naming for result
   metadata and helper functions. The remaining broad `test_only_dynamic_array_*` snippet fields are classified as
   fixture-only renderers gated by explicit test-only options.
+- 2026-07-30: `examples/local_dynamic_array_computed_for.or` now pins computed same-owner `DynamicArray<UInt32>` `for`
+  iteration with final-use cleanup through normal CLI run/build coverage.
 
 ## Scope
 
