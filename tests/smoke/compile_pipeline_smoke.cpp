@@ -5694,6 +5694,79 @@ auto main() -> int {
         std::string::npos
     );
 
+    auto dynamic_array_push_owned_payload_reuse_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_push_owned_payload_reuse.or";
+    {
+        auto push_owned_payload_reuse_source = std::ofstream(dynamic_array_push_owned_payload_reuse_path);
+        push_owned_payload_reuse_source
+            << "package demo.pipeline.dynamicarraypushownedpayloadreuse\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function main() -> Int64\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    let payload = Payload(7)\n"
+            << "    items.push(payload)\n"
+            << "    payload.value\n";
+    }
+    auto dynamic_array_push_owned_payload_reuse = pipeline.emit_llvm(
+        dynamic_array_push_owned_payload_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_push_owned_payload_reuse.has_errors());
+    assert(
+        dynamic_array_push_owned_payload_reuse.error_text.find("use after move: payload") !=
+        std::string::npos
+    );
+
+    auto dynamic_array_push_owned_field_reuse_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_push_owned_field_reuse.or";
+    {
+        auto push_owned_field_reuse_source = std::ofstream(dynamic_array_push_owned_field_reuse_path);
+        push_owned_field_reuse_source
+            << "package demo.pipeline.dynamicarraypushownedfieldreuse\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "record Box\n"
+            << "    public payload: Payload\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function main() -> Int64\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    let box = Box(Payload(7))\n"
+            << "    items.push(box.payload)\n"
+            << "    box.payload.value\n";
+    }
+    auto dynamic_array_push_owned_field_reuse = pipeline.emit_llvm(
+        dynamic_array_push_owned_field_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_push_owned_field_reuse.has_errors());
+    assert(
+        dynamic_array_push_owned_field_reuse.error_text.find("use after move: box.payload") !=
+        std::string::npos
+    );
+
     auto dynamic_array_owned_production_ready = pipeline.emit_llvm(
         dynamic_array_source_owner_path,
         orison::pipeline::CompilePipelineOptions {

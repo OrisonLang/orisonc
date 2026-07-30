@@ -9,6 +9,9 @@
   loop labels, enabled cleanup handoffs, the final-use deallocation call, and descriptor finalization.
 - 2026-07-30: computed same-owner final-use cleanup now consumes the local cleanup plan after descriptor finalization,
   so the function-exit cleanup hook does not emit a duplicate zero-descriptor cleanup.
+- 2026-07-30: `DynamicArray<T>.push(value)` now consumes owned element bindings and owned record-member element paths
+  after a successful store, so later reads report `use after move` instead of reusing a value transferred into array
+  storage.
 
 ## Scope
 

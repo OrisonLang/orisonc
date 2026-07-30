@@ -664,6 +664,8 @@ representation.
   cleanup handoff markers, deallocation call, and descriptor finalization store.
 - Computed same-owner final-use cleanup now consumes the local cleanup plan after deallocation and descriptor
   finalization, suppressing the later function-exit local cleanup plan for the same owner.
+- `DynamicArray<T>.push(value)` now marks owned element bindings and owned record-member element paths consumed after
+  the successful store into array storage, so subsequent reads reuse the existing `use after move` diagnostics.
 - Production-gated local cleanup now records constructed local descriptors as real lowered storage and emits descriptor
   load plus backing-storage deallocation before function returns. Dynamic-array indexing, growth, append, and
   unauthorized owned-element cleanup remain separate disabled work.

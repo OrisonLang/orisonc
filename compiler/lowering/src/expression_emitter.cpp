@@ -71,6 +71,12 @@ auto consumed_owned_record_member_path_name(
         path.base_expression->kind != syntax::ExpressionKind::name) {
         return std::nullopt;
     }
+    if (auto moved_name = consumed_owned_binding_or_descendant_name(
+            state.ownership_transfers,
+            path.base_expression->text
+        )) {
+        return moved_name;
+    }
 
     auto field_names = std::vector<std::string> {};
     field_names.reserve(path.steps.size());

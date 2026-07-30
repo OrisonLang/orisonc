@@ -61,6 +61,57 @@ auto is_dynamic_array_source_type(std::string_view source_type_name) -> bool {
     return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
 }
 
+auto consumed_owned_push_argument_name(
+    syntax::ExpressionSyntax const& argument,
+    std::string_view expected_source_type,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession const& session
+) -> std::optional<std::string> {
+    if (!is_owned_transfer_source_type(expected_source_type, context.lowering)) {
+        return std::nullopt;
+    }
+
+    if (argument.kind == syntax::ExpressionKind::name) {
+        auto actual_source_type = session.state.source_type_names.find(argument.text);
+        if (actual_source_type != session.state.source_type_names.end() &&
+            actual_source_type->second == expected_source_type) {
+            return argument.text;
+        }
+        return std::nullopt;
+    }
+
+    auto path = collect_named_aggregate_path(argument);
+    if (!path.has_value() || path->base_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto field_names = std::vector<std::string> {};
+    field_names.reserve(path->steps.size());
+    for (auto const& step : path->steps) {
+        if (step.kind != AggregatePathStepKind::member) {
+            return std::nullopt;
+        }
+        field_names.push_back(step.field_name);
+    }
+
+    auto owner_source_type = session.state.source_type_names.find(path->base_expression->text);
+    if (owner_source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+
+    auto transfer = owned_record_member_path_transfer(
+        path->base_expression->text,
+        owner_source_type->second,
+        field_names,
+        context.lowering
+    );
+    if (!transfer.has_value() || transfer->source_type_name != expected_source_type) {
+        return std::nullopt;
+    }
+
+    return transfer->binding_name;
+}
+
 auto aggregate_assignment_target_failure(
     std::string_view operation,
     AggregatePathError error
@@ -1127,6 +1178,14 @@ auto lower_dynamic_array_push_statement(
         prefix + ".updated",
         *storage
     );
+    if (auto consumed_name = consumed_owned_push_argument_name(
+            expression.arguments.front(),
+            *element_source_type,
+            context,
+            session
+        )) {
+        mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));
+    }
     return true;
 }
 
