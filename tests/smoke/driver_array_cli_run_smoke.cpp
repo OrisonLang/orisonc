@@ -44,6 +44,36 @@ void assert_emit_llvm_success(
     assert(output.find("load i32, ptr") != std::string::npos);
 }
 
+void assert_computed_dynamic_array_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("declare void @__orison_dynamic_array_allocate") != std::string::npos);
+    assert(output.find("declare void @__orison_dynamic_array_deallocate") != std::string::npos);
+    assert(output.find("items.computed_for.0.condition:") != std::string::npos);
+    assert(output.find("items.computed_for.0.body:") != std::string::npos);
+    assert(
+        output.find(
+            "cleanup state handoff acquire operation items.computed_for.0.cleanup.acquire "
+            "from items to items.loop.entry [cleanup calls enabled]"
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
+            "cleanup state handoff resume operation items.computed_for.0.cleanup.resume "
+            "from items.loop.entry to items [cleanup calls enabled]"
+        ) != std::string::npos
+    );
+    assert(
+        output.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data, "
+            "i64 4, i64 %items.computed_for.0.capacity)"
+        ) != std::string::npos
+    );
+    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr") != std::string::npos);
+}
+
 void assert_emit_object_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path,
@@ -104,6 +134,7 @@ auto main() -> int {
     }
 
     auto generic_record_literal_path = examples / "local_generic_record_array_literal_for.or";
+    auto computed_dynamic_array_path = examples / "local_dynamic_array_computed_for.or";
     assert_emit_llvm_success(executable, generic_record_literal_path);
     assert_emit_object_success(
         executable,
@@ -115,9 +146,15 @@ auto main() -> int {
         generic_record_literal_path,
         smoke_temp_root / "local_generic_record_array_literal_for"
     );
+    assert_computed_dynamic_array_emit_llvm_success(executable, computed_dynamic_array_path);
+    assert_emit_object_success(
+        executable,
+        computed_dynamic_array_path,
+        smoke_temp_root / "local_dynamic_array_computed_for.o"
+    );
     assert_build_success(
         executable,
-        examples / "local_dynamic_array_computed_for.or",
+        computed_dynamic_array_path,
         smoke_temp_root / "local_dynamic_array_computed_for"
     );
 

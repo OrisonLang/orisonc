@@ -660,6 +660,8 @@ representation.
   separate disabled work.
 - `examples/local_dynamic_array_computed_for.or` now pins computed same-owner `DynamicArray<UInt32>` `for` iteration
   with final-use deallocation and descriptor finalization through the normal CLI run/build path.
+- The same example is now checked through CLI LLVM/object emission, including the computed loop labels, enabled
+  cleanup handoff markers, deallocation call, and descriptor finalization store.
 - Production-gated local cleanup now records constructed local descriptors as real lowered storage and emits descriptor
   load plus backing-storage deallocation before function returns. Dynamic-array indexing, growth, append, and
   unauthorized owned-element cleanup remain separate disabled work.

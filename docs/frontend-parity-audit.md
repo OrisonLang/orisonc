@@ -5,6 +5,8 @@
   fixture-only renderers gated by explicit test-only options.
 - 2026-07-30: `examples/local_dynamic_array_computed_for.or` now pins computed same-owner `DynamicArray<UInt32>` `for`
   iteration with final-use cleanup through normal CLI run/build coverage.
+- 2026-07-30: the computed DynamicArray example smoke now also asserts CLI LLVM/object emission, including computed
+  loop labels, enabled cleanup handoffs, the final-use deallocation call, and descriptor finalization.
 
 ## Scope
 
