@@ -2463,7 +2463,7 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
     assert(!computed_local_same_owner_metadata_without_comment_emission.has_errors());
     assert(
         computed_local_same_owner_metadata_without_comment_emission
-            .test_only_computed_dynamic_array_for_production_sequence_module_ir.empty()
+            .computed_dynamic_array_for_production_sequence_module_ir.empty()
     );
     assert(
         computed_local_same_owner_metadata_without_comment_emission.ir_text.find(
@@ -2476,13 +2476,13 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         orison::lowering::LlvmIrEmissionOptions {
             .enable_dynamic_array_construction_lowering = true,
             .enable_dynamic_array_for_lowering = true,
-            .test_only_emit_computed_dynamic_array_for_production_sequence_comments = true,
+            .emit_computed_dynamic_array_for_production_sequence_comments = true,
         }
     );
     assert(!computed_local_same_owner_metadata_with_comment_emission.has_errors());
     assert(
         computed_local_same_owner_metadata_with_comment_emission
-            .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 18
+            .computed_dynamic_array_for_production_sequence_module_ir.size() == 18
     );
     assert(
         computed_local_same_owner_metadata_with_comment_emission

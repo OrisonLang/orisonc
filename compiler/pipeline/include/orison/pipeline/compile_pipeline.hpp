@@ -386,7 +386,7 @@ struct CompilePipelineOptions {
     bool collect_computed_dynamic_array_for_cleanup_transitions = false;
     bool collect_computed_dynamic_array_for_production_emission_gates = false;
     bool collect_computed_dynamic_array_for_production_sequences = false;
-    bool test_only_emit_computed_dynamic_array_for_production_sequence_comments = false;
+    bool emit_computed_dynamic_array_for_production_sequence_comments = false;
     bool test_only_authorize_computed_dynamic_array_cleanup_calls = false;
     bool test_only_insert_computed_dynamic_array_cleanup_calls = false;
     bool test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
@@ -479,7 +479,7 @@ struct CompilePipelineResult {
     std::vector<std::string> computed_dynamic_array_for_production_sequence_report;
     ComputedDynamicArrayForProductionSequenceState computed_dynamic_array_for_production_sequence_state;
     ComputedDynamicArrayForProductionReadiness computed_dynamic_array_for_production_readiness;
-    std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_module_ir;
+    std::vector<std::string> computed_dynamic_array_for_production_sequence_module_ir;
     DynamicArrayCleanupProductionReadiness dynamic_array_cleanup_production_readiness;
     std::vector<std::string> dynamic_array_cleanup_production_readiness_report;
     std::vector<std::string> planned_drop_report;

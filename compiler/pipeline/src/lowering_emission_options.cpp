@@ -108,8 +108,8 @@ auto build_lowering_emission_options(
         options.collect_computed_dynamic_array_for_production_emission_gates;
     emission_options.collect_computed_dynamic_array_for_production_sequences =
         options.collect_computed_dynamic_array_for_production_sequences;
-    emission_options.test_only_emit_computed_dynamic_array_for_production_sequence_comments =
-        options.test_only_emit_computed_dynamic_array_for_production_sequence_comments;
+    emission_options.emit_computed_dynamic_array_for_production_sequence_comments =
+        options.emit_computed_dynamic_array_for_production_sequence_comments;
     emission_options.test_only_authorize_computed_dynamic_array_cleanup_calls =
         options.test_only_authorize_computed_dynamic_array_cleanup_calls;
     emission_options.test_only_insert_computed_dynamic_array_cleanup_calls =

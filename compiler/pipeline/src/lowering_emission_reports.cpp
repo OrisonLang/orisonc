@@ -14,10 +14,10 @@ auto build_computed_dynamic_array_for_production_sequence_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> ComputedDynamicArrayForProductionSequenceState {
     auto state = ComputedDynamicArrayForProductionSequenceState {
-        .module_comments_emitted = !emission.test_only_computed_dynamic_array_for_production_sequence_module_ir.empty(),
+        .module_comments_emitted = !emission.computed_dynamic_array_for_production_sequence_module_ir.empty(),
         .sequence_count = emission.test_only_computed_dynamic_array_for_production_sequences.size(),
         .module_comment_line_count =
-            emission.test_only_computed_dynamic_array_for_production_sequence_module_ir.size(),
+            emission.computed_dynamic_array_for_production_sequence_module_ir.size(),
     };
     state.sequence_metadata_available = state.sequence_count > 0;
     state.cleanup_owner_names.reserve(emission.test_only_computed_dynamic_array_for_production_sequences.size());
@@ -887,8 +887,8 @@ void populate_lowering_emission_reports(
             result.computed_dynamic_array_for_inserted_cleanup_state_verification_state,
             result.computed_dynamic_array_for_cleanup_call_insertion_capability_state
         );
-    result.test_only_computed_dynamic_array_for_production_sequence_module_ir =
-        std::move(emission.test_only_computed_dynamic_array_for_production_sequence_module_ir);
+    result.computed_dynamic_array_for_production_sequence_module_ir =
+        std::move(emission.computed_dynamic_array_for_production_sequence_module_ir);
     result.dynamic_array_cleanup_production_readiness =
         plan_dynamic_array_cleanup_production_readiness(result, options);
     result.dynamic_array_cleanup_production_readiness_report = {

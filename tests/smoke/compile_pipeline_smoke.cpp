@@ -2014,7 +2014,7 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_metadata_without_comments.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_metadata_without_comments
-            .test_only_computed_dynamic_array_for_production_sequence_module_ir.empty()
+            .computed_dynamic_array_for_production_sequence_module_ir.empty()
     );
     assert(
         computed_dynamic_array_local_same_owner_metadata_without_comments
@@ -2060,7 +2060,7 @@ auto main() -> int {
         dynamic_array_metadata_collector.collect(
             computed_dynamic_array_local_same_owner_for_path,
             orison::pipeline::CompilePipelineOptions {
-                .test_only_emit_computed_dynamic_array_for_production_sequence_comments = true,
+                .emit_computed_dynamic_array_for_production_sequence_comments = true,
                 .dynamic_array_production_construction_lowering_enabled = true,
                 .dynamic_array_production_for_lowering_enabled = true,
             }
@@ -2068,7 +2068,7 @@ auto main() -> int {
     assert(!computed_dynamic_array_local_same_owner_metadata_with_comments.has_errors());
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments
-            .test_only_computed_dynamic_array_for_production_sequence_module_ir.size() == 18
+            .computed_dynamic_array_for_production_sequence_module_ir.size() == 18
     );
     assert(
         computed_dynamic_array_local_same_owner_metadata_with_comments

@@ -286,7 +286,7 @@ struct LlvmIrEmissionResult {
     std::vector<ComputedDynamicArrayForProductionSequenceMetadata>
         test_only_computed_dynamic_array_for_production_sequences;
     std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_ir;
-    std::vector<std::string> test_only_computed_dynamic_array_for_production_sequence_module_ir;
+    std::vector<std::string> computed_dynamic_array_for_production_sequence_module_ir;
     std::vector<ComputedDynamicArrayForDescriptorRenderMetadata>
         test_only_computed_dynamic_array_for_descriptor_renders;
     std::vector<std::string> test_only_computed_dynamic_array_for_descriptor_render_ir;

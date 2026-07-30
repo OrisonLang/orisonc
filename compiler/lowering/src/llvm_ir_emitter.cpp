@@ -2403,15 +2403,15 @@ auto emit_module(
         );
     }
     if (options.collect_computed_dynamic_array_for_production_sequences ||
-        options.test_only_emit_computed_dynamic_array_for_production_sequence_comments) {
+        options.emit_computed_dynamic_array_for_production_sequence_comments) {
         result.test_only_computed_dynamic_array_for_production_sequences =
             collect_computed_dynamic_array_for_production_sequences(module, context);
         append_rendered_ir(
             result.test_only_computed_dynamic_array_for_production_sequence_ir,
             result.test_only_computed_dynamic_array_for_production_sequences
         );
-        if (options.test_only_emit_computed_dynamic_array_for_production_sequence_comments) {
-            result.test_only_computed_dynamic_array_for_production_sequence_module_ir =
+        if (options.emit_computed_dynamic_array_for_production_sequence_comments) {
+            result.computed_dynamic_array_for_production_sequence_module_ir =
                 render_computed_dynamic_array_for_production_sequence_module_comments(
                     result.test_only_computed_dynamic_array_for_production_sequences
                 );
@@ -2717,7 +2717,7 @@ auto emit_module(
         }
     }
     if (metadata_only) {
-        for (auto const& line : result.test_only_computed_dynamic_array_for_production_sequence_module_ir) {
+        for (auto const& line : result.computed_dynamic_array_for_production_sequence_module_ir) {
             output << line;
         }
         result.ir_text = output.str();
@@ -2797,7 +2797,7 @@ auto emit_module(
         }
     }
 
-    for (auto const& line : result.test_only_computed_dynamic_array_for_production_sequence_module_ir) {
+    for (auto const& line : result.computed_dynamic_array_for_production_sequence_module_ir) {
         output << line;
     }
 

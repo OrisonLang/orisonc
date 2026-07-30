@@ -57,7 +57,7 @@ struct LlvmIrEmissionOptions {
     bool collect_computed_dynamic_array_for_cleanup_transitions = false;
     bool collect_computed_dynamic_array_for_production_emission_gates = false;
     bool collect_computed_dynamic_array_for_production_sequences = false;
-    bool test_only_emit_computed_dynamic_array_for_production_sequence_comments = false;
+    bool emit_computed_dynamic_array_for_production_sequence_comments = false;
     bool test_only_authorize_computed_dynamic_array_cleanup_calls = false;
     bool test_only_insert_computed_dynamic_array_cleanup_calls = false;
     bool enable_computed_dynamic_array_consumed_cleanup_descriptor_collection = false;
