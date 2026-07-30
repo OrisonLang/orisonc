@@ -7,6 +7,8 @@
   iteration with final-use cleanup through normal CLI run/build coverage.
 - 2026-07-30: the computed DynamicArray example smoke now also asserts CLI LLVM/object emission, including computed
   loop labels, enabled cleanup handoffs, the final-use deallocation call, and descriptor finalization.
+- 2026-07-30: computed same-owner final-use cleanup now consumes the local cleanup plan after descriptor finalization,
+  so the function-exit cleanup hook does not emit a duplicate zero-descriptor cleanup.
 
 ## Scope
 

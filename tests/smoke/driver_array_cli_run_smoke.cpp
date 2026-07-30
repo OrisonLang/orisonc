@@ -71,7 +71,18 @@ void assert_computed_dynamic_array_emit_llvm_success(
             "i64 4, i64 %items.computed_for.0.capacity)"
         ) != std::string::npos
     );
-    assert(output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr") != std::string::npos);
+    auto const first_deallocation = output.find("call void @__orison_dynamic_array_deallocate");
+    assert(first_deallocation != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate", first_deallocation + 1) == std::string::npos);
+    auto const first_finalization = output.find("store { ptr, i64, i64 } zeroinitializer, ptr %items.addr");
+    assert(first_finalization != std::string::npos);
+    assert(
+        output.find(
+            "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr",
+            first_finalization + 1
+        ) == std::string::npos
+    );
+    assert(output.find("items.dynamic_array_cleanup") == std::string::npos);
 }
 
 void assert_emit_object_success(

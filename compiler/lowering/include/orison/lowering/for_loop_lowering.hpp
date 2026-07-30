@@ -203,6 +203,24 @@ inline auto computed_dynamic_array_local_cleanup_call_insertion_blocked_reason(
     return {};
 }
 
+inline void consume_computed_dynamic_array_local_cleanup_plan(
+    FunctionLoweringState& state,
+    std::string_view cleanup_owner_name,
+    std::string_view source_type_name
+) {
+    for (auto cleanup_plan = state.dynamic_array_local_cleanup_plans.begin();
+         cleanup_plan != state.dynamic_array_local_cleanup_plans.end();
+         ++cleanup_plan) {
+        if (cleanup_plan->owner_name == cleanup_owner_name &&
+            cleanup_plan->source_type_name == source_type_name &&
+            cleanup_plan->descriptor_storage_status ==
+                DynamicArrayDescriptorStorageStatus::lowered_local_descriptor) {
+            state.dynamic_array_local_cleanup_plans.erase(cleanup_plan);
+            return;
+        }
+    }
+}
+
 template <typename LowerBody>
 auto lower_sequence_for_statement(
     syntax::StatementSyntax const& statement,
@@ -424,6 +442,11 @@ auto lower_sequence_for_statement(
                         if (cleanup_call_operands.has_value()) {
                             cleanup_call_operands->descriptor_finalized = true;
                         }
+                        consume_computed_dynamic_array_local_cleanup_plan(
+                            session.state,
+                            cleanup_sequence_plan.cleanup_owner_name,
+                            cleanup_sequence_plan.source_type_name
+                        );
                     }
                 }
             }

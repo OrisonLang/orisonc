@@ -1814,17 +1814,12 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .consumed_descriptor_finalization_plan_report.size() == 2
+            .consumed_descriptor_finalization_plan_report.size() == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .consumed_descriptor_finalization_plan_report[0] ==
+            .consumed_descriptor_finalization_plan_report.front() ==
         smoke::consumed_descriptor_finalization_plan_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .consumed_descriptor_finalization_plan_report[1] ==
-        smoke::local_sum_words_consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_for
@@ -1832,9 +1827,9 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 1
+            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 0
     );
-    assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.ready_plan_count == 2);
+    assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.ready_plan_count == 1);
     assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.blocked_plan_count == 0);
     assert(computed_dynamic_array_local_same_owner_for.consumed_descriptor_finalization_state.all_ready);
     assert(
@@ -1844,6 +1839,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_for
             .consumed_descriptor_finalization_state.descriptor_storage_names.front() == "%items.addr"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_for.ir_text.find("items.dynamic_array_cleanup") ==
+        std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_for
@@ -2666,11 +2665,7 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .consumed_descriptor_finalization_plan_report.size() == 2
-    );
-    assert_any_line_contains(
-        computed_dynamic_array_local_same_owner_lowered_for.consumed_descriptor_finalization_plan_report,
-        smoke::local_sum_words_consumed_descriptor_finalization_plan_report
+            .consumed_descriptor_finalization_plan_report.size() == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -2678,9 +2673,9 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 1
+            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 0
     );
-    assert(computed_dynamic_array_local_same_owner_lowered_for.consumed_descriptor_finalization_state.ready_plan_count == 2);
+    assert(computed_dynamic_array_local_same_owner_lowered_for.consumed_descriptor_finalization_state.ready_plan_count == 1);
     assert(computed_dynamic_array_local_same_owner_lowered_for.consumed_descriptor_finalization_state.blocked_plan_count == 0);
     assert(computed_dynamic_array_local_same_owner_lowered_for.consumed_descriptor_finalization_state.all_ready);
     assert(
@@ -2690,6 +2685,10 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
             .consumed_descriptor_finalization_state.descriptor_storage_names.front() == "%items.addr"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_lowered_for.ir_text.find("items.dynamic_array_cleanup") ==
+        std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -3242,17 +3241,12 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_plan_report.size() == 2
+            .consumed_descriptor_finalization_plan_report.size() == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_plan_report[0] ==
+            .consumed_descriptor_finalization_plan_report.front() ==
         smoke::consumed_descriptor_finalization_plan_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_plan_report[1] ==
-        smoke::local_sum_words_consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
@@ -3260,17 +3254,21 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 1
+            .consumed_descriptor_finalization_state.emitted_finalization_plan_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_state.ready_plan_count == 2
+            .consumed_descriptor_finalization_state.ready_plan_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .consumed_descriptor_finalization_state.blocked_plan_count == 0
     );
     assert(computed_dynamic_array_local_same_owner_inserted_cleanup_for.consumed_descriptor_finalization_state.all_ready);
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text.find("items.dynamic_array_cleanup") ==
+        std::string::npos
+    );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1
@@ -3606,32 +3604,26 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text.find(
             "store { ptr, i64, i64 } zeroinitializer, ptr %items.addr"
         );
-    auto computed_final_cleanup =
-        computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text.find(
-            "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
-        );
     auto computed_return =
         computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text.find("ret i32 %tmp");
     assert(computed_inserted_deallocate != std::string::npos);
     assert(computed_inserted_clear != std::string::npos);
-    assert(computed_final_cleanup != std::string::npos);
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run.ir_text.find(
+            "call void @__orison_dynamic_array_deallocate(ptr %items.dynamic_array_cleanup"
+        ) == std::string::npos
+    );
     assert(computed_return != std::string::npos);
     assert(computed_inserted_deallocate < computed_inserted_clear);
-    assert(computed_inserted_clear < computed_final_cleanup);
-    assert(computed_final_cleanup < computed_return);
+    assert(computed_inserted_clear < computed_return);
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .consumed_descriptor_finalization_plan_report.size() == 2
+            .consumed_descriptor_finalization_plan_report.size() == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .consumed_descriptor_finalization_plan_report[0] ==
+            .consumed_descriptor_finalization_plan_report.front() ==
         smoke::consumed_descriptor_finalization_plan_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .consumed_descriptor_finalization_plan_report[1] ==
-        smoke::local_main_consumed_descriptor_finalization_plan_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run

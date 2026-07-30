@@ -662,6 +662,8 @@ representation.
   with final-use deallocation and descriptor finalization through the normal CLI run/build path.
 - The same example is now checked through CLI LLVM/object emission, including the computed loop labels, enabled
   cleanup handoff markers, deallocation call, and descriptor finalization store.
+- Computed same-owner final-use cleanup now consumes the local cleanup plan after deallocation and descriptor
+  finalization, suppressing the later function-exit local cleanup plan for the same owner.
 - Production-gated local cleanup now records constructed local descriptors as real lowered storage and emits descriptor
   load plus backing-storage deallocation before function returns. Dynamic-array indexing, growth, append, and
   unauthorized owned-element cleanup remain separate disabled work.
