@@ -1,6 +1,7 @@
 #include "computed_cleanup_reports.hpp"
 
 #include <cstddef>
+#include <set>
 #include <sstream>
 #include <string_view>
 
@@ -131,6 +132,33 @@ auto computed_inserted_cleanup_handoff_state_report(
     }
 
     return lines;
+}
+
+auto computed_cleanup_call_blocker_summary_report(
+    pipeline::ComputedInsertedCleanupHandoffState const& state
+) -> std::vector<std::string> {
+    if (state.cleanup_call_blocker_count == 0) {
+        return {};
+    }
+
+    auto unique_reasons = std::set<std::string_view> {};
+    for (auto const& reason : state.cleanup_calls_blocked_reasons) {
+        if (!reason.empty()) {
+            unique_reasons.insert(reason);
+        }
+    }
+
+    auto output = std::ostringstream {};
+    output << "computed DynamicArray cleanup call blockers blocked";
+    output << " cleanup-blockers " << state.cleanup_call_blocker_count;
+    if (!unique_reasons.empty()) {
+        output << " blocker-reasons";
+        for (auto reason : unique_reasons) {
+            output << " [" << reason << "]";
+        }
+    }
+    output << " (metadata only)";
+    return {output.str()};
 }
 
 auto computed_inserted_cleanup_call_state_report(

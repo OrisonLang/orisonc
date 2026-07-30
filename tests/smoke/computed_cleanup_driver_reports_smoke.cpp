@@ -70,23 +70,27 @@ void assert_computed_inserted_cleanup_handoff_reports() {
     );
     assert(empty.size() == 1);
     assert(empty.front() == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_empty_report);
-
-    auto paired_disabled = driver::computed_inserted_cleanup_handoff_state_report(
-        pipeline::ComputedInsertedCleanupHandoffState {
-            .cleanup_owner_names = {"items"},
-            .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
-            .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
-            .cleanup_calls_blocked_reasons = {"later owner use"},
-            .from_metadata = true,
-            .all_paired = true,
-            .all_cleanup_calls_enabled = false,
-            .transition_count = 1,
-            .verification_count = 1,
-            .paired_count = 1,
-            .blocked_count = 0,
-            .cleanup_call_blocker_count = 1,
-        }
+    assert(
+        driver::computed_cleanup_call_blocker_summary_report(
+            pipeline::ComputedInsertedCleanupHandoffState {}
+        ).empty()
     );
+
+    auto paired_disabled_state = pipeline::ComputedInsertedCleanupHandoffState {
+        .cleanup_owner_names = {"items"},
+        .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
+        .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
+        .cleanup_calls_blocked_reasons = {"later owner use"},
+        .from_metadata = true,
+        .all_paired = true,
+        .all_cleanup_calls_enabled = false,
+        .transition_count = 1,
+        .verification_count = 1,
+        .paired_count = 1,
+        .blocked_count = 0,
+        .cleanup_call_blocker_count = 1,
+    };
+    auto paired_disabled = driver::computed_inserted_cleanup_handoff_state_report(paired_disabled_state);
     assert(paired_disabled.size() == 2);
     assert(paired_disabled[0] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_paired_disabled_report);
     assert(
@@ -94,6 +98,14 @@ void assert_computed_inserted_cleanup_handoff_reports() {
             "acquire items.computed_for.0.cleanup.acquire resume items.computed_for.0.cleanup.resume "
             "cleanup-blocked-reason later owner use"
         ) != std::string::npos
+    );
+    auto paired_disabled_blockers =
+        driver::computed_cleanup_call_blocker_summary_report(paired_disabled_state);
+    assert(paired_disabled_blockers.size() == 1);
+    assert(
+        paired_disabled_blockers.front() ==
+        "computed DynamicArray cleanup call blockers blocked cleanup-blockers 1 "
+        "blocker-reasons [later owner use] (metadata only)"
     );
 
     auto paired_enabled = driver::computed_inserted_cleanup_handoff_state_report(

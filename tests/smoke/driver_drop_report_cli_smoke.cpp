@@ -1083,6 +1083,8 @@ int main() {
         {
             "computed DynamicArray for inserted cleanup state verification "
             "acquire-operation items.computed_for.0.cleanup.acquire",
+            "computed DynamicArray cleanup call blockers blocked cleanup-blockers 1 "
+            "blocker-reasons [later owner use] (metadata only)",
             "[cleanup calls disabled] [cleanup blocked: later owner use]",
             "computed DynamicArray for cleanup call emission gate blocked "
             "acquire-operation items.computed_for.0.cleanup.acquire",
@@ -1127,6 +1129,8 @@ int main() {
         {
             "computed DynamicArray for inserted cleanup state verification "
             "acquire-operation items.computed_for.1.cleanup.acquire",
+            "computed DynamicArray cleanup call blockers blocked cleanup-blockers 1 "
+            "blocker-reasons [active loop body] (metadata only)",
             "[cleanup calls disabled] [cleanup blocked: active loop body]",
             "computed DynamicArray for cleanup call emission gate blocked "
             "acquire-operation items.computed_for.1.cleanup.acquire",
