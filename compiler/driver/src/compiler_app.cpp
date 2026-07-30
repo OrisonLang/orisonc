@@ -103,7 +103,6 @@ auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions 
 
 auto test_only_computed_cleanup_insertion_seam_options() -> pipeline::CompilePipelineOptions {
     auto options = dynamic_array_cleanup_report_options();
-    options.test_only_enable_computed_dynamic_array_for_lowering = true;
     options.test_only_authorize_computed_dynamic_array_cleanup_calls = true;
     options.test_only_insert_computed_dynamic_array_cleanup_calls = true;
     options.dynamic_array_production_construction_lowering_enabled = true;
