@@ -248,6 +248,9 @@ representation.
 - The computed cleanup-proof model is now extracted into a reusable private pipeline component. Report formatting
   consumes the component output, and later production-oriented pipeline stages can consume the same typed proof bundle
   without depending on anonymous report state.
+- Computed dynamic-array `for` audit collectors use production audit names for collected result metadata and helper
+  functions. The older `test_only_dynamic_array_*` construction/allocation/grow/deallocation snippet fields remain
+  fixture-only renderers driven by explicit test-only options.
 
 ## Consequences
 

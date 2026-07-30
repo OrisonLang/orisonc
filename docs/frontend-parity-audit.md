@@ -1,5 +1,9 @@
 # Frontend Parity Audit
 
+- 2026-07-30: computed owned `DynamicArray<T>` `for` audit collectors now reserve production audit naming for result
+  metadata and helper functions. The remaining broad `test_only_dynamic_array_*` snippet fields are classified as
+  fixture-only renderers gated by explicit test-only options.
+
 ## Scope
 
 This file tracks which source-language frontend slices are reflected in the current native compiler scaffold.

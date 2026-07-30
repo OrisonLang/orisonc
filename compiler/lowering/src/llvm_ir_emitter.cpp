@@ -738,7 +738,7 @@ void collect_source_dynamic_array_construction_plans(
     }
 }
 
-void bind_test_only_dynamic_array_local_for_computed_for_collection(
+void bind_dynamic_array_local_for_computed_for_collection(
     syntax::StatementSyntax const& statement,
     LoweringContext const& context,
     FunctionLoweringState& state
@@ -786,7 +786,7 @@ void collect_computed_dynamic_array_for_statements(
     FunctionLoweringState& state,
     CollectForStatement&& collect_for_statement
 ) {
-    bind_test_only_dynamic_array_local_for_computed_for_collection(statement, context, state);
+    bind_dynamic_array_local_for_computed_for_collection(statement, context, state);
     if (statement.kind == syntax::StatementKind::for_statement) {
         collect_for_statement(statement, enclosing_function_name, context, state);
     }
