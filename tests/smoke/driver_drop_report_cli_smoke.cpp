@@ -1157,6 +1157,7 @@ int main() {
             "cleanup-operation items.computed_for.1.cleanup.resume.call",
         }
     );
+    assert_computed_dynamic_array_final_use_cleanup_reports(app, dynamic_array_computed_later_owner_use_path);
 
     auto dynamic_array_computed_active_loop_body_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_computed_active_loop_body.or";
