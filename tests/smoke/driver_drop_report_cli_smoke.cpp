@@ -296,6 +296,44 @@ void assert_success_with_stdout_contains_in_order(
     }
 }
 
+void assert_computed_dynamic_array_later_owner_use_readiness(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) {
+    auto readiness = run_computed_dynamic_array_cleanup_call_insertion_readiness(app, path);
+    assert_success_with_stdout_contains(
+        readiness,
+        {
+            "computed DynamicArray cleanup call insertion readiness blocked gates 2 ready 1 blocked 1 "
+            "cleanup-blockers 1",
+            "cleanup-blocked-reason later owner use",
+        }
+    );
+}
+
+void assert_computed_dynamic_array_final_use_cleanup_reports(
+    orison::driver::CompilerApp const& app,
+    std::filesystem::path const& path
+) {
+    auto inserted_cleanup_calls = run_computed_dynamic_array_inserted_cleanup_calls(app, path);
+    assert_success_with_stdout_contains(
+        inserted_cleanup_calls,
+        {
+            smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
+            "computed DynamicArray inserted cleanup call detail owner items data %items.computed_for.",
+        }
+    );
+
+    auto consumed_cleanup_descriptors = run_computed_dynamic_array_consumed_cleanup_descriptors(app, path);
+    assert_success_with_stdout_contains(
+        consumed_cleanup_descriptors,
+        {
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report,
+            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
+        }
+    );
+}
+
 void assert_success_with_empty_stdout(orison::driver::CompileResult const& result) {
     assert(result.exit_code == 0);
     assert(result.stdout_text.empty());
@@ -1195,24 +1233,7 @@ int main() {
             "    total",
         }
     );
-    auto dynamic_array_computed_after_while_inserted_cleanup_calls =
-        run_computed_dynamic_array_inserted_cleanup_calls(app, dynamic_array_computed_after_while_path);
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_after_while_inserted_cleanup_calls,
-        {
-            smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
-            "computed DynamicArray inserted cleanup call detail owner items data %items.computed_for.",
-        }
-    );
-    auto dynamic_array_computed_after_while_consumed_cleanup_descriptors =
-        run_computed_dynamic_array_consumed_cleanup_descriptors(app, dynamic_array_computed_after_while_path);
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_after_while_consumed_cleanup_descriptors,
-        {
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report,
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
-        }
-    );
+    assert_computed_dynamic_array_final_use_cleanup_reports(app, dynamic_array_computed_after_while_path);
 
     auto dynamic_array_computed_if_then_later_loop_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_computed_if_then_later_loop.or";
@@ -1232,37 +1253,8 @@ int main() {
             "    total",
         }
     );
-    auto dynamic_array_computed_if_then_later_loop_readiness =
-        run_computed_dynamic_array_cleanup_call_insertion_readiness(
-            app,
-            dynamic_array_computed_if_then_later_loop_path
-        );
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_if_then_later_loop_readiness,
-        {
-            "computed DynamicArray cleanup call insertion readiness blocked gates 2 ready 1 blocked 1 "
-            "cleanup-blockers 1",
-            "cleanup-blocked-reason later owner use",
-        }
-    );
-    auto dynamic_array_computed_if_then_later_loop_inserted_cleanup_calls =
-        run_computed_dynamic_array_inserted_cleanup_calls(app, dynamic_array_computed_if_then_later_loop_path);
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_if_then_later_loop_inserted_cleanup_calls,
-        {
-            smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
-            "computed DynamicArray inserted cleanup call detail owner items data %items.computed_for.",
-        }
-    );
-    auto dynamic_array_computed_if_then_later_loop_consumed_cleanup_descriptors =
-        run_computed_dynamic_array_consumed_cleanup_descriptors(app, dynamic_array_computed_if_then_later_loop_path);
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_if_then_later_loop_consumed_cleanup_descriptors,
-        {
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report,
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
-        }
-    );
+    assert_computed_dynamic_array_later_owner_use_readiness(app, dynamic_array_computed_if_then_later_loop_path);
+    assert_computed_dynamic_array_final_use_cleanup_reports(app, dynamic_array_computed_if_then_later_loop_path);
 
     auto dynamic_array_computed_switch_case_later_loop_path =
         std::filesystem::temp_directory_path() / "orison_driver_drop_report_computed_switch_case_later_loop.or";
@@ -1284,40 +1276,8 @@ int main() {
             "    total",
         }
     );
-    auto dynamic_array_computed_switch_case_later_loop_readiness =
-        run_computed_dynamic_array_cleanup_call_insertion_readiness(
-            app,
-            dynamic_array_computed_switch_case_later_loop_path
-        );
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_switch_case_later_loop_readiness,
-        {
-            "computed DynamicArray cleanup call insertion readiness blocked gates 2 ready 1 blocked 1 "
-            "cleanup-blockers 1",
-            "cleanup-blocked-reason later owner use",
-        }
-    );
-    auto dynamic_array_computed_switch_case_later_loop_inserted_cleanup_calls =
-        run_computed_dynamic_array_inserted_cleanup_calls(app, dynamic_array_computed_switch_case_later_loop_path);
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_switch_case_later_loop_inserted_cleanup_calls,
-        {
-            smoke::computed_dynamic_array_inserted_cleanup_call_state_inserted_report,
-            "computed DynamicArray inserted cleanup call detail owner items data %items.computed_for.",
-        }
-    );
-    auto dynamic_array_computed_switch_case_later_loop_consumed_cleanup_descriptors =
-        run_computed_dynamic_array_consumed_cleanup_descriptors(
-            app,
-            dynamic_array_computed_switch_case_later_loop_path
-        );
-    assert_success_with_stdout_contains(
-        dynamic_array_computed_switch_case_later_loop_consumed_cleanup_descriptors,
-        {
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_finalized_report,
-            smoke::computed_dynamic_array_consumed_cleanup_descriptor_state_detail_report,
-        }
-    );
+    assert_computed_dynamic_array_later_owner_use_readiness(app, dynamic_array_computed_switch_case_later_loop_path);
+    assert_computed_dynamic_array_final_use_cleanup_reports(app, dynamic_array_computed_switch_case_later_loop_path);
 
     auto dynamic_array_computed_local_same_owner_insertion_capability =
         run_computed_dynamic_array_cleanup_call_insertion_capability(app, dynamic_array_computed_local_same_owner_path);
