@@ -13,7 +13,10 @@
   after a successful store, so later reads report `use after move` instead of reusing a value transferred into array
   storage.
 - 2026-07-30: local `DynamicArray<T>` indexed assignment now lowers for scalar/non-owning elements with the normal
-  bounds-failure branch; owned-element replacement remains blocked until old-element drop ordering is modeled.
+  bounds-failure branch.
+- 2026-07-30: local `DynamicArray<T>` indexed assignment now also lowers owned-element replacement when `items.element`
+  has authorized source Drop lowering, ordering the old-element drop before the replacement store and consuming owned
+  RHS bindings.
 
 ## Scope
 

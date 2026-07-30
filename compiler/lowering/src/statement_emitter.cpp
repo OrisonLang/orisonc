@@ -19,6 +19,8 @@
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_pointer_adapter.hpp"
 
+#include "orison/semantics/drop_model.hpp"
+
 #include <optional>
 #include <span>
 #include <sstream>
@@ -110,6 +112,25 @@ auto consumed_owned_push_argument_name(
     }
 
     return transfer->binding_name;
+}
+
+auto authorized_dynamic_array_element_drop_symbol_name(
+    std::string_view owner_name,
+    std::string_view element_source_type_name,
+    LoweringEmissionContext const& context
+) -> std::optional<std::string> {
+    auto symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
+    auto element_owner_name = std::string {owner_name};
+    element_owner_name += ".element";
+    for (auto const& authorization : context.options.semantic_drop_lowering_authorizations) {
+        if (authorization.authorized &&
+            authorization.site.source_type_name == element_source_type_name &&
+            authorization.site.abi_symbol_name == symbol_name &&
+            authorization.site.owner_name == element_owner_name) {
+            return symbol_name;
+        }
+    }
+    return std::nullopt;
 }
 
 auto aggregate_assignment_target_failure(
@@ -357,6 +378,7 @@ struct LoweredAssignmentTarget {
     LoweredType type;
     std::string pointer;
     std::optional<std::string> source_type_name;
+    bool consumes_owned_value_on_store = false;
 };
 
 auto lower_exclusive_view_index_assignment_target(
@@ -491,12 +513,22 @@ auto lower_dynamic_array_index_assignment_target(
         !sequence->owns_storage) {
         return std::nullopt;
     }
-    if (is_owned_transfer_source_type(sequence->element_source_type_name, context.lowering)) {
-        diagnostics.error(
-            target.line,
-            "lowering DynamicArray assignment to owned element requires replacement drop planning"
+    auto element_drop_symbol_name = std::optional<std::string> {};
+    auto const element_requires_ownership_transfer =
+        is_owned_transfer_source_type(sequence->element_source_type_name, context.lowering);
+    if (element_requires_ownership_transfer) {
+        element_drop_symbol_name = authorized_dynamic_array_element_drop_symbol_name(
+            owner_name,
+            sequence->element_source_type_name,
+            context
         );
-        return std::nullopt;
+        if (!element_drop_symbol_name.has_value()) {
+            diagnostics.error(
+                target.line,
+                "lowering DynamicArray assignment to owned element requires authorized replacement drop"
+            );
+            return std::nullopt;
+        }
     }
 
     auto element_type = lowered_type_for_source_type_name(
@@ -561,11 +593,16 @@ auto lower_dynamic_array_index_assignment_target(
     session.state.current_block = value_block;
     output << "  " << prefix << ".element.addr = getelementptr " << element_type->type;
     output << ", ptr " << prefix << ".data, i64 " << lowered_index->value << "\n";
+    if (element_drop_symbol_name.has_value()) {
+        output << "  call void @" << *element_drop_symbol_name << "(ptr ";
+        output << prefix << ".element.addr)\n";
+    }
 
     return LoweredAssignmentTarget {
         .type = std::move(*element_type),
         .pointer = prefix + ".element.addr",
         .source_type_name = sequence->element_source_type_name,
+        .consumes_owned_value_on_store = element_requires_ownership_transfer,
     };
 }
 
@@ -1624,6 +1661,16 @@ auto lower_assignment_statement(
 
     output << "  store " << target->type.type << " " << lowered->value
            << ", ptr " << target->pointer << "\n";
+    if (target->consumes_owned_value_on_store && target->source_type_name.has_value()) {
+        if (auto consumed_name = consumed_owned_push_argument_name(
+                statement.expression,
+                *target->source_type_name,
+                context,
+                session
+            )) {
+            mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));
+        }
+    }
     return true;
 }
 

@@ -5824,13 +5824,13 @@ auto main() -> int {
         std::string::npos
     );
 
-    auto dynamic_array_owned_element_assignment_blocked_path =
-        smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_blocked.or";
+    auto dynamic_array_owned_element_assignment_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment.or";
     {
-        auto owned_element_assignment_blocked_source =
-            std::ofstream(dynamic_array_owned_element_assignment_blocked_path);
-        owned_element_assignment_blocked_source
-            << "package demo.pipeline.dynamicarrayownedelementassignmentblocked\n"
+        auto owned_element_assignment_source =
+            std::ofstream(dynamic_array_owned_element_assignment_path);
+        owned_element_assignment_source
+            << "package demo.pipeline.dynamicarrayownedelementassignment\n"
             << "\n"
             << "record Payload\n"
             << "    public value: Int64\n"
@@ -5848,16 +5848,85 @@ auto main() -> int {
             << "    items[0] = Payload(8)\n"
             << "    0 as UInt32\n";
     }
-    auto dynamic_array_owned_element_assignment_blocked = pipeline.emit_llvm(
-        dynamic_array_owned_element_assignment_blocked_path,
+    auto dynamic_array_owned_element_assignment = pipeline.emit_llvm(
+        dynamic_array_owned_element_assignment_path,
         orison::pipeline::CompilePipelineOptions {
             .source_drop_lowering_enabled = true,
         }
     );
-    assert(dynamic_array_owned_element_assignment_blocked.has_errors());
+    assert(!dynamic_array_owned_element_assignment.has_errors());
+    auto replacement_drop = dynamic_array_owned_element_assignment.ir_text.find(
+        "call void @__orison_drop.Payload(ptr %items.dynamic_array_assign"
+    );
+    auto cleanup_drop = dynamic_array_owned_element_assignment.ir_text.find(
+        "call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup"
+    );
+    assert(replacement_drop != std::string::npos);
+    auto replacement_store = dynamic_array_owned_element_assignment.ir_text.find(
+        "store %record.Payload ",
+        replacement_drop
+    );
+    assert(replacement_store != std::string::npos);
+    auto replacement_store_end = dynamic_array_owned_element_assignment.ir_text.find("\n", replacement_store);
     assert(
-        dynamic_array_owned_element_assignment_blocked.error_text.find(
-            "lowering DynamicArray assignment to owned element requires replacement drop planning"
+        dynamic_array_owned_element_assignment.ir_text.find(
+            "ptr %items.dynamic_array_assign",
+            replacement_store
+        ) < replacement_store_end
+    );
+    assert(cleanup_drop != std::string::npos);
+    assert(replacement_drop < replacement_store);
+    assert(replacement_store < cleanup_drop);
+    auto dynamic_array_owned_element_assignment_object =
+        orison::lowering::LlvmObjectEmitter {}.emit(dynamic_array_owned_element_assignment.ir_text);
+    assert(!dynamic_array_owned_element_assignment_object.has_errors());
+    auto dynamic_array_owned_element_assignment_executable =
+        smoke_temp_root / "dynamic_array_owned_element_assignment";
+    auto dynamic_array_owned_element_assignment_link = orison::link::HostLinker {}.link(
+        dynamic_array_owned_element_assignment_object.object_bytes,
+        dynamic_array_owned_element_assignment_executable
+    );
+    assert(!dynamic_array_owned_element_assignment_link.has_errors());
+    auto dynamic_array_owned_element_assignment_status =
+        std::system(dynamic_array_owned_element_assignment_executable.string().c_str());
+    assert(WIFEXITED(dynamic_array_owned_element_assignment_status));
+    assert(WEXITSTATUS(dynamic_array_owned_element_assignment_status) == 0);
+
+    auto dynamic_array_owned_element_assignment_rhs_reuse_path =
+        smoke_temp_root / "orison_pipeline_dynamic_array_owned_element_assignment_rhs_reuse.or";
+    {
+        auto owned_element_assignment_rhs_reuse_source =
+            std::ofstream(dynamic_array_owned_element_assignment_rhs_reuse_path);
+        owned_element_assignment_rhs_reuse_source
+            << "package demo.pipeline.dynamicarrayownedelementassignmentrhsreuse\n"
+            << "\n"
+            << "record Payload\n"
+            << "    public value: Int64\n"
+            << "\n"
+            << "interface Drop\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "\n"
+            << "implements Drop for Payload\n"
+            << "    function drop(this: exclusive This) -> Unit\n"
+            << "        return\n"
+            << "\n"
+            << "function main() -> Int64\n"
+            << "    var items: DynamicArray<Payload> = DynamicArray()\n"
+            << "    items.push(Payload(7))\n"
+            << "    let payload = Payload(8)\n"
+            << "    items[0] = payload\n"
+            << "    payload.value\n";
+    }
+    auto dynamic_array_owned_element_assignment_rhs_reuse = pipeline.emit_llvm(
+        dynamic_array_owned_element_assignment_rhs_reuse_path,
+        orison::pipeline::CompilePipelineOptions {
+            .source_drop_lowering_enabled = true,
+        }
+    );
+    assert(dynamic_array_owned_element_assignment_rhs_reuse.has_errors());
+    assert(
+        dynamic_array_owned_element_assignment_rhs_reuse.error_text.find(
+            "use after move: payload"
         ) != std::string::npos
     );
 
