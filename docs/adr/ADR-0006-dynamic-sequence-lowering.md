@@ -720,6 +720,8 @@ representation.
   by the array CLI smoke across run, LLVM IR emission, object emission, and retained executable build paths.
 - Missing authorized element Drop now blocks computed same-owner final-use cleanup for owned `DynamicArray<T>` elements
   before descriptor deallocation can be emitted.
+- `tests/fixtures/dynamic_array_owned_computed_cleanup_missing_drop.or` is the checked-in CLI diagnostic fixture for
+  the missing authorized element Drop boundary.
 - Production-gated dynamic-array parameter descriptor lowering is now limited to scalar or non-owning element types.
   `DynamicArray<UInt32>` parameters lower to `{ ptr, i64, i64 }` and can emit descriptor cleanup under the production
   signature/cleanup gates, while owned-element parameters such as `DynamicArray<Payload>` remain rejected unless the
