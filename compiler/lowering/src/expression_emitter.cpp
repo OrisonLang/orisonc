@@ -1984,6 +1984,119 @@ auto lower_dynamic_array_index_read(
     };
 }
 
+auto lower_shared_dynamic_array_receiver_element_path_read(
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    IntegerSignedness expected_signedness,
+    EmissionContext const& context,
+    FunctionLoweringSession& session,
+    std::ostringstream& output
+) -> std::optional<LoweredExpression> {
+    auto path = collect_named_aggregate_path(expression);
+    if (!path.has_value() ||
+        path->base_expression == nullptr ||
+        path->base_expression->text != "this" ||
+        session.state.exclusive_receiver_bindings.contains("this") ||
+        path->steps.size() < 2 ||
+        path->steps.front().kind != AggregatePathStepKind::index ||
+        path->steps.front().index_expression == nullptr) {
+        return std::nullopt;
+    }
+
+    auto source_type = session.state.source_type_names.find("this");
+    if (source_type == session.state.source_type_names.end()) {
+        return std::nullopt;
+    }
+    auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
+    if (!element_source_type.has_value() ||
+        !is_owned_transfer_source_type(*element_source_type, context.lowering)) {
+        return std::nullopt;
+    }
+
+    auto storage = aggregate_storage_for_name("this", session.state);
+    if (!storage.has_value()) {
+        return std::nullopt;
+    }
+
+    auto plan = plan_dynamic_array_descriptor_cleanup(
+        "this",
+        source_type->second,
+        context.lowering
+    );
+    if (!plan.has_value()) {
+        return std::nullopt;
+    }
+
+    auto lowered_index = lowered_expression(
+        *path->steps.front().index_expression,
+        "i64",
+        IntegerSignedness::unsigned_integer,
+        context,
+        session,
+        output
+    );
+    if (!lowered_index.has_value()) {
+        return std::nullopt;
+    }
+
+    auto prefix = "%this.dynamic_array_element_path" +
+        std::to_string(session.state.next_temporary_index++);
+    output << emit_dynamic_array_descriptor_load(
+        prefix + ".descriptor",
+        *storage
+    );
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".length",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::length
+    );
+    output << emit_dynamic_array_bounds_check(
+        prefix + ".in_bounds",
+        lowered_index->value,
+        prefix + ".length",
+        DynamicArrayBoundsCheckKind::index_within_length
+    );
+    auto block_index = next_llvm_block_index(session.state.next_block_index);
+    auto value_block = llvm_block_name("dynamic_array.element_path.in_bounds", block_index);
+    auto failure_block = llvm_block_name("dynamic_array.element_path.out_of_bounds", block_index);
+    emit_llvm_conditional_branch(
+        output,
+        prefix + ".in_bounds",
+        value_block,
+        failure_block
+    );
+    emit_llvm_block_label(output, failure_block);
+    output << "  call void @__orison_dynamic_array_bounds_failed()\n";
+    emit_llvm_unreachable(output);
+    emit_llvm_block_label(output, value_block);
+    session.state.current_block = value_block;
+    output << emit_dynamic_array_descriptor_field_projection(
+        prefix + ".data",
+        prefix + ".descriptor",
+        DynamicArrayDescriptorField::data
+    );
+    output << emit_dynamic_array_element_address(
+        *plan,
+        prefix + ".element.addr",
+        prefix + ".data",
+        lowered_index->value
+    );
+
+    auto element_path = *path;
+    element_path.steps.erase(element_path.steps.begin());
+    return lower_aggregate_path_read_from_storage(
+        expression,
+        element_path,
+        prefix + ".element.addr",
+        *element_source_type,
+        expected_llvm_type,
+        expected_signedness,
+        context,
+        session,
+        output
+    );
+}
+
 auto lower_dynamic_array_length_call(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
@@ -2770,6 +2883,17 @@ auto lowered_expression(
             return std::nullopt;
         }
         return binding->second;
+    }
+
+    if (auto dynamic_array_element_path_read = lower_shared_dynamic_array_receiver_element_path_read(
+            expression,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        )) {
+        return dynamic_array_element_path_read;
     }
 
     if (auto aggregate_path_read = lower_addressable_aggregate_path_read(

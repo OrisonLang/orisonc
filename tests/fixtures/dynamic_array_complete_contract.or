@@ -17,6 +17,9 @@ extend DynamicArray<T>
     function first(this: shared This) -> T
         this[0]
 
+    function first_value(this: shared This) -> UInt32
+        this[0].value
+
     function count_each(this: shared This) -> IntSize
         var total: IntSize = 0 as IntSize
         for item in this
@@ -48,7 +51,7 @@ function owned_demo() -> UInt32
     values.push(Payload(13 as UInt32))
     values.replace_first(Payload(17 as UInt32))
     let count: IntSize = values.count_each()
-    0 as UInt32
+    values.first_value()
 
 function main() -> UInt32
     0 as UInt32

@@ -219,6 +219,9 @@ representation.
 - Shared DynamicArray receiver index reads now reject owned element value copies. Receiver methods should project a
   non-owning scalar/member value, such as `this[0].value`, until the language has an explicit safe ownership-preserving
   borrow or clone model for owned elements.
+- Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
+  element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
+  scalar field reads from the borrowed receiver element.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports
