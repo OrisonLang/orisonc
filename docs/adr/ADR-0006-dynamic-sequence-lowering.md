@@ -899,6 +899,11 @@ representation.
 - `generic_call_resolution` negative-path coverage now pins conflicting generic substitutions, no-match concrete
   specialization lookup, and ambiguous duplicate specialization lookup. These failures stay resolver-level invariants
   before they reach CLI lowering fixtures.
+- Generic method-call inference now has a shared lowered-method specialization matcher that uses receiver source type,
+  method name, expected LLVM return type, and user argument source types while skipping the lowered `this` parameter.
+  Direct smoke coverage pins receiver call source-type queries plus positive, no-match, and ambiguous method
+  specialization lookup. Expression-emitter smoke coverage pins ambiguous lowered method lookup resolving to the
+  concrete source-typed method specialization and emitting that symbol.
 
 ## Follow-up work
 

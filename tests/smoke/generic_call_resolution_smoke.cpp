@@ -53,6 +53,23 @@ auto call_expression(
     return expression;
 }
 
+auto member_call_expression(
+    orison::syntax::ExpressionSyntax receiver,
+    std::string method_name,
+    orison::syntax::ExpressionSyntax argument
+) -> orison::syntax::ExpressionSyntax {
+    auto member = orison::syntax::ExpressionSyntax {};
+    member.kind = orison::syntax::ExpressionKind::member_access;
+    member.text = std::move(method_name);
+    member.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(receiver));
+
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::call;
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(member));
+    expression.arguments.push_back(std::move(argument));
+    return expression;
+}
+
 auto generic_function(
     std::string name,
     std::string parameter_name,
@@ -198,6 +215,7 @@ int main() {
     );
     auto state = orison::lowering::FunctionLoweringState {};
     state.source_type_names["value"] = "UInt32";
+    state.source_type_names["box"] = "Box<UInt32>";
     auto matched = orison::lowering::find_matching_generic_specialization(
         "consume",
         local_call,
@@ -240,6 +258,68 @@ int main() {
         state
     );
     assert(ambiguous == nullptr);
+
+    context.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Box<UInt32>",
+        .method_name = "pick",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "i32",
+            .source_return_type_name = "UInt32",
+            .parameter_types = {"%record.Box_UInt32", "i32"},
+            .parameter_source_type_names = {"Box<UInt32>", "UInt32"},
+            .symbol_name = "method.Box_UInt32.pick",
+        },
+    });
+    auto method_call = member_call_expression(name_expression("box"), "pick", name_expression("value"));
+    auto method_source_type = orison::lowering::source_type_name_for_expression(
+        method_call,
+        context,
+        state
+    );
+    assert(method_source_type.has_value());
+    assert(*method_source_type == "UInt32");
+
+    auto matched_method = orison::lowering::find_matching_generic_method_specialization(
+        "Box<UInt32>",
+        "pick",
+        method_call,
+        "i32",
+        context,
+        state
+    );
+    assert(matched_method != nullptr);
+    assert(matched_method->symbol_name == "method.Box_UInt32.pick");
+
+    auto no_matching_method = orison::lowering::find_matching_generic_method_specialization(
+        "Box<UInt32>",
+        "pick",
+        method_call,
+        "i64",
+        context,
+        state
+    );
+    assert(no_matching_method == nullptr);
+
+    context.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "Box<UInt32>",
+        .method_name = "pick",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "i32",
+            .source_return_type_name = "UInt32",
+            .parameter_types = {"%record.Box_UInt32", "i32"},
+            .parameter_source_type_names = {"Box<UInt32>", "UInt32"},
+            .symbol_name = "method.Box_UInt32.pick_duplicate",
+        },
+    });
+    auto ambiguous_method = orison::lowering::find_matching_generic_method_specialization(
+        "Box<UInt32>",
+        "pick",
+        method_call,
+        "i32",
+        context,
+        state
+    );
+    assert(ambiguous_method == nullptr);
 
     return 0;
 }

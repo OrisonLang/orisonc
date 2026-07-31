@@ -562,6 +562,80 @@ int main() {
         "  %tmp0 = call i32 @method.UInt32.scale(i32 %value, i32 2)\n"
     );
 
+    auto generic_method_lowering = lowering;
+    generic_method_lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "UInt32",
+        .method_name = "select",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "i32",
+            .source_return_type_name = "UInt32",
+            .return_signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+            .parameter_types = {"i32", "i32"},
+            .parameter_source_type_names = {"UInt32", "UInt32"},
+            .parameter_signedness = {
+                orison::lowering::IntegerSignedness::unsigned_integer,
+                orison::lowering::IntegerSignedness::unsigned_integer,
+            },
+            .symbol_name = "method.UInt32.select_UInt32",
+        },
+    });
+    generic_method_lowering.methods.push_back(orison::lowering::LoweredMethodSignature {
+        .receiver_type_name = "UInt32",
+        .method_name = "select",
+        .signature = orison::lowering::LoweredFunctionSignature {
+            .return_type = "i32",
+            .source_return_type_name = "UInt32",
+            .return_signedness = orison::lowering::IntegerSignedness::unsigned_integer,
+            .parameter_types = {"i32", "i64"},
+            .parameter_source_type_names = {"UInt32", "UInt64"},
+            .parameter_signedness = {
+                orison::lowering::IntegerSignedness::unsigned_integer,
+                orison::lowering::IntegerSignedness::unsigned_integer,
+            },
+            .symbol_name = "method.UInt32.select_UInt64",
+        },
+    });
+    auto generic_method_call = orison::syntax::ExpressionSyntax {};
+    generic_method_call.kind = orison::syntax::ExpressionKind::call;
+    generic_method_call.left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    generic_method_call.left->kind = orison::syntax::ExpressionKind::member_access;
+    generic_method_call.left->text = "select";
+    generic_method_call.left->left = std::make_unique<orison::syntax::ExpressionSyntax>();
+    generic_method_call.left->left->kind = orison::syntax::ExpressionKind::name;
+    generic_method_call.left->left->text = "value";
+    generic_method_call.arguments.push_back(orison::syntax::ExpressionSyntax {
+        .kind = orison::syntax::ExpressionKind::name,
+        .text = "value",
+    });
+    auto generic_method_context = orison::lowering::LoweringEmissionContext {
+        .lowering = generic_method_lowering,
+        .string_constants = strings,
+        .options = {},
+    };
+    auto generic_method_state = member_state;
+    generic_method_state.next_temporary_index = 0;
+    auto generic_method_failures = orison::lowering::LoweringFailures {};
+    auto generic_method_session = orison::lowering::FunctionLoweringSession {
+        .state = generic_method_state,
+        .failures = generic_method_failures,
+    };
+    output = {};
+    auto generic_method_lowered = orison::lowering::lower_expression(
+        generic_method_call,
+        "i32",
+        orison::lowering::IntegerSignedness::unsigned_integer,
+        generic_method_context,
+        generic_method_session,
+        output
+    );
+    assert(generic_method_lowered.has_value());
+    assert(generic_method_lowered->type == "i32");
+    assert(generic_method_lowered->value == "%tmp0");
+    assert(
+        output.str() ==
+        "  %tmp0 = call i32 @method.UInt32.select_UInt32(i32 %value, i32 %value)\n"
+    );
+
     auto null_safe_member_call = orison::syntax::ExpressionSyntax {};
     null_safe_member_call.kind = orison::syntax::ExpressionKind::call;
     null_safe_member_call.left = std::make_unique<orison::syntax::ExpressionSyntax>();

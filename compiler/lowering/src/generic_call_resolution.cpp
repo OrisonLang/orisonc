@@ -249,6 +249,28 @@ auto call_arguments_match_source_types(
     return true;
 }
 
+auto method_call_arguments_match_source_types(
+    syntax::ExpressionSyntax const& expression,
+    LoweredFunctionSignature const& signature,
+    GenericCallSourceResolver const& resolver
+) -> bool {
+    if (signature.parameter_source_type_names.size() != expression.arguments.size() + 1) {
+        return false;
+    }
+
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto const& expected_source_type = signature.parameter_source_type_names[index + 1];
+        if (expected_source_type.empty()) {
+            return false;
+        }
+        auto actual_source_type = source_type_name_for_generic_call_argument(expression.arguments[index], resolver);
+        if (!actual_source_type.has_value() || *actual_source_type != expected_source_type) {
+            return false;
+        }
+    }
+    return true;
+}
+
 auto find_matching_generic_specialization(
     std::string_view function_name,
     syntax::ExpressionSyntax const& expression,
@@ -277,6 +299,37 @@ auto find_matching_generic_specialization(
             return nullptr;
         }
         match = &signature->second;
+    }
+    return match;
+}
+
+auto find_matching_generic_method_specialization(
+    std::string_view receiver_type_name,
+    std::string_view method_name,
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> LoweredFunctionSignature const* {
+    auto resolver = GenericCallSourceResolver {
+        .lowering_context = &context,
+        .state = &state,
+    };
+    auto const* match = static_cast<LoweredFunctionSignature const*>(nullptr);
+    for (auto const& method : context.methods) {
+        if (method.receiver_type_name != receiver_type_name ||
+            method.method_name != method_name ||
+            method.signature.return_type != expected_llvm_type ||
+            method.signature.parameter_types.size() != expression.arguments.size() + 1 ||
+            method.signature.parameter_source_type_names.empty() ||
+            method.signature.parameter_source_type_names.front() != receiver_type_name ||
+            !method_call_arguments_match_source_types(expression, method.signature, resolver)) {
+            continue;
+        }
+        if (match != nullptr) {
+            return nullptr;
+        }
+        match = &method.signature;
     }
     return match;
 }

@@ -3551,7 +3551,23 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
-        if (resolved.method.result == LoweredMethodLookupResult::not_found) {
+        auto const* method_signature = resolved.method.method == nullptr
+            ? nullptr
+            : &resolved.method.method->signature;
+        if (method_signature == nullptr ||
+            resolved.method.result != LoweredMethodLookupResult::found ||
+            method_signature->return_type != expected_llvm_type) {
+            method_signature = find_matching_generic_method_specialization(
+                resolved.receiver.receiver_type_name,
+                resolved.receiver.method_name,
+                expression,
+                expected_llvm_type,
+                context.lowering,
+                session.state
+            );
+        }
+
+        if (method_signature == nullptr && resolved.method.result == LoweredMethodLookupResult::not_found) {
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unknown_member_call_target,
@@ -3559,7 +3575,7 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
-        if (resolved.method.result == LoweredMethodLookupResult::ambiguous) {
+        if (method_signature == nullptr && resolved.method.result == LoweredMethodLookupResult::ambiguous) {
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::ambiguous_member_call_target,
@@ -3567,8 +3583,7 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
-        if (resolved.method.method == nullptr ||
-            !has_supported_function_signature_types(resolved.method.method->signature)) {
+        if (method_signature == nullptr || !has_supported_function_signature_types(*method_signature)) {
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
@@ -3577,18 +3592,17 @@ auto lowered_expression(
             return std::nullopt;
         }
 
-        auto const& method = resolved.method.method->signature;
-        if (method.return_type != expected_llvm_type) {
+        if (method_signature->return_type != expected_llvm_type) {
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::call_return_type_mismatch,
-                target_name + " returns " + method.return_type + ", expected " +
+                target_name + " returns " + method_signature->return_type + ", expected " +
                     std::string(expected_llvm_type)
             );
             return std::nullopt;
         }
 
-        auto const expected_argument_count = method.parameter_types.size() - 1;
+        auto const expected_argument_count = method_signature->parameter_types.size() - 1;
         if (expected_argument_count != expression.arguments.size()) {
             record_expression_lowering_failure(
                 failures,
@@ -3605,7 +3619,7 @@ auto lowered_expression(
                 expression.arguments.data(),
                 expression.arguments.size()
             ),
-            method,
+            *method_signature,
             context,
             session,
             output
@@ -3622,7 +3636,7 @@ auto lowered_expression(
         }
 
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        return emit_value_call(std::move(temporary_name), method, *arguments, output);
+        return emit_value_call(std::move(temporary_name), *method_signature, *arguments, output);
     }
 
     if (expression.kind == syntax::ExpressionKind::unary &&
