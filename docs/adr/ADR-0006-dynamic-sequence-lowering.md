@@ -857,6 +857,10 @@ representation.
 - Successful `--dynamic-array-cleanup-audit` full-emission probes now replace metadata cleanup
   obligation/sequence/verification/gate/capability sections with emitted cleanup reports. This keeps emitted local
   cleanup operation names aligned with consumed descriptor finalization report lines.
+- DynamicArray implementation gap review after owned-parameter read coverage keeps the next backend work focused on
+  parameter descriptor mutation policy, generic DynamicArray lowering beyond concrete examples, retiring remaining
+  computed-cleanup test-only seams, and expanding runtime/allocator APIs beyond allocate/grow/deallocate plus bounds
+  failure. These are implementation-readiness gaps, not surface syntax changes.
 
 ## Follow-up work
 
