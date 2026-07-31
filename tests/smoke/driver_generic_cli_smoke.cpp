@@ -474,6 +474,11 @@ auto main() -> int {
         executable,
         fixtures / "dynamic_array_complete_contract.or"
     );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_receiver_append_missing_drop.or",
+        "lowering DynamicArray push to owned element requires authorized element drop"
+    );
     assert_cli_parse_success(
         executable,
         smoke_temp_root / "orison_cli_generic_function_dependent_same_width_integer.or",

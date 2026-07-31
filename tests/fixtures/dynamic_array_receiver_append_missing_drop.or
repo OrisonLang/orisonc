@@ -1,0 +1,13 @@
+package fixtures.dynamicarray.receiverappendmissingdrop
+
+record Payload
+    value: UInt32
+
+extend DynamicArray<T>
+    function append_value(this: exclusive This, value: T) -> Unit
+        this.push(value)
+
+function main() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.append_value(Payload(11 as UInt32))
+    0 as UInt32

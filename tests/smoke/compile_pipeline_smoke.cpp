@@ -2738,7 +2738,6 @@ auto main() -> int {
             << "function main() -> UInt32\n"
             << "    var items: DynamicArray<Payload> = DynamicArray()\n"
             << "    var total = 0 as Int64\n"
-            << "    items.push(Payload(5))\n"
             << "    for item in true ? items : items\n"
             << "        total = total + item.value\n"
             << "    0 as UInt32\n";

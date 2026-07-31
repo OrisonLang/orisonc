@@ -133,6 +133,21 @@ auto authorized_dynamic_array_element_drop_symbol_name(
     return std::nullopt;
 }
 
+auto has_authorized_dynamic_array_element_drop_type(
+    std::string_view element_source_type_name,
+    LoweringEmissionContext const& context
+) -> bool {
+    auto symbol_name = semantics::drop_abi_symbol_name(element_source_type_name);
+    for (auto const& authorization : context.options.semantic_drop_lowering_authorizations) {
+        if (authorization.authorized &&
+            authorization.site.source_type_name == element_source_type_name &&
+            authorization.site.abi_symbol_name == symbol_name) {
+            return true;
+        }
+    }
+    return false;
+}
+
 auto aggregate_assignment_target_failure(
     std::string_view operation,
     AggregatePathError error
@@ -1216,6 +1231,16 @@ auto lower_dynamic_array_push_statement(
     auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
     if (!element_source_type.has_value()) {
         return false;
+    }
+    auto const element_requires_ownership_transfer =
+        is_owned_transfer_source_type(*element_source_type, context.lowering);
+    if (element_requires_ownership_transfer &&
+        !has_authorized_dynamic_array_element_drop_type(*element_source_type, context)) {
+        diagnostics.error(
+            statement.line,
+            "lowering DynamicArray push to owned element requires authorized element drop"
+        );
+        return true;
     }
     auto storage = aggregate_storage_for_name(owner_name, session.state);
     if (!storage.has_value()) {

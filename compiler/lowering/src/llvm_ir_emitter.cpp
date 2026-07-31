@@ -457,6 +457,12 @@ auto has_dynamic_array_index_read(
         if (!parameter.name.empty() && is_dynamic_array_source_type(parameter.type)) {
             owner_names.insert(parameter.name);
         }
+        if (parameter.name == "this" &&
+            (parameter.type.name == "This" ||
+             parameter.type.name == "shared.This" ||
+             parameter.type.name == "exclusive.This")) {
+            owner_names.insert(parameter.name);
+        }
     }
     for (auto const& statement : function.body_statements) {
         collect_dynamic_array_owner_names(statement, owner_names);
@@ -484,6 +490,12 @@ auto has_dynamic_array_append_call(
     auto owner_names = std::unordered_set<std::string> {};
     for (auto const& parameter : function.parameters) {
         if (!parameter.name.empty() && is_dynamic_array_source_type(parameter.type)) {
+            owner_names.insert(parameter.name);
+        }
+        if (parameter.name == "this" &&
+            (parameter.type.name == "This" ||
+             parameter.type.name == "shared.This" ||
+             parameter.type.name == "exclusive.This")) {
             owner_names.insert(parameter.name);
         }
     }
