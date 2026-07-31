@@ -1,7 +1,10 @@
 package fixtures.dynamicarray.completecontract
 
-record Payload
+record Nested
     value: UInt32
+
+record Payload
+    child: Nested
 
 interface Drop
     function drop(this: exclusive This) -> Unit
@@ -18,7 +21,7 @@ extend DynamicArray<T>
         this[0]
 
     function first_value(this: shared This) -> UInt32
-        this[0].value
+        this[0].child.value
 
     function count_each(this: shared This) -> IntSize
         var total: IntSize = 0 as IntSize
@@ -47,11 +50,11 @@ function scalar_demo() -> UInt32
 
 function owned_demo() -> UInt32
     var values: DynamicArray<Payload> = DynamicArray()
-    values.append_value(Payload(11 as UInt32))
-    values.push(Payload(13 as UInt32))
-    values.replace_first(Payload(17 as UInt32))
+    values.append_value(Payload(Nested(11 as UInt32)))
+    values.push(Payload(Nested(13 as UInt32)))
+    values.replace_first(Payload(Nested(17 as UInt32)))
     let count: IntSize = values.count_each()
-    let projected: UInt32 = values[0].value
+    let projected: UInt32 = values[0].child.value
     projected + values.first_value()
 
 function main() -> UInt32

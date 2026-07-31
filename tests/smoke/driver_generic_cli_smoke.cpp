@@ -240,6 +240,8 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
     assert(output.find("%this.dynamic_array_element_path") != std::string::npos);
     assert(output.find("getelementptr %record.Payload, ptr %this.dynamic_array_element_path") !=
         std::string::npos);
+    assert(output.find("getelementptr %record.Nested, ptr %tmp") !=
+        std::string::npos);
     assert(output.find("%values.dynamic_array_element_path") != std::string::npos);
     assert(output.find("getelementptr %record.Payload, ptr %values.dynamic_array_element_path") !=
         std::string::npos);
