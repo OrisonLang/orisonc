@@ -229,6 +229,8 @@ representation.
   the bounded element address is established.
 - DynamicArray element paths can also continue through fixed-array indexing after the element, such as
   `items[0].bytes[1]`, using the same aggregate cursor after the bounded element address is established.
+- DynamicArray element paths reject owned projections such as `items[0].child` while allowing scalar terminal
+  projections such as `items[0].child.value`.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

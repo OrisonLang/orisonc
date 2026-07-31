@@ -1,0 +1,20 @@
+package fixtures.dynamicarray.ownedprojectionrejected
+
+record Nested
+    value: UInt32
+
+record Payload
+    child: Nested
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+function main() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(Nested(7 as UInt32)))
+    let child: Nested = values[0].child
+    child.value
