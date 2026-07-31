@@ -2756,6 +2756,26 @@ auto emit_module(
         append_function_emission_reports(result, function_emission);
         output << "\n";
     }
+    for (auto const& function_ptr : context.generic_function_specializations) {
+        auto const& function = *function_ptr;
+        auto signature = context.functions.find(function.name);
+        if (signature == context.functions.end()) {
+            result.diagnostics.error(function.line, "lowering context is missing generic function specialization");
+            return result;
+        }
+        auto function_emission = emit_function_with_metadata(
+            function,
+            signature->second,
+            context,
+            string_constants,
+            semantic_result,
+            result.diagnostics,
+            options
+        );
+        output << function_emission.ir_text;
+        append_function_emission_reports(result, function_emission);
+        output << "\n";
+    }
 
     auto method_index = std::size_t {0};
     auto emit_method = [&](syntax::FunctionSyntax const& method) -> bool {

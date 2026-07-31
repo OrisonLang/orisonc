@@ -2,10 +2,14 @@
 
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
+#include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/target_layout.hpp"
 #include "orison/lowering/type_lowering.hpp"
 
 #include <algorithm>
+#include <cctype>
+#include <memory>
+#include <optional>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
@@ -13,6 +17,21 @@
 
 namespace orison::lowering {
 namespace {
+
+auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax;
+auto clone_statement(syntax::StatementSyntax const& statement) -> syntax::StatementSyntax;
+void collect_generic_calls_from_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, std::string> const& local_source_types,
+    std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
+);
+void collect_generic_calls_from_statement(
+    syntax::StatementSyntax const& statement,
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, std::string> const& local_source_types,
+    std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
+);
 
 auto unquoted_text(std::string_view text) -> std::string_view {
     if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
@@ -127,6 +146,14 @@ auto generic_parameter_set(syntax::ChoiceSyntax const& choice) -> std::unordered
     return parameters;
 }
 
+auto generic_parameter_set(std::vector<std::string> const& generic_parameters) -> std::unordered_set<std::string> {
+    auto parameters = std::unordered_set<std::string> {};
+    for (auto const& parameter : generic_parameters) {
+        parameters.insert(parameter);
+    }
+    return parameters;
+}
+
 auto unify_constructor_type(
     syntax::TypeSyntax const& pattern,
     syntax::TypeSyntax const& actual,
@@ -156,6 +183,290 @@ auto unify_constructor_type(
         }
     }
     return true;
+}
+
+auto clone_expression(syntax::ExpressionSyntax const& expression) -> syntax::ExpressionSyntax {
+    auto cloned = syntax::ExpressionSyntax {
+        .kind = expression.kind,
+        .line = expression.line,
+        .text = expression.text,
+    };
+    cloned.arguments.reserve(expression.arguments.size());
+    for (auto const& argument : expression.arguments) {
+        cloned.arguments.push_back(clone_expression(argument));
+    }
+    cloned.nested_statements.reserve(expression.nested_statements.size());
+    for (auto const& statement : expression.nested_statements) {
+        cloned.nested_statements.push_back(std::make_unique<syntax::StatementSyntax>(clone_statement(*statement)));
+    }
+    if (expression.left != nullptr) {
+        cloned.left = std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.left));
+    }
+    if (expression.right != nullptr) {
+        cloned.right = std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.right));
+    }
+    if (expression.alternate != nullptr) {
+        cloned.alternate = std::make_unique<syntax::ExpressionSyntax>(clone_expression(*expression.alternate));
+    }
+    return cloned;
+}
+
+auto clone_switch_case(syntax::SwitchCaseSyntax const& switch_case) -> syntax::SwitchCaseSyntax {
+    auto cloned = syntax::SwitchCaseSyntax {
+        .is_default = switch_case.is_default,
+        .pattern = clone_expression(switch_case.pattern),
+    };
+    cloned.statements.reserve(switch_case.statements.size());
+    for (auto const& statement : switch_case.statements) {
+        cloned.statements.push_back(std::make_unique<syntax::StatementSyntax>(clone_statement(*statement)));
+    }
+    return cloned;
+}
+
+auto clone_statement(syntax::StatementSyntax const& statement) -> syntax::StatementSyntax {
+    auto cloned = syntax::StatementSyntax {
+        .kind = statement.kind,
+        .line = statement.line,
+        .valid = statement.valid,
+        .name = statement.name,
+        .annotated_type = statement.annotated_type,
+        .assignment_target = clone_expression(statement.assignment_target),
+        .assignment_operator = statement.assignment_operator,
+        .expression = clone_expression(statement.expression),
+    };
+    cloned.nested_statements.reserve(statement.nested_statements.size());
+    for (auto const& nested_statement : statement.nested_statements) {
+        cloned.nested_statements.push_back(clone_statement(nested_statement));
+    }
+    cloned.alternate_statements.reserve(statement.alternate_statements.size());
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        cloned.alternate_statements.push_back(clone_statement(alternate_statement));
+    }
+    cloned.switch_cases.reserve(statement.switch_cases.size());
+    for (auto const& switch_case : statement.switch_cases) {
+        cloned.switch_cases.push_back(clone_switch_case(switch_case));
+    }
+    return cloned;
+}
+
+auto clone_function(syntax::FunctionSyntax const& function) -> syntax::FunctionSyntax {
+    auto cloned = syntax::FunctionSyntax {
+        .visibility = function.visibility,
+        .line = function.line,
+        .is_async = function.is_async,
+        .is_unsafe = function.is_unsafe,
+        .name = function.name,
+        .generic_parameters = function.generic_parameters,
+        .parameters = function.parameters,
+        .return_type = function.return_type,
+        .where_constraints = function.where_constraints,
+    };
+    cloned.body_statements.reserve(function.body_statements.size());
+    for (auto const& statement : function.body_statements) {
+        cloned.body_statements.push_back(clone_statement(statement));
+    }
+    return cloned;
+}
+
+auto sanitized_specialization_part(std::string source_type_name) -> std::string {
+    for (auto& character : source_type_name) {
+        if (!std::isalnum(static_cast<unsigned char>(character))) {
+            character = '_';
+        }
+    }
+    return source_type_name;
+}
+
+auto specialized_function_symbol_name(
+    syntax::FunctionSyntax const& function,
+    std::unordered_map<std::string, syntax::TypeSyntax> const& substitutions
+) -> std::string {
+    auto symbol = function.name;
+    for (auto const& generic_parameter : function.generic_parameters) {
+        auto substitution = substitutions.find(generic_parameter);
+        if (substitution == substitutions.end()) {
+            return function.name;
+        }
+        symbol += "__";
+        symbol += sanitized_specialization_part(render_source_type_name(substitution->second));
+    }
+    return symbol;
+}
+
+auto bind_generic_function_call_substitutions(
+    syntax::FunctionSyntax const& function,
+    syntax::ExpressionSyntax const& call,
+    std::unordered_map<std::string, std::string> const& local_source_types
+) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>> {
+    if (function.generic_parameters.empty() || call.arguments.size() != function.parameters.size()) {
+        return std::nullopt;
+    }
+
+    auto generic_parameters = generic_parameter_set(function.generic_parameters);
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    for (auto index = std::size_t {0}; index < call.arguments.size(); ++index) {
+        auto const& argument = call.arguments[index];
+        if (argument.kind != syntax::ExpressionKind::name) {
+            return std::nullopt;
+        }
+        auto source_type = local_source_types.find(argument.text);
+        if (source_type == local_source_types.end()) {
+            return std::nullopt;
+        }
+        if (!unify_constructor_type(
+                function.parameters[index].type,
+                parse_source_type_name(source_type->second),
+                generic_parameters,
+                substitutions
+            )) {
+            return std::nullopt;
+        }
+    }
+
+    for (auto const& generic_parameter : function.generic_parameters) {
+        if (!substitutions.contains(generic_parameter)) {
+            return std::nullopt;
+        }
+    }
+    return substitutions;
+}
+
+void record_dynamic_array_descriptor_parameter_types(
+    syntax::FunctionSyntax const& function,
+    LoweredFunctionSignature& signature
+) {
+    for (auto index = std::size_t {0}; index < function.parameters.size(); ++index) {
+        if (index >= signature.parameter_types.size()) {
+            continue;
+        }
+        auto source_type_name = render_source_type_name(function.parameters[index].type);
+        auto sequence = dynamic_sequence_source_type(source_type_name);
+        if (!sequence.has_value() ||
+            sequence->kind != DynamicSequenceKind::dynamic_array ||
+            !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+            continue;
+        }
+        signature.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
+        signature.parameter_signedness[index] = IntegerSignedness::not_integer;
+    }
+}
+
+auto specialized_function_copy(
+    syntax::FunctionSyntax const& function,
+    std::unordered_map<std::string, syntax::TypeSyntax> const& substitutions
+) -> syntax::FunctionSyntax {
+    auto specialized = clone_function(function);
+    specialized.name = specialized_function_symbol_name(function, substitutions);
+    specialized.generic_parameters.clear();
+    specialized.return_type = substitute_type(specialized.return_type, substitutions);
+    for (auto& parameter : specialized.parameters) {
+        parameter.type = substitute_type(parameter.type, substitutions);
+    }
+    return specialized;
+}
+
+void collect_generic_calls_from_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, std::string> const& local_source_types,
+    std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
+) {
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::name) {
+        auto function = generic_functions.find(expression.left->text);
+        if (function != generic_functions.end()) {
+            if (auto substitutions =
+                    bind_generic_function_call_substitutions(*function->second, expression, local_source_types)) {
+                auto specialization = specialized_function_copy(*function->second, *substitutions);
+                auto already_recorded = std::ranges::any_of(
+                    specializations,
+                    [&](std::shared_ptr<syntax::FunctionSyntax> const& existing) {
+                        return existing->name == specialization.name;
+                    }
+                );
+                if (!already_recorded) {
+                    specializations.push_back(
+                        std::make_shared<syntax::FunctionSyntax>(std::move(specialization))
+                    );
+                }
+            }
+        }
+    }
+
+    for (auto const& argument : expression.arguments) {
+        collect_generic_calls_from_expression(argument, generic_functions, local_source_types, specializations);
+    }
+    for (auto const& nested_statement : expression.nested_statements) {
+        collect_generic_calls_from_statement(*nested_statement, generic_functions, local_source_types, specializations);
+    }
+    if (expression.left != nullptr) {
+        collect_generic_calls_from_expression(*expression.left, generic_functions, local_source_types, specializations);
+    }
+    if (expression.right != nullptr) {
+        collect_generic_calls_from_expression(*expression.right, generic_functions, local_source_types, specializations);
+    }
+    if (expression.alternate != nullptr) {
+        collect_generic_calls_from_expression(
+            *expression.alternate,
+            generic_functions,
+            local_source_types,
+            specializations
+        );
+    }
+}
+
+void collect_generic_calls_from_statement(
+    syntax::StatementSyntax const& statement,
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, std::string> const& local_source_types,
+    std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
+) {
+    collect_generic_calls_from_expression(statement.assignment_target, generic_functions, local_source_types, specializations);
+    collect_generic_calls_from_expression(statement.expression, generic_functions, local_source_types, specializations);
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_generic_calls_from_statement(nested_statement, generic_functions, local_source_types, specializations);
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_generic_calls_from_statement(alternate_statement, generic_functions, local_source_types, specializations);
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        collect_generic_calls_from_expression(switch_case.pattern, generic_functions, local_source_types, specializations);
+        for (auto const& case_statement : switch_case.statements) {
+            collect_generic_calls_from_statement(*case_statement, generic_functions, local_source_types, specializations);
+        }
+    }
+}
+
+auto collect_generic_function_specializations(
+    syntax::ModuleSyntax const& module
+) -> std::vector<std::shared_ptr<syntax::FunctionSyntax>> {
+    auto generic_functions = std::unordered_map<std::string, syntax::FunctionSyntax const*> {};
+    for (auto const& function : module.functions) {
+        if (!function.generic_parameters.empty()) {
+            generic_functions.emplace(function.name, &function);
+        }
+    }
+    if (generic_functions.empty()) {
+        return {};
+    }
+
+    auto specializations = std::vector<std::shared_ptr<syntax::FunctionSyntax>> {};
+    for (auto const& function : module.functions) {
+        auto local_source_types = std::unordered_map<std::string, std::string> {};
+        for (auto const& parameter : function.parameters) {
+            local_source_types[parameter.name] = render_source_type_name(parameter.type);
+        }
+        for (auto const& statement : function.body_statements) {
+            if ((statement.kind == syntax::StatementKind::let_binding ||
+                 statement.kind == syntax::StatementKind::var_binding) &&
+                !statement.annotated_type.name.empty()) {
+                local_source_types[statement.name] = render_source_type_name(statement.annotated_type);
+            }
+            collect_generic_calls_from_statement(statement, generic_functions, local_source_types, specializations);
+        }
+    }
+    return specializations;
 }
 
 auto infer_constructor_expression_type(
@@ -928,6 +1239,38 @@ auto build_lowering_context(
             context.choices
         );
         context.functions.emplace(function.name, std::move(signature));
+    }
+
+    context.generic_function_specializations = collect_generic_function_specializations(module);
+    auto specialization_counts = std::unordered_map<std::string, std::size_t> {};
+    for (auto const& specialization_ptr : context.generic_function_specializations) {
+        auto delimiter = specialization_ptr->name.find("__");
+        if (delimiter != std::string::npos) {
+            ++specialization_counts[specialization_ptr->name.substr(0, delimiter)];
+        }
+    }
+    for (auto const& specialization_ptr : context.generic_function_specializations) {
+        auto const& specialization = *specialization_ptr;
+        auto signature = lower_contextual_function_signature(
+            specialization.return_type,
+            specialization.parameters,
+            specialization.name,
+            record_names,
+            context.choices
+        );
+        record_dynamic_array_descriptor_parameter_types(specialization, signature);
+        if (!has_supported_function_signature_types(signature)) {
+            continue;
+        }
+        auto original_name = std::string {};
+        auto delimiter = specialization.name.find("__");
+        if (delimiter != std::string::npos) {
+            original_name = specialization.name.substr(0, delimiter);
+        }
+        context.functions[specialization.name] = signature;
+        if (!original_name.empty() && specialization_counts[original_name] == 1) {
+            context.functions[original_name] = signature;
+        }
     }
 
     for (auto const& implementation : module.implementations) {

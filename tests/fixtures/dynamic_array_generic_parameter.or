@@ -1,4 +1,4 @@
-package tests.dynamicarraygenericparameterrejected
+package tests.dynamicarraygenericparameter
 
 function first<T>(values: DynamicArray<T>) -> T
     values[0]

@@ -869,6 +869,10 @@ representation.
   returns `T` from `values[0]` parses, but a concrete `DynamicArray<UInt32>` call still reaches lowering with an
   unconcretized return type. The remaining work is generic function monomorphization/substitution before descriptor
   index lowering can reuse the existing concrete parameter path.
+- The first generic function specialization path now lowers same-module calls with named arguments whose source types
+  are known in the caller. The current slice specializes `first<T>(values: DynamicArray<T>) -> T` to `first__UInt32`,
+  substitutes the return and parameter source types, reuses the concrete `DynamicArray<UInt32>` descriptor ABI, and
+  emits the concrete function body once. This is intentionally narrower than full generic dispatch.
 
 ## Follow-up work
 

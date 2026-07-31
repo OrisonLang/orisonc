@@ -94,14 +94,24 @@ void assert_cli_emit_llvm_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
-void assert_cli_emit_llvm_fixture_failure(
+void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
-    std::filesystem::path const& path,
-    std::string_view expected_message
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " run " + path.string();
+    auto output = read_command_output(command);
+    assert(output.empty());
+}
+
+void assert_cli_emit_llvm_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
 ) {
     auto command = executable.string() + " --emit-llvm " + path.string();
-    auto output = read_failing_command_output(command);
-    assert(output.find(expected_message) != std::string::npos);
+    auto output = read_command_output(command);
+    assert(output.find("define i32 @first__UInt32({ ptr, i64, i64 } %values)") != std::string::npos);
+    assert(output.find("call i32 @first__UInt32({ ptr, i64, i64 } %tmp") != std::string::npos);
+    assert(output.find("getelementptr i32, ptr %values.dynamic_array_index") != std::string::npos);
 }
 
 auto generic_pair_consumer_lines(
@@ -255,10 +265,13 @@ auto main() -> int {
         underconstrained_generic_record_for_lines(),
         "generic parameter 'T' cannot be inferred for record 'Tag'"
     );
-    assert_cli_emit_llvm_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "dynamic_array_generic_parameter_rejected.or",
-        "lowering does not yet support this return expression: call return type mismatch: first returns , expected i32"
+        fixtures / "dynamic_array_generic_parameter.or"
+    );
+    assert_cli_emit_llvm_fixture_success(
+        executable,
+        fixtures / "dynamic_array_generic_parameter.or"
     );
     assert_cli_parse_success(
         executable,

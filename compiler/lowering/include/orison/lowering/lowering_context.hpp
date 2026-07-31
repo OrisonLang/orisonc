@@ -5,6 +5,7 @@
 #include "orison/syntax/module_parser.hpp"
 
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -61,6 +62,7 @@ struct LoweringContext {
     std::unordered_map<std::string, LoweredChoiceLayout> choices;
     std::vector<LoweredMethodSignature> methods;
     std::vector<LoweredFunctionSignature> foreign_declarations;
+    std::vector<std::shared_ptr<syntax::FunctionSyntax>> generic_function_specializations;
 };
 
 enum class LoweredMethodLookupResult {

@@ -474,6 +474,12 @@ This file tracks which source-language frontend slices are reflected in the curr
   `first<T>(values: DynamicArray<T>) -> T` can parse, but instantiating it from a concrete `DynamicArray<UInt32>`
   call still fails before backend emission with an unconcretized return-type mismatch. This pins the current gap as
   generic function monomorphization/type substitution rather than descriptor read/index lowering.
+- 2026-07-30: The first generic function specialization slice is now lowered for a same-module call with named
+  arguments carrying known source types. `tests/fixtures/dynamic_array_generic_parameter.or` proves
+  `first<T>(values: DynamicArray<T>) -> T` specializes to `first__UInt32`, accepts a `DynamicArray<UInt32>` descriptor,
+  performs a checked index read, returns `UInt32`, transfers cleanup to the callee, and links/runs through the generic
+  CLI smoke. Broader generic dispatch, multiple simultaneous instantiations, non-name argument inference, methods, and
+  generic owned-element Drop proof remain pending.
 - 2026-07-20: source-derived finite Drop implementations now emit narrow no-op LLVM ABI bodies such as
   `define void @__orison_drop.Payload(ptr %value)` for proven empty/naked-return `implements Drop` bodies. Pipeline
   smoke now links and runs the source-drop owned-parameter path for an empty local `DynamicArray<Payload>` passed to
