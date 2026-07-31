@@ -893,6 +893,9 @@ representation.
   specialization matching. Collector mode still uses original generic syntax plus local source bindings, while emitter
   mode uses the lowered context and function lowering state, removing the duplicated call-argument matching path from
   `expression_emitter.cpp`.
+- `generic_call_resolution` now has direct smoke coverage for collector-mode nested generic substitution, unannotated
+  local source-type binding reuse, and emitter-mode lookup of the matching concrete specialization. CLI fixtures remain
+  end-to-end coverage for emitted IR and linked execution.
 
 ## Follow-up work
 

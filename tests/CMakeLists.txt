@@ -1085,6 +1085,22 @@ add_test(
     COMMAND orison_source_type_queries_smoke
 )
 
+add_executable(orison_generic_call_resolution_smoke
+    smoke/generic_call_resolution_smoke.cpp
+)
+
+target_link_libraries(orison_generic_call_resolution_smoke
+    PRIVATE
+        orison_lowering
+)
+
+target_compile_features(orison_generic_call_resolution_smoke PRIVATE cxx_std_23)
+
+add_test(
+    NAME orison_generic_call_resolution_smoke
+    COMMAND orison_generic_call_resolution_smoke
+)
+
 add_executable(orison_maybe_value_emitter_smoke
     smoke/maybe_value_emitter_smoke.cpp
 )
