@@ -42,6 +42,17 @@ auto call_expression(
     return expression;
 }
 
+auto call_expression(
+    std::string function_name,
+    orison::syntax::ExpressionSyntax first_argument,
+    orison::syntax::ExpressionSyntax second_argument
+) -> orison::syntax::ExpressionSyntax {
+    auto expression = call_expression(std::move(function_name));
+    expression.arguments.push_back(std::move(first_argument));
+    expression.arguments.push_back(std::move(second_argument));
+    return expression;
+}
+
 auto generic_function(
     std::string name,
     std::string parameter_name,
@@ -61,15 +72,39 @@ auto generic_function(
     };
 }
 
+auto binary_generic_function(
+    std::string name,
+    orison::syntax::TypeSyntax parameter_type,
+    orison::syntax::TypeSyntax return_type
+) -> orison::syntax::FunctionSyntax {
+    return orison::syntax::FunctionSyntax {
+        .name = std::move(name),
+        .generic_parameters = {"T"},
+        .parameters = {
+            orison::syntax::ParameterSyntax {
+                .name = "left",
+                .type = parameter_type,
+            },
+            orison::syntax::ParameterSyntax {
+                .name = "right",
+                .type = parameter_type,
+            },
+        },
+        .return_type = std::move(return_type),
+    };
+}
+
 }  // namespace
 
 int main() {
     auto first = generic_function("first", "values", dynamic_array_type("T"), type("T"));
     auto consume = generic_function("consume", "value", type("T"), type("T"));
+    auto choose_same = binary_generic_function("choose_same", type("T"), type("T"));
 
     auto generic_functions = std::unordered_map<std::string, orison::syntax::FunctionSyntax const*> {
         {"first", &first},
         {"consume", &consume},
+        {"choose_same", &choose_same},
     };
     auto functions = std::unordered_map<std::string, orison::lowering::LoweredFunctionSignature> {
         {
@@ -78,6 +113,14 @@ int main() {
                 .return_type = std::string {orison::lowering::dynamic_array_descriptor_llvm_type()},
                 .source_return_type_name = "DynamicArray<UInt32>",
                 .symbol_name = "make_values",
+            },
+        },
+        {
+            "make_u64",
+            orison::lowering::LoweredFunctionSignature {
+                .return_type = "i64",
+                .source_return_type_name = "UInt64",
+                .symbol_name = "make_u64",
             },
         },
     };
@@ -115,6 +158,18 @@ int main() {
     assert(local_substitutions.has_value());
     assert(local_substitutions->at("T").name == "UInt32");
 
+    auto mismatched_generic_call = call_expression(
+        "choose_same",
+        name_expression("value"),
+        call_expression("make_u64")
+    );
+    auto mismatched_substitutions = orison::lowering::bind_generic_function_call_substitutions(
+        choose_same,
+        mismatched_generic_call,
+        collector_resolver
+    );
+    assert(!mismatched_substitutions.has_value());
+
     auto context = orison::lowering::LoweringContext {};
     context.functions.emplace(
         "consume__UInt32",
@@ -124,6 +179,16 @@ int main() {
             .parameter_types = {"i32"},
             .parameter_source_type_names = {"UInt32"},
             .symbol_name = "consume__UInt32",
+        }
+    );
+    context.functions.emplace(
+        "consume__UInt64",
+        orison::lowering::LoweredFunctionSignature {
+            .return_type = "i64",
+            .source_return_type_name = "UInt64",
+            .parameter_types = {"i64"},
+            .parameter_source_type_names = {"UInt64"},
+            .symbol_name = "consume__UInt64",
         }
     );
     context.generic_function_specializations.push_back(
@@ -142,6 +207,39 @@ int main() {
     );
     assert(matched != nullptr);
     assert(matched->symbol_name == "consume__UInt32");
+
+    auto mismatched = orison::lowering::find_matching_generic_specialization(
+        "consume",
+        local_call,
+        "i64",
+        context,
+        state
+    );
+    assert(mismatched == nullptr);
+
+    context.functions.emplace(
+        "consume__UInt32_duplicate",
+        orison::lowering::LoweredFunctionSignature {
+            .return_type = "i32",
+            .source_return_type_name = "UInt32",
+            .parameter_types = {"i32"},
+            .parameter_source_type_names = {"UInt32"},
+            .symbol_name = "consume__UInt32_duplicate",
+        }
+    );
+    context.generic_function_specializations.push_back(
+        std::make_shared<orison::syntax::FunctionSyntax>(orison::syntax::FunctionSyntax {
+            .name = "consume__UInt32_duplicate",
+        })
+    );
+    auto ambiguous = orison::lowering::find_matching_generic_specialization(
+        "consume",
+        local_call,
+        "i32",
+        context,
+        state
+    );
+    assert(ambiguous == nullptr);
 
     return 0;
 }

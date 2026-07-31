@@ -896,6 +896,9 @@ representation.
 - `generic_call_resolution` now has direct smoke coverage for collector-mode nested generic substitution, unannotated
   local source-type binding reuse, and emitter-mode lookup of the matching concrete specialization. CLI fixtures remain
   end-to-end coverage for emitted IR and linked execution.
+- `generic_call_resolution` negative-path coverage now pins conflicting generic substitutions, no-match concrete
+  specialization lookup, and ambiguous duplicate specialization lookup. These failures stay resolver-level invariants
+  before they reach CLI lowering fixtures.
 
 ## Follow-up work
 
