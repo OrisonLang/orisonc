@@ -1,0 +1,9 @@
+package tests.dynamicarraygenericparameterrejected
+
+function first<T>(values: DynamicArray<T>) -> T
+    values[0]
+
+function main() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(7 as UInt32)
+    first(values) - 7 as UInt32

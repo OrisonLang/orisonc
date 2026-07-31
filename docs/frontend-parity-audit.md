@@ -470,6 +470,10 @@ This file tracks which source-language frontend slices are reflected in the curr
   `DynamicArray<T>` descriptors remain readable/iterable/cleaned up, while `items[index] = value` and
   `items.push(value)` on parameters stay out of lowering; mutable parameter-style element writes remain represented by
   the existing `exclusive.View<T>` indexed-assignment path.
+- 2026-07-30: Generic `DynamicArray<T>` function use now has an explicit CLI boundary fixture. A generic function
+  `first<T>(values: DynamicArray<T>) -> T` can parse, but instantiating it from a concrete `DynamicArray<UInt32>`
+  call still fails before backend emission with an unconcretized return-type mismatch. This pins the current gap as
+  generic function monomorphization/type substitution rather than descriptor read/index lowering.
 - 2026-07-20: source-derived finite Drop implementations now emit narrow no-op LLVM ABI bodies such as
   `define void @__orison_drop.Payload(ptr %value)` for proven empty/naked-return `implements Drop` bodies. Pipeline
   smoke now links and runs the source-drop owned-parameter path for an empty local `DynamicArray<Payload>` passed to

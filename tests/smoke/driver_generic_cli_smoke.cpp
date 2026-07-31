@@ -94,6 +94,16 @@ void assert_cli_emit_llvm_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
+void assert_cli_emit_llvm_fixture_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view expected_message
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+}
+
 auto generic_pair_consumer_lines(
     std::initializer_list<std::string_view> body_lines
 ) -> std::vector<std::string> {
@@ -206,6 +216,7 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
+    auto fixtures = std::filesystem::current_path().parent_path().parent_path() / "tests" / "fixtures";
 
     assert_cli_parse_failure(
         executable,
@@ -243,6 +254,11 @@ auto main() -> int {
         smoke_temp_root / "orison_cli_underconstrained_generic_record_array_literal_for_emit.or",
         underconstrained_generic_record_for_lines(),
         "generic parameter 'T' cannot be inferred for record 'Tag'"
+    );
+    assert_cli_emit_llvm_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_generic_parameter_rejected.or",
+        "lowering does not yet support this return expression: call return type mismatch: first returns , expected i32"
     );
     assert_cli_parse_success(
         executable,
