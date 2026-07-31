@@ -881,6 +881,10 @@ representation.
   source return metadata. The checked fixture lowers `first(make_values())` where `make_values()` returns a
   `DynamicArray<UInt32>` descriptor, specializes `first<T>` to `first__UInt32`, and transfers the local descriptor out
   of the helper without callee-side local cleanup before the consuming generic call cleans it up.
+- Generic function specialization collection now prefers generic substitution over raw generic signature metadata when
+  inferring call-result arguments. The checked nested fixture lowers `consume(first(make_values()))`, collecting both
+  `first__UInt32` and `consume__UInt32` from source types rather than returning unresolved `T` metadata from the inner
+  generic call.
 
 ## Follow-up work
 
