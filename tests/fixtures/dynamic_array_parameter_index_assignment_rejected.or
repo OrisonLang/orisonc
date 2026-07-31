@@ -1,0 +1,8 @@
+package tests.dynamicarrayparameterindexassignmentrejected
+
+function overwrite(items: DynamicArray<UInt32>) -> UInt32
+    items[0] = 3 as UInt32
+    0 as UInt32
+
+function main() -> UInt32
+    0 as UInt32

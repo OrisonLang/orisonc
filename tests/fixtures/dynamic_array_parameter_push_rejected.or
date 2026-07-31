@@ -1,0 +1,8 @@
+package tests.dynamicarrayparameterpushrejected
+
+function append(items: DynamicArray<UInt32>) -> UInt32
+    items.push(3 as UInt32)
+    0 as UInt32
+
+function main() -> UInt32
+    0 as UInt32

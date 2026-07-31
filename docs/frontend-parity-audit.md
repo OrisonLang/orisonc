@@ -466,6 +466,10 @@ This file tracks which source-language frontend slices are reflected in the curr
   parameter descriptors), broader generic DynamicArray lowering beyond concrete examples, productionizing the remaining
   computed-cleanup authorization/insertion seams, and fuller runtime/allocator surface beyond allocate/grow/deallocate
   plus bounds failure.
+- 2026-07-30: DynamicArray parameter mutation policy is now pinned as an explicit rejection boundary. Bound
+  `DynamicArray<T>` descriptors remain readable/iterable/cleaned up, while `items[index] = value` and
+  `items.push(value)` on parameters stay out of lowering; mutable parameter-style element writes remain represented by
+  the existing `exclusive.View<T>` indexed-assignment path.
 - 2026-07-20: source-derived finite Drop implementations now emit narrow no-op LLVM ABI bodies such as
   `define void @__orison_drop.Payload(ptr %value)` for proven empty/naked-return `implements Drop` bodies. Pipeline
   smoke now links and runs the source-drop owned-parameter path for an empty local `DynamicArray<Payload>` passed to

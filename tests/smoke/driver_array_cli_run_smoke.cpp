@@ -210,6 +210,28 @@ void assert_owned_dynamic_array_parameter_missing_drop_emit_llvm_failure(
     );
 }
 
+void assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(
+        output.find("lowering assignment target is not a mutable local") !=
+        std::string::npos
+    );
+}
+
+void assert_dynamic_array_parameter_push_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(
+        output.find("lowering member call target is unknown: DynamicArray<UInt32>.push") !=
+        std::string::npos
+    );
+}
+
 void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -293,6 +315,10 @@ auto main() -> int {
         fixtures / "dynamic_array_owned_computed_cleanup_missing_drop.or";
     auto owned_dynamic_array_parameter_missing_drop_path =
         fixtures / "dynamic_array_owned_parameter_iteration_missing_drop.or";
+    auto dynamic_array_parameter_index_assignment_path =
+        fixtures / "dynamic_array_parameter_index_assignment_rejected.or";
+    auto dynamic_array_parameter_push_path =
+        fixtures / "dynamic_array_parameter_push_rejected.or";
     auto owned_dynamic_array_replacement_path = examples / "local_dynamic_array_owned_replacement.or";
     assert_emit_llvm_success(executable, generic_record_literal_path);
     assert_emit_object_success(
@@ -341,6 +367,14 @@ auto main() -> int {
     assert_owned_dynamic_array_parameter_missing_drop_emit_llvm_failure(
         executable,
         owned_dynamic_array_parameter_missing_drop_path
+    );
+    assert_dynamic_array_parameter_index_assignment_emit_llvm_failure(
+        executable,
+        dynamic_array_parameter_index_assignment_path
+    );
+    assert_dynamic_array_parameter_push_emit_llvm_failure(
+        executable,
+        dynamic_array_parameter_push_path
     );
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,

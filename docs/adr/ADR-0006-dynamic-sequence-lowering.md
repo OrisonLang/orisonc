@@ -861,6 +861,10 @@ representation.
   parameter descriptor mutation policy, generic DynamicArray lowering beyond concrete examples, retiring remaining
   computed-cleanup test-only seams, and expanding runtime/allocator APIs beyond allocate/grow/deallocate plus bounds
   failure. These are implementation-readiness gaps, not surface syntax changes.
+- Bound `DynamicArray<T>` parameter mutation is intentionally rejected on the current production path.
+  `DynamicArray<T>` parameters support descriptor reads, iteration, transfer, and cleanup; they do not support
+  `items[index] = value` or `items.push(value)` as parameter descriptor mutation. Parameter-style mutable element
+  writes remain represented by `exclusive.View<T>` indexed assignment.
 
 ## Follow-up work
 
