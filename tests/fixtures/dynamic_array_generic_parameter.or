@@ -3,7 +3,12 @@ package tests.dynamicarraygenericparameter
 function first<T>(values: DynamicArray<T>) -> T
     values[0]
 
+function check64(value: UInt64) -> UInt32
+    value == 11 as UInt64 ? 0 as UInt32 : 1 as UInt32
+
 function main() -> UInt32
     var values: DynamicArray<UInt32> = DynamicArray()
     values.push(7 as UInt32)
-    first(values) - 7 as UInt32
+    var wide_values: DynamicArray<UInt64> = DynamicArray()
+    wide_values.push(11 as UInt64)
+    check64(first(wide_values)) + first(values) - 7 as UInt32

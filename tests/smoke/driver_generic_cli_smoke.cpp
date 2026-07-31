@@ -110,8 +110,11 @@ void assert_cli_emit_llvm_fixture_success(
     auto command = executable.string() + " --emit-llvm " + path.string();
     auto output = read_command_output(command);
     assert(output.find("define i32 @first__UInt32({ ptr, i64, i64 } %values)") != std::string::npos);
+    assert(output.find("define i64 @first__UInt64({ ptr, i64, i64 } %values)") != std::string::npos);
     assert(output.find("call i32 @first__UInt32({ ptr, i64, i64 } %tmp") != std::string::npos);
+    assert(output.find("call i64 @first__UInt64({ ptr, i64, i64 } %tmp") != std::string::npos);
     assert(output.find("getelementptr i32, ptr %values.dynamic_array_index") != std::string::npos);
+    assert(output.find("getelementptr i64, ptr %values.dynamic_array_index") != std::string::npos);
 }
 
 auto generic_pair_consumer_lines(

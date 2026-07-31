@@ -480,6 +480,11 @@ This file tracks which source-language frontend slices are reflected in the curr
   performs a checked index read, returns `UInt32`, transfers cleanup to the callee, and links/runs through the generic
   CLI smoke. Broader generic dispatch, multiple simultaneous instantiations, non-name argument inference, methods, and
   generic owned-element Drop proof remain pending.
+- 2026-07-30: Generic function call dispatch now selects a matching concrete specialization by argument source types
+  at the call site. The DynamicArray generic fixture now emits and runs both `first__UInt32` and `first__UInt64` in the
+  same module, with each call using the matching descriptor element width, bounds check, return type, and callee-side
+  descriptor cleanup. Remaining generic gaps are non-name argument inference, ambiguous overload diagnostics, methods,
+  and generic owned-element Drop proof.
 - 2026-07-20: source-derived finite Drop implementations now emit narrow no-op LLVM ABI bodies such as
   `define void @__orison_drop.Payload(ptr %value)` for proven empty/naked-return `implements Drop` bodies. Pipeline
   smoke now links and runs the source-drop owned-parameter path for an empty local `DynamicArray<Payload>` passed to

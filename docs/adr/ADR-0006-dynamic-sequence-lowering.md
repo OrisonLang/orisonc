@@ -873,6 +873,10 @@ representation.
   are known in the caller. The current slice specializes `first<T>(values: DynamicArray<T>) -> T` to `first__UInt32`,
   substitutes the return and parameter source types, reuses the concrete `DynamicArray<UInt32>` descriptor ABI, and
   emits the concrete function body once. This is intentionally narrower than full generic dispatch.
+- Generic function call dispatch now resolves multiple same-module concrete specializations by matching the call
+  argument source types against each specialized signature. The current DynamicArray proof emits `first__UInt32` and
+  `first__UInt64` side by side and routes each call to the matching symbol; broader inference and method dispatch stay
+  out of this slice.
 
 ## Follow-up work
 

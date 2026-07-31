@@ -61,6 +61,65 @@ auto record_use_after_move_failure(
     );
 }
 
+auto generic_specialization_base_name(std::string_view symbol_name) -> std::optional<std::string> {
+    auto delimiter = symbol_name.find("__");
+    if (delimiter == std::string_view::npos) {
+        return std::nullopt;
+    }
+    return std::string {symbol_name.substr(0, delimiter)};
+}
+
+auto call_arguments_match_source_types(
+    syntax::ExpressionSyntax const& expression,
+    LoweredFunctionSignature const& signature,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    if (signature.parameter_source_type_names.size() != expression.arguments.size()) {
+        return false;
+    }
+
+    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
+        auto const& expected_source_type = signature.parameter_source_type_names[index];
+        if (expected_source_type.empty()) {
+            return false;
+        }
+        auto actual_source_type = source_type_name_for_expression(expression.arguments[index], context, state);
+        if (!actual_source_type.has_value() || *actual_source_type != expected_source_type) {
+            return false;
+        }
+    }
+    return true;
+}
+
+auto find_matching_generic_specialization(
+    std::string_view function_name,
+    syntax::ExpressionSyntax const& expression,
+    std::string_view expected_llvm_type,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> LoweredFunctionSignature const* {
+    auto const* match = static_cast<LoweredFunctionSignature const*>(nullptr);
+    for (auto const& specialization : context.generic_function_specializations) {
+        auto base_name = generic_specialization_base_name(specialization->name);
+        if (!base_name.has_value() || *base_name != function_name) {
+            continue;
+        }
+        auto signature = context.functions.find(specialization->name);
+        if (signature == context.functions.end() ||
+            signature->second.return_type != expected_llvm_type ||
+            signature->second.parameter_types.size() != expression.arguments.size() ||
+            !call_arguments_match_source_types(expression, signature->second, context, state)) {
+            continue;
+        }
+        if (match != nullptr) {
+            return nullptr;
+        }
+        match = &signature->second;
+    }
+    return match;
+}
+
 auto consumed_owned_record_member_path_name(
     AggregatePath const& path,
     std::string_view base_source_type_name,
@@ -3655,7 +3714,24 @@ auto lowered_expression(
         }
 
         auto function = context.lowering.functions.find(expression.left->text);
-        if (function == context.lowering.functions.end()) {
+        auto const* function_signature = function == context.lowering.functions.end()
+            ? nullptr
+            : &function->second;
+        if (function_signature == nullptr ||
+            function_signature->return_type != expected_llvm_type ||
+            function_signature->parameter_types.size() != expression.arguments.size()) {
+            if (auto specialization = find_matching_generic_specialization(
+                    expression.left->text,
+                    expression,
+                    expected_llvm_type,
+                    context.lowering,
+                    session.state
+                )) {
+                function_signature = specialization;
+            }
+        }
+
+        if (function_signature == nullptr) {
             if (auto detail = generic_record_constructor_inference_failure_detail(
                     expression,
                     context.lowering,
@@ -3675,27 +3751,27 @@ auto lowered_expression(
             );
             return std::nullopt;
         }
-        if (function->second.return_type != expected_llvm_type) {
+        if (function_signature->return_type != expected_llvm_type) {
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::call_return_type_mismatch,
-                expression.left->text + " returns " + function->second.return_type +
+                expression.left->text + " returns " + function_signature->return_type +
                     ", expected " + std::string(expected_llvm_type)
             );
             return std::nullopt;
         }
-        if (function->second.parameter_types.size() != expression.arguments.size()) {
+        if (function_signature->parameter_types.size() != expression.arguments.size()) {
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::call_arity_mismatch,
                 expression.left->text + " expects " +
-                    std::to_string(function->second.parameter_types.size()) + " arguments, got " +
+                    std::to_string(function_signature->parameter_types.size()) + " arguments, got " +
                     std::to_string(expression.arguments.size())
             );
             return std::nullopt;
         }
 
-        auto arguments = lower_call_arguments(expression, function->second, context, session, output);
+        auto arguments = lower_call_arguments(expression, *function_signature, context, session, output);
         if (!arguments.has_value()) {
             if (failures.expression.reason == ExpressionLoweringFailureReason::none) {
                 record_expression_lowering_failure(
@@ -3708,7 +3784,7 @@ auto lowered_expression(
         }
 
         auto temporary_name = next_llvm_temporary_name(state.next_temporary_index);
-        return emit_value_call(std::move(temporary_name), function->second, *arguments, output);
+        return emit_value_call(std::move(temporary_name), *function_signature, *arguments, output);
     }
 
     record_expression_lowering_failure(
