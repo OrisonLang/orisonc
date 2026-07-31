@@ -918,6 +918,10 @@ representation.
   method body is skipped during ordinary method emission, while collected concrete receiver methods are emitted through
   the specialization list. CLI smoke coverage pins `Box<UInt32>.value()` routing to
   `method.Box_UInt32_.value__UInt32`.
+- Receiver-bound generic method coverage now includes multi-parameter receiver patterns and nested concrete receiver
+  substitutions. Resolver smoke coverage pins `Pair<A, B>` binding from `Pair<UInt32, UInt64>` and `Box<T>` binding
+  `T` to `Pair<UInt32, UInt64>`, while CLI smoke coverage pins emitted specializations for
+  `Pair<UInt32, UInt64>.first()` and `Box<Pair<UInt32, UInt64>>.value()`.
 
 ## Follow-up work
 

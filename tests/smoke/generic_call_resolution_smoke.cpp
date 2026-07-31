@@ -282,6 +282,36 @@ int main() {
     assert(receiver_method_substitutions.has_value());
     assert(receiver_method_substitutions->at("T").name == "UInt32");
 
+    local_source_types["pair"] = "Pair<UInt32, UInt64>";
+    auto pair_method_substitutions = orison::lowering::bind_generic_method_call_substitutions(
+        orison::syntax::TypeSyntax {
+            .name = "Pair",
+            .generic_arguments = {type("A"), type("B")},
+        },
+        receiver_value,
+        member_call_expression(name_expression("pair"), "value"),
+        collector_resolver
+    );
+    assert(pair_method_substitutions.has_value());
+    assert(pair_method_substitutions->at("A").name == "UInt32");
+    assert(pair_method_substitutions->at("B").name == "UInt64");
+
+    local_source_types["nested_box"] = "Box<Pair<UInt32, UInt64>>";
+    auto nested_receiver_method_substitutions = orison::lowering::bind_generic_method_call_substitutions(
+        orison::syntax::TypeSyntax {
+            .name = "Box",
+            .generic_arguments = {type("T")},
+        },
+        receiver_value,
+        member_call_expression(name_expression("nested_box"), "value"),
+        collector_resolver
+    );
+    assert(nested_receiver_method_substitutions.has_value());
+    assert(nested_receiver_method_substitutions->at("T").name == "Pair");
+    assert(nested_receiver_method_substitutions->at("T").generic_arguments.size() == 2);
+    assert(nested_receiver_method_substitutions->at("T").generic_arguments[0].name == "UInt32");
+    assert(nested_receiver_method_substitutions->at("T").generic_arguments[1].name == "UInt64");
+
     auto context = orison::lowering::LoweringContext {};
     context.functions.emplace(
         "consume__UInt32",

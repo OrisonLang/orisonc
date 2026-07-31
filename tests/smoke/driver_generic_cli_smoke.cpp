@@ -163,9 +163,13 @@ void assert_cli_emit_llvm_generic_method_fixture_success(
     assert(output.find("define i32 @select_value__UInt64(i64 %value)") != std::string::npos);
     assert(output.find("define i32 @method.UInt32.select__UInt64(i32 %this, i64 %value)") != std::string::npos);
     assert(output.find("define i32 @method.Box_UInt32_.value__UInt32(%record.Box_UInt32_ %this)") != std::string::npos);
+    assert(output.find("define i32 @method.Pair_UInt32__UInt64_.first__UInt32__UInt64(%record.Pair_UInt32__UInt64_ %this)") != std::string::npos);
+    assert(output.find("define %record.Pair_UInt32__UInt64_ @method.Box_Pair_UInt32__UInt64__.value__Pair_UInt32__UInt64_(%record.Box_Pair_UInt32__UInt64__ %this)") != std::string::npos);
     assert(output.find("call i32 @select_value__UInt64(i64 11)") != std::string::npos);
     assert(output.find("call i32 @method.UInt32.select__UInt64(i32 %seed, i64 9)") != std::string::npos);
     assert(output.find("call i32 @method.Box_UInt32_.value__UInt32(%record.Box_UInt32_ %tmp") != std::string::npos);
+    assert(output.find("call i32 @method.Pair_UInt32__UInt64_.first__UInt32__UInt64(%record.Pair_UInt32__UInt64_ %tmp") != std::string::npos);
+    assert(output.find("call %record.Pair_UInt32__UInt64_ @method.Box_Pair_UInt32__UInt64__.value__Pair_UInt32__UInt64_(%record.Box_Pair_UInt32__UInt64__ %tmp") != std::string::npos);
 }
 
 auto generic_method_lines() -> std::vector<std::string> {
@@ -173,6 +177,9 @@ auto generic_method_lines() -> std::vector<std::string> {
         "package demo.cli",
         "record Box<T>",
         "    value: T",
+        "record Pair<A, B>",
+        "    first: A",
+        "    second: B",
         "function select_value<T>(value: T) -> UInt32",
         "    return 0 as UInt32",
         "extend UInt32",
@@ -181,10 +188,17 @@ auto generic_method_lines() -> std::vector<std::string> {
         "extend Box<T>",
         "    function value(this: shared This) -> T",
         "        return this.value",
+        "extend Pair<A, B>",
+        "    function first(this: shared This) -> A",
+        "        return this.first",
         "function main() -> UInt32",
         "    let seed: UInt32 = 7 as UInt32",
         "    let box: Box<UInt32> = Box(13 as UInt32)",
+        "    let pair: Pair<UInt32, UInt64> = Pair(17 as UInt32, 19 as UInt64)",
+        "    let nested_box: Box<Pair<UInt32, UInt64>> = Box(pair)",
         "    let selected: UInt32 = select_value(11 as UInt64) + seed.select(9 as UInt64) + box.value()",
+        "    let first_value: UInt32 = pair.first()",
+        "    let nested_pair: Pair<UInt32, UInt64> = nested_box.value()",
         "    0 as UInt32",
     };
 }
