@@ -210,6 +210,9 @@ representation.
 - DynamicArray receiver `.push` lowering now rejects owned element appends unless semantic Drop lowering authorizes the
   element Drop ABI. Receiver bodies use type-level Drop proof so `this.push(value)` can lower for any proven
   `DynamicArray<T>` specialization while missing-Drop owned appends fail before LLVM IR validation.
+- DynamicArray receiver indexed replacement now accepts exclusive receiver descriptor mutation through `this[index] =
+  value`. Owned element replacement emits the old-element Drop call under the same receiver type-level Drop proof used
+  by receiver append.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

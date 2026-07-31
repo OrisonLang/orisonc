@@ -126,7 +126,7 @@ auto authorized_dynamic_array_element_drop_symbol_name(
         if (authorization.authorized &&
             authorization.site.source_type_name == element_source_type_name &&
             authorization.site.abi_symbol_name == symbol_name &&
-            authorization.site.owner_name == element_owner_name) {
+            (authorization.site.owner_name == element_owner_name || owner_name == "this")) {
             return symbol_name;
         }
     }
@@ -515,7 +515,10 @@ auto lower_dynamic_array_index_assignment_target(
         diagnostics.error(target.line, "use after move: " + owner_name);
         return std::nullopt;
     }
-    if (!session.state.mutable_bindings.contains(owner_name)) {
+    auto const owner_is_mutable_local = session.state.mutable_bindings.contains(owner_name);
+    auto const owner_is_exclusive_receiver =
+        owner_name == "this" && session.state.exclusive_receiver_bindings.contains(owner_name);
+    if (!owner_is_mutable_local && !owner_is_exclusive_receiver) {
         return std::nullopt;
     }
 

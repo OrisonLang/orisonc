@@ -218,6 +218,16 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
         std::string::npos);
     assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload(ptr %values.addr, %record.Payload %tmp") !=
         std::string::npos);
+    assert(output.find("define void @method.DynamicArray_UInt32_.replace_first__UInt32(ptr %this, i32 %value)") !=
+        std::string::npos);
+    assert(output.find("call void @method.DynamicArray_UInt32_.replace_first__UInt32(ptr %values.addr, i32 7)") !=
+        std::string::npos);
+    assert(output.find("define void @method.DynamicArray_Payload_.replace_first__Payload(ptr %this, %record.Payload %value)") !=
+        std::string::npos);
+    assert(output.find("call void @method.DynamicArray_Payload_.replace_first__Payload(ptr %values.addr, %record.Payload %tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %this.dynamic_array_assign") !=
+        std::string::npos);
     assert(output.find("define %record.Payload @method.DynamicArray_Payload_.first__Payload({ ptr, i64, i64 } %this)") !=
         std::string::npos);
     assert(output.find("call %record.Payload @method.DynamicArray_Payload_.first__Payload({ ptr, i64, i64 } %tmp") !=
