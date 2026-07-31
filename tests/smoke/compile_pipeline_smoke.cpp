@@ -5433,7 +5433,10 @@ auto main() -> int {
             << "        return\n"
             << "\n"
             << "function use_items(items: DynamicArray<Payload>) -> Int64\n"
-            << "    items.length() == 1 ? items[0].value : 0\n"
+            << "    var total = 0 as Int64\n"
+            << "    for item in items\n"
+            << "        total = total + item.value\n"
+            << "    items.length() == 1 ? total : 0\n"
             << "\n"
             << "function main() -> UInt32\n"
             << "    var items: DynamicArray<Payload> = DynamicArray()\n"
@@ -5445,23 +5448,27 @@ auto main() -> int {
     assert(!dynamic_array_owned_parameter_initialized_ir.has_errors());
     assert(
         dynamic_array_owned_parameter_initialized_ir.ir_text.find(
-            "%items.dynamic_array_length0.value = extractvalue { ptr, i64, i64 } "
-            "%items.dynamic_array_length0.descriptor, 1"
+            ".value = extractvalue { ptr, i64, i64 } %items.dynamic_array_length"
         ) != std::string::npos
     );
     assert(
         dynamic_array_owned_parameter_initialized_ir.ir_text.find(
-            "%items.dynamic_array_index2.in_bounds = icmp ult i64 0, %items.dynamic_array_index2.length"
+            "%items.sequence_for0.descriptor = load { ptr, i64, i64 }, ptr %items.addr"
         ) != std::string::npos
     );
     assert(
         dynamic_array_owned_parameter_initialized_ir.ir_text.find(
-            "%items.dynamic_array_index2.value = load %record.Payload, ptr %items.dynamic_array_index2.element.addr"
+            "%items.sequence_for0.more = icmp ult i64 %items.sequence_for0.index, %items.sequence_for0.length"
         ) != std::string::npos
     );
     assert(
         dynamic_array_owned_parameter_initialized_ir.ir_text.find(
-            "extractvalue %record.Payload %items.dynamic_array_index2.value, 0"
+            "%items.sequence_for0.value = load %record.Payload, ptr %items.sequence_for0.element.addr"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_parameter_initialized_ir.ir_text.find(
+            "getelementptr %record.Payload, ptr %item.addr, i32 0, i32 0"
         ) != std::string::npos
     );
     auto initialized_transfer_deallocate =

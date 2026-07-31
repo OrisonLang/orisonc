@@ -168,38 +168,30 @@ void assert_owned_dynamic_array_parameter_emit_llvm_success(
         output.find("define i64 @consume_items({ ptr, i64, i64 } %items)") !=
         std::string::npos
     );
-    auto const length_read = output.find(
-        "%items.dynamic_array_length0.value = extractvalue { ptr, i64, i64 } "
-        "%items.dynamic_array_length0.descriptor, 1"
-    );
+    auto const length_read = output.find(".value = extractvalue { ptr, i64, i64 } %items.dynamic_array_length");
     assert(length_read != std::string::npos);
-    auto const first_index_check =
-        output.find("%items.dynamic_array_index2.in_bounds = icmp ult i64 0, %items.dynamic_array_index2.length");
-    auto const first_index_load =
-        output.find("%items.dynamic_array_index2.value = load %record.Payload");
-    auto const first_field_read =
-        output.find("extractvalue %record.Payload %items.dynamic_array_index2.value, 0");
-    auto const second_index_check =
-        output.find("%items.dynamic_array_index4.in_bounds = icmp ult i64 1, %items.dynamic_array_index4.length");
-    auto const second_index_load =
-        output.find("%items.dynamic_array_index4.value = load %record.Payload");
-    auto const second_field_read =
-        output.find("extractvalue %record.Payload %items.dynamic_array_index4.value, 0");
-    assert(first_index_check != std::string::npos);
-    assert(first_index_load != std::string::npos);
-    assert(first_field_read != std::string::npos);
-    assert(second_index_check != std::string::npos);
-    assert(second_index_load != std::string::npos);
-    assert(second_field_read != std::string::npos);
+    auto const loop_descriptor =
+        output.find("%items.sequence_for0.descriptor = load { ptr, i64, i64 }, ptr %items.addr");
+    auto const loop_more =
+        output.find("%items.sequence_for0.more = icmp ult i64 %items.sequence_for0.index, %items.sequence_for0.length");
+    auto const loop_load =
+        output.find("%items.sequence_for0.value = load %record.Payload, ptr %items.sequence_for0.element.addr");
+    auto const loop_field_read =
+        output.find("getelementptr %record.Payload, ptr %item.addr, i32 0, i32 0");
+    assert(loop_descriptor != std::string::npos);
+    assert(loop_more != std::string::npos);
+    assert(loop_load != std::string::npos);
+    assert(loop_field_read != std::string::npos);
     assert(
         output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") !=
         std::string::npos
     );
     auto const deallocation = output.find("call void @__orison_dynamic_array_deallocate");
     assert(deallocation != std::string::npos);
+    assert(loop_descriptor < loop_load);
+    assert(loop_load < loop_field_read);
     assert(length_read < deallocation);
-    assert(first_field_read < deallocation);
-    assert(second_field_read < deallocation);
+    assert(loop_field_read < deallocation);
     assert(output.find("call void @__orison_dynamic_array_deallocate", deallocation + 1) == std::string::npos);
     assert(output.find("icmp eq i64") != std::string::npos);
     assert(output.find("ret i32 %") != std::string::npos);

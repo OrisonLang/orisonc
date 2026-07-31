@@ -11,7 +11,10 @@ implements Drop for Payload
         return
 
 function consume_items(items: DynamicArray<Payload>) -> Int64
-    items.length() == 2 ? items[0].value + items[1].value : 0
+    var total = 0 as Int64
+    for item in items
+        total = total + item.value
+    items.length() == 2 ? total : 0
 
 function main() -> UInt32
     var items: DynamicArray<Payload> = DynamicArray()

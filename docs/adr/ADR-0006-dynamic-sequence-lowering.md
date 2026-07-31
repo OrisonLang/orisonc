@@ -789,6 +789,9 @@ representation.
 - Authorized owned-element `DynamicArray<T>` parameters now share the existing checked index-read lowering path with
   scalar/non-owning parameters. Aggregate elements load through the descriptor data pointer, recover fields through
   normal aggregate extraction, and still emit source-backed element cleanup before descriptor deallocation.
+- Authorized owned-element `DynamicArray<T>` parameters now share the existing descriptor `for` iteration lowering path
+  with scalar/non-owning parameters. Loop items load through the descriptor data pointer, bind as aggregate values for
+  field reads, and preserve callee-side element cleanup ordering.
 - Dynamic-array cleanup report paths now use production-facing descriptor cleanup planning and cleanup-emission gates.
   They no longer need the parameter-descriptor signature bypass to inspect missing element cleanup proof.
 - Dynamic-array cleanup report paths no longer require the parameter descriptor signature bypass. Report emission can
