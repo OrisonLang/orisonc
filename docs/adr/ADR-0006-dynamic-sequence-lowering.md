@@ -213,6 +213,9 @@ representation.
 - DynamicArray receiver indexed replacement now accepts exclusive receiver descriptor mutation through `this[index] =
   value`. Owned element replacement emits the old-element Drop call under the same receiver type-level Drop proof used
   by receiver append.
+- DynamicArray receiver `for item in this` lowering is now pinned for shared receiver methods. Concrete scalar and
+  owned-element receiver specializations reuse the named descriptor iteration path with `%this.addr` storage, while the
+  receiver descriptor remains non-cleanup-owned by the method body.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

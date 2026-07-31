@@ -222,6 +222,11 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
         std::string::npos);
     assert(output.find("call void @method.DynamicArray_UInt32_.replace_first__UInt32(ptr %values.addr, i32 7)") !=
         std::string::npos);
+    assert(output.find("define i64 @method.DynamicArray_UInt32_.count_each__UInt32({ ptr, i64, i64 } %this)") !=
+        std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_UInt32_.count_each__UInt32({ ptr, i64, i64 } %tmp") !=
+        std::string::npos);
+    assert(output.find("%this.sequence_for") != std::string::npos);
     assert(output.find("define void @method.DynamicArray_Payload_.replace_first__Payload(ptr %this, %record.Payload %value)") !=
         std::string::npos);
     assert(output.find("call void @method.DynamicArray_Payload_.replace_first__Payload(ptr %values.addr, %record.Payload %tmp") !=
@@ -231,6 +236,10 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
     assert(output.find("define %record.Payload @method.DynamicArray_Payload_.first__Payload({ ptr, i64, i64 } %this)") !=
         std::string::npos);
     assert(output.find("call %record.Payload @method.DynamicArray_Payload_.first__Payload({ ptr, i64, i64 } %tmp") !=
+        std::string::npos);
+    assert(output.find("define i64 @method.DynamicArray_Payload_.count_each__Payload({ ptr, i64, i64 } %this)") !=
+        std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_Payload_.count_each__Payload({ ptr, i64, i64 } %tmp") !=
         std::string::npos);
     assert(output.find("call void @__orison_drop.Payload(ptr %values.dynamic_array_cleanup") !=
         std::string::npos);
