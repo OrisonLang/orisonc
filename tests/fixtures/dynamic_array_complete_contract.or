@@ -5,6 +5,7 @@ record Nested
 
 record Payload
     child: Nested
+    bytes: Array<UInt32, 2>
 
 interface Drop
     function drop(this: exclusive This) -> Unit
@@ -22,6 +23,9 @@ extend DynamicArray<T>
 
     function first_value(this: shared This) -> UInt32
         this[0].child.value
+
+    function second_byte(this: shared This) -> UInt32
+        this[0].bytes[1 as UInt64]
 
     function count_each(this: shared This) -> IntSize
         var total: IntSize = 0 as IntSize
@@ -50,12 +54,13 @@ function scalar_demo() -> UInt32
 
 function owned_demo() -> UInt32
     var values: DynamicArray<Payload> = DynamicArray()
-    values.append_value(Payload(Nested(11 as UInt32)))
-    values.push(Payload(Nested(13 as UInt32)))
-    values.replace_first(Payload(Nested(17 as UInt32)))
+    values.append_value(Payload(Nested(11 as UInt32), [3 as UInt32, 5 as UInt32]))
+    values.push(Payload(Nested(13 as UInt32), [7 as UInt32, 11 as UInt32]))
+    values.replace_first(Payload(Nested(17 as UInt32), [13 as UInt32, 19 as UInt32]))
     let count: IntSize = values.count_each()
     let projected: UInt32 = values[0].child.value
-    projected + values.first_value()
+    let indexed: UInt32 = values[0].bytes[1 as UInt64]
+    projected + indexed + values.first_value() + values.second_byte()
 
 function main() -> UInt32
     0 as UInt32

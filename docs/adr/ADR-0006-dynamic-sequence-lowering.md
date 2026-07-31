@@ -227,6 +227,8 @@ representation.
   clone semantics exist.
 - Nested DynamicArray element paths such as `items[0].child.value` are covered by the same aggregate cursor path after
   the bounded element address is established.
+- DynamicArray element paths can also continue through fixed-array indexing after the element, such as
+  `items[0].bytes[1]`, using the same aggregate cursor after the bounded element address is established.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

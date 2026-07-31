@@ -242,6 +242,12 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
         std::string::npos);
     assert(output.find("getelementptr %record.Nested, ptr %tmp") !=
         std::string::npos);
+    assert(output.find("define i32 @method.DynamicArray_Payload_.second_byte__Payload({ ptr, i64, i64 } %this)") !=
+        std::string::npos);
+    assert(output.find("call i32 @method.DynamicArray_Payload_.second_byte__Payload({ ptr, i64, i64 } %tmp") !=
+        std::string::npos);
+    assert(output.find("getelementptr [2 x i32], ptr %tmp") !=
+        std::string::npos);
     assert(output.find("%values.dynamic_array_element_path") != std::string::npos);
     assert(output.find("getelementptr %record.Payload, ptr %values.dynamic_array_element_path") !=
         std::string::npos);
