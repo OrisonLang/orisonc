@@ -885,6 +885,10 @@ representation.
   inferring call-result arguments. The checked nested fixture lowers `consume(first(make_values()))`, collecting both
   `first__UInt32` and `consume__UInt32` from source types rather than returning unresolved `T` metadata from the inner
   generic call.
+- Generic function specialization collection now records inferred source types for unannotated local bindings when the
+  initializer is a source-type-resolvable call expression. The checked fixture lowers `let value = first(make_values())`
+  followed by `consume(value)`, collecting `consume__UInt32` from the local binding without requiring an explicit
+  `UInt32` annotation.
 
 ## Follow-up work
 

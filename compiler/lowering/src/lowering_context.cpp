@@ -527,6 +527,18 @@ auto collect_generic_function_specializations(
                  statement.kind == syntax::StatementKind::var_binding) &&
                 !statement.annotated_type.name.empty()) {
                 local_source_types[statement.name] = render_source_type_name(statement.annotated_type);
+            } else if ((statement.kind == syntax::StatementKind::let_binding ||
+                        statement.kind == syntax::StatementKind::var_binding) &&
+                       !statement.name.empty()) {
+                auto inferred_source_type = source_type_name_for_generic_specialization_argument(
+                    statement.expression,
+                    generic_functions,
+                    functions,
+                    local_source_types
+                );
+                if (inferred_source_type.has_value()) {
+                    local_source_types[statement.name] = std::move(*inferred_source_type);
+                }
             }
             collect_generic_calls_from_statement(statement, generic_functions, functions, local_source_types, specializations);
         }
