@@ -35,6 +35,26 @@ void collect_generic_calls_from_statement(
     std::unordered_map<std::string, std::string> const& local_source_types,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 );
+struct GenericMethodCandidate {
+    syntax::TypeSyntax const* receiver_type = nullptr;
+    syntax::FunctionSyntax const* method = nullptr;
+};
+void collect_generic_method_calls_from_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::vector<GenericMethodCandidate> const& generic_methods,
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
+    std::unordered_map<std::string, std::string> const& local_source_types,
+    std::vector<GenericMethodSpecialization>& specializations
+);
+void collect_generic_method_calls_from_statement(
+    syntax::StatementSyntax const& statement,
+    std::vector<GenericMethodCandidate> const& generic_methods,
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
+    std::unordered_map<std::string, std::string> const& local_source_types,
+    std::vector<GenericMethodSpecialization>& specializations
+);
 
 auto unquoted_text(std::string_view text) -> std::string_view {
     if (text.size() >= 2 && text.front() == '"' && text.back() == '"') {
@@ -296,6 +316,23 @@ auto specialized_function_symbol_name(
     return symbol;
 }
 
+auto specialized_method_symbol_name(
+    std::string_view receiver_type_name,
+    syntax::FunctionSyntax const& method,
+    std::unordered_map<std::string, syntax::TypeSyntax> const& substitutions
+) -> std::string {
+    auto method_name = method.name;
+    for (auto const& generic_parameter : method.generic_parameters) {
+        auto substitution = substitutions.find(generic_parameter);
+        if (substitution == substitutions.end()) {
+            return lowered_method_symbol_name(receiver_type_name, method.name);
+        }
+        method_name += "__";
+        method_name += sanitized_specialization_part(render_source_type_name(substitution->second));
+    }
+    return lowered_method_symbol_name(receiver_type_name, method_name);
+}
+
 void record_dynamic_array_descriptor_parameter_types(
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature& signature
@@ -322,6 +359,19 @@ auto specialized_function_copy(
 ) -> syntax::FunctionSyntax {
     auto specialized = clone_function(function);
     specialized.name = specialized_function_symbol_name(function, substitutions);
+    specialized.generic_parameters.clear();
+    specialized.return_type = substitute_type(specialized.return_type, substitutions);
+    for (auto& parameter : specialized.parameters) {
+        parameter.type = substitute_type(parameter.type, substitutions);
+    }
+    return specialized;
+}
+
+auto specialized_method_copy(
+    syntax::FunctionSyntax const& method,
+    std::unordered_map<std::string, syntax::TypeSyntax> const& substitutions
+) -> syntax::FunctionSyntax {
+    auto specialized = clone_function(method);
     specialized.generic_parameters.clear();
     specialized.return_type = substitute_type(specialized.return_type, substitutions);
     for (auto& parameter : specialized.parameters) {
@@ -457,6 +507,273 @@ auto collect_generic_function_specializations(
                 }
             }
             collect_generic_calls_from_statement(statement, generic_functions, functions, local_source_types, specializations);
+        }
+    }
+    return specializations;
+}
+
+void collect_generic_method_calls_from_expression(
+    syntax::ExpressionSyntax const& expression,
+    std::vector<GenericMethodCandidate> const& generic_methods,
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
+    std::unordered_map<std::string, std::string> const& local_source_types,
+    std::vector<GenericMethodSpecialization>& specializations
+) {
+    if (expression.kind == syntax::ExpressionKind::call &&
+        expression.left != nullptr &&
+        expression.left->kind == syntax::ExpressionKind::member_access &&
+        expression.left->left != nullptr) {
+        auto resolver = GenericCallSourceResolver {
+            .generic_functions = &generic_functions,
+            .functions = &functions,
+            .local_source_types = &local_source_types,
+        };
+        auto actual_receiver_type = source_type_name_for_generic_call_argument(*expression.left->left, resolver);
+        if (actual_receiver_type.has_value()) {
+            for (auto const& candidate : generic_methods) {
+                if (candidate.receiver_type == nullptr ||
+                    candidate.method == nullptr ||
+                    candidate.method->name != expression.left->text) {
+                    continue;
+                }
+                auto substitutions = bind_generic_method_call_substitutions(
+                    *candidate.receiver_type,
+                    *candidate.method,
+                    expression,
+                    resolver
+                );
+                if (!substitutions.has_value()) {
+                    continue;
+                }
+                auto concrete_receiver_type = substitute_type(*candidate.receiver_type, *substitutions);
+                auto concrete_receiver_type_name = render_source_type_name(concrete_receiver_type);
+                if (concrete_receiver_type_name != *actual_receiver_type) {
+                    continue;
+                }
+                auto specialized = specialized_method_copy(*candidate.method, *substitutions);
+                auto symbol_name = specialized_method_symbol_name(
+                    concrete_receiver_type_name,
+                    *candidate.method,
+                    *substitutions
+                );
+                auto already_recorded = std::ranges::any_of(
+                    specializations,
+                    [&](GenericMethodSpecialization const& existing) {
+                        return existing.symbol_name == symbol_name;
+                    }
+                );
+                if (!already_recorded) {
+                    specializations.push_back(GenericMethodSpecialization {
+                        .receiver_type_name = std::move(concrete_receiver_type_name),
+                        .method_name = candidate.method->name,
+                        .symbol_name = std::move(symbol_name),
+                        .method = std::make_shared<syntax::FunctionSyntax>(std::move(specialized)),
+                    });
+                }
+            }
+        }
+    }
+
+    for (auto const& argument : expression.arguments) {
+        collect_generic_method_calls_from_expression(
+            argument,
+            generic_methods,
+            generic_functions,
+            functions,
+            local_source_types,
+            specializations
+        );
+    }
+    for (auto const& nested_statement : expression.nested_statements) {
+        collect_generic_method_calls_from_statement(
+            *nested_statement,
+            generic_methods,
+            generic_functions,
+            functions,
+            local_source_types,
+            specializations
+        );
+    }
+    if (expression.left != nullptr) {
+        collect_generic_method_calls_from_expression(
+            *expression.left,
+            generic_methods,
+            generic_functions,
+            functions,
+            local_source_types,
+            specializations
+        );
+    }
+    if (expression.right != nullptr) {
+        collect_generic_method_calls_from_expression(
+            *expression.right,
+            generic_methods,
+            generic_functions,
+            functions,
+            local_source_types,
+            specializations
+        );
+    }
+    if (expression.alternate != nullptr) {
+        collect_generic_method_calls_from_expression(
+            *expression.alternate,
+            generic_methods,
+            generic_functions,
+            functions,
+            local_source_types,
+            specializations
+        );
+    }
+}
+
+void collect_generic_method_calls_from_statement(
+    syntax::StatementSyntax const& statement,
+    std::vector<GenericMethodCandidate> const& generic_methods,
+    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
+    std::unordered_map<std::string, std::string> const& local_source_types,
+    std::vector<GenericMethodSpecialization>& specializations
+) {
+    collect_generic_method_calls_from_expression(
+        statement.assignment_target,
+        generic_methods,
+        generic_functions,
+        functions,
+        local_source_types,
+        specializations
+    );
+    collect_generic_method_calls_from_expression(
+        statement.expression,
+        generic_methods,
+        generic_functions,
+        functions,
+        local_source_types,
+        specializations
+    );
+    for (auto const& nested_statement : statement.nested_statements) {
+        collect_generic_method_calls_from_statement(
+            nested_statement,
+            generic_methods,
+            generic_functions,
+            functions,
+            local_source_types,
+            specializations
+        );
+    }
+    for (auto const& alternate_statement : statement.alternate_statements) {
+        collect_generic_method_calls_from_statement(
+            alternate_statement,
+            generic_methods,
+            generic_functions,
+            functions,
+            local_source_types,
+            specializations
+        );
+    }
+    for (auto const& switch_case : statement.switch_cases) {
+        collect_generic_method_calls_from_expression(
+            switch_case.pattern,
+            generic_methods,
+            generic_functions,
+            functions,
+            local_source_types,
+            specializations
+        );
+        for (auto const& case_statement : switch_case.statements) {
+            collect_generic_method_calls_from_statement(
+                *case_statement,
+                generic_methods,
+                generic_functions,
+                functions,
+                local_source_types,
+                specializations
+            );
+        }
+    }
+}
+
+auto collect_generic_method_specializations(
+    syntax::ModuleSyntax const& module,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions
+) -> std::vector<GenericMethodSpecialization> {
+    auto generic_functions = std::unordered_map<std::string, syntax::FunctionSyntax const*> {};
+    for (auto const& function : module.functions) {
+        if (!function.generic_parameters.empty()) {
+            generic_functions.emplace(function.name, &function);
+        }
+    }
+
+    auto generic_methods = std::vector<GenericMethodCandidate> {};
+    for (auto const& implementation : module.implementations) {
+        for (auto const& method : implementation.methods) {
+            if (!method.generic_parameters.empty()) {
+                generic_methods.push_back(GenericMethodCandidate {
+                    .receiver_type = &implementation.receiver_type,
+                    .method = &method,
+                });
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        for (auto const& method : extension.methods) {
+            if (!method.generic_parameters.empty()) {
+                generic_methods.push_back(GenericMethodCandidate {
+                    .receiver_type = &extension.receiver_type,
+                    .method = &method,
+                });
+            }
+        }
+    }
+    if (generic_methods.empty()) {
+        return {};
+    }
+
+    auto specializations = std::vector<GenericMethodSpecialization> {};
+    auto collect_from_function = [&](syntax::FunctionSyntax const& function, std::string_view receiver_type_name = {}) {
+        auto local_source_types = std::unordered_map<std::string, std::string> {};
+        if (!receiver_type_name.empty()) {
+            local_source_types["this"] = std::string {receiver_type_name};
+        }
+        for (auto const& parameter : function.parameters) {
+            local_source_types[parameter.name] = render_source_type_name(parameter.type);
+        }
+        for (auto const& statement : function.body_statements) {
+            if ((statement.kind == syntax::StatementKind::let_binding ||
+                 statement.kind == syntax::StatementKind::var_binding) &&
+                !statement.annotated_type.name.empty()) {
+                local_source_types[statement.name] = render_source_type_name(statement.annotated_type);
+            }
+            collect_generic_method_calls_from_statement(
+                statement,
+                generic_methods,
+                generic_functions,
+                functions,
+                local_source_types,
+                specializations
+            );
+        }
+    };
+
+    for (auto const& function : module.functions) {
+        if (function.generic_parameters.empty()) {
+            collect_from_function(function);
+        }
+    }
+    for (auto const& implementation : module.implementations) {
+        auto receiver_type_name = render_source_type_name(implementation.receiver_type);
+        for (auto const& method : implementation.methods) {
+            if (method.generic_parameters.empty()) {
+                collect_from_function(method, receiver_type_name);
+            }
+        }
+    }
+    for (auto const& extension : module.extensions) {
+        auto receiver_type_name = render_source_type_name(extension.receiver_type);
+        for (auto const& method : extension.methods) {
+            if (method.generic_parameters.empty()) {
+                collect_from_function(method, receiver_type_name);
+            }
         }
     }
     return specializations;
@@ -1290,6 +1607,31 @@ auto build_lowering_context(
                     context.choices
             ));
         }
+    }
+
+    auto generic_method_specializations = collect_generic_method_specializations(module, context.functions);
+    for (auto& specialization : generic_method_specializations) {
+        if (specialization.method == nullptr) {
+            continue;
+        }
+        auto receiver_type = parse_source_type_name(specialization.receiver_type_name);
+        auto signature = lower_method_signature(
+            receiver_type,
+            *specialization.method,
+            specialization.symbol_name,
+            record_names,
+            context.choices
+        );
+        record_dynamic_array_descriptor_parameter_types(*specialization.method, signature);
+        if (!has_supported_function_signature_types(signature)) {
+            continue;
+        }
+        context.methods.push_back(LoweredMethodSignature {
+            .receiver_type_name = specialization.receiver_type_name,
+            .method_name = specialization.method_name,
+            .signature = std::move(signature),
+        });
+        context.generic_method_specializations.push_back(std::move(specialization));
     }
 
     for (auto const& foreign_import : module.foreign_imports) {

@@ -904,6 +904,11 @@ representation.
   Direct smoke coverage pins receiver call source-type queries plus positive, no-match, and ambiguous method
   specialization lookup. Expression-emitter smoke coverage pins ambiguous lowered method lookup resolving to the
   concrete source-typed method specialization and emitting that symbol.
+- Generic method specialization collection now records concrete method clones for generic methods with explicit method
+  parameters, appends supported lowered signatures to `context.methods`, and emits those cloned methods after ordinary
+  methods. CLI smoke coverage pins `UInt32.select<T>(..., UInt64)` specializing to
+  `method.UInt32.select__UInt64` and routing the member call to that symbol. Generic receiver-parameter collection for
+  extension receiver patterns still needs a separate syntax/modeling slice.
 
 ## Follow-up work
 

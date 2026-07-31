@@ -154,6 +154,29 @@ void assert_cli_emit_llvm_local_call_result_fixture_success(
     assert(output.find("call i32 @consume__UInt32(i32 %value)") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_generic_method_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define i32 @method.UInt32.select__UInt64(i32 %this, i64 %value)") != std::string::npos);
+    assert(output.find("call i32 @method.UInt32.select__UInt64(i32 %seed, i64 %other)") != std::string::npos);
+}
+
+auto generic_method_lines() -> std::vector<std::string> {
+    return {
+        "package demo.cli",
+        "extend UInt32",
+        "    function select<T>(this: shared This, value: T) -> UInt32",
+        "        return 0 as UInt32",
+        "function main() -> UInt32",
+        "    let seed: UInt32 = 7 as UInt32",
+        "    let other: UInt64 = 9 as UInt64",
+        "    seed.select(other)",
+    };
+}
+
 auto generic_pair_consumer_lines(
     std::initializer_list<std::string_view> body_lines
 ) -> std::vector<std::string> {
@@ -336,6 +359,16 @@ auto main() -> int {
     assert_cli_emit_llvm_local_call_result_fixture_success(
         executable,
         fixtures / "dynamic_array_generic_local_call_result_parameter.or"
+    );
+    auto generic_method_path = smoke_temp_root / "orison_cli_generic_method_specialization.or";
+    write_lines(generic_method_path, generic_method_lines());
+    assert_cli_run_fixture_success(
+        executable,
+        generic_method_path
+    );
+    assert_cli_emit_llvm_generic_method_fixture_success(
+        executable,
+        generic_method_path
     );
     assert_cli_parse_success(
         executable,

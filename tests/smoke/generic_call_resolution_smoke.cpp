@@ -187,6 +187,29 @@ int main() {
     );
     assert(!mismatched_substitutions.has_value());
 
+    auto generic_pick = generic_function("pick", "value", type("T"), type("T"));
+    generic_pick.parameters.insert(
+        generic_pick.parameters.begin(),
+        orison::syntax::ParameterSyntax {
+            .name = "this",
+            .type = type("shared.This"),
+        }
+    );
+    auto generic_method_call = member_call_expression(
+        name_expression("box"),
+        "pick",
+        name_expression("value")
+    );
+    local_source_types["box"] = "Box";
+    auto method_substitutions = orison::lowering::bind_generic_method_call_substitutions(
+        type("Box"),
+        generic_pick,
+        generic_method_call,
+        collector_resolver
+    );
+    assert(method_substitutions.has_value());
+    assert(method_substitutions->at("T").name == "UInt32");
+
     auto context = orison::lowering::LoweringContext {};
     context.functions.emplace(
         "consume__UInt32",

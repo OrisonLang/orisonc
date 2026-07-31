@@ -34,6 +34,13 @@ auto bind_generic_function_call_substitutions(
     GenericCallSourceResolver const& resolver
 ) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>>;
 
+auto bind_generic_method_call_substitutions(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::FunctionSyntax const& method,
+    syntax::ExpressionSyntax const& call,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>>;
+
 auto call_arguments_match_source_types(
     syntax::ExpressionSyntax const& expression,
     LoweredFunctionSignature const& signature,

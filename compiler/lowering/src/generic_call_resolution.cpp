@@ -227,6 +227,58 @@ auto bind_generic_function_call_substitutions(
     return substitutions;
 }
 
+auto bind_generic_method_call_substitutions(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::FunctionSyntax const& method,
+    syntax::ExpressionSyntax const& call,
+    GenericCallSourceResolver const& resolver
+) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>> {
+    if (method.generic_parameters.empty() ||
+        call.left == nullptr ||
+        call.left->left == nullptr ||
+        call.arguments.size() + 1 != method.parameters.size()) {
+        return std::nullopt;
+    }
+
+    auto actual_receiver_type = source_type_name_for_generic_call_argument(*call.left->left, resolver);
+    if (!actual_receiver_type.has_value()) {
+        return std::nullopt;
+    }
+
+    auto generic_parameters = generic_parameter_set(method.generic_parameters);
+    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
+    if (!unify_generic_type(
+            receiver_type,
+            parse_source_type_name(*actual_receiver_type),
+            generic_parameters,
+            substitutions
+        )) {
+        return std::nullopt;
+    }
+
+    for (auto index = std::size_t {0}; index < call.arguments.size(); ++index) {
+        auto source_type_name = source_type_name_for_generic_call_argument(call.arguments[index], resolver);
+        if (!source_type_name.has_value()) {
+            return std::nullopt;
+        }
+        if (!unify_generic_type(
+                method.parameters[index + 1].type,
+                parse_source_type_name(*source_type_name),
+                generic_parameters,
+                substitutions
+            )) {
+            return std::nullopt;
+        }
+    }
+
+    for (auto const& generic_parameter : method.generic_parameters) {
+        if (!substitutions.contains(generic_parameter)) {
+            return std::nullopt;
+        }
+    }
+    return substitutions;
+}
+
 auto call_arguments_match_source_types(
     syntax::ExpressionSyntax const& expression,
     LoweredFunctionSignature const& signature,

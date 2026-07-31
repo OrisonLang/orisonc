@@ -19,6 +19,13 @@ struct LoweredMethodSignature {
     LoweredFunctionSignature signature;
 };
 
+struct GenericMethodSpecialization {
+    std::string receiver_type_name;
+    std::string method_name;
+    std::string symbol_name;
+    std::shared_ptr<syntax::FunctionSyntax> method;
+};
+
 struct LoweredRecordField {
     std::string name;
     std::string source_type_name;
@@ -63,6 +70,7 @@ struct LoweringContext {
     std::vector<LoweredMethodSignature> methods;
     std::vector<LoweredFunctionSignature> foreign_declarations;
     std::vector<std::shared_ptr<syntax::FunctionSyntax>> generic_function_specializations;
+    std::vector<GenericMethodSpecialization> generic_method_specializations;
 };
 
 enum class LoweredMethodLookupResult {

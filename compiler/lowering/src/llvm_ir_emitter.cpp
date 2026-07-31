@@ -2816,6 +2816,39 @@ auto emit_module(
             }
         }
     }
+    for (auto const& specialization : context.generic_method_specializations) {
+        if (specialization.method == nullptr) {
+            continue;
+        }
+        auto method = std::ranges::find_if(
+            context.methods,
+            [&](LoweredMethodSignature const& candidate) {
+                return candidate.signature.symbol_name == specialization.symbol_name;
+            }
+        );
+        if (method == context.methods.end()) {
+            result.diagnostics.error(
+                specialization.method->line,
+                "lowering context is missing generic method specialization"
+            );
+            return result;
+        }
+        auto function_emission = emit_function_with_metadata(
+            *specialization.method,
+            method->signature,
+            context,
+            string_constants,
+            semantic_result,
+            result.diagnostics,
+            options
+        );
+        output << function_emission.ir_text;
+        append_function_emission_reports(result, function_emission);
+        output << "\n";
+        if (result.has_errors()) {
+            return result;
+        }
+    }
 
     for (auto const& line : result.computed_dynamic_array_for_production_sequence_module_ir) {
         output << line;
