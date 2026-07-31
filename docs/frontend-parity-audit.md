@@ -444,6 +444,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-30: source-backed owned-element `DynamicArray<T>` parameter lowering now runs on the default compile path
   when semantic Drop proof authorizes the `owner.element` cleanup site. Pipeline smoke pins initialized-owner transfer
   and forwarding through descriptor ABI emission, single callee-side descriptor deallocation, and linked execution.
+- 2026-07-30: `examples/dynamic_array_owned_parameter.or` is the checked-in CLI demo for owned-element
+  `DynamicArray<Payload>` parameter transfer. Array CLI smoke now covers `run`, `--emit-llvm`, `--emit-object`, and
+  retained `--build` executable paths for the default source-backed cleanup path.
 - 2026-07-20: source-derived finite Drop implementations now emit narrow no-op LLVM ABI bodies such as
   `define void @__orison_drop.Payload(ptr %value)` for proven empty/naked-return `implements Drop` bodies. Pipeline
   smoke now links and runs the source-drop owned-parameter path for an empty local `DynamicArray<Payload>` passed to

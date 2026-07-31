@@ -157,6 +157,27 @@ void assert_owned_computed_dynamic_array_emit_llvm_success(
     assert(output.find("items.dynamic_array_cleanup") == std::string::npos);
 }
 
+void assert_owned_dynamic_array_parameter_emit_llvm_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_successful_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(output.find("%record.Payload = type { i64 }") != std::string::npos);
+    assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
+    assert(
+        output.find("define i32 @consume_items({ ptr, i64, i64 } %items)") !=
+        std::string::npos
+    );
+    assert(
+        output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") !=
+        std::string::npos
+    );
+    auto const deallocation = output.find("call void @__orison_dynamic_array_deallocate");
+    assert(deallocation != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate", deallocation + 1) == std::string::npos);
+    assert(output.find("ret i32 0") != std::string::npos);
+}
+
 void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -209,10 +230,11 @@ auto main() -> int {
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
     auto examples = std::filesystem::path(ORISON_SOURCE_DIR) / "examples";
     auto fixtures = std::filesystem::path(ORISON_SOURCE_DIR) / "tests" / "fixtures";
-    constexpr auto run_examples = std::array<std::string_view, 15> {
+    constexpr auto run_examples = std::array<std::string_view, 16> {
         "local_array_for.or",
         "local_dynamic_array_computed_for.or",
         "local_dynamic_array_owned_computed_for.or",
+        "dynamic_array_owned_parameter.or",
         "local_dynamic_array_owned_replacement.or",
         "local_ternary_array_for.or",
         "local_ternary_array_literal_for.or",
@@ -234,6 +256,7 @@ auto main() -> int {
     auto generic_record_literal_path = examples / "local_generic_record_array_literal_for.or";
     auto computed_dynamic_array_path = examples / "local_dynamic_array_computed_for.or";
     auto owned_computed_dynamic_array_path = examples / "local_dynamic_array_owned_computed_for.or";
+    auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_owned_computed_cleanup_missing_drop.or";
     auto owned_dynamic_array_replacement_path = examples / "local_dynamic_array_owned_replacement.or";
@@ -269,6 +292,17 @@ auto main() -> int {
         executable,
         owned_computed_dynamic_array_path,
         smoke_temp_root / "local_dynamic_array_owned_computed_for"
+    );
+    assert_owned_dynamic_array_parameter_emit_llvm_success(executable, owned_dynamic_array_parameter_path);
+    assert_emit_object_success(
+        executable,
+        owned_dynamic_array_parameter_path,
+        smoke_temp_root / "dynamic_array_owned_parameter.o"
+    );
+    assert_build_success(
+        executable,
+        owned_dynamic_array_parameter_path,
+        smoke_temp_root / "dynamic_array_owned_parameter"
     );
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,
