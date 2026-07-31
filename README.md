@@ -62,7 +62,7 @@ Configure, build, compile, link, and run it with:
 
 ```sh
 cmake -S . -B build
-cmake --build build
+cmake --build build -j 16
 build/tools/orisonc/orisonc run examples/minimal.or
 ```
 
@@ -107,7 +107,7 @@ The exact layout may change during early implementation.
 For a quick compiler pipeline check, run the canonical demo smoke test:
 
 ```sh
-ctest --test-dir build --output-on-failure -L canonical_pipeline
+ctest --test-dir build -j 16 --output-on-failure -L canonical_pipeline
 ```
 
 This covers the canonical backend demos across LLVM IR emission, object emission, `run`, and retained `--build`

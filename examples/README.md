@@ -222,7 +222,7 @@ coverage. The canonical pipeline smoke pins those files through `--emit-llvm`, `
 Run only these canonical pipeline demos with:
 
 ```sh
-ctest --test-dir build --output-on-failure -L canonical_pipeline
+ctest --test-dir build -j 16 --output-on-failure -L canonical_pipeline
 ```
 
 Run the backend demo with:
