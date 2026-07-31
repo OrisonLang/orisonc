@@ -913,6 +913,11 @@ representation.
   specialize generic functions and generic methods without an annotated temporary binding. The collector also recognizes
   uncast `Bool` and `Text` literals, while uncast numeric literals remain unresolved to avoid implicit width or
   signedness guesses.
+- Generic method specialization collection now recognizes receiver-bound generic record parameters when the extension
+  receiver mirrors the record declaration, such as `record Box<T>` with `extend Box<T>`. The original receiver-pattern
+  method body is skipped during ordinary method emission, while collected concrete receiver methods are emitted through
+  the specialization list. CLI smoke coverage pins `Box<UInt32>.value()` routing to
+  `method.Box_UInt32_.value__UInt32`.
 
 ## Follow-up work
 

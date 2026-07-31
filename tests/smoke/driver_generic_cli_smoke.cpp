@@ -162,21 +162,30 @@ void assert_cli_emit_llvm_generic_method_fixture_success(
     auto output = read_command_output(command);
     assert(output.find("define i32 @select_value__UInt64(i64 %value)") != std::string::npos);
     assert(output.find("define i32 @method.UInt32.select__UInt64(i32 %this, i64 %value)") != std::string::npos);
+    assert(output.find("define i32 @method.Box_UInt32_.value__UInt32(%record.Box_UInt32_ %this)") != std::string::npos);
     assert(output.find("call i32 @select_value__UInt64(i64 11)") != std::string::npos);
     assert(output.find("call i32 @method.UInt32.select__UInt64(i32 %seed, i64 9)") != std::string::npos);
+    assert(output.find("call i32 @method.Box_UInt32_.value__UInt32(%record.Box_UInt32_ %tmp") != std::string::npos);
 }
 
 auto generic_method_lines() -> std::vector<std::string> {
     return {
         "package demo.cli",
+        "record Box<T>",
+        "    value: T",
         "function select_value<T>(value: T) -> UInt32",
         "    return 0 as UInt32",
         "extend UInt32",
         "    function select<T>(this: shared This, value: T) -> UInt32",
         "        return 0 as UInt32",
+        "extend Box<T>",
+        "    function value(this: shared This) -> T",
+        "        return this.value",
         "function main() -> UInt32",
         "    let seed: UInt32 = 7 as UInt32",
-        "    select_value(11 as UInt64) + seed.select(9 as UInt64)",
+        "    let box: Box<UInt32> = Box(13 as UInt32)",
+        "    let selected: UInt32 = select_value(11 as UInt64) + seed.select(9 as UInt64) + box.value()",
+        "    0 as UInt32",
     };
 }
 

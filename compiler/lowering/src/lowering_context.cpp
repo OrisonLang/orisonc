@@ -38,6 +38,7 @@ void collect_generic_calls_from_statement(
 struct GenericMethodCandidate {
     syntax::TypeSyntax const* receiver_type = nullptr;
     syntax::FunctionSyntax const* method = nullptr;
+    std::vector<std::string> generic_parameters;
 };
 void collect_generic_method_calls_from_expression(
     syntax::ExpressionSyntax const& expression,
@@ -319,10 +320,11 @@ auto specialized_function_symbol_name(
 auto specialized_method_symbol_name(
     std::string_view receiver_type_name,
     syntax::FunctionSyntax const& method,
+    std::vector<std::string> const& generic_parameters,
     std::unordered_map<std::string, syntax::TypeSyntax> const& substitutions
 ) -> std::string {
     auto method_name = method.name;
-    for (auto const& generic_parameter : method.generic_parameters) {
+    for (auto const& generic_parameter : generic_parameters) {
         auto substitution = substitutions.find(generic_parameter);
         if (substitution == substitutions.end()) {
             return lowered_method_symbol_name(receiver_type_name, method.name);
@@ -331,6 +333,50 @@ auto specialized_method_symbol_name(
         method_name += sanitized_specialization_part(render_source_type_name(substitution->second));
     }
     return lowered_method_symbol_name(receiver_type_name, method_name);
+}
+
+void append_unique_generic_parameter(std::vector<std::string>& parameters, std::string const& parameter) {
+    if (!parameter.empty() && !std::ranges::contains(parameters, parameter)) {
+        parameters.push_back(parameter);
+    }
+}
+
+auto receiver_pattern_generic_parameters(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::ModuleSyntax const& module
+) -> std::vector<std::string> {
+    auto record = std::ranges::find_if(
+        module.records,
+        [&](syntax::RecordSyntax const& candidate) {
+            return candidate.name == receiver_type.name;
+        }
+    );
+    if (record == module.records.end() ||
+        record->generic_parameters.size() != receiver_type.generic_arguments.size()) {
+        return {};
+    }
+
+    auto parameters = std::vector<std::string> {};
+    for (auto index = std::size_t {0}; index < receiver_type.generic_arguments.size(); ++index) {
+        auto const& argument = receiver_type.generic_arguments[index];
+        if (!argument.generic_arguments.empty() || argument.name != record->generic_parameters[index]) {
+            continue;
+        }
+        append_unique_generic_parameter(parameters, argument.name);
+    }
+    return parameters;
+}
+
+auto generic_method_parameters(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::FunctionSyntax const& method,
+    syntax::ModuleSyntax const& module
+) -> std::vector<std::string> {
+    auto parameters = method.generic_parameters;
+    for (auto const& parameter : receiver_pattern_generic_parameters(receiver_type, module)) {
+        append_unique_generic_parameter(parameters, parameter);
+    }
+    return parameters;
 }
 
 void record_dynamic_array_descriptor_parameter_types(
@@ -555,6 +601,7 @@ void collect_generic_method_calls_from_expression(
                 auto symbol_name = specialized_method_symbol_name(
                     concrete_receiver_type_name,
                     *candidate.method,
+                    candidate.generic_parameters,
                     *substitutions
                 );
                 auto already_recorded = std::ranges::any_of(
@@ -707,20 +754,24 @@ auto collect_generic_method_specializations(
     auto generic_methods = std::vector<GenericMethodCandidate> {};
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
-            if (!method.generic_parameters.empty()) {
+            auto generic_parameters = generic_method_parameters(implementation.receiver_type, method, module);
+            if (!generic_parameters.empty()) {
                 generic_methods.push_back(GenericMethodCandidate {
                     .receiver_type = &implementation.receiver_type,
                     .method = &method,
+                    .generic_parameters = std::move(generic_parameters),
                 });
             }
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
-            if (!method.generic_parameters.empty()) {
+            auto generic_parameters = generic_method_parameters(extension.receiver_type, method, module);
+            if (!generic_parameters.empty()) {
                 generic_methods.push_back(GenericMethodCandidate {
                     .receiver_type = &extension.receiver_type,
                     .method = &method,
+                    .generic_parameters = std::move(generic_parameters),
                 });
             }
         }

@@ -88,6 +88,21 @@ auto member_call_expression(
     return expression;
 }
 
+auto member_call_expression(
+    orison::syntax::ExpressionSyntax receiver,
+    std::string method_name
+) -> orison::syntax::ExpressionSyntax {
+    auto member = orison::syntax::ExpressionSyntax {};
+    member.kind = orison::syntax::ExpressionKind::member_access;
+    member.text = std::move(method_name);
+    member.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(receiver));
+
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::call;
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(member));
+    return expression;
+}
+
 auto generic_function(
     std::string name,
     std::string parameter_name,
@@ -236,6 +251,36 @@ int main() {
     );
     assert(method_substitutions.has_value());
     assert(method_substitutions->at("T").name == "UInt64");
+
+    auto receiver_value = orison::syntax::FunctionSyntax {
+        .name = "value",
+        .parameters = {
+            orison::syntax::ParameterSyntax {
+                .name = "this",
+                .type = type("shared.This"),
+            },
+        },
+        .return_type = type("T"),
+    };
+    local_source_types["box"] = "Box<UInt32>";
+    auto receiver_method_substitutions = orison::lowering::bind_generic_method_call_substitutions(
+        dynamic_array_type("T"),
+        receiver_value,
+        member_call_expression(name_expression("box"), "value"),
+        collector_resolver
+    );
+    assert(!receiver_method_substitutions.has_value());
+    receiver_method_substitutions = orison::lowering::bind_generic_method_call_substitutions(
+        orison::syntax::TypeSyntax {
+            .name = "Box",
+            .generic_arguments = {type("T")},
+        },
+        receiver_value,
+        member_call_expression(name_expression("box"), "value"),
+        collector_resolver
+    );
+    assert(receiver_method_substitutions.has_value());
+    assert(receiver_method_substitutions->at("T").name == "UInt32");
 
     auto context = orison::lowering::LoweringContext {};
     context.functions.emplace(

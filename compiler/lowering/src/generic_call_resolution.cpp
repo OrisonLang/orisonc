@@ -3,6 +3,7 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
+#include <algorithm>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -98,6 +99,27 @@ auto generic_parameter_set(std::vector<std::string> const& generic_parameters) -
         parameters.insert(parameter);
     }
     return parameters;
+}
+
+void collect_leaf_type_names(syntax::TypeSyntax const& type, std::vector<std::string>& names) {
+    if (type.generic_arguments.empty()) {
+        if (!type.name.empty() && !std::ranges::contains(names, type.name)) {
+            names.push_back(type.name);
+        }
+        return;
+    }
+    for (auto const& argument : type.generic_arguments) {
+        collect_leaf_type_names(argument, names);
+    }
+}
+
+auto generic_method_parameter_set(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::FunctionSyntax const& method
+) -> std::unordered_set<std::string> {
+    auto parameters = method.generic_parameters;
+    collect_leaf_type_names(receiver_type, parameters);
+    return generic_parameter_set(parameters);
 }
 
 auto unify_generic_type(
@@ -245,7 +267,8 @@ auto bind_generic_method_call_substitutions(
     syntax::ExpressionSyntax const& call,
     GenericCallSourceResolver const& resolver
 ) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>> {
-    if (method.generic_parameters.empty() ||
+    auto generic_parameters = generic_method_parameter_set(receiver_type, method);
+    if (generic_parameters.empty() ||
         call.left == nullptr ||
         call.left->left == nullptr ||
         call.arguments.size() + 1 != method.parameters.size()) {
@@ -257,7 +280,6 @@ auto bind_generic_method_call_substitutions(
         return std::nullopt;
     }
 
-    auto generic_parameters = generic_parameter_set(method.generic_parameters);
     auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
     if (!unify_generic_type(
             receiver_type,

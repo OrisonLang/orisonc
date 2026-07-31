@@ -95,6 +95,29 @@ auto is_uninstantiated_generic_function(syntax::FunctionSyntax const& function) 
     return !function.generic_parameters.empty();
 }
 
+auto is_generic_receiver_pattern(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::ModuleSyntax const& module
+) -> bool {
+    auto record = std::ranges::find_if(
+        module.records,
+        [&](syntax::RecordSyntax const& candidate) {
+            return candidate.name == receiver_type.name;
+        }
+    );
+    if (record == module.records.end() ||
+        record->generic_parameters.size() != receiver_type.generic_arguments.size()) {
+        return false;
+    }
+    for (auto index = std::size_t {0}; index < receiver_type.generic_arguments.size(); ++index) {
+        auto const& argument = receiver_type.generic_arguments[index];
+        if (argument.generic_arguments.empty() && argument.name == record->generic_parameters[index]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 auto has_authorized_source_drop_definition(
     semantics::DropImplementation const& implementation,
     std::vector<semantics::DropLoweringAuthorization> const& authorizations
@@ -2778,13 +2801,13 @@ auto emit_module(
     }
 
     auto method_index = std::size_t {0};
-    auto emit_method = [&](syntax::FunctionSyntax const& method) -> bool {
+    auto emit_method = [&](syntax::TypeSyntax const& receiver_type, syntax::FunctionSyntax const& method) -> bool {
         if (method_index >= context.methods.size()) {
             result.diagnostics.error(method.line, "lowering context is missing method signature");
             return false;
         }
         auto const& lowered_method = context.methods[method_index++];
-        if (is_uninstantiated_generic_function(method)) {
+        if (is_uninstantiated_generic_function(method) || is_generic_receiver_pattern(receiver_type, module)) {
             return true;
         }
         auto function_emission = emit_function_with_metadata(
@@ -2804,14 +2827,14 @@ auto emit_module(
 
     for (auto const& implementation : module.implementations) {
         for (auto const& method : implementation.methods) {
-            if (!emit_method(method)) {
+            if (!emit_method(implementation.receiver_type, method)) {
                 return result;
             }
         }
     }
     for (auto const& extension : module.extensions) {
         for (auto const& method : extension.methods) {
-            if (!emit_method(method)) {
+            if (!emit_method(extension.receiver_type, method)) {
                 return result;
             }
         }
