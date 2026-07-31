@@ -60,12 +60,24 @@ int main() {
         },
         "sum_dynamic"
     );
-    assert(!orison::lowering::has_supported_function_signature_types(dynamic_array_signature));
+    assert(orison::lowering::has_supported_function_signature_types(dynamic_array_signature));
     assert(dynamic_array_signature.source_return_type_name == "UInt32");
     assert(dynamic_array_signature.return_type == "i32");
     assert(dynamic_array_signature.parameter_types.size() == 1);
-    assert(dynamic_array_signature.parameter_types.front().empty());
+    assert(dynamic_array_signature.parameter_types.front() == std::string {orison::lowering::dynamic_array_descriptor_llvm_type()});
     assert(dynamic_array_signature.parameter_source_type_names == std::vector<std::string>({"DynamicArray<UInt32>"}));
+
+    auto dynamic_array_return_signature = orison::lowering::lower_function_signature(
+        TypeSyntax {
+            .name = "DynamicArray",
+            .generic_arguments = {TypeSyntax {.name = "UInt32"}},
+        },
+        {},
+        "make_dynamic"
+    );
+    assert(orison::lowering::has_supported_function_signature_types(dynamic_array_return_signature));
+    assert(dynamic_array_return_signature.source_return_type_name == "DynamicArray<UInt32>");
+    assert(dynamic_array_return_signature.return_type == std::string {orison::lowering::dynamic_array_descriptor_llvm_type()});
 
     auto view_signature = orison::lowering::lower_function_signature(
         TypeSyntax {.name = "View", .generic_arguments = {TypeSyntax {.name = "UInt32"}}},

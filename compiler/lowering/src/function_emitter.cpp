@@ -237,6 +237,35 @@ auto emit_function_return_cleanup(
     return emit_bound_dynamic_array_parameter_cleanups(context, session, output);
 }
 
+void release_returned_dynamic_array_local_cleanup(
+    syntax::ExpressionSyntax const& expression,
+    std::optional<std::string_view> return_source_type_name,
+    FunctionLoweringState& state
+) {
+    if (!return_source_type_name.has_value() ||
+        dynamic_array_element_source_type_name(*return_source_type_name) == std::nullopt ||
+        expression.kind != syntax::ExpressionKind::name) {
+        return;
+    }
+
+    auto source_type = state.source_type_names.find(expression.text);
+    if (source_type == state.source_type_names.end() || source_type->second != *return_source_type_name) {
+        return;
+    }
+
+    for (auto cleanup_plan = state.dynamic_array_local_cleanup_plans.begin();
+         cleanup_plan != state.dynamic_array_local_cleanup_plans.end();
+         ++cleanup_plan) {
+        if (cleanup_plan->owner_name == expression.text &&
+            cleanup_plan->source_type_name == *return_source_type_name &&
+            cleanup_plan->descriptor_storage_status ==
+                DynamicArrayDescriptorStorageStatus::lowered_local_descriptor) {
+            state.dynamic_array_local_cleanup_plans.erase(cleanup_plan);
+            return;
+        }
+    }
+}
+
 auto infer_unit_expression_type(
     syntax::ExpressionSyntax const& expression,
     EmissionContext const& context,
@@ -624,6 +653,7 @@ auto lower_guard_return_statement(
         return StatementFlow::failed;
     }
 
+    release_returned_dynamic_array_local_cleanup(statement.expression, return_source_type_name, session.state);
     if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
         return StatementFlow::failed;
     }
@@ -1409,6 +1439,9 @@ void emit_function_body(
         return;
     }
 
+    if (expression != nullptr) {
+        release_returned_dynamic_array_local_cleanup(*expression, return_source_type_name, session.state);
+    }
     if (!emit_function_return_cleanup(context, session, diagnostics, output)) {
         return;
     }

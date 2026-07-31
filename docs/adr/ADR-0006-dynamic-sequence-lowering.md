@@ -877,6 +877,10 @@ representation.
   argument source types against each specialized signature. The current DynamicArray proof emits `first__UInt32` and
   `first__UInt64` side by side and routes each call to the matching symbol; broader inference and method dispatch stay
   out of this slice.
+- Generic function specialization collection now infers direct non-generic call-result argument types from lowered
+  source return metadata. The checked fixture lowers `first(make_values())` where `make_values()` returns a
+  `DynamicArray<UInt32>` descriptor, specializes `first<T>` to `first__UInt32`, and transfers the local descriptor out
+  of the helper without callee-side local cleanup before the consuming generic call cleans it up.
 
 ## Follow-up work
 

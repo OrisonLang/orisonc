@@ -1573,13 +1573,11 @@ void test_binds_test_only_dynamic_array_parameter_descriptor_origin() {
         "    1 as UInt32\n"
     };
 
-    auto rejected = lower_source(path, source);
-    assert(rejected.has_errors());
-    assert(
-        rejected.render(path.string()).find(
-            "lowering does not yet support this function parameter type"
-        ) != std::string::npos
-    );
+    auto production_default = lower_source(path, source);
+    assert(!production_default.has_errors());
+    assert_ir_contains(production_default, "define i32 @use_items({ ptr, i64, i64 } %items)");
+    assert_ir_contains(production_default, "  %items.addr = alloca { ptr, i64, i64 }");
+    assert_ir_contains(production_default, "  store { ptr, i64, i64 } %items, ptr %items.addr");
 
     auto production_signature_bound = lower_source(
         path,

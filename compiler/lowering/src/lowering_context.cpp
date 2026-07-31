@@ -23,12 +23,14 @@ auto clone_statement(syntax::StatementSyntax const& statement) -> syntax::Statem
 void collect_generic_calls_from_expression(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 );
 void collect_generic_calls_from_statement(
     syntax::StatementSyntax const& statement,
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 );
@@ -296,6 +298,7 @@ auto specialized_function_symbol_name(
 auto bind_generic_function_call_substitutions(
     syntax::FunctionSyntax const& function,
     syntax::ExpressionSyntax const& call,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types
 ) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>> {
     if (function.generic_parameters.empty() || call.arguments.size() != function.parameters.size()) {
@@ -306,16 +309,28 @@ auto bind_generic_function_call_substitutions(
     auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
     for (auto index = std::size_t {0}; index < call.arguments.size(); ++index) {
         auto const& argument = call.arguments[index];
-        if (argument.kind != syntax::ExpressionKind::name) {
-            return std::nullopt;
+        auto source_type_name = std::optional<std::string> {};
+        if (argument.kind == syntax::ExpressionKind::name) {
+            auto source_type = local_source_types.find(argument.text);
+            if (source_type != local_source_types.end()) {
+                source_type_name = source_type->second;
+            }
         }
-        auto source_type = local_source_types.find(argument.text);
-        if (source_type == local_source_types.end()) {
+        if (!source_type_name.has_value() &&
+            argument.kind == syntax::ExpressionKind::call &&
+            argument.left != nullptr &&
+            argument.left->kind == syntax::ExpressionKind::name) {
+            auto source_function = functions.find(argument.left->text);
+            if (source_function != functions.end() && !source_function->second.source_return_type_name.empty()) {
+                source_type_name = source_function->second.source_return_type_name;
+            }
+        }
+        if (!source_type_name.has_value()) {
             return std::nullopt;
         }
         if (!unify_constructor_type(
                 function.parameters[index].type,
-                parse_source_type_name(source_type->second),
+                parse_source_type_name(*source_type_name),
                 generic_parameters,
                 substitutions
             )) {
@@ -368,6 +383,7 @@ auto specialized_function_copy(
 void collect_generic_calls_from_expression(
     syntax::ExpressionSyntax const& expression,
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 ) {
@@ -377,7 +393,7 @@ void collect_generic_calls_from_expression(
         auto function = generic_functions.find(expression.left->text);
         if (function != generic_functions.end()) {
             if (auto substitutions =
-                    bind_generic_function_call_substitutions(*function->second, expression, local_source_types)) {
+                    bind_generic_function_call_substitutions(*function->second, expression, functions, local_source_types)) {
                 auto specialization = specialized_function_copy(*function->second, *substitutions);
                 auto already_recorded = std::ranges::any_of(
                     specializations,
@@ -395,21 +411,22 @@ void collect_generic_calls_from_expression(
     }
 
     for (auto const& argument : expression.arguments) {
-        collect_generic_calls_from_expression(argument, generic_functions, local_source_types, specializations);
+        collect_generic_calls_from_expression(argument, generic_functions, functions, local_source_types, specializations);
     }
     for (auto const& nested_statement : expression.nested_statements) {
-        collect_generic_calls_from_statement(*nested_statement, generic_functions, local_source_types, specializations);
+        collect_generic_calls_from_statement(*nested_statement, generic_functions, functions, local_source_types, specializations);
     }
     if (expression.left != nullptr) {
-        collect_generic_calls_from_expression(*expression.left, generic_functions, local_source_types, specializations);
+        collect_generic_calls_from_expression(*expression.left, generic_functions, functions, local_source_types, specializations);
     }
     if (expression.right != nullptr) {
-        collect_generic_calls_from_expression(*expression.right, generic_functions, local_source_types, specializations);
+        collect_generic_calls_from_expression(*expression.right, generic_functions, functions, local_source_types, specializations);
     }
     if (expression.alternate != nullptr) {
         collect_generic_calls_from_expression(
             *expression.alternate,
             generic_functions,
+            functions,
             local_source_types,
             specializations
         );
@@ -419,27 +436,29 @@ void collect_generic_calls_from_expression(
 void collect_generic_calls_from_statement(
     syntax::StatementSyntax const& statement,
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
     std::vector<std::shared_ptr<syntax::FunctionSyntax>>& specializations
 ) {
-    collect_generic_calls_from_expression(statement.assignment_target, generic_functions, local_source_types, specializations);
-    collect_generic_calls_from_expression(statement.expression, generic_functions, local_source_types, specializations);
+    collect_generic_calls_from_expression(statement.assignment_target, generic_functions, functions, local_source_types, specializations);
+    collect_generic_calls_from_expression(statement.expression, generic_functions, functions, local_source_types, specializations);
     for (auto const& nested_statement : statement.nested_statements) {
-        collect_generic_calls_from_statement(nested_statement, generic_functions, local_source_types, specializations);
+        collect_generic_calls_from_statement(nested_statement, generic_functions, functions, local_source_types, specializations);
     }
     for (auto const& alternate_statement : statement.alternate_statements) {
-        collect_generic_calls_from_statement(alternate_statement, generic_functions, local_source_types, specializations);
+        collect_generic_calls_from_statement(alternate_statement, generic_functions, functions, local_source_types, specializations);
     }
     for (auto const& switch_case : statement.switch_cases) {
-        collect_generic_calls_from_expression(switch_case.pattern, generic_functions, local_source_types, specializations);
+        collect_generic_calls_from_expression(switch_case.pattern, generic_functions, functions, local_source_types, specializations);
         for (auto const& case_statement : switch_case.statements) {
-            collect_generic_calls_from_statement(*case_statement, generic_functions, local_source_types, specializations);
+            collect_generic_calls_from_statement(*case_statement, generic_functions, functions, local_source_types, specializations);
         }
     }
 }
 
 auto collect_generic_function_specializations(
-    syntax::ModuleSyntax const& module
+    syntax::ModuleSyntax const& module,
+    std::unordered_map<std::string, LoweredFunctionSignature> const& functions
 ) -> std::vector<std::shared_ptr<syntax::FunctionSyntax>> {
     auto generic_functions = std::unordered_map<std::string, syntax::FunctionSyntax const*> {};
     for (auto const& function : module.functions) {
@@ -463,7 +482,7 @@ auto collect_generic_function_specializations(
                 !statement.annotated_type.name.empty()) {
                 local_source_types[statement.name] = render_source_type_name(statement.annotated_type);
             }
-            collect_generic_calls_from_statement(statement, generic_functions, local_source_types, specializations);
+            collect_generic_calls_from_statement(statement, generic_functions, functions, local_source_types, specializations);
         }
     }
     return specializations;
@@ -1241,7 +1260,7 @@ auto build_lowering_context(
         context.functions.emplace(function.name, std::move(signature));
     }
 
-    context.generic_function_specializations = collect_generic_function_specializations(module);
+    context.generic_function_specializations = collect_generic_function_specializations(module, context.functions);
     auto specialization_counts = std::unordered_map<std::string, std::size_t> {};
     for (auto const& specialization_ptr : context.generic_function_specializations) {
         auto delimiter = specialization_ptr->name.find("__");

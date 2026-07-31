@@ -38,6 +38,13 @@ auto lowered_function_type_for(syntax::TypeSyntax const& type) -> std::optional<
             : std::nullopt;
     }
 
+    if (type.name == "DynamicArray" && type.generic_arguments.size() == 1) {
+        auto element_source_type = render_source_type_name(type.generic_arguments[0]);
+        return is_scalar_or_nonowning_source_type(element_source_type)
+            ? std::optional<std::string> {std::string {dynamic_array_descriptor_llvm_type()}}
+            : std::nullopt;
+    }
+
     if (auto lowered_type = llvm_type_for(type); lowered_type.has_value()) {
         return std::string {*lowered_type};
     }
