@@ -173,6 +173,24 @@ void assert_owned_dynamic_array_parameter_emit_llvm_success(
         "%items.dynamic_array_length0.descriptor, 1"
     );
     assert(length_read != std::string::npos);
+    auto const first_index_check =
+        output.find("%items.dynamic_array_index2.in_bounds = icmp ult i64 0, %items.dynamic_array_index2.length");
+    auto const first_index_load =
+        output.find("%items.dynamic_array_index2.value = load %record.Payload");
+    auto const first_field_read =
+        output.find("extractvalue %record.Payload %items.dynamic_array_index2.value, 0");
+    auto const second_index_check =
+        output.find("%items.dynamic_array_index4.in_bounds = icmp ult i64 1, %items.dynamic_array_index4.length");
+    auto const second_index_load =
+        output.find("%items.dynamic_array_index4.value = load %record.Payload");
+    auto const second_field_read =
+        output.find("extractvalue %record.Payload %items.dynamic_array_index4.value, 0");
+    assert(first_index_check != std::string::npos);
+    assert(first_index_load != std::string::npos);
+    assert(first_field_read != std::string::npos);
+    assert(second_index_check != std::string::npos);
+    assert(second_index_load != std::string::npos);
+    assert(second_field_read != std::string::npos);
     assert(
         output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") !=
         std::string::npos
@@ -180,6 +198,8 @@ void assert_owned_dynamic_array_parameter_emit_llvm_success(
     auto const deallocation = output.find("call void @__orison_dynamic_array_deallocate");
     assert(deallocation != std::string::npos);
     assert(length_read < deallocation);
+    assert(first_field_read < deallocation);
+    assert(second_field_read < deallocation);
     assert(output.find("call void @__orison_dynamic_array_deallocate", deallocation + 1) == std::string::npos);
     assert(output.find("icmp eq i64") != std::string::npos);
     assert(output.find("ret i32 %") != std::string::npos);

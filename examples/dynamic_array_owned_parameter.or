@@ -10,11 +10,11 @@ implements Drop for Payload
     function drop(this: exclusive This) -> Unit
         return
 
-function consume_items(items: DynamicArray<Payload>) -> IntSize
-    items.length()
+function consume_items(items: DynamicArray<Payload>) -> Int64
+    items.length() == 2 ? items[0].value + items[1].value : 0
 
 function main() -> UInt32
     var items: DynamicArray<Payload> = DynamicArray()
     items.push(Payload(5))
     items.push(Payload(7))
-    consume_items(items) == 2 ? 0 as UInt32 : 1 as UInt32
+    consume_items(items) == 12 ? 0 as UInt32 : 1 as UInt32

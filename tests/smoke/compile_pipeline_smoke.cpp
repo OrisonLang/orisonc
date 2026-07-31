@@ -5432,13 +5432,13 @@ auto main() -> int {
             << "    function drop(this: exclusive This) -> Unit\n"
             << "        return\n"
             << "\n"
-            << "function use_items(items: DynamicArray<Payload>) -> IntSize\n"
-            << "    items.length()\n"
+            << "function use_items(items: DynamicArray<Payload>) -> Int64\n"
+            << "    items.length() == 1 ? items[0].value : 0\n"
             << "\n"
             << "function main() -> UInt32\n"
             << "    var items: DynamicArray<Payload> = DynamicArray()\n"
             << "    items.push(Payload(7))\n"
-            << "    use_items(items) == 1 ? 0 as UInt32 : 1 as UInt32\n";
+            << "    use_items(items) == 7 ? 0 as UInt32 : 1 as UInt32\n";
     }
     auto dynamic_array_owned_parameter_initialized_ir =
         pipeline.emit_llvm(dynamic_array_owned_parameter_initialized_run_path);
@@ -5447,6 +5447,21 @@ auto main() -> int {
         dynamic_array_owned_parameter_initialized_ir.ir_text.find(
             "%items.dynamic_array_length0.value = extractvalue { ptr, i64, i64 } "
             "%items.dynamic_array_length0.descriptor, 1"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_parameter_initialized_ir.ir_text.find(
+            "%items.dynamic_array_index2.in_bounds = icmp ult i64 0, %items.dynamic_array_index2.length"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_parameter_initialized_ir.ir_text.find(
+            "%items.dynamic_array_index2.value = load %record.Payload, ptr %items.dynamic_array_index2.element.addr"
+        ) != std::string::npos
+    );
+    assert(
+        dynamic_array_owned_parameter_initialized_ir.ir_text.find(
+            "extractvalue %record.Payload %items.dynamic_array_index2.value, 0"
         ) != std::string::npos
     );
     auto initialized_transfer_deallocate =
