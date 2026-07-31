@@ -456,6 +456,9 @@ This file tracks which source-language frontend slices are reflected in the curr
 - 2026-07-30: owned-element `DynamicArray<T>` parameter descriptor `for` iteration is now pinned on the default path.
   The owned-parameter demo validates descriptor loop control, `%record.Payload` loop-item loads, record-field reads,
   length checks, and source-backed cleanup ordering.
+- 2026-07-30: `tests/fixtures/dynamic_array_owned_parameter_iteration_missing_drop.or` now pins the negative CLI
+  boundary for owned-element parameter iteration without source-backed Drop proof. The driver still rejects the
+  unproven `items.element` cleanup site before production lowering.
 - 2026-07-20: source-derived finite Drop implementations now emit narrow no-op LLVM ABI bodies such as
   `define void @__orison_drop.Payload(ptr %value)` for proven empty/naked-return `implements Drop` bodies. Pipeline
   smoke now links and runs the source-drop owned-parameter path for an empty local `DynamicArray<Payload>` passed to

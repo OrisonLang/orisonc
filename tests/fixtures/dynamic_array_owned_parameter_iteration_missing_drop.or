@@ -1,0 +1,10 @@
+package fixtures.dynamicarrayownedparameteriterationmissingdrop
+
+record Payload
+    public value: Int64
+
+function sum_items(items: DynamicArray<Payload>) -> Int64
+    var total = 0 as Int64
+    for item in items
+        total = total + item.value
+    total

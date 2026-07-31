@@ -792,6 +792,8 @@ representation.
 - Authorized owned-element `DynamicArray<T>` parameters now share the existing descriptor `for` iteration lowering path
   with scalar/non-owning parameters. Loop items load through the descriptor data pointer, bind as aggregate values for
   field reads, and preserve callee-side element cleanup ordering.
+- Owned-element `DynamicArray<T>` parameter iteration without authorized `owner.element` Drop proof remains rejected on
+  the CLI path; `tests/fixtures/dynamic_array_owned_parameter_iteration_missing_drop.or` pins that boundary.
 - Dynamic-array cleanup report paths now use production-facing descriptor cleanup planning and cleanup-emission gates.
   They no longer need the parameter-descriptor signature bypass to inspect missing element cleanup proof.
 - Dynamic-array cleanup report paths no longer require the parameter descriptor signature bypass. Report emission can

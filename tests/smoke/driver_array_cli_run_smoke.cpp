@@ -197,6 +197,19 @@ void assert_owned_dynamic_array_parameter_emit_llvm_success(
     assert(output.find("ret i32 %") != std::string::npos);
 }
 
+void assert_owned_dynamic_array_parameter_missing_drop_emit_llvm_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& source_path
+) {
+    auto output = read_failing_command_output(executable.string() + " --emit-llvm " + source_path.string());
+    assert(
+        output.find(
+            "lowering DynamicArray parameter 'items' with owned element type Payload requires ownership/drop proof "
+            "before production lowering"
+        ) != std::string::npos
+    );
+}
+
 void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
     std::filesystem::path const& executable,
     std::filesystem::path const& source_path
@@ -278,6 +291,8 @@ auto main() -> int {
     auto owned_dynamic_array_parameter_path = examples / "dynamic_array_owned_parameter.or";
     auto owned_computed_dynamic_array_missing_drop_path =
         fixtures / "dynamic_array_owned_computed_cleanup_missing_drop.or";
+    auto owned_dynamic_array_parameter_missing_drop_path =
+        fixtures / "dynamic_array_owned_parameter_iteration_missing_drop.or";
     auto owned_dynamic_array_replacement_path = examples / "local_dynamic_array_owned_replacement.or";
     assert_emit_llvm_success(executable, generic_record_literal_path);
     assert_emit_object_success(
@@ -322,6 +337,10 @@ auto main() -> int {
         executable,
         owned_dynamic_array_parameter_path,
         smoke_temp_root / "dynamic_array_owned_parameter"
+    );
+    assert_owned_dynamic_array_parameter_missing_drop_emit_llvm_failure(
+        executable,
+        owned_dynamic_array_parameter_missing_drop_path
     );
     assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
         executable,
