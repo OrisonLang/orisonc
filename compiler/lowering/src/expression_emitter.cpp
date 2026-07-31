@@ -8,6 +8,7 @@
 #include "orison/lowering/concurrency_runtime.hpp"
 #include "orison/lowering/dynamic_array_runtime.hpp"
 #include "orison/lowering/function_signature.hpp"
+#include "orison/lowering/generic_call_resolution.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_failure_lifecycle.hpp"
@@ -59,65 +60,6 @@ auto record_use_after_move_failure(
         ExpressionLoweringFailureReason::use_after_move,
         std::string(owner_name)
     );
-}
-
-auto generic_specialization_base_name(std::string_view symbol_name) -> std::optional<std::string> {
-    auto delimiter = symbol_name.find("__");
-    if (delimiter == std::string_view::npos) {
-        return std::nullopt;
-    }
-    return std::string {symbol_name.substr(0, delimiter)};
-}
-
-auto call_arguments_match_source_types(
-    syntax::ExpressionSyntax const& expression,
-    LoweredFunctionSignature const& signature,
-    LoweringContext const& context,
-    FunctionLoweringState const& state
-) -> bool {
-    if (signature.parameter_source_type_names.size() != expression.arguments.size()) {
-        return false;
-    }
-
-    for (auto index = std::size_t {0}; index < expression.arguments.size(); ++index) {
-        auto const& expected_source_type = signature.parameter_source_type_names[index];
-        if (expected_source_type.empty()) {
-            return false;
-        }
-        auto actual_source_type = source_type_name_for_expression(expression.arguments[index], context, state);
-        if (!actual_source_type.has_value() || *actual_source_type != expected_source_type) {
-            return false;
-        }
-    }
-    return true;
-}
-
-auto find_matching_generic_specialization(
-    std::string_view function_name,
-    syntax::ExpressionSyntax const& expression,
-    std::string_view expected_llvm_type,
-    LoweringContext const& context,
-    FunctionLoweringState const& state
-) -> LoweredFunctionSignature const* {
-    auto const* match = static_cast<LoweredFunctionSignature const*>(nullptr);
-    for (auto const& specialization : context.generic_function_specializations) {
-        auto base_name = generic_specialization_base_name(specialization->name);
-        if (!base_name.has_value() || *base_name != function_name) {
-            continue;
-        }
-        auto signature = context.functions.find(specialization->name);
-        if (signature == context.functions.end() ||
-            signature->second.return_type != expected_llvm_type ||
-            signature->second.parameter_types.size() != expression.arguments.size() ||
-            !call_arguments_match_source_types(expression, signature->second, context, state)) {
-            continue;
-        }
-        if (match != nullptr) {
-            return nullptr;
-        }
-        match = &signature->second;
-    }
-    return match;
 }
 
 auto consumed_owned_record_member_path_name(

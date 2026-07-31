@@ -1,6 +1,7 @@
 #include "orison/lowering/lowering_context.hpp"
 
 #include "orison/lowering/c_abi_adapter.hpp"
+#include "orison/lowering/generic_call_resolution.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 #include "orison/lowering/target_layout.hpp"
@@ -295,97 +296,6 @@ auto specialized_function_symbol_name(
     return symbol;
 }
 
-auto source_type_name_for_generic_specialization_argument(
-    syntax::ExpressionSyntax const& expression,
-    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
-    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
-    std::unordered_map<std::string, std::string> const& local_source_types
-) -> std::optional<std::string>;
-
-auto bind_generic_function_call_substitutions(
-    syntax::FunctionSyntax const& function,
-    syntax::ExpressionSyntax const& call,
-    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
-    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
-    std::unordered_map<std::string, std::string> const& local_source_types
-) -> std::optional<std::unordered_map<std::string, syntax::TypeSyntax>> {
-    if (function.generic_parameters.empty() || call.arguments.size() != function.parameters.size()) {
-        return std::nullopt;
-    }
-
-    auto generic_parameters = generic_parameter_set(function.generic_parameters);
-    auto substitutions = std::unordered_map<std::string, syntax::TypeSyntax> {};
-    for (auto index = std::size_t {0}; index < call.arguments.size(); ++index) {
-        auto const& argument = call.arguments[index];
-        auto source_type_name = source_type_name_for_generic_specialization_argument(
-            argument,
-            generic_functions,
-            functions,
-            local_source_types
-        );
-        if (!source_type_name.has_value()) {
-            return std::nullopt;
-        }
-        if (!unify_constructor_type(
-                function.parameters[index].type,
-                parse_source_type_name(*source_type_name),
-                generic_parameters,
-                substitutions
-            )) {
-            return std::nullopt;
-        }
-    }
-
-    for (auto const& generic_parameter : function.generic_parameters) {
-        if (!substitutions.contains(generic_parameter)) {
-            return std::nullopt;
-        }
-    }
-    return substitutions;
-}
-
-auto source_type_name_for_generic_specialization_argument(
-    syntax::ExpressionSyntax const& expression,
-    std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
-    std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
-    std::unordered_map<std::string, std::string> const& local_source_types
-) -> std::optional<std::string> {
-    if (expression.kind == syntax::ExpressionKind::name) {
-        auto source_type = local_source_types.find(expression.text);
-        if (source_type != local_source_types.end()) {
-            return source_type->second;
-        }
-        return std::nullopt;
-    }
-
-    if (expression.kind != syntax::ExpressionKind::call ||
-        expression.left == nullptr ||
-        expression.left->kind != syntax::ExpressionKind::name) {
-        return std::nullopt;
-    }
-
-    auto generic_function = generic_functions.find(expression.left->text);
-    if (generic_function != generic_functions.end()) {
-        auto substitutions = bind_generic_function_call_substitutions(
-            *generic_function->second,
-            expression,
-            generic_functions,
-            functions,
-            local_source_types
-        );
-        if (!substitutions.has_value()) {
-            return std::nullopt;
-        }
-        return render_source_type_name(substitute_type(generic_function->second->return_type, *substitutions));
-    }
-
-    auto source_function = functions.find(expression.left->text);
-    if (source_function != functions.end() && !source_function->second.source_return_type_name.empty()) {
-        return source_function->second.source_return_type_name;
-    }
-    return std::nullopt;
-}
-
 void record_dynamic_array_descriptor_parameter_types(
     syntax::FunctionSyntax const& function,
     LoweredFunctionSignature& signature
@@ -432,13 +342,16 @@ void collect_generic_calls_from_expression(
         expression.left->kind == syntax::ExpressionKind::name) {
         auto function = generic_functions.find(expression.left->text);
         if (function != generic_functions.end()) {
+            auto resolver = GenericCallSourceResolver {
+                .generic_functions = &generic_functions,
+                .functions = &functions,
+                .local_source_types = &local_source_types,
+            };
             if (auto substitutions =
                     bind_generic_function_call_substitutions(
                         *function->second,
                         expression,
-                        generic_functions,
-                        functions,
-                        local_source_types
+                        resolver
                     )) {
                 auto specialization = specialized_function_copy(*function->second, *substitutions);
                 auto already_recorded = std::ranges::any_of(
@@ -530,11 +443,14 @@ auto collect_generic_function_specializations(
             } else if ((statement.kind == syntax::StatementKind::let_binding ||
                         statement.kind == syntax::StatementKind::var_binding) &&
                        !statement.name.empty()) {
-                auto inferred_source_type = source_type_name_for_generic_specialization_argument(
+                auto resolver = GenericCallSourceResolver {
+                    .generic_functions = &generic_functions,
+                    .functions = &functions,
+                    .local_source_types = &local_source_types,
+                };
+                auto inferred_source_type = source_type_name_for_generic_call_argument(
                     statement.expression,
-                    generic_functions,
-                    functions,
-                    local_source_types
+                    resolver
                 );
                 if (inferred_source_type.has_value()) {
                     local_source_types[statement.name] = std::move(*inferred_source_type);

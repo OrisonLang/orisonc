@@ -889,6 +889,10 @@ representation.
   initializer is a source-type-resolvable call expression. The checked fixture lowers `let value = first(make_values())`
   followed by `consume(value)`, collecting `consume__UInt32` from the local binding without requiring an explicit
   `UInt32` annotation.
+- Generic call source-type inference now has a shared resolver used by specialization collection and emitter-side
+  specialization matching. Collector mode still uses original generic syntax plus local source bindings, while emitter
+  mode uses the lowered context and function lowering state, removing the duplicated call-argument matching path from
+  `expression_emitter.cpp`.
 
 ## Follow-up work
 
