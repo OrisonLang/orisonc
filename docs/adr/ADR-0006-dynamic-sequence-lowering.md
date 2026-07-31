@@ -783,6 +783,9 @@ representation.
   owned element site named `owner.element`. Scalar/non-owning parameters still lower directly; owned-element parameters
   use the same authorization to seed bound cleanup-owner plans for callee-side element drop walks and descriptor
   deallocation.
+- Authorized owned-element `DynamicArray<T>` parameters now share the existing descriptor `.length()` lowering path
+  with scalar/non-owning parameters: the callee reads field 1 from the bound `{ ptr, i64, i64 }` descriptor before
+  cleanup emission.
 - Dynamic-array cleanup report paths now use production-facing descriptor cleanup planning and cleanup-emission gates.
   They no longer need the parameter-descriptor signature bypass to inspect missing element cleanup proof.
 - Dynamic-array cleanup report paths no longer require the parameter descriptor signature bypass. Report emission can

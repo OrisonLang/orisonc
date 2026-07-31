@@ -5432,17 +5432,23 @@ auto main() -> int {
             << "    function drop(this: exclusive This) -> Unit\n"
             << "        return\n"
             << "\n"
-            << "function use_items(items: DynamicArray<Payload>) -> UInt32\n"
-            << "    0 as UInt32\n"
+            << "function use_items(items: DynamicArray<Payload>) -> IntSize\n"
+            << "    items.length()\n"
             << "\n"
             << "function main() -> UInt32\n"
             << "    var items: DynamicArray<Payload> = DynamicArray()\n"
             << "    items.push(Payload(7))\n"
-            << "    use_items(items)\n";
+            << "    use_items(items) == 1 ? 0 as UInt32 : 1 as UInt32\n";
     }
     auto dynamic_array_owned_parameter_initialized_ir =
         pipeline.emit_llvm(dynamic_array_owned_parameter_initialized_run_path);
     assert(!dynamic_array_owned_parameter_initialized_ir.has_errors());
+    assert(
+        dynamic_array_owned_parameter_initialized_ir.ir_text.find(
+            "%items.dynamic_array_length0.value = extractvalue { ptr, i64, i64 } "
+            "%items.dynamic_array_length0.descriptor, 1"
+        ) != std::string::npos
+    );
     auto initialized_transfer_deallocate =
         dynamic_array_owned_parameter_initialized_ir.ir_text.find(
             "call void @__orison_dynamic_array_deallocate"

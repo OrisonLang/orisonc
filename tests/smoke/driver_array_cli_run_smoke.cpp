@@ -165,17 +165,24 @@ void assert_owned_dynamic_array_parameter_emit_llvm_success(
     assert(output.find("%record.Payload = type { i64 }") != std::string::npos);
     assert(output.find("define void @__orison_drop.Payload(ptr %value)") != std::string::npos);
     assert(
-        output.find("define i32 @consume_items({ ptr, i64, i64 } %items)") !=
+        output.find("define i64 @consume_items({ ptr, i64, i64 } %items)") !=
         std::string::npos
     );
+    auto const length_read = output.find(
+        "%items.dynamic_array_length0.value = extractvalue { ptr, i64, i64 } "
+        "%items.dynamic_array_length0.descriptor, 1"
+    );
+    assert(length_read != std::string::npos);
     assert(
         output.find("call void @__orison_drop.Payload(ptr %items.dynamic_array_cleanup") !=
         std::string::npos
     );
     auto const deallocation = output.find("call void @__orison_dynamic_array_deallocate");
     assert(deallocation != std::string::npos);
+    assert(length_read < deallocation);
     assert(output.find("call void @__orison_dynamic_array_deallocate", deallocation + 1) == std::string::npos);
-    assert(output.find("ret i32 0") != std::string::npos);
+    assert(output.find("icmp eq i64") != std::string::npos);
+    assert(output.find("ret i32 %") != std::string::npos);
 }
 
 void assert_owned_computed_dynamic_array_missing_drop_emit_llvm_failure(
