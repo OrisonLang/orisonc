@@ -51,7 +51,8 @@ function owned_demo() -> UInt32
     values.push(Payload(13 as UInt32))
     values.replace_first(Payload(17 as UInt32))
     let count: IntSize = values.count_each()
-    values.first_value()
+    let projected: UInt32 = values[0].value
+    projected + values.first_value()
 
 function main() -> UInt32
     0 as UInt32

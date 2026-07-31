@@ -240,6 +240,9 @@ void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
     assert(output.find("%this.dynamic_array_element_path") != std::string::npos);
     assert(output.find("getelementptr %record.Payload, ptr %this.dynamic_array_element_path") !=
         std::string::npos);
+    assert(output.find("%values.dynamic_array_element_path") != std::string::npos);
+    assert(output.find("getelementptr %record.Payload, ptr %values.dynamic_array_element_path") !=
+        std::string::npos);
     assert(output.find("define i64 @method.DynamicArray_Payload_.count_each__Payload({ ptr, i64, i64 } %this)") !=
         std::string::npos);
     assert(output.find("call i64 @method.DynamicArray_Payload_.count_each__Payload({ ptr, i64, i64 } %tmp") !=
@@ -499,7 +502,12 @@ auto main() -> int {
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
         fixtures / "dynamic_array_receiver_owned_read_rejected.or",
-        "shared DynamicArray receiver index read of owned element requires a non-owning projection"
+        "DynamicArray index read of owned element requires a non-owning projection"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_local_owned_read_rejected.or",
+        "DynamicArray index read of owned element requires a non-owning projection"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

@@ -222,6 +222,9 @@ representation.
 - Shared DynamicArray receiver element paths such as `this[0].value` now lower through descriptor bounds checking,
   element-address projection, and ordinary record field loads. This keeps owned element copies rejected while allowing
   scalar field reads from the borrowed receiver element.
+- Named DynamicArray element paths such as `items[0].field` now use the same bounded element-address projection.
+  Direct index reads of owned elements are rejected for every named DynamicArray owner until explicit safe borrow or
+  clone semantics exist.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

@@ -1889,13 +1889,11 @@ auto lower_dynamic_array_index_read(
     if (!element_source_type.has_value()) {
         return std::nullopt;
     }
-    if (owner_name == "this" &&
-        !session.state.exclusive_receiver_bindings.contains(owner_name) &&
-        is_owned_transfer_source_type(*element_source_type, context.lowering)) {
+    if (is_owned_transfer_source_type(*element_source_type, context.lowering)) {
         record_expression_lowering_failure(
             session.failures,
             ExpressionLoweringFailureReason::unsupported_expression,
-            "shared DynamicArray receiver index read of owned element requires a non-owning projection"
+            "DynamicArray index read of owned element requires a non-owning projection"
         );
         return std::nullopt;
     }
@@ -1984,7 +1982,7 @@ auto lower_dynamic_array_index_read(
     };
 }
 
-auto lower_shared_dynamic_array_receiver_element_path_read(
+auto lower_dynamic_array_element_path_read(
     syntax::ExpressionSyntax const& expression,
     std::string_view expected_llvm_type,
     IntegerSignedness expected_signedness,
@@ -1995,15 +1993,19 @@ auto lower_shared_dynamic_array_receiver_element_path_read(
     auto path = collect_named_aggregate_path(expression);
     if (!path.has_value() ||
         path->base_expression == nullptr ||
-        path->base_expression->text != "this" ||
-        session.state.exclusive_receiver_bindings.contains("this") ||
         path->steps.size() < 2 ||
         path->steps.front().kind != AggregatePathStepKind::index ||
         path->steps.front().index_expression == nullptr) {
         return std::nullopt;
     }
 
-    auto source_type = session.state.source_type_names.find("this");
+    auto const& owner_name = path->base_expression->text;
+    if (auto moved_name = moved_owned_dynamic_array_binding_name(owner_name, session.state)) {
+        record_use_after_move_failure(session.failures, *moved_name);
+        return std::nullopt;
+    }
+
+    auto source_type = session.state.source_type_names.find(owner_name);
     if (source_type == session.state.source_type_names.end()) {
         return std::nullopt;
     }
@@ -2013,13 +2015,13 @@ auto lower_shared_dynamic_array_receiver_element_path_read(
         return std::nullopt;
     }
 
-    auto storage = aggregate_storage_for_name("this", session.state);
+    auto storage = aggregate_storage_for_name(owner_name, session.state);
     if (!storage.has_value()) {
         return std::nullopt;
     }
 
     auto plan = plan_dynamic_array_descriptor_cleanup(
-        "this",
+        owner_name,
         source_type->second,
         context.lowering
     );
@@ -2039,7 +2041,7 @@ auto lower_shared_dynamic_array_receiver_element_path_read(
         return std::nullopt;
     }
 
-    auto prefix = "%this.dynamic_array_element_path" +
+    auto prefix = "%" + owner_name + ".dynamic_array_element_path" +
         std::to_string(session.state.next_temporary_index++);
     output << emit_dynamic_array_descriptor_load(
         prefix + ".descriptor",
@@ -2885,7 +2887,7 @@ auto lowered_expression(
         return binding->second;
     }
 
-    if (auto dynamic_array_element_path_read = lower_shared_dynamic_array_receiver_element_path_read(
+    if (auto dynamic_array_element_path_read = lower_dynamic_array_element_path_read(
             expression,
             expected_llvm_type,
             expected_signedness,
@@ -2894,6 +2896,17 @@ auto lowered_expression(
             output
         )) {
         return dynamic_array_element_path_read;
+    }
+
+    if (auto dynamic_array_index_read = lower_dynamic_array_index_read(
+            expression,
+            expected_llvm_type,
+            expected_signedness,
+            context,
+            session,
+            output
+        )) {
+        return dynamic_array_index_read;
     }
 
     if (auto aggregate_path_read = lower_addressable_aggregate_path_read(
@@ -2916,17 +2929,6 @@ auto lowered_expression(
             output
         )) {
         return aggregate_path_read;
-    }
-
-    if (auto dynamic_array_index_read = lower_dynamic_array_index_read(
-            expression,
-            expected_llvm_type,
-            expected_signedness,
-            context,
-            session,
-            output
-        )) {
-        return dynamic_array_index_read;
     }
 
     if (auto dynamic_array_length_call = lower_dynamic_array_length_call(
