@@ -1889,6 +1889,16 @@ auto lower_dynamic_array_index_read(
     if (!element_source_type.has_value()) {
         return std::nullopt;
     }
+    if (owner_name == "this" &&
+        !session.state.exclusive_receiver_bindings.contains(owner_name) &&
+        is_owned_transfer_source_type(*element_source_type, context.lowering)) {
+        record_expression_lowering_failure(
+            session.failures,
+            ExpressionLoweringFailureReason::unsupported_expression,
+            "shared DynamicArray receiver index read of owned element requires a non-owning projection"
+        );
+        return std::nullopt;
+    }
 
     auto storage = aggregate_storage_for_name(owner_name, session.state);
     if (!storage.has_value()) {

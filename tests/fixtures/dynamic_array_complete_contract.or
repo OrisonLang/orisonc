@@ -48,8 +48,7 @@ function owned_demo() -> UInt32
     values.push(Payload(13 as UInt32))
     values.replace_first(Payload(17 as UInt32))
     let count: IntSize = values.count_each()
-    let first: Payload = values.first()
-    first.value
+    0 as UInt32
 
 function main() -> UInt32
     0 as UInt32

@@ -18,6 +18,7 @@
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/nonvalue_if_lowering.hpp"
 #include "orison/lowering/nonvalue_switch_lowering.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
@@ -306,6 +307,28 @@ auto is_exclusive_receiver_parameter(
 ) -> bool {
     return parameter.name == "this" &&
         (parameter.type.name == "exclusive.This" || function.has_exclusive_receiver_parameter);
+}
+
+auto is_shared_dynamic_array_receiver_owned_index_return(
+    syntax::ExpressionSyntax const& expression,
+    FunctionLoweringState const& state,
+    LoweringContext const& context
+) -> bool {
+    if (expression.kind != syntax::ExpressionKind::index_access ||
+        expression.left == nullptr ||
+        expression.left->kind != syntax::ExpressionKind::name ||
+        expression.left->text != "this" ||
+        state.exclusive_receiver_bindings.contains("this")) {
+        return false;
+    }
+
+    auto source_type = state.source_type_names.find("this");
+    if (source_type == state.source_type_names.end()) {
+        return false;
+    }
+    auto element_source_type = dynamic_array_element_source_type_name(source_type->second);
+    return element_source_type.has_value() &&
+        is_owned_transfer_source_type(*element_source_type, context);
 }
 
 void seed_bound_dynamic_array_parameter_cleanup_owner(
@@ -1437,6 +1460,18 @@ void emit_function_body(
 
     auto lowered = std::move(lowered_final_statement);
     if (!lowered.has_value()) {
+        if (is_shared_dynamic_array_receiver_owned_index_return(
+                *expression,
+                session.state,
+                context.lowering
+            )) {
+            diagnostics.error(
+                expression->line,
+                "lowering does not yet support this return expression: unsupported expression: "
+                "shared DynamicArray receiver index read of owned element requires a non-owning projection"
+            );
+            return;
+        }
         lowered = lower_expression(
             *expression,
             signature.return_type,

@@ -216,6 +216,9 @@ representation.
 - DynamicArray receiver `for item in this` lowering is now pinned for shared receiver methods. Concrete scalar and
   owned-element receiver specializations reuse the named descriptor iteration path with `%this.addr` storage, while the
   receiver descriptor remains non-cleanup-owned by the method body.
+- Shared DynamicArray receiver index reads now reject owned element value copies. Receiver methods should project a
+  non-owning scalar/member value, such as `this[0].value`, until the language has an explicit safe ownership-preserving
+  borrow or clone model for owned elements.
 - CLI cleanup-audit smoke coverage now pins those owned-element drop pairs for the authorized `DynamicArray<Payload>`
   fixture, so the end-to-end audit surface proves the element-drop context reaches users.
 - CLI cleanup-audit smoke coverage also pins the blocked owned-element path: missing semantic/source drop proof reports

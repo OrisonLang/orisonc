@@ -1,0 +1,21 @@
+package fixtures.dynamicarray.receiverownedreadrejected
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+extend DynamicArray<T>
+    function first(this: shared This) -> T
+        this[0]
+
+function main() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.push(Payload(7 as UInt32))
+    let first: Payload = values.first()
+    first.value
