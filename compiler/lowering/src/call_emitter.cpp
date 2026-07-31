@@ -1,5 +1,6 @@
 #include "orison/lowering/call_emitter.hpp"
 
+#include "orison/lowering/addressable_binding.hpp"
 #include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/c_abi_adapter.hpp"
 #include "orison/lowering/expression_emitter.hpp"
@@ -178,15 +179,34 @@ auto lower_call_arguments_impl(
 
     auto parameter_index = std::size_t {0};
     if (receiver_expression != nullptr) {
-        auto lowered_receiver = lower_expression(
-            *receiver_expression,
-            function.parameter_types.front(),
-            function.parameter_signedness.front(),
-            context,
-            session,
-            output,
-            expected_source_type_for_parameter(0)
-        );
+        auto lowered_receiver = std::optional<LoweredExpression> {};
+        auto expected_receiver_source_type = expected_source_type_for_parameter(0);
+        if (function.parameter_types.front() == "ptr" &&
+            expected_receiver_source_type.has_value() &&
+            receiver_expression->kind == syntax::ExpressionKind::name) {
+            auto sequence = dynamic_sequence_source_type(*expected_receiver_source_type);
+            auto storage = aggregate_storage_for_name(receiver_expression->text, session.state);
+            if (sequence.has_value() &&
+                sequence->kind == DynamicSequenceKind::dynamic_array &&
+                storage.has_value()) {
+                lowered_receiver = LoweredExpression {
+                    .type = "ptr",
+                    .value = std::move(*storage),
+                    .signedness = IntegerSignedness::not_integer,
+                };
+            }
+        }
+        if (!lowered_receiver.has_value()) {
+            lowered_receiver = lower_expression(
+                *receiver_expression,
+                function.parameter_types.front(),
+                function.parameter_signedness.front(),
+                context,
+                session,
+                output,
+                expected_receiver_source_type
+            );
+        }
         if (!lowered_receiver.has_value()) {
             return std::nullopt;
         }

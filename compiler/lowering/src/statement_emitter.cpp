@@ -1203,7 +1203,10 @@ auto lower_dynamic_array_push_statement(
         diagnostics.error(statement.line, "use after move: " + owner_name);
         return true;
     }
-    if (!session.state.mutable_bindings.contains(owner_name)) {
+    auto const owner_is_mutable_local = session.state.mutable_bindings.contains(owner_name);
+    auto const owner_is_exclusive_receiver =
+        owner_name == "this" && session.state.exclusive_receiver_bindings.contains(owner_name);
+    if (!owner_is_mutable_local && !owner_is_exclusive_receiver) {
         return false;
     }
     auto source_type = session.state.source_type_names.find(owner_name);

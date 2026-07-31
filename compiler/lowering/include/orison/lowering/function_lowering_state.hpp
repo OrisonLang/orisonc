@@ -9,6 +9,7 @@
 
 #include <cstddef>
 #include <string>
+#include <unordered_set>
 #include <unordered_map>
 #include <vector>
 
@@ -54,6 +55,7 @@ struct FunctionLoweringState {
     std::unordered_map<std::string, LoweredExpression> immutable_bindings;
     std::unordered_map<std::string, MutableBinding> mutable_bindings;
     std::unordered_map<std::string, AddressableBinding> addressable_bindings;
+    std::unordered_set<std::string> exclusive_receiver_bindings;
     std::unordered_map<std::string, ConcurrencyBinding> thread_bindings;
     std::unordered_map<std::string, ConcurrencyBinding> task_bindings;
     std::vector<std::string> thread_binding_order;

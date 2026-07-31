@@ -300,6 +300,14 @@ auto is_receiver_self_source_type(std::string_view type_name) -> bool {
     return type_name == "This" || type_name == "shared.This" || type_name == "exclusive.This";
 }
 
+auto is_exclusive_receiver_parameter(
+    syntax::FunctionSyntax const& function,
+    syntax::ParameterSyntax const& parameter
+) -> bool {
+    return parameter.name == "this" &&
+        (parameter.type.name == "exclusive.This" || function.has_exclusive_receiver_parameter);
+}
+
 void seed_bound_dynamic_array_parameter_cleanup_owner(
     std::string_view parameter_name,
     std::string_view source_type_name,
@@ -1118,16 +1126,30 @@ void emit_function_body(
             }
         }
         state.source_type_names.emplace(function.parameters[index].name, std::move(source_type_name));
-        bind_addressable_aggregate_value(
-            function.parameters[index].name,
-            LoweredExpression {
-                .type = signature.parameter_types[index],
-                .value = llvm_local_value_name(function.parameters[index].name),
-                .signedness = signature.parameter_signedness[index],
-            },
-            session,
-            output
-        );
+        if (is_exclusive_receiver_parameter(function, function.parameters[index])) {
+            state.exclusive_receiver_bindings.insert(function.parameters[index].name);
+        }
+        if (is_exclusive_receiver_parameter(function, function.parameters[index]) &&
+            signature.parameter_types[index] == "ptr") {
+            state.addressable_bindings[function.parameters[index].name] = AddressableBinding {
+                .type = LoweredType {
+                    .type = std::string {dynamic_array_descriptor_llvm_type()},
+                    .signedness = IntegerSignedness::not_integer,
+                },
+                .storage = llvm_local_value_name(function.parameters[index].name),
+            };
+        } else {
+            bind_addressable_aggregate_value(
+                function.parameters[index].name,
+                LoweredExpression {
+                    .type = signature.parameter_types[index],
+                    .value = llvm_local_value_name(function.parameters[index].name),
+                    .signedness = signature.parameter_signedness[index],
+                },
+                session,
+                output
+            );
+        }
         seed_bound_dynamic_array_parameter_cleanup_owner(
             function.parameters[index].name,
             state.source_type_names.at(function.parameters[index].name),

@@ -194,6 +194,20 @@ void assert_cli_emit_llvm_dynamic_array_receiver_fixture_success(
     assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %this.") == std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_receiver_append_scalar_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define void @method.DynamicArray_UInt32_.append_value__UInt32(ptr %this, i32 %value)") !=
+        std::string::npos);
+    assert(output.find("call void @method.DynamicArray_UInt32_.append_value__UInt32(ptr %values.addr, i32 3)") !=
+        std::string::npos);
+    assert(output.find("%this.dynamic_array_append") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_grow") != std::string::npos);
+}
+
 auto generic_method_lines() -> std::vector<std::string> {
     return {
         "package demo.cli",
@@ -425,6 +439,14 @@ auto main() -> int {
     assert_cli_emit_llvm_dynamic_array_receiver_fixture_success(
         executable,
         fixtures / "dynamic_array_receiver_length.or"
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_append_scalar.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_append_scalar_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_append_scalar.or"
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,

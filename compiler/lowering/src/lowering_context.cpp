@@ -69,6 +69,38 @@ auto is_receiver_self_type(syntax::TypeSyntax const& type) -> bool {
         (type.name == "This" || type.name == "shared.This" || type.name == "exclusive.This");
 }
 
+auto has_exclusive_receiver_parameter(syntax::FunctionSyntax const& method) -> bool {
+    for (auto const& parameter : method.parameters) {
+        if (parameter.name == "this" &&
+            (parameter.type.name == "exclusive.This" || method.has_exclusive_receiver_parameter)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto has_lowerable_dynamic_array_receiver(syntax::TypeSyntax const& receiver_type) -> bool {
+    auto source_type_name = render_source_type_name(receiver_type);
+    auto sequence = dynamic_sequence_source_type(source_type_name);
+    return sequence.has_value() &&
+        sequence->kind == DynamicSequenceKind::dynamic_array &&
+        is_scalar_or_nonowning_source_type(sequence->element_source_type_name);
+}
+
+void lower_exclusive_dynamic_array_receiver_pointer(
+    syntax::TypeSyntax const& receiver_type,
+    syntax::FunctionSyntax const& method,
+    LoweredFunctionSignature& signature
+) {
+    if (!has_exclusive_receiver_parameter(method) ||
+        !has_lowerable_dynamic_array_receiver(receiver_type) ||
+        signature.parameter_types.empty()) {
+        return;
+    }
+    signature.parameter_types.front() = "ptr";
+    signature.parameter_signedness.front() = IntegerSignedness::not_integer;
+}
+
 auto render_record_type_name(syntax::TypeSyntax const& type) -> std::string {
     return render_source_type_name(type);
 }
@@ -279,6 +311,7 @@ auto clone_function(syntax::FunctionSyntax const& function) -> syntax::FunctionS
         .line = function.line,
         .is_async = function.is_async,
         .is_unsafe = function.is_unsafe,
+        .has_exclusive_receiver_parameter = function.has_exclusive_receiver_parameter,
         .name = function.name,
         .generic_parameters = function.generic_parameters,
         .parameters = function.parameters,
@@ -394,6 +427,11 @@ void record_dynamic_array_descriptor_parameter_types(
         if (index >= signature.parameter_types.size()) {
             continue;
         }
+        if (function.parameters[index].name == "this" &&
+            function.has_exclusive_receiver_parameter &&
+            signature.parameter_types[index] == "ptr") {
+            continue;
+        }
         auto source_type_name = render_source_type_name(function.parameters[index].type);
         auto sequence = dynamic_sequence_source_type(source_type_name);
         if (!sequence.has_value() ||
@@ -430,6 +468,9 @@ auto specialized_method_copy(
     specialized.return_type = substitute_type(specialized.return_type, substitutions);
     for (auto& parameter : specialized.parameters) {
         if (parameter.name == "this" && is_receiver_self_type(parameter.type)) {
+            if (parameter.type.name == "exclusive.This") {
+                specialized.has_exclusive_receiver_parameter = true;
+            }
             parameter.type = concrete_receiver_type;
         } else {
             parameter.type = substitute_type(parameter.type, substitutions);
@@ -1254,13 +1295,15 @@ auto lower_method_signature(
             parameter.type = receiver_type;
         }
     }
-    return lower_contextual_function_signature(
+    auto signature = lower_contextual_function_signature(
         method.return_type,
         parameters,
         std::move(symbol_name),
         record_names,
         choices
     );
+    lower_exclusive_dynamic_array_receiver_pointer(receiver_type, method, signature);
+    return signature;
 }
 
 auto collect_method_signature(

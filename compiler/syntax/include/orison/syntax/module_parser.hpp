@@ -182,6 +182,7 @@ struct FunctionSyntax {
     std::size_t line = 0;
     bool is_async = false;
     bool is_unsafe = false;
+    bool has_exclusive_receiver_parameter = false;
     std::string name;
     std::vector<std::string> generic_parameters;
     std::vector<ParameterSyntax> parameters;
