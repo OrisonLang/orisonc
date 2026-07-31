@@ -208,6 +208,24 @@ void assert_cli_emit_llvm_dynamic_array_receiver_append_scalar_fixture_success(
     assert(output.find("call void @__orison_dynamic_array_grow") != std::string::npos);
 }
 
+void assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define void @method.DynamicArray_Payload_.append_value__Payload(ptr %this, %record.Payload %value)") !=
+        std::string::npos);
+    assert(output.find("call void @method.DynamicArray_Payload_.append_value__Payload(ptr %values.addr, %record.Payload %tmp") !=
+        std::string::npos);
+    assert(output.find("define %record.Payload @method.DynamicArray_Payload_.first__Payload({ ptr, i64, i64 } %this)") !=
+        std::string::npos);
+    assert(output.find("call %record.Payload @method.DynamicArray_Payload_.first__Payload({ ptr, i64, i64 } %tmp") !=
+        std::string::npos);
+    assert(output.find("call void @__orison_drop.Payload(ptr %values.dynamic_array_cleanup") !=
+        std::string::npos);
+}
+
 auto generic_method_lines() -> std::vector<std::string> {
     return {
         "package demo.cli",
@@ -448,10 +466,13 @@ auto main() -> int {
         executable,
         fixtures / "dynamic_array_receiver_append_scalar.or"
     );
-    assert_cli_emit_llvm_existing_fixture_failure(
+    assert_cli_run_fixture_success(
         executable,
-        fixtures / "dynamic_array_complete_contract.or",
-        "lowering member call target is unknown: DynamicArray<Payload>.append_value"
+        fixtures / "dynamic_array_complete_contract.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_complete_contract_fixture_success(
+        executable,
+        fixtures / "dynamic_array_complete_contract.or"
     );
     assert_cli_parse_success(
         executable,

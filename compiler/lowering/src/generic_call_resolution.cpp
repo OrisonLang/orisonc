@@ -202,6 +202,11 @@ auto source_type_name_for_generic_call_argument(
         return std::nullopt;
     }
 
+    if (resolver.record_names != nullptr &&
+        resolver.record_names->contains(expression.left->text)) {
+        return expression.left->text;
+    }
+
     if (resolver.generic_functions != nullptr) {
         auto generic_function = resolver.generic_functions->find(expression.left->text);
         if (generic_function != resolver.generic_functions->end()) {

@@ -46,6 +46,7 @@ void collect_generic_method_calls_from_expression(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_set<std::string> const& record_names,
     std::vector<GenericMethodSpecialization>& specializations
 );
 void collect_generic_method_calls_from_statement(
@@ -54,6 +55,7 @@ void collect_generic_method_calls_from_statement(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_set<std::string> const& record_names,
     std::vector<GenericMethodSpecialization>& specializations
 );
 
@@ -82,9 +84,7 @@ auto has_exclusive_receiver_parameter(syntax::FunctionSyntax const& method) -> b
 auto has_lowerable_dynamic_array_receiver(syntax::TypeSyntax const& receiver_type) -> bool {
     auto source_type_name = render_source_type_name(receiver_type);
     auto sequence = dynamic_sequence_source_type(source_type_name);
-    return sequence.has_value() &&
-        sequence->kind == DynamicSequenceKind::dynamic_array &&
-        is_scalar_or_nonowning_source_type(sequence->element_source_type_name);
+    return sequence.has_value() && sequence->kind == DynamicSequenceKind::dynamic_array;
 }
 
 void lower_exclusive_dynamic_array_receiver_pointer(
@@ -435,8 +435,15 @@ void record_dynamic_array_descriptor_parameter_types(
         auto source_type_name = render_source_type_name(function.parameters[index].type);
         auto sequence = dynamic_sequence_source_type(source_type_name);
         if (!sequence.has_value() ||
-            sequence->kind != DynamicSequenceKind::dynamic_array ||
-            !is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
+            sequence->kind != DynamicSequenceKind::dynamic_array) {
+            continue;
+        }
+        if (function.parameters[index].name == "this") {
+            signature.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
+            signature.parameter_signedness[index] = IntegerSignedness::not_integer;
+            continue;
+        }
+        if (!is_scalar_or_nonowning_source_type(sequence->element_source_type_name)) {
             continue;
         }
         signature.parameter_types[index] = std::string {dynamic_array_descriptor_llvm_type()};
@@ -617,6 +624,7 @@ void collect_generic_method_calls_from_expression(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_set<std::string> const& record_names,
     std::vector<GenericMethodSpecialization>& specializations
 ) {
     if (expression.kind == syntax::ExpressionKind::call &&
@@ -627,6 +635,7 @@ void collect_generic_method_calls_from_expression(
             .generic_functions = &generic_functions,
             .functions = &functions,
             .local_source_types = &local_source_types,
+            .record_names = &record_names,
         };
         auto actual_receiver_type = source_type_name_for_generic_call_argument(*expression.left->left, resolver);
         if (actual_receiver_type.has_value()) {
@@ -682,6 +691,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            record_names,
             specializations
         );
     }
@@ -692,6 +702,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            record_names,
             specializations
         );
     }
@@ -702,6 +713,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            record_names,
             specializations
         );
     }
@@ -712,6 +724,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            record_names,
             specializations
         );
     }
@@ -722,6 +735,7 @@ void collect_generic_method_calls_from_expression(
             generic_functions,
             functions,
             local_source_types,
+            record_names,
             specializations
         );
     }
@@ -733,6 +747,7 @@ void collect_generic_method_calls_from_statement(
     std::unordered_map<std::string, syntax::FunctionSyntax const*> const& generic_functions,
     std::unordered_map<std::string, LoweredFunctionSignature> const& functions,
     std::unordered_map<std::string, std::string> const& local_source_types,
+    std::unordered_set<std::string> const& record_names,
     std::vector<GenericMethodSpecialization>& specializations
 ) {
     collect_generic_method_calls_from_expression(
@@ -741,6 +756,7 @@ void collect_generic_method_calls_from_statement(
         generic_functions,
         functions,
         local_source_types,
+        record_names,
         specializations
     );
     collect_generic_method_calls_from_expression(
@@ -749,6 +765,7 @@ void collect_generic_method_calls_from_statement(
         generic_functions,
         functions,
         local_source_types,
+        record_names,
         specializations
     );
     for (auto const& nested_statement : statement.nested_statements) {
@@ -758,6 +775,7 @@ void collect_generic_method_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            record_names,
             specializations
         );
     }
@@ -768,6 +786,7 @@ void collect_generic_method_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            record_names,
             specializations
         );
     }
@@ -778,6 +797,7 @@ void collect_generic_method_calls_from_statement(
             generic_functions,
             functions,
             local_source_types,
+            record_names,
             specializations
         );
         for (auto const& case_statement : switch_case.statements) {
@@ -787,6 +807,7 @@ void collect_generic_method_calls_from_statement(
                 generic_functions,
                 functions,
                 local_source_types,
+                record_names,
                 specializations
             );
         }
@@ -833,6 +854,13 @@ auto collect_generic_method_specializations(
         return {};
     }
 
+    auto record_names = std::unordered_set<std::string> {};
+    for (auto const& record : module.records) {
+        if (record.generic_parameters.empty()) {
+            record_names.insert(record.name);
+        }
+    }
+
     auto specializations = std::vector<GenericMethodSpecialization> {};
     auto collect_from_function = [&](syntax::FunctionSyntax const& function, std::string_view receiver_type_name = {}) {
         auto local_source_types = std::unordered_map<std::string, std::string> {};
@@ -854,6 +882,7 @@ auto collect_generic_method_specializations(
                 generic_functions,
                 functions,
                 local_source_types,
+                record_names,
                 specializations
             );
         }

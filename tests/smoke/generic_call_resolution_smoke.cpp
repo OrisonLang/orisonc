@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace {
 
@@ -175,10 +176,12 @@ int main() {
         },
     };
     auto local_source_types = std::unordered_map<std::string, std::string> {};
+    auto record_names = std::unordered_set<std::string> {"Payload"};
     auto collector_resolver = orison::lowering::GenericCallSourceResolver {
         .generic_functions = &generic_functions,
         .functions = &functions,
         .local_source_types = &local_source_types,
+        .record_names = &record_names,
     };
 
     auto first_call = call_expression("first", call_expression("make_values"));
@@ -207,6 +210,13 @@ int main() {
     );
     assert(local_substitutions.has_value());
     assert(local_substitutions->at("T").name == "UInt32");
+
+    auto payload_constructor_type = orison::lowering::source_type_name_for_generic_call_argument(
+        call_expression("Payload", cast_expression(integer_literal("11"), "UInt32")),
+        collector_resolver
+    );
+    assert(payload_constructor_type.has_value());
+    assert(*payload_constructor_type == "Payload");
 
     auto cast_call = call_expression("consume", cast_expression(integer_literal("9"), "UInt64"));
     auto cast_substitutions = orison::lowering::bind_generic_function_call_substitutions(

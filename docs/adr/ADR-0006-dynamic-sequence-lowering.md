@@ -220,8 +220,11 @@ representation.
   `CompilePipelineResult` rather than parsing formatted cleanup capability report text.
 - Exclusive `DynamicArray<T>` receiver methods now use an internal pointer receiver ABI for scalar or non-owning
   element types. Generic receiver specialization preserves the exclusive receiver marker, member-call lowering passes
-  the caller descriptor storage pointer, and `this.push(value)` mutates the caller-owned descriptor. Owned-element
-  receiver append remains blocked until `DynamicArray<Owned>` element move/drop proof is available.
+  the caller descriptor storage pointer, and `this.push(value)` mutates the caller-owned descriptor.
+- `DynamicArray<T>` receiver methods now specialize and lower for owned record element types when source Drop proof is
+  available. Generic-call source inference recognizes non-generic record constructors such as `Payload(...)`, exclusive
+  receiver methods pass descriptor storage by pointer, shared receiver methods pass descriptors by value, and the full
+  receiver contract fixture now covers owned append, owned first-element read, and initialized-element cleanup.
 - Dynamic-array cleanup production-readiness planning now consumes structured sequence-verification and
   cleanup-capability booleans from `CompilePipelineResult` rather than scanning formatted report strings.
 - Computed dynamic-array inserted cleanup handoffs are now analyzed once into structured verified pairs before the
