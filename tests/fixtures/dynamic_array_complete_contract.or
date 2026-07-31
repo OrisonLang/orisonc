@@ -1,0 +1,43 @@
+package fixtures.dynamicarray.completecontract
+
+record Payload
+    value: UInt32
+
+interface Drop
+    function drop(this: exclusive This) -> Unit
+
+implements Drop for Payload
+    function drop(this: exclusive This) -> Unit
+        return
+
+extend DynamicArray<T>
+    function count(this: shared This) -> IntSize
+        this.length()
+
+    function first(this: shared This) -> T
+        this[0]
+
+    function append_value(this: exclusive This, value: T) -> Unit
+        this.push(value)
+
+function scalar_demo() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.append_value(3 as UInt32)
+    values.push(5 as UInt32)
+    values[0] = 7 as UInt32
+    let count: IntSize = values.count()
+    let first: UInt32 = values.first()
+    var total: UInt32 = 0 as UInt32
+    for value in values
+        total = total + value
+    first + total
+
+function owned_demo() -> UInt32
+    var values: DynamicArray<Payload> = DynamicArray()
+    values.append_value(Payload(11 as UInt32))
+    values.push(Payload(13 as UInt32))
+    let first: Payload = values.first()
+    first.value
+
+function main() -> UInt32
+    0 as UInt32

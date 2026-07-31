@@ -345,6 +345,13 @@ auto receiver_pattern_generic_parameters(
     syntax::TypeSyntax const& receiver_type,
     syntax::ModuleSyntax const& module
 ) -> std::vector<std::string> {
+    if (receiver_type.name == "DynamicArray" && receiver_type.generic_arguments.size() == 1) {
+        auto const& argument = receiver_type.generic_arguments.front();
+        if (argument.generic_arguments.empty()) {
+            return {argument.name};
+        }
+    }
+
     auto record = std::ranges::find_if(
         module.records,
         [&](syntax::RecordSyntax const& candidate) {
@@ -415,13 +422,18 @@ auto specialized_function_copy(
 
 auto specialized_method_copy(
     syntax::FunctionSyntax const& method,
+    syntax::TypeSyntax const& concrete_receiver_type,
     std::unordered_map<std::string, syntax::TypeSyntax> const& substitutions
 ) -> syntax::FunctionSyntax {
     auto specialized = clone_function(method);
     specialized.generic_parameters.clear();
     specialized.return_type = substitute_type(specialized.return_type, substitutions);
     for (auto& parameter : specialized.parameters) {
-        parameter.type = substitute_type(parameter.type, substitutions);
+        if (parameter.name == "this" && is_receiver_self_type(parameter.type)) {
+            parameter.type = concrete_receiver_type;
+        } else {
+            parameter.type = substitute_type(parameter.type, substitutions);
+        }
     }
     return specialized;
 }
@@ -597,7 +609,7 @@ void collect_generic_method_calls_from_expression(
                 if (concrete_receiver_type_name != *actual_receiver_type) {
                     continue;
                 }
-                auto specialized = specialized_method_copy(*candidate.method, *substitutions);
+                auto specialized = specialized_method_copy(*candidate.method, concrete_receiver_type, *substitutions);
                 auto symbol_name = specialized_method_symbol_name(
                     concrete_receiver_type_name,
                     *candidate.method,

@@ -1,0 +1,14 @@
+package fixtures.dynamicarray.receiverlength
+
+extend DynamicArray<T>
+    function count(this: shared This) -> IntSize
+        this.length()
+
+function count_values(values: DynamicArray<UInt32>) -> IntSize
+    values.count()
+
+function main() -> UInt32
+    var values: DynamicArray<UInt32> = DynamicArray()
+    values.push(7 as UInt32)
+    let count: IntSize = values.count()
+    0 as UInt32

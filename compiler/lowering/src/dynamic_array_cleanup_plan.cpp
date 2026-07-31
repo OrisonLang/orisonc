@@ -514,6 +514,9 @@ auto plan_bound_dynamic_array_parameter_cleanups(
     std::ranges::sort(names);
 
     for (auto const& name : names) {
+        if (name == "this") {
+            continue;
+        }
         if (is_owned_binding_consumed(session.state.ownership_transfers, name)) {
             continue;
         }

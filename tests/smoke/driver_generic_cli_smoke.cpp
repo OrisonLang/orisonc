@@ -94,6 +94,16 @@ void assert_cli_emit_llvm_failure(
     assert(output.find(expected_message) != std::string::npos);
 }
 
+void assert_cli_emit_llvm_existing_fixture_failure(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path,
+    std::string_view expected_message
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_failing_command_output(command);
+    assert(output.find(expected_message) != std::string::npos);
+}
+
 void assert_cli_run_fixture_success(
     std::filesystem::path const& executable,
     std::filesystem::path const& path
@@ -170,6 +180,18 @@ void assert_cli_emit_llvm_generic_method_fixture_success(
     assert(output.find("call i32 @method.Box_UInt32_.value__UInt32(%record.Box_UInt32_ %tmp") != std::string::npos);
     assert(output.find("call i32 @method.Pair_UInt32__UInt64_.first__UInt32__UInt64(%record.Pair_UInt32__UInt64_ %tmp") != std::string::npos);
     assert(output.find("call %record.Pair_UInt32__UInt64_ @method.Box_Pair_UInt32__UInt64__.value__Pair_UInt32__UInt64_(%record.Box_Pair_UInt32__UInt64__ %tmp") != std::string::npos);
+}
+
+void assert_cli_emit_llvm_dynamic_array_receiver_fixture_success(
+    std::filesystem::path const& executable,
+    std::filesystem::path const& path
+) {
+    auto command = executable.string() + " --emit-llvm " + path.string();
+    auto output = read_command_output(command);
+    assert(output.find("define i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %this)") != std::string::npos);
+    assert(output.find("call i64 @method.DynamicArray_UInt32_.count__UInt32({ ptr, i64, i64 } %tmp") != std::string::npos);
+    assert(output.find("ret i64 %this.dynamic_array_length0.value") != std::string::npos);
+    assert(output.find("call void @__orison_dynamic_array_deallocate(ptr %this.") == std::string::npos);
 }
 
 auto generic_method_lines() -> std::vector<std::string> {
@@ -395,6 +417,19 @@ auto main() -> int {
     assert_cli_emit_llvm_generic_method_fixture_success(
         executable,
         generic_method_path
+    );
+    assert_cli_run_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_length.or"
+    );
+    assert_cli_emit_llvm_dynamic_array_receiver_fixture_success(
+        executable,
+        fixtures / "dynamic_array_receiver_length.or"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "dynamic_array_complete_contract.or",
+        "lowering member call target is unknown: DynamicArray<Payload>.append_value"
     );
     assert_cli_parse_success(
         executable,

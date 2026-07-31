@@ -922,6 +922,11 @@ representation.
   substitutions. Resolver smoke coverage pins `Pair<A, B>` binding from `Pair<UInt32, UInt64>` and `Box<T>` binding
   `T` to `Pair<UInt32, UInt64>`, while CLI smoke coverage pins emitted specializations for
   `Pair<UInt32, UInt64>.first()` and `Box<Pair<UInt32, UInt64>>.value()`.
+- Built-in `DynamicArray<T>` receiver-pattern specialization now supports a minimal `count()` fixture that lowers
+  `DynamicArray<UInt32>.count()` to `method.DynamicArray_UInt32_.count__UInt32`, preserves receiver `this` as a
+  non-cleaned-up method receiver, and runs successfully. A fuller checked contract fixture currently records the next
+  gap: owned-element `DynamicArray<Payload>.append_value(...)` is not yet collected/lowered as a receiver
+  specialization.
 
 ## Follow-up work
 

@@ -312,6 +312,16 @@ int main() {
     assert(nested_receiver_method_substitutions->at("T").generic_arguments[0].name == "UInt32");
     assert(nested_receiver_method_substitutions->at("T").generic_arguments[1].name == "UInt64");
 
+    local_source_types["items"] = "DynamicArray<UInt32>";
+    auto dynamic_array_receiver_substitutions = orison::lowering::bind_generic_method_call_substitutions(
+        dynamic_array_type("T"),
+        receiver_value,
+        member_call_expression(name_expression("items"), "value"),
+        collector_resolver
+    );
+    assert(dynamic_array_receiver_substitutions.has_value());
+    assert(dynamic_array_receiver_substitutions->at("T").name == "UInt32");
+
     auto context = orison::lowering::LoweringContext {};
     context.functions.emplace(
         "consume__UInt32",

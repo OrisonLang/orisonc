@@ -306,6 +306,10 @@ void seed_bound_dynamic_array_parameter_cleanup_owner(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session
 ) {
+    if (parameter_name == "this") {
+        return;
+    }
+
     auto sequence = dynamic_sequence_source_type(source_type_name);
     if (!sequence.has_value() ||
         sequence->kind != DynamicSequenceKind::dynamic_array) {

@@ -99,6 +99,11 @@ auto is_generic_receiver_pattern(
     syntax::TypeSyntax const& receiver_type,
     syntax::ModuleSyntax const& module
 ) -> bool {
+    if (receiver_type.name == "DynamicArray" && receiver_type.generic_arguments.size() == 1) {
+        auto const& argument = receiver_type.generic_arguments.front();
+        return argument.generic_arguments.empty() && !argument.name.empty();
+    }
+
     auto record = std::ranges::find_if(
         module.records,
         [&](syntax::RecordSyntax const& candidate) {
