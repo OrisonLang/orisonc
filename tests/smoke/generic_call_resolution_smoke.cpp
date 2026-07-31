@@ -26,6 +26,24 @@ auto name_expression(std::string text) -> orison::syntax::ExpressionSyntax {
     return expression;
 }
 
+auto cast_expression(
+    orison::syntax::ExpressionSyntax inner,
+    std::string target_type
+) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::cast;
+    expression.text = std::move(target_type);
+    expression.left = std::make_unique<orison::syntax::ExpressionSyntax>(std::move(inner));
+    return expression;
+}
+
+auto integer_literal(std::string text) -> orison::syntax::ExpressionSyntax {
+    auto expression = orison::syntax::ExpressionSyntax {};
+    expression.kind = orison::syntax::ExpressionKind::integer_literal;
+    expression.text = std::move(text);
+    return expression;
+}
+
 auto call_expression(std::string function_name) -> orison::syntax::ExpressionSyntax {
     auto expression = orison::syntax::ExpressionSyntax {};
     expression.kind = orison::syntax::ExpressionKind::call;
@@ -175,6 +193,15 @@ int main() {
     assert(local_substitutions.has_value());
     assert(local_substitutions->at("T").name == "UInt32");
 
+    auto cast_call = call_expression("consume", cast_expression(integer_literal("9"), "UInt64"));
+    auto cast_substitutions = orison::lowering::bind_generic_function_call_substitutions(
+        consume,
+        cast_call,
+        collector_resolver
+    );
+    assert(cast_substitutions.has_value());
+    assert(cast_substitutions->at("T").name == "UInt64");
+
     auto mismatched_generic_call = call_expression(
         "choose_same",
         name_expression("value"),
@@ -198,7 +225,7 @@ int main() {
     auto generic_method_call = member_call_expression(
         name_expression("box"),
         "pick",
-        name_expression("value")
+        cast_expression(integer_literal("9"), "UInt64")
     );
     local_source_types["box"] = "Box";
     auto method_substitutions = orison::lowering::bind_generic_method_call_substitutions(
@@ -208,7 +235,7 @@ int main() {
         collector_resolver
     );
     assert(method_substitutions.has_value());
-    assert(method_substitutions->at("T").name == "UInt32");
+    assert(method_substitutions->at("T").name == "UInt64");
 
     auto context = orison::lowering::LoweringContext {};
     context.functions.emplace(

@@ -162,6 +162,18 @@ auto source_type_name_for_generic_call_argument(
         return std::nullopt;
     }
 
+    if (expression.kind == syntax::ExpressionKind::cast && !expression.text.empty()) {
+        return expression.text;
+    }
+
+    if (expression.kind == syntax::ExpressionKind::boolean_literal) {
+        return "Bool";
+    }
+
+    if (expression.kind == syntax::ExpressionKind::string_literal) {
+        return "Text";
+    }
+
     if (expression.kind != syntax::ExpressionKind::call ||
         expression.left == nullptr ||
         expression.left->kind != syntax::ExpressionKind::name) {

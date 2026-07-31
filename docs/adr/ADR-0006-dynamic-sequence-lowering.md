@@ -909,6 +909,10 @@ representation.
   methods. CLI smoke coverage pins `UInt32.select<T>(..., UInt64)` specializing to
   `method.UInt32.select__UInt64` and routing the member call to that symbol. Generic receiver-parameter collection for
   extension receiver patterns still needs a separate syntax/modeling slice.
+- Collector-mode generic call source typing now honors explicit cast expressions, so direct `9 as UInt64` arguments can
+  specialize generic functions and generic methods without an annotated temporary binding. The collector also recognizes
+  uncast `Bool` and `Text` literals, while uncast numeric literals remain unresolved to avoid implicit width or
+  signedness guesses.
 
 ## Follow-up work
 
