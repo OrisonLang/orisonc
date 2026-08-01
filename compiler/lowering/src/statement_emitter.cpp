@@ -47,7 +47,7 @@ auto owned_aggregate_projection_value_read_diagnostic(
         state,
         AggregateProjectionAccessIntent::value_read
     );
-    if (emission_context.options.test_only_collect_aggregate_projection_access_plans &&
+    if (emission_context.options.collect_aggregate_projection_access_metadata &&
         plan.status != AggregateProjectionAccessStatus::not_named_aggregate_path) {
         state.aggregate_projection_access_plans.push_back(plan);
     }

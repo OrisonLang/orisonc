@@ -33,9 +33,9 @@ inventing semantics outside the spec/tour.
   value-read rejection text stable while giving future borrow and clone gates shared wording.
 - Aggregate projection access plans have a deterministic internal report line containing intent, status, binding,
   source type, receiver status, and diagnostic text when present. This is debugging/audit metadata only.
-- A test-only lowering option can collect aggregate projection access-plan report lines into function and module
-  emission results. Normal compiler output remains unchanged.
-- The driver exposes those aggregate projection access-plan lines only through the explicit
+- A lowering metadata option can collect aggregate projection access-plan records into function and module emission
+  results. Normal compiler output remains unchanged.
+- The driver exposes those aggregate projection access-plan records as report output only through the explicit
   `--test-only-aggregate-projection-access-plans` report command.
 - That test-only report command preserves access-plan output on lowering failure, so rejection-boundary tests can assert
   the blocked plan and diagnostic without changing normal compiler output.
@@ -50,6 +50,8 @@ inventing semantics outside the spec/tour.
   consumers use typed state at the pipeline boundary.
 - Lowering metadata no longer exposes aggregate projection access-plan report strings; lower-level tests and pipeline
   state construction consume typed access-plan records.
+- The internal aggregate projection access collection option is named for metadata collection, while the CLI command
+  remains the explicit test-only report surface.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

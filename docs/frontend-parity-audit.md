@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-07-30: aggregate projection access collection now uses an internal metadata-named option and typed access-plan
+  records through lowering/pipeline boundaries; only the explicit CLI report command renders text.
 - 2026-07-30: computed owned `DynamicArray<T>` `for` audit collectors now reserve production audit naming for result
   metadata and helper functions. The remaining broad `test_only_dynamic_array_*` snippet fields are classified as
   fixture-only renderers gated by explicit test-only options.

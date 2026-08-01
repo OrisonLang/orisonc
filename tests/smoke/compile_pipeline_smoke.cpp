@@ -241,7 +241,7 @@ void assert_aggregate_projection_access_plan_state(
     auto result = pipeline.emit_llvm(
         source_path,
         orison::pipeline::CompilePipelineOptions {
-            .test_only_collect_aggregate_projection_access_plans = true,
+            .collect_aggregate_projection_access_metadata = true,
         }
     );
     assert(!result.has_errors());

@@ -872,7 +872,7 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return emit_llvm_report_with_failure_output(
             std::filesystem::path(args[2]),
             pipeline::CompilePipelineOptions {
-                .test_only_collect_aggregate_projection_access_plans = true,
+                .collect_aggregate_projection_access_metadata = true,
             },
             [](auto const& result) {
                 return aggregate_projection_access_plan_state_report(

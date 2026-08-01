@@ -14219,7 +14219,7 @@ void test_collects_aggregate_projection_access_plan_records() {
         "    let count: UInt32 = box.count\n"
         "    consume_payload(box.payload) + count\n",
         orison::lowering::LlvmIrEmissionOptions {
-            .test_only_collect_aggregate_projection_access_plans = true,
+            .collect_aggregate_projection_access_metadata = true,
         }
     );
 

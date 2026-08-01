@@ -36,7 +36,7 @@ auto run_llvm_emission_stage(
             options.collect_computed_dynamic_array_for_production_emission_gates ||
             options.collect_computed_dynamic_array_for_production_sequences ||
             options.emit_computed_dynamic_array_for_production_sequence_comments ||
-            options.test_only_collect_aggregate_projection_access_plans) {
+            options.collect_aggregate_projection_access_metadata) {
             populate_lowering_emission_reports(result, std::move(emission), options);
         }
         return result;
