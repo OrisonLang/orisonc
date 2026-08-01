@@ -49,6 +49,27 @@ void write_rejected_fixture(std::filesystem::path const& path) {
         "    box.payload\n";
 }
 
+void write_receiver_fixture(std::filesystem::path const& path) {
+    auto output = std::ofstream(path);
+    output <<
+        "package smoke.aggregate_access_plan_receiver\n"
+        "\n"
+        "record Payload\n"
+        "    public value: UInt32\n"
+        "\n"
+        "record Box\n"
+        "    public payload: Payload\n"
+        "\n"
+        "extend Box\n"
+        "    function payload(this: shared This) -> Payload\n"
+        "        this.payload\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let box: Box = Box(Payload(13 as UInt32))\n"
+        "    let payload: Payload = box.payload()\n"
+        "    payload.value\n";
+}
+
 auto run_single_file_command(
     orison::driver::CompilerApp const& app,
     std::string_view command,
@@ -119,6 +140,24 @@ auto main() -> int {
         rejected_report.stderr_text.find(
             "aggregate path read of owned projection requires an explicit ownership transfer"
         ) != std::string::npos
+    );
+
+    auto receiver_fixture_path = smoke_temp_root / "receiver_fixture.or";
+    write_receiver_fixture(receiver_fixture_path);
+    auto receiver_report = run_single_file_command(
+        app,
+        "--test-only-aggregate-projection-access-plans",
+        receiver_fixture_path
+    );
+
+    assert(receiver_report.exit_code == 0);
+    assert(receiver_report.stderr_text.empty());
+    assert(
+        receiver_report.stdout_text ==
+        "function main aggregate projection access intent value_read status non_owned_projection binding "
+        "payload.value source UInt32 receiver false\n"
+        "function method.Box.payload aggregate projection access intent value_read status allowed binding "
+        "this.payload source Payload receiver true\n"
     );
 
     std::filesystem::remove_all(smoke_temp_root);

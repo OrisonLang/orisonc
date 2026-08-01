@@ -39,6 +39,8 @@ inventing semantics outside the spec/tour.
   `--test-only-aggregate-projection-access-plans` report command.
 - That test-only report command preserves access-plan output on lowering failure, so rejection-boundary tests can assert
   the blocked plan and diagnostic without changing normal compiler output.
+- Driver smoke coverage now pins receiver projection access reports, including `this.payload` as an allowed owned
+  receiver projection.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI
