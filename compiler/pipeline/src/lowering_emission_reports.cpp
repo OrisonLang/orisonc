@@ -866,8 +866,6 @@ void populate_lowering_emission_reports(
         build_computed_cleanup_call_insertion_gate_state(cleanup_proof_model);
     result.computed_dynamic_array_for_cleanup_call_insertion_capability_state =
         build_computed_cleanup_call_insertion_capability_state(options);
-    result.computed_dynamic_array_for_inserted_cleanup_call_report =
-        cleanup_proof_model.reports.inserted_cleanup_call_report;
     result.computed_dynamic_array_for_inserted_cleanup_call_state =
         build_computed_inserted_cleanup_call_state(cleanup_proof_model);
     result.consumed_descriptor_finalization_plan_report =

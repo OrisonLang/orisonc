@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-01: pipeline results no longer expose raw computed DynamicArray inserted cleanup-call report strings; pipeline
+  consumers use typed inserted cleanup-call state.
 - 2026-08-01: pipeline results no longer expose raw computed DynamicArray inserted cleanup transition or inserted
   cleanup state verification report strings; pipeline consumers use typed inserted-cleanup transition and verification
   states.

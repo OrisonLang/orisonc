@@ -469,7 +469,6 @@ struct CompilePipelineResult {
     ComputedCleanupCallPlanRenderState computed_dynamic_array_for_cleanup_call_plan_render_state;
     ComputedCleanupCallInsertionGateState computed_dynamic_array_for_cleanup_call_insertion_gate_state;
     ComputedCleanupCallInsertionCapabilityState computed_dynamic_array_for_cleanup_call_insertion_capability_state;
-    std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_call_report;
     ComputedInsertedCleanupCallState computed_dynamic_array_for_inserted_cleanup_call_state;
     std::vector<std::string> consumed_descriptor_finalization_plan_report;
     ConsumedDescriptorFinalizationState consumed_descriptor_finalization_state;

@@ -1783,10 +1783,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_inserted_cleanup_call_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_inserted_cleanup_call_state.call_count == 1
     );
     assert(
@@ -2564,10 +2560,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_inserted_cleanup_call_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
             .consumed_descriptor_finalization_plan_report.size() == 1
     );
     assert(
@@ -2973,10 +2965,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_inserted_cleanup_call_report.empty()
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .consumed_descriptor_finalization_plan_report.size() == 1
     );
     assert(
@@ -3082,10 +3070,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_inserted_cleanup_call_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.verified_inserted_cleanup_pair_count == 1
     );
     assert(
@@ -3131,11 +3115,6 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count == 0
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_inserted_cleanup_call_report.front() ==
-        smoke::computed_dynamic_array_inserted_cleanup_call_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
@@ -3335,10 +3314,6 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_inserted_cleanup_call_report.size() == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
