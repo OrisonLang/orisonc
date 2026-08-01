@@ -1018,8 +1018,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return dynamic_array_cleanup_report(
             std::filesystem::path(args[2]),
             dynamic_array_cleanup_report_options(),
-            [](auto const& result) -> auto const& {
-                return result.dynamic_array_cleanup_production_readiness_report;
+            [](auto const& result) {
+                return dynamic_array_cleanup_production_readiness_state_report(
+                    result.dynamic_array_cleanup_production_readiness
+                );
             }
         );
     }

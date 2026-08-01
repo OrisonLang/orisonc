@@ -70,6 +70,16 @@ auto line_index_containing(
     return lines.size();
 }
 
+auto formatted_dynamic_array_cleanup_production_readiness_report(
+    orison::pipeline::CompilePipelineResult const& result
+) -> std::vector<std::string> {
+    return {
+        orison::pipeline::format_dynamic_array_cleanup_production_readiness(
+            result.dynamic_array_cleanup_production_readiness
+        ),
+    };
+}
+
 void assert_computed_cleanup_proof_model_reusable_without_reports() {
     auto handoffs = std::vector<orison::lowering::ComputedDynamicArrayCleanupStateHandoff> {
         {
@@ -356,14 +366,16 @@ auto main() -> int {
     assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
         ir.dynamic_array_cleanup_production_readiness
     ));
-    assert(ir.dynamic_array_cleanup_production_readiness_report.size() == 1);
+    auto ir_production_readiness_report =
+        formatted_dynamic_array_cleanup_production_readiness_report(ir);
+    assert(ir_production_readiness_report.size() == 1);
     assert_line_contains(
-        ir.dynamic_array_cleanup_production_readiness_report,
+        ir_production_readiness_report,
         0,
         "production readiness blocked"
     );
     assert_line_contains(
-        ir.dynamic_array_cleanup_production_readiness_report,
+        ir_production_readiness_report,
         0,
         "[descriptor origins missing]"
     );
@@ -691,8 +703,12 @@ auto main() -> int {
         cleanup_metadata_facade.dynamic_array_cleanup_emission_capability_report
     );
     assert(
-        cleanup_metadata_collector.dynamic_array_cleanup_production_readiness_report ==
-        cleanup_metadata_facade.dynamic_array_cleanup_production_readiness_report
+        orison::pipeline::format_dynamic_array_cleanup_production_readiness(
+            cleanup_metadata_collector.dynamic_array_cleanup_production_readiness
+        ) ==
+        orison::pipeline::format_dynamic_array_cleanup_production_readiness(
+            cleanup_metadata_facade.dynamic_array_cleanup_production_readiness
+        )
     );
 
     auto scalar_dynamic_array_path =
@@ -4307,19 +4323,21 @@ auto main() -> int {
     assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
         dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness
     ));
-    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report.size() == 1);
+    auto dynamic_array_blocked_owned_cleanup_production_readiness_report =
+        formatted_dynamic_array_cleanup_production_readiness_report(dynamic_array_blocked_owned_cleanup);
+    assert(dynamic_array_blocked_owned_cleanup_production_readiness_report.size() == 1);
     assert_line_contains(
-        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_blocked_owned_cleanup_production_readiness_report,
         0,
         "production readiness blocked"
     );
     assert_line_contains(
-        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_blocked_owned_cleanup_production_readiness_report,
         0,
         "[cleanup capability missing]"
     );
     assert_line_contains(
-        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_blocked_owned_cleanup_production_readiness_report,
         0,
         "missing-element-drop-pairs [items:items.element:__orison_drop.Payload]"
     );
@@ -4403,19 +4421,21 @@ auto main() -> int {
     assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
         dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness
     ));
-    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness_report.size() == 1);
+    auto dynamic_array_owned_cleanup_production_readiness_report =
+        formatted_dynamic_array_cleanup_production_readiness_report(dynamic_array_owned_cleanup);
+    assert(dynamic_array_owned_cleanup_production_readiness_report.size() == 1);
     assert_line_contains(
-        dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_owned_cleanup_production_readiness_report,
         0,
         "production readiness blocked"
     );
     assert_line_contains(
-        dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_owned_cleanup_production_readiness_report,
         0,
         "[cleanup capability ok]"
     );
     assert_line_contains(
-        dynamic_array_owned_cleanup.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_owned_cleanup_production_readiness_report,
         0,
         "[production signatures missing]"
     );
@@ -4448,13 +4468,15 @@ auto main() -> int {
     assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
         dynamic_array_owned_signature_gate_only.dynamic_array_cleanup_production_readiness
     ));
+    auto dynamic_array_owned_signature_gate_only_production_readiness_report =
+        formatted_dynamic_array_cleanup_production_readiness_report(dynamic_array_owned_signature_gate_only);
     assert_line_contains(
-        dynamic_array_owned_signature_gate_only.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_owned_signature_gate_only_production_readiness_report,
         0,
         "[production signatures ok]"
     );
     assert_line_contains(
-        dynamic_array_owned_signature_gate_only.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_owned_signature_gate_only_production_readiness_report,
         0,
         "[production construction missing]"
     );
@@ -4519,13 +4541,15 @@ auto main() -> int {
     assert(!orison::pipeline::dynamic_array_cleanup_production_ready(
         dynamic_array_owned_construction_gate.dynamic_array_cleanup_production_readiness
     ));
+    auto dynamic_array_owned_construction_gate_production_readiness_report =
+        formatted_dynamic_array_cleanup_production_readiness_report(dynamic_array_owned_construction_gate);
     assert_line_contains(
-        dynamic_array_owned_construction_gate.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_owned_construction_gate_production_readiness_report,
         0,
         "[production construction ok]"
     );
     assert_line_contains(
-        dynamic_array_owned_construction_gate.dynamic_array_cleanup_production_readiness_report,
+        dynamic_array_owned_construction_gate_production_readiness_report,
         0,
         "[production cleanup emission missing]"
     );

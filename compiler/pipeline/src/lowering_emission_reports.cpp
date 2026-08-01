@@ -892,9 +892,6 @@ void populate_lowering_emission_reports(
         std::move(emission.computed_dynamic_array_for_production_sequence_module_ir);
     result.dynamic_array_cleanup_production_readiness =
         plan_dynamic_array_cleanup_production_readiness(result, options);
-    result.dynamic_array_cleanup_production_readiness_report = {
-        format_dynamic_array_cleanup_production_readiness(result.dynamic_array_cleanup_production_readiness),
-    };
     result.planned_drop_report = emission.planned_drop_report();
     result.emitted_drop_declaration_report =
         emission.emitted_drop_declaration_report();
