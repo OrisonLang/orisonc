@@ -360,6 +360,74 @@ auto computed_inserted_cleanup_call_state_report(
     return lines;
 }
 
+auto consumed_descriptor_finalization_state_report(
+    pipeline::ConsumedDescriptorFinalizationState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "computed-descriptor-plans " << state.computed_descriptor_plan_count;
+    counts << " emitted-finalization-plans " << state.emitted_finalization_plan_count;
+    counts << " ready " << state.ready_plan_count;
+    counts << " blocked " << state.blocked_plan_count;
+    append_computed_cleanup_summary(
+        lines,
+        "consumed descriptor finalization plans",
+        state.all_ready ? "ready" : "blocked",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "descriptor " << indexed_name_or_unknown(state.descriptor_storage_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "consumed descriptor finalization plan",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
+auto computed_consumed_cleanup_descriptor_model_state_report(
+    pipeline::ComputedConsumedCleanupDescriptorModelState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "models " << state.descriptor_model_count;
+    counts << " ready " << state.ready_model_count;
+    counts << " blocked " << state.blocked_model_count;
+    counts << (state.all_finalization_ready ? " [finalization ready]" : " [finalization blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "consumed cleanup descriptor models",
+        state.all_finalization_ready ? "ready" : "blocked",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " descriptor " << indexed_name_or_unknown(state.descriptor_storage_names, index);
+        fields << " cleanup-operation " << indexed_name_or_unknown(state.cleanup_operation_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "consumed cleanup descriptor model",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_consumed_cleanup_descriptor_state_report(
     pipeline::ComputedConsumedCleanupDescriptorState const& state
 ) -> std::vector<std::string> {

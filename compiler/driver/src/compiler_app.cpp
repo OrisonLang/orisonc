@@ -274,6 +274,15 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.computed_dynamic_array_for_cleanup_call_plan_render_state =
             std::move(emitted_result.computed_dynamic_array_for_cleanup_call_plan_render_state);
     }
+    if (emitted_result.consumed_descriptor_finalization_state.ready_plan_count > 0 ||
+        emitted_result.consumed_descriptor_finalization_state.blocked_plan_count > 0) {
+        result.consumed_descriptor_finalization_state =
+            std::move(emitted_result.consumed_descriptor_finalization_state);
+    }
+    if (emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count > 0) {
+        result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_state =
+            std::move(emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_state);
+    }
 }
 
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
@@ -353,8 +362,18 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
             result.computed_dynamic_array_for_inserted_cleanup_call_state
         )
     );
-    append_report_lines(report, result.consumed_descriptor_finalization_plan_report);
-    append_report_lines(report, result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report);
+    append_report_lines(
+        report,
+        consumed_descriptor_finalization_state_report(
+            result.consumed_descriptor_finalization_state
+        )
+    );
+    append_report_lines(
+        report,
+        computed_consumed_cleanup_descriptor_model_state_report(
+            result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_state
+        )
+    );
     append_report_lines(
         report,
         computed_consumed_cleanup_descriptor_state_report(

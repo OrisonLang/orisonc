@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-01: the full DynamicArray cleanup audit now renders consumed descriptor finalization plans and computed
+  descriptor models from typed pipeline state at the driver edge instead of appending those report vectors directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders cleanup-call plan and render summaries from typed
   pipeline state at the driver edge instead of appending those pipeline report vectors directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders inserted cleanup state verification and cleanup-call

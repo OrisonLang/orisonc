@@ -43,6 +43,14 @@ auto computed_inserted_cleanup_call_state_report(
     pipeline::ComputedInsertedCleanupCallState const& state
 ) -> std::vector<std::string>;
 
+auto consumed_descriptor_finalization_state_report(
+    pipeline::ConsumedDescriptorFinalizationState const& state
+) -> std::vector<std::string>;
+
+auto computed_consumed_cleanup_descriptor_model_state_report(
+    pipeline::ComputedConsumedCleanupDescriptorModelState const& state
+) -> std::vector<std::string>;
+
 auto computed_consumed_cleanup_descriptor_state_report(
     pipeline::ComputedConsumedCleanupDescriptorState const& state
 ) -> std::vector<std::string>;

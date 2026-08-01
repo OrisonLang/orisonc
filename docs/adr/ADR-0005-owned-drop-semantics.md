@@ -62,6 +62,8 @@ inventing semantics outside the spec/tour.
   from typed pipeline state at the driver edge instead of appending those pipeline report vectors directly.
 - The full DynamicArray cleanup audit now renders cleanup-call plan and render summaries from typed pipeline state at
   the driver edge instead of appending those pipeline report vectors directly.
+- The full DynamicArray cleanup audit now renders consumed descriptor finalization plans and computed descriptor models
+  from typed pipeline state at the driver edge instead of appending those report vectors directly.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

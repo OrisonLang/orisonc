@@ -322,6 +322,73 @@ void assert_computed_inserted_cleanup_call_reports() {
     assert(inserted[1] == smoke::computed_dynamic_array_inserted_cleanup_call_state_detail_report);
 }
 
+void assert_consumed_descriptor_finalization_and_model_reports() {
+    auto finalization = driver::consumed_descriptor_finalization_state_report(
+        pipeline::ConsumedDescriptorFinalizationState {
+            .cleanup_owner_names = {"items"},
+            .descriptor_storage_names = {"%items.addr"},
+            .all_ready = true,
+            .computed_descriptor_plan_count = 1,
+            .emitted_finalization_plan_count = 1,
+            .ready_plan_count = 2,
+            .blocked_plan_count = 0,
+        }
+    );
+    assert(finalization.size() == 2);
+    assert(
+        finalization[0] ==
+        "computed DynamicArray consumed descriptor finalization plans ready computed-descriptor-plans 1 "
+        "emitted-finalization-plans 1 ready 2 blocked 0 (metadata only)"
+    );
+    assert(
+        finalization[1] ==
+        "computed DynamicArray consumed descriptor finalization plan detail owner items descriptor %items.addr "
+        "(metadata only)"
+    );
+
+    auto blocked_finalization = driver::consumed_descriptor_finalization_state_report(
+        pipeline::ConsumedDescriptorFinalizationState {
+            .computed_descriptor_plan_count = 0,
+            .emitted_finalization_plan_count = 0,
+            .ready_plan_count = 0,
+            .blocked_plan_count = 0,
+        }
+    );
+    assert(blocked_finalization.size() == 1);
+    assert(
+        blocked_finalization[0] ==
+        "computed DynamicArray consumed descriptor finalization plans blocked computed-descriptor-plans 0 "
+        "emitted-finalization-plans 0 ready 0 blocked 0 (metadata only)"
+    );
+
+    auto model = driver::computed_consumed_cleanup_descriptor_model_state_report(
+        pipeline::ComputedConsumedCleanupDescriptorModelState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .descriptor_storage_names = {"%items.addr"},
+            .cleanup_operation_names = {"items.computed_for.cleanup.resume"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .all_finalization_ready = true,
+            .descriptor_model_count = 1,
+            .ready_model_count = 1,
+            .blocked_model_count = 0,
+        }
+    );
+    assert(model.size() == 2);
+    assert(
+        model[0] ==
+        "computed DynamicArray consumed cleanup descriptor models ready models 1 ready 1 blocked 0 "
+        "[finalization ready] (metadata only)"
+    );
+    assert(
+        model[1] ==
+        "computed DynamicArray consumed cleanup descriptor model detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 descriptor %items.addr cleanup-operation "
+        "items.computed_for.cleanup.resume (metadata only)"
+    );
+}
+
 void assert_computed_consumed_cleanup_descriptor_reports() {
     auto absent = driver::computed_consumed_cleanup_descriptor_state_report(
         pipeline::ComputedConsumedCleanupDescriptorState {}
@@ -514,6 +581,7 @@ auto main() -> int {
     assert_computed_cleanup_verification_and_emission_gate_reports();
     assert_computed_cleanup_call_plan_and_render_reports();
     assert_computed_inserted_cleanup_call_reports();
+    assert_consumed_descriptor_finalization_and_model_reports();
     assert_computed_consumed_cleanup_descriptor_reports();
     assert_computed_cleanup_proof_summary_reports();
     assert_computed_cleanup_unknown_detail_fallbacks();

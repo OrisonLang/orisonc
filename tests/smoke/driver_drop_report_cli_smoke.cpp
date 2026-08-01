@@ -1049,9 +1049,10 @@ int main() {
             "function use_items dynamic array cleanup emission capability proven",
             "element-drop-pairs [items:items.element:__orison_drop.Payload]",
             "[element cleanup ok]",
-            "consumed descriptor finalization plan function use_items owner items descriptor %items.addr "
-            "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
-            "[descriptor finalization planned] (metadata only)",
+            "computed DynamicArray consumed descriptor finalization plans ready computed-descriptor-plans 0 "
+            "emitted-finalization-plans 1 ready 1 blocked 0 (metadata only)",
+            "computed DynamicArray consumed descriptor finalization plan detail owner items descriptor %items.addr "
+            "(metadata only)",
             "dynamic array cleanup production readiness ready",
             "[production signatures ok]",
         }
@@ -1421,12 +1422,10 @@ int main() {
             "function first_value dynamic array cleanup emission capability proven",
             "function counted_sum dynamic array cleanup obligation __orison_dynamic_array_cleanup.0",
             "[descriptor storage ok]",
-            "consumed descriptor finalization plan function first_value owner items descriptor %items.addr "
-            "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
-            "[descriptor finalization planned] (metadata only)",
-            "consumed descriptor finalization plan function counted_sum owner items descriptor %items.addr "
-            "cleanup-operation __orison_dynamic_array_cleanup.0 [cleanup owner consumed] "
-            "[descriptor finalization planned] (metadata only)",
+            "computed DynamicArray consumed descriptor finalization plans ready computed-descriptor-plans 0 "
+            "emitted-finalization-plans 2 ready 2 blocked 0 (metadata only)",
+            "computed DynamicArray consumed descriptor finalization plan detail owner items descriptor %items.addr "
+            "(metadata only)",
         }
     );
 
