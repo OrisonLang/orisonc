@@ -1,5 +1,6 @@
 #pragma once
 
+#include "orison/lowering/function_lowering_state.hpp"
 #include "orison/lowering/lowered_value.hpp"
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/syntax/module_parser.hpp"
@@ -51,6 +52,30 @@ enum class AggregatePathError {
 
 struct AggregatePathResult {
     AggregatePathError error = AggregatePathError::none;
+};
+
+enum class AggregateProjectionAccessIntent {
+    value_read,
+    explicit_transfer,
+    shared_borrow,
+    exclusive_borrow,
+    clone_value,
+};
+
+enum class AggregateProjectionAccessStatus {
+    not_named_aggregate_path,
+    non_owned_projection,
+    allowed,
+    requires_explicit_boundary,
+    boundary_not_enabled,
+};
+
+struct AggregateProjectionAccessPlan {
+    AggregateProjectionAccessIntent intent = AggregateProjectionAccessIntent::value_read;
+    AggregateProjectionAccessStatus status = AggregateProjectionAccessStatus::not_named_aggregate_path;
+    std::string binding_name;
+    std::string source_type_name;
+    bool receiver_projection = false;
 };
 
 auto collect_aggregate_path(syntax::ExpressionSyntax const& expression) -> AggregatePath;
@@ -109,6 +134,21 @@ auto emit_aggregate_path_cursor_load(
     std::ostream& output
 ) -> LoweredExpression;
 
+auto describe_named_aggregate_projection_access(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state,
+    AggregateProjectionAccessIntent intent
+) -> AggregateProjectionAccessPlan;
+
 auto render_aggregate_path_error(AggregatePathError error) -> std::string_view;
+
+auto render_aggregate_projection_access_intent(
+    AggregateProjectionAccessIntent intent
+) -> std::string_view;
+
+auto render_aggregate_projection_access_status(
+    AggregateProjectionAccessStatus status
+) -> std::string_view;
 
 }  // namespace orison::lowering

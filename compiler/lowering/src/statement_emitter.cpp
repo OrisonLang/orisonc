@@ -35,29 +35,18 @@ auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::thread;
 }
 
-auto is_owned_aggregate_projection_value_read(
+auto owned_aggregate_projection_value_read_requires_boundary(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
     FunctionLoweringState const& state
 ) -> bool {
-    auto path = collect_named_aggregate_path(expression);
-    if (!path.has_value() || path->base_expression == nullptr || path->steps.empty()) {
-        return false;
-    }
-    if (path->base_expression->kind == syntax::ExpressionKind::name &&
-        path->base_expression->text == "this") {
-        return false;
-    }
-
-    auto base_source_type = source_type_name_for_expression(*path->base_expression, context, state);
-    if (!base_source_type.has_value() ||
-        dynamic_array_element_source_type_name(*base_source_type).has_value()) {
-        return false;
-    }
-
-    auto projected_source_type = source_type_name_for_expression(expression, context, state);
-    return projected_source_type.has_value() &&
-        is_owned_transfer_source_type(*projected_source_type, context);
+    auto plan = describe_named_aggregate_projection_access(
+        expression,
+        context,
+        state,
+        AggregateProjectionAccessIntent::value_read
+    );
+    return plan.status == AggregateProjectionAccessStatus::requires_explicit_boundary;
 }
 
 auto reject_owned_aggregate_projection_value_read(
@@ -65,7 +54,7 @@ auto reject_owned_aggregate_projection_value_read(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session
 ) -> bool {
-    if (!is_owned_aggregate_projection_value_read(expression, context.lowering, session.state)) {
+    if (!owned_aggregate_projection_value_read_requires_boundary(expression, context.lowering, session.state)) {
         return false;
     }
 

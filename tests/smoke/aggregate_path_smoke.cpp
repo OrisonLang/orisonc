@@ -47,6 +47,48 @@ auto call(std::string callee) -> orison::syntax::ExpressionSyntax {
 
 auto context() -> orison::lowering::LoweringContext {
     auto lowering = orison::lowering::LoweringContext {};
+    lowering.records.emplace("Payload", orison::lowering::LoweredRecordLayout {
+        .name = "Payload",
+        .llvm_type_name = "%record.Payload",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "value",
+                .source_type_name = "UInt32",
+                .llvm_type = "i32",
+                .index = 0,
+            },
+        },
+    });
+    lowering.records.emplace("Box", orison::lowering::LoweredRecordLayout {
+        .name = "Box",
+        .llvm_type_name = "%record.Box",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "payload",
+                .source_type_name = "Payload",
+                .llvm_type = "%record.Payload",
+                .index = 0,
+            },
+            orison::lowering::LoweredRecordField {
+                .name = "count",
+                .source_type_name = "UInt32",
+                .llvm_type = "i32",
+                .index = 1,
+            },
+        },
+    });
+    lowering.records.emplace("Nested", orison::lowering::LoweredRecordLayout {
+        .name = "Nested",
+        .llvm_type_name = "%record.Nested",
+        .fields = {
+            orison::lowering::LoweredRecordField {
+                .name = "box",
+                .source_type_name = "Box",
+                .llvm_type = "%record.Box",
+                .index = 0,
+            },
+        },
+    });
     lowering.records.emplace("Bucket", orison::lowering::LoweredRecordLayout {
         .name = "Bucket",
         .llvm_type_name = "%record.Bucket",
@@ -109,6 +151,103 @@ int main() {
     assert(!orison::lowering::collect_named_aggregate_path(temporary_target).has_value());
     assert(!orison::lowering::collect_named_aggregate_path(name("shelf")).has_value());
     assert(!orison::lowering::collect_temporary_aggregate_path(name("shelf")).has_value());
+
+    auto access_state = orison::lowering::FunctionLoweringState {};
+    access_state.source_type_names.emplace("box", "Box");
+    access_state.source_type_names.emplace("nested", "Nested");
+    access_state.source_type_names.emplace("this", "Box");
+
+    auto owned_projection = member(name("box"), "payload");
+    auto value_read_plan = orison::lowering::describe_named_aggregate_projection_access(
+        owned_projection,
+        lowering,
+        access_state,
+        orison::lowering::AggregateProjectionAccessIntent::value_read
+    );
+    assert(
+        value_read_plan.status ==
+        orison::lowering::AggregateProjectionAccessStatus::requires_explicit_boundary
+    );
+    assert(value_read_plan.binding_name == "box.payload");
+    assert(value_read_plan.source_type_name == "Payload");
+    assert(!value_read_plan.receiver_projection);
+
+    auto transfer_plan = orison::lowering::describe_named_aggregate_projection_access(
+        owned_projection,
+        lowering,
+        access_state,
+        orison::lowering::AggregateProjectionAccessIntent::explicit_transfer
+    );
+    assert(transfer_plan.status == orison::lowering::AggregateProjectionAccessStatus::allowed);
+    assert(transfer_plan.binding_name == "box.payload");
+
+    auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
+        owned_projection,
+        lowering,
+        access_state,
+        orison::lowering::AggregateProjectionAccessIntent::shared_borrow
+    );
+    assert(borrow_plan.status == orison::lowering::AggregateProjectionAccessStatus::boundary_not_enabled);
+
+    auto clone_plan = orison::lowering::describe_named_aggregate_projection_access(
+        owned_projection,
+        lowering,
+        access_state,
+        orison::lowering::AggregateProjectionAccessIntent::clone_value
+    );
+    assert(clone_plan.status == orison::lowering::AggregateProjectionAccessStatus::boundary_not_enabled);
+
+    auto receiver_projection = member(name("this"), "payload");
+    auto receiver_plan = orison::lowering::describe_named_aggregate_projection_access(
+        receiver_projection,
+        lowering,
+        access_state,
+        orison::lowering::AggregateProjectionAccessIntent::value_read
+    );
+    assert(receiver_plan.status == orison::lowering::AggregateProjectionAccessStatus::allowed);
+    assert(receiver_plan.binding_name == "this.payload");
+    assert(receiver_plan.receiver_projection);
+
+    auto scalar_projection = member(name("box"), "count");
+    auto scalar_plan = orison::lowering::describe_named_aggregate_projection_access(
+        scalar_projection,
+        lowering,
+        access_state,
+        orison::lowering::AggregateProjectionAccessIntent::value_read
+    );
+    assert(scalar_plan.status == orison::lowering::AggregateProjectionAccessStatus::non_owned_projection);
+    assert(scalar_plan.binding_name == "box.count");
+    assert(scalar_plan.source_type_name == "UInt32");
+
+    auto nested_projection = member(member(name("nested"), "box"), "payload");
+    auto nested_plan = orison::lowering::describe_named_aggregate_projection_access(
+        nested_projection,
+        lowering,
+        access_state,
+        orison::lowering::AggregateProjectionAccessIntent::explicit_transfer
+    );
+    assert(nested_plan.status == orison::lowering::AggregateProjectionAccessStatus::allowed);
+    assert(nested_plan.binding_name == "nested.box.payload");
+    assert(nested_plan.source_type_name == "Payload");
+
+    auto non_path_plan = orison::lowering::describe_named_aggregate_projection_access(
+        name("box"),
+        lowering,
+        access_state,
+        orison::lowering::AggregateProjectionAccessIntent::value_read
+    );
+    assert(non_path_plan.status == orison::lowering::AggregateProjectionAccessStatus::not_named_aggregate_path);
+
+    assert(
+        orison::lowering::render_aggregate_projection_access_intent(
+            orison::lowering::AggregateProjectionAccessIntent::exclusive_borrow
+        ) == "exclusive_borrow"
+    );
+    assert(
+        orison::lowering::render_aggregate_projection_access_status(
+            orison::lowering::AggregateProjectionAccessStatus::requires_explicit_boundary
+        ) == "requires_explicit_boundary"
+    );
 
     auto cursor = orison::lowering::initialize_aggregate_path_cursor("%shelf.addr", "Shelf", lowering);
     assert(cursor.has_value());

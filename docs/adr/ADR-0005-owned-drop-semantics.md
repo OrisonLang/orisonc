@@ -24,6 +24,9 @@ inventing semantics outside the spec/tour.
   dispatch.
 - Ordinary value reads of owned aggregate projections remain rejected until explicit borrow/clone/move semantics exist
   for that boundary. Passing the projection to a matching owned parameter is still the explicit transfer path.
+- Lowering represents aggregate projection access intent internally as value read, explicit transfer, shared borrow,
+  exclusive borrow, or clone value. Only explicit transfer is enabled for owned projections today; borrow and clone
+  intents remain future-gated metadata.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

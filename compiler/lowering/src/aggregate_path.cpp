@@ -1,10 +1,12 @@
 #include "orison/lowering/aggregate_path.hpp"
 
 #include "orison/lowering/llvm_names.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/source_type_queries.hpp"
 
 #include <algorithm>
 #include <ostream>
+#include <string>
 #include <utility>
 
 namespace orison::lowering {
@@ -225,6 +227,69 @@ auto emit_aggregate_path_cursor_load(
     };
 }
 
+auto describe_named_aggregate_projection_access(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state,
+    AggregateProjectionAccessIntent intent
+) -> AggregateProjectionAccessPlan {
+    auto plan = AggregateProjectionAccessPlan {
+        .intent = intent,
+    };
+
+    auto path = collect_named_aggregate_path(expression);
+    if (!path.has_value() || path->base_expression == nullptr || path->steps.empty()) {
+        return plan;
+    }
+
+    if (path->base_expression->kind == syntax::ExpressionKind::name) {
+        plan.binding_name = path->base_expression->text;
+        plan.receiver_projection = path->base_expression->text == "this";
+    }
+
+    for (auto const& step : path->steps) {
+        if (step.kind != AggregatePathStepKind::member || step.field_name.empty()) {
+            plan.binding_name.clear();
+            break;
+        }
+        if (!plan.binding_name.empty()) {
+            plan.binding_name += ".";
+        }
+        plan.binding_name += step.field_name;
+    }
+
+    auto base_source_type = source_type_name_for_expression(*path->base_expression, context, state);
+    if (!base_source_type.has_value() ||
+        dynamic_array_element_source_type_name(*base_source_type).has_value()) {
+        plan.status = AggregateProjectionAccessStatus::non_owned_projection;
+        return plan;
+    }
+
+    auto projected_source_type = source_type_name_for_expression(expression, context, state);
+    if (!projected_source_type.has_value() ||
+        !is_owned_transfer_source_type(*projected_source_type, context)) {
+        plan.status = AggregateProjectionAccessStatus::non_owned_projection;
+        if (projected_source_type.has_value()) {
+            plan.source_type_name = std::move(*projected_source_type);
+        }
+        return plan;
+    }
+    plan.source_type_name = std::move(*projected_source_type);
+
+    if (plan.receiver_projection || intent == AggregateProjectionAccessIntent::explicit_transfer) {
+        plan.status = AggregateProjectionAccessStatus::allowed;
+        return plan;
+    }
+
+    if (intent == AggregateProjectionAccessIntent::value_read) {
+        plan.status = AggregateProjectionAccessStatus::requires_explicit_boundary;
+        return plan;
+    }
+
+    plan.status = AggregateProjectionAccessStatus::boundary_not_enabled;
+    return plan;
+}
+
 auto render_aggregate_path_error(AggregatePathError error) -> std::string_view {
     switch (error) {
     case AggregatePathError::none:
@@ -249,6 +314,42 @@ auto render_aggregate_path_error(AggregatePathError error) -> std::string_view {
         return "unsupported element type";
     }
     return "unknown aggregate path error";
+}
+
+auto render_aggregate_projection_access_intent(
+    AggregateProjectionAccessIntent intent
+) -> std::string_view {
+    switch (intent) {
+    case AggregateProjectionAccessIntent::value_read:
+        return "value_read";
+    case AggregateProjectionAccessIntent::explicit_transfer:
+        return "explicit_transfer";
+    case AggregateProjectionAccessIntent::shared_borrow:
+        return "shared_borrow";
+    case AggregateProjectionAccessIntent::exclusive_borrow:
+        return "exclusive_borrow";
+    case AggregateProjectionAccessIntent::clone_value:
+        return "clone_value";
+    }
+    return "unknown";
+}
+
+auto render_aggregate_projection_access_status(
+    AggregateProjectionAccessStatus status
+) -> std::string_view {
+    switch (status) {
+    case AggregateProjectionAccessStatus::not_named_aggregate_path:
+        return "not_named_aggregate_path";
+    case AggregateProjectionAccessStatus::non_owned_projection:
+        return "non_owned_projection";
+    case AggregateProjectionAccessStatus::allowed:
+        return "allowed";
+    case AggregateProjectionAccessStatus::requires_explicit_boundary:
+        return "requires_explicit_boundary";
+    case AggregateProjectionAccessStatus::boundary_not_enabled:
+        return "boundary_not_enabled";
+    }
+    return "unknown";
 }
 
 }  // namespace orison::lowering
