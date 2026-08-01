@@ -35,4 +35,8 @@ auto computed_cleanup_proof_summary_state_report(
     pipeline::ComputedCleanupProofSummaryState const& state
 ) -> std::vector<std::string>;
 
+auto aggregate_projection_access_plan_state_report(
+    pipeline::AggregateProjectionAccessPlanState const& state
+) -> std::vector<std::string>;
+
 }  // namespace orison::driver

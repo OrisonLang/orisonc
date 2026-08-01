@@ -1,5 +1,7 @@
 #include "computed_cleanup_reports.hpp"
 
+#include "orison/lowering/aggregate_path.hpp"
+
 #include <cstddef>
 #include <set>
 #include <sstream>
@@ -254,6 +256,42 @@ auto computed_cleanup_proof_summary_state_report(
         counts.str(),
         "(inserted IR)"
     );
+    return lines;
+}
+
+auto aggregate_projection_access_plan_state_report(
+    pipeline::AggregateProjectionAccessPlanState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    for (auto index = std::size_t {0}; index < state.plan_count; ++index) {
+        auto line = std::ostringstream {};
+        line << "function " << indexed_name_or_unknown(state.function_symbol_names, index);
+        line << " aggregate projection access intent ";
+        if (index < state.intents.size()) {
+            line << lowering::render_aggregate_projection_access_intent(state.intents[index]);
+        } else {
+            line << "<unknown>";
+        }
+        line << " status ";
+        if (index < state.statuses.size()) {
+            line << lowering::render_aggregate_projection_access_status(state.statuses[index]);
+        } else {
+            line << "<unknown>";
+        }
+        line << " binding " << indexed_name_or_unknown(state.binding_names, index);
+        line << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        line << " receiver ";
+        if (index < state.receiver_projections.size()) {
+            line << (state.receiver_projections[index] ? "true" : "false");
+        } else {
+            line << "<unknown>";
+        }
+        auto const diagnostic = indexed_name_or_unknown(state.diagnostics, index);
+        if (diagnostic != "<unknown>" && !diagnostic.empty()) {
+            line << " diagnostic " << diagnostic;
+        }
+        lines.push_back(line.str());
+    }
     return lines;
 }
 

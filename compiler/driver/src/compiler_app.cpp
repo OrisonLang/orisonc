@@ -874,8 +874,10 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
             pipeline::CompilePipelineOptions {
                 .test_only_collect_aggregate_projection_access_plans = true,
             },
-            [](auto const& result) -> auto const& {
-                return result.aggregate_projection_access_plan_report;
+            [](auto const& result) {
+                return aggregate_projection_access_plan_state_report(
+                    result.aggregate_projection_access_plan_state
+                );
             }
         );
     }

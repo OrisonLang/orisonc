@@ -44,6 +44,8 @@ inventing semantics outside the spec/tour.
 - Pipeline results now expose typed aggregate projection access-plan state, including function symbols, intents,
   statuses, bindings, source types, diagnostics, receiver flags, and summary counts. Tests and future tooling should
   consume that state instead of parsing report strings.
+- The driver aggregate projection access-plan report now renders from the typed pipeline state while preserving the
+  previous report text.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

@@ -272,6 +272,73 @@ void assert_computed_cleanup_unknown_detail_fallbacks() {
     assert(handoff[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_unknown_detail_report);
 }
 
+void assert_aggregate_projection_access_plan_reports() {
+    auto empty = driver::aggregate_projection_access_plan_state_report(
+        pipeline::AggregateProjectionAccessPlanState {}
+    );
+    assert(empty.empty());
+
+    auto report = driver::aggregate_projection_access_plan_state_report(
+        pipeline::AggregateProjectionAccessPlanState {
+            .function_symbol_names = {"main", "main", "method.Box.payload"},
+            .intents = {
+                orison::lowering::AggregateProjectionAccessIntent::value_read,
+                orison::lowering::AggregateProjectionAccessIntent::explicit_transfer,
+                orison::lowering::AggregateProjectionAccessIntent::value_read,
+            },
+            .statuses = {
+                orison::lowering::AggregateProjectionAccessStatus::requires_explicit_boundary,
+                orison::lowering::AggregateProjectionAccessStatus::allowed,
+                orison::lowering::AggregateProjectionAccessStatus::allowed,
+            },
+            .binding_names = {"box.payload", "box.payload", "this.payload"},
+            .source_type_names = {"Payload", "Payload", "Payload"},
+            .diagnostics = {
+                "aggregate path read of owned projection requires an explicit ownership transfer",
+                "",
+                "",
+            },
+            .receiver_projections = {false, false, true},
+            .access_plans_available = true,
+            .plan_count = 3,
+            .allowed_count = 2,
+            .blocked_count = 1,
+            .receiver_projection_count = 1,
+        }
+    );
+    assert(report.size() == 3);
+    assert(
+        report[0] ==
+        "function main aggregate projection access intent value_read status requires_explicit_boundary "
+        "binding box.payload source Payload receiver false diagnostic aggregate path read of owned projection "
+        "requires an explicit ownership transfer"
+    );
+    assert(
+        report[1] ==
+        "function main aggregate projection access intent explicit_transfer status allowed binding box.payload "
+        "source Payload receiver false"
+    );
+    assert(
+        report[2] ==
+        "function method.Box.payload aggregate projection access intent value_read status allowed binding "
+        "this.payload source Payload receiver true"
+    );
+
+    auto unknown_detail = driver::aggregate_projection_access_plan_state_report(
+        pipeline::AggregateProjectionAccessPlanState {
+            .function_symbol_names = {"main"},
+            .access_plans_available = true,
+            .plan_count = 1,
+        }
+    );
+    assert(unknown_detail.size() == 1);
+    assert(
+        unknown_detail[0] ==
+        "function main aggregate projection access intent <unknown> status <unknown> binding <unknown> "
+        "source <unknown> receiver <unknown>"
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -282,5 +349,6 @@ auto main() -> int {
     assert_computed_consumed_cleanup_descriptor_reports();
     assert_computed_cleanup_proof_summary_reports();
     assert_computed_cleanup_unknown_detail_fallbacks();
+    assert_aggregate_projection_access_plan_reports();
     return 0;
 }
