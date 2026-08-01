@@ -314,7 +314,8 @@ auto is_exclusive_receiver_parameter(
 auto owned_aggregate_projection_value_read_diagnostic(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
-    FunctionLoweringState const& state
+    LoweringEmissionContext const& emission_context,
+    FunctionLoweringState& state
 ) -> std::string {
     auto plan = describe_named_aggregate_projection_access(
         expression,
@@ -322,6 +323,12 @@ auto owned_aggregate_projection_value_read_diagnostic(
         state,
         AggregateProjectionAccessIntent::value_read
     );
+    if (emission_context.options.test_only_collect_aggregate_projection_access_plans &&
+        plan.status != AggregateProjectionAccessStatus::not_named_aggregate_path) {
+        state.aggregate_projection_access_plan_report.push_back(
+            aggregate_projection_access_plan_report(plan)
+        );
+    }
     return aggregate_projection_access_diagnostic(plan);
 }
 
@@ -1043,6 +1050,8 @@ void finish_function_emission(
             state.emitted_dynamic_array_cleanup_emission_gate_report;
         result->emitted_dynamic_array_cleanup_emission_capability_report =
             state.emitted_dynamic_array_cleanup_emission_capability_report;
+        result->aggregate_projection_access_plan_report =
+            state.aggregate_projection_access_plan_report;
         result->computed_dynamic_array_inserted_cleanup_handoffs =
             state.computed_dynamic_array_inserted_cleanup_handoffs;
         result->computed_dynamic_array_cleanup_call_operands =
@@ -1457,6 +1466,7 @@ void emit_function_body(
         if (auto diagnostic = owned_aggregate_projection_value_read_diagnostic(
                 *expression,
                 context.lowering,
+                context,
                 session.state
             ); !diagnostic.empty()) {
             record_expression_lowering_failure(

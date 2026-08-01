@@ -33,6 +33,8 @@ inventing semantics outside the spec/tour.
   value-read rejection text stable while giving future borrow and clone gates shared wording.
 - Aggregate projection access plans have a deterministic internal report line containing intent, status, binding,
   source type, receiver status, and diagnostic text when present. This is debugging/audit metadata only.
+- A test-only lowering option can collect aggregate projection access-plan report lines into function and module
+  emission results. Normal compiler output remains unchanged.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

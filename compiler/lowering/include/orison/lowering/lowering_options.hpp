@@ -64,6 +64,7 @@ struct LlvmIrEmissionOptions {
     bool enable_computed_dynamic_array_local_cleanup_call_insertion = true;
     bool test_only_suppress_computed_dynamic_array_cleanup_handoff_metadata = false;
     bool test_only_suppress_computed_dynamic_array_cleanup_operand_metadata = false;
+    bool test_only_collect_aggregate_projection_access_plans = false;
     std::vector<semantics::DropLoweringAuthorization> semantic_drop_lowering_authorizations;
 };
 

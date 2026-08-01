@@ -263,6 +263,7 @@ struct LlvmIrEmissionResult {
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_verification_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_gate_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_emission_capability_report;
+    std::vector<std::string> aggregate_projection_access_plan_report;
     std::vector<ComputedDynamicArrayCleanupStateHandoff> computed_dynamic_array_inserted_cleanup_handoffs;
     std::vector<ComputedDynamicArrayCleanupCallOperands> computed_dynamic_array_cleanup_call_operands;
     std::vector<std::string> dynamic_array_allocation_call_ir;

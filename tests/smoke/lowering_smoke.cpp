@@ -14199,6 +14199,49 @@ void test_emit_native_object_file() {
     assert(!result.object_bytes.empty());
 }
 
+void test_collects_aggregate_projection_access_plan_report() {
+    auto result = lower_source(
+        std::filesystem::temp_directory_path() / "orison_aggregate_projection_access_plan_report.or",
+        "package demo.aggregate_projection_access_report\n"
+        "\n"
+        "record Payload\n"
+        "    value: UInt32\n"
+        "\n"
+        "record Box\n"
+        "    payload: Payload\n"
+        "    count: UInt32\n"
+        "\n"
+        "function consume_payload(payload: Payload) -> UInt32\n"
+        "    payload.value\n"
+        "\n"
+        "function main() -> UInt32\n"
+        "    let box: Box = Box(Payload(13 as UInt32), 7 as UInt32)\n"
+        "    let count: UInt32 = box.count\n"
+        "    consume_payload(box.payload) + count\n",
+        orison::lowering::LlvmIrEmissionOptions {
+            .test_only_collect_aggregate_projection_access_plans = true,
+        }
+    );
+
+    assert(!result.has_errors());
+    assert(result.aggregate_projection_access_plan_report.size() == 3);
+    assert(
+        result.aggregate_projection_access_plan_report[0] ==
+        "function consume_payload aggregate projection access intent value_read status non_owned_projection "
+        "binding payload.value source UInt32 receiver false"
+    );
+    assert(
+        result.aggregate_projection_access_plan_report[1] ==
+        "function main aggregate projection access intent value_read status non_owned_projection "
+        "binding box.count source UInt32 receiver false"
+    );
+    assert(
+        result.aggregate_projection_access_plan_report[2] ==
+        "function main aggregate projection access intent explicit_transfer status allowed "
+        "binding box.payload source Payload receiver false"
+    );
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -14210,6 +14253,7 @@ auto main() -> int {
     auto smoke_temp_root_text = smoke_temp_root.string();
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
+    test_collects_aggregate_projection_access_plan_report();
     test_emit_constant_uint32_return();
     test_collects_test_only_dynamic_array_construction_metadata();
     test_collects_test_only_dynamic_array_element_drop_readiness_metadata();

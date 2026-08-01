@@ -113,7 +113,7 @@ auto consumed_owned_aggregate_projection_argument_name(
     syntax::ExpressionSyntax const& argument,
     std::optional<std::string_view> expected_source_type,
     LoweringEmissionContext const& context,
-    FunctionLoweringSession const& session
+    FunctionLoweringSession& session
 ) -> std::optional<std::string> {
     if (!expected_source_type.has_value() ||
         !is_owned_transfer_source_type(*expected_source_type, context.lowering)) {
@@ -126,6 +126,12 @@ auto consumed_owned_aggregate_projection_argument_name(
         session.state,
         AggregateProjectionAccessIntent::explicit_transfer
     );
+    if (context.options.test_only_collect_aggregate_projection_access_plans &&
+        plan.status != AggregateProjectionAccessStatus::not_named_aggregate_path) {
+        session.state.aggregate_projection_access_plan_report.push_back(
+            aggregate_projection_access_plan_report(plan)
+        );
+    }
     if (plan.status != AggregateProjectionAccessStatus::allowed ||
         plan.source_type_name != *expected_source_type ||
         plan.binding_name.empty()) {

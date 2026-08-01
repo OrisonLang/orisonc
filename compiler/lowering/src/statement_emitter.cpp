@@ -38,7 +38,8 @@ auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
 auto owned_aggregate_projection_value_read_diagnostic(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
-    FunctionLoweringState const& state
+    LoweringEmissionContext const& emission_context,
+    FunctionLoweringState& state
 ) -> std::string {
     auto plan = describe_named_aggregate_projection_access(
         expression,
@@ -46,6 +47,12 @@ auto owned_aggregate_projection_value_read_diagnostic(
         state,
         AggregateProjectionAccessIntent::value_read
     );
+    if (emission_context.options.test_only_collect_aggregate_projection_access_plans &&
+        plan.status != AggregateProjectionAccessStatus::not_named_aggregate_path) {
+        state.aggregate_projection_access_plan_report.push_back(
+            aggregate_projection_access_plan_report(plan)
+        );
+    }
     return aggregate_projection_access_diagnostic(plan);
 }
 
@@ -54,7 +61,12 @@ auto reject_owned_aggregate_projection_value_read(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session
 ) -> bool {
-    auto diagnostic = owned_aggregate_projection_value_read_diagnostic(expression, context.lowering, session.state);
+    auto diagnostic = owned_aggregate_projection_value_read_diagnostic(
+        expression,
+        context.lowering,
+        context,
+        session.state
+    );
     if (diagnostic.empty()) {
         return false;
     }
