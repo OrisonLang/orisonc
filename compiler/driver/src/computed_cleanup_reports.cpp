@@ -253,6 +253,81 @@ auto computed_cleanup_call_emission_gate_state_report(
     return lines;
 }
 
+auto computed_cleanup_call_plan_state_report(
+    pipeline::ComputedCleanupCallPlanRenderState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "plans " << state.plan_count;
+    counts << " planned " << state.planned_count;
+    counts << " renderable " << state.renderable_count;
+    counts << " renders " << state.render_count;
+    counts << (state.all_state_verified ? " [inserted state verified]" : " [inserted state unverified]");
+    counts << (state.all_operands_proven ? " [cleanup operands proven]" : " [cleanup operands missing]");
+    counts << (state.all_cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    append_computed_cleanup_summary(
+        lines,
+        "cleanup call plan",
+        state.planned_count > 0 ? "planned" : "blocked",
+        counts.str(),
+        "(inserted IR)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "cleanup-operation " << indexed_name_or_unknown(state.cleanup_operation_names, index);
+        fields << " data " << indexed_name_or_unknown(state.data_pointer_names, index);
+        fields << " element-size " << indexed_name_or_unknown(state.element_size_bytes, index);
+        fields << " capacity " << indexed_name_or_unknown(state.capacity_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "cleanup call plan",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(inserted IR)"
+        );
+    }
+
+    return lines;
+}
+
+auto computed_cleanup_call_render_state_report(
+    pipeline::ComputedCleanupCallPlanRenderState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "renders " << state.render_count;
+    counts << " renderable " << state.renderable_count;
+    counts << " plans " << state.plan_count;
+    counts << (state.all_state_verified ? " [inserted state verified]" : " [inserted state unverified]");
+    counts << (state.all_operands_proven ? " [cleanup operands proven]" : " [cleanup operands missing]");
+    counts << (state.all_renderable ? " [renderable]" : " [render blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "cleanup call render",
+        state.all_renderable ? "rendered" : "blocked",
+        counts.str(),
+        "(inserted IR)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "cleanup-operation " << indexed_name_or_unknown(state.cleanup_operation_names, index);
+        fields << " data " << indexed_name_or_unknown(state.data_pointer_names, index);
+        fields << " element-size " << indexed_name_or_unknown(state.element_size_bytes, index);
+        fields << " capacity " << indexed_name_or_unknown(state.capacity_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "cleanup call render",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(inserted IR)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_inserted_cleanup_call_state_report(
     pipeline::ComputedInsertedCleanupCallState const& state
 ) -> std::vector<std::string> {

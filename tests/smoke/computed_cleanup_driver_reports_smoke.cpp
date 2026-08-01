@@ -237,6 +237,68 @@ void assert_computed_cleanup_verification_and_emission_gate_reports() {
     );
 }
 
+void assert_computed_cleanup_call_plan_and_render_reports() {
+    auto blocked = pipeline::ComputedCleanupCallPlanRenderState {
+        .cleanup_owner_names = {"items"},
+        .cleanup_operation_names = {"items.computed_for.0.cleanup.resume.call"},
+        .data_pointer_names = {"%items.computed_for.0.data"},
+        .element_size_bytes = {"4"},
+        .capacity_names = {"%items.computed_for.0.capacity"},
+        .all_state_verified = true,
+        .all_operands_proven = true,
+        .all_cleanup_calls_enabled = false,
+        .all_renderable = false,
+        .plan_count = 1,
+        .render_count = 1,
+        .planned_count = 1,
+        .renderable_count = 1,
+    };
+    auto blocked_plan = driver::computed_cleanup_call_plan_state_report(blocked);
+    assert(blocked_plan.size() == 2);
+    assert(
+        blocked_plan[0] ==
+        "computed DynamicArray cleanup call plan planned plans 1 planned 1 renderable 1 renders 1 "
+        "[inserted state verified] [cleanup operands proven] [cleanup calls disabled] (inserted IR)"
+    );
+    assert(
+        blocked_plan[1] ==
+        "computed DynamicArray cleanup call plan detail owner items cleanup-operation "
+        "items.computed_for.0.cleanup.resume.call data %items.computed_for.0.data element-size 4 capacity "
+        "%items.computed_for.0.capacity (inserted IR)"
+    );
+    auto blocked_render = driver::computed_cleanup_call_render_state_report(blocked);
+    assert(blocked_render.size() == 2);
+    assert(
+        blocked_render[0] ==
+        "computed DynamicArray cleanup call render blocked renders 1 renderable 1 plans 1 "
+        "[inserted state verified] [cleanup operands proven] [render blocked] (inserted IR)"
+    );
+    assert(
+        blocked_render[1] ==
+        "computed DynamicArray cleanup call render detail owner items cleanup-operation "
+        "items.computed_for.0.cleanup.resume.call data %items.computed_for.0.data element-size 4 capacity "
+        "%items.computed_for.0.capacity (inserted IR)"
+    );
+
+    auto rendered = blocked;
+    rendered.all_cleanup_calls_enabled = true;
+    rendered.all_renderable = true;
+    auto rendered_plan = driver::computed_cleanup_call_plan_state_report(rendered);
+    assert(rendered_plan.size() == 2);
+    assert(
+        rendered_plan[0] ==
+        "computed DynamicArray cleanup call plan planned plans 1 planned 1 renderable 1 renders 1 "
+        "[inserted state verified] [cleanup operands proven] [cleanup calls enabled] (inserted IR)"
+    );
+    auto rendered_call = driver::computed_cleanup_call_render_state_report(rendered);
+    assert(rendered_call.size() == 2);
+    assert(
+        rendered_call[0] ==
+        "computed DynamicArray cleanup call render rendered renders 1 renderable 1 plans 1 "
+        "[inserted state verified] [cleanup operands proven] [renderable] (inserted IR)"
+    );
+}
+
 void assert_computed_inserted_cleanup_call_reports() {
     auto absent = driver::computed_inserted_cleanup_call_state_report(
         pipeline::ComputedInsertedCleanupCallState {}
@@ -450,6 +512,7 @@ auto main() -> int {
     assert_computed_cleanup_readiness_reports();
     assert_computed_inserted_cleanup_handoff_reports();
     assert_computed_cleanup_verification_and_emission_gate_reports();
+    assert_computed_cleanup_call_plan_and_render_reports();
     assert_computed_inserted_cleanup_call_reports();
     assert_computed_consumed_cleanup_descriptor_reports();
     assert_computed_cleanup_proof_summary_reports();

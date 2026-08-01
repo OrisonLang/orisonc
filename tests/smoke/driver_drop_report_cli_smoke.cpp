@@ -1123,18 +1123,23 @@ int main() {
             "items.computed_for.0.cleanup.acquire",
             "computed DynamicArray cleanup call blockers blocked cleanup-blockers 1 "
             "blocker-reasons [later owner use] (metadata only)",
-            "[cleanup calls disabled] [cleanup blocked: later owner use]",
+            "cleanup-blocked-reason later owner use",
             "computed DynamicArray cleanup call emission gate blocked gates 2 ready 1 blocked 1 "
             "[inserted state verified] [cleanup calls disabled] (inserted IR)",
             "computed DynamicArray cleanup call emission gate detail owner items acquire "
             "items.computed_for.0.cleanup.acquire",
-            "computed DynamicArray for cleanup call plan planned "
-            "cleanup-operation items.computed_for.0.cleanup.resume.call",
-            "[cleanup blocked: later owner use] [data operand proven]",
+            "computed DynamicArray cleanup call plan planned plans 2 planned 2 renderable 2 renders 2 "
+            "[inserted state verified] [cleanup operands proven] [cleanup calls disabled] (inserted IR)",
+            "computed DynamicArray cleanup call plan detail owner items cleanup-operation "
+            "items.computed_for.0.cleanup.resume.call data %items.computed_for.0.data element-size 4 capacity "
+            "%items.computed_for.0.capacity",
             "computed DynamicArray inserted cleanup state verification detail owner items acquire "
             "items.computed_for.1.cleanup.acquire",
-            "[cleanup calls enabled]",
-            "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.1.data",
+            "computed DynamicArray cleanup call emission gate detail owner items acquire "
+            "items.computed_for.1.cleanup.acquire",
+            "computed DynamicArray cleanup call render detail owner items cleanup-operation "
+            "items.computed_for.1.cleanup.resume.call data %items.computed_for.1.data element-size 4 capacity "
+            "%items.computed_for.1.capacity",
         }
     );
     assert(
@@ -1186,14 +1191,16 @@ int main() {
             "items.computed_for.1.cleanup.acquire",
             "computed DynamicArray cleanup call blockers blocked cleanup-blockers 1 "
             "blocker-reasons [active loop body] (metadata only)",
-            "[cleanup calls disabled] [cleanup blocked: active loop body]",
+            "cleanup-blocked-reason active loop body",
             "computed DynamicArray cleanup call emission gate blocked gates 1 ready 0 blocked 1 "
             "[inserted state verified] [cleanup calls disabled] (inserted IR)",
             "computed DynamicArray cleanup call emission gate detail owner items acquire "
             "items.computed_for.1.cleanup.acquire",
-            "computed DynamicArray for cleanup call plan planned "
-            "cleanup-operation items.computed_for.1.cleanup.resume.call",
-            "[cleanup blocked: active loop body] [data operand proven]",
+            "computed DynamicArray cleanup call plan planned plans 1 planned 1 renderable 1 renders 1 "
+            "[inserted state verified] [cleanup operands proven] [cleanup calls disabled] (inserted IR)",
+            "computed DynamicArray cleanup call plan detail owner items cleanup-operation "
+            "items.computed_for.1.cleanup.resume.call data %items.computed_for.1.data element-size 4 capacity "
+            "%items.computed_for.1.capacity",
         }
     );
     assert(dynamic_array_computed_active_loop_body_audit.stdout_text.find("[cleanup calls enabled]") == std::string::npos);

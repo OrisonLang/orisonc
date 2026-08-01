@@ -31,6 +31,14 @@ auto computed_cleanup_call_emission_gate_state_report(
     pipeline::ComputedCleanupCallEmissionGateState const& state
 ) -> std::vector<std::string>;
 
+auto computed_cleanup_call_plan_state_report(
+    pipeline::ComputedCleanupCallPlanRenderState const& state
+) -> std::vector<std::string>;
+
+auto computed_cleanup_call_render_state_report(
+    pipeline::ComputedCleanupCallPlanRenderState const& state
+) -> std::vector<std::string>;
+
 auto computed_inserted_cleanup_call_state_report(
     pipeline::ComputedInsertedCleanupCallState const& state
 ) -> std::vector<std::string>;

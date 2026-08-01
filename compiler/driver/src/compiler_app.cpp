@@ -270,6 +270,10 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.computed_dynamic_array_for_cleanup_call_emission_gate_state =
             std::move(emitted_result.computed_dynamic_array_for_cleanup_call_emission_gate_state);
     }
+    if (emitted_result.computed_dynamic_array_for_cleanup_call_plan_render_state.plan_count > 0) {
+        result.computed_dynamic_array_for_cleanup_call_plan_render_state =
+            std::move(emitted_result.computed_dynamic_array_for_cleanup_call_plan_render_state);
+    }
 }
 
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
@@ -319,8 +323,18 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
             result.computed_dynamic_array_for_cleanup_call_emission_gate_state
         )
     );
-    append_report_lines(report, result.computed_dynamic_array_for_cleanup_call_plan_report);
-    append_report_lines(report, result.computed_dynamic_array_for_cleanup_call_render_report);
+    append_report_lines(
+        report,
+        computed_cleanup_call_plan_state_report(
+            result.computed_dynamic_array_for_cleanup_call_plan_render_state
+        )
+    );
+    append_report_lines(
+        report,
+        computed_cleanup_call_render_state_report(
+            result.computed_dynamic_array_for_cleanup_call_plan_render_state
+        )
+    );
     append_report_lines(
         report,
         computed_cleanup_call_insertion_capability_report(
