@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-01: the full DynamicArray cleanup audit now renders inserted cleanup calls and consumed cleanup descriptors
+  from typed pipeline state at the driver edge instead of appending those pipeline report vectors directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders cleanup-call insertion readiness from typed pipeline
   state at the driver edge instead of appending the pipeline report vector directly.
 - 2026-07-30: aggregate projection access collection now uses an internal metadata-named option and typed access-plan

@@ -304,10 +304,20 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
             result.computed_dynamic_array_for_cleanup_call_insertion_gate_state
         )
     );
-    append_report_lines(report, result.computed_dynamic_array_for_inserted_cleanup_call_report);
+    append_report_lines(
+        report,
+        computed_inserted_cleanup_call_state_report(
+            result.computed_dynamic_array_for_inserted_cleanup_call_state
+        )
+    );
     append_report_lines(report, result.consumed_descriptor_finalization_plan_report);
     append_report_lines(report, result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report);
-    append_report_lines(report, result.computed_dynamic_array_for_consumed_cleanup_descriptor_report);
+    append_report_lines(
+        report,
+        computed_consumed_cleanup_descriptor_state_report(
+            result.computed_dynamic_array_for_consumed_cleanup_descriptor_state
+        )
+    );
     append_report_lines(report, result.computed_dynamic_array_for_production_emission_gate_report);
     append_report_lines(report, result.computed_dynamic_array_for_production_sequence_report);
     append_report_lines(report, result.dynamic_array_cleanup_production_readiness_report);
