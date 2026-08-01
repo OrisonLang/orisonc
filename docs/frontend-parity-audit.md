@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-01: pipeline results no longer expose raw consumed descriptor finalization plan report strings; pipeline
+  consumers use typed consumed descriptor finalization state.
 - 2026-08-01: pipeline results no longer expose raw computed DynamicArray consumed cleanup descriptor or descriptor-model
   report strings; pipeline consumers use typed consumed cleanup descriptor states.
 - 2026-08-01: pipeline results no longer expose raw computed DynamicArray inserted cleanup-call report strings; pipeline

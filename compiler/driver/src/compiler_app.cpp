@@ -218,10 +218,6 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.dynamic_array_cleanup_emission_capability_report,
         std::move(emitted_result.emitted_dynamic_array_cleanup_emission_capability_report)
     );
-    prefer_report_lines(
-        result.consumed_descriptor_finalization_plan_report,
-        std::move(emitted_result.consumed_descriptor_finalization_plan_report)
-    );
     if (emitted_result.computed_dynamic_array_for_descriptor_render_state.render_count > 0) {
         result.computed_dynamic_array_for_descriptor_render_state =
             std::move(emitted_result.computed_dynamic_array_for_descriptor_render_state);
