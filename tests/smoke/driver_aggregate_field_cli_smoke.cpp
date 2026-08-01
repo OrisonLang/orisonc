@@ -10,6 +10,7 @@ int main() {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     auto executable = std::filesystem::current_path().parent_path() / "tools" / "orisonc" / "orisonc";
+    auto fixtures = std::filesystem::current_path().parent_path().parent_path() / "tests" / "fixtures";
     auto aggregate_ownership_cli_lines = [](
         bool include_nested,
         bool use_switch,
@@ -436,6 +437,20 @@ int main() {
         aggregate_ownership_cli_lines(true, true, true, true),
         "use after move: nested.box.payload"
     );
+    auto aggregate_projection_transfer_output = read_command_output(
+        executable.string() + " --emit-llvm " +
+        (fixtures / "aggregate_owned_projection_transfer.or").string()
+    );
+    assert(aggregate_projection_transfer_output.find("call i32 @consume_payload(%record.Payload") !=
+        std::string::npos);
+    assert(aggregate_projection_transfer_output.find("aggregate path read of owned projection") ==
+        std::string::npos);
+    auto aggregate_projection_reuse_output = read_failing_command_output(
+        executable.string() + " --emit-llvm " +
+        (fixtures / "aggregate_nested_owned_projection_transfer_reuse_rejected.or").string()
+    );
+    assert(aggregate_projection_reuse_output.find("use after move: nested.box.payload") !=
+        std::string::npos);
     auto nested_scalar_member_call_path =
         std::filesystem::temp_directory_path() / "orison_cli_nested_scalar_member_call_success.or";
     assert_cli_parse_success(

@@ -1,0 +1,14 @@
+package fixtures.aggregate.ownedprojectiontransfer
+
+record Payload
+    value: UInt32
+
+record Box
+    payload: Payload
+
+function consume_payload(payload: Payload) -> UInt32
+    payload.value
+
+function main() -> UInt32
+    let box: Box = Box(Payload(13 as UInt32))
+    consume_payload(box.payload)

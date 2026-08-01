@@ -1,0 +1,21 @@
+package fixtures.aggregate.nestedownedprojectiontransferreuserejected
+
+record Payload
+    value: UInt32
+
+record Box
+    payload: Payload
+
+record Nested
+    box: Box
+
+function consume_payload(payload: Payload) -> UInt32
+    payload.value
+
+function consume_nested(nested: Nested) -> UInt32
+    nested.box.payload.value
+
+function main() -> UInt32
+    let nested: Nested = Nested(Box(Payload(21 as UInt32)))
+    let consumed: UInt32 = consume_payload(nested.box.payload)
+    consume_nested(nested)
