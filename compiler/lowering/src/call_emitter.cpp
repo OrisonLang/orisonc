@@ -129,9 +129,6 @@ auto consumed_owned_aggregate_projection_argument_name(
     if (context.options.test_only_collect_aggregate_projection_access_plans &&
         plan.status != AggregateProjectionAccessStatus::not_named_aggregate_path) {
         session.state.aggregate_projection_access_plans.push_back(plan);
-        session.state.aggregate_projection_access_plan_report.push_back(
-            aggregate_projection_access_plan_report(plan)
-        );
     }
     if (plan.status != AggregateProjectionAccessStatus::allowed ||
         plan.source_type_name != *expected_source_type ||

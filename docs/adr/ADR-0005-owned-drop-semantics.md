@@ -48,6 +48,8 @@ inventing semantics outside the spec/tour.
   previous report text.
 - Pipeline results no longer expose aggregate projection access-plan report strings; aggregate projection access
   consumers use typed state at the pipeline boundary.
+- Lowering metadata no longer exposes aggregate projection access-plan report strings; lower-level tests and pipeline
+  state construction consume typed access-plan records.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

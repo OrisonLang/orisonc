@@ -14199,9 +14199,9 @@ void test_emit_native_object_file() {
     assert(!result.object_bytes.empty());
 }
 
-void test_collects_aggregate_projection_access_plan_report() {
+void test_collects_aggregate_projection_access_plan_records() {
     auto result = lower_source(
-        std::filesystem::temp_directory_path() / "orison_aggregate_projection_access_plan_report.or",
+        std::filesystem::temp_directory_path() / "orison_aggregate_projection_access_plan_records.or",
         "package demo.aggregate_projection_access_report\n"
         "\n"
         "record Payload\n"
@@ -14224,22 +14224,31 @@ void test_collects_aggregate_projection_access_plan_report() {
     );
 
     assert(!result.has_errors());
-    assert(result.aggregate_projection_access_plan_report.size() == 3);
-    assert(
-        result.aggregate_projection_access_plan_report[0] ==
-        "function consume_payload aggregate projection access intent value_read status non_owned_projection "
-        "binding payload.value source UInt32 receiver false"
-    );
-    assert(
-        result.aggregate_projection_access_plan_report[1] ==
-        "function main aggregate projection access intent value_read status non_owned_projection "
-        "binding box.count source UInt32 receiver false"
-    );
-    assert(
-        result.aggregate_projection_access_plan_report[2] ==
-        "function main aggregate projection access intent explicit_transfer status allowed "
-        "binding box.payload source Payload receiver false"
-    );
+    assert(result.aggregate_projection_access_plans.size() == 3);
+
+    auto const& payload_read = result.aggregate_projection_access_plans[0];
+    assert(payload_read.function_symbol_name == "consume_payload");
+    assert(payload_read.plan.intent == orison::lowering::AggregateProjectionAccessIntent::value_read);
+    assert(payload_read.plan.status == orison::lowering::AggregateProjectionAccessStatus::non_owned_projection);
+    assert(payload_read.plan.binding_name == "payload.value");
+    assert(payload_read.plan.source_type_name == "UInt32");
+    assert(!payload_read.plan.receiver_projection);
+
+    auto const& count_read = result.aggregate_projection_access_plans[1];
+    assert(count_read.function_symbol_name == "main");
+    assert(count_read.plan.intent == orison::lowering::AggregateProjectionAccessIntent::value_read);
+    assert(count_read.plan.status == orison::lowering::AggregateProjectionAccessStatus::non_owned_projection);
+    assert(count_read.plan.binding_name == "box.count");
+    assert(count_read.plan.source_type_name == "UInt32");
+    assert(!count_read.plan.receiver_projection);
+
+    auto const& payload_transfer = result.aggregate_projection_access_plans[2];
+    assert(payload_transfer.function_symbol_name == "main");
+    assert(payload_transfer.plan.intent == orison::lowering::AggregateProjectionAccessIntent::explicit_transfer);
+    assert(payload_transfer.plan.status == orison::lowering::AggregateProjectionAccessStatus::allowed);
+    assert(payload_transfer.plan.binding_name == "box.payload");
+    assert(payload_transfer.plan.source_type_name == "Payload");
+    assert(!payload_transfer.plan.receiver_projection);
 }
 
 }  // namespace
@@ -14253,7 +14262,7 @@ auto main() -> int {
     auto smoke_temp_root_text = smoke_temp_root.string();
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
-    test_collects_aggregate_projection_access_plan_report();
+    test_collects_aggregate_projection_access_plan_records();
     test_emit_constant_uint32_return();
     test_collects_test_only_dynamic_array_construction_metadata();
     test_collects_test_only_dynamic_array_element_drop_readiness_metadata();
