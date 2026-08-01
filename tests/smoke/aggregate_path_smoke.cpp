@@ -171,6 +171,10 @@ int main() {
     assert(value_read_plan.binding_name == "box.payload");
     assert(value_read_plan.source_type_name == "Payload");
     assert(!value_read_plan.receiver_projection);
+    assert(
+        orison::lowering::aggregate_projection_access_diagnostic(value_read_plan) ==
+        "aggregate path read of owned projection requires an explicit ownership transfer"
+    );
 
     auto transfer_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
@@ -180,6 +184,7 @@ int main() {
     );
     assert(transfer_plan.status == orison::lowering::AggregateProjectionAccessStatus::allowed);
     assert(transfer_plan.binding_name == "box.payload");
+    assert(orison::lowering::aggregate_projection_access_diagnostic(transfer_plan).empty());
 
     auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
@@ -188,6 +193,10 @@ int main() {
         orison::lowering::AggregateProjectionAccessIntent::shared_borrow
     );
     assert(borrow_plan.status == orison::lowering::AggregateProjectionAccessStatus::boundary_not_enabled);
+    assert(
+        orison::lowering::aggregate_projection_access_diagnostic(borrow_plan) ==
+        "aggregate projection shared_borrow boundary is not enabled"
+    );
 
     auto clone_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
@@ -196,6 +205,10 @@ int main() {
         orison::lowering::AggregateProjectionAccessIntent::clone_value
     );
     assert(clone_plan.status == orison::lowering::AggregateProjectionAccessStatus::boundary_not_enabled);
+    assert(
+        orison::lowering::aggregate_projection_access_diagnostic(clone_plan) ==
+        "aggregate projection clone_value boundary is not enabled"
+    );
 
     auto receiver_projection = member(name("this"), "payload");
     auto receiver_plan = orison::lowering::describe_named_aggregate_projection_access(
@@ -218,6 +231,7 @@ int main() {
     assert(scalar_plan.status == orison::lowering::AggregateProjectionAccessStatus::non_owned_projection);
     assert(scalar_plan.binding_name == "box.count");
     assert(scalar_plan.source_type_name == "UInt32");
+    assert(orison::lowering::aggregate_projection_access_diagnostic(scalar_plan).empty());
 
     auto nested_projection = member(member(name("nested"), "box"), "payload");
     auto nested_plan = orison::lowering::describe_named_aggregate_projection_access(
@@ -237,6 +251,7 @@ int main() {
         orison::lowering::AggregateProjectionAccessIntent::value_read
     );
     assert(non_path_plan.status == orison::lowering::AggregateProjectionAccessStatus::not_named_aggregate_path);
+    assert(orison::lowering::aggregate_projection_access_diagnostic(non_path_plan).empty());
 
     assert(
         orison::lowering::render_aggregate_projection_access_intent(

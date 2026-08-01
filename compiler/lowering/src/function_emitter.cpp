@@ -311,18 +311,18 @@ auto is_exclusive_receiver_parameter(
         (parameter.type.name == "exclusive.This" || function.has_exclusive_receiver_parameter);
 }
 
-auto owned_aggregate_projection_value_read_requires_boundary(
+auto owned_aggregate_projection_value_read_diagnostic(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
     FunctionLoweringState const& state
-) -> bool {
+) -> std::string {
     auto plan = describe_named_aggregate_projection_access(
         expression,
         context,
         state,
         AggregateProjectionAccessIntent::value_read
     );
-    return plan.status == AggregateProjectionAccessStatus::requires_explicit_boundary;
+    return aggregate_projection_access_diagnostic(plan);
 }
 
 void seed_bound_dynamic_array_parameter_cleanup_owner(
@@ -1454,15 +1454,15 @@ void emit_function_body(
 
     auto lowered = std::move(lowered_final_statement);
     if (!lowered.has_value()) {
-        if (owned_aggregate_projection_value_read_requires_boundary(
+        if (auto diagnostic = owned_aggregate_projection_value_read_diagnostic(
                 *expression,
                 context.lowering,
                 session.state
-            )) {
+            ); !diagnostic.empty()) {
             record_expression_lowering_failure(
                 failures,
                 ExpressionLoweringFailureReason::unsupported_expression,
-                "aggregate path read of owned projection requires an explicit ownership transfer"
+                std::move(diagnostic)
             );
             diagnostics.error(
                 expression->line,

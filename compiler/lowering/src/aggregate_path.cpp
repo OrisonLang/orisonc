@@ -352,4 +352,22 @@ auto render_aggregate_projection_access_status(
     return "unknown";
 }
 
+auto aggregate_projection_access_diagnostic(
+    AggregateProjectionAccessPlan const& plan
+) -> std::string {
+    switch (plan.status) {
+    case AggregateProjectionAccessStatus::requires_explicit_boundary:
+        return "aggregate path read of owned projection requires an explicit ownership transfer";
+    case AggregateProjectionAccessStatus::boundary_not_enabled:
+        return "aggregate projection " +
+            std::string(render_aggregate_projection_access_intent(plan.intent)) +
+            " boundary is not enabled";
+    case AggregateProjectionAccessStatus::not_named_aggregate_path:
+    case AggregateProjectionAccessStatus::non_owned_projection:
+    case AggregateProjectionAccessStatus::allowed:
+        return {};
+    }
+    return {};
+}
+
 }  // namespace orison::lowering

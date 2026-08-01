@@ -35,18 +35,18 @@ auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::thread;
 }
 
-auto owned_aggregate_projection_value_read_requires_boundary(
+auto owned_aggregate_projection_value_read_diagnostic(
     syntax::ExpressionSyntax const& expression,
     LoweringContext const& context,
     FunctionLoweringState const& state
-) -> bool {
+) -> std::string {
     auto plan = describe_named_aggregate_projection_access(
         expression,
         context,
         state,
         AggregateProjectionAccessIntent::value_read
     );
-    return plan.status == AggregateProjectionAccessStatus::requires_explicit_boundary;
+    return aggregate_projection_access_diagnostic(plan);
 }
 
 auto reject_owned_aggregate_projection_value_read(
@@ -54,14 +54,15 @@ auto reject_owned_aggregate_projection_value_read(
     LoweringEmissionContext const& context,
     FunctionLoweringSession& session
 ) -> bool {
-    if (!owned_aggregate_projection_value_read_requires_boundary(expression, context.lowering, session.state)) {
+    auto diagnostic = owned_aggregate_projection_value_read_diagnostic(expression, context.lowering, session.state);
+    if (diagnostic.empty()) {
         return false;
     }
 
     record_expression_lowering_failure(
         session.failures,
         ExpressionLoweringFailureReason::unsupported_expression,
-        "aggregate path read of owned projection requires an explicit ownership transfer"
+        std::move(diagnostic)
     );
     return true;
 }

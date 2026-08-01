@@ -151,4 +151,8 @@ auto render_aggregate_projection_access_status(
     AggregateProjectionAccessStatus status
 ) -> std::string_view;
 
+auto aggregate_projection_access_diagnostic(
+    AggregateProjectionAccessPlan const& plan
+) -> std::string;
+
 }  // namespace orison::lowering

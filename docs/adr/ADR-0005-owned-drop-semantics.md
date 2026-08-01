@@ -29,6 +29,8 @@ inventing semantics outside the spec/tour.
   intents remain future-gated metadata.
 - Call-argument ownership transfer and ordinary value-read rejection must use the same aggregate projection access plan
   so future borrow and clone gates have one lowering decision point.
+- Aggregate projection diagnostics render from the access plan instead of emitter-local strings, keeping current
+  value-read rejection text stable while giving future borrow and clone gates shared wording.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI
