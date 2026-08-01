@@ -1026,16 +1026,11 @@ auto lower_unit_statement(
     return StatementFlow::failed;
 }
 
-void finish_function_emission(
+void preserve_function_emission_metadata(
     FunctionLoweringState const& state,
     FunctionEmissionResult* result,
-    std::vector<ConsumedDescriptorFinalizationPlan>* consumed_descriptor_finalization_plans,
-    std::ostringstream& output
+    std::vector<ConsumedDescriptorFinalizationPlan>* consumed_descriptor_finalization_plans
 ) {
-    output << "}\n";
-    for (auto const& definition : state.pending_function_definitions) {
-        output << "\n" << definition;
-    }
     if (consumed_descriptor_finalization_plans == nullptr) {
         return;
     }
@@ -1062,6 +1057,19 @@ void finish_function_emission(
         state.consumed_descriptor_finalization_plans.begin(),
         state.consumed_descriptor_finalization_plans.end()
     );
+}
+
+void finish_function_emission(
+    FunctionLoweringState const& state,
+    FunctionEmissionResult* result,
+    std::vector<ConsumedDescriptorFinalizationPlan>* consumed_descriptor_finalization_plans,
+    std::ostringstream& output
+) {
+    output << "}\n";
+    for (auto const& definition : state.pending_function_definitions) {
+        output << "\n" << definition;
+    }
+    preserve_function_emission_metadata(state, result, consumed_descriptor_finalization_plans);
 }
 
 void emit_function_body(
@@ -1267,6 +1275,11 @@ void emit_function_body(
                             diagnostics,
                             output
                         )) {
+                        preserve_function_emission_metadata(
+                            state,
+                            result,
+                            consumed_descriptor_finalization_plans
+                        );
                         return;
                     }
                     continue;
@@ -1298,6 +1311,11 @@ void emit_function_body(
                     diagnostics,
                     output
                 )) {
+                preserve_function_emission_metadata(
+                    state,
+                    result,
+                    consumed_descriptor_finalization_plans
+                );
                 return;
             }
             continue;
@@ -1480,6 +1498,11 @@ void emit_function_body(
                     "lowering does not yet support this return expression",
                     failures.expression
                 )
+            );
+            preserve_function_emission_metadata(
+                state,
+                result,
+                consumed_descriptor_finalization_plans
             );
             return;
         }

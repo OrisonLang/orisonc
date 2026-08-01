@@ -83,6 +83,28 @@ auto emit_llvm_report(std::filesystem::path const& source_path, auto report_sele
     return emit_llvm_report(source_path, pipeline::CompilePipelineOptions {}, report_selector);
 }
 
+auto emit_llvm_report_with_failure_output(
+    std::filesystem::path const& source_path,
+    pipeline::CompilePipelineOptions const& options,
+    auto report_selector
+) -> CompileResult {
+    pipeline::CompilePipeline pipeline;
+    auto result = pipeline.emit_llvm(source_path, options);
+    auto report_lines = render_report_lines(report_selector(result));
+    if (result.has_errors()) {
+        return CompileResult {
+            .exit_code = 1,
+            .stdout_text = std::move(report_lines),
+            .stderr_text = std::move(result.error_text),
+        };
+    }
+
+    return CompileResult {
+        .exit_code = 0,
+        .stdout_text = std::move(report_lines),
+    };
+}
+
 auto dynamic_array_cleanup_report_options() -> pipeline::CompilePipelineOptions {
     return pipeline::CompilePipelineOptions {
         .source_drop_lowering_enabled = true,
@@ -846,17 +868,16 @@ auto CompilerApp::run(std::span<char const* const> args) const -> CompileResult 
         return std::move(*result);
     }
 
-    if (auto result = try_emit_llvm_report_command(
-            args,
-            "--test-only-aggregate-projection-access-plans",
+    if (args.size() == 3 && std::string_view(args[1]) == "--test-only-aggregate-projection-access-plans") {
+        return emit_llvm_report_with_failure_output(
+            std::filesystem::path(args[2]),
             pipeline::CompilePipelineOptions {
                 .test_only_collect_aggregate_projection_access_plans = true,
             },
             [](auto const& result) -> auto const& {
                 return result.aggregate_projection_access_plan_report;
             }
-        )) {
-        return std::move(*result);
+        );
     }
 
     if (args.size() == 3 && std::string_view(args[1]) == "--dynamic-array-cleanup-production-readiness") {

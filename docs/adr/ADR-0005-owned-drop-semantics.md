@@ -37,6 +37,8 @@ inventing semantics outside the spec/tour.
   emission results. Normal compiler output remains unchanged.
 - The driver exposes those aggregate projection access-plan lines only through the explicit
   `--test-only-aggregate-projection-access-plans` report command.
+- That test-only report command preserves access-plan output on lowering failure, so rejection-boundary tests can assert
+  the blocked plan and diagnostic without changing normal compiler output.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

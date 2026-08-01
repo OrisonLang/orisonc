@@ -12,7 +12,7 @@
 
 namespace {
 
-void write_fixture(std::filesystem::path const& path) {
+void write_allowed_fixture(std::filesystem::path const& path) {
     auto output = std::ofstream(path);
     output <<
         "package smoke.aggregate_access_plan\n"
@@ -31,6 +31,22 @@ void write_fixture(std::filesystem::path const& path) {
         "    let box: Box = Box(Payload(13 as UInt32), 7 as UInt32)\n"
         "    let count: UInt32 = box.count\n"
         "    consume_payload(box.payload) + count\n";
+}
+
+void write_rejected_fixture(std::filesystem::path const& path) {
+    auto output = std::ofstream(path);
+    output <<
+        "package smoke.aggregate_access_plan_rejected\n"
+        "\n"
+        "record Payload\n"
+        "    public value: UInt32\n"
+        "\n"
+        "record Box\n"
+        "    public payload: Payload\n"
+        "\n"
+        "function main() -> Payload\n"
+        "    let box: Box = Box(Payload(13 as UInt32))\n"
+        "    box.payload\n";
 }
 
 auto run_single_file_command(
@@ -59,7 +75,7 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     auto fixture_path = smoke_temp_root / "fixture.or";
-    write_fixture(fixture_path);
+    write_allowed_fixture(fixture_path);
 
     auto app = orison::driver::CompilerApp {};
     auto report = run_single_file_command(
@@ -83,6 +99,27 @@ auto main() -> int {
     auto normal_emit = run_single_file_command(app, "--emit-llvm", fixture_path);
     assert(normal_emit.exit_code == 0);
     assert(normal_emit.stdout_text.find("aggregate projection access") == std::string::npos);
+
+    auto rejected_fixture_path = smoke_temp_root / "rejected_fixture.or";
+    write_rejected_fixture(rejected_fixture_path);
+    auto rejected_report = run_single_file_command(
+        app,
+        "--test-only-aggregate-projection-access-plans",
+        rejected_fixture_path
+    );
+
+    assert(rejected_report.exit_code == 1);
+    assert(
+        rejected_report.stdout_text ==
+        "function main aggregate projection access intent value_read status requires_explicit_boundary "
+        "binding box.payload source Payload receiver false diagnostic aggregate path read of owned projection "
+        "requires an explicit ownership transfer\n"
+    );
+    assert(
+        rejected_report.stderr_text.find(
+            "aggregate path read of owned projection requires an explicit ownership transfer"
+        ) != std::string::npos
+    );
 
     std::filesystem::remove_all(smoke_temp_root);
     return 0;
