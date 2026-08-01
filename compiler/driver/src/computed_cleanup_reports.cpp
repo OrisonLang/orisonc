@@ -459,6 +459,77 @@ auto computed_consumed_cleanup_descriptor_state_report(
     return lines;
 }
 
+auto computed_dynamic_array_for_production_emission_gate_state_report(
+    pipeline::ComputedDynamicArrayForProductionEmissionGateState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "gates " << state.gate_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.gate_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_ownership_ready ? " [ownership ready]" : " [ownership blocked]");
+    counts << (state.all_loop_render_ready ? " [loop render ready]" : " [loop render blocked]");
+    counts << (state.all_loop_cleanup_ownership_ready ?
+        " [loop cleanup ownership ready]" : " [loop cleanup ownership blocked]");
+    counts << (state.all_function_cleanup_resumption_ready ?
+        " [function cleanup resumption ready]" : " [function cleanup resumption blocked]");
+    counts << (state.all_exit_cleanup_ready ? " [exit cleanup ready]" : " [exit cleanup blocked]");
+    counts << (state.all_production_sequences_planned ?
+        " [production sequence planned]" : " [production sequence blocked]");
+    counts << (state.any_production_emission_enabled ?
+        " [production emission enabled]" : " [production emission disabled]");
+    append_computed_cleanup_summary(
+        lines,
+        "production emission gate",
+        state.gate_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto const& owner_name : state.cleanup_owner_names) {
+        append_computed_cleanup_detail(
+            lines,
+            "production emission gate",
+            owner_name,
+            {},
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
+auto computed_dynamic_array_for_production_sequence_state_report(
+    pipeline::ComputedDynamicArrayForProductionSequenceState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "sequences " << state.sequence_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << " module-comments " << state.module_comment_line_count;
+    counts << (state.sequence_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.module_comments_emitted ? " [module comments emitted]" : " [module comments absent]");
+    append_computed_cleanup_summary(
+        lines,
+        "production sequence",
+        state.sequence_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto const& owner_name : state.cleanup_owner_names) {
+        append_computed_cleanup_detail(
+            lines,
+            "production sequence",
+            owner_name,
+            {},
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_cleanup_proof_summary_state_report(
     pipeline::ComputedCleanupProofSummaryState const& state
 ) -> std::vector<std::string> {

@@ -1092,8 +1092,12 @@ int main() {
             smoke::computed_dynamic_array_loop_exit_cleanup_report,
             smoke::computed_dynamic_array_cleanup_transition_report,
             smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report,
-            smoke::computed_dynamic_array_production_emission_gate_enabled_report,
-            smoke::computed_dynamic_array_production_sequence_report,
+            "computed DynamicArray production emission gate planned gates 1 snippets 17 [metadata available] "
+            "[ownership ready] [loop render ready] [loop cleanup ownership ready] "
+            "[function cleanup resumption ready] [exit cleanup ready] [production sequence planned] "
+            "[production emission enabled] (metadata only)",
+            "computed DynamicArray production sequence planned sequences 1 snippets 17 module-comments 0 "
+            "[metadata available] [module comments absent] (metadata only)",
             "dynamic array cleanup production readiness ready",
         }
     );

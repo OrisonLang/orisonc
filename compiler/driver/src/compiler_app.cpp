@@ -283,6 +283,14 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_state =
             std::move(emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_state);
     }
+    if (emitted_result.computed_dynamic_array_for_production_emission_gate_state.gate_count > 0) {
+        result.computed_dynamic_array_for_production_emission_gate_state =
+            std::move(emitted_result.computed_dynamic_array_for_production_emission_gate_state);
+    }
+    if (emitted_result.computed_dynamic_array_for_production_sequence_state.sequence_count > 0) {
+        result.computed_dynamic_array_for_production_sequence_state =
+            std::move(emitted_result.computed_dynamic_array_for_production_sequence_state);
+    }
 }
 
 auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& result) -> std::vector<std::string> {
@@ -380,8 +388,18 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
             result.computed_dynamic_array_for_consumed_cleanup_descriptor_state
         )
     );
-    append_report_lines(report, result.computed_dynamic_array_for_production_emission_gate_report);
-    append_report_lines(report, result.computed_dynamic_array_for_production_sequence_report);
+    append_report_lines(
+        report,
+        computed_dynamic_array_for_production_emission_gate_state_report(
+            result.computed_dynamic_array_for_production_emission_gate_state
+        )
+    );
+    append_report_lines(
+        report,
+        computed_dynamic_array_for_production_sequence_state_report(
+            result.computed_dynamic_array_for_production_sequence_state
+        )
+    );
     append_report_lines(report, result.dynamic_array_cleanup_production_readiness_report);
     return report;
 }

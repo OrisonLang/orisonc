@@ -505,6 +505,75 @@ void assert_computed_cleanup_unknown_detail_fallbacks() {
     assert(handoff[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_unknown_detail_report);
 }
 
+void assert_computed_dynamic_array_production_reports() {
+    auto disabled_gate = driver::computed_dynamic_array_for_production_emission_gate_state_report(
+        pipeline::ComputedDynamicArrayForProductionEmissionGateState {
+            .cleanup_owner_names = {"items"},
+            .gate_metadata_available = true,
+            .all_ownership_ready = true,
+            .all_loop_render_ready = true,
+            .all_loop_cleanup_ownership_ready = true,
+            .all_function_cleanup_resumption_ready = true,
+            .all_exit_cleanup_ready = true,
+            .all_production_sequences_planned = true,
+            .any_production_emission_enabled = false,
+            .gate_count = 1,
+            .rendered_ir_snippet_count = 17,
+        }
+    );
+    assert(disabled_gate.size() == 2);
+    assert(
+        disabled_gate[0] ==
+        "computed DynamicArray production emission gate planned gates 1 snippets 17 [metadata available] "
+        "[ownership ready] [loop render ready] [loop cleanup ownership ready] "
+        "[function cleanup resumption ready] [exit cleanup ready] [production sequence planned] "
+        "[production emission disabled] (metadata only)"
+    );
+    assert(disabled_gate[1] == "computed DynamicArray production emission gate detail owner items (metadata only)");
+
+    auto enabled_gate = driver::computed_dynamic_array_for_production_emission_gate_state_report(
+        pipeline::ComputedDynamicArrayForProductionEmissionGateState {
+            .cleanup_owner_names = {"items"},
+            .gate_metadata_available = true,
+            .all_ownership_ready = true,
+            .all_loop_render_ready = true,
+            .all_loop_cleanup_ownership_ready = true,
+            .all_function_cleanup_resumption_ready = true,
+            .all_exit_cleanup_ready = true,
+            .all_production_sequences_planned = true,
+            .any_production_emission_enabled = true,
+            .gate_count = 1,
+            .rendered_ir_snippet_count = 17,
+        }
+    );
+    assert(enabled_gate.size() == 2);
+    assert(
+        enabled_gate[0] ==
+        "computed DynamicArray production emission gate planned gates 1 snippets 17 [metadata available] "
+        "[ownership ready] [loop render ready] [loop cleanup ownership ready] "
+        "[function cleanup resumption ready] [exit cleanup ready] [production sequence planned] "
+        "[production emission enabled] (metadata only)"
+    );
+
+    auto sequence = driver::computed_dynamic_array_for_production_sequence_state_report(
+        pipeline::ComputedDynamicArrayForProductionSequenceState {
+            .cleanup_owner_names = {"items"},
+            .sequence_metadata_available = true,
+            .module_comments_emitted = false,
+            .sequence_count = 1,
+            .rendered_ir_snippet_count = 17,
+            .module_comment_line_count = 0,
+        }
+    );
+    assert(sequence.size() == 2);
+    assert(
+        sequence[0] ==
+        "computed DynamicArray production sequence planned sequences 1 snippets 17 module-comments 0 "
+        "[metadata available] [module comments absent] (metadata only)"
+    );
+    assert(sequence[1] == "computed DynamicArray production sequence detail owner items (metadata only)");
+}
+
 void assert_aggregate_projection_access_plan_reports() {
     auto empty = driver::aggregate_projection_access_plan_state_report(
         pipeline::AggregateProjectionAccessPlanState {}
@@ -585,6 +654,7 @@ auto main() -> int {
     assert_computed_consumed_cleanup_descriptor_reports();
     assert_computed_cleanup_proof_summary_reports();
     assert_computed_cleanup_unknown_detail_fallbacks();
+    assert_computed_dynamic_array_production_reports();
     assert_aggregate_projection_access_plan_reports();
     return 0;
 }
