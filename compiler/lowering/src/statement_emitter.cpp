@@ -35,6 +35,48 @@ auto is_thread_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::thread;
 }
 
+auto is_owned_aggregate_projection_value_read(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    auto path = collect_named_aggregate_path(expression);
+    if (!path.has_value() || path->base_expression == nullptr || path->steps.empty()) {
+        return false;
+    }
+    if (path->base_expression->kind == syntax::ExpressionKind::name &&
+        path->base_expression->text == "this") {
+        return false;
+    }
+
+    auto base_source_type = source_type_name_for_expression(*path->base_expression, context, state);
+    if (!base_source_type.has_value() ||
+        dynamic_array_element_source_type_name(*base_source_type).has_value()) {
+        return false;
+    }
+
+    auto projected_source_type = source_type_name_for_expression(expression, context, state);
+    return projected_source_type.has_value() &&
+        is_owned_transfer_source_type(*projected_source_type, context);
+}
+
+auto reject_owned_aggregate_projection_value_read(
+    syntax::ExpressionSyntax const& expression,
+    LoweringEmissionContext const& context,
+    FunctionLoweringSession& session
+) -> bool {
+    if (!is_owned_aggregate_projection_value_read(expression, context.lowering, session.state)) {
+        return false;
+    }
+
+    record_expression_lowering_failure(
+        session.failures,
+        ExpressionLoweringFailureReason::unsupported_expression,
+        "aggregate path read of owned projection requires an explicit ownership transfer"
+    );
+    return true;
+}
+
 auto is_task_expression(syntax::ExpressionSyntax const& expression) -> bool {
     return expression.kind == syntax::ExpressionKind::task;
 }
@@ -1458,6 +1500,17 @@ auto lower_let_statement(
         type = std::move(*inferred);
     }
 
+    if (reject_owned_aggregate_projection_value_read(statement.expression, context, session)) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering does not yet support this let initializer",
+                session.failures.expression
+            )
+        );
+        return false;
+    }
+
     auto lowered = lower_expression(
         statement.expression,
         type.type,
@@ -1556,6 +1609,17 @@ auto lower_var_statement(
         type = std::move(*annotated_type);
     } else if (auto inferred = infer_expression_type(statement.expression, context, session.state)) {
         type = std::move(*inferred);
+    }
+
+    if (reject_owned_aggregate_projection_value_read(statement.expression, context, session)) {
+        diagnostics.error(
+            statement.line,
+            append_expression_lowering_failure(
+                "lowering does not yet support this var initializer",
+                session.failures.expression
+            )
+        );
+        return false;
     }
 
     auto lowered = lower_expression(

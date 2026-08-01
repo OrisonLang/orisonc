@@ -524,6 +524,16 @@ auto main() -> int {
     );
     assert_cli_emit_llvm_existing_fixture_failure(
         executable,
+        fixtures / "aggregate_owned_projection_rejected.or",
+        "aggregate path read of owned projection requires an explicit ownership transfer"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
+        fixtures / "aggregate_owned_projection_return_rejected.or",
+        "aggregate path read of owned projection requires an explicit ownership transfer"
+    );
+    assert_cli_emit_llvm_existing_fixture_failure(
+        executable,
         fixtures / "dynamic_array_receiver_append_missing_drop.or",
         "lowering DynamicArray push to owned element requires authorized element drop"
     );

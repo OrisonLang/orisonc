@@ -22,6 +22,8 @@ inventing semantics outside the spec/tour.
   emitted declaration, no drop calls are emitted for that thunk.
 - Drop planning remains finite and explicit. The compiler will not synthesize variadic, spread-like, or open-ended drop
   dispatch.
+- Ordinary value reads of owned aggregate projections remain rejected until explicit borrow/clone/move semantics exist
+  for that boundary. Passing the projection to a matching owned parameter is still the explicit transfer path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI

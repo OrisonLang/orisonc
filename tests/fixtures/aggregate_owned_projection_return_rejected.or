@@ -1,0 +1,11 @@
+package fixtures.aggregate.ownedprojectionreturnrejected
+
+record Nested
+    value: UInt32
+
+record Box
+    child: Nested
+
+function main() -> Nested
+    let box: Box = Box(Nested(11 as UInt32))
+    box.child

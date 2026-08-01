@@ -1,5 +1,6 @@
 #include "orison/lowering/control_flow_emitter.hpp"
 #include "orison/lowering/addressable_binding.hpp"
+#include "orison/lowering/aggregate_path.hpp"
 #include "orison/lowering/branch_binding_scope.hpp"
 #include "orison/lowering/concurrency_emitter.hpp"
 #include "orison/lowering/concurrency_runtime.hpp"
@@ -13,11 +14,13 @@
 #include "orison/lowering/lowering_context.hpp"
 #include "orison/lowering/lowering_diagnostics.hpp"
 #include "orison/lowering/lowering_emission_context.hpp"
+#include "orison/lowering/lowering_failure_lifecycle.hpp"
 #include "orison/lowering/loop_lowering_support.hpp"
 #include "orison/lowering/llvm_names.hpp"
 #include "orison/lowering/member_call_receiver.hpp"
 #include "orison/lowering/nonvalue_if_lowering.hpp"
 #include "orison/lowering/nonvalue_switch_lowering.hpp"
+#include "orison/lowering/ownership_transfer.hpp"
 #include "orison/lowering/repeat_loop_lowering.hpp"
 #include "orison/lowering/statement_body_lowering.hpp"
 #include "orison/lowering/statement_emitter.hpp"
@@ -306,6 +309,31 @@ auto is_exclusive_receiver_parameter(
 ) -> bool {
     return parameter.name == "this" &&
         (parameter.type.name == "exclusive.This" || function.has_exclusive_receiver_parameter);
+}
+
+auto is_owned_aggregate_projection_value_read(
+    syntax::ExpressionSyntax const& expression,
+    LoweringContext const& context,
+    FunctionLoweringState const& state
+) -> bool {
+    auto path = collect_named_aggregate_path(expression);
+    if (!path.has_value() || path->base_expression == nullptr || path->steps.empty()) {
+        return false;
+    }
+    if (path->base_expression->kind == syntax::ExpressionKind::name &&
+        path->base_expression->text == "this") {
+        return false;
+    }
+
+    auto base_source_type = source_type_name_for_expression(*path->base_expression, context, state);
+    if (!base_source_type.has_value() ||
+        dynamic_array_element_source_type_name(*base_source_type).has_value()) {
+        return false;
+    }
+
+    auto projected_source_type = source_type_name_for_expression(expression, context, state);
+    return projected_source_type.has_value() &&
+        is_owned_transfer_source_type(*projected_source_type, context);
 }
 
 void seed_bound_dynamic_array_parameter_cleanup_owner(
@@ -1437,6 +1465,25 @@ void emit_function_body(
 
     auto lowered = std::move(lowered_final_statement);
     if (!lowered.has_value()) {
+        if (is_owned_aggregate_projection_value_read(
+                *expression,
+                context.lowering,
+                session.state
+            )) {
+            record_expression_lowering_failure(
+                failures,
+                ExpressionLoweringFailureReason::unsupported_expression,
+                "aggregate path read of owned projection requires an explicit ownership transfer"
+            );
+            diagnostics.error(
+                expression->line,
+                append_expression_lowering_failure(
+                    "lowering does not yet support this return expression",
+                    failures.expression
+                )
+            );
+            return;
+        }
         lowered = lower_expression(
             *expression,
             signature.return_type,
