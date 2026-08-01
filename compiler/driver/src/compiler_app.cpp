@@ -223,14 +223,6 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         std::move(emitted_result.consumed_descriptor_finalization_plan_report)
     );
     prefer_report_lines(
-        result.computed_dynamic_array_for_inserted_cleanup_transition_report,
-        std::move(emitted_result.computed_dynamic_array_for_inserted_cleanup_transition_report)
-    );
-    prefer_report_lines(
-        result.computed_dynamic_array_for_inserted_cleanup_state_verification_report,
-        std::move(emitted_result.computed_dynamic_array_for_inserted_cleanup_state_verification_report)
-    );
-    prefer_report_lines(
         result.computed_dynamic_array_for_inserted_cleanup_call_report,
         std::move(emitted_result.computed_dynamic_array_for_inserted_cleanup_call_report)
     );

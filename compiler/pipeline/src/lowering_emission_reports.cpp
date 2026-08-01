@@ -850,12 +850,8 @@ void populate_lowering_emission_reports(
         build_computed_dynamic_array_for_loop_exit_cleanup_state(emission);
     result.computed_dynamic_array_for_cleanup_transition_state =
         build_computed_dynamic_array_for_cleanup_transition_state(emission);
-    result.computed_dynamic_array_for_inserted_cleanup_transition_report =
-        cleanup_proof_model.reports.inserted_cleanup_transition_report;
     result.computed_dynamic_array_for_inserted_cleanup_transition_state =
         build_computed_inserted_cleanup_transition_state(cleanup_proof_model);
-    result.computed_dynamic_array_for_inserted_cleanup_state_verification_report =
-        cleanup_proof_model.reports.inserted_cleanup_state_verification_report;
     result.computed_dynamic_array_for_inserted_cleanup_state_verification_state =
         build_computed_inserted_cleanup_state_verification_state(cleanup_proof_model);
     result.computed_dynamic_array_for_inserted_cleanup_handoff_state =

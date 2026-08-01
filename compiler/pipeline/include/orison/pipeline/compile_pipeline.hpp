@@ -460,9 +460,7 @@ struct CompilePipelineResult {
     ComputedDynamicArrayForLoopRenderSequenceState computed_dynamic_array_for_loop_render_sequence_state;
     ComputedDynamicArrayForLoopExitCleanupState computed_dynamic_array_for_loop_exit_cleanup_state;
     ComputedDynamicArrayForCleanupTransitionState computed_dynamic_array_for_cleanup_transition_state;
-    std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_transition_report;
     ComputedInsertedCleanupTransitionState computed_dynamic_array_for_inserted_cleanup_transition_state;
-    std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_state_verification_report;
     ComputedInsertedCleanupStateVerificationState
         computed_dynamic_array_for_inserted_cleanup_state_verification_state;
     ComputedInsertedCleanupHandoffState computed_dynamic_array_for_inserted_cleanup_handoff_state;

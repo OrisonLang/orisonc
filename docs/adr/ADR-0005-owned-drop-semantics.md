@@ -84,6 +84,8 @@ inventing semantics outside the spec/tour.
 - Pipeline results no longer expose raw computed DynamicArray cleanup-call emission gate, cleanup-call plan,
   cleanup-call render, or cleanup-call insertion readiness report strings. Pipeline consumers use typed cleanup-call
   states for those sections.
+- Pipeline results no longer expose raw computed DynamicArray inserted cleanup transition or inserted cleanup state
+  verification report strings. Pipeline consumers use typed inserted-cleanup transition and verification states.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
