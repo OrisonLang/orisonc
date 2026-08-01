@@ -258,6 +258,14 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.computed_dynamic_array_for_consumed_cleanup_descriptor_report,
         std::move(emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_report)
     );
+    if (emitted_result.computed_dynamic_array_for_descriptor_render_state.render_count > 0) {
+        result.computed_dynamic_array_for_descriptor_render_state =
+            std::move(emitted_result.computed_dynamic_array_for_descriptor_render_state);
+    }
+    if (emitted_result.computed_dynamic_array_for_loop_control_render_state.render_count > 0) {
+        result.computed_dynamic_array_for_loop_control_render_state =
+            std::move(emitted_result.computed_dynamic_array_for_loop_control_render_state);
+    }
     if (emitted_result.computed_dynamic_array_for_inserted_cleanup_handoff_state.transition_count > 0) {
         result.computed_dynamic_array_for_inserted_cleanup_handoff_state =
             std::move(emitted_result.computed_dynamic_array_for_inserted_cleanup_handoff_state);
@@ -302,8 +310,18 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, result.dynamic_array_cleanup_sequence_verification_report);
     append_report_lines(report, result.dynamic_array_cleanup_emission_gate_report);
     append_report_lines(report, result.dynamic_array_cleanup_emission_capability_report);
-    append_report_lines(report, result.computed_dynamic_array_for_descriptor_render_report);
-    append_report_lines(report, result.computed_dynamic_array_for_loop_control_render_report);
+    append_report_lines(
+        report,
+        computed_dynamic_array_for_descriptor_render_state_report(
+            result.computed_dynamic_array_for_descriptor_render_state
+        )
+    );
+    append_report_lines(
+        report,
+        computed_dynamic_array_for_loop_control_render_state_report(
+            result.computed_dynamic_array_for_loop_control_render_state
+        )
+    );
     append_report_lines(report, result.computed_dynamic_array_for_element_address_render_report);
     append_report_lines(report, result.computed_dynamic_array_for_element_load_render_report);
     append_report_lines(report, result.computed_dynamic_array_for_loop_continue_render_report);

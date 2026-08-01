@@ -15,6 +15,14 @@ auto computed_cleanup_call_insertion_readiness_report(
     pipeline::ComputedCleanupCallInsertionGateState const& state
 ) -> std::vector<std::string>;
 
+auto computed_dynamic_array_for_descriptor_render_state_report(
+    pipeline::ComputedDynamicArrayForDescriptorRenderState const& state
+) -> std::vector<std::string>;
+
+auto computed_dynamic_array_for_loop_control_render_state_report(
+    pipeline::ComputedDynamicArrayForLoopControlRenderState const& state
+) -> std::vector<std::string>;
+
 auto computed_inserted_cleanup_handoff_state_report(
     pipeline::ComputedInsertedCleanupHandoffState const& state
 ) -> std::vector<std::string>;

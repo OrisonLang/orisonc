@@ -1,5 +1,7 @@
 # Frontend Parity Audit
 
+- 2026-08-01: the full DynamicArray cleanup audit now renders computed DynamicArray descriptor and loop-control render
+  sections from typed pipeline state at the driver edge instead of appending those report vectors directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders dynamic-array production readiness from typed pipeline
   state at the driver edge instead of appending the pipeline report vector directly.
 - 2026-08-01: the full DynamicArray cleanup audit now renders computed DynamicArray production emission gates and

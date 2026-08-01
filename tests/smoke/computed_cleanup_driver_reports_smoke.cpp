@@ -70,6 +70,73 @@ void assert_computed_cleanup_readiness_reports() {
     assert(ready[1] == smoke::computed_dynamic_array_cleanup_call_insertion_readiness_detail_report);
 }
 
+void assert_computed_dynamic_array_render_reports() {
+    auto descriptor = driver::computed_dynamic_array_for_descriptor_render_state_report(
+        pipeline::ComputedDynamicArrayForDescriptorRenderState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .descriptor_storage_names = {"%items.addr"},
+            .descriptor_value_names = {"%items.computed_for.descriptor"},
+            .data_pointer_names = {"%items.computed_for.data"},
+            .length_names = {"%items.computed_for.length"},
+            .capacity_names = {"%items.computed_for.capacity"},
+            .render_metadata_available = true,
+            .all_descriptor_projections_ready = true,
+            .render_count = 1,
+            .rendered_ir_snippet_count = 4,
+        }
+    );
+    assert(descriptor.size() == 2);
+    assert(
+        descriptor[0] ==
+        "computed DynamicArray descriptor render planned renders 1 snippets 4 [metadata available] "
+        "[descriptor projections ready] (metadata only)"
+    );
+    assert(
+        descriptor[1] ==
+        "computed DynamicArray descriptor render detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 descriptor %items.addr value %items.computed_for.descriptor "
+        "data %items.computed_for.data length %items.computed_for.length capacity %items.computed_for.capacity "
+        "(metadata only)"
+    );
+
+    auto control = driver::computed_dynamic_array_for_loop_control_render_state_report(
+        pipeline::ComputedDynamicArrayForLoopControlRenderState {
+            .enclosing_function_names = {"sum_words"},
+            .cleanup_owner_names = {"items"},
+            .source_type_names = {"DynamicArray<UInt32>"},
+            .element_source_type_names = {"UInt32"},
+            .condition_block_names = {"items.computed_for.condition"},
+            .body_block_names = {"items.computed_for.body"},
+            .continue_block_names = {"items.computed_for.continue"},
+            .exit_block_names = {"items.computed_for.exit"},
+            .index_names = {"%items.computed_for.index"},
+            .next_index_names = {"%items.computed_for.next.index"},
+            .bounds_check_names = {"%items.computed_for.more"},
+            .render_metadata_available = true,
+            .all_control_flow_names_ready = true,
+            .render_count = 1,
+            .rendered_ir_snippet_count = 5,
+        }
+    );
+    assert(control.size() == 2);
+    assert(
+        control[0] ==
+        "computed DynamicArray loop control render planned renders 1 snippets 5 [metadata available] "
+        "[control flow ready] (metadata only)"
+    );
+    assert(
+        control[1] ==
+        "computed DynamicArray loop control render detail owner items function sum_words "
+        "source DynamicArray<UInt32> element UInt32 condition items.computed_for.condition "
+        "body items.computed_for.body continue items.computed_for.continue exit items.computed_for.exit "
+        "index %items.computed_for.index next %items.computed_for.next.index bounds %items.computed_for.more "
+        "(metadata only)"
+    );
+}
+
 void assert_computed_inserted_cleanup_handoff_reports() {
     auto empty = driver::computed_inserted_cleanup_handoff_state_report(
         pipeline::ComputedInsertedCleanupHandoffState {}
@@ -690,6 +757,7 @@ void assert_aggregate_projection_access_plan_reports() {
 auto main() -> int {
     assert_computed_cleanup_capability_reports();
     assert_computed_cleanup_readiness_reports();
+    assert_computed_dynamic_array_render_reports();
     assert_computed_inserted_cleanup_handoff_reports();
     assert_computed_cleanup_verification_and_emission_gate_reports();
     assert_computed_cleanup_call_plan_and_render_reports();

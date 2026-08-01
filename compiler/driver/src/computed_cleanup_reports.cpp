@@ -100,6 +100,87 @@ auto computed_cleanup_call_insertion_readiness_report(
     return lines;
 }
 
+auto computed_dynamic_array_for_descriptor_render_state_report(
+    pipeline::ComputedDynamicArrayForDescriptorRenderState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "renders " << state.render_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.render_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_descriptor_projections_ready ?
+        " [descriptor projections ready]" : " [descriptor projections blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "descriptor render",
+        state.render_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " descriptor " << indexed_name_or_unknown(state.descriptor_storage_names, index);
+        fields << " value " << indexed_name_or_unknown(state.descriptor_value_names, index);
+        fields << " data " << indexed_name_or_unknown(state.data_pointer_names, index);
+        fields << " length " << indexed_name_or_unknown(state.length_names, index);
+        fields << " capacity " << indexed_name_or_unknown(state.capacity_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "descriptor render",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
+auto computed_dynamic_array_for_loop_control_render_state_report(
+    pipeline::ComputedDynamicArrayForLoopControlRenderState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "renders " << state.render_count;
+    counts << " snippets " << state.rendered_ir_snippet_count;
+    counts << (state.render_metadata_available ? " [metadata available]" : " [metadata missing]");
+    counts << (state.all_control_flow_names_ready ? " [control flow ready]" : " [control flow blocked]");
+    append_computed_cleanup_summary(
+        lines,
+        "loop control render",
+        state.render_metadata_available ? "planned" : "absent",
+        counts.str(),
+        "(metadata only)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "function " << indexed_name_or_unknown(state.enclosing_function_names, index);
+        fields << " source " << indexed_name_or_unknown(state.source_type_names, index);
+        fields << " element " << indexed_name_or_unknown(state.element_source_type_names, index);
+        fields << " condition " << indexed_name_or_unknown(state.condition_block_names, index);
+        fields << " body " << indexed_name_or_unknown(state.body_block_names, index);
+        fields << " continue " << indexed_name_or_unknown(state.continue_block_names, index);
+        fields << " exit " << indexed_name_or_unknown(state.exit_block_names, index);
+        fields << " index " << indexed_name_or_unknown(state.index_names, index);
+        fields << " next " << indexed_name_or_unknown(state.next_index_names, index);
+        fields << " bounds " << indexed_name_or_unknown(state.bounds_check_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "loop control render",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(metadata only)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_inserted_cleanup_handoff_state_report(
     pipeline::ComputedInsertedCleanupHandoffState const& state
 ) -> std::vector<std::string> {

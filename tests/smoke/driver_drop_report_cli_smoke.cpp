@@ -1083,8 +1083,10 @@ int main() {
             "descriptor %items.addr local",
             "dynamic array cleanup emission capability proven",
             "[descriptor storage ok]",
-            smoke::computed_dynamic_array_descriptor_render_report,
-            smoke::computed_dynamic_array_loop_control_render_report,
+            "computed DynamicArray descriptor render planned renders 1 snippets 4 [metadata available] "
+            "[descriptor projections ready] (metadata only)",
+            "computed DynamicArray loop control render planned renders 1 snippets 5 [metadata available] "
+            "[control flow ready] (metadata only)",
             smoke::computed_dynamic_array_element_address_render_report,
             smoke::computed_dynamic_array_element_load_render_report,
             smoke::computed_dynamic_array_loop_continue_render_report,
