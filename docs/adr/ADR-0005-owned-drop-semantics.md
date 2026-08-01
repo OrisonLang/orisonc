@@ -79,6 +79,8 @@ inventing semantics outside the spec/tour.
 - Pipeline results no longer expose raw computed DynamicArray loop-render report strings for descriptor, loop-control,
   element-address, element-load, loop-continue, loop-render-sequence, loop-exit-cleanup, or cleanup-transition sections.
   Pipeline consumers use the typed states for those sections.
+- Pipeline results no longer expose raw computed DynamicArray production emission gate or production sequence report
+  strings. Pipeline consumers use the typed production states for those sections.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

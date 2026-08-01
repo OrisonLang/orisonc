@@ -1873,15 +1873,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_production_emission_gate_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_production_emission_gate_report.front() ==
-        smoke::computed_dynamic_array_production_emission_gate_enabled_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_emission_gate_state.gate_metadata_available
     );
     assert(
@@ -1927,11 +1918,6 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_production_emission_gate_state.cleanup_owner_names.front() == "items"
-    );
-    assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.size() == 1);
-    assert(
-        computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_production_sequence_report.front() ==
-        smoke::computed_dynamic_array_production_sequence_report
     );
     assert(
         computed_dynamic_array_local_same_owner_for
@@ -2359,15 +2345,6 @@ auto main() -> int {
         }
     );
     assert(!computed_dynamic_array_local_same_owner_production_ready_for.has_errors());
-    assert(
-        computed_dynamic_array_local_same_owner_production_ready_for
-            .computed_dynamic_array_for_production_emission_gate_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_production_ready_for
-            .computed_dynamic_array_for_production_emission_gate_report.front() ==
-        smoke::computed_dynamic_array_production_emission_gate_enabled_report
-    );
     assert(
         computed_dynamic_array_local_same_owner_production_ready_for
             .computed_dynamic_array_for_production_emission_gate_state.any_production_emission_enabled

@@ -896,12 +896,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.consumed_cleanup_descriptor_report;
     result.aggregate_projection_access_plan_state =
         build_aggregate_projection_access_plan_state(emission);
-    result.computed_dynamic_array_for_production_emission_gate_report =
-        emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_emission_gate_state =
         build_computed_dynamic_array_for_production_emission_gate_state(emission);
-    result.computed_dynamic_array_for_production_sequence_report =
-        emission.computed_dynamic_array_for_production_sequence_report();
     result.computed_dynamic_array_for_production_sequence_state =
         build_computed_dynamic_array_for_production_sequence_state(emission);
     result.computed_dynamic_array_for_production_readiness =
