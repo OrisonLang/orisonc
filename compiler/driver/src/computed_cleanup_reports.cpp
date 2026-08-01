@@ -141,6 +141,57 @@ auto computed_inserted_cleanup_handoff_state_report(
     return lines;
 }
 
+auto computed_inserted_cleanup_state_verification_report(
+    pipeline::ComputedInsertedCleanupStateVerificationState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "verifications " << state.verification_count;
+    counts << " paired " << state.paired_count;
+    counts << " blocked " << state.blocked_count;
+    counts << (state.from_metadata ? " [metadata-backed]" : " [metadata-missing]");
+    counts << (state.all_paired ? " [handoff paired]" : " [handoff blocked]");
+    counts << (state.all_cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    append_computed_cleanup_summary(
+        lines,
+        "inserted cleanup state verification",
+        state.all_paired ? "paired" : "blocked",
+        counts.str(),
+        "(inserted IR)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.acquire_operation_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "acquire " << indexed_name_or_unknown(state.acquire_operation_names, index);
+        fields << " resume " << indexed_name_or_unknown(state.resume_operation_names, index);
+        fields << " acquire-from " << indexed_name_or_unknown(state.acquire_source_owner_names, index);
+        fields << " acquire-to " << indexed_name_or_unknown(state.acquire_target_owner_names, index);
+        fields << " resume-from " << indexed_name_or_unknown(state.resume_source_owner_names, index);
+        fields << " resume-to " << indexed_name_or_unknown(state.resume_target_owner_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "inserted cleanup state verification",
+            indexed_name_or_unknown(state.resume_target_owner_names, index),
+            fields.str(),
+            "(inserted IR)"
+        );
+    }
+
+    for (auto const& reason : state.blocked_reasons) {
+        auto fields = std::ostringstream {};
+        fields << "blocked-reason " << (reason.empty() ? "<unknown>" : reason);
+        append_computed_cleanup_detail(
+            lines,
+            "inserted cleanup state verification",
+            "<unknown>",
+            fields.str(),
+            "(inserted IR)"
+        );
+    }
+
+    return lines;
+}
+
 auto computed_cleanup_call_blocker_summary_report(
     pipeline::ComputedInsertedCleanupHandoffState const& state
 ) -> std::vector<std::string> {
@@ -166,6 +217,40 @@ auto computed_cleanup_call_blocker_summary_report(
     }
     output << " (metadata only)";
     return {output.str()};
+}
+
+auto computed_cleanup_call_emission_gate_state_report(
+    pipeline::ComputedCleanupCallEmissionGateState const& state
+) -> std::vector<std::string> {
+    auto lines = std::vector<std::string> {};
+    auto counts = std::ostringstream {};
+    counts << "gates " << state.gate_count;
+    counts << " ready " << state.ready_count;
+    counts << " blocked " << state.blocked_count;
+    counts << (state.all_state_verified ? " [inserted state verified]" : " [inserted state unverified]");
+    counts << (state.all_cleanup_calls_enabled ? " [cleanup calls enabled]" : " [cleanup calls disabled]");
+    append_computed_cleanup_summary(
+        lines,
+        "cleanup call emission gate",
+        state.all_ready ? "ready" : "blocked",
+        counts.str(),
+        "(inserted IR)"
+    );
+
+    for (auto index = std::size_t {0}; index < state.cleanup_owner_names.size(); ++index) {
+        auto fields = std::ostringstream {};
+        fields << "acquire " << indexed_name_or_unknown(state.acquire_operation_names, index);
+        fields << " resume " << indexed_name_or_unknown(state.resume_operation_names, index);
+        append_computed_cleanup_detail(
+            lines,
+            "cleanup call emission gate",
+            state.cleanup_owner_names[index],
+            fields.str(),
+            "(inserted IR)"
+        );
+    }
+
+    return lines;
 }
 
 auto computed_inserted_cleanup_call_state_report(

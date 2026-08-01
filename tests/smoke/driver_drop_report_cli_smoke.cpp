@@ -1119,19 +1119,20 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_later_owner_use_audit,
         {
-            "computed DynamicArray for inserted cleanup state verification "
-            "acquire-operation items.computed_for.0.cleanup.acquire",
+            "computed DynamicArray inserted cleanup state verification detail owner items acquire "
+            "items.computed_for.0.cleanup.acquire",
             "computed DynamicArray cleanup call blockers blocked cleanup-blockers 1 "
             "blocker-reasons [later owner use] (metadata only)",
             "[cleanup calls disabled] [cleanup blocked: later owner use]",
-            "computed DynamicArray for cleanup call emission gate blocked "
-            "acquire-operation items.computed_for.0.cleanup.acquire",
-            "[cleanup blocked: later owner use] [cleanup call emission blocked]",
+            "computed DynamicArray cleanup call emission gate blocked gates 2 ready 1 blocked 1 "
+            "[inserted state verified] [cleanup calls disabled] (inserted IR)",
+            "computed DynamicArray cleanup call emission gate detail owner items acquire "
+            "items.computed_for.0.cleanup.acquire",
             "computed DynamicArray for cleanup call plan planned "
             "cleanup-operation items.computed_for.0.cleanup.resume.call",
             "[cleanup blocked: later owner use] [data operand proven]",
-            "computed DynamicArray for inserted cleanup state verification "
-            "acquire-operation items.computed_for.1.cleanup.acquire",
+            "computed DynamicArray inserted cleanup state verification detail owner items acquire "
+            "items.computed_for.1.cleanup.acquire",
             "[cleanup calls enabled]",
             "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.1.data",
         }
@@ -1181,14 +1182,15 @@ int main() {
     assert_success_with_stdout_contains(
         dynamic_array_computed_active_loop_body_audit,
         {
-            "computed DynamicArray for inserted cleanup state verification "
-            "acquire-operation items.computed_for.1.cleanup.acquire",
+            "computed DynamicArray inserted cleanup state verification detail owner items acquire "
+            "items.computed_for.1.cleanup.acquire",
             "computed DynamicArray cleanup call blockers blocked cleanup-blockers 1 "
             "blocker-reasons [active loop body] (metadata only)",
             "[cleanup calls disabled] [cleanup blocked: active loop body]",
-            "computed DynamicArray for cleanup call emission gate blocked "
-            "acquire-operation items.computed_for.1.cleanup.acquire",
-            "[cleanup blocked: active loop body] [cleanup call emission blocked]",
+            "computed DynamicArray cleanup call emission gate blocked gates 1 ready 0 blocked 1 "
+            "[inserted state verified] [cleanup calls disabled] (inserted IR)",
+            "computed DynamicArray cleanup call emission gate detail owner items acquire "
+            "items.computed_for.1.cleanup.acquire",
             "computed DynamicArray for cleanup call plan planned "
             "cleanup-operation items.computed_for.1.cleanup.resume.call",
             "[cleanup blocked: active loop body] [data operand proven]",

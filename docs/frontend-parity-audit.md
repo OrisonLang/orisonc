@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-01: the full DynamicArray cleanup audit now renders inserted cleanup state verification and cleanup-call
+  emission gates from typed pipeline state at the driver edge instead of appending those pipeline report vectors
+  directly.
 - 2026-08-01: the full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge,
   exposing structured proof counters in the aggregate audit path.
 - 2026-08-01: the full DynamicArray cleanup audit now renders inserted cleanup handoffs from typed pipeline state at

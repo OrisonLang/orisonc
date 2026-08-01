@@ -133,6 +133,110 @@ void assert_computed_inserted_cleanup_handoff_reports() {
     assert(paired_enabled[1] == smoke::computed_dynamic_array_inserted_cleanup_handoff_state_detail_report);
 }
 
+void assert_computed_cleanup_verification_and_emission_gate_reports() {
+    auto blocked_verification = driver::computed_inserted_cleanup_state_verification_report(
+        pipeline::ComputedInsertedCleanupStateVerificationState {
+            .blocked_reasons = {"missing cleanup acquisition"},
+            .from_metadata = true,
+            .all_paired = false,
+            .all_cleanup_calls_enabled = false,
+            .verification_count = 1,
+            .paired_count = 0,
+            .blocked_count = 1,
+        }
+    );
+    assert(blocked_verification.size() == 2);
+    assert(
+        blocked_verification[0] ==
+        "computed DynamicArray inserted cleanup state verification blocked verifications 1 paired 0 blocked 1 "
+        "[metadata-backed] [handoff blocked] [cleanup calls disabled] (inserted IR)"
+    );
+    assert(
+        blocked_verification[1] ==
+        "computed DynamicArray inserted cleanup state verification detail owner <unknown> blocked-reason "
+        "missing cleanup acquisition (inserted IR)"
+    );
+
+    auto paired_verification = driver::computed_inserted_cleanup_state_verification_report(
+        pipeline::ComputedInsertedCleanupStateVerificationState {
+            .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
+            .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
+            .acquire_source_owner_names = {"items"},
+            .acquire_target_owner_names = {"items.loop.entry"},
+            .resume_source_owner_names = {"items.loop.entry"},
+            .resume_target_owner_names = {"items"},
+            .from_metadata = true,
+            .all_paired = true,
+            .all_cleanup_calls_enabled = true,
+            .verification_count = 1,
+            .paired_count = 1,
+            .blocked_count = 0,
+        }
+    );
+    assert(paired_verification.size() == 2);
+    assert(
+        paired_verification[0] ==
+        "computed DynamicArray inserted cleanup state verification paired verifications 1 paired 1 blocked 0 "
+        "[metadata-backed] [handoff paired] [cleanup calls enabled] (inserted IR)"
+    );
+    assert(
+        paired_verification[1] ==
+        "computed DynamicArray inserted cleanup state verification detail owner items acquire "
+        "items.computed_for.0.cleanup.acquire resume items.computed_for.0.cleanup.resume acquire-from items "
+        "acquire-to items.loop.entry resume-from items.loop.entry resume-to items (inserted IR)"
+    );
+
+    auto blocked_gate = driver::computed_cleanup_call_emission_gate_state_report(
+        pipeline::ComputedCleanupCallEmissionGateState {
+            .cleanup_owner_names = {"items"},
+            .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
+            .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
+            .all_state_verified = true,
+            .all_cleanup_calls_enabled = false,
+            .all_ready = false,
+            .gate_count = 1,
+            .ready_count = 0,
+            .blocked_count = 1,
+        }
+    );
+    assert(blocked_gate.size() == 2);
+    assert(
+        blocked_gate[0] ==
+        "computed DynamicArray cleanup call emission gate blocked gates 1 ready 0 blocked 1 "
+        "[inserted state verified] [cleanup calls disabled] (inserted IR)"
+    );
+    assert(
+        blocked_gate[1] ==
+        "computed DynamicArray cleanup call emission gate detail owner items acquire "
+        "items.computed_for.0.cleanup.acquire resume items.computed_for.0.cleanup.resume (inserted IR)"
+    );
+
+    auto ready_gate = driver::computed_cleanup_call_emission_gate_state_report(
+        pipeline::ComputedCleanupCallEmissionGateState {
+            .cleanup_owner_names = {"items"},
+            .acquire_operation_names = {"items.computed_for.0.cleanup.acquire"},
+            .resume_operation_names = {"items.computed_for.0.cleanup.resume"},
+            .all_state_verified = true,
+            .all_cleanup_calls_enabled = true,
+            .all_ready = true,
+            .gate_count = 1,
+            .ready_count = 1,
+            .blocked_count = 0,
+        }
+    );
+    assert(ready_gate.size() == 2);
+    assert(
+        ready_gate[0] ==
+        "computed DynamicArray cleanup call emission gate ready gates 1 ready 1 blocked 0 "
+        "[inserted state verified] [cleanup calls enabled] (inserted IR)"
+    );
+    assert(
+        ready_gate[1] ==
+        "computed DynamicArray cleanup call emission gate detail owner items acquire "
+        "items.computed_for.0.cleanup.acquire resume items.computed_for.0.cleanup.resume (inserted IR)"
+    );
+}
+
 void assert_computed_inserted_cleanup_call_reports() {
     auto absent = driver::computed_inserted_cleanup_call_state_report(
         pipeline::ComputedInsertedCleanupCallState {}
@@ -345,6 +449,7 @@ auto main() -> int {
     assert_computed_cleanup_capability_reports();
     assert_computed_cleanup_readiness_reports();
     assert_computed_inserted_cleanup_handoff_reports();
+    assert_computed_cleanup_verification_and_emission_gate_reports();
     assert_computed_inserted_cleanup_call_reports();
     assert_computed_consumed_cleanup_descriptor_reports();
     assert_computed_cleanup_proof_summary_reports();
