@@ -293,6 +293,12 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
             result.computed_dynamic_array_for_inserted_cleanup_handoff_state
         )
     );
+    append_report_lines(
+        report,
+        computed_cleanup_proof_summary_state_report(
+            result.computed_dynamic_array_for_cleanup_proof_summary_state
+        )
+    );
     append_report_lines(report, result.computed_dynamic_array_for_inserted_cleanup_state_verification_report);
     append_report_lines(report, result.computed_dynamic_array_for_cleanup_call_emission_gate_report);
     append_report_lines(report, result.computed_dynamic_array_for_cleanup_call_plan_report);
