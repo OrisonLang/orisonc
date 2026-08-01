@@ -109,7 +109,7 @@ auto consumed_owned_dynamic_array_argument_name(
     return argument.text;
 }
 
-auto consumed_owned_record_field_argument_name(
+auto consumed_owned_aggregate_projection_argument_name(
     syntax::ExpressionSyntax const& argument,
     std::optional<std::string_view> expected_source_type,
     LoweringEmissionContext const& context,
@@ -120,36 +120,19 @@ auto consumed_owned_record_field_argument_name(
         return std::nullopt;
     }
 
-    auto path = collect_named_aggregate_path(argument);
-    if (!path.has_value() || path->base_expression == nullptr) {
-        return std::nullopt;
-    }
-    auto field_names = std::vector<std::string> {};
-    field_names.reserve(path->steps.size());
-    for (auto const& step : path->steps) {
-        if (step.kind != AggregatePathStepKind::member) {
-            return std::nullopt;
-        }
-        field_names.push_back(step.field_name);
-    }
-
-    auto const& owner_name = path->base_expression->text;
-    auto owner_source_type = session.state.source_type_names.find(owner_name);
-    if (owner_source_type == session.state.source_type_names.end()) {
-        return std::nullopt;
-    }
-
-    auto transfer = owned_record_member_path_transfer(
-        owner_name,
-        owner_source_type->second,
-        field_names,
-        context.lowering
+    auto plan = describe_named_aggregate_projection_access(
+        argument,
+        context.lowering,
+        session.state,
+        AggregateProjectionAccessIntent::explicit_transfer
     );
-    if (!transfer.has_value() || transfer->source_type_name != *expected_source_type) {
+    if (plan.status != AggregateProjectionAccessStatus::allowed ||
+        plan.source_type_name != *expected_source_type ||
+        plan.binding_name.empty()) {
         return std::nullopt;
     }
 
-    return transfer->binding_name;
+    return plan.binding_name;
 }
 
 auto lower_call_arguments_impl(
@@ -271,7 +254,7 @@ auto lower_call_arguments_impl(
             )) {
             mark_owned_binding_consumed(session.state.ownership_transfers, std::move(*consumed_name));
         }
-        if (auto consumed_name = consumed_owned_record_field_argument_name(
+        if (auto consumed_name = consumed_owned_aggregate_projection_argument_name(
                 arguments[index],
                 expected_source_type,
                 context,

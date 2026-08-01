@@ -27,6 +27,8 @@ inventing semantics outside the spec/tour.
 - Lowering represents aggregate projection access intent internally as value read, explicit transfer, shared borrow,
   exclusive borrow, or clone value. Only explicit transfer is enabled for owned projections today; borrow and clone
   intents remain future-gated metadata.
+- Call-argument ownership transfer and ordinary value-read rejection must use the same aggregate projection access plan
+  so future borrow and clone gates have one lowering decision point.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI
