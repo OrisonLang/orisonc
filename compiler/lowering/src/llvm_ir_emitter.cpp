@@ -1632,6 +1632,16 @@ void append_function_emission_reports(
         function_emission.aggregate_projection_access_plan_report,
         function_emission.function_symbol_name
     );
+    result.aggregate_projection_access_plans.reserve(
+        result.aggregate_projection_access_plans.size() +
+        function_emission.aggregate_projection_access_plans.size()
+    );
+    for (auto const& plan : function_emission.aggregate_projection_access_plans) {
+        result.aggregate_projection_access_plans.push_back(AggregateProjectionAccessPlanRecord {
+            .function_symbol_name = function_emission.function_symbol_name,
+            .plan = plan,
+        });
+    }
     result.computed_dynamic_array_inserted_cleanup_handoffs.insert(
         result.computed_dynamic_array_inserted_cleanup_handoffs.end(),
         function_emission.computed_dynamic_array_inserted_cleanup_handoffs.begin(),

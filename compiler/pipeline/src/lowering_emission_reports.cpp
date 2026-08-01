@@ -1,6 +1,7 @@
 #include "lowering_emission_reports.hpp"
 
 #include "orison/lowering/dynamic_array_cleanup_plan.hpp"
+#include "orison/lowering/aggregate_path.hpp"
 #include "orison/pipeline/drop_readiness_source_correlation_report.hpp"
 
 #include "dynamic_array_cleanup_readiness.hpp"
@@ -24,6 +25,44 @@ auto build_computed_dynamic_array_for_production_sequence_state(
     for (auto const& sequence : emission.computed_dynamic_array_for_production_sequences) {
         state.cleanup_owner_names.push_back(sequence.cleanup_owner_name);
         state.rendered_ir_snippet_count += sequence.rendered_ir.size();
+    }
+    return state;
+}
+
+auto build_aggregate_projection_access_plan_state(
+    lowering::LlvmIrEmissionResult const& emission
+) -> AggregateProjectionAccessPlanState {
+    auto const& access_plans = emission.aggregate_projection_access_plans;
+    auto state = AggregateProjectionAccessPlanState {
+        .plan_count = access_plans.size(),
+    };
+    state.access_plans_available = state.plan_count > 0;
+    state.function_symbol_names.reserve(access_plans.size());
+    state.intents.reserve(access_plans.size());
+    state.statuses.reserve(access_plans.size());
+    state.binding_names.reserve(access_plans.size());
+    state.source_type_names.reserve(access_plans.size());
+    state.diagnostics.reserve(access_plans.size());
+    state.receiver_projections.reserve(access_plans.size());
+    for (auto const& access_plan : access_plans) {
+        state.function_symbol_names.push_back(access_plan.function_symbol_name);
+        state.intents.push_back(access_plan.plan.intent);
+        state.statuses.push_back(access_plan.plan.status);
+        state.binding_names.push_back(access_plan.plan.binding_name);
+        state.source_type_names.push_back(access_plan.plan.source_type_name);
+        state.diagnostics.push_back(lowering::aggregate_projection_access_diagnostic(access_plan.plan));
+        state.receiver_projections.push_back(access_plan.plan.receiver_projection);
+        if (access_plan.plan.status == lowering::AggregateProjectionAccessStatus::allowed ||
+            access_plan.plan.status == lowering::AggregateProjectionAccessStatus::non_owned_projection) {
+            ++state.allowed_count;
+        }
+        if (access_plan.plan.status == lowering::AggregateProjectionAccessStatus::requires_explicit_boundary ||
+            access_plan.plan.status == lowering::AggregateProjectionAccessStatus::boundary_not_enabled) {
+            ++state.blocked_count;
+        }
+        if (access_plan.plan.receiver_projection) {
+            ++state.receiver_projection_count;
+        }
     }
     return state;
 }
@@ -873,6 +912,8 @@ void populate_lowering_emission_reports(
         cleanup_proof_model.reports.consumed_cleanup_descriptor_report;
     result.aggregate_projection_access_plan_report =
         std::move(emission.aggregate_projection_access_plan_report);
+    result.aggregate_projection_access_plan_state =
+        build_aggregate_projection_access_plan_state(emission);
     result.computed_dynamic_array_for_production_emission_gate_report =
         emission.computed_dynamic_array_for_production_emission_gate_report();
     result.computed_dynamic_array_for_production_emission_gate_state =

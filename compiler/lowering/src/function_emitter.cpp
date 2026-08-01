@@ -325,6 +325,7 @@ auto owned_aggregate_projection_value_read_diagnostic(
     );
     if (emission_context.options.test_only_collect_aggregate_projection_access_plans &&
         plan.status != AggregateProjectionAccessStatus::not_named_aggregate_path) {
+        state.aggregate_projection_access_plans.push_back(plan);
         state.aggregate_projection_access_plan_report.push_back(
             aggregate_projection_access_plan_report(plan)
         );
@@ -1047,6 +1048,8 @@ void preserve_function_emission_metadata(
             state.emitted_dynamic_array_cleanup_emission_capability_report;
         result->aggregate_projection_access_plan_report =
             state.aggregate_projection_access_plan_report;
+        result->aggregate_projection_access_plans =
+            state.aggregate_projection_access_plans;
         result->computed_dynamic_array_inserted_cleanup_handoffs =
             state.computed_dynamic_array_inserted_cleanup_handoffs;
         result->computed_dynamic_array_cleanup_call_operands =

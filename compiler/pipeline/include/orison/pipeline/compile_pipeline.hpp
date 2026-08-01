@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orison/lowering/concurrency_plan.hpp"
+#include "orison/lowering/aggregate_projection_access_plan.hpp"
 #include "orison/lowering/lowering_options.hpp"
 #include "orison/semantics/module_semantic_analyzer.hpp"
 #include "orison/source/source_file.hpp"
@@ -299,6 +300,21 @@ struct ComputedCleanupProofSummaryState {
     std::size_t ir_consumed_cleanup_descriptor_fallback_count = 0;
 };
 
+struct AggregateProjectionAccessPlanState {
+    std::vector<std::string> function_symbol_names;
+    std::vector<lowering::AggregateProjectionAccessIntent> intents;
+    std::vector<lowering::AggregateProjectionAccessStatus> statuses;
+    std::vector<std::string> binding_names;
+    std::vector<std::string> source_type_names;
+    std::vector<std::string> diagnostics;
+    std::vector<bool> receiver_projections;
+    bool access_plans_available = false;
+    std::size_t plan_count = 0;
+    std::size_t allowed_count = 0;
+    std::size_t blocked_count = 0;
+    std::size_t receiver_projection_count = 0;
+};
+
 struct ComputedInsertedCleanupHandoffState {
     std::vector<std::string> cleanup_owner_names;
     std::vector<std::string> acquire_operation_names;
@@ -476,6 +492,7 @@ struct CompilePipelineResult {
     ComputedConsumedCleanupDescriptorState computed_dynamic_array_for_consumed_cleanup_descriptor_state;
     std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_report;
     std::vector<std::string> aggregate_projection_access_plan_report;
+    AggregateProjectionAccessPlanState aggregate_projection_access_plan_state;
     std::vector<std::string> computed_dynamic_array_for_production_emission_gate_report;
     ComputedDynamicArrayForProductionEmissionGateState computed_dynamic_array_for_production_emission_gate_state;
     std::vector<std::string> computed_dynamic_array_for_production_sequence_report;

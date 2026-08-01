@@ -212,6 +212,67 @@ void assert_consumed_descriptor_finalization_readiness_typed() {
     assert(!orison::lowering::consumed_descriptor_finalization_plan_ready(blocked_plan));
 }
 
+void assert_aggregate_projection_access_plan_state(
+    orison::pipeline::CompilePipeline& pipeline,
+    std::filesystem::path const& smoke_temp_root
+) {
+    auto source_path = smoke_temp_root / "aggregate_projection_access_plan_state.or";
+    {
+        auto output = std::ofstream(source_path);
+        output <<
+            "package smoke.aggregate_access_plan_state\n"
+            "\n"
+            "record Payload\n"
+            "    public value: UInt32\n"
+            "\n"
+            "record Box\n"
+            "    public payload: Payload\n"
+            "    public count: UInt32\n"
+            "\n"
+            "function consume_payload(payload: Payload) -> UInt32\n"
+            "    payload.value\n"
+            "\n"
+            "function main() -> UInt32\n"
+            "    let box: Box = Box(Payload(13 as UInt32), 7 as UInt32)\n"
+            "    let count: UInt32 = box.count\n"
+            "    consume_payload(box.payload) + count\n";
+    }
+
+    auto result = pipeline.emit_llvm(
+        source_path,
+        orison::pipeline::CompilePipelineOptions {
+            .test_only_collect_aggregate_projection_access_plans = true,
+        }
+    );
+    assert(!result.has_errors());
+    auto const& state = result.aggregate_projection_access_plan_state;
+    assert(state.access_plans_available);
+    assert(state.plan_count == 3);
+    assert(state.allowed_count == 3);
+    assert(state.blocked_count == 0);
+    assert(state.receiver_projection_count == 0);
+    assert(state.function_symbol_names.size() == 3);
+    assert(state.intents.size() == 3);
+    assert(state.statuses.size() == 3);
+    assert(state.binding_names.size() == 3);
+    assert(state.source_type_names.size() == 3);
+    assert(state.diagnostics.size() == 3);
+    assert(state.function_symbol_names[0] == "consume_payload");
+    assert(state.intents[0] == orison::lowering::AggregateProjectionAccessIntent::value_read);
+    assert(state.statuses[0] == orison::lowering::AggregateProjectionAccessStatus::non_owned_projection);
+    assert(state.binding_names[0] == "payload.value");
+    assert(state.source_type_names[0] == "UInt32");
+    assert(state.diagnostics[0].empty());
+    assert(!state.receiver_projections[0]);
+    assert(state.function_symbol_names[2] == "main");
+    assert(state.intents[2] == orison::lowering::AggregateProjectionAccessIntent::explicit_transfer);
+    assert(state.statuses[2] == orison::lowering::AggregateProjectionAccessStatus::allowed);
+    assert(state.binding_names[2] == "box.payload");
+    assert(state.source_type_names[2] == "Payload");
+    assert(state.diagnostics[2].empty());
+    assert(!state.receiver_projections[2]);
+}
+
 }  // namespace
 
 auto main() -> int {
@@ -227,6 +288,8 @@ auto main() -> int {
     assert(::setenv("TMPDIR", smoke_temp_root_text.c_str(), 1) == 0);
 
     orison::pipeline::CompilePipeline pipeline;
+    assert_aggregate_projection_access_plan_state(pipeline, smoke_temp_root);
+
     auto source_path = std::filesystem::path(ORISON_SOURCE_DIR) / "examples" / "minimal.or";
 
     auto analysis = pipeline.analyze(source_path);
