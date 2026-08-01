@@ -175,6 +175,12 @@ int main() {
         orison::lowering::aggregate_projection_access_diagnostic(value_read_plan) ==
         "aggregate path read of owned projection requires an explicit ownership transfer"
     );
+    assert(
+        orison::lowering::aggregate_projection_access_plan_report(value_read_plan) ==
+        "aggregate projection access intent value_read status requires_explicit_boundary "
+        "binding box.payload source Payload receiver false diagnostic "
+        "aggregate path read of owned projection requires an explicit ownership transfer"
+    );
 
     auto transfer_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
@@ -185,6 +191,11 @@ int main() {
     assert(transfer_plan.status == orison::lowering::AggregateProjectionAccessStatus::allowed);
     assert(transfer_plan.binding_name == "box.payload");
     assert(orison::lowering::aggregate_projection_access_diagnostic(transfer_plan).empty());
+    assert(
+        orison::lowering::aggregate_projection_access_plan_report(transfer_plan) ==
+        "aggregate projection access intent explicit_transfer status allowed "
+        "binding box.payload source Payload receiver false"
+    );
 
     auto borrow_plan = orison::lowering::describe_named_aggregate_projection_access(
         owned_projection,
@@ -195,6 +206,12 @@ int main() {
     assert(borrow_plan.status == orison::lowering::AggregateProjectionAccessStatus::boundary_not_enabled);
     assert(
         orison::lowering::aggregate_projection_access_diagnostic(borrow_plan) ==
+        "aggregate projection shared_borrow boundary is not enabled"
+    );
+    assert(
+        orison::lowering::aggregate_projection_access_plan_report(borrow_plan) ==
+        "aggregate projection access intent shared_borrow status boundary_not_enabled "
+        "binding box.payload source Payload receiver false diagnostic "
         "aggregate projection shared_borrow boundary is not enabled"
     );
 
@@ -252,6 +269,11 @@ int main() {
     );
     assert(non_path_plan.status == orison::lowering::AggregateProjectionAccessStatus::not_named_aggregate_path);
     assert(orison::lowering::aggregate_projection_access_diagnostic(non_path_plan).empty());
+    assert(
+        orison::lowering::aggregate_projection_access_plan_report(non_path_plan) ==
+        "aggregate projection access intent value_read status not_named_aggregate_path "
+        "binding <none> source <unknown> receiver false"
+    );
 
     assert(
         orison::lowering::render_aggregate_projection_access_intent(

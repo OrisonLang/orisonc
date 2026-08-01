@@ -370,4 +370,26 @@ auto aggregate_projection_access_diagnostic(
     return {};
 }
 
+auto aggregate_projection_access_plan_report(
+    AggregateProjectionAccessPlan const& plan
+) -> std::string {
+    auto report = std::string {"aggregate projection access intent "};
+    report += render_aggregate_projection_access_intent(plan.intent);
+    report += " status ";
+    report += render_aggregate_projection_access_status(plan.status);
+    report += " binding ";
+    report += plan.binding_name.empty() ? "<none>" : plan.binding_name;
+    report += " source ";
+    report += plan.source_type_name.empty() ? "<unknown>" : plan.source_type_name;
+    report += " receiver ";
+    report += plan.receiver_projection ? "true" : "false";
+
+    auto diagnostic = aggregate_projection_access_diagnostic(plan);
+    if (!diagnostic.empty()) {
+        report += " diagnostic ";
+        report += diagnostic;
+    }
+    return report;
+}
+
 }  // namespace orison::lowering

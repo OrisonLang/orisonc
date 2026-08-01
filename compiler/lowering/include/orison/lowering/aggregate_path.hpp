@@ -155,4 +155,8 @@ auto aggregate_projection_access_diagnostic(
     AggregateProjectionAccessPlan const& plan
 ) -> std::string;
 
+auto aggregate_projection_access_plan_report(
+    AggregateProjectionAccessPlan const& plan
+) -> std::string;
+
 }  // namespace orison::lowering
