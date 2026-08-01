@@ -29,6 +29,29 @@ auto build_computed_dynamic_array_for_production_sequence_state(
     return state;
 }
 
+auto build_dynamic_array_cleanup_emission_capability_state(
+    std::optional<lowering::DynamicArrayCleanupEmissionCapability> const& capability
+) -> DynamicArrayCleanupEmissionCapabilityState {
+    if (!capability.has_value()) {
+        return {};
+    }
+    return DynamicArrayCleanupEmissionCapabilityState {
+        .cleanup_pairs = capability->cleanup_pairs,
+        .cleanup_operation_names = capability->cleanup_operation_names,
+        .cleanup_owner_names = capability->cleanup_owner_names,
+        .element_drop_pairs = capability->element_drop_pairs,
+        .missing_element_drop_pairs = capability->missing_element_drop_pairs,
+        .capability_metadata_available = true,
+        .proven = lowering::dynamic_array_cleanup_emission_capability_proven(*capability),
+        .emission_enabled = capability->emission_enabled,
+        .descriptor_storage_bound = capability->descriptor_storage_bound,
+        .sequence_verified = capability->sequence_verified,
+        .element_cleanup_authorized_or_not_required =
+            capability->element_cleanup_authorized_or_not_required,
+        .descriptor_deallocation_authorized = capability->descriptor_deallocation_authorized,
+    };
+}
+
 auto build_aggregate_projection_access_plan_state(
     lowering::LlvmIrEmissionResult const& emission
 ) -> AggregateProjectionAccessPlanState {
@@ -815,6 +838,8 @@ void populate_lowering_emission_reports(
     }
     result.dynamic_array_cleanup_emission_capability_report =
         emission.dynamic_array_cleanup_emission_capability_report();
+    result.dynamic_array_cleanup_emission_capability_state =
+        build_dynamic_array_cleanup_emission_capability_state(emission.dynamic_array_cleanup_emission_capability);
     result.dynamic_array_cleanup_availability = DynamicArrayCleanupAvailability {
         .missing_element_drop_pairs = result.dynamic_array_cleanup_missing_element_drop_pairs,
         .descriptor_origins_available = !result.semantic_result.dynamic_array_descriptor_origins.empty(),

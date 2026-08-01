@@ -25,6 +25,21 @@ struct DynamicArrayCleanupAvailability {
     bool cleanup_capability_proven = false;
 };
 
+struct DynamicArrayCleanupEmissionCapabilityState {
+    std::vector<std::string> cleanup_pairs;
+    std::vector<std::string> cleanup_operation_names;
+    std::vector<std::string> cleanup_owner_names;
+    std::vector<std::string> element_drop_pairs;
+    std::vector<std::string> missing_element_drop_pairs;
+    bool capability_metadata_available = false;
+    bool proven = false;
+    bool emission_enabled = false;
+    bool descriptor_storage_bound = false;
+    bool sequence_verified = false;
+    bool element_cleanup_authorized_or_not_required = false;
+    bool descriptor_deallocation_authorized = false;
+};
+
 struct DynamicArrayCleanupProductionReadiness {
     std::vector<std::string> missing_element_drop_pairs;
     bool descriptor_origins_available = false;
@@ -446,6 +461,7 @@ struct CompilePipelineResult {
     bool dynamic_array_cleanup_capability_proven = false;
     std::vector<std::string> dynamic_array_cleanup_missing_element_drop_pairs;
     std::vector<std::string> dynamic_array_cleanup_emission_capability_report;
+    DynamicArrayCleanupEmissionCapabilityState dynamic_array_cleanup_emission_capability_state;
     DynamicArrayCleanupAvailability dynamic_array_cleanup_availability;
     std::vector<std::string> emitted_dynamic_array_cleanup_obligation_report;
     std::vector<std::string> emitted_dynamic_array_cleanup_sequence_plan_report;

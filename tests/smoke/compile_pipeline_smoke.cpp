@@ -753,6 +753,26 @@ auto main() -> int {
         "__orison_dynamic_array_cleanup.0 allowed"
     );
     assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_report.size() == 1);
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.proven);
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.emission_enabled);
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.descriptor_storage_bound);
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.sequence_verified);
+    assert(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state
+            .element_cleanup_authorized_or_not_required
+    );
+    assert(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state
+            .descriptor_deallocation_authorized
+    );
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.cleanup_pairs.size() == 1);
+    assert(
+        scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.cleanup_pairs.front() ==
+        "words:__orison_dynamic_array_cleanup.0"
+    );
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.cleanup_owner_names.size() == 1);
+    assert(scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_state.cleanup_owner_names.front() == "words");
     assert_line_contains(
         scalar_dynamic_array_cleanup.dynamic_array_cleanup_emission_capability_report,
         0,
@@ -4297,6 +4317,21 @@ auto main() -> int {
     );
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_sequence_verification_passed);
     assert(!dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_capability_proven);
+    assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);
+    assert(!dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_state.proven);
+    assert(
+        !dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_state
+            .element_cleanup_authorized_or_not_required
+    );
+    assert(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_state
+            .missing_element_drop_pairs.size() == 1
+    );
+    assert(
+        dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_emission_capability_state
+            .missing_element_drop_pairs.front() ==
+        "items:items.element:__orison_drop.Payload"
+    );
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_missing_element_drop_pairs.size() == 1);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_origins_available);
     assert(dynamic_array_blocked_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
@@ -4394,6 +4429,17 @@ auto main() -> int {
     );
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_sequence_verification_passed);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_capability_proven);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.capability_metadata_available);
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.proven);
+    assert(
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state
+            .element_cleanup_authorized_or_not_required
+    );
+    assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_drop_pairs.size() == 1);
+    assert(
+        dynamic_array_owned_cleanup.dynamic_array_cleanup_emission_capability_state.element_drop_pairs.front() ==
+        "items:items.element:__orison_drop.Payload"
+    );
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_origins_available);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.descriptor_cleanup_plans_available);
     assert(dynamic_array_owned_cleanup.dynamic_array_cleanup_availability.cleanup_obligations_available);

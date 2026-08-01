@@ -28,6 +28,63 @@ void assert_computed_cleanup_capability_reports() {
     assert(enabled.front() == smoke::computed_dynamic_array_cleanup_call_insertion_capability_enabled_report);
 }
 
+void assert_dynamic_array_cleanup_emission_capability_reports() {
+    auto absent = driver::dynamic_array_cleanup_emission_capability_state_report(
+        pipeline::DynamicArrayCleanupEmissionCapabilityState {}
+    );
+    assert(absent.empty());
+
+    auto proven = driver::dynamic_array_cleanup_emission_capability_state_report(
+        pipeline::DynamicArrayCleanupEmissionCapabilityState {
+            .cleanup_pairs = {"items:__orison_dynamic_array_cleanup.0"},
+            .cleanup_operation_names = {"__orison_dynamic_array_cleanup.0"},
+            .cleanup_owner_names = {"items"},
+            .element_drop_pairs = {"items:items.element:__orison_drop.Payload"},
+            .capability_metadata_available = true,
+            .proven = true,
+            .emission_enabled = true,
+            .descriptor_storage_bound = true,
+            .sequence_verified = true,
+            .element_cleanup_authorized_or_not_required = true,
+            .descriptor_deallocation_authorized = true,
+        }
+    );
+    assert(proven.size() == 1);
+    assert(proven.front().find("dynamic array cleanup emission capability proven") != std::string::npos);
+    assert(
+        proven.front().find("cleanup-pairs [items:__orison_dynamic_array_cleanup.0]") !=
+        std::string::npos
+    );
+    assert(
+        proven.front().find("element-drop-pairs [items:items.element:__orison_drop.Payload]") !=
+        std::string::npos
+    );
+    assert(proven.front().find("[element cleanup ok]") != std::string::npos);
+
+    auto blocked = driver::dynamic_array_cleanup_emission_capability_state_report(
+        pipeline::DynamicArrayCleanupEmissionCapabilityState {
+            .cleanup_pairs = {"items:__orison_dynamic_array_cleanup.0"},
+            .cleanup_operation_names = {"__orison_dynamic_array_cleanup.0"},
+            .cleanup_owner_names = {"items"},
+            .missing_element_drop_pairs = {"items:items.element:__orison_drop.Payload"},
+            .capability_metadata_available = true,
+            .proven = false,
+            .emission_enabled = true,
+            .descriptor_storage_bound = true,
+            .sequence_verified = true,
+            .element_cleanup_authorized_or_not_required = false,
+            .descriptor_deallocation_authorized = true,
+        }
+    );
+    assert(blocked.size() == 1);
+    assert(blocked.front().find("dynamic array cleanup emission capability blocked") != std::string::npos);
+    assert(
+        blocked.front().find("missing-element-drop-pairs [items:items.element:__orison_drop.Payload]") !=
+        std::string::npos
+    );
+    assert(blocked.front().find("[element cleanup missing]") != std::string::npos);
+}
+
 void assert_computed_cleanup_readiness_reports() {
     auto blocked = driver::computed_cleanup_call_insertion_readiness_report(
         pipeline::ComputedCleanupCallInsertionGateState {
@@ -928,6 +985,7 @@ void assert_aggregate_projection_access_plan_reports() {
 
 auto main() -> int {
     assert_computed_cleanup_capability_reports();
+    assert_dynamic_array_cleanup_emission_capability_reports();
     assert_computed_cleanup_readiness_reports();
     assert_computed_dynamic_array_render_reports();
     assert_computed_inserted_cleanup_handoff_reports();

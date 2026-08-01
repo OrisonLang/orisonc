@@ -94,6 +94,8 @@ inventing semantics outside the spec/tour.
   typed consumed descriptor finalization state.
 - Pipeline results no longer expose raw DynamicArray cleanup production-readiness report strings. Pipeline consumers use
   typed DynamicArray cleanup production-readiness state.
+- DynamicArray cleanup emission capability now has typed pipeline state with cleanup pairs, operations, owners,
+  element-drop pairs, missing element-drop pairs, metadata availability, and readiness booleans.
 - The full DynamicArray cleanup audit now includes the typed cleanup proof summary at the driver edge, exposing
   structured proof counters in the aggregate audit path.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,

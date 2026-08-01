@@ -99,6 +99,10 @@ auto dynamic_array_cleanup_production_readiness_state_report(
     pipeline::DynamicArrayCleanupProductionReadiness const& state
 ) -> std::vector<std::string>;
 
+auto dynamic_array_cleanup_emission_capability_state_report(
+    pipeline::DynamicArrayCleanupEmissionCapabilityState const& state
+) -> std::vector<std::string>;
+
 auto computed_cleanup_proof_summary_state_report(
     pipeline::ComputedCleanupProofSummaryState const& state
 ) -> std::vector<std::string>;

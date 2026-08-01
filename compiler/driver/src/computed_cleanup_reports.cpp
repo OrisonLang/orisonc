@@ -843,6 +843,57 @@ auto dynamic_array_cleanup_production_readiness_state_report(
     return {pipeline::format_dynamic_array_cleanup_production_readiness(state)};
 }
 
+auto dynamic_array_cleanup_emission_capability_state_report(
+    pipeline::DynamicArrayCleanupEmissionCapabilityState const& state
+) -> std::vector<std::string> {
+    if (!state.capability_metadata_available) {
+        return {};
+    }
+    auto const status = [](bool value) {
+        return value ? "ok" : "missing";
+    };
+    auto output = std::ostringstream {};
+    output << "dynamic array cleanup emission capability ";
+    output << (state.proven ? "proven" : "blocked");
+    if (!state.cleanup_pairs.empty()) {
+        output << " cleanup-pairs";
+        for (auto const& cleanup_pair : state.cleanup_pairs) {
+            output << " [" << cleanup_pair << "]";
+        }
+    }
+    if (!state.cleanup_operation_names.empty()) {
+        output << " cleanup-operations";
+        for (auto const& cleanup_operation_name : state.cleanup_operation_names) {
+            output << " [" << cleanup_operation_name << "]";
+        }
+    }
+    if (!state.cleanup_owner_names.empty()) {
+        output << " cleanup-owners";
+        for (auto const& cleanup_owner_name : state.cleanup_owner_names) {
+            output << " [" << cleanup_owner_name << "]";
+        }
+    }
+    if (!state.element_drop_pairs.empty()) {
+        output << " element-drop-pairs";
+        for (auto const& element_drop_pair : state.element_drop_pairs) {
+            output << " [" << element_drop_pair << "]";
+        }
+    }
+    if (!state.missing_element_drop_pairs.empty()) {
+        output << " missing-element-drop-pairs";
+        for (auto const& missing_element_drop_pair : state.missing_element_drop_pairs) {
+            output << " [" << missing_element_drop_pair << "]";
+        }
+    }
+    output << " [emission " << status(state.emission_enabled) << "]";
+    output << " [descriptor storage " << status(state.descriptor_storage_bound) << "]";
+    output << " [sequence verification " << status(state.sequence_verified) << "]";
+    output << " [element cleanup " << status(state.element_cleanup_authorized_or_not_required) << "]";
+    output << " [descriptor deallocation " << status(state.descriptor_deallocation_authorized) << "]";
+    output << " (metadata only)";
+    return {output.str()};
+}
+
 auto computed_cleanup_proof_summary_state_report(
     pipeline::ComputedCleanupProofSummaryState const& state
 ) -> std::vector<std::string> {
