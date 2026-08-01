@@ -281,7 +281,12 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
     append_report_lines(report, result.computed_dynamic_array_for_loop_render_sequence_report);
     append_report_lines(report, result.computed_dynamic_array_for_loop_exit_cleanup_report);
     append_report_lines(report, result.computed_dynamic_array_for_cleanup_transition_report);
-    append_report_lines(report, result.computed_dynamic_array_for_inserted_cleanup_transition_report);
+    append_report_lines(
+        report,
+        computed_inserted_cleanup_handoff_state_report(
+            result.computed_dynamic_array_for_inserted_cleanup_handoff_state
+        )
+    );
     append_report_lines(
         report,
         computed_cleanup_call_blocker_summary_report(

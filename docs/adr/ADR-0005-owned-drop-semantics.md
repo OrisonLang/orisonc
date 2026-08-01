@@ -56,6 +56,8 @@ inventing semantics outside the spec/tour.
   driver edge instead of appending the pipeline report vector directly.
 - The full DynamicArray cleanup audit now renders inserted cleanup calls and consumed cleanup descriptors from typed
   pipeline state at the driver edge instead of appending those pipeline report vectors directly.
+- The full DynamicArray cleanup audit now renders inserted cleanup handoffs from typed pipeline state at the driver edge
+  instead of appending the inserted-cleanup transition report vector directly.
 - Runtime concurrency cleanup callbacks remain untyped. The compiler owns typed environment layout, field addressing,
   drop ordering, and drop-call emission.
 - The existing test-only drop declaration allowlist remains an internal backend seam only. It must not be exposed as CLI
