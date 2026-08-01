@@ -572,6 +572,50 @@ void assert_computed_dynamic_array_production_reports() {
         "[metadata available] [module comments absent] (metadata only)"
     );
     assert(sequence[1] == "computed DynamicArray production sequence detail owner items (metadata only)");
+
+    auto ready = driver::dynamic_array_cleanup_production_readiness_state_report(
+        pipeline::DynamicArrayCleanupProductionReadiness {
+            .descriptor_origins_available = true,
+            .descriptor_cleanup_plans_available = true,
+            .cleanup_obligations_available = true,
+            .sequence_verification_available = true,
+            .sequence_verification_passed = true,
+            .cleanup_capability_proven = true,
+            .production_signature_lowering_enabled = true,
+            .production_construction_lowering_enabled = true,
+            .production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(ready.size() == 1);
+    assert(
+        ready.front() ==
+        "dynamic array cleanup production readiness ready [descriptor origins ok] [cleanup plans ok] "
+        "[cleanup obligations ok] [sequence verification ok] [sequence passed ok] [cleanup capability ok] "
+        "[production signatures ok] [production construction ok] [production cleanup emission ok] (metadata only)"
+    );
+
+    auto blocked = driver::dynamic_array_cleanup_production_readiness_state_report(
+        pipeline::DynamicArrayCleanupProductionReadiness {
+            .missing_element_drop_pairs = {"items:items.element:__orison_drop.Payload"},
+            .descriptor_origins_available = true,
+            .descriptor_cleanup_plans_available = true,
+            .cleanup_obligations_available = true,
+            .sequence_verification_available = true,
+            .sequence_verification_passed = true,
+            .cleanup_capability_proven = false,
+            .production_signature_lowering_enabled = true,
+            .production_construction_lowering_enabled = true,
+            .production_cleanup_emission_enabled = true,
+        }
+    );
+    assert(blocked.size() == 1);
+    assert(
+        blocked.front() ==
+        "dynamic array cleanup production readiness blocked [descriptor origins ok] [cleanup plans ok] "
+        "[cleanup obligations ok] [sequence verification ok] [sequence passed ok] [cleanup capability missing] "
+        "missing-element-drop-pairs [items:items.element:__orison_drop.Payload] [production signatures ok] "
+        "[production construction ok] [production cleanup emission ok] (metadata only)"
+    );
 }
 
 void assert_aggregate_projection_access_plan_reports() {

@@ -400,7 +400,12 @@ auto dynamic_array_cleanup_audit_report(pipeline::CompilePipelineResult const& r
             result.computed_dynamic_array_for_production_sequence_state
         )
     );
-    append_report_lines(report, result.dynamic_array_cleanup_production_readiness_report);
+    append_report_lines(
+        report,
+        dynamic_array_cleanup_production_readiness_state_report(
+            result.dynamic_array_cleanup_production_readiness
+        )
+    );
     return report;
 }
 

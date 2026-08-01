@@ -63,6 +63,10 @@ auto computed_dynamic_array_for_production_sequence_state_report(
     pipeline::ComputedDynamicArrayForProductionSequenceState const& state
 ) -> std::vector<std::string>;
 
+auto dynamic_array_cleanup_production_readiness_state_report(
+    pipeline::DynamicArrayCleanupProductionReadiness const& state
+) -> std::vector<std::string>;
+
 auto computed_cleanup_proof_summary_state_report(
     pipeline::ComputedCleanupProofSummaryState const& state
 ) -> std::vector<std::string>;
