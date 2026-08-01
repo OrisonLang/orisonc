@@ -834,36 +834,20 @@ void populate_lowering_emission_reports(
         std::move(emission.emitted_dynamic_array_cleanup_emission_gate_report);
     result.emitted_dynamic_array_cleanup_emission_capability_report =
         std::move(emission.emitted_dynamic_array_cleanup_emission_capability_report);
-    result.computed_dynamic_array_for_descriptor_render_report =
-        emission.computed_dynamic_array_for_descriptor_render_report();
     result.computed_dynamic_array_for_descriptor_render_state =
         build_computed_dynamic_array_for_descriptor_render_state(emission);
-    result.computed_dynamic_array_for_loop_control_render_report =
-        emission.computed_dynamic_array_for_loop_control_render_report();
     result.computed_dynamic_array_for_loop_control_render_state =
         build_computed_dynamic_array_for_loop_control_render_state(emission);
-    result.computed_dynamic_array_for_element_address_render_report =
-        emission.computed_dynamic_array_for_element_address_render_report();
     result.computed_dynamic_array_for_element_address_render_state =
         build_computed_dynamic_array_for_element_address_render_state(emission);
-    result.computed_dynamic_array_for_element_load_render_report =
-        emission.computed_dynamic_array_for_element_load_render_report();
     result.computed_dynamic_array_for_element_load_render_state =
         build_computed_dynamic_array_for_element_load_render_state(emission);
-    result.computed_dynamic_array_for_loop_continue_render_report =
-        emission.computed_dynamic_array_for_loop_continue_render_report();
     result.computed_dynamic_array_for_loop_continue_render_state =
         build_computed_dynamic_array_for_loop_continue_render_state(emission);
-    result.computed_dynamic_array_for_loop_render_sequence_report =
-        emission.computed_dynamic_array_for_loop_render_sequence_report();
     result.computed_dynamic_array_for_loop_render_sequence_state =
         build_computed_dynamic_array_for_loop_render_sequence_state(emission);
-    result.computed_dynamic_array_for_loop_exit_cleanup_report =
-        emission.computed_dynamic_array_for_loop_exit_cleanup_report();
     result.computed_dynamic_array_for_loop_exit_cleanup_state =
         build_computed_dynamic_array_for_loop_exit_cleanup_state(emission);
-    result.computed_dynamic_array_for_cleanup_transition_report =
-        emission.computed_dynamic_array_for_cleanup_transition_report();
     result.computed_dynamic_array_for_cleanup_transition_state =
         build_computed_dynamic_array_for_cleanup_transition_state(emission);
     result.computed_dynamic_array_for_inserted_cleanup_transition_report =

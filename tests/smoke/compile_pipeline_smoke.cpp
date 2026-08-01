@@ -1289,11 +1289,6 @@ auto main() -> int {
         }
     );
     assert(!computed_dynamic_array_local_same_owner_for.has_errors());
-    assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_descriptor_render_report.size() == 1);
-    assert(
-        computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_descriptor_render_report.front() ==
-        smoke::computed_dynamic_array_descriptor_render_report
-    );
     assert(
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_descriptor_render_state.render_metadata_available
@@ -1350,11 +1345,6 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_descriptor_render_state.capacity_names.front() ==
         "%items.computed_for.capacity"
-    );
-    assert(computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_loop_control_render_report.size() == 1);
-    assert(
-        computed_dynamic_array_local_same_owner_for.computed_dynamic_array_for_loop_control_render_report.front() ==
-        smoke::computed_dynamic_array_loop_control_render_report
     );
     assert(
         computed_dynamic_array_local_same_owner_for
@@ -1426,15 +1416,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_element_address_render_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_element_address_render_report.front() ==
-        smoke::computed_dynamic_array_element_address_render_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_element_address_render_state.render_metadata_available
     );
     assert(
@@ -1487,15 +1468,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_element_load_render_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_element_load_render_report.front() ==
-        smoke::computed_dynamic_array_element_load_render_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_element_load_render_state.render_metadata_available
     );
     assert(
@@ -1540,15 +1512,6 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_element_load_render_state.item_value_names.front() ==
         "%items.computed_for.item"
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_loop_continue_render_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_loop_continue_render_report.front() ==
-        smoke::computed_dynamic_array_loop_continue_render_report
     );
     assert(
         computed_dynamic_array_local_same_owner_for
@@ -1605,15 +1568,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_loop_render_sequence_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_loop_render_sequence_report.front() ==
-        smoke::computed_dynamic_array_loop_render_sequence_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_loop_render_sequence_state.sequence_metadata_available
     );
     assert(
@@ -1649,15 +1603,6 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_loop_render_sequence_state.body_block_names.front() ==
         "items.computed_for.body"
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_loop_exit_cleanup_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_loop_exit_cleanup_report.front() ==
-        smoke::computed_dynamic_array_loop_exit_cleanup_report
     );
     assert(
         computed_dynamic_array_local_same_owner_for
@@ -1710,15 +1655,6 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_loop_exit_cleanup_state.cleanup_resumption_operation_names.front() ==
         "items.computed_for.cleanup.resume"
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_cleanup_transition_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_cleanup_transition_report.front() ==
-        smoke::computed_dynamic_array_cleanup_transition_report
     );
     assert(
         computed_dynamic_array_local_same_owner_for

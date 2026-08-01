@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-01: pipeline results no longer expose raw computed DynamicArray loop-render report strings for descriptor,
+  loop-control, element-address, element-load, loop-continue, loop-render-sequence, loop-exit-cleanup, or
+  cleanup-transition sections; pipeline consumers use typed states for those sections.
 - 2026-08-01: the full DynamicArray cleanup audit now renders computed DynamicArray loop-exit-cleanup and
   cleanup-transition sections from typed pipeline state at the driver edge instead of appending those report vectors
   directly.
