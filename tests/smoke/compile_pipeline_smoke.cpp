@@ -2465,15 +2465,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_call_emission_gate_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_emission_gate_ready_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_state.gate_count == 1
     );
     assert(
@@ -2509,25 +2500,6 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_state.resume_operation_names.front() ==
         "items.computed_for.0.cleanup.resume"
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_call_plan_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_call_plan_report.front().find(
-                "[cleanup calls enabled]"
-            ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_call_render_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_call_render_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_render_report
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -2588,15 +2560,6 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
             "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.0.data"
         ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_insertion_gate_ready_report
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
@@ -2862,34 +2825,6 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_operand_fallback_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.ir_consumed_cleanup_descriptor_fallback_count == 1
     );
-    assert(
-        computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_cleanup_call_plan_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_cleanup_call_plan_report.front().find(
-                "[cleanup calls enabled]"
-            ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_cleanup_call_render_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_cleanup_call_render_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_render_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_operand_fallback_for
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_insertion_gate_ready_report
-    );
     auto computed_dynamic_array_local_same_owner_authorized_cleanup_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
         orison::pipeline::CompilePipelineOptions {
@@ -3019,15 +2954,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_emission_gate_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_emission_gate_ready_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_cleanup_call_emission_gate_state.gate_count == 1
     );
     assert(
@@ -3052,21 +2978,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_plan_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_plan_report.front().find(
-                "[cleanup calls enabled]"
-            ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_render_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_render_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_cleanup_call_plan_render_state.plan_count == 1
     );
     assert(
@@ -3076,15 +2987,6 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
             .computed_dynamic_array_for_cleanup_call_plan_render_state.all_renderable
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_insertion_gate_ready_report
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
@@ -3193,10 +3095,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_cleanup_call_plan_render_state.plan_count == 1
     );
     assert(
@@ -3210,11 +3108,6 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_cleanup_call_plan_render_state.all_renderable
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_insertion_gate_ready_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
@@ -3890,10 +3783,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_emission_gate_report.size() == 2
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_cleanup_call_emission_gate_state.gate_count == 2
     );
     assert(
@@ -3915,50 +3804,6 @@ auto main() -> int {
     assert(
         !computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_cleanup_call_emission_gate_state.all_ready
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_emission_gate_report.front().find(
-                "[cleanup calls disabled] [cleanup blocked: later owner use] [cleanup call emission blocked]"
-            ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_emission_gate_report.back().find(
-                "[cleanup call emission ready]"
-            ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_plan_report.size() == 2
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_plan_report.front().find(
-                "[cleanup calls disabled] [cleanup blocked: later owner use] [data operand proven]"
-            ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_plan_report.back().find(
-                "items.computed_for.1.cleanup.resume.call"
-            ) != std::string::npos
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_render_report.size() == 2
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_render_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_render_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_render_report.back().find(
-                "call void @__orison_dynamic_array_deallocate(ptr %items.computed_for.1.data, i64 4, "
-                "i64 %items.computed_for.1.capacity)"
-            ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
@@ -3994,10 +3839,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.size() == 2
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_cleanup_call_insertion_gate_state.gate_count == 2
     );
     assert(
@@ -4023,18 +3864,6 @@ auto main() -> int {
     assert(
         !computed_dynamic_array_local_same_owner_two_loops
             .computed_dynamic_array_for_cleanup_call_insertion_gate_state.all_ready
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.front() ==
-        smoke::computed_dynamic_array_cleanup_call_insertion_gate_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_two_loops
-            .computed_dynamic_array_for_cleanup_call_insertion_gate_report.back().find(
-                "items.computed_for.1.cleanup.resume.call [inserted state verified] "
-                "[cleanup operands proven] [cleanup calls authorized] [cleanup call insertion ready]"
-            ) != std::string::npos
     );
     assert(
         computed_dynamic_array_local_same_owner_two_loops.ir_text.find(

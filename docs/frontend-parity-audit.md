@@ -1,5 +1,8 @@
 # Frontend Parity Audit
 
+- 2026-08-01: pipeline results no longer expose raw computed DynamicArray cleanup-call emission gate, cleanup-call plan,
+  cleanup-call render, or cleanup-call insertion readiness report strings; pipeline consumers use typed cleanup-call
+  states for those sections.
 - 2026-08-01: pipeline results no longer expose raw computed DynamicArray production emission gate or production
   sequence report strings; pipeline consumers use typed production states for those sections.
 - 2026-08-01: pipeline results no longer expose raw computed DynamicArray loop-render report strings for descriptor,

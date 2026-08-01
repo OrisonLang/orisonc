@@ -862,18 +862,10 @@ void populate_lowering_emission_reports(
         build_computed_inserted_cleanup_handoff_state(cleanup_proof_model);
     result.computed_dynamic_array_for_cleanup_proof_summary_state =
         build_computed_cleanup_proof_summary_state(cleanup_proof_model);
-    result.computed_dynamic_array_for_cleanup_call_emission_gate_report =
-        cleanup_proof_model.reports.cleanup_call_emission_gate_report;
     result.computed_dynamic_array_for_cleanup_call_emission_gate_state =
         build_computed_cleanup_call_emission_gate_state(cleanup_proof_model);
-    result.computed_dynamic_array_for_cleanup_call_plan_report =
-        cleanup_proof_model.reports.cleanup_call_plan_report;
-    result.computed_dynamic_array_for_cleanup_call_render_report =
-        cleanup_proof_model.reports.cleanup_call_render_report;
     result.computed_dynamic_array_for_cleanup_call_plan_render_state =
         build_computed_cleanup_call_plan_render_state(cleanup_proof_model);
-    result.computed_dynamic_array_for_cleanup_call_insertion_gate_report =
-        cleanup_proof_model.reports.cleanup_call_insertion_gate_report;
     result.computed_dynamic_array_for_cleanup_call_insertion_gate_state =
         build_computed_cleanup_call_insertion_gate_state(cleanup_proof_model);
     result.computed_dynamic_array_for_cleanup_call_insertion_capability_state =

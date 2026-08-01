@@ -467,12 +467,8 @@ struct CompilePipelineResult {
         computed_dynamic_array_for_inserted_cleanup_state_verification_state;
     ComputedInsertedCleanupHandoffState computed_dynamic_array_for_inserted_cleanup_handoff_state;
     ComputedCleanupProofSummaryState computed_dynamic_array_for_cleanup_proof_summary_state;
-    std::vector<std::string> computed_dynamic_array_for_cleanup_call_emission_gate_report;
     ComputedCleanupCallEmissionGateState computed_dynamic_array_for_cleanup_call_emission_gate_state;
-    std::vector<std::string> computed_dynamic_array_for_cleanup_call_plan_report;
-    std::vector<std::string> computed_dynamic_array_for_cleanup_call_render_report;
     ComputedCleanupCallPlanRenderState computed_dynamic_array_for_cleanup_call_plan_render_state;
-    std::vector<std::string> computed_dynamic_array_for_cleanup_call_insertion_gate_report;
     ComputedCleanupCallInsertionGateState computed_dynamic_array_for_cleanup_call_insertion_gate_state;
     ComputedCleanupCallInsertionCapabilityState computed_dynamic_array_for_cleanup_call_insertion_capability_state;
     std::vector<std::string> computed_dynamic_array_for_inserted_cleanup_call_report;
