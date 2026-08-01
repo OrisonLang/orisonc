@@ -222,14 +222,6 @@ void prefer_emitted_dynamic_array_cleanup_reports(
         result.consumed_descriptor_finalization_plan_report,
         std::move(emitted_result.consumed_descriptor_finalization_plan_report)
     );
-    prefer_report_lines(
-        result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report,
-        std::move(emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report)
-    );
-    prefer_report_lines(
-        result.computed_dynamic_array_for_consumed_cleanup_descriptor_report,
-        std::move(emitted_result.computed_dynamic_array_for_consumed_cleanup_descriptor_report)
-    );
     if (emitted_result.computed_dynamic_array_for_descriptor_render_state.render_count > 0) {
         result.computed_dynamic_array_for_descriptor_render_state =
             std::move(emitted_result.computed_dynamic_array_for_descriptor_render_state);

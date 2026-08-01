@@ -1823,10 +1823,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 1
     );
     assert(
@@ -1836,10 +1832,6 @@ auto main() -> int {
     assert(
         computed_dynamic_array_local_same_owner_for
              .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.all_finalization_ready
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_for
@@ -2587,11 +2579,11 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_lowered_for.ir_text.find(
@@ -2974,11 +2966,11 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.empty()
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 0
     );
     assert(
         computed_dynamic_array_local_same_owner_authorized_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.empty()
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_count == 0
     );
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_for = pipeline.emit_llvm(
         computed_dynamic_array_local_same_owner_for_path,
@@ -3178,15 +3170,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.front() ==
-        smoke::computed_dynamic_array_consumed_cleanup_descriptor_model_report
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 1
     );
     assert(
@@ -3229,15 +3212,6 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.element_source_type_names.front() ==
         "UInt32"
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.front() ==
-        smoke::computed_dynamic_array_consumed_cleanup_descriptor_report
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
@@ -3333,10 +3307,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_fallback_for
             .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_count == 1
     );
     assert(
@@ -3421,42 +3391,30 @@ auto main() -> int {
         computed_dynamic_array_local_same_owner_handoff_fallback_for
             .computed_dynamic_array_for_cleanup_proof_summary_state.ir_cleanup_operand_fallback_count == 0
     );
-    auto inserted_cleanup_finalization_audit = std::vector<std::string> {};
-    inserted_cleanup_finalization_audit.insert(
-        inserted_cleanup_finalization_audit.end(),
+    assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_plan_report.begin(),
+            .consumed_descriptor_finalization_state.computed_descriptor_plan_count == 1
+    );
+    assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .consumed_descriptor_finalization_plan_report.end()
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 1
     );
-    inserted_cleanup_finalization_audit.insert(
-        inserted_cleanup_finalization_audit.end(),
+    assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.begin(),
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_count == 1
+    );
+    assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.end()
-    );
-    inserted_cleanup_finalization_audit.insert(
-        inserted_cleanup_finalization_audit.end(),
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.cleanup_owner_names.front() ==
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.begin(),
+            .consumed_descriptor_finalization_state.cleanup_owner_names.front()
+    );
+    assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_for
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.end()
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_storage_names.front() ==
+        computed_dynamic_array_local_same_owner_inserted_cleanup_for
+            .consumed_descriptor_finalization_state.descriptor_storage_names.front()
     );
-    auto const generic_finalization_report_index = line_index_containing(
-        inserted_cleanup_finalization_audit,
-        "consumed descriptor finalization plan owner items"
-    );
-    auto const dynamic_array_model_report_index = line_index_containing(
-        inserted_cleanup_finalization_audit,
-        "computed DynamicArray for consumed cleanup descriptor model"
-    );
-    auto const dynamic_array_inserted_report_index = line_index_containing(
-        inserted_cleanup_finalization_audit,
-        "computed DynamicArray for consumed cleanup descriptor cleanup-operation"
-    );
-    assert(generic_finalization_report_index < dynamic_array_model_report_index);
-    assert(generic_finalization_report_index < dynamic_array_inserted_report_index);
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_object =
         orison::lowering::LlvmObjectEmitter {}.emit(
             computed_dynamic_array_local_same_owner_inserted_cleanup_for.ir_text
@@ -3530,10 +3488,6 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.size() == 1
-    );
-    assert(
-        computed_dynamic_array_local_same_owner_inserted_cleanup_run
             .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_model_count == 1
     );
     assert(
@@ -3560,20 +3514,21 @@ auto main() -> int {
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_report.front().find(
-            "descriptor %items.addr cleanup-operation items.computed_for.cleanup.resume "
-                "[generic finalization proof referenced]"
-            ) != std::string::npos
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_model_state.descriptor_storage_names.front() ==
+        "%items.addr"
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.size() == 1
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_count == 1
     );
     assert(
         computed_dynamic_array_local_same_owner_inserted_cleanup_run
-            .computed_dynamic_array_for_consumed_cleanup_descriptor_report.front().find(
-                "owner items descriptor %items.addr [inserted cleanup call proven] [descriptor finalized]"
-            ) != std::string::npos
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.cleanup_owner_names.front() == "items"
+    );
+    assert(
+        computed_dynamic_array_local_same_owner_inserted_cleanup_run
+            .computed_dynamic_array_for_consumed_cleanup_descriptor_state.descriptor_storage_names.front() ==
+        "%items.addr"
     );
     auto computed_dynamic_array_local_same_owner_inserted_cleanup_run_object =
         orison::lowering::LlvmObjectEmitter {}.emit(

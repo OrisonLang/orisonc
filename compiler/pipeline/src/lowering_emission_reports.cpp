@@ -872,14 +872,10 @@ void populate_lowering_emission_reports(
         emission.consumed_descriptor_finalization_plan_report();
     result.consumed_descriptor_finalization_state =
         build_consumed_descriptor_finalization_state(emission);
-    result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report =
-        emission.computed_dynamic_array_for_consumed_cleanup_descriptor_model_report();
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_model_state =
         build_computed_consumed_cleanup_descriptor_model_state(emission);
     result.computed_dynamic_array_for_consumed_cleanup_descriptor_state =
         build_computed_consumed_cleanup_descriptor_state(cleanup_proof_model);
-    result.computed_dynamic_array_for_consumed_cleanup_descriptor_report =
-        cleanup_proof_model.reports.consumed_cleanup_descriptor_report;
     result.aggregate_projection_access_plan_state =
         build_aggregate_projection_access_plan_state(emission);
     result.computed_dynamic_array_for_production_emission_gate_state =

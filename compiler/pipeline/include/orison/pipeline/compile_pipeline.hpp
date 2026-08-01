@@ -472,10 +472,8 @@ struct CompilePipelineResult {
     ComputedInsertedCleanupCallState computed_dynamic_array_for_inserted_cleanup_call_state;
     std::vector<std::string> consumed_descriptor_finalization_plan_report;
     ConsumedDescriptorFinalizationState consumed_descriptor_finalization_state;
-    std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_model_report;
     ComputedConsumedCleanupDescriptorModelState computed_dynamic_array_for_consumed_cleanup_descriptor_model_state;
     ComputedConsumedCleanupDescriptorState computed_dynamic_array_for_consumed_cleanup_descriptor_state;
-    std::vector<std::string> computed_dynamic_array_for_consumed_cleanup_descriptor_report;
     AggregateProjectionAccessPlanState aggregate_projection_access_plan_state;
     ComputedDynamicArrayForProductionEmissionGateState computed_dynamic_array_for_production_emission_gate_state;
     ComputedDynamicArrayForProductionSequenceState computed_dynamic_array_for_production_sequence_state;
